@@ -71,6 +71,14 @@ proto-worker = [
     "cryptography>=48.0.1",
     "anyio>=4.14.2",
 ]
+# The E2B sandbox image's runtime closure (issue #3263). `make proto-requirements` exports it
+# to apps/server/sandbox/requirements.txt, which e2b.Dockerfile installs with --require-hashes,
+# so hosted sessions run the SDK, and the Claude Code CLI its wheel bundles, that uv.lock
+# resolves. Never installed by `uv sync` or CI.
+sandbox = [
+    "claude-agent-sdk==0.2.128",
+    "websockets>=13",
+]
 
 [tool.pytest.ini_options]
 asyncio_mode = "auto"

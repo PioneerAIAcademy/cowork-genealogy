@@ -900,8 +900,19 @@ def test_migrate_is_the_only_schema_applier():
         assert condition == "service_completed_successfully", f"{name} must wait for the migration, not {condition}"
 
 
-REQUIREMENTS = {"web": PROTO / "web" / "requirements.txt", "worker": PROTO / "worker" / "requirements.txt"}
-REGENERATE = "run `make proto-requirements` and commit apps/server/proto/{web,worker}/requirements.txt"
+# Each image that installs a uv group's export: tier -> (Dockerfile, committed export, uv group).
+# "sandbox" is the hosted E2B agent image (issue #3263): its SDK decides which Claude Code CLI
+# every hosted session runs.
+TIERS = {
+    "web": (PROTO / "web" / "Dockerfile", PROTO / "web" / "requirements.txt", "proto-web"),
+    "worker": (PROTO / "worker" / "Dockerfile", PROTO / "worker" / "requirements.txt", "proto-worker"),
+    "sandbox": (PROTO.parent / "sandbox" / "e2b.Dockerfile", PROTO.parent / "sandbox" / "requirements.txt", "sandbox"),
+}
+REQUIREMENTS = {tier: requirements for tier, (_, requirements, _) in TIERS.items()}
+REGENERATE = (
+    "run `make proto-requirements` and commit "
+    "apps/server/{proto/web,proto/worker,sandbox}/requirements.txt"
+)
 
 
 def _locked_version(package: str) -> str:
@@ -939,7 +950,7 @@ def _uv_export(group: str) -> str:
     if not uv:
         pytest.fail("uv is not on PATH: the requirements drift check needs it, and a skip would hide drift")
     proc = subprocess.run(
-        [uv, "export", "--locked", "--only-group", f"proto-{group}", "--no-emit-project",
+        [uv, "export", "--locked", "--only-group", group, "--no-emit-project",
          "--format", "requirements-txt", "--no-header"],
         cwd=PROTO.parent, capture_output=True, text=True, encoding="utf-8",
     )
@@ -947,39 +958,88 @@ def _uv_export(group: str) -> str:
     return proc.stdout
 
 
+# `pip install` however it is spelled: `pip`, `pip3`, `pip3.12`, any case.
+_PIP_INSTALL = re.compile(r"\bpip(?:3(?:\.\d+)?)?\s+install\b", re.IGNORECASE)
+
+
 def _dockerfile_logical_lines(dockerfile: Path) -> list[str]:
+    """Logical lines, comments dropped and continuations joined. An exec-form RUN
+    (`RUN ["pip", "install", ...]`) is rewritten to its shell spelling so its words can be
+    read; a heredoc's body stays as its own lines, which the pip scan below reads too."""
     text = dockerfile.read_text(encoding="utf-8")
     body = "\n".join(line for line in text.splitlines() if not line.lstrip().startswith("#"))
-    return [" ".join(line.split()) for line in body.replace("\\\n", " ").splitlines() if line.strip()]
+    out = []
+    for line in body.replace("\\\n", " ").splitlines():
+        line = " ".join(line.split())
+        if not line:
+            continue
+        m = re.match(r"(RUN)\s*(\[.*\])$", line, re.IGNORECASE)
+        if m:
+            try:
+                line = "RUN " + " ".join(str(a) for a in json.loads(m.group(2)))
+            except ValueError:
+                pass
+        out.append(line)
+    return out
 
 
 @pytest.mark.parametrize("tier", sorted(REQUIREMENTS))
 def test_proto_images_install_their_requirements_in_hash_mode(tier):
-    """U12: each image installs the committed export of its uv group, every pip line in
-    hash mode, so the image runs uv.lock's closure (the versions the suite tested) and a
-    wheel that does not match the lock's hash fails the build."""
-    dockerfile = PROTO / tier / "Dockerfile"
+    """Each image installs the committed export of its uv group, every pip install in the
+    file in hash mode, so the image runs uv.lock's closure (the versions the suite tested)
+    and a wheel that does not match the lock's hash fails the build. Every line is scanned,
+    not only RUN lines, so an install inside a heredoc counts; exec form is read as words."""
+    dockerfile, requirements, _ = TIERS[tier]
+    name = dockerfile.relative_to(PROTO.parent)
     lines = _dockerfile_logical_lines(dockerfile)
-    source = f"apps/server/proto/{tier}/requirements.txt"
-    dests = [line.split()[-1] for line in lines if re.match(rf"COPY (--\S+ )*{re.escape(source)} ", line)]
-    assert len(dests) == 1, f"{dockerfile.relative_to(PROTO)} must COPY {source} exactly once"
+    source = requirements.relative_to(REPO).as_posix()
+    copies = [line.split()[1:] for line in lines if re.match(r"(COPY|ADD)\b", line, re.IGNORECASE)]
+    copies = [[w for w in words if not w.startswith("--")] for words in copies]
+    dests = [words[-1] for words in copies if source in words[:-1]]
+    assert len(dests) == 1, f"{name} must COPY {source} exactly once"
     [dest] = dests
     if dest.endswith("/"):
         dest += "requirements.txt"
     accepted = {dest, dest.removeprefix("./")}
-    pips = [line for line in lines if re.match(r"RUN\b.*\bpip3? install\b", line)]
-    assert pips, f"{dockerfile.relative_to(PROTO)} has no pip install"
+    # Another COPY landing on the same path would replace the export before pip reads it:
+    # one naming the path itself, or one into its directory carrying a file of that name.
+    folder, _, base = dest.rpartition("/")
+    onto = [
+        words for words in copies if words and (
+            words[-1] in accepted
+            or (words[-1].rstrip("/") in {folder, folder.removeprefix("./"), "." if folder == "." else folder}
+                and words[-1].endswith("/") and any(w.rsplit("/", 1)[-1] == base for w in words[:-1]))
+        )
+    ]
+    assert len(onto) == 1, f"{name}: something else is copied onto {dest}: {onto}"
+    pips = [line for line in lines if _PIP_INSTALL.search(line)]
+    assert pips, f"{name} has no pip install"
     for pip in pips:
-        # Every command in the RUN: a second pip chained after the first decides hash mode
-        # on its own.
+        # Every command on the line: a second pip chained after the first decides hash
+        # mode on its own.
         for seg in re.split(r"\s*(?:&&|\|\||;|\|)\s*", pip):
-            if not re.search(r"\bpip3? install\b", seg):
+            parts = _PIP_INSTALL.split(seg, 1)
+            if len(parts) < 2:
                 continue
-            words = seg.split(" install ", 1)[1].split()
+            words = parts[1].split()
             assert "--require-hashes" in words, f"not in hash mode: {pip}"
             targets = [b for a, b in zip(words, words[1:]) if a in ("-r", "--requirement")]
             targets += [w.split("=", 1)[1] for w in words if w.startswith("--requirement=")]
+            targets += [w[2:] for w in words if w.startswith("-r") and len(w) > 2 and not w.startswith("-r=")]
             assert targets and set(targets) <= accepted, f"pip must install only {source} (copied to {dest}): {pip}"
+
+
+@pytest.mark.parametrize("tier", sorted(TIERS))
+def test_make_proto_requirements_regenerates_every_tier(tier):
+    """Every failure above says `make proto-requirements`; that remedy must export each
+    tier's group to the file its image installs, or it stops fixing the failure."""
+    _, requirements, group = TIERS[tier]
+    out = requirements.relative_to(PROTO.parent).as_posix()
+    exports = [line for line in _recipe("proto-requirements") if "uv export" in line]
+    assert any(
+        re.search(rf"--only-group {re.escape(group)}\b", line) and re.search(rf"-o {re.escape(out)}\b", line)
+        for line in exports
+    ), f"`make proto-requirements` does not export the {group} group to apps/server/{out}"
 
 
 @pytest.mark.parametrize("tier", sorted(REQUIREMENTS))
@@ -988,11 +1048,11 @@ def test_committed_requirements_are_the_uv_export(tier):
     (name, version, marker) set and the same hashes. A Dependabot bump to uv.lock that moves
     a package in either closure fails here until the files are regenerated."""
     committed, options = _requirements(REQUIREMENTS[tier].read_text(encoding="utf-8"))
-    fresh, _ = _requirements(_uv_export(tier))
-    assert not options, f"{REQUIREMENTS[tier].relative_to(PROTO)} carries options {options}; {REGENERATE}"
+    fresh, _ = _requirements(_uv_export(TIERS[tier][2]))
+    assert not options, f"{REQUIREMENTS[tier].relative_to(PROTO.parent)} carries options {options}; {REGENERATE}"
     stale = {n: (committed.get(n), fresh.get(n)) for n in committed.keys() | fresh.keys() if committed.get(n) != fresh.get(n)}
     assert not stale, (
-        f"proto/{tier}/requirements.txt differs from uv.lock's proto-{tier} group; {REGENERATE}. "
+        f"{REQUIREMENTS[tier].relative_to(PROTO.parent)} differs from uv.lock's {TIERS[tier][2]} group; {REGENERATE}. "
         f"(committed, uv.lock) per package: " + "; ".join(
             f"{n}: {(c or ('absent',))[:2]} vs {(f or ('absent',))[:2]}" + (" (hashes differ)" if c and f and c[:2] == f[:2] else "")
             for n, (c, f) in sorted(stale.items())
@@ -1017,6 +1077,9 @@ def test_committed_requirements_are_the_uv_export(tier):
         ("worker", "botocore", None),
         # U3: grants.py decrypts what web/auth.py encrypts, at the one locked version.
         ("worker", "cryptography", None),
+        # Issue #3263: the hosted agent's SDK, which bundles the CLI every session runs.
+        ("sandbox", "claude-agent-sdk", "0.2.128"),
+        ("sandbox", "websockets", None),
     ],
 )
 def test_requirements_carry_what_the_tiers_import_at_the_locked_version(tier, package, pinned):
@@ -1025,11 +1088,12 @@ def test_requirements_carry_what_the_tiers_import_at_the_locked_version(tier, pa
     passes every other test and fails only when the tier starts. botocore at uv.lock's
     version is what the U7 signing vectors proved."""
     reqs, _ = _requirements(REQUIREMENTS[tier].read_text(encoding="utf-8"))
-    assert package in reqs, f"proto/{tier}/requirements.txt does not carry {package}"
+    where = REQUIREMENTS[tier].relative_to(PROTO.parent)
+    assert package in reqs, f"{where} does not carry {package}"
     version = reqs[package][0]
-    assert version == _locked_version(package), f"proto/{tier} {package}=={version} vs uv.lock; {REGENERATE}"
+    assert version == _locked_version(package), f"{where} {package}=={version} vs uv.lock; {REGENERATE}"
     if pinned:
-        assert version == pinned, f"proto/{tier} {package}=={version}, not the {pinned} pin"
+        assert version == pinned, f"{where} {package}=={version}, not the {pinned} pin"
 
 
 def test_host_venv_sqs_recipes_use_static_dummies():

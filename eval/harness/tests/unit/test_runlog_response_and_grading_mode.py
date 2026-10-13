@@ -124,7 +124,7 @@ def test_an_enriched_fixture_response_is_kept_even_though_it_matched():
     `projectPath`, which all three enrichment paths require. Dropping them would
     have been irreversible.
     """
-    for marker in ("staged", "ranked", "rankingSkipped"):
+    for marker in ("staged", "ranked", "rankingSkipped", "surnameVariantHints"):
         entry = _tool_call_entry({
             "tool": "mcp__genealogy__record_search",
             "args": {"surname": "Smith"},
