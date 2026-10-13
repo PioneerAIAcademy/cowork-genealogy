@@ -15,8 +15,9 @@ accessible FamilySearch-indexed records, yet **indirect evidence** supports the 
   constrains the death to a window within 1935 (`a_003`, indirect).
 - The SD vital records archive and unindexed FamilySearch microfilm may hold the original
   certificate; these have not been searched.
-- Research declared exhaustive (`exhaustive_declaration.declared: true`) over the
-  accessible FamilySearch-indexed collections.
+- Research declared exhaustive (`search_stop.stopped_because: "nothing_further_reachable"`) — the
+  accessible FamilySearch-indexed collections are exhausted and the remaining sources (state archive,
+  unindexed microfilm) are not reachable through FamilySearch. Two `not_reached` entries record these.
 
 The correct conclusion explicitly states: (1) **no death certificate was found** in
 FamilySearch-indexed South Dakota records, (2) the **indirect evidence** supports death

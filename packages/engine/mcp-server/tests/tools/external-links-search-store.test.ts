@@ -5,9 +5,9 @@ import { join } from "path";
 import { externalLinksSearchTool } from "../../src/tools/external-links-search.js";
 import { collectionKey, dedupeCollections } from "../../src/utils/external-collections-store.js";
 import { researchQuery } from "../../src/tools/research-query.js";
-import { FsProjectStore } from "../../src/store/fs-project-store.js";
 import { runWithProjectStore, type ProjectStore } from "../../src/store/project-store.js";
 import { projectContext } from "../../src/tools/project-context.js";
+import { ON_PG, backingStore, fileStoreOnly } from "../helpers/store-backend.js";
 
 // The stored list (external-collections.json) through the real file store, on a
 // real temp project. Only the network and the place resolver are mocked.
@@ -190,7 +190,8 @@ describe("external_links_search stores the full list in external-collections.jso
     mockFetch.mockResolvedValueOnce(response([...paRows, ...schuylkillOnly]));
     await externalLinksSearchTool({ standardPlace: SCHUYLKILL, projectPath: project });
     const doc = await stored();
-    expect(Object.keys(doc.places)).toEqual([PA, SCHUYLKILL, VENANGO]);
+    // Sorted on the file store; a jsonb document keeps no key order (spec, "Same bytes").
+    expect(ON_PG ? Object.keys(doc.places).sort() : Object.keys(doc.places)).toEqual([PA, SCHUYLKILL, VENANGO]);
     expect(doc.places[PA].rows).toHaveLength(3);
     expect(doc.places[SCHUYLKILL].rows).toHaveLength(2);
     expect(doc.places[VENANGO].rows).toEqual([]);
@@ -204,7 +205,8 @@ describe("external_links_search stores the full list in external-collections.jso
       externalLinksSearchTool({ standardPlace: VENANGO, projectPath: project }),
     ]);
     const doc = await stored();
-    expect(Object.keys(doc.places)).toEqual([PA, SCHUYLKILL, VENANGO]);
+    // Sorted on the file store; a jsonb document keeps no key order (spec, "Same bytes").
+    expect(ON_PG ? Object.keys(doc.places).sort() : Object.keys(doc.places)).toEqual([PA, SCHUYLKILL, VENANGO]);
     expect(doc.places[PA].rows).toHaveLength(3);
     expect(doc.places[SCHUYLKILL].rows).toHaveLength(2);
     expect(doc.places[VENANGO].rows).toEqual([]);
@@ -254,6 +256,7 @@ describe("external_links_search stores the full list in external-collections.jso
 
 describe("a stored list that cannot be read", () => {
   it("is rebuilt when it is not valid JSON, keeping this fetch's rows", async () => {
+    fileStoreOnly("a document that is not JSON cannot exist in the Postgres store");
     await writeFile(join(project, "external-collections.json"), "{not json");
     mockFetch.mockResolvedValueOnce(response(paRows));
     const r = await externalLinksSearchTool({ standardPlace: PA, projectPath: project });
@@ -266,7 +269,7 @@ describe("a stored list that cannot be read", () => {
     await externalLinksSearchTool({ standardPlace: PA, projectPath: project });
     const before = await readFile(join(project, "external-collections.json"), "utf-8");
 
-    const real = new FsProjectStore();
+    const real = backingStore();
     const failingRead = Object.assign(Object.create(Object.getPrototypeOf(real)), real, {
       readText: async () => {
         throw new Error("store unavailable");
@@ -354,6 +357,7 @@ describe("project_context counts the stored lists", () => {
   });
 
   it("omits the field when nothing is stored, and never fails on an unreadable file", async () => {
+    fileStoreOnly("a document that is not JSON cannot exist in the Postgres store");
     const none = await projectContext({ projectPath: project });
     expect(none.ok && "externalCollections" in none).toBe(false);
     await writeFile(join(project, "external-collections.json"), "{not json");

@@ -76,7 +76,8 @@ ruling does not stand in the way: it sequenced the `--autonomous` flag behind S2
 #2870 landed.
 
 **Not every turn is a job.** The hook vetoes every stop until `project.status` is
-`completed`, whatever was asked. "Create a research plan for Mary Hales but leave it at
+`completed`, whatever was asked, except on a session with no `research.json` (issue #3274).
+"Create a research plan for Mary Hales but leave it at
 that" (issue #2932), a christening-record lookup (issue #2921: "Why is it building a tree
 when I simply asked…"), or "where are we?" on an active project each now run to the proof,
 the nudge cap or $35. No approval gate still holds — this pushback is about scope, not

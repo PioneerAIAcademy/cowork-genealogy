@@ -1,0 +1,442 @@
+{
+  "schema_version": 3,
+  "skill": "survey-surname",
+  "version": null,
+  "released": false,
+  "releasable": false,
+  "invocation": "test",
+  "timestamp": "2026-10-12_23-32-19",
+  "harness_version": "0.1.0",
+  "model": "claude-sonnet-4-6",
+  "judge_prompt_hash": "0ec4cfbbfee949ee39d19136867fe47e26cc377bc3697cf58c148f42371468f8",
+  "snapshot": {
+    "packages/engine/plugin/agents/survey-surname.md": "8a8caf47b53b5cff9ecac109f528a00bc34b67e4533b3be1a21951a199a8f532",
+    "eval/tests/unit/survey-surname/negative-single-person-search.json": "ec4792ae64e1a51454b8594a9bb7d42b18b21fca4c493d56572d81eb5f6334de",
+    "eval/tests/unit/survey-surname/post-1850-household-grouping.json": "b59eb26eff9ea40a1d61efe84eaba146b7286203a264c6b84cd5f60879f5e73e",
+    "eval/tests/unit/survey-surname/pre-1850-heads-only.json": "912b3499cd6000c77741d6a484f5755162f108d0fd29745889a9b0b8d359c17c",
+    "eval/tests/unit/survey-surname/rubric.md": "497727c8a119211ae38c3f1827410f21bd267820cb2d301c3ab79b9d75c963f9",
+    "eval/tests/unit/survey-surname/statewide-sweep.json": "9345b1ca62cc92facbfbd87ecbfac6127202427c9030600c6b2bda27ed719f9e",
+    "eval/tests/unit/survey-surname/year-over-threshold.json": "67e6c217a7c620c4a3ee6957abcfb74ea7da6e5d57f3e33a75d2e067a7f3d44c",
+    "eval/fixtures/scenarios/mid-research-flynn/README.md": "f7020ae65e077c8a6c1a25013de7f884210cffc17fea88eae2c8b48558702ddc",
+    "eval/fixtures/scenarios/mid-research-flynn/research.json": "e3e19c382517435b52ef58c3675a0fece91d25c78b28311f7dc4e9d0cfaa2cda",
+    "eval/fixtures/scenarios/mid-research-flynn/tree.gedcomx.json": "efb4f78453dd94f4d94c6ff8d2bd16ae9519b67a6a8aa179d9e9bf41d1326d86",
+    "eval/fixtures/mcp/place-search-virginia.json": "fa1a06d5fb16643fe7f930b81affc77e7efcec89aaeab239fd97ea93862ba2cd",
+    "eval/fixtures/mcp/record-search-dixon-virginia-1820-census.json": "6f1e54eacb9378636e65c74d45b63636944390ea1dc5601bf68bb486285e8ee7",
+    "eval/fixtures/mcp/record-search-dixon-virginia-1830-census.json": "41cacbee5b195aaf6e9fe3d4e092941c1afef3366a9e2bee4f78a9aba1d472c5",
+    "eval/fixtures/mcp/record-search-dixon-virginia-1840-census.json": "aedddf18c88599e52c4d29e162557362281e748f25f33c0506ec696b5df82300",
+    "eval/fixtures/mcp/record-search-dixon-virginia-1840-census-page2.json": "3ff05abb1c2b660d5e9e7fcfa43fe099fb4233165ac462a3692ccaaed4c4d54b",
+    "eval/fixtures/mcp/record-search-dixon-virginia-1850-census.json": "fe191d45ed2cb419b0a6c62d89cffa65e4af0f431f1bd31a44b7c4b717caf7bc",
+    "eval/fixtures/mcp/record-search-dixon-virginia-1850-census-over-threshold.json": "87425b2abeb8af5485c1c4b3e5bdb2d2989ad96eaaedbb923fae7300657e79f2"
+  },
+  "tests": [
+    {
+      "test_id": "ut_survey_surname_d4",
+      "test_type": "negative",
+      "expected_outcome": "pass",
+      "scenario": null,
+      "mcp_fixtures": [],
+      "outcome": "pass",
+      "flaky": false,
+      "outcome_summary": {
+        "per_run_outcomes": [
+          "pass"
+        ],
+        "aggregated_dimensions": [
+          {
+            "source": "base",
+            "name": "Correctness",
+            "score": 3,
+            "rationale": "Claude correctly identified that the request is for a single person's census record, not a surname survey. The response accurately declined the task and correctly routed the user to the search-records skill, which is the appropriate tool for single-person record searches. No fabricated material or unsupported claims."
+          },
+          {
+            "source": "base",
+            "name": "Completeness",
+            "score": 3,
+            "rationale": "Claude fully addressed the requirement of this negative test: recognizing the out-of-scope request and declining without performing the survey-surname task. The response included a clear explanation of why the request was out of scope and directed the user to the correct skill."
+          },
+          {
+            "source": "base",
+            "name": "Tool Arguments",
+            "score": null,
+            "rationale": "No MCP tool calls were made. Claude correctly declined to invoke any tools (no place_search, record_search, research_log_append, or Write), which is the required behavior for this negative test. N/A applies."
+          }
+        ],
+        "review_dimensions": [
+          {
+            "source": "base",
+            "name": "Correctness",
+            "score": 3,
+            "rationale": "Claude correctly identified that the request is for a single person's census record, not a surname survey. The response accurately declined the task and correctly routed the user to the search-records skill, which is the appropriate tool for single-person record searches. No fabricated material or unsupported claims."
+          },
+          {
+            "source": "base",
+            "name": "Completeness",
+            "score": 3,
+            "rationale": "Claude fully addressed the requirement of this negative test: recognizing the out-of-scope request and declining without performing the survey-surname task. The response included a clear explanation of why the request was out of scope and directed the user to the correct skill."
+          },
+          {
+            "source": "base",
+            "name": "Tool Arguments",
+            "score": null,
+            "rationale": "No MCP tool calls were made. Claude correctly declined to invoke any tools (no place_search, record_search, research_log_append, or Write), which is the required behavior for this negative test. N/A applies."
+          }
+        ]
+      },
+      "totals": {
+        "duration_ms": 6562.712082988583,
+        "duration_api_ms": 6617.0,
+        "judge_duration_ms": 3332.407833993784,
+        "wall_clock_ms": 10183.144092559814,
+        "num_turns": 2,
+        "input_tokens": 532,
+        "cached_input_tokens": 27891,
+        "cache_creation_input_tokens": 17734,
+        "output_tokens": 213,
+        "judge_input_tokens": 6331,
+        "judge_cached_input_tokens": 0,
+        "judge_output_tokens": 312,
+        "skill_cost_usd": 0.07842879999999999,
+        "judge_cost_usd": 0.007891,
+        "total_cost_usd": 0.08631979999999999
+      },
+      "runs": [
+        {
+          "run_index": 0,
+          "run_id": "run_ut_survey_surname_d4_2026-10-12_23-32-19_0",
+          "outcome": "pass",
+          "aborted_reason": null,
+          "error": null,
+          "duration_ms": 6562.712082988583,
+          "duration_api_ms": 6617.0,
+          "num_turns": 2,
+          "skill_attempts": 1,
+          "input_tokens": 532,
+          "cached_input_tokens": 27891,
+          "cache_creation_input_tokens": 17734,
+          "output_tokens": 213,
+          "model_usage": {
+            "claude-haiku-4-5-20251001": {
+              "inputTokens": 526,
+              "outputTokens": 18,
+              "cacheReadInputTokens": 0,
+              "cacheCreationInputTokens": 0,
+              "webSearchRequests": 0,
+              "costUSD": 0.000616,
+              "contextWindow": 200000,
+              "maxOutputTokens": 32000
+            },
+            "claude-sonnet-4-6": {
+              "inputTokens": 6,
+              "outputTokens": 195,
+              "cacheReadInputTokens": 27891,
+              "cacheCreationInputTokens": 17734,
+              "webSearchRequests": 0,
+              "costUSD": 0.0778128,
+              "contextWindow": 200000,
+              "maxOutputTokens": 32000
+            }
+          },
+          "no_result_message": false,
+          "subagents": [
+            {
+              "agent_type": "survey-surname",
+              "description": "Survey surname agent delegation",
+              "num_assistant_turns": 1,
+              "max_output_tokens": 19,
+              "hit_output_cap": false,
+              "runaway_thinking": false,
+              "usage": {
+                "input_tokens": 3,
+                "output_tokens": 19,
+                "cache_read_input_tokens": 0,
+                "cache_creation_input_tokens": 4717
+              },
+              "peak_window_tokens": 4720,
+              "compactions": [],
+              "models": [
+                "claude-sonnet-4-6"
+              ],
+              "duration_seconds": 1.593
+            }
+          ],
+          "subagent_capture_status": "captured",
+          "main_thread": {
+            "peak_window_tokens": 20582,
+            "compactions": [],
+            "models": [
+              "claude-sonnet-4-6"
+            ]
+          },
+          "skill_cost_usd": 0.07842879999999999,
+          "output": {
+            "text_response": "That's a search for one person's record \u2014 please use search-records.",
+            "activated": false,
+            "skills_invoked": [],
+            "tool_calls": [],
+            "files_created": [],
+            "builtin_tool_calls": [
+              {
+                "tool": "Agent",
+                "args": {
+                  "description": "Survey surname agent delegation",
+                  "prompt": "Find Edmund Dixon's 1850 census record.\n\nprojectPath: <workspace>",
+                  "subagent_type": "survey-surname"
+                }
+              }
+            ],
+            "agent_returns": [
+              {
+                "subagent_type": "survey-surname",
+                "text": "That's a search for one person's record \u2014 please use search-records."
+              }
+            ]
+          },
+          "validators": {
+            "passed": true,
+            "results": [
+              {
+                "name": "test_activated_run_produces_response",
+                "passed": true,
+                "error": "skipped: skill did not activate",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_decline_response_nonempty",
+                "passed": true,
+                "error": "skipped: skill did not activate",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_direct_delegation_relayed_verbatim",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_direct_test_spawned_its_agent",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_hand_back_names_its_owner",
+                "passed": true,
+                "error": "skipped: not a hand-back test",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_id_references_resolve",
+                "passed": true,
+                "error": "skipped: No research.json in output",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_log_append_only",
+                "passed": true,
+                "error": "skipped: Missing research.json for diff",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_no_duplicate_tree_ids",
+                "passed": true,
+                "error": "skipped: No tree.gedcomx.json in output",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_no_entries_deleted",
+                "passed": true,
+                "error": "skipped: Missing research.json for diff",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_no_main_thread_subagent_only_calls",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_no_out_of_lane_section_writes",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_no_raw_writes_to_protected_files",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_ownership_table",
+                "passed": true,
+                "error": "skipped: ownership is not checked on negative tests \u2014 writes belong to the routed-to skill, not the skill under test",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_parent_child_age_plausibility_flagged",
+                "passed": true,
+                "error": "skipped: missing tree.gedcomx.json for diff",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_project_file_changes_route_through_writer_tools",
+                "passed": true,
+                "error": "skipped: Missing research.json/tree.gedcomx.json for diff",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_project_files_pass_full_validation",
+                "passed": true,
+                "error": "skipped: both research.json and tree.gedcomx.json required for full cross-file validation",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_research_json_validates_schema",
+                "passed": true,
+                "error": "skipped: No research.json in output",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_skill_calls_name_a_shipped_skill",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_tool_allowlist",
+                "passed": true,
+                "error": "skipped: allowlist is not checked on negative tests \u2014 tool calls belong to the routed-to skill, not the skill under test",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_tree_facts_agree_with_linked_assertions",
+                "passed": true,
+                "error": "skipped: both research.json and tree.gedcomx.json required",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_tree_gedcomx_json_validates_schema",
+                "passed": true,
+                "error": "skipped: No tree.gedcomx.json in output",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_tree_ownership_table",
+                "passed": true,
+                "error": "skipped: ownership is not checked on negative tests \u2014 writes belong to the routed-to skill, not the skill under test",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_write_then_validate",
+                "passed": true,
+                "error": "skipped: negative test \u2014 tool calls belong to the routed-to skill",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_household_grouping_and_slave_schedule",
+                "passed": true,
+                "error": "skipped: not a household-grouping test",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_negative_makes_no_mcp_calls",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_negative_makes_no_write",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_paging_offsets_1840",
+                "passed": true,
+                "error": "skipped: only statewide and threshold tests exercise 1840 paging",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_positive_logs_each_search_page",
+                "passed": true,
+                "error": "skipped: only positive tests",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_positive_writes_table",
+                "passed": true,
+                "error": "skipped: only positive tests",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_table_has_rubric_columns",
+                "passed": true,
+                "error": "skipped: only positive tests",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_threshold_year_gets_one_record_search",
+                "passed": true,
+                "error": "skipped: not a threshold test",
+                "outcome": "skipped"
+              }
+            ]
+          },
+          "judge": {
+            "skipped": false,
+            "dimensions": [
+              {
+                "source": "base",
+                "name": "Correctness",
+                "score": 3,
+                "rationale": "Claude correctly identified that the request is for a single person's census record, not a surname survey. The response accurately declined the task and correctly routed the user to the search-records skill, which is the appropriate tool for single-person record searches. No fabricated material or unsupported claims."
+              },
+              {
+                "source": "base",
+                "name": "Completeness",
+                "score": 3,
+                "rationale": "Claude fully addressed the requirement of this negative test: recognizing the out-of-scope request and declining without performing the survey-surname task. The response included a clear explanation of why the request was out of scope and directed the user to the correct skill."
+              },
+              {
+                "source": "base",
+                "name": "Tool Arguments",
+                "score": null,
+                "rationale": "No MCP tool calls were made. Claude correctly declined to invoke any tools (no place_search, record_search, research_log_append, or Write), which is the required behavior for this negative test. N/A applies."
+              }
+            ],
+            "judge_cost_usd": 0.007891,
+            "duration_ms": 3332.407833993784,
+            "error": null,
+            "input_tokens": 6331,
+            "cached_input_tokens": 0,
+            "output_tokens": 312
+          },
+          "started_at": 1791848164.359835,
+          "ended_at": 1791848174.542979
+        }
+      ],
+      "grading_mode": "dimensions",
+      "dimensions_gate_outcome": true
+    }
+  ],
+  "totals": {
+    "duration_ms": 6562.712082988583,
+    "duration_api_ms": 6617.0,
+    "judge_duration_ms": 3332.407833993784,
+    "num_turns": 2,
+    "input_tokens": 532,
+    "cached_input_tokens": 27891,
+    "cache_creation_input_tokens": 17734,
+    "output_tokens": 213,
+    "judge_input_tokens": 6331,
+    "judge_cached_input_tokens": 0,
+    "judge_output_tokens": 312,
+    "skill_cost_usd": 0.07842879999999999,
+    "judge_cost_usd": 0.007891,
+    "total_cost_usd": 0.08631979999999999,
+    "wall_clock_ms": 10183.144092559814
+  },
+  "judge_model": "claude-haiku-4-5-20251001",
+  "tool_search": true,
+  "store": "pg"
+}
