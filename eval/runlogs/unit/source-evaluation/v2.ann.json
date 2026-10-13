@@ -448,7 +448,7 @@
       "dimension_name": "Signal versus backend noise",
       "llm_score": 3,
       "corrected_score": 2,
-      "comment": "The response counts the 1900 census birth-year difference as one of its three findings and recommends reviewing it for correction or removal. The test rules thspecify that this two-year difference is ordinary census variance, not an actionable source issue. Including it inflates the findings count and introduces an unnecessary remediation recommendation. The remaining findings, warnings, and profile checklist are appropriately check separated. "
+      "comment": "The response counts the 1900 census birth-year difference as one of its three findings and recommends reviewing it for correction or removal. The test rules specify that this two-year difference is ordinary census variance, not an actionable source issue. Including it inflates the findings count and introduces an unnecessary remediation recommendation. The remaining findings, warnings, and profile checklist are appropriately separated."
     },
     {
       "test_id": "ut_source_evaluation_o3c",
@@ -464,7 +464,7 @@
       "dimension_name": "Remediation doctrine",
       "llm_score": 2,
       "corrected_score": 2,
-      "comment": "Finding 1 reports the 1900 census birth year (1877 against the profile's 1875) as an indexing error. A two-year census drift is ordinary variance, not a finding. It also explains the cause without evidence: \"in a handwritten census return where ages and years were often reported from memory or estimated by the enumerator.\" The other findings are grounded in the tool results."
+      "comment": "Finding 1's next step sends the researcher to open the original 1900 census image and, if it shows a value closer to 1875, to use FamilySearch's index-correction path, for a two-year birth-year drift (1877 against 1875) that is ordinary census variance, not an index error. No remedy was due for that source. The death-index remedy (consult the original first) and the 1885-census detach, named to KD96-WX7 after reading him, are correct."
     },
     {
       "test_id": "ut_source_evaluation_j4s",
@@ -472,7 +472,7 @@
       "dimension_name": "Correctness",
       "llm_score": 2,
       "corrected_score": 2,
-      "comment": "The death-date conflict, the marriage-year indexing error and the ambiguous 1851 census place are handled soundly. Two over-claims cost the point: Finding 4 reports the 1861 census birth year (1816) against the baptism's 1814 as a finding, though a two-year census drift is ordinary variance; and Finding 3 asserts Melbourne is \"a distinct place … roughly 30 kilometres from the city of Sherbrooke\", which the index entry does not show."
+      "comment": "The death-date conflict, the marriage-year indexing error and the ambiguous 1851 census place are handled soundly. Two over-claims cost the point: Finding 4 reports the 1861 census birth year (1816) against the baptism's 1814 as a finding, though a two-year census drift is ordinary variance; and Finding 3 asserts \"These are distinct places: Melbourne (Melbourne Township) is in Richmond County, roughly 30 kilometres from the city of Sherbrooke.\", which the index entry does not show."
     }
   ]
 }
