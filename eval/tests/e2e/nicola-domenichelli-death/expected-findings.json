@@ -3,7 +3,7 @@
     {
       "id": "f1",
       "type": "fact",
-      "description": "Nicola Domenichelli died on 29 June 1981 in Rosario de la Frontera, Salta, Argentina; his death was registered the next day in that town's civil register, which records him as an Italian-born widower aged 84.",
+      "description": "PROVISIONAL — pending adjudication (see README). The death-hint index establishes that a Nicolas Domenichelli died on 29 June 1981 and was registered the next day in the Rosario de la Frontera, Salta civil register; the register coverage locates the record, not the death event. The place value below is the act's stated place of death, which is image-derived (uncalibrated, unlicensed), and whether this entry is Nicola Domenichelli of the tree rests on the exact birth date and birthplace read from the same image — not on the index. Not independently verified.",
       "details": {
         "subject_person": "Nicola Domenichelli (G2WX-HZ5)",
         "fact_type": "Death",
@@ -11,9 +11,9 @@
         "place": "Rosario de la Frontera, Salta, Argentina"
       },
       "supporting_sources": [
-        "ark:/61903/1:1:6ZB1-TVLX — death hint index (Argentina, Salta, Civil Registration, 1880-2000): Nicolas Domenichelli, died 29 Jun 1981, registered 30 Jun 1981",
-        "ark:/61903/3:1:3Q9M-C336-QQWY-K — death-act image (Acta 53): states Italian nationality, widower, death 29 Jun 1981 in Rosario de la Frontera, and an image-derived birth of 23 Apr 1897 in Roccasicura; the act's parent fields are blank (image reading; same-page calibration unavailable — see README)",
-        "ark:/61903/1:1:6NZZ-HLRL — Nicola's own Italian birth record (Italy, Isernia, Civil Registration (State Archive), 1809-1914): indexed birth 23 Apr 1897 in Roccasicura, Molise, with parents Michele Domenichelli and Diletta Berardinelli, matching the tree; the shared birth date and birthplace correlate it with the death act"
+        "ark:/61903/1:1:6ZB1-TVLX — death-hint INDEX (Argentina, Salta, Civil Registration, 1880-2000): establishes death 29 Jun 1981, registration 30 Jun 1981, Rosario de la Frontera register coverage, and birth YEAR 1897 only; no exact birth date, birthplace, nationality, parents, or stated death place",
+        "ark:/61903/3:1:3Q9M-C336-QQWY-K — death-act IMAGE (Acta 53): source of the exact birth 23 Apr 1897, birthplace Roccasicura, Italian nationality, widower, aged 84, and the stated place of death in Rosario de la Frontera; parent fields blank. IMAGE-derived; same-page calibration unavailable, so UNLICENSED per docs/e2e-testing-guide.md Step 1a — not independently verified",
+        "ark:/61903/1:1:6NZZ-HLRL — Nicola's Italian birth record (Italy, Isernia, Civil Registration 1809-1914): INDEX-derived birth 23 Apr 1897 Roccasicura, Molise, parents Michele Domenichelli and Diletta Berardinelli (match the tree). Corroborates identity ONLY through the image-derived birth date/place above; not an independent link on index alone"
       ],
       "required": true
     }
