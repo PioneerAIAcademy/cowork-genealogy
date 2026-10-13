@@ -1,7 +1,7 @@
 import { describe, it, expect } from "vitest";
 
 import { mergeGedcomx } from "../../src/utils/merge-gedcomx.js";
-import type { SimplifiedGedcomX } from "../../src/types/gedcomx.js";
+import type { SimplifiedGedcomX, SimplifiedRelationship } from "../../src/types/gedcomx.js";
 
 /**
  * Assert the document is internally consistent: every relationship endpoint
