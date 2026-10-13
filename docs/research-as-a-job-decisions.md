@@ -123,3 +123,30 @@ folded up. Ruled worth fixing even though it is the smaller of the two.
 
 **Retry state: not a decision.** It has been built since PR #765; the status log row was
 stale.
+
+## 2026-10-13 — turning continuous work back on, and the nudge cap
+
+`AUTO_CONTINUE` was turned off on the hosted alpha for cost. The agreement on
+putting it back, relayed from the lead:
+
+**Keep it off until the enforcement half lands.** That is #3372, the `delivered`
+exit's enforcement arm. Then turn `AUTO_CONTINUE` back on with the lower cap
+already in place.
+
+**Set `AUTONOMOUS_MAX_NUDGES` to 25–30 now, not at flip-on time**, so it is not
+something anyone has to remember later. Built as **30** in PR #3393, sized on
+the committed e2e corpus: 203 runs, p90 26, so 25 would sit below p90 and 30
+clears it.
+
+**No change to the spend cap** until the 10x work is done — a separate knob, and
+#3393 does not touch it. Worth stating because the two are easy to conflate: on
+the alpha there is in fact no spend meter at all (ruling 2026-09-25), so the
+nudge cap is not a spend control and must not be described as one.
+
+Recorded here because it existed only in a working session, and PR #3393's
+review asked for a link to it. **What nobody has confirmed:** what actually
+turns `AUTO_CONTINUE` off today. Nothing in `deploy/fly.toml` or the web client
+sets it and `Settings.auto_continue` defaults to `True`, so it is either a Fly
+secret or it is not off at all — `fly secrets list -a genealogy-workbench`
+settles it, and the answer decides whether #3393 is inert until the flip or goes
+live on the next deploy.
