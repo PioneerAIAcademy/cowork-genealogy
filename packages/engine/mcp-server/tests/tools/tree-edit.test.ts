@@ -801,6 +801,34 @@ describe("tree_edit", () => {
     expect(tree.relationships[0].facts.some((f: any) => f.date === "1850")).toBe(true);
   });
 
+  it("a retried add_relationship whose Marriage fact has a resolvable place still leaves one fact", async () => {
+    // The twin lookup runs BEFORE maybeResolvePlace, so the stored fact carries
+    // a resolved standard_place and the retried one carries none. Comparing
+    // standard_place made this write a SECOND Marriage fact — the opposite of
+    // the idempotence Decision 37 buys. The place-less retry case above cannot
+    // reach this: it needs a place the resolver actually standardizes.
+    await writeProject(twoPersons());
+    const call = () =>
+      treeEdit({
+        projectPath: dir,
+        operation: "add_relationship",
+        relationship: {
+          type: "Couple",
+          person1: "I1",
+          person2: "I2",
+          sources: [{ ref: "S1" }],
+          facts: [{ type: "Marriage", date: "1850", place: "Schuylkill County, Pennsylvania", sources: [{ ref: "S1" }] }],
+        },
+      });
+    expect((await call()).ok).toBe(true);
+    expect((await call()).ok).toBe(true);
+    const tree: any = await readTree();
+    expect(tree.relationships).toHaveLength(1);
+    expect(tree.relationships[0].facts).toHaveLength(1);
+    // And the resolution the first call did is still there.
+    expect(tree.relationships[0].facts[0].standard_place).toBe("Schuylkill, Pennsylvania, United States");
+  });
+
   it("add_relationship: rejects a caller-supplied fact id", async () => {
     const tree = onePersonSourced();
     tree.persons.push({ id: "I2", gender: "Female", names: [{ id: "N2", given: "Mary", surname: "Smith", preferred: true }], facts: [] } as any);

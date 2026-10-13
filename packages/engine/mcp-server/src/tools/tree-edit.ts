@@ -364,17 +364,19 @@ function clearPrimaryOfType(holder: FactHolder, type: string | undefined, except
  * `compatibleDate`/`compatiblePlace` "treated 5 of 10 labelled
  * affirmed-and-ruled-out pairs as one object").
  *
- * Both the raw and the standardized date and place are compared, so a fact
- * that differs only in how it was standardized still reads as a second fact
- * rather than being swallowed.
+ * Compares the four fields the plan names — type, date, place and value — and
+ * deliberately NOT `standard_place`. The twin lookup runs before
+ * `maybeResolvePlace`, so the stored fact carries a resolved `standard_place`
+ * while the incoming one carries none: comparing it made a retried call whose
+ * fact had a resolvable place write a SECOND fact, which is the opposite of the
+ * idempotence corroboration exists for. `standard_date` is dropped with it —
+ * caller-supplied, and the raw `date` already carries the claim.
  */
 function sameFactValue(a: SimplifiedFact, b: SimplifiedFact): boolean {
   return (
     a.type === b.type &&
     a.date === b.date &&
-    a.standard_date === b.standard_date &&
     a.place === b.place &&
-    a.standard_place === b.standard_place &&
     a.value === b.value
   );
 }
@@ -751,6 +753,11 @@ async function applyOperation(
             if (f.sources?.length) {
               twin.sources = dedupSourceRefs([...(twin.sources ?? []), ...f.sources]);
             }
+            // Report the fact the caller's sources landed on, exactly as the
+            // corroborated edge reports its existing id. A silent omission
+            // would leave a fully-corroborated retry returning no fact id at
+            // all, with nothing to say where the evidence went.
+            if (twin.id) factIds.push(twin.id);
             continue;
           }
           f.id = nextId(tree, "F");

@@ -238,9 +238,15 @@ tree_edit({
     would leave two edges.
     - An inline Couple fact **equal to one already on the edge** in type, date,
       place and value is not added again; its sources merge into the fact
-      already there, so a retried call is idempotent. Equality here is strict,
-      not the merge tool's `factsEquivalent` compatibility test — folding by
-      that would silently discard the date a new record supplied.
+      already there, so a retried call is idempotent, and `assignedIds.facts`
+      reports **that** fact's id — the same way the corroborated edge reports
+      its own. Equality compares **type, date, place and value**: strict, not
+      the merge tool's `factsEquivalent` compatibility test, which treats an
+      absent date as matching any date and would silently discard the date a new
+      record supplied. `standard_place` is deliberately NOT compared — the twin
+      lookup runs before place resolution, so the stored fact carries a resolved
+      value and the retried one does not, and comparing it wrote a second fact
+      on exactly the retry this exists to absorb.
     - **The matched edge's subtype never changes.** Retyping is
       `update_relationship`'s job. When the new edge carries a subtype the
       matched one does not share, the result warns and names
