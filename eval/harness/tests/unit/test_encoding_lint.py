@@ -218,19 +218,31 @@ def _offenders_in(source: str) -> list[tuple[int, str]]:
     return offenders
 
 
-def _scan_tree(root: Path) -> tuple[list[str], list[str]]:
-    """Scan all .py files under *root*, returning (offenders, unparseable)."""
+def _scan_tree(
+    root: Path,
+    offenders_in=None,
+    message: str = '{name}() has no encoding= (add encoding="utf-8")',
+    scanned: set[str] | None = None,
+) -> tuple[list[str], list[str]]:
+    """Scan all .py files under *root*, returning (offenders, unparseable).
+
+    *offenders_in* defaults to this lint's rule; the Unix-only import lint passes
+    its own, with *message* formatted from ``name``. When *scanned* is given, each
+    parsed file's relative path is added to it."""
+    offenders_in = offenders_in or _offenders_in
     offenders: list[str] = []
     unparseable: list[str] = []
     for path in _iter_python_files(root):
         rel = path.relative_to(root).as_posix()
         try:
-            hits = _offenders_in(path.read_text(encoding="utf-8"))
+            hits = offenders_in(path.read_text(encoding="utf-8"))
         except (SyntaxError, ValueError, UnicodeDecodeError) as exc:
             unparseable.append(f"{rel}: {type(exc).__name__}: {exc}")
             continue
+        if scanned is not None:
+            scanned.add(rel)
         for lineno, name in hits:
-            offenders.append(f'{rel}:{lineno}: {name}() has no encoding= (add encoding="utf-8")')
+            offenders.append(f"{rel}:{lineno}: " + message.format(name=name))
     return offenders, unparseable
 
 
