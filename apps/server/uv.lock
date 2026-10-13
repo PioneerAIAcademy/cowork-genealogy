@@ -363,6 +363,10 @@ proto-worker = [
     { name = "cryptography" },
     { name = "psycopg", extra = ["binary"] },
 ]
+sandbox = [
+    { name = "claude-agent-sdk" },
+    { name = "websockets" },
+]
 
 [package.metadata]
 requires-dist = [
@@ -408,6 +412,10 @@ proto-worker = [
     { name = "claude-agent-sdk", specifier = "==0.2.128" },
     { name = "cryptography", specifier = ">=48.0.1" },
     { name = "psycopg", extras = ["binary"], specifier = ">=3.3.4" },
+]
+sandbox = [
+    { name = "claude-agent-sdk", specifier = "==0.2.128" },
+    { name = "websockets", specifier = ">=13" },
 ]
 
 [[package]]

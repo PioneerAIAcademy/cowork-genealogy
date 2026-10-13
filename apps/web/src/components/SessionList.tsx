@@ -61,7 +61,13 @@ export default function SessionList({
   const remove = async (id: string, e: React.MouseEvent): Promise<void> => {
     e.stopPropagation()
     if (!confirm('Delete this session and its sandbox? This cannot be undone.')) return
-    await api.deleteSession(id)
+    setError(null)
+    try {
+      await api.deleteSession(id)
+    } catch (err) {
+      setError(err instanceof ApiError ? err.message : 'Failed to delete session')
+      return
+    }
     void load()
   }
 

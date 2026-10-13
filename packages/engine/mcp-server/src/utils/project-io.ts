@@ -24,7 +24,7 @@ import type {
   WriteJsonBothOptions,
 } from "../store/project-store.js";
 
-export { isInsideProject, assertInsideProject } from "../store/paths.js";
+export { isInsideProject, assertInsideProject, projectRelativeRef } from "../store/paths.js";
 export type { ProjectPathClass } from "../store/project-store.js";
 
 /**

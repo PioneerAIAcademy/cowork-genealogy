@@ -48,6 +48,7 @@ from __future__ import annotations
 import dataclasses
 import json
 import os
+import re
 import sys
 from collections.abc import Callable, Mapping
 from typing import Any
@@ -643,6 +644,29 @@ def make_pretool_hook(
     return _pretool
 
 
+# U19's reauth alarm: a FamilySearch tool's result carrying the engine's sign-in
+# instruction (auth/refresh.ts's "Call the login tool", the hosted "Reconnect FamilySearch").
+# The same pattern as turn.py's REAUTH_ENTRY, which this image does not ship (a test pins
+# the two). Only tools whose code reaches the token (a test derives the set from the
+# engine's imports), so a research_query or Read result quoting the text is no reauth.
+REAUTH_ENTRY = re.compile(r"call the login tool|Reconnect FamilySearch", re.I)
+FS_TOOLS = frozenset({
+    "build_external_search_url", "catalog_search", "collections_search", "fulltext_search", "image_read",
+    "image_search", "image_transcribe", "person_ancestors", "person_quality", "person_read",
+    "person_person_matches", "person_record_matches", "person_search", "rank_search_matches", "record_read",
+    "record_person_matches", "record_record_matches", "record_search", "same_person", "source_attachments",
+    "tree_gaps", "volume_bisect", "volume_search",
+})
+
+
+def reauth_text(data: dict[str, Any]) -> bool:
+    """Whether a PostToolUse(Failure) payload is a FamilySearch tool asking for a sign-in."""
+    if str(data.get("tool_name") or "").rsplit("__", 1)[-1] not in FS_TOOLS:
+        return False
+    text = json.dumps(data.get("tool_response"), default=str) + " " + str(data.get("error") or "")
+    return REAUTH_ENTRY.search(text) is not None
+
+
 def make_posttool_hook(
     *,
     turn_id: str,
@@ -652,7 +676,8 @@ def make_posttool_hook(
     """The worker's ``PostToolUse`` / ``PostToolUseFailure`` callback: ``finish(tool_use_id)``
     stamps the row the PreToolUse hook wrote with the call's duration (acceptance
     criterion 4). Never raises and never changes what the model sees; a failed stamp is
-    one log line. A call in flight when its worker is killed keeps a NULL duration."""
+    one log line. A call in flight when its worker is killed keeps a NULL duration.
+    U19: a FamilySearch tool answering with the sign-in instruction logs ``ev=reauth_hit``."""
 
     async def _posttool(input_data: Any, tool_use_id: str | None, _context: Any) -> dict[str, Any]:
         data = input_data if isinstance(input_data, dict) else {}
@@ -664,6 +689,12 @@ def make_posttool_hook(
             if log is not None:
                 log(ev="tool_call_finish_failed", turn_id=turn_id, tool_name=str(data.get("tool_name") or ""),
                     error=f"{type(exc).__name__}: {exc}")
+        try:
+            if log is not None and reauth_text(data):
+                log(ev="reauth_hit", turn_id=turn_id, tool_name=str(data.get("tool_name") or ""),
+                    agent_id=data.get("agent_id"))
+        except Exception:  # noqa: BLE001, S110 - an alarm signal must not fail the call
+            pass
         return {}
 
     return _posttool
