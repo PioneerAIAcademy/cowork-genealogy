@@ -1,0 +1,11 @@
+{
+  "tool": "image_transcribe",
+  "description": "The hard image cap's refusal (image-transcribe-tool-spec.md §5.8): image group 004452257 already holds 20 distinct images in this project, so a 21st is refused before any fetch. The error text is the tool's own, pinned to browse-budget.ts by tests/packaging/image-cap-fixture.test.ts. Marked is_error because production returns a thrown error with isError: true.",
+  "args": {
+    "imageId": "004452257_00021"
+  },
+  "is_error": true,
+  "response": {
+    "error": "Image cap reached: 20 distinct images from image group 004452257 have already been read in this project (or in this server session, for reads with no projectPath), so 004452257_00021 (https://www.familysearch.org/search/film/004452257?i=20) was not fetched. Re-reading any of those 20 still works. To find one year's page in a browse-only volume, run volume_bisect first, then read the narrowed range. Log this browse as partial with research_log_append (the group, the pages you read, what you were looking for), move to other routes (record_search, fulltext_search, other collections), and name the unfinished browse in your final summary with this link so the researcher can continue it by hand."
+  }
+}
