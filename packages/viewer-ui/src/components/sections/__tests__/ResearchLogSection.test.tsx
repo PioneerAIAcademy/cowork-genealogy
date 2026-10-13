@@ -185,6 +185,43 @@ describe('ResearchLogSection — default sort order', () => {
   })
 })
 
+describe('ResearchLogSection — column alignment', () => {
+  beforeEach(() => vi.clearAllMocks())
+
+  it('renders rows as siblings of the header, not as nested tables', () => {
+    // Reported from a screenshot: the headers did not line up with their cells. Each entry
+    // was its own <table> inside a colSpan={6} cell, so its columns were sized
+    // independently of the header's -- measured drift was up to 71px, and any alignment
+    // was luck. A table can only size columns across rows it actually owns.
+    //
+    // Asserted structurally rather than by measuring pixels, because jsdom does no
+    // layout: widths are all 0 here, so a geometric assertion would pass on the broken
+    // markup too. The structure IS the guarantee.
+    mockResearch()
+    const { container } = render(<ResearchLogSection />)
+
+    const tables = container.querySelectorAll('table')
+    expect(tables.length).toBe(1)
+    expect(container.querySelector('tbody table')).toBeNull()
+
+    // And the rows really are in that one table, so this cannot pass by rendering nothing.
+    const header = container.querySelectorAll('thead th')
+    expect(header.length).toBe(6)
+    const firstBodyRow = container.querySelector('tbody tr')
+    expect(firstBodyRow?.querySelectorAll('td').length).toBe(6)
+  })
+
+  it('keeps the entry id on a row so cross-links still land', () => {
+    // The id used to sit on the wrapper row that the nested table lived in. Flattening
+    // removed that row, and a CrossLink to a log entry scrolls to `#<id>`.
+    mockResearch()
+    const { container } = render(<ResearchLogSection />)
+    const anchored = container.querySelector('#log_001')
+    expect(anchored).not.toBeNull()
+    expect(anchored?.tagName).toBe('TR')
+  })
+})
+
 describe('off-plan group', () => {
   // `splitOffPlan` shipped with a thorough unit suite and NO render site — the helper
   // was imported by its own test and nothing else. That is this branch's own finding 13
