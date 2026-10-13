@@ -30,9 +30,9 @@ from __future__ import annotations
 
 import asyncio
 import inspect
-import json
 import logging
 
+from ..agent.build_info import AGENT_HOME, BUILD_INFO_PATH, build_label
 from ..config import get_settings
 from ..ws_token import sandbox_secret
 from .base import (
@@ -66,12 +66,12 @@ log = logging.getLogger(__name__)
 _RUNNING_TIMEOUT_S = 3600
 # The image's fixed prefix (e2b.Dockerfile AGENT_HOME). E2B commands.run does NOT
 # inherit the Dockerfile ENV, so the WS server launch must pass these explicitly.
-_AGENT_HOME = "/opt/genealogy-agent"
+_AGENT_HOME = AGENT_HOME
 
 # Baked by apps/server/sandbox/build-image.sh (the Dockerfile's last COPY):
 # {"commit": "<sha|dev>", "dirty": <bool>, "built_at": "<iso8601>"}. Read back
 # once per create() so /api/health can answer which build a session is on.
-_BUILD_INFO_PATH = f"{_AGENT_HOME}/BUILD_INFO.json"
+_BUILD_INFO_PATH = BUILD_INFO_PATH
 # Bound on that read. It is a ~100-byte file on a microVM that has just booted,
 # and it sits inside create(), so an unbounded await would hang session creation
 # on a stalled SDK call for a value that is only observability.
@@ -314,16 +314,7 @@ class E2BProvider(SandboxProvider):
             raw = await asyncio.wait_for(
                 sandbox.read_file(_BUILD_INFO_PATH), _PROVENANCE_READ_TIMEOUT_S
             )
-            info = json.loads(raw.decode("utf-8")) if raw else None
-            commit = info.get("commit") if isinstance(info, dict) else None
-            if not isinstance(commit, str) or not commit:
-                raise ValueError("no usable 'commit' field")
-            # The dirty marker rides on the value itself so no caller can report
-            # the sha while dropping the caveat. `+dirty` is the shape issue #2126
-            # prescribes for the engine/.mcpb/plugin stamps it adds ("a clean sha
-            # that lies is worse than no sha"); this is its first use in the repo,
-            # chosen so the two agree rather than diverge when that card lands.
-            self._image_commit = f"{commit}+dirty" if info.get("dirty") is True else commit
+            self._image_commit = build_label(raw)
         except Exception as exc:  # noqa: BLE001 - never break create() over provenance
             log.warning(
                 "could not read build provenance from %s (%s); /api/health cannot "

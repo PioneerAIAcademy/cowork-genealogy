@@ -109,6 +109,31 @@ async def ungranted_advisory(dsn: str, classid: int | None = None, timeout_s: fl
     raise AssertionError("nothing waited on an advisory lock")
 
 
+class AsyncPausingConn:
+    """A proxy over the web tier's AsyncConnection that awaits ``pause`` once, just before
+    the first statement containing ``marker`` -- so a test can hold one tier inside a
+    transaction while another runs into it."""
+
+    def __init__(self, conn, marker: str, pause) -> None:
+        self._conn, self._marker, self._pause = conn, marker, pause
+
+    async def __aenter__(self):
+        await self._conn.__aenter__()
+        return self
+
+    async def __aexit__(self, *exc):
+        return await self._conn.__aexit__(*exc)
+
+    async def execute(self, statement, params=None):
+        if self._pause is not None and self._marker in statement:
+            pause, self._pause = self._pause, None
+            await pause()
+        return await self._conn.execute(statement, params)
+
+    def __getattr__(self, name):
+        return getattr(self._conn, name)
+
+
 @contextlib.contextmanager
 def dml_role(dsn: str) -> Iterator[tuple[str, str]]:
     """A LOGIN role holding only what the services need -- DML on every table either tier

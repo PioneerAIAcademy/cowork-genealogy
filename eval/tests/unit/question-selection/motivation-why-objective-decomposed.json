@@ -1,0 +1,32 @@
+{
+  "test": {
+    "id": "ut_question_selection_d05",
+    "skill": "question-selection",
+    "name": "A \"why\" objective is decomposed into a fact question, and the reason is left to historical context",
+    "type": "positive",
+    "description": "The objective asks WHY Patrick Flynn's family came to Schuylkill County between 1850 and 1880. A motivation is not a research question (ruling on issue #2003, 2026-09-17): the first question written must be a relationship or event question the reason rests on — when the family arrived, where they lived before, who was already there — and the reply must say the reason itself will be explained from historical context rather than proved. A question asking the reason, including a yes/no hypothesis about the cause of the move, fails `test_motivation_objective_decomposed`.",
+    "tags": [
+      "question-selection",
+      "from-objective",
+      "empty-project",
+      "first-question",
+      "selection-basis-objective-decomposition",
+      "motivation-objective-decomposed",
+      "first-question-depends-on-empty",
+      "new-question-exhaustive-declaration-unstarted",
+      "objective-scope-match",
+      "direct-arm"
+    ]
+  },
+  "input": {
+    "delegation": "Select and record the next research question for this project.\n\nprojectPath: <workspace>",
+    "scenario": "empty-project-why-objective"
+  },
+  "judge_context": [
+    "The objective is a MOTIVATION ('why did the family come to Schuylkill County?'). The correct first question is ONE relationship or event fact the reason rests on, about Patrick Flynn's family and the move — e.g. 'When did Patrick Flynn's family arrive in Schuylkill County, Pennsylvania?', 'Where did Patrick Flynn's family live before Schuylkill County?', or 'Who were the members of Patrick Flynn's family when it came to Schuylkill County?'. Any one of these is correct; do not require a particular one.",
+    "A question that asks for the reason itself fails Correctness: 'Why did they move?', 'What led them to settle there?', or a yes/no cause hypothesis such as 'Did they move for coal-mining work?'. The bare 'why' and cause-hypothesis shapes are also checked mechanically by `test_motivation_objective_decomposed`.",
+    "The question must hold ONE unknown. 'When and from where did they arrive?' is two facts and scores Question specificity down.",
+    "THE DATE WINDOW: the 1850–1880 window bounds which questions are asked, not what evidence may answer them. A question that itself caps the evidence to the window ('…using only records from 1850–1880') scores Correctness down.",
+    "PRESENTATION: the reply has two parts, split by a final line containing only `---`. Above it are terse caller-facing lines, which may carry the `q_` id and a routing hint; do not penalize either there. Everything after the final `---` is what the researcher reads, and is graded: in plain words it must name the question chosen, and it must say that the reason for the move will be explained from the history of the time and place once the facts are established, rather than proved. A reply that presents the chosen question as if answering it will answer 'why' fails Completeness. It must not use 'GPS', name a skill, tool or field, or show a `q_` id."
+  ]
+}

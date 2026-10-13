@@ -1,0 +1,19 @@
+{
+  "id": "jantje-willems-birth",
+  "name": "Jantje Willems — baptism in November 1748, Groningen, Netherlands",
+  "genre": "record-hint",
+  "source_pid": "K8C9-ZZC",
+  "captured": "2026-10-12",
+  "researcher_question": "When and where was Jantje Willems, wife of Jacob Jeltes and mother of Trijntje (baptized 1774) and Willemke (baptized 1777) in the city of Groningen, baptized, and who were her parents?",
+  "tags": {
+    "question_type": "birth_date",
+    "era": "1740s",
+    "geography": "NL"
+  },
+  "model": {
+    "agent": "claude-sonnet-4-6",
+    "judge": "claude-haiku-4-5-20251001"
+  },
+  "difficulty": "medium",
+  "notes": "Record-hint fixture (filtered-list-samples-3.csv row 17, hint-samples.csv row 591, flags adds_father/adds_mother/adds_christening, confidence 3). Draft transcribed from a 1748 Groningen baptism register entry; unverified."
+}

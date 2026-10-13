@@ -66,7 +66,7 @@ export function isProjectForm(
 export interface SamePersonResult {
   /** True when the API returned a `confidence` field on the entry. */
   matched: boolean;
-  /** Integer 1-10 bucket. Omitted when the API treats the pair as a non-match. */
+  /** Integer 1-5 bucket. Omitted when the API treats the pair as a non-match. */
   confidence?: number;
   /** Float 0-1, fine-grained match score from the API's algorithm. */
   score: number;
@@ -97,7 +97,7 @@ export interface SamePersonRelativeMatch {
   candidateId: string;
   /** Float 0-1 from FamilySearch — the real answer. */
   score: number;
-  /** Integer 1-10 bucket from FamilySearch. Omitted on a no-match. */
+  /** Integer 1-5 bucket from FamilySearch. Omitted on a no-match. */
   confidence?: number;
   /** The local heuristic score that selected this pair (transparency/debugging). */
   preScore: number;
