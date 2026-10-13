@@ -22,11 +22,11 @@
       "created": "2026-05-01",
       "resolved": null,
       "resolution_assertion_ids": [],
-      "exhaustive_declaration": {
-        "declared": false,
-        "justification": null,
+      "search_stop": {
+        "stopped_because": null,
         "log_entry_ids": [],
-        "stop_criteria": null
+        "stop_criteria": null,
+        "not_reached": []
       }
     },
     {
@@ -47,9 +47,8 @@
         "a_002",
         "a_003"
       ],
-      "exhaustive_declaration": {
-        "declared": true,
-        "justification": "Searched 1850 census for Schuylkill County on FamilySearch (indexed and browse), Ancestry (indexed), and MyHeritage (indexed). All three returned the same household. No other Patrick Flynn of matching age found in the county.",
+      "search_stop": {
+        "stopped_because": "question_answered",
         "log_entry_ids": [
           "log_001",
           "log_002",
@@ -63,7 +62,8 @@
           "evidence_class": "Yes \u2014 FamilySearch provides original census image with indeterminate-quality information.",
           "conflict_resolution": "No conflicts on the 1850 census placement question.",
           "overturn_risk": "Low \u2014 all three repositories agree, and no competing Patrick Flynn of matching age exists in the county."
-        }
+        },
+        "not_reached": []
       }
     }
   ],
