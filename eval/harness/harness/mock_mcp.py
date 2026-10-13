@@ -124,6 +124,17 @@ LIVE_TOOLS: set[str] = {
     # allowed_tools' callee-fixture check exempts LIVE_TOOLS members.
     "person_quality",
     "project_context",
+    # The bounded-delivery signal. Live rather than fixture-backed because the
+    # tool IS inert by contract -- no network, no auth, no project write; it
+    # returns a fixed acknowledgement (`research-delivered.ts`) -- so running the
+    # real one is both free and more faithful than a canned answer.
+    #
+    # It was advertised NOWHERE in this harness until now, which is why #2813
+    # item 1 reached alpha untested: the hosted Stop hook only allows a bounded
+    # turn to stop when the model calls this tool, and a model that cannot see
+    # the tool cannot call it. Every unit eval therefore graded the skill on
+    # prose it had no way to act on.
+    "research_delivered",
     # Read-only projection over the workspace's own research.json — same shape
     # as project_context, and deterministic, so mocking it would only invite
     # drift. Added when search-records / research were pointed at it in place of
@@ -1487,6 +1498,9 @@ _COMPILED_TOOLS: dict[str, tuple[str, str]] = {
     "build_external_search_url": ("build-external-search-url.js", "buildExternalSearchUrlTool"),
     "sidecar_read": ("sidecar-read.js", "sidecarRead"),
     "get_name_variants": ("name-variants.js", "getNameVariants"),
+    # Takes only `{summary}`; the handler's injected `projectPath` is the inert
+    # extra key convert_calendar already tolerates.
+    "research_delivered": ("research-delivered.js", "researchDelivered"),
 }
 
 #: Compiled tools whose `projectPath` is optional and changes what the call

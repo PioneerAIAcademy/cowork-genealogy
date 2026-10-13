@@ -80,9 +80,15 @@ tools on purpose.
   server-prefix wildcard). So it must not error and must not claim an effect it did not
   have: it returns the acknowledgement above and the run genuinely carries on. That inert
   behaviour is the intended one for these environments, not an oversight.
-- **The unit harness.** Not advertised at all: that harness binds a mock server which
-  registers only fixture-backed tools plus `LIVE_TOOLS` (`eval/harness/harness/mock_mcp.py`),
-  and this tool is in neither set.
+- **The unit harness.** Advertised, and inert. That harness binds a mock server which
+  registers only fixture-backed tools plus `LIVE_TOOLS` (`eval/harness/harness/mock_mcp.py`);
+  this tool is a `LIVE_TOOL` there, so the real implementation runs and the call is
+  recorded. No hook binds, so calling it ends nothing — what a unit test can therefore
+  grade is whether the model *made* the call, not what the call did. One further gap to
+  know about: the mock passes only `name`/`description`/`inputSchema` through, dropping
+  `_meta`, so the `ALWAYS_LOAD` hint does not reach a unit run and the schema is still
+  deferred there. That is why the router's bounded close tells the model to search for it
+  by name if it does not already hold it.
 
 The `note` is worded to be true in both places, which is why it is hedged rather than
 asserting the turn ended.
@@ -91,9 +97,24 @@ asserting the turn ended.
 
 The instruction rides each hosted plane's per-turn system prompt (`DELIVERY_GUIDANCE`, now
 defined once in `apps/server/app/agent/continue_policy.py` and appended by the prototype worker
-and the hosted alpha alike), **not** any skill body — the hook that gives this
-tool its meaning exists only on the hosted path, so a skill-body rule would teach every
-skill to call a tool that is inert in Cowork and in the harness that grades them.
+and the hosted alpha alike). It is **also** named at the router's bounded close
+(`skills/research/SKILL.md`), which reverses what this section used to say.
+
+**What changed, and what did not.** The old rule was "not any skill body", because a
+skill-body rule "would teach every skill to call a tool that is inert in Cowork and in the
+harness that grades them". Half of that premise is gone: the tool is a `LIVE_TOOL` in the
+unit harness now, so it is advertised there, though still inert, and a bounded turn can
+be graded on whether it calls it. Inertness was never the half that moved: what
+changed is that the call is visible to a validator. The Cowork half still holds — there is no hook there and the
+tool returns its harmless acknowledgement.
+
+**Why the reversal is still right.** The rule was written as though the choice were
+"instruct in the prompt" versus "instruct in the body". It was not. The body already told
+the model what to do at that exact moment — *"end your turn"* — while the prompt told it to
+call this tool. A model following the nearer, more specific instruction ends the turn
+without the call, the hosted arm never halts, and the nudge arm pushes it on into more
+research. The cost of naming it in the body is one inert call per bounded turn in Cowork;
+the cost of not naming it was the conflict. One skill body names it, not every skill.
 
 It carries two exclusions, both load-bearing:
 
