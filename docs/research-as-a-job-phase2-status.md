@@ -14,6 +14,10 @@ phase 2's own acceptance are unmet**, and three "deferred" items have no recorde
 They are listed below rather than left implied. A status log that undercounts what is left
 is worse than no status log.
 
+**To test this branch by hand**, use
+[`docs/research-as-a-job-phase2-test-plan.md`](./research-as-a-job-phase2-test-plan.md)
+(2026-10-13). Most of phase 2 needs no Docker.
+
 This is a status log, not a plan. The plan is
 [`docs/plan/research-as-a-job-phase2.md`](./plan/research-as-a-job-phase2.md); the parent
 is [`docs/plan/research-as-a-job-later-REVISED.md`](./plan/research-as-a-job-later-REVISED.md).
