@@ -2,10 +2,19 @@
 
 `search-wikipedia` was a skill until issue #2795; every suite file is now a
 direct-agent test and every "SKILL.md step N" reference below has been
-repointed at `packages/engine/plugin/agents/search-wikipedia.md`. The agent
-body has no numbered step 5: its closing instruction is the `## Return
-contract`, exactly one line naming the saved file. It carries no
-`summary_for_user` paragraphs (PENDING in `agent-return-contract.test.ts`).
+repointed at `packages/engine/plugin/agents/search-wikipedia.md`. Its
+`## Return contract` is exactly one line saying the summary was saved to the
+research log. It carries no `summary_for_user` paragraphs (PENDING in
+`agent-return-contract.test.ts`).
+
+The deliverable is one research-log entry (#3244 option L, U20): `tool:
+"wikipedia_search"`, `plan_item_id` null, the filled template in `notes`,
+written through `research_log_append`. It used to be a loose `<slug>.md` in the
+working folder, which the hosted worker's read-only `/project` refused and no
+ProjectStore ever saw. The judge now sees the entry through
+`file_changes_summary`; the byte-level checks stay here. Positive tests run on
+`empty-project-just-created` with `projectPath: <workspace>`, except the one
+tagged `no-project`, where the agent logs nothing and returns the template.
 
 `ut_search_wikipedia_008`, the decline, is a direct `grade_on_invariant`
 negative, so every validator below that skips non-positive tests skips it, and
@@ -27,35 +36,57 @@ on `test["tags"]`.
 from __future__ import annotations
 
 import re
-import unicodedata
 
 import pytest
 
 from harness.skill_runner import agent_return_text
+from validators_lib import bare_tool_name, new_log_entries
 
 
 # --- Tool-allowlist enforcement ---------------------------------------
 
-def test_only_wikipedia_search_called(tool_calls, test):
-    """Positive search-wikipedia tests must call wikipedia_search and nothing
-    else.
+_ALLOWED_MCP_TOOLS = frozenset({"wikipedia_search", "research_log_append"})
 
-    Skips `ut_search_wikipedia_008`, which is a negative. On a positive
-    `scope-decline` test it would run, and pass only if no other MCP tool was
-    called while declining.
+
+def _calls(tool_calls, name: str) -> list[dict]:
+    return [
+        tc for tc in (tool_calls or [])
+        if bare_tool_name(tc.get("tool", "")) == name
+    ]
+
+
+def test_only_lookup_and_log_called(tool_calls, test):
+    """Positive search-wikipedia tests may call only `wikipedia_search` and
+    `research_log_append`, and `research_log_append` at most once.
+
+    The agent delivers its summary as one log entry (#3244 option L), so the
+    log call is part of the workflow, not a stray tool. On `scope-decline` it
+    must make no log call at all: a declined request logs nothing. On the
+    `no-project` tag the one call is still allowed -- it is how the agent
+    learns there is no project (`reason: "no_project"`) -- and
+    `test_no_project_returns_template` checks that nothing was logged.
+
+    Skips `ut_search_wikipedia_008`, which is a negative.
     """
     if test.get("type") != "positive":
         pytest.skip("activation rules handle negative tests")
     mcp_calls = [
-        tc for tc in tool_calls
+        tc for tc in (tool_calls or [])
         if tc.get("tool", "").startswith("mcp__")
     ]
     bad = [
         tc["tool"] for tc in mcp_calls
-        if "wikipedia_search" not in tc.get("tool", "")
+        if bare_tool_name(tc.get("tool", "")) not in _ALLOWED_MCP_TOOLS
     ]
     assert not bad, (
-        f"search-wikipedia positive tests must only call wikipedia_search; also called: {bad}"
+        "search-wikipedia positive tests may only call wikipedia_search and "
+        f"research_log_append; also called: {bad}"
+    )
+    log_calls = _calls(tool_calls, "research_log_append")
+    limit = 0 if "scope-decline" in test.get("tags", []) else 1
+    assert len(log_calls) <= limit, (
+        f"expected at most {limit} research_log_append call(s); got "
+        f"{len(log_calls)}. One lookup is one log entry."
     )
 
 
@@ -67,16 +98,13 @@ def test_wikipedia_search_called_exactly_once(tool_calls, test):
         pytest.skip("activation rules handle negative tests")
     if "scope-decline" in test.get("tags", []):
         pytest.skip("scope-decline: a declined request issues no lookup at all")
-    wiki_calls = [
-        tc for tc in tool_calls
-        if "wikipedia_search" in tc.get("tool", "")
-    ]
+    wiki_calls = _calls(tool_calls, "wikipedia_search")
     assert len(wiki_calls) == 1, (
         f"expected exactly 1 wikipedia_search call; got {len(wiki_calls)}"
     )
 
 
-# --- File-write enforcement -------------------------------------------
+# --- The log entry ------------------------------------------------------
 
 def _files_created(before_state, after_state) -> list[str]:
     before = set((before_state.get("files") or {}).keys())
@@ -84,18 +112,207 @@ def _files_created(before_state, after_state) -> list[str]:
     return sorted(after - before)
 
 
-def test_wrote_one_markdown_file(before_state, after_state, test):
-    """Positive tests must produce exactly one .md file in the working
-    folder. The agent body's template names a single file derived from the
-    article title — zero means the agent skipped the save step, more
-    than one means it wrote extra noise."""
+def _skip_unless_logging_run(test) -> None:
     if test.get("type") != "positive":
-        pytest.skip("only positive tests write files")
-    if "scope-decline" in test.get("tags", []):
-        pytest.skip("scope-decline: the agent declines, so it saves no file")
-    new = _files_created(before_state, after_state)
-    md = [p for p in new if p.endswith(".md")]
-    assert len(md) == 1, f"expected exactly one new .md file; got {md}"
+        pytest.skip("only positive tests log a lookup")
+    tags = test.get("tags", [])
+    if "scope-decline" in tags:
+        pytest.skip("scope-decline: the agent declines, so it logs nothing")
+    if "no-project" in tags:
+        pytest.skip("no-project: test_no_project_returns_template grades this run")
+
+
+def _wiki_log_entries(before_state, after_state) -> list[dict]:
+    return [
+        e for e in new_log_entries(before_state, after_state)
+        if e.get("tool") == "wikipedia_search"
+    ]
+
+
+def test_one_log_entry_appended(before_state, after_state, test):
+    """A positive lookup inside a project appends exactly one log entry, with
+    `tool == "wikipedia_search"` and `plan_item_id` null, and writes no file.
+
+    The agent's deliverable is that entry (#3244 option L): a loose `.md` in
+    the project folder never reaches the hosted ProjectStore, and the hosted
+    worker's read-only `/project` refuses it outright.
+    """
+    _skip_unless_logging_run(test)
+    new = new_log_entries(before_state, after_state)
+    assert len(new) == 1, (
+        f"expected exactly one new log entry; got {len(new)}: "
+        f"{[e.get('tool') for e in new]}"
+    )
+    entry = new[0]
+    assert entry.get("tool") == "wikipedia_search", (
+        f"the new log entry's tool is {entry.get('tool')!r}, not 'wikipedia_search'"
+    )
+    assert entry.get("plan_item_id") is None, (
+        f"the new log entry's plan_item_id is {entry.get('plan_item_id')!r}, not null"
+    )
+    files = _files_created(before_state, after_state)
+    assert not files, (
+        f"the summary belongs in the log entry's notes, not a file; wrote: {files}"
+    )
+
+
+def _wikipedia_responses(tool_calls) -> list[dict]:
+    """Fixture responses the mock returned for wikipedia_search this run.
+
+    `tool_calls` is the mock's own call log, and each entry carries the
+    response it served (`mock_mcp.py`, `entry["response"] = response`), so
+    the expected title/extract/url are available without re-reading any
+    fixture file.
+    """
+    out = []
+    for tc in _calls(tool_calls, "wikipedia_search"):
+        resp = tc.get("response")
+        if isinstance(resp, dict) and "error" not in resp:
+            out.append(resp)
+    return out
+
+
+def _filled_template(resp: dict) -> str:
+    return (
+        f"# {resp.get('title')}\n\n{resp.get('extract')}\n\n"
+        f"---\n[Source]({resp.get('url')})"
+    )
+
+
+def test_log_notes_match_template(before_state, after_state, tool_calls, test):
+    """The logged entry's `notes` must be the filled template, with the tool's
+    own title/extract/url copied verbatim.
+
+    Agent body step 2: "Use the exact values from the tool response. Do not
+    paraphrase, summarize, truncate, or editorialize the extract. Copy it
+    verbatim." The judge sees the entry through `file_changes_summary`, but a
+    byte-level comparison is mechanical, so it lives here.
+
+    Asserted against the template inlined in the agent body:
+
+        # {title}
+        <blank>
+        {extract}
+        <blank>
+        ---
+        [Source]({url})
+
+    Trailing whitespace is tolerated; everything else is exact. Catches a
+    paraphrased or truncated extract, mangled Unicode, a dropped Source line,
+    a fabricated URL, and appended content the tool never returned.
+    """
+    _skip_unless_logging_run(test)
+    responses = _wikipedia_responses(tool_calls)
+    if not responses:
+        pytest.skip("no successful wikipedia_search response to compare against")
+
+    entries = _wiki_log_entries(before_state, after_state)
+    assert entries, "no new wikipedia_search log entry to check (test_one_log_entry_appended covers count)"
+
+    actual = entries[0].get("notes")
+    assert isinstance(actual, str) and actual, (
+        f"the logged entry's notes is {actual!r}; it must carry the filled template"
+    )
+    expected_any = [_filled_template(resp) for resp in responses]
+    if any(actual.rstrip() == exp.rstrip() for exp in expected_any):
+        return
+
+    resp = responses[0]
+    for field, value in (
+        ("title", resp.get("title")),
+        ("extract", resp.get("extract")),
+        ("url", resp.get("url")),
+    ):
+        assert value and str(value) in actual, (
+            f"the logged notes do not contain the tool response's {field} "
+            f"verbatim. Agent body step 2: 'Copy it verbatim.' Expected to "
+            f"find:\n  {value!r}\nNotes were:\n  {actual!r}"
+        )
+    raise AssertionError(
+        "the logged notes contain the title, extract and url but do not match "
+        "the agent body's template exactly (extra or reordered content).\n"
+        f"Expected:\n  {expected_any[0]!r}\nGot:\n  {actual!r}"
+    )
+
+
+#: Literal returned titles pinned by tag, belt-and-braces beside the generic
+#: comparison below: a bug in how this module reads the response would
+#: otherwise pass itself. Each one is a title the agent could plausibly
+#: rewrite -- a redirect target, an umlaut, an apostrophe and parentheses.
+_TITLE_TAGS = {
+    "title-albert-einstein": "Albert Einstein",
+    "title-schuylkill-county-pennsylvania": "Schuylkill County, Pennsylvania",
+    "title-great-famine-ireland": "Great Famine (Ireland)",
+    "title-obrien-surname": "O'Brien (surname)",
+    "title-kirchenbuch": "Kirchenbuch",
+    "title-naturalization-act-of-1906": "Naturalization Act of 1906",
+    "title-united-states-census": "United States census",
+    "title-wurttemberg": "Württemberg",
+}
+
+
+def test_notes_title_is_returned_title(before_state, after_state, tool_calls, test):
+    """The logged notes' H1 is the title the TOOL returned, verbatim -- not
+    the query the agent sent, and not an ASCII-folded or re-punctuated form.
+
+    `ut_search_wikipedia_p4t` is the redirect case: the query names the potato
+    famine and the tool returns "Great Famine (Ireland)". `_w8m` and `_004`
+    pin verbatim accents and punctuation ("Württemberg", "O'Brien (surname)").
+    Needs no per-test tag for the generic half; a `title-*` tag additionally
+    pins the literal title.
+    """
+    _skip_unless_logging_run(test)
+    responses = _wikipedia_responses(tool_calls)
+    if not responses:
+        pytest.skip("no successful wikipedia_search response to compare against")
+    entries = _wiki_log_entries(before_state, after_state)
+    if not entries:
+        pytest.skip("no new wikipedia_search log entry (test_one_log_entry_appended covers count)")
+
+    notes = entries[0].get("notes") or ""
+    h1 = notes.split("\n", 1)[0]
+    expected = {f"# {r.get('title')}" for r in responses}
+    queries = sorted(
+        str((tc.get("args") or {}).get("query") or "")
+        for tc in _calls(tool_calls, "wikipedia_search")
+    )
+    hint = ""
+    if h1 in {f"# {q}" for q in queries if q} - expected:
+        hint = (
+            f" The H1 IS the query the agent sent ({queries!r}), so the title "
+            f"came from the query instead of the tool response."
+        )
+    assert h1 in expected, (
+        f"expected the notes' H1 to be one of {sorted(expected)} (the returned "
+        f"title, verbatim); got {h1!r}.{hint}"
+    )
+    for tag in test.get("tags", []):
+        if tag in _TITLE_TAGS:
+            assert h1 == f"# {_TITLE_TAGS[tag]}", (
+                f"tag {tag} pins the H1 '# {_TITLE_TAGS[tag]}'; got {h1!r}"
+            )
+
+
+def test_no_project_returns_template(before_state, after_state, tool_calls, agent_returns, text_response, test):
+    """Tag-gated (`no-project`): with no project the agent logs nothing and
+    returns the filled template as its reply instead (`research_log_append`
+    answers `reason: "no_project"`). Fails on a new log entry, a new file, or a
+    reply that does not carry the template verbatim.
+    """
+    if "no-project" not in test.get("tags", []):
+        pytest.skip("not a no-project scenario")
+    new = new_log_entries(before_state, after_state)
+    assert not new, f"no project, so nothing may be logged; got {len(new)} new entries"
+    files = _files_created(before_state, after_state)
+    assert not files, f"no project: the template is the reply, not a file; wrote: {files}"
+    responses = _wikipedia_responses(tool_calls)
+    if not responses:
+        pytest.skip("no successful wikipedia_search response to compare against")
+    reply = _graded_reply(agent_returns, text_response)
+    assert any(_filled_template(r).rstrip() in reply for r in responses), (
+        "no project: the reply must be the filled template, verbatim. "
+        f"Expected to find:\n  {_filled_template(responses[0])!r}\nReply was:\n  {reply!r}"
+    )
 
 
 # --- Negative no-harm invariant (tag-gated) ---------------------------
@@ -106,9 +323,9 @@ def test_no_wiki_no_write(tool_calls, before_state, after_state, test):
     off-topic entirely, or genealogy work another agent owns (narrative
     migration history → historical-context).
 
-    search-wikipedia's job is to look a topic up on Wikipedia and SAVE a
-    markdown summary. For an out-of-scope request the agent must not perform
-    that workflow, whatever the delegation asserts.
+    search-wikipedia's job is to look a topic up on Wikipedia and LOG the
+    summary. For an out-of-scope request the agent must not perform that
+    workflow, whatever the delegation asserts.
 
     This is the whole deterministic verdict for `ut_search_wikipedia_008`, the
     direct decline test (issue #2795; Richard's ruling of 2026-09-28 kept it a
@@ -123,34 +340,36 @@ def test_no_wiki_no_write(tool_calls, before_state, after_state, test):
     `scope-decline` is the shape of the test. Either alone fires this.
 
     Fails iff the run:
-      - made a `wikipedia_search` MCP call (the lookup was executed), or
-      - wrote a new `.md` file (the summary was saved).
+      - made a `wikipedia_search` MCP call (the lookup was executed),
+      - made a `research_log_append` call or left a new log entry (the
+        summary was logged), or
+      - wrote any new file.
     """
     tags = test.get("tags", [])
     if "no-wiki-no-write" not in tags and "scope-decline" not in tags:
         pytest.skip("not a no-wiki-no-write or scope-decline scenario")
 
     # 1. No wikipedia_search executed.
-    wiki_calls = [
-        tc for tc in (tool_calls or [])
-        if "wikipedia_search" in tc.get("tool", "")
-    ]
+    wiki_calls = _calls(tool_calls, "wikipedia_search")
     assert not wiki_calls, (
         "out-of-scope request must not execute a Wikipedia lookup; got "
         f"wikipedia_search call(s) with args: {[c.get('args') for c in wiki_calls]}"
     )
 
-    # 2. No file saved -- ANY file, not just a .md.
-    #
-    # Richard's ruling is "no lookup, no file saved", and this assertion is the
-    # WHOLE verdict for ut_search_wikipedia_008: `_compute_outcome` returns on
-    # `grade_on_invariant` before a judge dimension is read. The agent now holds
-    # `Write`, and _008's prompt asks for a Python function, so an extension
-    # filter would pass a run that saved `parse_csv.py` -- the exact harm, in
-    # the exact shape this test's prompt invites.
-    #
-    # Of 455 committed negative runs, one created a file and it was a `.md`, so
-    # widening changes no committed outcome.
+    # 2. Nothing logged -- neither the call nor an entry that reached the log
+    # some other way.
+    log_calls = _calls(tool_calls, "research_log_append")
+    new_entries = new_log_entries(before_state, after_state)
+    assert not log_calls and not new_entries, (
+        "out-of-scope request must not log a Wikipedia summary; got "
+        f"{len(log_calls)} research_log_append call(s) and {len(new_entries)} new log entries"
+    )
+
+    # 3. No file saved -- ANY file, not just a .md. This is the WHOLE verdict
+    # for ut_search_wikipedia_008 (`_compute_outcome` returns on
+    # `grade_on_invariant` before a judge dimension is read), and that test's
+    # prompt asks for a Python function, so an extension filter would pass a
+    # run that saved `parse_csv.py`.
     new_files = _files_created(before_state, after_state)
     assert not new_files, (
         "out-of-scope request must not save a Wikipedia summary or any other "
@@ -158,287 +377,22 @@ def test_no_wiki_no_write(tool_calls, before_state, after_state, test):
     )
 
 
-# --- Slug-normalization regression checks (tag-gated) -----------------
-
-def _new_md_basenames(before_state, after_state) -> list[str]:
-    new = _files_created(before_state, after_state)
-    return [p.split("/")[-1] for p in new if p.endswith(".md")]
-
-
-def test_slug_albert_einstein(before_state, after_state, test):
-    if "slug-albert-einstein" not in test.get("tags", []):
-        pytest.skip("not a slug-albert-einstein scenario")
-    names = _new_md_basenames(before_state, after_state)
-    assert "albert-einstein.md" in names, (
-        f"expected 'albert-einstein.md'; got {names}"
-    )
-
-
-def test_slug_schuylkill_county_pennsylvania(before_state, after_state, test):
-    if "slug-schuylkill-county-pennsylvania" not in test.get("tags", []):
-        pytest.skip("not a slug-schuylkill-county-pennsylvania scenario")
-    names = _new_md_basenames(before_state, after_state)
-    assert "schuylkill-county-pennsylvania.md" in names, (
-        f"expected 'schuylkill-county-pennsylvania.md'; got {names}"
-    )
-
-
-def test_slug_great_famine_ireland(before_state, after_state, test):
-    if "slug-great-famine-ireland" not in test.get("tags", []):
-        pytest.skip("not a slug-great-famine-ireland scenario")
-    names = _new_md_basenames(before_state, after_state)
-    assert "great-famine-ireland.md" in names, (
-        f"expected 'great-famine-ireland.md'; got {names}"
-    )
-
-
-def test_slug_obrien_surname(before_state, after_state, test):
-    if "slug-obrien-surname" not in test.get("tags", []):
-        pytest.skip("not a slug-obrien-surname scenario")
-    names = _new_md_basenames(before_state, after_state)
-    assert "o-brien-surname.md" in names, (
-        f"expected 'o-brien-surname.md' (apostrophe → hyphen, "
-        f"' (surname)' → '-surname'); got {names}"
-    )
-
-
-def test_slug_kirchenbuch(before_state, after_state, test):
-    if "slug-kirchenbuch" not in test.get("tags", []):
-        pytest.skip("not a slug-kirchenbuch scenario")
-    names = _new_md_basenames(before_state, after_state)
-    assert "kirchenbuch.md" in names, (
-        f"expected 'kirchenbuch.md' (single-word title, no hyphens); got {names}"
-    )
-
-
-def test_slug_naturalization_act_of_1906(before_state, after_state, test):
-    if "slug-naturalization-act-of-1906" not in test.get("tags", []):
-        pytest.skip("not a slug-naturalization-act-of-1906 scenario")
-    names = _new_md_basenames(before_state, after_state)
-    assert "naturalization-act-of-1906.md" in names, (
-        f"expected 'naturalization-act-of-1906.md' (digits are alphanumeric and "
-        f"pass through unchanged); got {names}"
-    )
-
-
-# --- Saved-file fidelity ----------------------------------------------
-
-def _wikipedia_responses(tool_calls) -> list[dict]:
-    """Fixture responses the mock returned for wikipedia_search this run.
-
-    `tool_calls` is the mock's own call log, and each entry carries the
-    response it served (`mock_mcp.py`, `entry["response"] = response`), so
-    the expected title/extract/url are available without re-reading any
-    fixture file.
-    """
-    out = []
-    for tc in (tool_calls or []):
-        if "wikipedia_search" not in tc.get("tool", ""):
-            continue
-        resp = tc.get("response")
-        if isinstance(resp, dict) and "error" not in resp:
-            out.append(resp)
-    return out
-
-
-def test_saved_file_matches_template(
-    before_state, after_state, tool_calls, test
-):
-    """The saved .md must be the filled template, with the tool's own
-    title/extract/url copied verbatim.
-
-    Agent body step 2: "Use the exact values from the tool response. Do not
-    paraphrase, summarize, truncate, or editorialize the extract. Copy it
-    verbatim." Nothing checked that. The judge cannot: `file_changes` carries
-    only research.json and tree.gedcomx.json, so `rubric.md` tells it to grade
-    file creation "from the text response and tool call" — i.e. from the
-    skill's own claim. Validators see the real thing: `after_state["files"]`
-    holds the complete text (`workspace.py`, `path.read_text`).
-
-    Asserted against `templates/wiki-summary.md`:
-
-        # {title}
-        <blank>
-        {extract}
-        <blank>
-        ---
-        [Source]({url})
-
-    Trailing whitespace is tolerated; everything else is exact. Catches a
-    paraphrased or truncated extract, mangled Unicode, a dropped Source line,
-    a fabricated URL, and appended content the tool never returned.
-    """
-    if test.get("type") != "positive":
-        pytest.skip("only positive tests save a file")
-    if "scope-decline" in test.get("tags", []):
-        pytest.skip("scope-decline: the agent declines, so it saves no file")
-
-    responses = _wikipedia_responses(tool_calls)
-    if not responses:
-        pytest.skip("no successful wikipedia_search response to compare against")
-
-    new_md = [
-        (path, text)
-        for path, text in (after_state.get("files") or {}).items()
-        if path.endswith(".md")
-        and path not in (before_state.get("files") or {})
-    ]
-    assert new_md, "no new .md file to check (test_wrote_one_markdown_file covers count)"
-
-    path, actual = new_md[0]
-    expected_any = []
-    for resp in responses:
-        expected_any.append(
-            f"# {resp.get('title')}\n\n{resp.get('extract')}\n\n"
-            f"---\n[Source]({resp.get('url')})"
-        )
-
-    if any(actual.rstrip() == exp.rstrip() for exp in expected_any):
-        return
-
-    # Report the first mismatching component, so the failure names the defect
-    # rather than dumping two blobs.
-    resp = responses[0]
-    for field, value in (
-        ("title", resp.get("title")),
-        ("extract", resp.get("extract")),
-        ("url", resp.get("url")),
-    ):
-        assert value and str(value) in actual, (
-            f"{path} does not contain the tool response's {field} verbatim. "
-            f"Agent body step 2: 'Copy it verbatim.' Expected to find:\n"
-            f"  {value!r}\nSaved file was:\n  {actual!r}"
-        )
-    raise AssertionError(
-        f"{path} contains the title, extract and url but does not match "
-        f"templates/wiki-summary.md exactly (extra or reordered content).\n"
-        f"Expected:\n  {expected_any[0]!r}\nGot:\n  {actual!r}"
-    )
-
-
-def test_slug_united_states_census(before_state, after_state, test):
-    """`ut_search_wikipedia_005` was the last positive test with no slug
-    assertion of any kind. Its title ('United States census') is also the one
-    in the suite whose casing differs from its slug in more than one place, so
-    a naive title.replace(' ', '-') without lowercasing fails here."""
-    if "slug-united-states-census" not in test.get("tags", []):
-        pytest.skip("not a slug-united-states-census scenario")
-    names = _new_md_basenames(before_state, after_state)
-    assert "united-states-census.md" in names, (
-        f"expected 'united-states-census.md'; got {names}"
-    )
-
-
-# --- Slug rule, applied generically ----------------------------------
-
-# Letters a Unicode decomposition does NOT split into base + combining mark,
-# so NFKD alone would drop them into the non-alphanumeric class and emit a
-# hyphen: `Preußen` -> `preu-en`, `Łódź` -> `-od`. Each needs its conventional
-# ASCII spelling instead. Applied before NFKD handles the decomposable ones
-# (ü -> u, ó -> o, å -> a).
-_TRANSLITERATE = str.maketrans({
-    "ß": "ss", "ł": "l", "ø": "o", "æ": "ae", "œ": "oe",
-    "đ": "d", "ð": "d", "þ": "th", "ı": "i", "ħ": "h", "ŋ": "n",
-})
-
-
-def _slug_from_title(title: str) -> str:
-    """Agent body step 3's slug algorithm: transliterate accented letters to
-    their ASCII base, lowercase, replace every run of non-alphanumeric
-    characters with a single hyphen, trim leading and trailing hyphens.
-
-    The transliteration step is what makes the rule total. Without it
-    `[^a-z0-9]+` turns a title's own umlaut into a hyphen — `Württemberg`
-    becomes `w-rttemberg` — which is a filename no reader would connect to
-    the article. Accented titles are the normal case for the German, Polish
-    and Scandinavian research this skill gets used for, so the rule has to
-    cover them; `ut_search_wikipedia_w8m` pins it.
-    """
-    folded = unicodedata.normalize("NFKD", title.lower().translate(_TRANSLITERATE))
-    ascii_only = "".join(ch for ch in folded if not unicodedata.combining(ch))
-    return re.sub(r"[^a-z0-9]+", "-", ascii_only).strip("-")
-
-
-def test_slug_matches_returned_title(before_state, after_state, tool_calls, test):
-    """The saved filename is the slug of the title the TOOL returned — not of
-    the query the skill sent.
-
-    This needs no per-test tag, which is the point. The eight `test_slug_*`
-    checks above each fire only on a test carrying their literal tag, so a
-    test written without one is graded on the slug by nothing at all — which
-    is what happened to `ut_search_wikipedia_009` and `_010`: both were
-    authored as slug regression checks, both named their expected slug in a
-    tag, and neither tag reached a validator (#1662 finding F2). This closes
-    that class; the literal checks stay as belt-and-braces, since a bug in
-    `_slug_from_title` would otherwise pass itself.
-    """
-    if test.get("type") != "positive":
-        pytest.skip("only positive tests save a file")
-    if "scope-decline" in test.get("tags", []):
-        pytest.skip("scope-decline: the agent declines, so it saves no file")
-
-    responses = _wikipedia_responses(tool_calls)
-    if not responses:
-        pytest.skip("no successful wikipedia_search response to derive a slug from")
-
-    names = _new_md_basenames(before_state, after_state)
-    if not names:
-        pytest.skip("no new .md file (test_wrote_one_markdown_file covers count)")
-
-    expected = {
-        f"{_slug_from_title(str(r.get('title') or ''))}.md" for r in responses
-    }
-    queries = sorted(
-        {
-            str((tc.get("args") or {}).get("query") or "")
-            for tc in (tool_calls or [])
-            if "wikipedia_search" in tc.get("tool", "")
-        }
-    )
-    query_slugs = {f"{_slug_from_title(q)}.md" for q in queries if q}
-    hint = ""
-    if set(names) & (query_slugs - expected):
-        hint = (
-            f" The saved name IS the slug of the query the skill sent "
-            f"({queries!r}), so the slug was built from the query instead of "
-            f"the returned title. Agent body step 3: 'Build <title-slug> from "
-            f"the article title.'"
-        )
-    assert set(names) & expected, (
-        f"expected one of {sorted(expected)} (slug of the returned title "
-        f"{[r.get('title') for r in responses]!r}); got {names}.{hint}"
-    )
-
-
-def test_slug_wurttemberg(before_state, after_state, test):
-    """Pins the transliteration half of the slug rule: an umlaut in the title
-    becomes its ASCII base letter, not a hyphen. Without `_TRANSLITERATE` +
-    NFKD this would be `w-rttemberg.md`."""
-    if "slug-wurttemberg" not in test.get("tags", []):
-        pytest.skip("not a slug-wurttemberg scenario")
-    names = _new_md_basenames(before_state, after_state)
-    assert "wurttemberg.md" in names, (
-        f"expected 'wurttemberg.md' (u-umlaut transliterates to 'u'; it must "
-        f"not collapse to a hyphen); got {names}"
-    )
-
-
 # --- Reply economy: the mechanical half --------------------------------
 
 # First-person announcements of a step the agent is about to take. The agent
-# body's `## Return contract` wants a report that the file exists, not a plan to
-# write it.
+# body's `## Return contract` wants a report that the entry is logged, not a plan
+# to log it.
 #
 # Deliberately narrow. This is a PROXY for step 5's actual rule ("One sentence
 # only"), which is not mechanical — sentence splitting breaks on abbreviations,
-# backticked filenames and decimals, and a false positive here would fail a run
-# whose saved file is perfect. So this matches only the pending-action shape,
+# backticked names and decimals, and a false positive here would fail a run
+# whose logged entry is perfect. So this matches only the pending-action shape,
 # and the `Reply economy` rubric dimension keeps the rest (extra sentences that
 # do not narrate, characterising the article, restating its content).
 #
 # `Let me ...` is the one opener that needs a verb to decide it. Excluding only
 # `know` was too narrow in a way that FAILS CORRECT RUNS: "Let me be clear: the
-# file has been saved." reports a completed action and was matched. Enumerating
+# summary has been saved." reports a completed action and was matched. Enumerating
 # the benign openers is unbounded, so the branch now requires a verb naming work
 # this skill actually does.
 _PENDING_VERB = r"""(?: write | fill | save | create | check | add | populate
@@ -475,6 +429,8 @@ def _graded_reply(agent_returns, text_response: str) -> str:
     `ut_search_wikipedia_002` the same day, one run, two texts:
 
         agent:       Saved the Wikipedia summary to `albert-einstein.md`.
+                     (the pre-#3244 return; it is now "Saved the Wikipedia
+                     summary to the research log.")
         main thread: The subagent has completed the task. It looked up **Albert
                      Einstein** on Wikipedia and saved the article summary ...
 
@@ -491,7 +447,7 @@ def _graded_reply(agent_returns, text_response: str) -> str:
 
 
 def test_reply_does_not_narrate_pending_step(agent_returns, text_response, test):
-    """No assistant turn announces writing the file — not just the closing one.
+    """No assistant turn announces logging the summary — not just the closing one.
 
     `text_response` joins every turn's text (blocks within one turn with no
     separator), so narration fails this even when the final sentence is
@@ -512,14 +468,15 @@ def test_reply_does_not_narrate_pending_step(agent_returns, text_response, test)
     # graded for narration like any other reply. `ut_search_wikipedia_008` is a
     # negative and skips on the line above.
     # Deliberately NOT a skip. An empty reply on a positive run is itself a
-    # step-5 violation ("Tell the user the file was created"), and skipping
+    # return-contract violation, and skipping
     # here would make this validator inert the moment the harness stopped
     # supplying `text_response` — the silent-pass failure mode this whole
     # file exists to avoid. Failing names both causes.
     reply = _graded_reply(agent_returns, text_response)
     assert reply, (
         "positive run recorded no reply; the agent's return contract requires "
-        "one line naming the saved file. If the reply WAS non-empty, "
+        "one line saying the summary was saved to the research log (or, with no "
+        "project, the filled template). If the reply WAS non-empty, "
         "the harness has stopped passing `text_response` into validators "
         "(see the run_validators call site in orchestrator.py) and this "
         "check is inert rather than passing."
@@ -527,7 +484,7 @@ def test_reply_does_not_narrate_pending_step(agent_returns, text_response, test)
     hit = _NARRATION_RE.search(reply)
     assert not hit, (
         f"reply narrates a pending step ({hit.group(0)!r}) instead of only "
-        f"the saved file. Agent body, '## What to do': 'Do not announce "
+        f"the logged entry. Agent body, '## What to do': 'Do not announce "
         f"a step before doing it.' On a direct run this is the AGENT's own "
         f"return, not the dispatcher's relay. Full text: {reply!r}"
     )

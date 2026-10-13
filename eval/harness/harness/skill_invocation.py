@@ -1199,10 +1199,12 @@ DEDICATED_AGENT_NAMES = frozenset(
         # set is asserted equal to the shipped agent files.
         "check-warnings",
         # Same shape as `search-images` and `citation` (issue #2795): a
-        # cost-motivated conversion, no hook route, and it writes no project
-        # state at all -- one standalone markdown file in the working folder. It
-        # is listed because the set is asserted equal to the shipped agent
-        # files. Do not read its presence here as evidence of a hook route.
+        # cost-motivated conversion, no hook route. It writes only one `log`
+        # entry per lookup through `research_log_append` (#3244 option L), the
+        # article summary in `notes`. It is listed because the set is asserted
+        # equal to the shipped agent files, and so a log entry arriving from it
+        # is not read as an unnamed-delegate bypass. Do not read its presence
+        # here as evidence of a hook route.
         "search-wikipedia",
         # Same shape as search-images, and for the same reason (issue #2790):
         # a converted skill, not a hook-routed pair. It writes nothing at all,
@@ -1210,10 +1212,12 @@ DEDICATED_AGENT_NAMES = frozenset(
         # row. Listed because the set is asserted equal to the shipped agent
         # files.
         "convert-dates",
-        # Same shape again (issue #2794): a converted skill with no hook route
-        # that writes no project state -- one markdown file in the working
-        # folder. Listed because the set is asserted equal to the shipped agent
-        # files.
+        # Same shape again (issue #2794): a converted skill with no hook route.
+        # It writes only one `log` entry per search through
+        # `research_log_append` (#3244 option L), the guidance in `notes`.
+        # Listed because the set is asserted equal to the shipped agent files,
+        # and so a log entry arriving from it is not read as an
+        # unnamed-delegate bypass.
         "search-familysearch-wiki",
         # A new agent, not a conversion (issue #2029), and no hook route: it
         # writes only `log` entries, one per researcher verdict on a hint. Listed

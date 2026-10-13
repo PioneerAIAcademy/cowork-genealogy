@@ -215,7 +215,9 @@
         "agent:search-images",
         "agent:search-hints",
         "skill:record-extraction",
-        "agent:survey-surname"
+        "agent:survey-surname",
+        "agent:search-wikipedia",
+        "agent:search-familysearch-wiki"
       ],
       "agentCallers": [
         {
@@ -251,6 +253,18 @@
         },
         {
           "agent": "agent:survey-surname",
+          "tools": [
+            "research_log_append"
+          ]
+        },
+        {
+          "agent": "agent:search-wikipedia",
+          "tools": [
+            "research_log_append"
+          ]
+        },
+        {
+          "agent": "agent:search-familysearch-wiki",
           "tools": [
             "research_log_append"
           ]
