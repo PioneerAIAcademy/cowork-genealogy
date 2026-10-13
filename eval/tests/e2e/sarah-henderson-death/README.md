@@ -28,17 +28,11 @@ match strength.
 
 ## Notes for reviewers
 
-**DRAFT PENDING ADJUDICATION.** This fixture comes from a hint batch
-(`filtered-list-samples-3.csv` row 5, `hint-samples.csv` row 162,
-flags `adds_death,adds_burial`, confidence 3) in which roughly half the hint records are
-**false matches**, and the authors do not know which.
-`expected-findings.json` was transcribed from the hint record — "BillionGraves Index", a grave entry for Sarah Maude Henderson Coleman, born 15 February 1886, died 21 March 1928, buried in Toronto; the index gives no cemetery name and no death place, and links to a BillionGraves page rather than a FamilySearch image.
-The genealogist + developer teams must decide (a) true match — keep the
-findings; (b) different answer — edit `expected-findings.json`; or (c) no
-findable answer — replace the findings with a `"polarity": "avoid"` guard
-naming the March 1928 death, plus a `required` finding that the report documents
-the rejection.
+**Resolved 2026-10-13 (issue #3328): the hint is a true match.** Adjudicated by Ikennaya1. The hint record (`ark:/61903/1:1:QV1B-V142`, "BillionGraves Index") gives Sarah Maude Henderson Coleman, born 15 February 1886, died 21 March 1928, buried in Toronto. A grave index alone names no husband or parents, so the call rests on two original registrations found by independent search:
 
-A good candidate. The index carries both her maiden and married surnames, "Henderson Coleman", with the given names Sarah Maude, and the tree's own sources call her both Sarah Maud Henderson (the 1906 Toronto marriage) and Maude Henderson (mother on her son William's 1907 birth, `ark:/61903/1:1:QV9H-D6WC`). The 15 February 1886 birth sits a year off the tree's 1885, which most likely comes from an age on the 1911 census or the marriage, and the Toronto burial fits a family the tree has in Toronto in 1911 and 1931. The tree has George, William and Margaret in a 1931 Toronto census household and cites no 1931 entry for Sarah, which a 1928 death would explain, but those 1931 entries are indexed with no names, so that is not proof she was absent. No tree source is a death or burial record, so nothing here is a re-index of this entry.
+- **Ontario civil death registration** (`ark:/61903/1:1:JKW2-LBP`, "Canada, Ontario, Deaths, 1869-1937 and Overseas Deaths, 1939-1947"): Maude Coleman, married, died 21 March 1928 in York County, Ontario, born 1886, father **Alexander Henderson**, mother **Margaret Draper**. These are the parents the tree's own source for this woman, her 11 October 1906 Toronto marriage to George Alfred Coleman (`ark:/61903/1:1:KZ17-BGL`), gives the bride Sarah Maud Henderson ("Alex Henderson" and "Margaret Draper"). Maiden name, married name, both parents and the death date agree, so this is the deciding record.
+- **Toronto Trust Cemeteries register** (`ark:/61903/1:1:276Q-ZXZ`): Maud Coleman, died 21 March 1928 in Toronto, buried 23 March 1928 in Toronto, born 1886, with a George Coleman named on the entry. It ties the death to her husband and supplies the burial date the hint lacks. A Find a Grave entry (`ark:/61903/1:1:QVLG-DM11`) repeats the hint's data.
 
-What is thin is that a grave index is a derivative of a headstone, and this entry names no husband or parents, so the tie to George Coleman rests on the combination of surnames, given names and city. The check that would settle it is the Ontario civil death registration for 21 March 1928: it would name her husband and give her age and birthplace, and a husband George Coleman would confirm this as the tree's Sarah.
+The place agrees across records: the civil registration names the county (York) and the cemetery register the city (Toronto), which lies in York County. The hint is not a re-index of an existing source: none of the 17 record arks already in the tree is a death or burial record. The 1886 birth year against the tree's 1885 is the usual one-year spread between a census or marriage age and a death record.
+
+**Retrieval** was tool-assisted (`record_read`, `record_search` through the engine, in Claude Code); the identity judgement is the genealogist's. The FamilySearch indexes settled it: no page image was read, so no image-reading calibration applies and `image_basis` is not set.

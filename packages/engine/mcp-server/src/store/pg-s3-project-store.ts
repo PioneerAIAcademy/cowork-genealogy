@@ -39,7 +39,8 @@
 // that throws therefore leaves the ref's bytes, size and hash exactly as they
 // were; a reader never sees content that was not committed. The one residual
 // is an orphan object after a crash between PutObject and the row write, or
-// between COMMIT and the delete; nothing references it and nothing sweeps it.
+// between COMMIT and the delete; nothing references it, and the orphan sweep
+// (s3-orphan-sweep.ts, U19) deletes it once it is older than the sweep's grace.
 //
 // `projectId` is the S3 key prefix, so it is restricted to `[A-Za-z0-9._-]`
 // with a leading letter or digit: a `/` would let two projects share a key.
@@ -148,8 +149,9 @@ class ReadyCheckError extends Error {
   }
 }
 
-/** The label a failed check reports: never `message`. */
-function readyLabel(e: unknown): string {
+/** The label a failed check reports: never `message`. The orphan sweep's
+ *  failure line uses it too. */
+export function readyLabel(e: unknown): string {
   if (e instanceof ReadyCheckError) return e.label;
   const err = e as { code?: unknown; name?: unknown };
   if (typeof err?.code === "string" && err.code) return err.code;
