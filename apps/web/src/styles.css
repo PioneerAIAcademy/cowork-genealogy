@@ -783,15 +783,39 @@ button {
   0%, 100% { opacity: 0.35; }
   50% { opacity: 1; }
 }
+/* Two rows: what you type into, then what you do with it.
+   One row meant the textarea was the only flexible item among three fixed-width
+   controls, so every pixel the composer lost -- dragging the splitter to widen the
+   viewer, or just a narrow window -- came out of the typing box and none out of the
+   checkbox, the attach icon or Send. */
 .chatInputBar {
   display: flex;
+  flex-direction: column;
   gap: 8px;
   padding: 10px;
   border-top: 1px solid var(--line);
   background: var(--bg-elev);
 }
+
+.chatControls {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+/* Send (and Stop beside it) go hard right, so the destructive-ish and the primary
+   action are never where the cursor rests after ticking Reasoning. */
+.chatControls .chatSend {
+  margin-left: auto;
+}
 .chatTextarea {
-  flex: 1;
+  /* `flex: 1` here meant "take the leftover WIDTH" while the bar was a row. The bar is a
+     column now, so the same declaration means "take the leftover HEIGHT" and the box grew
+     to 370px tall whenever the composer had room. Explicitly neither: natural height from
+     `rows`, full width of its own row. */
+  flex: none;
+  width: 100%;
+  box-sizing: border-box;
   resize: none;
   border: 1px solid var(--line);
   border-radius: 8px;
@@ -806,7 +830,11 @@ button {
   border-color: var(--accent-soft);
 }
 .chatSend {
-  align-self: stretch;
+  /* A rectangle now, not a square: it no longer stretches to the textarea's height
+     because it no longer sits beside it. */
+  padding-top: 7px;
+  padding-bottom: 7px;
+  cursor: pointer;
   background: var(--accent);
   color: var(--bg-primary);
   border: none;
@@ -824,7 +852,8 @@ button {
    rather than accented so it still reads as a secondary "abort", not the primary
    action. */
 .chatStop {
-  align-self: stretch;
+  padding-top: 7px;
+  padding-bottom: 7px;
   background: var(--bg-card);
   color: var(--ink);
   border: 1px solid var(--line);
@@ -840,7 +869,8 @@ button {
 }
 /* Attach a document/image for the agent to read (uploads/ in the project). */
 .chatAttach {
-  align-self: stretch;
+  padding-top: 5px;
+  padding-bottom: 5px;
   background: var(--bg-card);
   color: var(--ink);
   border: 1px solid var(--line);

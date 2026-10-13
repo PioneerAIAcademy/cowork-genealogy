@@ -717,24 +717,11 @@ export default function ChatPane({
             if (f) void handleFile(f)
           }}
         />
-        <label className="chatAdvanced" title="Show the model's reasoning blocks">
-          <input
-            type="checkbox"
-            checked={showThinking}
-            onChange={(e) => setShowThinking(e.target.checked)}
-          />
-          Reasoning
-        </label>
-        <button
-          type="button"
-          className="chatAttach"
-          onClick={() => fileInputRef.current?.click()}
-          disabled={busy || uploading || !ready}
-          title="Attach a document or image for the agent to read"
-          aria-label="Attach a document or image"
-        >
-          {uploading ? '…' : '📎'}
-        </button>
+        {/* The box spans its own row; the controls sit beneath it.
+            All four used to share one flex row, so dragging the splitter to widen the
+            viewer squeezed the textarea between a checkbox, an icon button and Send --
+            and those three, being fixed-width, gave up none of the space. The thing you
+            type into was the only part that shrank. */}
         <textarea
           className="chatTextarea"
           placeholder={
@@ -754,22 +741,42 @@ export default function ChatPane({
             }
           }}
         />
-        {/* 1b: Send sits BESIDE Stop while a turn runs, it does not replace it.
-            Under continuous work a turn is the whole job, so a composer that
-            only offers Stop for 53 minutes is a composer you cannot use. */}
-        {busy && (
-          <button className="chatStop" type="button" onClick={stop} title="Stop the current turn">
-            Stop
+        <div className="chatControls">
+          <label className="chatAdvanced" title="Show the model's reasoning blocks">
+            <input
+              type="checkbox"
+              checked={showThinking}
+              onChange={(e) => setShowThinking(e.target.checked)}
+            />
+            Reasoning
+          </label>
+          <button
+            type="button"
+            className="chatAttach"
+            onClick={() => fileInputRef.current?.click()}
+            disabled={busy || uploading || !ready}
+            title="Attach a document or image for the agent to read"
+            aria-label="Attach a document or image"
+          >
+            {uploading ? '…' : '📎'}
           </button>
-        )}
-        <button
-          className="chatSend"
-          type="submit"
-          disabled={!input.trim()}
-          title={busy ? 'The agent is working — this is queued, not dropped' : 'Send'}
-        >
-          Send
-        </button>
+          {/* 1b: Send sits BESIDE Stop while a turn runs, it does not replace it.
+              Under continuous work a turn is the whole job, so a composer that
+              only offers Stop for 53 minutes is a composer you cannot use. */}
+          {busy && (
+            <button className="chatStop" type="button" onClick={stop} title="Stop the current turn">
+              Stop
+            </button>
+          )}
+          <button
+            className="chatSend"
+            type="submit"
+            disabled={!input.trim()}
+            title={busy ? 'The agent is working — this is queued, not dropped' : 'Send'}
+          >
+            Send
+          </button>
+        </div>
       </form>
     </div>
   )
