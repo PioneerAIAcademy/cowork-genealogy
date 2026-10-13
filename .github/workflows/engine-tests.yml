@@ -115,7 +115,7 @@ jobs:
           docker run -d --name minio -e MINIO_ROOT_USER=proto -e MINIO_ROOT_PASSWORD=protoproto -p 9000:9000 \
             pgsty/minio:RELEASE.2026-08-04T00-00-00Z server /data
 
-      - name: Set up uv (Python 3.12, for the migrations runner)
+      - name: Set up uv (Python 3.12, for the migrations runner and the harness)
         uses: astral-sh/setup-uv@v7
         with:
           python-version: '3.12'
@@ -157,6 +157,15 @@ jobs:
         env:
           PROTO_STORE: pg
         run: npm test
+
+      # The harness's `--store pg` cases (eval/harness/harness/pg_store_prelude.mjs).
+      # They skip without a stack, so on this job's stack a skip fails the step.
+      - name: Run the harness's --store pg cases
+        working-directory: eval/harness
+        run: |
+          set -euo pipefail
+          uv run --frozen pytest -q -rs tests/unit/test_pg_store_switch.py | tee "$RUNNER_TEMP/pg-switch.txt"
+          if grep -qi skipped "$RUNNER_TEMP/pg-switch.txt"; then echo "::error::a --store pg case skipped"; exit 1; fi
 
       # The keyless arm of `make proto-store-test` (U8): the MinIO keys only as
       # AWS_*, everything else that could sign isolated, so the SDK default

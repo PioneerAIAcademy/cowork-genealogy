@@ -768,14 +768,19 @@ proto-store-test: proto-up-store ## D6–8 store: PgS3ProjectStore conformance +
 
 # U15: the whole engine suite with every tool's project I/O on PgS3ProjectStore
 # (PROTO_STORE=pg: tests/setup/proto-store.ts installs tests/helpers/pg-routing-store.ts),
-# failing on any skipped test, then proto-store-test's keyless arm. CI's twin is
-# engine-tests.yml's vitest-pg job. Static keys, with exported AWS_* unset as above.
+# failing on any skipped test, then the harness's --store pg cases, then
+# proto-store-test's keyless arm. CI's twin is engine-tests.yml's vitest-pg job.
+# Static keys, with exported AWS_* unset as above.
 .PHONY: engine-test-pg
 engine-test-pg: proto-up-store $(ENGINE_DEPS) ## U15: engine vitest suite on the Postgres/S3 store (compose postgres/minio), nothing may skip
 	cd $(ENGINE_DIR) && env -u AWS_ACCESS_KEY_ID -u AWS_SECRET_ACCESS_KEY PROTO_STORE=pg \
 	  PROTO_PG_DSN=$(PROTO_PG_DSN) PROTO_S3_ENDPOINT=http://localhost:9000 \
 	  PROTO_S3_BUCKET=projects PROTO_S3_ACCESS_KEY=proto PROTO_S3_SECRET_KEY=protoproto \
 	  npm test
+	cd eval/harness && env -u AWS_ACCESS_KEY_ID -u AWS_SECRET_ACCESS_KEY \
+	  PROTO_PG_DSN=$(PROTO_PG_DSN) PROTO_S3_ENDPOINT=http://localhost:9000 \
+	  PROTO_S3_BUCKET=projects PROTO_S3_ACCESS_KEY=proto PROTO_S3_SECRET_KEY=protoproto \
+	  uv run --frozen pytest -q -rs tests/unit/test_pg_store_switch.py
 	$(MAKE) proto-store-test
 
 .PHONY: engine-test
