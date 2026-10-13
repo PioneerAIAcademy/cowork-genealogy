@@ -33,7 +33,7 @@ const QUESTION = {
   unblocks: [],
   resolved: null,
   resolution_assertion_ids: [],
-  exhaustive_declaration: { declared: false, log_entry_ids: [], stop_criteria: null },
+  search_stop: { stopped_because: null, log_entry_ids: [], stop_criteria: null, not_reached: [] },
 };
 
 function item(over: Record<string, unknown> = {}) {

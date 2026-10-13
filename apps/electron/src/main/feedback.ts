@@ -448,7 +448,7 @@ function conversationEntries(raw: string, folderPath: string, allowSubdirs: bool
  * Subagent transcripts are the reason this returns a set rather than one log:
  * they live one level down at `<session-id>/subagents/agent-*.jsonl` with a
  * small `agent-*.meta.json` beside each, and two guardrail owner arms
- * (`proof_summaries`, `questions.exhaustive_declaration`) do their protected
+ * (`proof_summaries`, `questions.search_stop`) do their protected
  * write from inside one. While a bundle carried only the main log, those writes
  * were invisible and a zero could not be told apart from "we cannot see"
  * (issue #1880).
