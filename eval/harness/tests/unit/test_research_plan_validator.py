@@ -510,6 +510,30 @@ _UT007_RUN0_PLI006 = (
 )
 
 
+_DK_SERVED = [_call("collections_search", _collections([
+    {"id": "2513529", "title": "Denmark, Military Levying Rolls", "personCount": 200408},
+]))]
+
+
+def test_v5_ignores_browse_only_in_brackets_after_an_image_group():
+    """ut_research_plan_015, 2026-10-13, pli_009: the bracket describes the
+    image group, not collection 2513529."""
+    before, after = _states([_item("pli_009", rationale=(
+        "Image group 004748896 (Thisted Amt military levy rolls, 1789-1814, "
+        "browse-only (personCount 0)) provides the raw roll images if the name "
+        "search in collection 2513529 (item 3) fails to surface Mikkel."
+    ))])
+    check_v5(before, after, _DK_SERVED)
+
+
+def test_v5_still_fires_on_browse_only_in_the_collections_own_bracket():
+    before, after = _states([_item("pli_009", rationale=(
+        "Collection 2513529 (browse-only) and image group 004748896 "
+        "(1789-1814) hold the levy rolls."
+    ))])
+    with pytest.raises(AssertionError, match="2513529"):
+        check_v5(before, after, _DK_SERVED)
+
 def test_v5_ignores_a_coverage_percentage():
     before, after = _states([_item("pli_006", rationale=_UT007_RUN0_PLI006)])
     check_v5(before, after, _SERVED)

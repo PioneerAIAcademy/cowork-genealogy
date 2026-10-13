@@ -839,6 +839,18 @@ _ADJ_ON_NON_COLLECTION_RE = re.compile(
     r"for\s+(?:this|the)\s+\w+)\b",
     re.I,
 )
+# A bracket right after a non-collection id describes that item, so the
+# adjective inside it is not a claim about the collection the sentence also
+# names. ut_research_plan_015, 2026-10-13, pli_009: "Image group 004748896
+# (Thisted Amt military levy rolls, 1789-1814, browse-only (personCount 0))
+# provides the raw roll images if the name search in collection 2513529 (item
+# 3) fails" charged "browse-only" to 2513529 (personCount 200408). One level
+# of nested brackets is allowed, for the "(personCount 0)" inside it.
+_PAREN_ON_NON_COLLECTION_RE = re.compile(
+    r"\b(?:image\s+groups?|volumes?|films?|microfilms?|dgs)\s+(?:no\.?\s*)?\d{5,}\s*"
+    r"\((?:[^()]|\([^()]*\))*\)",
+    re.I,
+)
 # A coverage percentage ("412 images, 0% indexed", "only 4% name-indexed") is
 # neither an indexed nor a browse-only claim. ut_research_plan_007 run 0 on
 # 2026-09-24 (issue #2685) wrote "…returned personCount 0, so this is a browse
@@ -907,6 +919,7 @@ def test_research_plan_availability_claim_matches_counts(
                 cid = ids_here[0]
                 pcs = counts[cid]
                 claim_text = _PERCENT_INDEXED_RE.sub(" ", sentence)
+                claim_text = _PAREN_ON_NON_COLLECTION_RE.sub(" ", claim_text)
                 claims_indexed = bool(_INDEXED_RE.search(claim_text)) and not (
                     _UNINDEXED_RE.search(claim_text)
                 )
