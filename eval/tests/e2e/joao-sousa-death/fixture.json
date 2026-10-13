@@ -15,5 +15,6 @@
     "judge": "claude-haiku-4-5-20251001"
   },
   "difficulty": "medium",
-  "notes": "Record-hint fixture (filtered-list-samples-3.csv row 20, hint-samples.csv row 698, flags adds_death/adds_burial, confidence 3). Resolved 2026-10-13 as outcome 2: the 14 Dec 1919 Câmara de Lobos civil death extract (ark:/61903/1:1:6YP6-D37M) is genuine but cannot be assigned to the 1851 João over his elder namesake brother (bapt. 1839, alive 1905); the extract gives no age or spouse. The expected finding is that the report leaves the identity unresolved or names the competing candidate."
+  "notes": "Record-hint fixture (filtered-list-samples-3.csv row 20, hint-samples.csv row 698, flags adds_death/adds_burial, confidence 3). Resolved 2026-10-13 as outcome 2: the 14 Dec 1919 Câmara de Lobos civil death extract (ark:/61903/1:1:6YP6-D37M) is genuine but cannot be assigned to the 1851 João over his elder namesake brother (bapt. 1839, alive 1905); the extract form (read on the page images, ark:/61903/3:1:3Q9M-CSM5-Q9MC-1) has no age or spouse field. The expected finding is that the report leaves the identity unresolved or names the competing candidate.",
+  "image_basis": true
 }
