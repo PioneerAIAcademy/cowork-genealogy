@@ -138,14 +138,13 @@ time in 3; the worker never does (removed from the harness by handoff U17, 2026-
   re-measure the rubric.
 - **The trees are on Richard's machine.** The D17 and D18 exports (`proj_bagley-father-1884_072ee7`,
   `proj_paerai-teupooihi-spouse_1a8734`, `proj_bagley-father-1884_7b4922`), project files only;
-  the transcripts are gone. He decides their use (handoff U16). PR #2870's
-  `proj_bagley-father-1884_40af16` is on its author's machine.
+  the transcripts are gone. D18's `_072ee7` was picked for the grade (2026-10-12, PR #3323).
+  PR #2870's `proj_bagley-father-1884_40af16` is on its author's machine.
 
-**What closes it** (ours, not started, handoff U16):
+**What closes it** (ours, handoff U16):
 
-1. **A blind human grade of one prototype bagley tree:** one genealogist session on a tree
-   Richard picks (D18's `_072ee7` is the like-for-like pair; `_40af16` or a ~$16 re-run the
-   fallbacks). Still n=1.
+1. **A blind human grade of one prototype bagley tree:** D18's `_072ee7`, the like-for-like
+   pair, posted for a genealogist session (issue #3355, open). Still n=1.
 2. **A paired sample:** several fixtures and runs a side; same commit, week, CLI, stop policy,
    image cap and time limit. ~$15–30 a run.
 3. **Before beta (R5), re-baseline the corpus on the prototype:** 108 of 136 fixtures have runs
@@ -161,7 +160,7 @@ time in 3; the worker never does (removed from the harness by handoff U17, 2026-
 - **No time limit:** nothing ends a run by time; a cut attempt would keep running beside its redelivery, though since U6 (`claim_epoch`, 2026-10-09, n=1) its close, transcript and tool-server commits are no-ops and it halts at its next tool call; a dead-lettered turn holds the session; the cross-instance tool-server write lock is untested. U5, U26.
 - **Postgres backend (R14):** the engine suite runs on `PgS3ProjectStore` in CI (`vitest-pg`, U15): 6,802 cases on head `bce24a20d` (2026-10-12), none skipped, 29 run on the file store by name (`fileStoreOnly`). All 30 unit suites ran on it once (U15, 2026-10-12, n=1 per test): 440 tests, 0 store faults in 1,384 live tool calls.
 - **Throughput:** Bedrock counts input + cache write + 5× output for Sonnet 4.6 and exempts cache reads (documented; read back in our test account, 2026-10-09, n=1 per arm), so a session settles at ~26–43k tokens/min, not the ~166k that counted every token. 50 sessions ≈ 2M TPM against a 6M default; the 700M per-day default (~12 sessions around the clock) binds first. The throttle decides on a `max_tokens` reservation nobody has measured. The gateway is one 0.25 vCPU task, no autoscaling (2026-09-11). U18, [capacity](./search-agent-capacity.md).
-- **Re-logged duplicates:** PR #2850 refuses a re-extraction of the same record, person and fact type under the same log entry, even reworded: the measured resume shape (P1, D17). Under a new or missing log entry it gets through; never seen on a resume, and a corpus replay's 27 such misses (194 runs, 2026-09-29) left no duplicate. U16 counts them.
+- **Re-logged duplicates:** PR #2850 refuses a re-extraction of the same record, person and fact type under the same log entry, even reworded: the measured resume shape (P1, D17). Under a new or missing log entry it gets through; never seen on a resume, and a corpus replay's 27 such misses (194 runs, 2026-09-29) left no duplicate. Over the six prototype exports kept locally in `apps/server/proto/exports/` (gitignored; pass each `proj_*` directory to the script), 0 (2026-10-13, U16).
 - **Missing against the current stack:** uploads, images, logs, stored search results, two wiki skills, `evaluations/` gates, continuing a capped project. U20.
 - **Silent transcript loss:** a config-dir mismatch persists nothing; the turn now closes `transcript_lost`, answers 500, and `/healthz` answers 503 (U10). A partial loss (one dropped frame) is still silent.
 - **Stop, held messages, the $35 cap:** recorded live on compose 2026-10-05 (n=1 per case), main thread and mid-delegation (handoff U23); a Postgres error now fails the attempt closed (500, redelivered) instead of letting the call through. Live, both paths failed closed: a terminated connection in the receive loop, and a cancelled query inside the halt check; a 120 s freeze stalled the attempt without letting a call through (the stall itself is U19's). On Beanstalk with RDS and real SQS (U13, 2026-10-08, n=1 per case; handoff U23) 12 of 13 cases passed: Stop and the cap halted on the main thread and mid-delegation, held messages were released, and all four outage cases run failed closed (500 `AdminShutdown` or `StoreUnavailable`) and was redelivered; on the real meter a $1 cap halted a real turn at $1.07, the turn costing $1.29. The resume probe resumed, but its turn researched on until Stop at the deadline; re-run twice with the nudge arm off (U13, 2026-10-10, n=1 each; 2/4 and 2/3 as scored), it did the same, so the cause is not the nudge arm (measured) but, inferred, the probe text's open ending.
