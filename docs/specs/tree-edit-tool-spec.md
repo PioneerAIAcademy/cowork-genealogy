@@ -304,8 +304,18 @@ tree_edit({
   fields onto the existing source (`id` immutable). Errors if `sourceId` is not found
   in the on-disk tree.
 - **`remove`** `{ factId }` **or** `{ relationshipId }` — delete that entry. **Only
-  facts and relationships** — a `personId` here is an error (person removal is
-  `merge_tree_persons`).
+  facts and relationships** — a `personId` **on its own** is an error (person
+  removal is `merge_tree_persons`).
+  - **A `factId` names a fact, not a holder, and holders share ids.** FamilySearch
+    reuses fact ids across the persons an import touches: 65 of the 136 committed
+    e2e starting trees carry one id on two or more holders, one of them on 15. An
+    unscoped remove of a shared id is **refused**, naming every holder, because
+    deleting one person's disproved imported Birth would otherwise delete it for
+    all fifteen.
+  - **`personId` or `relationshipId` beside a `factId` scopes the removal** to that
+    holder's copy; the other holders keep theirs. Both together is an error. A
+    `factId` whose id only one holder carries needs no scope.
+  - `{ relationshipId }` with no `factId` still removes the edge itself.
 
 **Fact payload shape (all fact write paths).** On every path that writes a fact —
 `add_fact`, `update_fact`, `add_person` inline facts, `add_relationship` facts —
@@ -545,7 +555,9 @@ Sequence (validate-before-persist, tree-only):
 | `add_fact` / `update_fact` targeting a `ParentChild` relationship, or `add_relationship` with facts on a `ParentChild` | input error — facts live only on Couple relationships |
 | A fact payload (any write path) with a non-string `date` / `standard_date` / `place` / `standard_place` / `value` — e.g. a nested `{ original, formal }` date object | input error naming the field and expected shape; write nothing (§4.1 "Fact payload shape") |
 | `add_person` inline fact / `add_relationship` fact carries an `id` | input error — the tool assigns `F` ids |
-| `remove` with a `personId` (attempt to delete a person) | input error — use `merge_tree_persons` |
+| `remove` with a `personId` and no `factId` (attempt to delete a person) | input error — use `merge_tree_persons` |
+| `remove` of a `factId` more than one holder carries, unscoped | input error naming every holder — pass `personId` or `relationshipId` |
+| `remove` with both `personId` and `relationshipId` | input error — one or the other scopes a `factId` |
 | `resolveStandardPlace` network call fails | best-effort: set `standard_place: null`, add a warning; never fail the edit on a place-resolution miss |
 | `projectPath` is a real directory holding **neither** project file | write nothing; `{ ok: false, reason: "no_project", errors }` — the user is not in a research project, so this is an answer rather than a failure and is **not** marked `isError`. A directory holding exactly one of the two files is a *broken* project and stays loud. Applies to `tree_correct` identically. See the write-boundary invariants in `guardrail-enforcement-spec.md` |
 | Resulting tree carries a **call-introduced** validation error | write nothing; return `{ ok: false, errors }`. A pre-existing error rides as a warning |
@@ -602,7 +614,7 @@ The caller (`tree-edit` skill) still:
   round-trip into the written `S` entry; `update_source` merges by `sourceId` (id
   immutable), errors on an unknown `sourceId`; missing-payload guards return
   `{ ok: false }`; a titleless `add_source` fails validation and writes nothing.
-- **remove** — fact/relationship deleted by id; `remove` with `personId` rejected.
+- **remove** — fact/relationship deleted by id; `remove` with a bare `personId` rejected; a shared `factId` refused unscoped and removed from only the scoped holder.
 - **staleness** — an unknown `factId` returns an error, writes nothing.
 - **validate-before-persist** — an edit that would invalidate the project writes
   nothing and returns `{ ok: false, errors }`; no `.bak` written.

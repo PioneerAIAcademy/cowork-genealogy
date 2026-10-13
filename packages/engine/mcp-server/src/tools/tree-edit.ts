@@ -838,30 +838,76 @@ async function applyOperation(
       break;
     }
     case "remove": {
-      if (input.personId) {
+      // `personId` is refused only as a target of its own. With a `factId` it
+      // SCOPES the removal — which holder's copy to drop — and that is the
+      // whole point below.
+      if (input.personId && !input.factId) {
         throw new TreeEditError("remove does not delete persons — use merge_tree_persons to collapse a person");
       }
-      const targets = [input.factId, input.relationshipId].filter(Boolean);
-      if (targets.length !== 1) {
+      if (input.personId && input.relationshipId) {
+        throw new TreeEditError(
+          "remove: pass `personId` OR `relationshipId` to scope a `factId`, not both",
+        );
+      }
+      // `factId` with `relationshipId` is a scoped fact removal, not two
+      // targets; `{relationshipId}` alone still removes the edge itself.
+      if (!input.factId && !input.relationshipId) {
         throw new TreeEditError("remove requires exactly one of `factId` or `relationshipId`");
       }
       if (input.factId) {
-        let found = false;
+        // FamilySearch reuses fact ids across the persons an import touches —
+        // 65 of the 136 committed e2e starting trees carry one id on two or
+        // more holders, one of them on 15. Filtering the id out of every person
+        // and every relationship therefore deleted the fact for all of them, so
+        // withdrawing one person's disproved imported Birth silently removed
+        // fifteen people's. A shared id must say whose copy to drop.
+        const holders: Array<{ label: string; node: { facts?: SimplifiedFact[] } }> = [];
         for (const p of tree.persons ?? []) {
-          const before = (p.facts ?? []).length;
-          if (before) {
-            p.facts = p.facts!.filter((f) => f.id !== input.factId);
-            if (p.facts.length !== before) found = true;
+          if ((p.facts ?? []).some((f) => f.id === input.factId)) {
+            holders.push({ label: `person '${p.id}'`, node: p });
           }
         }
         for (const r of tree.relationships ?? []) {
-          const before = (r.facts ?? []).length;
-          if (before) {
-            r.facts = r.facts!.filter((f) => f.id !== input.factId);
-            if (r.facts.length !== before) found = true;
+          if ((r.facts ?? []).some((f) => f.id === input.factId)) {
+            holders.push({ label: `relationship '${r.id}'`, node: r });
           }
         }
-        if (!found) throw new TreeEditError(`fact '${input.factId}' not found in tree`);
+        if (holders.length === 0) throw new TreeEditError(`fact '${input.factId}' not found in tree`);
+
+        const scopeId = input.personId ?? input.relationshipId;
+        if (scopeId === undefined) {
+          if (holders.length > 1) {
+            throw new TreeEditError(
+              `remove: fact '${input.factId}' is carried by ${holders.length} holders ` +
+                `(${holders.map((h) => h.label).join(", ")}) — FamilySearch reuses fact ids, so ` +
+                "removing it unscoped would delete all of them. Pass `personId` or " +
+                "`relationshipId` to say whose copy to remove",
+            );
+          }
+          holders[0].node.facts = (holders[0].node.facts ?? []).filter((f) => f.id !== input.factId);
+        } else {
+          const scoped = (input.personId
+            ? (tree.persons ?? []).find((p) => p.id === input.personId)
+            : (tree.relationships ?? []).find((r) => r.id === input.relationshipId)) as
+            | { facts?: SimplifiedFact[] }
+            | undefined;
+          if (!scoped) {
+            throw new TreeEditError(
+              input.personId
+                ? `person '${input.personId}' not found in tree`
+                : `relationship '${input.relationshipId}' not found in tree`,
+            );
+          }
+          const before = (scoped.facts ?? []).length;
+          scoped.facts = (scoped.facts ?? []).filter((f) => f.id !== input.factId);
+          if (scoped.facts.length === before) {
+            throw new TreeEditError(
+              `remove: fact '${input.factId}' is not carried by ${
+                input.personId ? `person '${input.personId}'` : `relationship '${input.relationshipId}'`
+              } — it is on ${holders.map((h) => h.label).join(", ")}`,
+            );
+          }
+        }
       } else {
         const before = (tree.relationships ?? []).length;
         tree.relationships = (tree.relationships ?? []).filter((r) => r.id !== input.relationshipId);

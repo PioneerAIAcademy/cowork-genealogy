@@ -909,6 +909,78 @@ describe("tree_edit", () => {
     expect(tree.relationships[0].facts.filter((f: any) => f.primary === true)).toHaveLength(2);
   });
 
+  // ── remove {factId} scopes to one holder ──────────────────────────────────
+  //
+  // FamilySearch reuses fact ids across the persons an import touches: 65 of
+  // the 136 committed e2e starting trees carry one id on two or more holders,
+  // one of them on 15. Removing unscoped deleted every copy.
+
+  const sharedFactTree = () => {
+    const t = twoPersons();
+    (t as any).persons[0].facts = [{ id: "F1", type: "Birth", date: "1820", sources: [{ ref: "S1" }] }];
+    (t as any).persons[1].facts = [{ id: "F1", type: "Birth", date: "1822", sources: [{ ref: "S1" }] }];
+    return t;
+  };
+
+  it("remove of a fact id two persons share is refused unscoped, and removes only the scoped person's fact", async () => {
+    await writeProject(sharedFactTree());
+    const unscoped = await treeCorrect({ projectPath: dir, operation: "remove", factId: "F1" } as any);
+    expect(unscoped.ok).toBe(false);
+    if (!unscoped.ok) expect(JSON.stringify(unscoped)).toMatch(/carried by 2 holders/);
+    // Nothing was written by the refusal.
+    expect(((await readTree()) as any).persons.every((p: any) => p.facts.length === 1)).toBe(true);
+
+    const scoped = await treeCorrect({ projectPath: dir, operation: "remove", factId: "F1", personId: "I1" } as any);
+    expect(scoped.ok).toBe(true);
+    const tree: any = await readTree();
+    expect(tree.persons.find((p: any) => p.id === "I1").facts).toHaveLength(0);
+    // I2 keeps its own Birth — the whole point.
+    expect(tree.persons.find((p: any) => p.id === "I2").facts).toHaveLength(1);
+    expect(tree.persons.find((p: any) => p.id === "I2").facts[0].date).toBe("1822");
+  });
+
+  it("must not fire: remove of an unshared fact id needs no scope", async () => {
+    const t = twoPersons();
+    (t as any).persons[0].facts = [{ id: "F1", type: "Birth", date: "1820", sources: [{ ref: "S1" }] }];
+    await writeProject(t);
+    const r = await treeCorrect({ projectPath: dir, operation: "remove", factId: "F1" } as any);
+    expect(r.ok).toBe(true);
+    expect(((await readTree()) as any).persons[0].facts).toHaveLength(0);
+  });
+
+  it("remove with a factId and a relationshipId removes that relationship's fact and keeps the edge", async () => {
+    const t = twoPersons();
+    (t as any).persons[0].facts = [{ id: "F1", type: "Marriage", date: "1850", sources: [{ ref: "S1" }] }];
+    (t as any).relationships = [
+      { id: "R1", type: "Couple", person1: "I1", person2: "I2", sources: [{ ref: "S1" }],
+        facts: [{ id: "F1", type: "Marriage", date: "1850", sources: [{ ref: "S1" }] }] },
+    ];
+    await writeProject(t);
+    const r = await treeCorrect({ projectPath: dir, operation: "remove", factId: "F1", relationshipId: "R1" } as any);
+    expect(r.ok).toBe(true);
+    const tree: any = await readTree();
+    expect(tree.relationships).toHaveLength(1);
+    expect(tree.relationships[0].facts ?? []).toHaveLength(0);
+    // The person's same-id fact is untouched.
+    expect(tree.persons.find((p: any) => p.id === "I1").facts).toHaveLength(1);
+  });
+
+  it("a remove carrying both personId and relationshipId is refused", async () => {
+    await writeProject(sharedFactTree());
+    const r = await treeCorrect({
+      projectPath: dir, operation: "remove", factId: "F1", personId: "I1", relationshipId: "R1",
+    } as any);
+    expect(r.ok).toBe(false);
+    if (!r.ok) expect(JSON.stringify(r)).toMatch(/not both/);
+  });
+
+  it("remove scoped to a holder that does not carry the fact says who does", async () => {
+    await writeProject(sharedFactTree());
+    const r = await treeCorrect({ projectPath: dir, operation: "remove", factId: "F1", personId: "I3" } as any);
+    expect(r.ok).toBe(false);
+    if (!r.ok) expect(JSON.stringify(r)).toMatch(/person 'I3' not found in tree/);
+  });
+
   it("add_relationship: rejects a caller-supplied fact id", async () => {
     const tree = onePersonSourced();
     tree.persons.push({ id: "I2", gender: "Female", names: [{ id: "N2", given: "Mary", surname: "Smith", preferred: true }], facts: [] } as any);
