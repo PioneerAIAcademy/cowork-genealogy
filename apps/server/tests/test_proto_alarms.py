@@ -190,6 +190,8 @@ _NAME = re.compile(r"""^\s*name:\s*['"]([a-z_]+)['"]""", re.M)
 
 
 def _tools_reaching_the_token() -> set[str]:
+    """Every advertised tool (manifest.json) named in a tools/ file whose imports reach
+    auth/refresh.ts. Every name in the file, not the first: match-by-id.ts declares four."""
     def deps(f: Path) -> set[Path]:
         out = set()
         for m in _IMPORT.finditer(f.read_text(encoding="utf-8")):
@@ -202,22 +204,25 @@ def _tools_reaching_the_token() -> set[str]:
 
     graph = {f.resolve(): deps(f) for f in ENGINE_SRC.rglob("*.ts")}
     target = (ENGINE_SRC / "auth" / "refresh.ts").resolve()
-    memo: dict[Path, bool] = {}
 
-    def reaches(f: Path, seen: frozenset = frozenset()) -> bool:
-        if f == target:
-            return True
-        if f in memo:
-            return memo[f]
-        if f in seen:
-            return False
-        memo[f] = any(reaches(d, seen | {f}) for d in graph.get(f, ()))
-        return memo[f]
+    def reaches(start: Path) -> bool:
+        seen, todo = {start}, [start]
+        while todo:
+            f = todo.pop()
+            if f == target:
+                return True
+            for d in graph.get(f, ()):
+                if d not in seen:
+                    seen.add(d)
+                    todo.append(d)
+        return False
 
+    manifest = json.loads((ENGINE_SRC.parent / "manifest.json").read_text(encoding="utf-8"))
+    advertised = {t["name"] for t in manifest["tools"]}
     names = set()
     for f in (ENGINE_SRC / "tools").glob("*.ts"):
         if reaches(f.resolve()):
-            names.update(_NAME.findall(f.read_text(encoding="utf-8"))[:1])
+            names.update(n for n in _NAME.findall(f.read_text(encoding="utf-8")) if n in advertised)
     return names
 
 

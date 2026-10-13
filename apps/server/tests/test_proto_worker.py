@@ -3705,6 +3705,31 @@ def test_sweep_is_off_unless_configured():
         assert not thread.is_alive(), "the sweep stops on SHUTDOWN"
 
 
+def test_each_sweep_pass_asks_for_this_processs_long_running_delegations(monkeypatch):
+    """U19: a stuck delegation never reaches PostToolUse, so the sweep's loop asks, for the
+    turns this process serves only, and an error there never stops the sweep."""
+    waits = iter([False, False, True])
+    monkeypatch.setattr(worker.SHUTDOWN, "wait", lambda _s: next(waits))
+    monkeypatch.setattr(worker, "sweep_once", lambda **_kw: [])
+    monkeypatch.setattr(worker, "inflight_turn_ids", lambda: ["turn-a"])
+    monkeypatch.setattr(worker, "pg_connect", lambda *_a, **_k: contextlib.nullcontext("conn"))
+    asked, logged = [], []
+    outcomes = iter([RuntimeError("pg down"), None])
+
+    def check(conn, turn_ids):
+        asked.append((conn, turn_ids))
+        if (err := next(outcomes)) is not None:
+            raise err
+
+    monkeypatch.setattr(worker, "long_inflight_calls", check)
+    monkeypatch.setattr(worker, "log", lambda **f: logged.append(f))
+    thread = worker.start_sweep(interval=1, max_retries=5, retention_s=0)
+    thread.join(5)
+    assert not thread.is_alive()
+    assert asked == [("conn", ["turn-a"])] * 2, "the second pass ran after the first failed"
+    assert [f["ev"] for f in logged] == ["long_call_check_failed"]
+
+
 class FakeServer:
     def __init__(self, probe=None) -> None:
         self.stopped = False

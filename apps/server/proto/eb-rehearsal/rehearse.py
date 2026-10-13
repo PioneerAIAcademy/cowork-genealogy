@@ -1671,6 +1671,10 @@ U13PY
         if not self.dry and self.alarm_state(full) is None:
             raise Die(f"no alarm {full}: run `up --phase alarms` first")
         self.out(f"== alarm-trip {name}")
+        # An alarm already in ALARM would read as tripped before anything ran: reset it, so
+        # only a breach evaluated after this trip moves it back.
+        self.aws("cloudwatch", "set-alarm-state", "--alarm-name", full, "--state-value", "OK",
+                 "--state-reason", "U19 alarm-trip: reset before the trip")
         self.note(f"recipe (alarms.json): {alarm['trip']}")
         restore = None
         try:

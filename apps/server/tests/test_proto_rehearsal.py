@@ -104,6 +104,7 @@ class FakeAws:
         self.dlq_in_resources = True
         # StateValue by alarm name; absent is OK.
         self.alarm_states: dict[str, str] = {}
+        self.trips: set[str] = set()  # alarms whose trip works: they breach again after a reset
         # test-metric-filter: None evaluates the pattern; "miss" matches nothing, "hit" everything.
         self.filter_mode: str | None = None
         self.sent: list[dict] = []
@@ -638,6 +639,11 @@ class FakeAws:
         return {"AlarmName": a["name"], "StateValue": self.alarm_states.get(a["name"], "OK"),
                 "ActionsEnabled": "--no-actions-enabled" not in a["argv"],
                 "Threshold": float(a["threshold"])}
+
+    def cloudwatch_set_alarm_state(self, rest):
+        # A trip that works: the alarm breaches again once it is reset (``trips``).
+        name = _flag(rest, "--alarm-name")
+        self.alarm_states[name] = "ALARM" if name in self.trips else _flag(rest, "--state-value")
 
     def cloudwatch_describe_alarms(self, rest):
         names, prefix = _flag_values(rest, "--alarm-names"), _flag(rest, "--alarm-name-prefix")
@@ -2049,8 +2055,8 @@ def test_alarms_needs_a_flag(env):
 
 def test_alarm_trip_dlq_sends_a_message_naming_no_turn_and_exits_0_on_alarm(alarmed):
     env, fake, _ = alarmed
-    fake.alarm_states["genealogy-u13-dlq_depth"] = "ALARM"
-    rc, lines = run(env, fake, "alarm-trip", "--billed", "--alarm", "dlq_depth")
+    fake.trips.add("genealogy-u13-dlq_depth")
+    rc, lines = run(env, fake, "alarm-trip", "--billed", "--alarm", "dlq_depth", "--timeout", "0")
     assert rc == 0, lines[-3:]
     assert len(fake.sent) == 1 and fake.sent[0]["url"].endswith("/q-genealogy-u13-worker")
     body = json.loads(fake.sent[0]["body"])
@@ -2066,13 +2072,15 @@ def test_alarm_trip_recipe_only_alarms_change_nothing_and_exit_1_on_timeout(alar
     want = next(a["trip"] for a in ALARMS if a["name"] == name)
     assert any(want in line for line in lines)
     assert any("up to 0s: genealogy-u13-" in line for line in lines), "--timeout bounds the poll"
-    assert set(fake.ops()) == {("sts", "get-caller-identity"), ("cloudwatch", "describe-alarms")}
+    assert set(fake.ops()) == {("sts", "get-caller-identity"), ("cloudwatch", "describe-alarms"),
+                               ("cloudwatch", "set-alarm-state")}
 
 
-@pytest.mark.parametrize("state, rc", [("OK", 1), ("ALARM", 0)])
-def test_alarm_trip_message_age_restores_the_threshold_even_on_timeout(alarmed, state, rc):
+@pytest.mark.parametrize("trips, rc", [(False, 1), (True, 0)])
+def test_alarm_trip_message_age_restores_the_threshold_even_on_timeout(alarmed, trips, rc):
     env, fake, _ = alarmed
-    fake.alarm_states["genealogy-u13-message_age"] = state
+    if trips:
+        fake.trips.add("genealogy-u13-message_age")
     fake.reset()
     got, lines = run(env, fake, "alarm-trip", "--billed", "--alarm", "message_age", "--timeout", "0")
     assert got == rc, lines[-3:]
@@ -2081,6 +2089,17 @@ def test_alarm_trip_message_age_restores_the_threshold_even_on_timeout(alarmed, 
     assert fake.get("alarm", "genealogy-u13-message_age")["threshold"] == "37000"
     for a in fake.calls_to("cloudwatch", "put-metric-alarm"):
         assert "--no-actions-enabled" in a
+
+
+def test_an_alarm_already_in_alarm_is_not_counted_as_tripped(alarmed):
+    """Reset first: a stale ALARM (an earlier trip, a real breach) must not pass for this one."""
+    env, fake, _ = alarmed
+    fake.alarm_states["genealogy-u13-spend_cap"] = "ALARM"
+    fake.reset()
+    rc, _ = run(env, fake, "alarm-trip", "--billed", "--alarm", "spend_cap", "--timeout", "0")
+    assert rc == 1
+    [reset] = fake.calls_to("cloudwatch", "set-alarm-state")
+    assert _flag(reset, "--state-value") == "OK"
 
 
 def test_alarm_trip_message_age_restores_when_interrupted(alarmed):
