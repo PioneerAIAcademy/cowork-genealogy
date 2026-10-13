@@ -192,6 +192,7 @@ Format:
 | `description` | string | yes | Human-readable description for the UI dropdown |
 | `args` | object | yes | Argument-match predicate AND grading target. Keys are dotted paths into the tool call's `args` object; values are exact-match scalars or, if prefixed with `~`, case-insensitive substring matches. All keys must match for the fixture to fire during dispatch. The LLM judge also reads this block as the canonical expected args for the **Tool Arguments** base dimension (Section 7) |
 | `response` | object | yes | The exact JSON response the harness returns when this tool is called |
+| `is_error` | boolean | no | `true` marks a thrown-error fixture: the harness returns `response` with `is_error` set, as production's catch arms set `isError: true` beside `{error}`. Requires `response` to be exactly `{"error": "<message>"}`; the harness rejects any other shape. Default `false` |
 
 **Match semantics.** When the skill calls a tool, the harness selects a response in this order:
 
@@ -204,7 +205,7 @@ A fixture's `args` block is **always required and non-empty.** It serves two pur
 
 **Error fixtures.** To test how a skill handles error responses (auth failure, upstream 5xx, malformed response), set `response` to the error envelope the real MCP tool would return. The harness returns whatever object is in `response` verbatim — there is no separate "error" mode.
 
-**The failure envelope is one key, `error`, holding the message string.** Every dispatch arm in `src/server.ts` catches identically and returns `{"error": <the thrown message>}`, and no arm produces any other shape for a THROWN error. A companion `message`, `status` or `code` key is therefore not a shape any tool can produce, and the fixture-shape check below rejects it. (The tools in `OK_FALSE_IS_FAILURE` are a separate case: they report an *expected* failure by returning `{ok: false, reason, errors}`, which `src/tool-result.ts` turns into `isError`. They are not all writers, and most of them still re-throw an unexpected error into the envelope above. The one fixture-served member, `external_links_search`, never returns that shape — it fails by throwing — so no fixture should carry it either.) Note also that production sets `isError: true` alongside `{error}` and a fixture-served response never does, so an error fixture exercises the body and not the flag:
+**The failure envelope is one key, `error`, holding the message string.** Every dispatch arm in `src/server.ts` catches identically and returns `{"error": <the thrown message>}`, and no arm produces any other shape for a THROWN error. A companion `message`, `status` or `code` key is therefore not a shape any tool can produce, and the fixture-shape check below rejects it. (The tools in `OK_FALSE_IS_FAILURE` are a separate case: they report an *expected* failure by returning `{ok: false, reason, errors}`, which `src/tool-result.ts` turns into `isError`. They are not all writers, and most of them still re-throw an unexpected error into the envelope above. The one fixture-served member, `external_links_search`, never returns that shape — it fails by throwing — so no fixture should carry it either.) Note also that production sets `isError: true` alongside `{error}`, and a fixture-served response carries the flag only when the fixture sets `is_error: true`. Without it an error fixture exercises the body and not the flag. The flag is opt-in so the existing error fixtures keep the envelope their runs were graded on:
 
 ```json
 // auth failure
@@ -859,7 +860,7 @@ that is the measured production failure mode the arm exists to catch — and it 
 not a synthetic shape: of the 11 real orchestrator delegations to a paired agent
 in the committed e2e corpus, most carry a caller-written research-state summary
 and one instructs the agent outright to *'verify all seven criteria now pass and
-issue the exhaustive_declaration'*. Write the delegation as that caller writes
+issue the search_stop'*. Write the delegation as that caller writes
 one: the arguments the routing skill specifies (`questionId`, `projectPath`, and
 the like), plus whatever framing the twin is testing the agent's resistance to.
 A `<workspace>` placeholder in a path argument is fine — the live writer tools
