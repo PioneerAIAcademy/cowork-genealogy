@@ -741,6 +741,66 @@ describe("tree_edit", () => {
     expect(tree.relationships[0].facts[0].type).toBe("Marriage");
   });
 
+  it("a corroborating Marriage with a different date is a second fact, not folded into the first", async () => {
+    // Two records giving different marriage dates are two facts, so the
+    // researcher can see the disagreement rather than have one silently win.
+    // This case does NOT on its own justify strict equality over the merge
+    // tool's `factsEquivalent` — measured: that helper's range-containment
+    // check already separates 1850 from 1852. The case below is the one that
+    // discriminates.
+    await writeProject(twoPersons());
+    const add = (date: string, ref: string) =>
+      treeEdit({
+        projectPath: dir,
+        operation: "add_relationship",
+        relationship: {
+          type: "Couple",
+          person1: "I1",
+          person2: "I2",
+          sources: [{ ref }],
+          facts: [{ type: "Marriage", date, sources: [{ ref }] }],
+        },
+      });
+    expect((await add("1850", "S1")).ok).toBe(true);
+    expect((await add("1852", "S2")).ok).toBe(true);
+    const tree: any = await readTree();
+    expect(tree.relationships).toHaveLength(1);
+    expect(tree.relationships[0].facts.map((f: any) => f.date).sort()).toEqual(["1850", "1852"]);
+  });
+
+  it("a corroborating Marriage with no date does not swallow the dated one already there", async () => {
+    // THE discriminating case for strict equality (Decision 31). The merge
+    // tool's `factsEquivalent` treats an absent date as matching any date, so
+    // the undated second record folds into the dated fact and the tree reads as
+    // if only one record existed. Verified by substituting `factsEquivalent`
+    // for `sameFactValue`: this test goes red and the differing-dates one above
+    // does not.
+    await writeProject(twoPersons());
+    expect(
+      (await treeEdit({
+        projectPath: dir,
+        operation: "add_relationship",
+        relationship: {
+          type: "Couple", person1: "I1", person2: "I2", sources: [{ ref: "S1" }],
+          facts: [{ type: "Marriage", date: "1850", sources: [{ ref: "S1" }] }],
+        },
+      })).ok,
+    ).toBe(true);
+    expect(
+      (await treeEdit({
+        projectPath: dir,
+        operation: "add_relationship",
+        relationship: {
+          type: "Couple", person1: "I1", person2: "I2", sources: [{ ref: "S2" }],
+          facts: [{ type: "Marriage", sources: [{ ref: "S2" }] }],
+        },
+      })).ok,
+    ).toBe(true);
+    const tree: any = await readTree();
+    expect(tree.relationships[0].facts).toHaveLength(2);
+    expect(tree.relationships[0].facts.some((f: any) => f.date === "1850")).toBe(true);
+  });
+
   it("add_relationship: rejects a caller-supplied fact id", async () => {
     const tree = onePersonSourced();
     tree.persons.push({ id: "I2", gender: "Female", names: [{ id: "N2", given: "Mary", surname: "Smith", preferred: true }], facts: [] } as any);
