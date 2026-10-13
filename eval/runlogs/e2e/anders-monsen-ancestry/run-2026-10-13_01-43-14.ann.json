@@ -1,0 +1,10 @@
+{
+  "per_finding": {
+    "f1": "true",
+    "f2": "true"
+  },
+  "proof_quality_score": 3,
+  "annotator": "Ikennaya1",
+  "findings_hash": "bbedf735a335074de029068986ec084ff7cf9b5d997effee5c728690fec8618a",
+  "blind_bundle_digest": "cecf07d67cc7d1b9b0162db71c0052c69b5396a58d4227fe113892aa74e54224"
+}
