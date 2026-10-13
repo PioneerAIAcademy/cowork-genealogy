@@ -148,10 +148,10 @@ to port to their own platform (F14, F17: Blueprint, Dynatrace). `page` there say
 alarms would page; on the rehearsal none does. `up --phase alarms` applies the file:
 
 - It reads the worker queue from the worker environment's `describe-environment-resources`
-  and the DLQ from the same list (a queue whose name holds `dead`). Whether Beanstalk lists
-  the DLQ there is unmeasured, so when it does not, the DLQ is the `deadLetterTargetArn` of
-  the worker queue's `RedrivePolicy` (`sqs get-queue-attributes`). The line
-  `# worker queue …; DLQ …, from …` says which, so a live run records the answer.
+  and the DLQ from the same list (a queue whose name holds `dead`). Beanstalk lists it there
+  as `WorkerDeadLetterQueue` (U19, 2026-10-13, n=1). If it ever does not, the DLQ is the
+  `deadLetterTargetArn` of the worker queue's `RedrivePolicy` (`sqs get-queue-attributes`).
+  The line `# worker queue …; DLQ …, from …` says which.
 - Each `kind: log` alarm gets one `logs put-metric-filter` per entry of its `filters`, on its
   tier's `/aws/elasticbeanstalk/genealogy-u13-<tier>/var/log/web.stdout.log`, named
   `genealogy-u13-<alarm>-<n>`, publishing 1 to the alarm's metric in `Genealogy/SearchAgent`
@@ -167,8 +167,8 @@ alarms would page; on the rehearsal none does. `up --phase alarms` applies the f
 | Alarm | What `alarm-trip` does |
 |---|---|
 | `dlq_depth` | Sends the worker queue a message naming no turn row. The worker answers it 400 and sqsd dead-letters it after `MaxRetries` receives, so hold `probe --case maxretries_1` (and `fast_errors`) to make that one. |
-| `message_age` | Puts the alarm back with threshold 60 s, polls, then puts the file's threshold back in `finally` (on success, timeout or Ctrl-C). A message must wait on the queue meanwhile. The file's threshold is a placeholder until a live run measures whether in-flight messages count. |
-| `reauth`, `spend_cap`, `long_agent`, `no_progress` | Prints the file's `trip` recipe and only polls. Each needs a probe case or an `--env` setting the operator applies (`refresh_age_0` with a corrupted refresh token, `cap_1usd`, `LONG_AGENT_CALL_S=60`, a redelivered no-work attempt). |
+| `message_age` | Puts the alarm back with threshold 60 s, polls, then puts the file's threshold back in `finally` (on success, timeout or Ctrl-C). A turn must run longer than 60 s meanwhile: an in-flight message counts (U19, 2026-10-13, n=1). |
+| `reauth`, `spend_cap`, `long_agent`, `no_progress` | Prints the file's `trip` recipe and only polls. The operator does the rest: `reauth`, the refresh token made undecryptable and the session backdated on the database, then a message; `spend_cap`, `probe --case cap_1usd` and a research turn; `long_agent`, `up --phase worker --env worker:LONG_AGENT_CALL_S=60` and a delegating turn (a later `up` without the `--env` removes it); `no_progress`, a turn asked to reply without tools. |
 
 The custom metrics' data cannot be deleted. It ages out of CloudWatch on its own, at no cost
 once nothing publishes, so `down` deletes the filters and alarms and leaves the metrics.
