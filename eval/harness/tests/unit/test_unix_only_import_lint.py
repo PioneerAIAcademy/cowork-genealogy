@@ -29,7 +29,7 @@ from __future__ import annotations
 
 import ast
 
-from tests.unit.test_encoding_lint import REPO_ROOT, _iter_python_files
+from tests.unit.test_encoding_lint import REPO_ROOT, _scan_tree
 
 UNIX_ONLY = frozenset(
     {
@@ -51,8 +51,8 @@ UNIX_ONLY = frozenset(
 
 LAZY_EXAMPLE = "apps/server/proto/worker/turn_users.py"
 
-# 504 .py files on 2026-10-12. parents[3] lands on eval/, which has its own
-# CLAUDE.md and 340 .py files -- the floor sits above that so a wrong root fails
+# 517 .py files on 2026-10-13. parents[3] lands on eval/, which has its own
+# CLAUDE.md and 349 .py files -- the floor sits above that so a wrong root fails
 # here, not just on the LAZY_EXAMPLE check, and leaves room for a cleanup PR.
 MIN_FILES_SCANNED = 400
 
@@ -100,19 +100,9 @@ def test_no_unix_only_import_at_import_time():
     )
 
     scanned: set[str] = set()
-    offenders: list[str] = []
-    unparseable: list[str] = []
-    for path in _iter_python_files(REPO_ROOT):
-        rel = path.relative_to(REPO_ROOT).as_posix()
-        try:
-            hits = _offenders_in(path.read_text(encoding="utf-8"))
-        except (SyntaxError, ValueError, UnicodeDecodeError) as exc:
-            unparseable.append(f"{rel}: {type(exc).__name__}: {exc}")
-            continue
-        scanned.add(rel)
-        offenders += [
-            f"{rel}:{lineno}: import of {module} runs at import time" for lineno, module in hits
-        ]
+    offenders, unparseable = _scan_tree(
+        REPO_ROOT, _offenders_in, "import of {name} runs at import time", scanned
+    )
 
     assert not unparseable, (
         "Unix-only import lint could not parse these files, so it did not scan them:\n  "

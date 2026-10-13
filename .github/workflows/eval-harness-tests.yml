@@ -91,14 +91,11 @@ jobs:
           # Python lives under apps/server/, so ^apps/server/ (not the broader
           # ^apps/) is exact coverage -- apps/web and apps/electron hold no .py.
           #
-          # `^\.claude/skills/(.*\.py$|lib/tests/)` (issue #2621): the suite under
-          # .claude/skills/lib/tests/ covers merge-issues/slots.py, and the ruff step
-          # below reaches fill-ready/collisions.py too -- both outside every pattern
-          # above, so a diff touching only one of them ran neither and reported
-          # success. Every .py under .claude/skills/, rather than a third
-          # per-directory entry; the `$` is load-bearing (without it `a.py.bak` and
-          # `notes.python` match). `lib/tests/` is the belt-and-braces half, so a
-          # non-.py fixture landing there still triggers the job.
+          # `^\.claude/skills/lib/tests/` (issue #2621): the suite there covers
+          # merge-issues/slots.py, and the ruff step below reaches
+          # fill-ready/collisions.py too. The trailing `\.py$` catches every .py
+          # under .claude/skills/; this entry is for a non-.py fixture landing in
+          # lib/tests/, which must still trigger the job.
           #
           # `^scripts/` (issue #1776): test_setup_feedback_case.py shells out to
           # scripts/setup-feedback-case.sh. Without it a scripts/-only diff
@@ -111,7 +108,7 @@ jobs:
           # on main -- and the failure then lands on whichever unrelated later PR does
           # match a pattern here. The trailing slash is load-bearing: without it a
           # sibling path like `agents-notes.md` would match too.
-          PATTERNS: '^eval/harness/|^eval/runlogs/|^packages/engine/plugin/skills/|^packages/engine/plugin/hooks/|^packages/engine/plugin/agents/|^apps/server/|^eval/triggering/|^eval/fixtures/|^eval/tests/|^docs/specs/schemas/|^packages/schema/schemas/|^packages/engine/mcp-server/|^scripts/|^\.claude/skills/(.*\.py$|lib/tests/)|^\.github/workflows/eval-harness-tests\.yml$|\.py$'
+          PATTERNS: '^eval/harness/|^eval/runlogs/|^packages/engine/plugin/skills/|^packages/engine/plugin/hooks/|^packages/engine/plugin/agents/|^apps/server/|^eval/triggering/|^eval/fixtures/|^eval/tests/|^docs/specs/schemas/|^packages/schema/schemas/|^packages/engine/mcp-server/|^scripts/|^\.claude/skills/lib/tests/|^\.github/workflows/eval-harness-tests\.yml$|\.py$'
         run: |
           set -euo pipefail
           files="$(gh api "repos/${{ github.repository }}/pulls/${PR_NUMBER}/files" \
