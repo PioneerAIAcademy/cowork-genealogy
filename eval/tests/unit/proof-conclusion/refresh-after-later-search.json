@@ -1,0 +1,33 @@
+{
+  "test": {
+    "id": "ut_proof_conclusion_g9j",
+    "skill": "proof-conclusion",
+    "name": "Re-concluding after later searches refreshes the narrative and the search summary together",
+    "type": "positive",
+    "description": "Mined from issue #3177 puzzle 4 (G9GJ-959, Iram F. Hyde), the graded Cowork run of 2026-10-09. q_002 (parents) already has ps_002 at not_proved. Its narrative's 'What could resolve it' and its exhaustive_search_summary both name Walworth's Hyde Genealogy, the 1855 NY census image and the 1880 father's-birthplace column as still to search. log_019, log_020 and log_021 then searched all three. On re-invocation the agent must update ps_002 in place so that both fields describe the current search state. In the mined run it updated the summary alone and left the narrative recommending the three records it had just searched.",
+    "tags": [
+      "from-cowork",
+      "proof",
+      "parentage",
+      "no-new-proof-expected",
+      "direct-arm"
+    ]
+  },
+  "input": {
+    "delegation": "Run your preconditions gate, then conclude the question at whatever tier the evidence supports, including `possible` or `not_proved`. Decline only if the gate itself fails.\n\nquestionId: q_002\nprojectPath: <workspace>",
+    "scenario": "g9gj-proof-update-after-later-search"
+  },
+  "judge_context": [
+    "q_002 (who were Iram Hyde's parents) already has ps_002 at not_proved. In the BEFORE state both its `narrative_markdown` ('What could resolve it') and its `exhaustive_search_summary` ('Not yet examined') list Walworth's Hyde Genealogy (1864), the 1855 NY state census image, and the 1880 census father's-birthplace column as records still to search.",
+    "Three log entries searched exactly those records after ps_002 was written: log_019 read the 1855 image (birthplace 'Washington' [Co., NY], 57 years in town), log_020 read daughter Margaret Clark's 1880 entry (father born 'N Hamshire'), and log_021 searched the full text of both Walworth volumes (no Iram). Their findings are in each entry's `notes`. None of them names Iram's parents.",
+    "COMPLIANT: ps_002 is updated in place (still exactly one proof summary for q_002), and AFTER the run its narrative and its exhaustive_search_summary agree with the log and with each other: neither still names Walworth, the 1855 image or the 1880 father's-birthplace column as unexamined or as what could resolve the question, and both name the same remaining sources (daughters' death certificates, New Hampshire town records, Washington Co. probate). not_proved stays the tier: nothing searched names a parent.",
+    "NON-COMPLIANT: one of the two fields is refreshed and the other still lists a record the log shows was searched. This is the mined failure: the Cowork run rewrote exhaustive_search_summary to report all three searches and left the narrative's 'What could resolve it' recommending all three. Score Correctness 1. A reply that says the narrative was refreshed when the persisted `narrative_markdown` still names a searched record as unexamined is also a Correctness 1.",
+    "Raising the tier is NON-COMPLIANT: no record names Iram's parents, and the candidate households in the narrative are a pool, not evidence.",
+    "Score `Tree encoding` NULL (N/A): the conclusion is not_proved, so nothing is encoded in the tree."
+  ],
+  "judge_reads_files": true,
+  "execution": {
+    "max_wall_clock_seconds": 900,
+    "sdk_message_silence_seconds": 600
+  }
+}
