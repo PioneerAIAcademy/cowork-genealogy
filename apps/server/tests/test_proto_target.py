@@ -548,15 +548,16 @@ def test_spill_kill_counts_a_tool_results_read_and_records_rerun_vs_stranded(mon
     assert rep.figures["rerun_calls"] == rerun and said in rep.findings[-1]
 
 
-@pytest.mark.parametrize("rerun, ok", [(0, False), (1, True)])
-def test_spill_kill_allows_a_nudged_no_progress_only_after_a_rerun(monkeypatch, rerun, ok):
-    """Every deployed spill_kill session is project-less and nudged, so the allowance alone
-    would pass a stranded spill; it holds only once the call was re-run (U13 review)."""
-    monkeypatch.setattr(bounds, "events_until", lambda tid, lines: [])
-    monkeypatch.setattr(bounds, "nudged_projectless", lambda *a: True)
+@pytest.mark.parametrize("rerun", [0, 1])
+def test_spill_kill_fails_a_no_progress_close_whether_or_not_the_call_was_rerun(monkeypatch, rerun):
+    """A no_progress close is not the bound working. It used to pass once the call was re-run,
+    for a nudged project-less session (U13 review); a session with no research.json is no
+    longer nudged (issue #3274), so that allowance is gone. This is the only test that closes
+    spill_kill on no_progress -- `_spill_run` closes `completed` by default -- so it is what
+    keeps that check from being weakened with the suite green."""
     rep, _order = _spill_run(monkeypatch, reads_after=1, rerun=rerun, outcome=bounds.TERMINAL_NO_PROGRESS)
     [closed] = [c for n, c, _ in rep.checks if n.startswith("spill_kill: not closed no_progress")]
-    assert closed is ok
+    assert closed is False
 
 
 def test_deployed_only_cases_refuse_compose():
