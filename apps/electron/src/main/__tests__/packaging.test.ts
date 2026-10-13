@@ -9,11 +9,10 @@
  * nothing, from a green build.
  *
  * `check-packaged-deps.mjs` catches that, but only once something has been
- * packaged, and `electron-release.yml` runs only on an `electron-v*` tag or a
- * manual dispatch. So if this line is dropped by a merge, a revert or a
- * Dependabot bump, nothing notices until someone cuts a release. This file runs
- * on every PR that touches `apps/electron/` (`js-tests.yml`), costs no build,
- * and closes that window.
+ * packaged: `electron-release.yml` does that on a PR touching the viewer, a
+ * multi-minute mac and Windows build that no branch rule requires. This file
+ * runs on every PR that touches `apps/electron/` (`js-tests.yml`) and costs no
+ * build.
  */
 import { describe, it, expect } from 'vitest'
 import { readFileSync } from 'node:fs'
