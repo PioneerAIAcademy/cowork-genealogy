@@ -249,7 +249,7 @@ basic-monitoring point covers the 5 minutes after its :00/:05 stamp). "avg" is t
   2026-10-10): `CPUUtilization` averaged 25.4% against the 40% baseline, with a peak of
   46.4% (CloudWatch Maximum statistic) in the window's first 10 minutes. 4 on a t3.large is not measured:
   its 0.6-core baseline is above the 0.448 cores measured at 4 turns on the t3.xlarge, but
-  that is inference. Fewer slots also means fewer runs cut by a deploy or a
+  that is inference. §5's ramp measures it at its 4-run step. Fewer slots also means fewer runs cut by a deploy or a
   lost instance (U13 M35). If sustained CPU exceeds the T3 baseline, move to a
   non-burstable 4 vCPU / 16 GiB type rather than cutting slots.
 - **The measurement that confirmed it for the t3.xlarge** (run 2026-10-10, tables above):
@@ -326,7 +326,9 @@ non-throttling steps may run, with APT's agreement.
   - time to first byte against `TimeToFirstToken`;
   - the gateway task's CPU and memory (one 0.25 vCPU task today);
   - V, NV and the age of the oldest message;
-  - worker cgroup memory and CPU, which also confirm §3.
+  - worker cgroup memory and CPU, which also confirm §3. Run the 4-run step on one t3.large
+    worker at `HttpConnections` 4 (`slots_4`): it is the measurement §3's t3.large proposal
+    lacks, so it is not run separately.
 - Draw the 50-session figure from the ramp plus the reservation arm. A 50-session step
   alone would cost ~$270.
 

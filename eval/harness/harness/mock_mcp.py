@@ -1153,6 +1153,7 @@ def create_mock_server(
         if tool_name == "person_quality":
             continue  # served by _make_person_quality_handler below
         predicated = list(bucket["predicated"])
+        is_error_flags = list(bucket.get("is_error") or [False] * len(predicated))
         # Input schema precedence: the compiled production schema wins (the
         # single source of truth), so fixture-backed tools advertise exactly
         # what production does. A fixture-provided input_schema is honored only
@@ -1168,6 +1169,7 @@ def create_mock_server(
         async def handler(
             args,
             _predicated=predicated,
+            _is_error=is_error_flags,
             _name=tool_name,
             _workspace=workspace,
             _rank_predicated=rank_predicated,
@@ -1409,11 +1411,16 @@ def create_mock_server(
             entry["response"] = response
             entry["response_fixture"] = source_name
             call_log.append(entry)
-            return {
+            envelope: dict[str, Any] = {
                 "content": [
                     {"type": "text", "text": json.dumps(response)},
                 ],
             }
+            # A fixture marked `is_error` stands for a THROWN tool error, which
+            # production's catch arms return with `isError: true` beside `{error}`.
+            if entry["matched"]["kind"] == "predicate" and _is_error[entry["matched"]["index"]]:
+                envelope["is_error"] = True
+            return envelope
 
         # Prefer the production description; fall back to a generic stub
         # if the tool is not in the catalog (e.g., aspirational tools
