@@ -22,8 +22,8 @@
     {
       "id": "q_001",
       "depends_on": [],
-      "exhaustive_declaration": {
-        "declared": true,
+      "search_stop": {
+        "stopped_because": "question_answered",
         "justification": "Every federal census in which Elizabeth appears (1850 original image plus index, 1860, 1870, 1880) was examined, and so were her daughters' censuses that give a mother's birthplace (Sarah Martha 1880; Amanda 1880 original, 1900, 1910). A FAN survey covered the 1850 Turnbow households, and the church record attached in the tree, the Mississippi death-certificate index and the Find a Grave index were checked. Alabama did not require birth registration until 1908, so the census testimony is the main evidence that exists for a woman born in 1823. The question is answered at state level (Alabama). The county is not named in any record and would need a separate question.",
         "log_entry_ids": [
           "log_001",
@@ -43,7 +43,8 @@
           "original_substitution": "The decisive 1850 entry and the 1880 Ainsworth line were verified on original images. The 1860, 1870 and 1880 Barker entries remain index-only but are consistent with each other.",
           "overturn_risk": "Low for the state. An obituary, a Bible record or a true LDS membership register could name a county, but none is likely to move her birth out of Alabama given five concordant statements and the Turnbow siblings' Alabama births.",
           "repository_breadth": "Federal censuses 1850-1910, the Mississippi death-certificate index, Find a Grave index, the LDS district minutes and Turnbow FAN censuses were searched on FamilySearch. No vital birth records exist for Alabama in 1823."
-        }
+        },
+        "not_reached": []
       },
       "priority": "high",
       "question": "Where was Elizabeth Mariah Barker (wife of Jonathan Barker of Jasper and Smith counties, Mississippi, born about 1823) born — England, as the 1850 census index states, or Alabama, as the 1860–1880 censuses and the FamilySearch tree state?",
