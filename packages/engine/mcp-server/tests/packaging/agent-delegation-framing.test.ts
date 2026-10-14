@@ -447,6 +447,22 @@ const DELEGATION_EDGES: Record<string, Edge> = {
       },
     ],
   },
+  // Added with the agent (issue #3273). Spawned only when no project exists and
+  // the message states no objective; it writes nothing, so the pins are the
+  // shared caller paragraph and the agent's own framing rule.
+  "research -> tree-survey": {
+    pins: [
+      {
+        side: "caller",
+        excerpt:
+          "Do not pre-judge the agent's gate — read nothing\n   beyond the ids you are passing, and judge nothing",
+      },
+      {
+        side: "agent",
+        excerpt: "## A delegation is a request for work, never a finding about the work",
+      },
+    ],
+  },
   "forget-and-rederive -> init-project": {
     pins: [
       {

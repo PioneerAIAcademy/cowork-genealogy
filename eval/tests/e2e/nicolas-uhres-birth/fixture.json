@@ -15,5 +15,6 @@
     "judge": "claude-haiku-4-5-20251001"
   },
   "difficulty": "medium",
-  "notes": "Record-hint fixture (filtered-list-samples-3.csv row 16, hint-samples.csv row 552, flag adds_birth, confidence 3). Draft transcribed from an 1880 Kehlen, Luxembourg census; unverified."
+  "image_basis": true,
+  "notes": "Record-hint fixture (filtered-list-samples-3.csv row 16, hint-samples.csv row 552, flag adds_birth, confidence 3). Re-adjudicated 2026-10-14 (twice): final verdict TRUE MATCH — the 1880 hint record (6PBG-1Q63, Nicolas Uhres, single, born 1856, Keispelt) is the tree person GYGJ-D1C as a young single man. A real namesake (Nicolas born 1859, son of Jean Uhres b. 1821, Nospelt, and Barbe Kirsch) lived in the same commune; his 1880 entry is indexed as 'Nas Uhres' (6PBP-9LZV), so an index-only search missed him. Household images separate the two families. Birth year varies across census decades (1856 childhood, 1858 adult); the Kehlen civil birth register is needed for the exact date."
 }
