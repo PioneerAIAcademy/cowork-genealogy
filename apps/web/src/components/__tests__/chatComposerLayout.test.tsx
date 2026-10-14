@@ -78,4 +78,30 @@ describe('chat composer layout', () => {
     expect(stop).not.toBeNull()
     expect(stop?.closest('.chatControls')).not.toBeNull()
   })
+
+  it('renders Stop immediately before Send, both last in the row', () => {
+    // Being IN the row was never the problem — the test above already passed while the
+    // layout was wrong. What decides where the pair LANDS is which of them comes first,
+    // because the stylesheet puts `margin-left: auto` on exactly that one
+    // (src/styles/__tests__/composerControls.test.ts). With the margin on Send alone the
+    // free space collapsed in front of Send and left Stop against the attach icon —
+    // measured at a 634px gap between them, for the whole duration of every turn.
+    //
+    // So reordering this JSX silently breaks the stylesheet. Move the margin with it.
+    const conn = new FakeConn()
+    Element.prototype.scrollTo = vi.fn()
+    const { container } = render(<ChatPane conn={conn} sessionId="sess_1" isNew={false} />)
+    conn.emit({ type: 'status', state: 'chat_ready' })
+    conn.emit({ type: 'status', state: 'turn_active' })
+
+    const kids = Array.from(container.querySelector('.chatControls')!.children)
+    const at = (cls: string): number => kids.findIndex((e) => e.classList.contains(cls))
+    expect(at('chatStop'), 'Stop is not in the controls row').toBeGreaterThan(-1)
+    expect(
+      at('chatStop'),
+      'Send now precedes Stop, so the auto margin is on the wrong element and Stop ' +
+        'strands mid-row. Move `margin-left: auto` to whichever is first.'
+    ).toBeLessThan(at('chatSend'))
+    expect(at('chatSend'), 'Send is no longer the far-right element').toBe(kids.length - 1)
+  })
 })
