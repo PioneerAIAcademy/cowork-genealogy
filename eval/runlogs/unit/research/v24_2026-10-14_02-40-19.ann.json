@@ -121,6 +121,14 @@
       "llm_score": 3,
       "corrected_score": 3,
       "comment": null
+    },
+    {
+      "test_id": "ut_research_h7w",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 1,
+      "comment": "The agent's reply labels James Tarrant Sr. and Jane Burch (I4/I5) the \"New York line\", but nothing in the scenario places either person in New York; both were born in Virginia. Fabricated geographic characterization contradicting the source material overrides the correct routing decision. Per Edmond's review."
     }
   ]
 }
