@@ -433,7 +433,7 @@
           "required": ["kind"],
           "additionalProperties": false,
           "properties": {
-            "kind": { "enum": ["predicate", "none", "live"] },
+            "kind": { "enum": ["predicate", "none", "live", "staged_ref_refused"] },
             "index": { "type": ["integer", "null"], "minimum": 0 }
           }
         },
