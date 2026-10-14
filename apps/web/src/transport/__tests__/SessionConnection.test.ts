@@ -351,6 +351,20 @@ describe('a 410 from /connect (session more than 24 h old, #3406)', () => {
     expect(expiredEvents(seen)).toHaveLength(1)
   })
 
+  it('a 404 (session deleted) is not read as expired', async () => {
+    let calls = 0
+    const conn = new WsSessionConnection(() => {
+      calls += 1
+      return Promise.reject(new ApiError(404, 'Session not found'))
+    })
+    const seen = listen(conn)
+    conn.connect()
+    await vi.advanceTimersByTimeAsync(0)
+    for (let i = 0; i < 3; i++) await vi.advanceTimersByTimeAsync(2000)
+    expect(calls).toBeGreaterThan(1)
+    expect(expiredEvents(seen)).toHaveLength(0)
+  })
+
   it('any other ApiError status still retries', async () => {
     let calls = 0
     const conn = new WsSessionConnection(() => {
@@ -363,5 +377,17 @@ describe('a 410 from /connect (session more than 24 h old, #3406)', () => {
     for (let i = 0; i < 3; i++) await vi.advanceTimersByTimeAsync(2000)
     expect(calls).toBeGreaterThan(1)
     expect(expiredEvents(seen)).toHaveLength(0)
+  })
+})
+
+describe('a 410 that lands before anyone subscribes', () => {
+  it('is replayed once to a listener that attaches later', async () => {
+    const conn = new WsSessionConnection(() =>
+      Promise.reject(new ApiError(410, 'This session is more than 24 hours old'))
+    )
+    conn.connect()
+    await vi.advanceTimersByTimeAsync(0)
+    const seen = listen(conn)
+    expect(seen.filter((m) => m.state === 'session_expired')).toHaveLength(1)
   })
 })

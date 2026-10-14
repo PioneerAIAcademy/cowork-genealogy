@@ -256,7 +256,7 @@ def test_revoked_cookie_is_not_resurrected_by_a_later_login():
 # --- issue #3406: a session more than 24 h old can be read but not continued ---
 
 
-def _new_session_aged(client: TestClient, hours: float, naive: bool = False) -> str:
+def _new_session_aged(client: TestClient, hours: float) -> str:
     from datetime import timedelta
 
     from app.models import Project, utcnow
@@ -264,8 +264,7 @@ def _new_session_aged(client: TestClient, hours: float, naive: bool = False) -> 
     sid = client.post("/api/sessions", json={}).json()["id"]
     with Session(get_engine()) as s:
         p = s.get(Project, sid)
-        created = utcnow() - timedelta(hours=hours)
-        p.created = created.replace(tzinfo=None) if naive else created
+        p.created = utcnow() - timedelta(hours=hours)
         s.add(p)
         s.commit()
     return sid
@@ -321,9 +320,16 @@ def test_session_list_reports_continuable():
         client.delete(f"/api/sessions/{young}")
 
 
-def test_naive_created_is_read_as_utc_not_a_500():
-    with TestClient(app) as client:
-        client.post("/auth/dev-login", json={"email": "tester@example.com"})
-        sid = _new_session_aged(client, 25, naive=True)
-        assert client.post(f"/api/sessions/{sid}/connect").status_code == 410
-        client.delete(f"/api/sessions/{sid}")
+def test_continuable_handles_aware_and_naive_created():
+    """Postgres reads `created` back tz-aware; SQLite, which every test above
+    runs on, reads it back naive. Called directly so both branches run."""
+    from datetime import timedelta
+
+    from app.models import Project, utcnow
+    from app.sessions import _continuable
+
+    old, young = utcnow() - timedelta(hours=25), utcnow() - timedelta(hours=23)
+    assert _continuable(Project(created=old)) is False
+    assert _continuable(Project(created=young)) is True
+    assert _continuable(Project(created=old.replace(tzinfo=None))) is False
+    assert _continuable(Project(created=young.replace(tzinfo=None))) is True

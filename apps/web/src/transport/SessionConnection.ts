@@ -95,6 +95,11 @@ export class WsSessionConnection implements SessionConnection {
   // silently billing compute for a tab nobody is viewing. Reconnects pause while
   // hidden and resume on focus.
   private hidden = false
+  // The 410 frame, kept because it can arrive before ChatPane subscribes: the
+  // refusal returns before any sandbox work, often inside the first render.
+  // `on()` replays it to a late listener. Every other terminal frame comes after
+  // seconds of retries, by which time the subscriber exists.
+  private expiredFrame: WsMessage | null = null
   // Guards the await window inside connect(): without it a retry firing while
   // the credentials request is in flight would open a second socket.
   private connecting = false
@@ -195,9 +200,8 @@ export class WsSessionConnection implements SessionConnection {
           if (typeof document !== 'undefined') {
             document.removeEventListener('visibilitychange', this.onVisibility)
           }
-          for (const l of [...this.listeners]) {
-            l({ type: 'status', state: 'session_expired', message: err.message })
-          }
+          this.expiredFrame = { type: 'status', state: 'session_expired', message: err.message }
+          for (const l of [...this.listeners]) l(this.expiredFrame)
           return
         }
         if (this.closed || this.hidden) return
@@ -287,6 +291,7 @@ export class WsSessionConnection implements SessionConnection {
 
   on(listener: Listener): () => void {
     this.listeners.add(listener)
+    if (this.expiredFrame) listener(this.expiredFrame)
     return () => this.listeners.delete(listener)
   }
 
