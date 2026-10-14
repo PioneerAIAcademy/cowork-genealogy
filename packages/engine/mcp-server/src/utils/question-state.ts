@@ -204,6 +204,7 @@ export function competingParentSets(
   tree: any,
   questionId: string,
   questionAssertionIds: ReadonlySet<string>,
+  extraPersonIds?: ReadonlySet<string>,
 ): CompetingParentSet[] {
   const related = arr(research?.hypotheses).filter((h) =>
     arr(h?.related_question_ids).includes(questionId),
@@ -220,6 +221,9 @@ export function competingParentSets(
     ) {
       inScope.add(pe.person_id);
     }
+  }
+  if (extraPersonIds) {
+    for (const id of extraPersonIds) inScope.add(id);
   }
   const parents = new Map<string, Set<string>>();
   for (const r of arr(tree?.relationships)) {

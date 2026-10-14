@@ -23,6 +23,7 @@ import { SETTLED_CONFLICT_STATUSES, VALIDATOR_ENUMS } from "../validation/valida
 import { validateIntroduced } from "../validation/introduced-errors.js";
 import { sanitizeTree } from "../validation/tree-sanitize.js";
 import {
+  competingParentSets,
   conflictBlocksCompletion,
   questionTiedAssertionIds,
   whyConflictBlocksCompletion,
@@ -2001,60 +2002,50 @@ export function competingParentSetsInvariants(
   preCallResearch: any,
   tree: any,
 ): string[] {
+  const tier = entry?.tier;
+  if (typeof tier === "string" && (tier === "not_proved" || tier === "disproved")) return [];
+
   const qid = entry?.question_id;
   if (typeof qid !== "string" || qid === "") return [];
 
-  const hypotheses = Array.isArray(preCallResearch?.hypotheses) ? preCallResearch.hypotheses : [];
-  const related = hypotheses.filter(
-    (h: any) =>
-      h &&
-      typeof h === "object" &&
-      Array.isArray(h.related_question_ids) &&
-      h.related_question_ids.includes(qid),
+  // In-scope: only persons whose parentage this proof is actually concluding.
+  // Claims-based: persons named as a child in a ParentChild claim.
+  // Scalar: persons named as a child in a supporting ParentChild assertion.
+  // Subject_person_ids alone is too broad — it includes parents and siblings,
+  // causing false refusals on children/marriage proofs where the subject happens
+  // to have a data-quality tree issue unrelated to the question.
+  const extraPersonIds = new Set<string>();
+  for (const c of Array.isArray(entry.claims) ? entry.claims : []) {
+    if (c?.relationship?.type === "ParentChild" && typeof c.relationship.child === "string") {
+      extraPersonIds.add(c.relationship.child);
+    }
+  }
+  const supportingIds = new Set<string>(
+    Array.isArray(entry.supporting_assertion_ids) ? entry.supporting_assertion_ids : [],
   );
-  if (related.length >= 1) return [];
-
-  const claims = Array.isArray(entry.claims) ? entry.claims : [];
-  let inScope: string[];
-  if (claims.length > 0) {
-    inScope = claims
-      .filter((c: any) => c?.relationship && typeof c.relationship.child === "string")
-      .map((c: any) => c.relationship.child as string);
-  } else {
-    inScope = (
-      Array.isArray(preCallResearch?.project?.subject_person_ids)
-        ? preCallResearch.project.subject_person_ids
-        : []
-    ).filter((id: any): id is string => typeof id === "string");
+  if (supportingIds.size > 0) {
+    for (const a of Array.isArray(preCallResearch?.assertions) ? preCallResearch.assertions : []) {
+      if (
+        supportingIds.has(a?.id) &&
+        a?.relationship?.type === "ParentChild" &&
+        typeof a.relationship.child === "string"
+      ) {
+        extraPersonIds.add(a.relationship.child);
+      }
+    }
   }
-  if (inScope.length === 0) return [];
+  if (extraPersonIds.size === 0) return [];
 
-  const inScopeSet = new Set(inScope);
-  const parents = new Map<string, Set<string>>();
-  for (const r of Array.isArray(tree?.relationships) ? tree.relationships : []) {
-    if (!r || typeof r !== "object") continue;
-    if (r.type !== "ParentChild") continue;
-    if (typeof r.child !== "string" || typeof r.parent !== "string") continue;
-    if (r.subtype != null && String(r.subtype).toLowerCase() !== "biological") continue;
-    if (!inScopeSet.has(r.child)) continue;
-    const s = parents.get(r.child) ?? new Set<string>();
-    s.add(r.parent);
-    parents.set(r.child, s);
-  }
-
-  const competing = [...parents].filter(([, s]) => s.size > 2);
+  const competing = competingParentSets(preCallResearch, tree, qid, new Set(), extraPersonIds);
   if (competing.length === 0) return [];
 
   const details = competing
-    .map(([personId, s]) => `${personId} (${[...s].sort().join(", ")})`)
+    .map(({ personId, parentIds }) => `${personId} (${parentIds.join(", ")})`)
     .join("; ");
   return [
     `proof_summaries ${entry.id ?? "(new entry)"}: question ${qid} has persons with competing ` +
       `parent sets — ${details} — but no hypothesis in hypotheses[] lists "${qid}" in ` +
-      `related_question_ids. A conclusion here treats one parent set as correct without ` +
-      `hypothesis-tracking registering the candidates. ` +
-      `Invoke @plugin:hypothesis-tracking first to set up one hypothesis per candidate ` +
-      `parent set, each listing "${qid}" in related_question_ids, then retry.`,
+      `related_question_ids. Decline to conclude; name hypothesis-tracking as the next step.`,
   ];
 }
 
@@ -5349,7 +5340,7 @@ export async function researchAppend(
             preCallExhaustiveDeclared,
             preCallBlockingConflicts,
             beforeResearch,
-            beforeTree,
+            tree,
             prep.matchScores,
             prep.batchAssertions,
             prep.startingPersonIds,
