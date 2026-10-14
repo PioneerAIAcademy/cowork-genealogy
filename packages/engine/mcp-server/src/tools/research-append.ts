@@ -4920,7 +4920,7 @@ async function prepareOps(
           );
           continue;
         }
-        // No sidecar (record_read, PDF, image, pasted records, or a nil/negative
+        // No sidecar (an unstaged record_read, PDF, image, pasted records, or a nil/negative
         // search): the field must be absent or null — there is no persona
         // document to point at.
         if (entry.record_persona_id != null) {
@@ -4928,7 +4928,7 @@ async function prepareOps(
             fmt(
               i,
               `record_persona_id must be null — log entry '${logId}' has no results sidecar ` +
-                "(results_ref is null; record_read/PDF/image/pasted records carry no persona ids)",
+                "(results_ref is null; a record_read logged without stagedResultsRef, or a PDF/image/pasted record, has no persona document to point at)",
             ),
           );
           continue;
@@ -4936,7 +4936,7 @@ async function prepareOps(
       } else if (typeof ref === "string") {
         const results = await readSidecarResults(ref);
         if (results) {
-          // Only record_search stages GedcomX personas; its results key on
+          // record_search and record_read stage GedcomX personas; their results key on
           // `recordId`. fulltext_search / external_links_search stage transcript
           // text and links keyed on `id`, with no persona document — matching
           // them on `recordId` (a field they never carry) matched nothing every

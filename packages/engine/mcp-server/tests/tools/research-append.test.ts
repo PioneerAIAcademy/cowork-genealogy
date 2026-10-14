@@ -5915,6 +5915,88 @@ describe("research_append (composite persist + enforcement)", () => {
     expect(await readFile(join(dir, "research.json"), "utf-8")).toBe(before); // nothing written
   });
 
+  // ── D2: record_read persona-bearing producer ──
+  // record_read stages a one-element sidecar with GedcomX personas, keyed on
+  // `recordId` in ark:/61903/1:1: form. A matching record_persona_id is accepted.
+
+  const recordReadResearch = () => {
+    const r = baseResearch();
+    r.log = [{ ...searchLogEntry("results/log_001.json"), tool: "record_read" }] as any;
+    return r;
+  };
+  const writeRecordReadSidecar = (records: any[] = [sidecarRecord()]) =>
+    writeSidecar(records).then(() =>
+      writeFile(
+        join(dir, "results", "log_001.json"),
+        JSON.stringify(
+          {
+            log_id: "log_001",
+            tool: "record_read",
+            retrieved: "2026-01-01T00:00:00Z",
+            returned_count: records.length,
+            payload: { results: records },
+          },
+          null,
+          2,
+        ),
+      ),
+    );
+
+  it("accepts a record_persona_id on a record_read-sourced assertion and persists the ARK form record_id", async () => {
+    await writeProject(recordReadResearch());
+    await writeRecordReadSidecar();
+    const { source_id: _s, ...a } = noId(validAssertion("x"));
+    const r = await researchAppend({
+      projectPath: dir,
+      ops: [
+        {
+          section: "assertions",
+          op: "append",
+          entry: {
+            ...a,
+            source_id: "src_001",
+            record_id: "ark:/61903/1:1:ABCD-123",
+            record_persona_id: "p_1",
+            log_entry_id: "log_001",
+          },
+        },
+      ],
+    });
+    expect(r.ok).toBe(true);
+    const persisted = (await readResearch()).assertions[1];
+    expect(persisted.record_persona_id).toBe("p_1");
+    expect(persisted.record_id).toBe("ark:/61903/1:1:ABCD-123");
+  });
+
+  it("rejects a record_persona_id that does not match any persona in a record_read sidecar", async () => {
+    await writeProject(recordReadResearch());
+    await writeRecordReadSidecar();
+    const before = await readFile(join(dir, "research.json"), "utf-8");
+    const { source_id: _s, ...a } = noId(validAssertion("x"));
+    const r = await researchAppend({
+      projectPath: dir,
+      ops: [
+        {
+          section: "assertions",
+          op: "append",
+          entry: {
+            ...a,
+            source_id: "src_001",
+            record_id: "ark:/61903/1:1:ABCD-123",
+            record_persona_id: "p_nonexistent",
+            log_entry_id: "log_001",
+          },
+        },
+      ],
+    });
+    expect(r.ok).toBe(false);
+    if (r.ok) return;
+    expect(r.errors).toHaveLength(1);
+    expect(r.errors[0]).toMatch(/does not resolve to a person/);
+    expect(r.errors[0]).not.toMatch(/no GedcomX personas/);
+    expect(await readFile(join(dir, "research.json"), "utf-8")).toBe(before);
+  });
+
   it("auto-fills across a multi-assertion batch when all ops share one record_id and one record_role", async () => {
     await writeProject(sidecarResearch());
     await writeSidecar();
@@ -6200,7 +6282,7 @@ describe("research_append (composite persist + enforcement)", () => {
     expect(r.ok).toBe(true);
   });
 
-  it("does NOT fire for a non-producer sidecar-less entry (record_read) — still enforces persona-id-must-be-null", async () => {
+  it("enforces persona-id-must-be-null for a sidecar-less record_read entry (results_ref is null)", async () => {
     const research = baseResearch();
     research.log = [
       { ...searchLogEntry(null), tool: "record_read" },
@@ -6238,6 +6320,7 @@ describe("research_append (composite persist + enforcement)", () => {
     expect(bad.ok).toBe(false);
     if (bad.ok) return;
     expect(bad.errors[0]).toMatch(/record_persona_id must be null/);
+    expect(bad.errors[0]).toMatch(/no persona document to point at/);
   });
 
   // ── Joint write: nothing written on failure ──
