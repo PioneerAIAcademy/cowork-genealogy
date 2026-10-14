@@ -5852,6 +5852,142 @@ async function sectionJ(): Promise<void> {
   console.log(`     anchor found: ${t5Found}  (total: ${t5Total}, error: ${t5Error})`);
   record("J", `T5:f.recordPlace1=${metadataState} (metadata place)`, { found: t5Found, total: t5Total, error: t5Error });
 
+  // --- Phase 2b: Drill-down to capture recordPlace2/3 facet param forms ---
+  // Issue #3296: empirically confirm the upstream `params` format at the
+  // county (recordPlace2) and city (recordPlace3) levels. Only recordPlace0
+  // ("10") and recordPlace1 ("10,Alabama") were captured before this.
+  console.log("\n  Phase 2b: drilling down for recordPlace2/3 facet param forms");
+  if (usRegionId !== null) {
+    // Drill from region to state: send f.recordPlace0=<regionId> with facets on,
+    // then capture the raw `params` of the first state-level facet item.
+    const stateBaseQuery =
+      "q.text=" + encodeURIComponent("+executor") +
+      "&f.collectionId=" + encodeURIComponent(cid) +
+      `&f.recordPlace0=${usRegionId}` +
+      "&m.defaultFacets=on";
+    const stateUrl = `${FULLTEXT_URL}?${stateBaseQuery}&${REQUIRE_SWITCH}&count=1`;
+    const stateRes = await fetchRetry(stateUrl, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+        Accept: "application/json",
+        "User-Agent": BROWSER_USER_AGENT,
+      },
+    }, { label: "facets: state-level drill-down" });
+    let stateParams: string | null = null;
+    let countyParams: string | null = null;
+    let cityParams: string | null = null;
+    if (stateRes.ok) {
+      let stateParsed: { facets?: Array<{ displayName?: string; facets?: Array<{ displayName?: string; params?: string }> }> };
+      try {
+        stateParsed = JSON.parse(await stateRes.text());
+      } catch {
+        stateParsed = {};
+      }
+      for (const facet of stateParsed.facets ?? []) {
+        if (facet.displayName !== "Place") continue;
+        const stateItem = (facet.facets ?? []).find((f) => f.params);
+        if (stateItem?.params) {
+          stateParams = stateItem.params;
+          console.log(`  state-level raw params: ${stateParams}`);
+          record("J", "facet:stateParams", stateParams);
+
+          // Extract the f.recordPlace1 value to drill down further.
+          const rp1Match = stateParams.match(/f\.recordPlace1=([^&]+)/);
+          if (rp1Match) {
+            const rp1Value = decodeURIComponent(rp1Match[1]);
+            // Drill from state to county: send f.recordPlace1=<value> with facets on.
+            const countyBaseQuery =
+              "q.text=" + encodeURIComponent("+executor") +
+              "&f.collectionId=" + encodeURIComponent(cid) +
+              `&f.recordPlace1=${encodeURIComponent(rp1Value)}` +
+              "&m.defaultFacets=on";
+            const countyUrl = `${FULLTEXT_URL}?${countyBaseQuery}&${REQUIRE_SWITCH}&count=1`;
+            const countyRes = await fetchRetry(countyUrl, {
+              headers: {
+                Authorization: `Bearer ${token}`,
+                Accept: "application/json",
+                "User-Agent": BROWSER_USER_AGENT,
+              },
+            }, { label: "facets: county-level drill-down" });
+            if (countyRes.ok) {
+              let countyParsed: { facets?: Array<{ displayName?: string; facets?: Array<{ displayName?: string; params?: string }> }> };
+              try {
+                countyParsed = JSON.parse(await countyRes.text());
+              } catch {
+                countyParsed = {};
+              }
+              for (const facet of countyParsed.facets ?? []) {
+                if (facet.displayName !== "Place") continue;
+                const countyItem = (facet.facets ?? []).find((f) => f.params);
+                if (countyItem?.params) {
+                  countyParams = countyItem.params;
+                  console.log(`  county-level raw params: ${countyParams}`);
+                  record("J", "facet:countyParams", countyParams);
+
+                  // Extract the f.recordPlace2 value to drill for city.
+                  const rp2Match = countyParams.match(/f\.recordPlace2=([^&]+)/);
+                  if (rp2Match) {
+                    const rp2Value = decodeURIComponent(rp2Match[1]);
+                    const cityBaseQuery =
+                      "q.text=" + encodeURIComponent("+executor") +
+                      "&f.collectionId=" + encodeURIComponent(cid) +
+                      `&f.recordPlace2=${encodeURIComponent(rp2Value)}` +
+                      "&m.defaultFacets=on";
+                    const cityUrl = `${FULLTEXT_URL}?${cityBaseQuery}&${REQUIRE_SWITCH}&count=1`;
+                    const cityRes = await fetchRetry(cityUrl, {
+                      headers: {
+                        Authorization: `Bearer ${token}`,
+                        Accept: "application/json",
+                        "User-Agent": BROWSER_USER_AGENT,
+                      },
+                    }, { label: "facets: city-level drill-down" });
+                    if (cityRes.ok) {
+                      let cityParsed: { facets?: Array<{ displayName?: string; facets?: Array<{ displayName?: string; params?: string }> }> };
+                      try {
+                        cityParsed = JSON.parse(await cityRes.text());
+                      } catch {
+                        cityParsed = {};
+                      }
+                      for (const facet of cityParsed.facets ?? []) {
+                        if (facet.displayName !== "Place") continue;
+                        const cityItem = (facet.facets ?? []).find((f) => f.params);
+                        if (cityItem?.params) {
+                          cityParams = cityItem.params;
+                          console.log(`  city-level raw params: ${cityParams}`);
+                          record("J", "facet:cityParams", cityParams);
+                        }
+                        break;
+                      }
+                    }
+                  }
+                }
+                break;
+              }
+            }
+          }
+        }
+        break;
+      }
+    }
+    if (!stateParams) {
+      console.log("  state-level params: NOT CAPTURED");
+      record("J", "facet:stateParams", null);
+    }
+    if (!countyParams) {
+      console.log("  county-level params: NOT CAPTURED");
+      record("J", "facet:countyParams", null);
+    }
+    if (!cityParams) {
+      console.log("  city-level params: NOT CAPTURED");
+      record("J", "facet:cityParams", null);
+    }
+  } else {
+    console.log("  Phase 2b skipped — no US region ID.");
+    record("J", "facet:stateParams", null);
+    record("J", "facet:countyParams", null);
+    record("J", "facet:cityParams", null);
+  }
+
   // Test 6: q.fullName with an NLP-recognized name from the anchor's transcript.
   // If q.fullName works at all for name queries, this should find the anchor.
   // The name is extracted from content.entities (type NAME) — the same field
