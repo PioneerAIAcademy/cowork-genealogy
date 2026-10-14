@@ -1,0 +1,822 @@
+{
+  "schema_version": 3,
+  "skill": "timeline",
+  "version": null,
+  "released": false,
+  "releasable": false,
+  "invocation": "test",
+  "timestamp": "2026-10-12_18-32-21",
+  "harness_version": "0.1.0",
+  "model": "claude-sonnet-4-6",
+  "judge_prompt_hash": "0ec4cfbbfee949ee39d19136867fe47e26cc377bc3697cf58c148f42371468f8",
+  "snapshot": {
+    "packages/engine/plugin/skills/timeline/SKILL.md": "2b896fe35fcd6acfad98100a2e711e979b9d6d53a3eb7880e0c92e11793ba747",
+    "packages/engine/plugin/skills/timeline/references/places-guidance.md": "89d780012fde12e10fa4fc2b171450e11dda31f0b61d66ab7e654f77c33284d8",
+    "packages/engine/plugin/skills/timeline/references/timeline-analysis-guide.md": "c73643ad216ca0ce2bcf56a46d70983b7f514f90f3ba06a23348f93ff8061cfc",
+    "eval/tests/unit/timeline/build-patrick-timeline.json": "adf3005beec0d1af1394243c604e69ac1310854acd25fe8459e34618365a5107",
+    "eval/tests/unit/timeline/england-census-timeline.json": "3cb2ad2f679d2a400e87842a84d44ac2c8bc24cc77065bd9170ac57e0a5137df",
+    "eval/tests/unit/timeline/geographic-infeasibility.json": "33ee44f3a167f8d21cc97b45fd0756479400ad2a9eec5bb89d2947ad3f6e771f",
+    "eval/tests/unit/timeline/identity-one-life.json": "52e399347013f3b1c851fc98392b36f09f760ff3c8df1fdcb2a05c489169e7b4",
+    "eval/tests/unit/timeline/identity-two-lives.json": "929b5c062d50117545fdcbc885ea0b85c66bd31c408d7ab6baf4ab3af22cbb1d",
+    "eval/tests/unit/timeline/impossibility-after-death.json": "346bd248a830ee261c585a3c1af603da1edfdcb53774e1481ed5112e6a9f39d1",
+    "eval/tests/unit/timeline/negative-conflict-resolution.json": "973a1d4844f26f91e18a7dd22fe019f7770415dd2a3c17e153b2245c457f0de0",
+    "eval/tests/unit/timeline/negative-hypothesis-tracking.json": "903c724bb613a49206c310a1e6e4de010da03a3136e1ca7e1dd293960477380d",
+    "eval/tests/unit/timeline/negative-person-evidence.json": "f8f1feea1418bd453c2f79dcf3d431f2811ac64a47a84af26b20e5e4fc0f1142",
+    "eval/tests/unit/timeline/negative-proof-conclusion.json": "b7adf30daf85d5c30d40c0f3c49ac028acdf71b74ccc45396a8b801d465a1a23",
+    "eval/tests/unit/timeline/rubric.md": "df9936b1e28fa86a0d431f3c284b831ef260029da297b728aedf03981796000d",
+    "eval/tests/unit/timeline/timeline-with-multi-conflict.json": "6a665a4672c62a2b4f942a85aacbf8292b146b4022ce206ce9523b15cedacf0f",
+    "eval/fixtures/scenarios/england-census-timeline/README.md": "65650a3d1227d414cb63f3a9ef497829bf6d4d0a3f9ed2564f70d127c53e956c",
+    "eval/fixtures/scenarios/england-census-timeline/research.json": "198c3dea13448b0dfbf77d6b037f42f54d08592c2e8d8e2fbf829ec443c4cdb3",
+    "eval/fixtures/scenarios/england-census-timeline/tree.gedcomx.json": "49d3b0b28f70003074d1efae102359cb3396f5bc33c9c507cadd7edee6802dfe",
+    "eval/fixtures/scenarios/flynn-competing-fathers/README.md": "9f6da76c082c4ac56dccfbfa2ee35d3178961a3678197d5c711e239678db0bb0",
+    "eval/fixtures/scenarios/flynn-competing-fathers/research.json": "1bf62d5e610856037d2f17c11938326471694d47f6353f6af24d97f81f489194",
+    "eval/fixtures/scenarios/flynn-competing-fathers/tree.gedcomx.json": "38e1e530f3944c30625a5ed38c22c1d9ba4a866630598eff0714a43117aa5bca",
+    "eval/fixtures/scenarios/flynn-distant-events/README.md": "a5a37bfe7071605b5a93daa1f6def12e8468f27ac7e95a516442c0e306a45785",
+    "eval/fixtures/scenarios/flynn-distant-events/research.json": "152d86c15f246aed099ac9d9d0fb3b04af8112a925218b9101b96d5201411995",
+    "eval/fixtures/scenarios/flynn-distant-events/tree.gedcomx.json": "8bf1255fea312aedd77bab3f7d22e25b0c692a522f813460714d929409d4cc55",
+    "eval/fixtures/scenarios/flynn-impossibility/README.md": "78feb55fd15f3914f3c329b1b0644e5dc709e939eeb44719a54458ecbcdc346b",
+    "eval/fixtures/scenarios/flynn-impossibility/research.json": "bc5ea04e9e5cbccb412635c79911b49907f3f03e25729b6cc917c09d5a09edbe",
+    "eval/fixtures/scenarios/flynn-impossibility/tree.gedcomx.json": "f375d753a86743b4661e439398dc0ce37ea87850fbc8c596fe970fdef994eead",
+    "eval/fixtures/scenarios/flynn-multi-conflict/README.md": "9580980fdf960770fb2728177727b94551a264d89fa9c187cae8eef2bcd1f130",
+    "eval/fixtures/scenarios/flynn-multi-conflict/research.json": "42d5b217fcf2735a8d116e790a55858c85c1e3e03537493f6b012d2b0718cd4a",
+    "eval/fixtures/scenarios/flynn-multi-conflict/tree.gedcomx.json": "65b54727a642fb1e5cfc1ee482bf2284c8f4477c9bfed99f5a2c26b6b2f3f4f0",
+    "eval/fixtures/scenarios/flynn-one-life/README.md": "f0869b56440d0f9f317bf2e0151a0ec461599a0a8b3ffb2aad0ab09f909bdea2",
+    "eval/fixtures/scenarios/flynn-one-life/research.json": "e32f9d985e918e688432cd027d0a7009c1124acf62ca87700e38e0f6988a0fa4",
+    "eval/fixtures/scenarios/flynn-one-life/tree.gedcomx.json": "fa661e8477a268ac502b1769ec40e2d3cc04b4273dab9fdd2b91434b13b12c2e",
+    "eval/fixtures/scenarios/flynn-record-matching/README.md": "db3b206f5df2b627c7caef95c07bf3625573b265068a018ae597b66f6cc62c6a",
+    "eval/fixtures/scenarios/flynn-record-matching/research.json": "3f67b9bb97b80449895ed66866c2ce033dd40aa89b6a477873fbd58204e94ff1",
+    "eval/fixtures/scenarios/flynn-record-matching/results/log_001.json": "f9e9fb76e1e752d1433b751cc4eba64dd035ac398dee587b201df97cf5f87187",
+    "eval/fixtures/scenarios/flynn-record-matching/results/log_002.json": "4e2547a62e95fdc9048c3de7b86a830ec075c258eddb68dc835ae80982278438",
+    "eval/fixtures/scenarios/flynn-record-matching/results/log_003.json": "3ec9c885548960deb30dfbc79c54cab88316247f76aedc6f1fe30b3410fe9d85",
+    "eval/fixtures/scenarios/flynn-record-matching/results/log_004.json": "9001fc2e90f3d655562b3e73e2671434a812e8d54b794333cc6ae0e17b97b7f3",
+    "eval/fixtures/scenarios/flynn-record-matching/starting-tree.gedcomx.json": "7767bb99f02a48a85ab0c3b10ad17e76f5c57e70adbef46cdc3e65c36d735f18",
+    "eval/fixtures/scenarios/flynn-record-matching/tree.gedcomx.json": "7767bb99f02a48a85ab0c3b10ad17e76f5c57e70adbef46cdc3e65c36d735f18",
+    "eval/fixtures/scenarios/flynn-two-lives/README.md": "70a7d5c8f7c37a37055d9a7fbf1566dd3dd412b4d84701b7c75180efea69c1aa",
+    "eval/fixtures/scenarios/flynn-two-lives/research.json": "b792147c9a93da82978104cf6f49cfe9d353560419659c3dba001cbd4a97e7de",
+    "eval/fixtures/scenarios/flynn-two-lives/tree.gedcomx.json": "85e11f802e98f3282840e63a3818154e780de6efdf22652fdf420474d46766f3",
+    "eval/fixtures/scenarios/flynn-with-birthplace-conflict/README.md": "cc7de5fdc61afed0f6392ac72c201c3e48e362d3295178433f48a90f81a5a5e6",
+    "eval/fixtures/scenarios/flynn-with-birthplace-conflict/research.json": "dcfea73cfca5c8402597c6821dbf7899e501ec1b7d891910d9687e38d4f5052e",
+    "eval/fixtures/scenarios/flynn-with-birthplace-conflict/tree.gedcomx.json": "65b54727a642fb1e5cfc1ee482bf2284c8f4477c9bfed99f5a2c26b6b2f3f4f0",
+    "eval/fixtures/scenarios/mid-research-flynn/README.md": "f7020ae65e077c8a6c1a25013de7f884210cffc17fea88eae2c8b48558702ddc",
+    "eval/fixtures/scenarios/mid-research-flynn/research.json": "e3e19c382517435b52ef58c3675a0fece91d25c78b28311f7dc4e9d0cfaa2cda",
+    "eval/fixtures/scenarios/mid-research-flynn/tree.gedcomx.json": "efb4f78453dd94f4d94c6ff8d2bd16ae9519b67a6a8aa179d9e9bf41d1326d86",
+    "eval/fixtures/mcp/place-distance-canterbury.json": "05dd1aa8ad44856772641d943bb3a68b04aaf41f46067faf83aa5aaa3af5d129",
+    "eval/fixtures/mcp/place-distance-ireland-pennsylvania.json": "db32490deab11674ae4e028586282c66378fa26b50045e28d8ca6aa7cfb66648",
+    "eval/fixtures/mcp/place-distance-pennsylvania-ireland.json": "fb11f75ee2a6798ab1c8958fda78529f83935f059e943ba55cad69ad233dd4d0",
+    "eval/fixtures/mcp/place-distance-within-pennsylvania.json": "82178b5b72b67707a5c2c1aa809b62cf11b4eb97bfce963d9ab57cab2124f0f2",
+    "eval/fixtures/mcp/place-search-canterbury.json": "a6d500684d3078c74559d0d9db4091ee4e02c4903efcec3f28d9697b76c8c46e",
+    "eval/fixtures/mcp/place-search-ireland.json": "cd31839e4d7aeed75a120a7e9d2a5b4d5bc67d6a60048a6b9d4055df39fe3c5b",
+    "eval/fixtures/mcp/place-search-ireland-by-name.json": "e23ca058076cb57ea1fd719e0b1a5c9a4bb6afdfefb11e88ee93498ecd1e2ed5",
+    "eval/fixtures/mcp/place-search-ireland-by-place.json": "5439c5df4b13aa66a5e50e49b439812c8db08164d46cc7731e8d815e48f3a6cf",
+    "eval/fixtures/mcp/place-search-pennsylvania.json": "4a4d6585cc9a9e4c2ff952aa3b55a172e0050689e772a9976022d95cdc0d45f2",
+    "eval/fixtures/mcp/place-search-pennsylvania-by-name.json": "bb72d4d15a8f6cde1688cb46393b9eeb931245cb0e7a7a7df8e027e66d03a35e",
+    "eval/fixtures/mcp/place-search-pennsylvania-by-place.json": "23c100903edd6c0dd69992a64539820e9c5f811f88fd2fd2e0fbf551e14457bc",
+    "eval/fixtures/mcp/place-search-schuylkill-by-name.json": "9ef0e099326ccfc98288e19dbf7b07f4c3507542c609a1b6593f2c2c0ff8bfed",
+    "eval/fixtures/mcp/place-search-schuylkill-by-place.json": "9c9c9d0721e2fdb7f2011283c8e401221791dc47668fb3431742daa017aa4479",
+    "eval/fixtures/mcp/place-search-schuylkill-county.json": "6edf894822d7af4d413d1605f9ae7a9b7782c6c515def3a8454a6a7959db31bf",
+    "eval/fixtures/mcp/wiki-read-any.json": "a1fe91696ce987b7897a4bc98256006ce02ac89903c0eaab62cdf923f30883df",
+    "eval/fixtures/mcp/wiki-read-england-census.json": "fe1bd4a40265ba53cf9ab0178be8ba5c2b13decdf4071246a09a623c226c6e2c",
+    "eval/fixtures/mcp/wiki-read-ireland-census.json": "63bf2c7db9deffb89e7fc6e746777a60c668897dec66574e4b6696e937c83e48",
+    "eval/fixtures/mcp/wiki-read-united-states-census.json": "792a04d69ab890369e742aabbf46b604c55bd336a95c02bc7641754dbde097b7"
+  },
+  "tests": [
+    {
+      "test_id": "ut_timeline_eng",
+      "test_type": "positive",
+      "expected_outcome": "pass",
+      "scenario": "england-census-timeline",
+      "mcp_fixtures": [
+        "place-search-canterbury",
+        "place-distance-canterbury",
+        "wiki-read-england-census",
+        "wiki-read-any"
+      ],
+      "outcome": "pass",
+      "flaky": false,
+      "outcome_summary": {
+        "per_run_outcomes": [
+          "pass"
+        ],
+        "aggregated_dimensions": [
+          {
+            "source": "base",
+            "name": "Correctness",
+            "score": 3,
+            "rationale": "All factual claims are supported by tool responses and the input state. The skill correctly identified William Ashford's four documented events (birth ~1838, 1851 census, marriage 1859, death 1874), all in Canterbury, Kent, England. The place resolution via place_search returned 'Canterbury, Kent, England' which matches all events. The England_Census wiki page was fetched and correctly identified the English decennial census years (1841, 1851, 1861, 1871) within William's lifespan. The gap analysis correctly names the missing English census years (1841, 1861, 1871) and a burial record, with appropriate severity levels. No fabricated material or unsupported claims."
+          },
+          {
+            "source": "base",
+            "name": "Completeness",
+            "score": 3,
+            "rationale": "The skill addressed all requirements from the input state. It built a chronology from all four documented events, resolved the place once (Canterbury, Kent, England), fetched the England_Census wiki page to obtain the jurisdiction's census schedule, identified all significant gaps where English censuses should exist but are undocumented (1841, 1861, 1871), and populated expected_events with those specific English census years. No major portions of the required work were omitted."
+          },
+          {
+            "source": "base",
+            "name": "Tool Arguments",
+            "score": 3,
+            "rationale": "All three tool calls passed arguments matching the fixture's expected_args semantically. place_search received 'Canterbury, Kent, England' (expected ~Canterbury) \u2014 a full match. wiki_read received the correct England_Census URL (expected ~England_Census) \u2014 a full match. research_append was a live call with no expected_args to compare. No critical identifiers were wrong, no calls landed in fixture_not_found, and no arguments bore little resemblance to expectations."
+          },
+          {
+            "source": "rubric",
+            "name": "Tool usage \u2014 place resolution and distance",
+            "score": 3,
+            "rationale": "Every non-null standard_place in the persisted timeline traces to a tool response. 'Canterbury, Kent, England' appears in all four events and matches the standardPlace returned by place_search. All distance_from_previous_km values are correctly set to 0 for consecutive events sharing the same standard_place (birth\u21921851 census\u2192marriage\u2192death), or null for the first event. No distance_from_previous_km value was derived by the skill itself or estimated from geography. The place string was resolved exactly once via a single place_search call, and the wiki_read call for the England_Census was issued in parallel with place resolution, not serialized."
+          },
+          {
+            "source": "rubric",
+            "name": "Gap detection",
+            "score": 3,
+            "rationale": "The skill identified all significant gaps. The 1841\u20131851 gap (13 years) is flagged as medium severity with expected_events naming '1841 England census \u2014 William about age 3, expected in parents' household.' The 1859\u20131874 gap (15 years) is flagged as high severity with expected_events naming both '1861 England census \u2014 William about age 23, married head of household' and '1871 England census \u2014 William about age 33, alive until 1874.' These are specific, searchable record types drawn from the England_Census wiki page, not generic placeholders. The 1874 burial gap is flagged as low severity. Severity correctly reflects research impact: the 1861/1871 gap covers his entire married adult life as head of household. No trivial gaps (e.g., between adjacent censuses) were flagged as significant. No destroyed-census records (like the 1890 US census) were listed in expected_events."
+          },
+          {
+            "source": "rubric",
+            "name": "Deferral of logical-impossibility detection",
+            "score": 3,
+            "rationale": "No logical-impossibility detection was performed by the skill itself. All four events (birth ~1838, 1851 census age 13, marriage 1859, death 1874) fall within the recorded lifespan and are chronologically coherent. The skill noted 'No anomalies \u2014 all events fall within the recorded lifespan' and did not adjudicate any vital-limit contradictions. The skill correctly deferred such checks to check-warnings, as instructed."
+          },
+          {
+            "source": "rubric",
+            "name": "Geographic feasibility",
+            "score": null,
+            "rationale": "N/A. All events are at the same place (Canterbury, Kent, England), so there is no distance-sensitive pair to judge. The per-test context confirms 'The distance dimension is N/A: all events are at the same place (Canterbury), so there is no distance-sensitive pair to judge.' No consecutive events are far apart in distance with little time between them; therefore, this dimension does not apply."
+          },
+          {
+            "source": "rubric",
+            "name": "Identity coherence (hypothesis-testing timelines)",
+            "score": null,
+            "rationale": "N/A. This is a Mode-A (single-person life) timeline, not a Mode-B (hypothesis-testing) timeline. The scenario does not test whether records describe one person or two people; it simply builds a chronology for William Ashford from documented events. No identity-coherence verdict was required or issued. This dimension applies only to candidate timelines built to test identity questions, which this is not."
+          }
+        ],
+        "review_dimensions": [
+          {
+            "source": "base",
+            "name": "Correctness",
+            "score": 3,
+            "rationale": "All factual claims are supported by tool responses and the input state. The skill correctly identified William Ashford's four documented events (birth ~1838, 1851 census, marriage 1859, death 1874), all in Canterbury, Kent, England. The place resolution via place_search returned 'Canterbury, Kent, England' which matches all events. The England_Census wiki page was fetched and correctly identified the English decennial census years (1841, 1851, 1861, 1871) within William's lifespan. The gap analysis correctly names the missing English census years (1841, 1861, 1871) and a burial record, with appropriate severity levels. No fabricated material or unsupported claims."
+          },
+          {
+            "source": "base",
+            "name": "Completeness",
+            "score": 3,
+            "rationale": "The skill addressed all requirements from the input state. It built a chronology from all four documented events, resolved the place once (Canterbury, Kent, England), fetched the England_Census wiki page to obtain the jurisdiction's census schedule, identified all significant gaps where English censuses should exist but are undocumented (1841, 1861, 1871), and populated expected_events with those specific English census years. No major portions of the required work were omitted."
+          },
+          {
+            "source": "base",
+            "name": "Tool Arguments",
+            "score": 3,
+            "rationale": "All three tool calls passed arguments matching the fixture's expected_args semantically. place_search received 'Canterbury, Kent, England' (expected ~Canterbury) \u2014 a full match. wiki_read received the correct England_Census URL (expected ~England_Census) \u2014 a full match. research_append was a live call with no expected_args to compare. No critical identifiers were wrong, no calls landed in fixture_not_found, and no arguments bore little resemblance to expectations."
+          },
+          {
+            "source": "rubric",
+            "name": "Tool usage \u2014 place resolution and distance",
+            "score": 3,
+            "rationale": "Every non-null standard_place in the persisted timeline traces to a tool response. 'Canterbury, Kent, England' appears in all four events and matches the standardPlace returned by place_search. All distance_from_previous_km values are correctly set to 0 for consecutive events sharing the same standard_place (birth\u21921851 census\u2192marriage\u2192death), or null for the first event. No distance_from_previous_km value was derived by the skill itself or estimated from geography. The place string was resolved exactly once via a single place_search call, and the wiki_read call for the England_Census was issued in parallel with place resolution, not serialized."
+          },
+          {
+            "source": "rubric",
+            "name": "Gap detection",
+            "score": 3,
+            "rationale": "The skill identified all significant gaps. The 1841\u20131851 gap (13 years) is flagged as medium severity with expected_events naming '1841 England census \u2014 William about age 3, expected in parents' household.' The 1859\u20131874 gap (15 years) is flagged as high severity with expected_events naming both '1861 England census \u2014 William about age 23, married head of household' and '1871 England census \u2014 William about age 33, alive until 1874.' These are specific, searchable record types drawn from the England_Census wiki page, not generic placeholders. The 1874 burial gap is flagged as low severity. Severity correctly reflects research impact: the 1861/1871 gap covers his entire married adult life as head of household. No trivial gaps (e.g., between adjacent censuses) were flagged as significant. No destroyed-census records (like the 1890 US census) were listed in expected_events."
+          },
+          {
+            "source": "rubric",
+            "name": "Deferral of logical-impossibility detection",
+            "score": 3,
+            "rationale": "No logical-impossibility detection was performed by the skill itself. All four events (birth ~1838, 1851 census age 13, marriage 1859, death 1874) fall within the recorded lifespan and are chronologically coherent. The skill noted 'No anomalies \u2014 all events fall within the recorded lifespan' and did not adjudicate any vital-limit contradictions. The skill correctly deferred such checks to check-warnings, as instructed."
+          },
+          {
+            "source": "rubric",
+            "name": "Geographic feasibility",
+            "score": null,
+            "rationale": "N/A. All events are at the same place (Canterbury, Kent, England), so there is no distance-sensitive pair to judge. The per-test context confirms 'The distance dimension is N/A: all events are at the same place (Canterbury), so there is no distance-sensitive pair to judge.' No consecutive events are far apart in distance with little time between them; therefore, this dimension does not apply."
+          },
+          {
+            "source": "rubric",
+            "name": "Identity coherence (hypothesis-testing timelines)",
+            "score": null,
+            "rationale": "N/A. This is a Mode-A (single-person life) timeline, not a Mode-B (hypothesis-testing) timeline. The scenario does not test whether records describe one person or two people; it simply builds a chronology for William Ashford from documented events. No identity-coherence verdict was required or issued. This dimension applies only to candidate timelines built to test identity questions, which this is not."
+          }
+        ]
+      },
+      "totals": {
+        "duration_ms": 95278.7542080041,
+        "duration_api_ms": 94962.0,
+        "judge_duration_ms": 15971.342791002826,
+        "wall_clock_ms": 111524.65105056763,
+        "num_turns": 10,
+        "input_tokens": 365,
+        "cached_input_tokens": 225417,
+        "cache_creation_input_tokens": 37744,
+        "output_tokens": 5596,
+        "judge_input_tokens": 5950,
+        "judge_cached_input_tokens": 0,
+        "judge_output_tokens": 1372,
+        "skill_cost_usd": 0.2933461,
+        "judge_cost_usd": 0.01281,
+        "total_cost_usd": 0.3061561
+      },
+      "runs": [
+        {
+          "run_index": 0,
+          "run_id": "run_ut_timeline_eng_2026-10-12_18-32-21_0",
+          "outcome": "pass",
+          "aborted_reason": null,
+          "error": null,
+          "duration_ms": 95278.7542080041,
+          "duration_api_ms": 94962.0,
+          "num_turns": 10,
+          "skill_attempts": 1,
+          "input_tokens": 365,
+          "cached_input_tokens": 225417,
+          "cache_creation_input_tokens": 37744,
+          "output_tokens": 5596,
+          "model_usage": {
+            "claude-haiku-4-5-20251001": {
+              "inputTokens": 347,
+              "outputTokens": 16,
+              "cacheReadInputTokens": 0,
+              "cacheCreationInputTokens": 0,
+              "webSearchRequests": 0,
+              "costUSD": 0.00042699999999999997,
+              "contextWindow": 200000,
+              "maxOutputTokens": 32000
+            },
+            "claude-sonnet-4-6": {
+              "inputTokens": 18,
+              "outputTokens": 5580,
+              "cacheReadInputTokens": 225417,
+              "cacheCreationInputTokens": 37744,
+              "webSearchRequests": 0,
+              "costUSD": 0.2929191,
+              "contextWindow": 200000,
+              "maxOutputTokens": 32000
+            }
+          },
+          "no_result_message": false,
+          "subagents": [],
+          "subagent_capture_status": "matched_no_transcripts",
+          "main_thread": {
+            "peak_window_tokens": 45311,
+            "compactions": [],
+            "models": [
+              "claude-sonnet-4-6"
+            ]
+          },
+          "skill_cost_usd": 0.2933461,
+          "output": {
+            "text_response": "I have all the data I need. William Ashford (I1) has 4 assertions linked via person_evidence. All events share the same place, so I'll resolve it once and fetch the England census schedule in parallel.\n\nAll place strings are the same, so `distance_from_previous_km` is 0 for every subsequent event. The England census schedule confirms decennial returns survive for 1841, 1851, 1861, and 1871 within William's lifespan (1838\u20131874). The 1931 census was destroyed but that's after William's death \u2014 irrelevant here.\n\n**Gap analysis:**\n- **1841** \u2014 William ~3 years old; should appear in parents' household. Not documented. \u2192 **medium**\n- **1861** \u2014 William ~23, married since 1859, would be head of household. Not documented. \u2192 **high**\n- **1871** \u2014 William ~33, alive until 1874. Not documented. \u2192 **high**\n- **Burial** \u2014 death 1874 recorded, no burial event. \u2192 **low**\n\n**t_001 \u2014 William Ashford \u2014 life timeline** persisted: 4 events, 3 gaps.\n\n**Events:** Birth ~1838 \u2192 1851 census (age 13) \u2192 Marriage 1859 \u2192 Death 1874 \u2014 all Canterbury, Kent, England. All inter-event distances 0 km (no geographic movement documented).\n\n**Gaps:**\n- **~1838\u20131851 | Medium** \u2014 1841 England census absent (William ~age 3; expected in parents' household)\n- **1859\u20131874 | High** \u2014 1861 and 1871 census years both absent; covers his entire married adult life as head of household \u2014 the most significant documentation gap\n- **1874 | Low** \u2014 Burial record expected following the 1874 death registration; not documented\n\n**No anomalies** \u2014 all events fall within the recorded lifespan; all locations are Canterbury (travel feasibility is not a concern).\n\n**Recommended next steps:**\n1. The **high-severity gap (1861 and 1871 censuses)** warrants immediate attention \u2192 use `question-selection` to add research questions targeting those two enumerations.\n2. Run `check-warnings` for biological/logical checks on parent-child age gaps and marriage ages that the chronological view doesn't cover.",
+            "activated": true,
+            "skills_invoked": [
+              "timeline"
+            ],
+            "tool_calls": [
+              {
+                "tool": "mcp__genealogy__place_search",
+                "args": {
+                  "placeName": "Canterbury, Kent, England"
+                },
+                "expected_args": {
+                  "placeName": "~Canterbury"
+                },
+                "matched": {
+                  "kind": "predicate",
+                  "index": 0
+                },
+                "response_fixture": "place-search-canterbury"
+              },
+              {
+                "tool": "mcp__genealogy__wiki_read",
+                "args": {
+                  "url": "https://www.familysearch.org/en/wiki/England_Census"
+                },
+                "expected_args": {
+                  "url": "~England_Census"
+                },
+                "matched": {
+                  "kind": "predicate",
+                  "index": 0
+                },
+                "response_fixture": "wiki-read-england-census"
+              },
+              {
+                "tool": "mcp__genealogy__research_append",
+                "args": {
+                  "projectPath": "/private/var/folders/ml/615yqgf91nb_nb5lzkw2dtmc0000gp/T/eval-ut_timeline_eng-0-0-ohdniz6i",
+                  "section": "timelines",
+                  "op": "append",
+                  "entry": {
+                    "label": "William Ashford \u2014 life timeline",
+                    "person_ids": [
+                      "I1"
+                    ],
+                    "events": [
+                      {
+                        "date": "~1838",
+                        "date_certainty": "estimated",
+                        "event_type": "birth",
+                        "place": "Canterbury, Kent, England",
+                        "standard_place": "Canterbury, Kent, England",
+                        "description": "Born about 1838, Canterbury, Kent, England",
+                        "assertion_ids": [
+                          "a_001"
+                        ],
+                        "distance_from_previous_km": null
+                      },
+                      {
+                        "date": "1851",
+                        "date_certainty": "exact",
+                        "event_type": "census",
+                        "place": "Canterbury, Kent, England",
+                        "standard_place": "Canterbury, Kent, England",
+                        "description": "Enumerated at Canterbury in the 1851 census, age 13",
+                        "assertion_ids": [
+                          "a_002"
+                        ],
+                        "distance_from_previous_km": 0
+                      },
+                      {
+                        "date": "1859",
+                        "date_certainty": "exact",
+                        "event_type": "marriage",
+                        "place": "Canterbury, Kent, England",
+                        "standard_place": "Canterbury, Kent, England",
+                        "description": "Married at Canterbury, 1859",
+                        "assertion_ids": [
+                          "a_003"
+                        ],
+                        "distance_from_previous_km": 0
+                      },
+                      {
+                        "date": "1874",
+                        "date_certainty": "exact",
+                        "event_type": "death",
+                        "place": "Canterbury, Kent, England",
+                        "standard_place": "Canterbury, Kent, England",
+                        "description": "Died 1874, Canterbury, Kent, England",
+                        "assertion_ids": [
+                          "a_004"
+                        ],
+                        "distance_from_previous_km": 0
+                      }
+                    ],
+                    "gaps": [
+                      {
+                        "start": "~1838",
+                        "end": "1851",
+                        "expected_events": [
+                          "1841 England census \u2014 William about age 3, expected in parents' household"
+                        ],
+                        "severity": "medium"
+                      },
+                      {
+                        "start": "1859",
+                        "end": "1874",
+                        "expected_events": [
+                          "1861 England census \u2014 William about age 23, married head of household",
+                          "1871 England census \u2014 William about age 33, alive until 1874"
+                        ],
+                        "severity": "high"
+                      },
+                      {
+                        "start": "1874",
+                        "end": "1874",
+                        "expected_events": [
+                          "burial record following death in 1874"
+                        ],
+                        "severity": "low"
+                      }
+                    ]
+                  }
+                },
+                "expected_args": null,
+                "matched": {
+                  "kind": "live",
+                  "index": null
+                },
+                "response_fixture": "live:research_append",
+                "response": {
+                  "ok": true,
+                  "section": "timelines",
+                  "op": "append",
+                  "entryId": "t_001",
+                  "filesWritten": [
+                    "research.json"
+                  ],
+                  "validation": {
+                    "valid": true,
+                    "warnings": []
+                  }
+                }
+              }
+            ],
+            "files_created": [],
+            "builtin_tool_calls": [
+              {
+                "tool": "Skill",
+                "args": {
+                  "skill": "timeline",
+                  "args": "William Ashford"
+                }
+              },
+              {
+                "tool": "Glob",
+                "args": {
+                  "pattern": "**/*.json",
+                  "path": "/private/var/folders/ml/615yqgf91nb_nb5lzkw2dtmc0000gp/T/eval-ut_timeline_eng-0-0-ohdniz6i"
+                }
+              },
+              {
+                "tool": "Read",
+                "args": {
+                  "file_path": "/private/var/folders/ml/615yqgf91nb_nb5lzkw2dtmc0000gp/T/eval-ut_timeline_eng-0-0-ohdniz6i/research.json"
+                }
+              },
+              {
+                "tool": "ToolSearch",
+                "args": {
+                  "query": "select:mcp__genealogy__place_search,mcp__genealogy__wiki_read",
+                  "max_results": "2"
+                }
+              },
+              {
+                "tool": "ToolSearch",
+                "args": {
+                  "query": "select:mcp__genealogy__research_append",
+                  "max_results": "1"
+                }
+              }
+            ],
+            "file_changes": {
+              "research.json": {
+                "sections_modified": [
+                  "timelines"
+                ],
+                "diff": {
+                  "timelines": {
+                    "added": [
+                      {
+                        "id": "t_001",
+                        "gaps": [
+                          {
+                            "end": "1851",
+                            "start": "~1838",
+                            "severity": "medium",
+                            "expected_events": [
+                              "1841 England census \u2014 William about age 3, expected in parents' household"
+                            ]
+                          },
+                          {
+                            "end": "1874",
+                            "start": "1859",
+                            "severity": "high",
+                            "expected_events": [
+                              "1861 England census \u2014 William about age 23, married head of household",
+                              "1871 England census \u2014 William about age 33, alive until 1874"
+                            ]
+                          },
+                          {
+                            "end": "1874",
+                            "start": "1874",
+                            "severity": "low",
+                            "expected_events": [
+                              "burial record following death in 1874"
+                            ]
+                          }
+                        ],
+                        "label": "William Ashford \u2014 life timeline",
+                        "events": [
+                          {
+                            "date": "~1838",
+                            "place": "Canterbury, Kent, England",
+                            "event_type": "birth",
+                            "description": "Born about 1838, Canterbury, Kent, England",
+                            "assertion_ids": [
+                              "a_001"
+                            ],
+                            "date_certainty": "estimated",
+                            "standard_place": "Canterbury, Kent, England",
+                            "distance_from_previous_km": null
+                          },
+                          {
+                            "date": "1851",
+                            "place": "Canterbury, Kent, England",
+                            "event_type": "census",
+                            "description": "Enumerated at Canterbury in the 1851 census, age 13",
+                            "assertion_ids": [
+                              "a_002"
+                            ],
+                            "date_certainty": "exact",
+                            "standard_place": "Canterbury, Kent, England",
+                            "distance_from_previous_km": 0
+                          },
+                          {
+                            "date": "1859",
+                            "place": "Canterbury, Kent, England",
+                            "event_type": "marriage",
+                            "description": "Married at Canterbury, 1859",
+                            "assertion_ids": [
+                              "a_003"
+                            ],
+                            "date_certainty": "exact",
+                            "standard_place": "Canterbury, Kent, England",
+                            "distance_from_previous_km": 0
+                          },
+                          {
+                            "date": "1874",
+                            "place": "Canterbury, Kent, England",
+                            "event_type": "death",
+                            "description": "Died 1874, Canterbury, Kent, England",
+                            "assertion_ids": [
+                              "a_004"
+                            ],
+                            "date_certainty": "exact",
+                            "standard_place": "Canterbury, Kent, England",
+                            "distance_from_previous_km": 0
+                          }
+                        ],
+                        "generated": "2026-10-12T18:41:26.006Z",
+                        "person_ids": [
+                          "I1"
+                        ]
+                      }
+                    ],
+                    "modified": [],
+                    "deleted": []
+                  }
+                }
+              }
+            }
+          },
+          "validators": {
+            "passed": true,
+            "results": [
+              {
+                "name": "test_activated_run_produces_response",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_decline_response_nonempty",
+                "passed": true,
+                "error": "skipped: positive test",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_direct_delegation_relayed_verbatim",
+                "passed": true,
+                "error": "skipped: not a direct-agent test",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_direct_test_spawned_its_agent",
+                "passed": true,
+                "error": "skipped: not a direct-agent test",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_hand_back_names_its_owner",
+                "passed": true,
+                "error": "skipped: not a hand-back test",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_id_references_resolve",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_log_append_only",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_no_duplicate_tree_ids",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_no_entries_deleted",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_no_main_thread_subagent_only_calls",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_no_out_of_lane_section_writes",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_no_raw_writes_to_protected_files",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_ownership_table",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_parent_child_age_plausibility_flagged",
+                "passed": true,
+                "error": "skipped: no new ParentChild relationships",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_project_file_changes_route_through_writer_tools",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_project_files_pass_full_validation",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_research_json_validates_schema",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_skill_calls_name_a_shipped_skill",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_tool_allowlist",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_tree_facts_agree_with_linked_assertions",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_tree_gedcomx_json_validates_schema",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_tree_ownership_table",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_write_then_validate",
+                "passed": true,
+                "error": "skipped: skill does not declare validate_research_schema",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_census_years_read_from_wiki",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_event_assertion_ids_resolve",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_events_chronologically_ordered",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_events_have_non_empty_assertion_ids",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_no_rejected_assertion_in_events",
+                "passed": true,
+                "error": "skipped: no rejected-assertion-id-<id> tag",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_positive_produces_timeline",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_us_1890_never_expected",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              }
+            ]
+          },
+          "judge": {
+            "skipped": false,
+            "dimensions": [
+              {
+                "source": "base",
+                "name": "Correctness",
+                "score": 3,
+                "rationale": "All factual claims are supported by tool responses and the input state. The skill correctly identified William Ashford's four documented events (birth ~1838, 1851 census, marriage 1859, death 1874), all in Canterbury, Kent, England. The place resolution via place_search returned 'Canterbury, Kent, England' which matches all events. The England_Census wiki page was fetched and correctly identified the English decennial census years (1841, 1851, 1861, 1871) within William's lifespan. The gap analysis correctly names the missing English census years (1841, 1861, 1871) and a burial record, with appropriate severity levels. No fabricated material or unsupported claims."
+              },
+              {
+                "source": "base",
+                "name": "Completeness",
+                "score": 3,
+                "rationale": "The skill addressed all requirements from the input state. It built a chronology from all four documented events, resolved the place once (Canterbury, Kent, England), fetched the England_Census wiki page to obtain the jurisdiction's census schedule, identified all significant gaps where English censuses should exist but are undocumented (1841, 1861, 1871), and populated expected_events with those specific English census years. No major portions of the required work were omitted."
+              },
+              {
+                "source": "base",
+                "name": "Tool Arguments",
+                "score": 3,
+                "rationale": "All three tool calls passed arguments matching the fixture's expected_args semantically. place_search received 'Canterbury, Kent, England' (expected ~Canterbury) \u2014 a full match. wiki_read received the correct England_Census URL (expected ~England_Census) \u2014 a full match. research_append was a live call with no expected_args to compare. No critical identifiers were wrong, no calls landed in fixture_not_found, and no arguments bore little resemblance to expectations."
+              },
+              {
+                "source": "rubric",
+                "name": "Tool usage \u2014 place resolution and distance",
+                "score": 3,
+                "rationale": "Every non-null standard_place in the persisted timeline traces to a tool response. 'Canterbury, Kent, England' appears in all four events and matches the standardPlace returned by place_search. All distance_from_previous_km values are correctly set to 0 for consecutive events sharing the same standard_place (birth\u21921851 census\u2192marriage\u2192death), or null for the first event. No distance_from_previous_km value was derived by the skill itself or estimated from geography. The place string was resolved exactly once via a single place_search call, and the wiki_read call for the England_Census was issued in parallel with place resolution, not serialized."
+              },
+              {
+                "source": "rubric",
+                "name": "Gap detection",
+                "score": 3,
+                "rationale": "The skill identified all significant gaps. The 1841\u20131851 gap (13 years) is flagged as medium severity with expected_events naming '1841 England census \u2014 William about age 3, expected in parents' household.' The 1859\u20131874 gap (15 years) is flagged as high severity with expected_events naming both '1861 England census \u2014 William about age 23, married head of household' and '1871 England census \u2014 William about age 33, alive until 1874.' These are specific, searchable record types drawn from the England_Census wiki page, not generic placeholders. The 1874 burial gap is flagged as low severity. Severity correctly reflects research impact: the 1861/1871 gap covers his entire married adult life as head of household. No trivial gaps (e.g., between adjacent censuses) were flagged as significant. No destroyed-census records (like the 1890 US census) were listed in expected_events."
+              },
+              {
+                "source": "rubric",
+                "name": "Deferral of logical-impossibility detection",
+                "score": 3,
+                "rationale": "No logical-impossibility detection was performed by the skill itself. All four events (birth ~1838, 1851 census age 13, marriage 1859, death 1874) fall within the recorded lifespan and are chronologically coherent. The skill noted 'No anomalies \u2014 all events fall within the recorded lifespan' and did not adjudicate any vital-limit contradictions. The skill correctly deferred such checks to check-warnings, as instructed."
+              },
+              {
+                "source": "rubric",
+                "name": "Geographic feasibility",
+                "score": null,
+                "rationale": "N/A. All events are at the same place (Canterbury, Kent, England), so there is no distance-sensitive pair to judge. The per-test context confirms 'The distance dimension is N/A: all events are at the same place (Canterbury), so there is no distance-sensitive pair to judge.' No consecutive events are far apart in distance with little time between them; therefore, this dimension does not apply."
+              },
+              {
+                "source": "rubric",
+                "name": "Identity coherence (hypothesis-testing timelines)",
+                "score": null,
+                "rationale": "N/A. This is a Mode-A (single-person life) timeline, not a Mode-B (hypothesis-testing) timeline. The scenario does not test whether records describe one person or two people; it simply builds a chronology for William Ashford from documented events. No identity-coherence verdict was required or issued. This dimension applies only to candidate timelines built to test identity questions, which this is not."
+              }
+            ],
+            "judge_cost_usd": 0.01281,
+            "duration_ms": 15971.342791002826,
+            "error": null,
+            "input_tokens": 5950,
+            "cached_input_tokens": 0,
+            "output_tokens": 1372
+          },
+          "started_at": 1791830399.338326,
+          "ended_at": 1791830510.862977
+        }
+      ],
+      "grading_mode": "dimensions",
+      "dimensions_gate_outcome": true
+    }
+  ],
+  "totals": {
+    "duration_ms": 95278.7542080041,
+    "duration_api_ms": 94962.0,
+    "judge_duration_ms": 15971.342791002826,
+    "num_turns": 10,
+    "input_tokens": 365,
+    "cached_input_tokens": 225417,
+    "cache_creation_input_tokens": 37744,
+    "output_tokens": 5596,
+    "judge_input_tokens": 5950,
+    "judge_cached_input_tokens": 0,
+    "judge_output_tokens": 1372,
+    "skill_cost_usd": 0.2933461,
+    "judge_cost_usd": 0.01281,
+    "total_cost_usd": 0.3061561,
+    "wall_clock_ms": 111524.65105056763
+  },
+  "judge_model": "claude-haiku-4-5-20251001",
+  "tool_search": true,
+  "store": "pg"
+}

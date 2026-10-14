@@ -1,0 +1,178 @@
+{
+  "_comment": [
+    "U19's alarms (docs/plan/familysearch-handoff.md, U19): the one file a FamilySearch engineer ports to their platform (F14/F17: Blueprint, Dynatrace). rehearse.py applies it on the rehearsal with every alarm's actions OFF; `page` says which would page. Log filters are CloudWatch TERM patterns over each tier's /var/log/web.stdout.log, whose events carry a syslog prefix before the JSON. `samples` are full lines as CloudWatch stores them: every `match` must match and every `no_match` must not (tests/test_proto_alarms.py, and live `rehearse.py alarms --test-filters`)."
+  ],
+  "alarms": [
+    {
+      "name": "dlq_depth",
+      "page": true,
+      "kind": "sqs",
+      "queue": "dlq",
+      "metric": "ApproximateNumberOfMessagesVisible",
+      "namespace": "AWS/SQS",
+      "statistic": "Maximum",
+      "period_s": 60,
+      "evaluation_periods": 1,
+      "threshold": 1,
+      "comparison": "GreaterThanOrEqualToThreshold",
+      "treat_missing": "notBreaching",
+      "description": "A turn's message was dead-lettered: sqsd gave up on it (MaxRetries), so its turn never ran or never finished.",
+      "trip": "Send the worker queue a message naming no turn row under maxretries_1: the worker answers 400 (refuse_unknown_turn) and sqsd moves it to the DLQ."
+    },
+    {
+      "name": "message_age",
+      "page": true,
+      "kind": "sqs",
+      "queue": "worker",
+      "metric": "ApproximateAgeOfOldestMessage",
+      "namespace": "AWS/SQS",
+      "statistic": "Maximum",
+      "period_s": 300,
+      "evaluation_periods": 1,
+      "threshold": 37000,
+      "comparison": "GreaterThanThreshold",
+      "treat_missing": "notBreaching",
+      "description": "The oldest message on the worker queue is older than any legitimate run. In-flight messages count: on the rehearsal, with none visible and one turn in flight, the alarm fired at a 60 s threshold (U19, 2026-10-13, n=1). So the threshold must sit above the longest legitimate run: a PLACEHOLDER above the 36,300 s VisibilityTimeout until U26's 1,800 s run limit lowers it.",
+      "trip": "Re-put the alarm with threshold 60 while one turn runs longer than 60 s, see ALARM, then restore the file's threshold (rehearse.py alarm-trip does both)."
+    },
+    {
+      "name": "reauth",
+      "page": true,
+      "description": "A patron must sign in to FamilySearch again: a turn closed with no usable grant, the web tier's refresh was refused, or a FamilySearch tool answered with the sign-in instruction mid-run.",
+      "kind": "log",
+      "metric": "Reauth",
+      "namespace": "Genealogy/SearchAgent",
+      "filters": [
+        {
+          "tier": "worker",
+          "pattern": "close signin_required -no_owner"
+        },
+        {
+          "tier": "web",
+          "pattern": "\"ev=grant_refresh\" \"result=refused\""
+        },
+        {
+          "tier": "worker",
+          "pattern": "reauth_hit"
+        }
+      ],
+      "statistic": "Sum",
+      "period_s": 300,
+      "evaluation_periods": 1,
+      "threshold": 1,
+      "comparison": "GreaterThanOrEqualToThreshold",
+      "treat_missing": "notBreaching",
+      "trip": "On the rehearsal database, make the probe patron's refresh_token_enc undecryptable and backdate session_started_at past FS_GRANT_MAX_START_AGE_S, then send a message: the attempt waits (ev=grant_wait), the web refresher logs result=refused, and the worker closes the turn signin_required. Restore with a fresh sign-in.",
+      "samples": {
+        "match": [
+          "Oct 07 15:09:22 ip-10-0-1-23 web[10213]: {\"ev\":\"close\",\"turn_id\":\"7f6d2c1e-0000-4000-8000-000000000001\",\"session_id\":\"sess_0123456789\",\"outcome\":\"signin_required\",\"cause\":\"no_grant\",\"receive_count\":1}",
+          "Oct 07 15:09:22 ip-10-0-1-23 web[10213]: {\"ev\":\"close\",\"turn_id\":\"7f6d2c1e-0000-4000-8000-000000000001\",\"session_id\":\"sess_0123456789\",\"outcome\":\"signin_required\",\"cause\":\"refused\",\"receive_count\":1,\"reason\":\"invalid_grant\"}",
+          "Oct 07 15:09:22 ip-10-0-1-23 web[10213]: INFO:     proto.web: ev=grant_refresh user_id=usr_0123 result=refused age_s=26500",
+          "Oct 07 15:09:22 ip-10-0-1-23 web[10213]: {\"ev\":\"reauth_hit\",\"turn_id\":\"7f6d2c1e-0000-4000-8000-000000000001\",\"tool_name\":\"mcp__genealogy__record_read\",\"agent_id\":null}"
+        ],
+        "no_match": [
+          "Oct 07 15:09:22 ip-10-0-1-23 web[10213]: {\"ev\":\"close\",\"turn_id\":\"7f6d2c1e-0000-4000-8000-000000000001\",\"session_id\":\"sess_0123456789\",\"outcome\":\"signin_required\",\"cause\":\"no_owner\",\"receive_count\":1}",
+          "Oct 07 15:09:22 ip-10-0-1-23 web[10213]: {\"ev\":\"turn\",\"turn_id\":\"7f6d2c1e-0000-4000-8000-000000000001\",\"session_id\":\"sess_0123456789\",\"receive_count\":1,\"seq\":4,\"outcome\":\"signin_required\",\"cause\":\"no_grant\",\"released_turn\":null,\"resumed\":false,\"status\":200}",
+          "Oct 07 15:09:22 ip-10-0-1-23 web[10213]: {\"ev\":\"turn\",\"turn_id\":\"7f6d2c1e-0000-4000-8000-000000000001\",\"session_id\":\"sess_0123456789\",\"receive_count\":5,\"status\":200,\"already_completed\":true,\"outcome\":\"signin_required\",\"cause\":\"error\",\"error\":null}",
+          "Oct 07 15:09:22 ip-10-0-1-23 web[10213]: {\"ev\":\"close\",\"turn_id\":\"7f6d2c1e-0000-4000-8000-000000000001\",\"session_id\":\"sess_0123456789\",\"outcome\":\"ok\",\"cause\":\"ok\",\"receive_count\":1}",
+          "Oct 07 15:09:22 ip-10-0-1-23 web[10213]: INFO:     proto.web: ev=grant_refresh user_id=usr_0123 result=refreshed age_s=26500",
+          "Oct 07 15:09:22 ip-10-0-1-23 web[10213]: WARNING:     proto.web: ev=grant_refresh user_id=usr_0123 result=error error=ConnectTimeout"
+        ]
+      }
+    },
+    {
+      "name": "spend_cap",
+      "page": true,
+      "description": "A session reached its spend cap (SESSION_SPEND_CAP_USD): the halt clause stopped its next tool call.",
+      "kind": "log",
+      "metric": "SpendCapHit",
+      "namespace": "Genealogy/SearchAgent",
+      "filters": [
+        {
+          "tier": "worker",
+          "pattern": "spend_cap spent_usd"
+        }
+      ],
+      "statistic": "Sum",
+      "period_s": 300,
+      "evaluation_periods": 1,
+      "threshold": 1,
+      "comparison": "GreaterThanOrEqualToThreshold",
+      "treat_missing": "notBreaching",
+      "trip": "Run a turn under the cap_1usd probe case (SESSION_SPEND_CAP_USD=1).",
+      "samples": {
+        "match": [
+          "Oct 07 15:09:22 ip-10-0-1-23 web[10213]: {\"ev\":\"spend_cap\",\"turn_id\":\"7f6d2c1e-0000-4000-8000-000000000001\",\"session_id\":\"sess_0123456789\",\"spent_usd\":35.0412,\"cap_usd\":35.0}"
+        ],
+        "no_match": [
+          "Oct 07 15:09:22 ip-10-0-1-23 web[10213]: {\"ev\":\"start\",\"port\":8000,\"spend_cap_usd\":35.0,\"sweep\":true}",
+          "Oct 07 15:09:22 ip-10-0-1-23 web[10213]: {\"ev\":\"turn\",\"turn_id\":\"7f6d2c1e-0000-4000-8000-000000000001\",\"session_id\":\"sess_0123456789\",\"receive_count\":1,\"seq\":9,\"outcome\":\"budget\",\"limit\":\"spend\",\"spent_usd\":35.0412,\"status\":200}",
+          "Oct 07 15:09:22 ip-10-0-1-23 web[10213]: {\"ev\":\"bad_env\",\"name\":\"SESSION_SPEND_CAP_USD\",\"value\":\"x\",\"using\":35.0}"
+        ]
+      }
+    },
+    {
+      "name": "long_agent",
+      "page": true,
+      "description": "A delegation (Agent/Task) ran LONG_AGENT_CALL_S or more (PLACEHOLDER 1,500 s), at its end or still in flight.",
+      "kind": "log",
+      "metric": "LongAgentCall",
+      "namespace": "Genealogy/SearchAgent",
+      "filters": [
+        {
+          "tier": "worker",
+          "pattern": "long_tool_call"
+        }
+      ],
+      "statistic": "Sum",
+      "period_s": 300,
+      "evaluation_periods": 1,
+      "threshold": 1,
+      "comparison": "GreaterThanOrEqualToThreshold",
+      "treat_missing": "notBreaching",
+      "trip": "Run a delegating turn with LONG_AGENT_CALL_S=60 set API-level.",
+      "samples": {
+        "match": [
+          "Oct 07 15:09:22 ip-10-0-1-23 web[10213]: {\"ev\":\"long_tool_call\",\"turn_id\":\"7f6d2c1e-0000-4000-8000-000000000001\",\"tool_use_id\":\"toolu_01\",\"tool_name\":\"Agent\",\"agent_type\":null,\"duration_ms\":1612000,\"in_flight\":false}",
+          "Oct 07 15:09:22 ip-10-0-1-23 web[10213]: {\"ev\":\"long_tool_call\",\"turn_id\":\"7f6d2c1e-0000-4000-8000-000000000001\",\"tool_use_id\":\"toolu_02\",\"tool_name\":\"Task\",\"agent_type\":null,\"duration_ms\":1530000,\"in_flight\":true}"
+        ],
+        "no_match": [
+          "Oct 07 15:09:22 ip-10-0-1-23 web[10213]: {\"ev\":\"tool_call_finish_failed\",\"turn_id\":\"7f6d2c1e-0000-4000-8000-000000000001\",\"tool_name\":\"Agent\",\"error\":\"OperationalError: x\"}",
+          "Oct 07 15:09:22 ip-10-0-1-23 web[10213]: {\"ev\":\"long_call_check_failed\",\"error\":\"OperationalError: x\"}",
+          "Oct 07 15:09:22 ip-10-0-1-23 web[10213]: {\"ev\":\"turn\",\"turn_id\":\"7f6d2c1e-0000-4000-8000-000000000001\",\"session_id\":\"sess_0123456789\",\"receive_count\":1,\"seq\":9,\"outcome\":\"ok\",\"tool_calls\":40,\"status\":200}"
+        ]
+      }
+    },
+    {
+      "name": "no_progress",
+      "page": false,
+      "description": "A turn closed no_progress. HELD, never paging (U24 question 3): today it mixes a stalled agent, a resume that failed twice, a lost tool surface and normal bounded requests.",
+      "kind": "log",
+      "metric": "NoProgress",
+      "namespace": "Genealogy/SearchAgent",
+      "filters": [
+        {
+          "tier": "worker",
+          "pattern": "outcome no_progress -already_completed"
+        }
+      ],
+      "statistic": "Sum",
+      "period_s": 300,
+      "evaluation_periods": 1,
+      "threshold": 1,
+      "comparison": "GreaterThanOrEqualToThreshold",
+      "treat_missing": "notBreaching",
+      "trip": "Ask for a reply with no tools, now or when nudged: the agent stops, the Stop hook nudges it, it stops again without a tool call, and the turn closes no_progress (U19, 2026-10-13, $0.17). A redelivered attempt that does no work ZERO_PROGRESS_CAP times also closes no_progress.",
+      "samples": {
+        "match": [
+          "Oct 07 15:09:22 ip-10-0-1-23 web[10213]: {\"ev\":\"turn\",\"turn_id\":\"7f6d2c1e-0000-4000-8000-000000000001\",\"session_id\":\"sess_0123456789\",\"receive_count\":3,\"seq\":12,\"outcome\":\"no_progress\",\"status\":200}"
+        ],
+        "no_match": [
+          "Oct 07 15:09:22 ip-10-0-1-23 web[10213]: {\"ev\":\"terminal\",\"turn_id\":\"7f6d2c1e-0000-4000-8000-000000000001\",\"session_id\":\"sess_0123456789\",\"reason\":\"no_progress\",\"recorded\":\"no_progress\"}",
+          "Oct 07 15:09:22 ip-10-0-1-23 web[10213]: {\"ev\":\"zero_progress_attempt\",\"turn_id\":\"7f6d2c1e-0000-4000-8000-000000000001\",\"session_id\":\"sess_0123456789\",\"receive_count\":2,\"attempts\":1,\"cap\":2,\"num_turns\":1,\"tool_calls\":0}",
+          "Oct 07 15:09:22 ip-10-0-1-23 web[10213]: {\"ev\":\"turn\",\"turn_id\":\"7f6d2c1e-0000-4000-8000-000000000001\",\"session_id\":\"sess_0123456789\",\"receive_count\":4,\"status\":200,\"already_completed\":true,\"outcome\":\"no_progress\",\"cause\":\"error\",\"error\":null}"
+        ]
+      }
+    }
+  ]
+}

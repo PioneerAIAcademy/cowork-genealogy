@@ -811,6 +811,7 @@ def test_check_guardrail_compliance_is_a_real_result_on_a_treeless_run():
     research = {
         "questions": [{"id": "q1", "status": "resolved"}],
         "proof_summaries": [{"id": "ps1", "question_id": "q1"}],
+        "search_stop": {"stopped_because": "question_answered", "log_entry_ids": ["log_001"], "stop_criteria": None, "not_reached": []},
         "evaluations": [],
     }
     violations = check_guardrail_compliance([], research, None)
