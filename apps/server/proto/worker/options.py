@@ -227,7 +227,8 @@ def provider_env(worker_env: Mapping[str, str]) -> tuple[str | None, dict[str, s
         "ANTHROPIC_MODEL": GATEWAY_MODEL,
         "ANTHROPIC_DEFAULT_HAIKU_MODEL": GATEWAY_SMALL_MODEL,
         # agentgateway < 1.6 cannot parse tool_reference, so tool search fails on
-        # its second turn (plan P3f); tap-agentgateway pins 1.5.0.
+        # its second turn (plan P3f). TAP's Fargate stack pins 1.5.0; its EKS stack
+        # (tap-gateway) runs 1.6.0, where tool search is unverified (handoff U14).
         "ENABLE_TOOL_SEARCH": (worker_env.get("GATEWAY_TOOL_SEARCH") or "false").strip().lower(),
     }
 
