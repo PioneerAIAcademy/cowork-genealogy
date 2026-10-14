@@ -152,7 +152,7 @@ settle it. Do **not** resolve the question, and do **not** write the tree —
 is asserted. Then route to `conflict-resolution`. Re-invoked after the
 conflict is resolved, you update that same `ps_NNN` in place.
 Report the exact failing IDs and route to the missing skill for each gap
-(`record-extraction`, `person-evidence`, or `conflict-resolution`) instead of
+(extraction, `person-evidence`, or `conflict-resolution`) instead of
 asking — who decides changes nothing about whether the gate runs. Advisory unlinked fact/negative assertions (step 3)
 do **not** stop the gate — surface them as a note and continue.
 
@@ -179,9 +179,9 @@ cost in this skill. Scope every lookup to the question/persons at hand:
 - `research_query({ section: "person_evidence", personId })` — per person the
   question concerns (one call per person; `person_evidence` has no
   `questionId` filter, so key off the persons the assertions above name).
-- `research_query({ section: "conflicts", questionId })` — conflicts blocking
-  this question (`blocks_question_ids`); check `status` for which are
-  already resolved.
+- `research_query({ section: "conflicts", questionId })` — conflicts that name
+  this question in `blocks_question_ids` or dispute one of its assertions;
+  check `status` for which are already resolved.
 - `research_query({ section: "hypotheses", questionId })` — related
   hypotheses.
 - `research_query({ section: "questions", questionId })` — the question

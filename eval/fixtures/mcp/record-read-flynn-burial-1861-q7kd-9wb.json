@@ -1,0 +1,58 @@
+{
+  "tool": "record_read",
+  "description": "FamilySearch record_read response for record Q7KD-9WB: the 1861 St. Patrick's, Pottsville burial register entry for Mary Flynn, aged 39. Shaped like a live read (a Record and a Collection source description, per-persona indexFields).",
+  "args": {
+    "recordId": "~Q7KD-9WB"
+  },
+  "response": {
+    "persons": [
+      {
+        "id": "p_1",
+        "gender": "Female",
+        "names": [
+          {
+            "id": "n_1",
+            "type": "BirthName",
+            "given": "Mary",
+            "surname": "Flynn"
+          }
+        ],
+        "principal": true,
+        "facts": [
+          {
+            "type": "Burial",
+            "date": "3 March 1861",
+            "place": "St. Patrick's, Pottsville, Schuylkill, Pennsylvania, United States"
+          }
+        ],
+        "sources": [
+          {
+            "ref": "src_r_1"
+          }
+        ]
+      }
+    ],
+    "relationships": [],
+    "sources": [
+      {
+        "id": "src_r_1",
+        "resource_type": "Record",
+        "title": "Entry for Mary Flynn, \"Pennsylvania, Catholic Church Records, 1750-1950\"",
+        "citation": "\"Pennsylvania, Catholic Church Records, 1750-1950\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:Q7KD-9WB : accessed 30 September 2026), Entry for Mary Flynn.",
+        "url": "https://www.familysearch.org/ark:/61903/1:1:Q7KD-9WB"
+      },
+      {
+        "id": "sd_c_1",
+        "resource_type": "Collection",
+        "title": "Pennsylvania, Catholic Church Records, 1750-1950"
+      }
+    ],
+    "places": [],
+    "indexFields": {
+      "p_1": {
+        "sortKey": "0000000000000001_00001_00001_0000000000000001_000",
+        "age": "39"
+      }
+    }
+  }
+}

@@ -4,7 +4,7 @@
     "skill": "search-external-sites",
     "name": "Generate Ancestry search URL for the 1870 census",
     "type": "positive",
-    "description": "Single-turn decomposition (per unit-test-spec.md §1): test the URL-generation phase only. The skill should produce a pre-filled Ancestry search URL with the right parameters and capture-workflow instructions. The capture-analysis phase (multi-turn) is tested via a separate record-extraction test. The 1850 Ancestry search is already completed in mid-research-flynn (pli_002/log_002); the 1870 census is a genuine gap with no existing plan item, so the skill should proceed with URL generation rather than asking permission to re-run.",
+    "description": "Single-turn decomposition (per unit-test-spec.md §1): test the URL-generation phase only. The skill should produce a pre-filled Ancestry search URL with the right parameters and capture-workflow instructions. The capture-analysis phase (multi-turn) is tested via a separate extraction test. The 1850 Ancestry search is already completed in mid-research-flynn (pli_002/log_002); the 1870 census is a genuine gap with no existing plan item, so the skill should proceed with URL generation rather than asking permission to re-run.",
     "tags": [
       "ancestry",
       "external-site",

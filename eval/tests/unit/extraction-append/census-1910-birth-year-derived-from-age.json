@@ -1,0 +1,72 @@
+{
+  "test": {
+    "id": "ut_extraction_append_011",
+    "skill": "extraction-append",
+    "name": "Extract assertions from the 1910 census — John Becker household (stated relationships)",
+    "type": "positive",
+    "description": "Converted from ut_record_extraction_027: the record the user pasted is now served as a record_read fixture (the 1910 census household of John Becker, Cincinnati Ward 7), and extraction runs in code. 1910 U.S. Census household of John Becker, Cincinnati Ward 7, Hamilton County, Ohio (ark:/61903/1:1:MLFM-GC8). Real record from the Ferber/Becker research (#799). Post-1880: has a relationship-to-head column, so relationships are DIRECT; but records age (not birth date), so birth years are indirect.",
+    "tags": [
+      "extraction",
+      "census",
+      "1910",
+      "ferber-becker",
+      "stated-relationship-direct"
+    ]
+  },
+  "input": {
+    "user_message": "Extract FamilySearch record ark:/61903/1:1:MLFM-GC8.",
+    "scenario": "extraction-workbench"
+  },
+  "mcp_fixtures": [
+    "record-read-becker-1910-mlfm-gc8"
+  ],
+  "judge_context": [
+    "Override for Correctness and Completeness: the test chooses which record the skill extracts. Do not lower any score because the record concerns people the project objective does not name.",
+    "The skill makes one extraction_append call with the record id and relays each record's summary verbatim. Grade that call and that relay; the classifications are decided in code and are checked by the expected_classifications validator, not by you."
+  ],
+  "execution": {
+    "max_turns": 10,
+    "max_wall_clock_seconds": 300
+  },
+  "expected_classifications": [
+    {
+      "record_role": "head_of_household",
+      "fact_type": "name",
+      "record_basis": "stated",
+      "information_quality": "indeterminate"
+    },
+    {
+      "record_role": "head_of_household",
+      "fact_type": "birth",
+      "attribute": "date",
+      "record_basis": "inferred",
+      "information_quality": "indeterminate"
+    },
+    {
+      "record_role": "head_of_household",
+      "fact_type": "birth",
+      "attribute": "place",
+      "record_basis": "stated",
+      "information_quality": "indeterminate"
+    },
+    {
+      "record_role": "daughter",
+      "fact_type": "birth",
+      "attribute": "date",
+      "optional": true,
+      "record_basis": "inferred"
+    },
+    {
+      "record_role": "daughter",
+      "fact_type": "relationship",
+      "optional": true,
+      "record_basis": "stated"
+    },
+    {
+      "record_role": "head_of_household",
+      "fact_type": "residence",
+      "optional": true,
+      "information_quality": "primary"
+    }
+  ]
+}
