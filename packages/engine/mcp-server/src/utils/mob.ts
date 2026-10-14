@@ -256,6 +256,31 @@ export class Mob {
     return this.getPerson().facts ?? [];
   }
 
+  /** Facts carried by the Couple relationships the anchor is a party to.
+   *
+   *  A Marriage lives on the Couple edge and is never duplicated onto either
+   *  spouse (`tree_edit`'s own convention), so `getFacts()` cannot see it.
+   *  Measured over the committed corpus: of 675 marriage-like facts in 636
+   *  trees, 579 are on a Couple edge and 96 on a person — and those 96 are the
+   *  mis-materialized ones the couple-event skip now prevents, so the share a
+   *  person-only read misses trends to all of them. */
+  coupleFacts(): SimplifiedFact[] {
+    const out: SimplifiedFact[] = [];
+    for (const r of this.tree.relationships ?? []) {
+      if (r.type !== "Couple") continue;
+      if (r.person1 !== this.anchorId && r.person2 !== this.anchorId) continue;
+      for (const f of r.facts ?? []) out.push(f);
+    }
+    return out;
+  }
+
+  /** The anchor's own facts plus the facts on its Couple edges. What a
+   *  warning about the anchor's MARRIAGE must read; a warning about its birth
+   *  or death wants `getFacts()`, since those are person-level by definition. */
+  factsWithCoupleFacts(): SimplifiedFact[] {
+    return [...this.getFacts(), ...this.coupleFacts()];
+  }
+
   /** Anchor's facts of an exact type (single-string match). */
   getFactsOfType(type: string): SimplifiedFact[] {
     return this.getFacts().filter((f) => f.type === type);

@@ -50,6 +50,8 @@ import {
   latestYearOfChildFacts,
   latestYearOfPersonFacts,
   latestYearOfSelfFacts,
+  latestYearOfFacts,
+  earliestYearOfFacts,
   perfectDaysOfSelfFacts,
 } from "../utils/fact-helpers.js";
 import { nameSimilarity, normalizeString } from "../utils/string-similarity.js";
@@ -487,7 +489,14 @@ export function deathRangeGreaterThan(mob: Mob, years: number): boolean {
  */
 export function hasLateMarriage(mob: Mob, years: number): boolean {
   const latestBirth = latestYearOfSelfFacts(mob, BIRTHLIKE_FACT_TYPES);
-  const latestMarriage = latestYearOfSelfFacts(mob, MARRIAGELIKE_FACT_TYPES);
+  // The marriage is read from the anchor's facts AND its Couple edges. A
+  // Marriage lives on the edge, so a person-only read saw 96 of the corpus's
+  // 675 marriage-like facts and missed 579 — the warning could fire only on a
+  // tree where a couple event had been mis-materialized onto the person.
+  const latestMarriage = latestYearOfFacts(
+    mob.factsWithCoupleFacts(),
+    MARRIAGELIKE_FACT_TYPES,
+  );
   if (latestBirth === null || latestMarriage === null) return false;
   return latestMarriage - latestBirth > years;
 }
@@ -500,14 +509,17 @@ export function hasLateMarriage(mob: Mob, years: number): boolean {
  * the tag `hasEarlyMarriage14` — married before age 14 is unusual.
  */
 export function hasEarlyMarriage(mob: Mob, years: number): boolean {
-  const age = factYearsDiffEarliestEarliest(
-    mob,
-    BIRTHLIKE_FACT_TYPES,
-    null,
+  // Not factYearsDiffEarliestEarliest: that reads both sides from the anchor's
+  // own facts, and the marriage side lives on the Couple edge (see
+  // hasLateMarriage).
+  const earliestBirth = earliestYearOfSelfFacts(mob, BIRTHLIKE_FACT_TYPES);
+  const earliestMarriage = earliestYearOfFacts(
+    mob.factsWithCoupleFacts(),
     MARRIAGELIKE_FACT_TYPES,
-    null,
   );
-  return age !== null && age < years;
+  if (earliestBirth === null || earliestMarriage === null) return false;
+  const age = earliestMarriage - earliestBirth;
+  return age < years;
 }
 
 /**
