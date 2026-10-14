@@ -63,13 +63,15 @@ check was possible, so `image_basis` is not set.
 **For the identification.**
 - **The children's mother is Myslisch.** The couple's children were baptised
   at Oxhöft to Anton Netzel and a mother indexed as:
-  - Elisabeth **Myslisch** for Elisabeth, `1:1:6ZM2-63Q4`, dated 26 Oct 1845.
+  - Elisabeth **Myslisch** for Elisabeth, `1:1:6ZM2-63Q4`, born 19 Oct and
+    baptised 26 Oct 1845.
     The Germany Births and Baptisms copy, `1:1:NZ3C-T8Z`, dates it 26 Nov
     1845, which is the tree's date.
   - Elisabeth **Myslisz** for Valentin, 14 Feb 1847, `1:1:6ZM2-J635`.
   - **Eva** Myslisck for Anton, 24 Mar 1850, `1:1:6ZM2-5QNZ`.
-- **The timing fits a first child.** The first child was baptised in the same
-  parish 8½–9½ months after the wedding.
+- **The timing fits a first child.** The first child was born 8½ months after
+  the wedding and baptised in the same parish 8¾ months after it (9¾ months
+  if the 26 Nov copy's date is right).
 - **This is the only candidate marriage.** No marriage of an Anton Netzel to a
   Myslisch or Myslisz appears in the collection. A marriage-type search for
   Anton Netzel returns 13 hits, and this one is the only Oxhöft Netzel
@@ -101,10 +103,13 @@ and the father of the 1856–1866 Netzel–Lohde baptisms. A Magdalena Elisabeth
 Myslisz baptised at Oxhöft on 19 Nov 1805 (`1:1:6ZM2-1T6V`) fits the bride's
 age but is unlinked. It is a lead, not evidence.
 
-**What an agent must find.** The 2 Feb 1845 Oxhöft marriage, recorded for the
-couple as a probable identification, with the Desmer/Myslisch surname
-conflict stated. f1 fails a run that asserts as fact that the bride was a
-widow née Myslisch, because nothing shows it.
+**What an agent must find.** f1 is scored on the tree, so recall needs the
+couple's marriage on 2 Feb 1845 at Oxhöft. That the call is probable, and
+that the Desmer/Myslisch conflict is acknowledged, belong in the agent's
+proof summary and conflicts. The judge grades those as proof quality
+(`tier_appropriate`, `conflicts_addressed`), not recall. Nothing found shows
+the bride was a widow née Myslisch, so a proof that states it as fact
+overreaches.
 
 **What could overturn this.** A reading of the restricted 2 Feb 1845 register
 entry, for example at a FamilySearch Center or affiliate library. If it calls
@@ -113,7 +118,12 @@ should become an `avoid` fixture. If it says widow née Myslisch, or gives
 Myslisch parents, the call is proved and `image_basis` can be set.
 
 **How this call was made.** The evidence was retrieved by Claude Code at the
-direction of the assigned genealogist (@Emruthwill). The verdict is the
-genealogist's: "probably a true match, but not proved", accepted as true match
-provided the finding labels it probable. A second opinion was requested on
-#3334.
+direction of the assigned genealogist (@Emruthwill). Their first assessment,
+before the alternatives were weighed, was "possible but unproven". After
+reviewing the evidence above they revised it to "probably a true match, but
+not proved". They accepted it as a true match provided the finding labels it
+probable. The card's instruction not to call a true match from the index alone
+is knowingly overridden, because the image is restricted and so cannot be the
+deciding check. A second opinion was requested on #3334.
+
+The geography tag is `PL`: Oxhöft is today Oksywie in Gdynia, Poland, following the corpus's Posen fixture, although the hint batch's country column says Germany and the collection is filed under Prussia.
