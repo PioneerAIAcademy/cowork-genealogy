@@ -840,9 +840,23 @@ button {
 }
 
 /* Send (and Stop beside it) go hard right, so the destructive-ish and the primary
-   action are never where the cursor rests after ticking Reasoning. */
+   action are never where the cursor rests after ticking Reasoning.
+
+   The auto margin has to sit on whichever is FIRST of the right-hand pair, not on
+   Send. Stop renders only while a turn runs and precedes Send in the DOM, so with
+   the margin on Send alone the free space collapsed in front of Send and left Stop
+   packed against the attach icon -- measured at a 634px gap between the two buttons
+   on a 900px composer, for the whole duration of every turn. */
 .chatControls .chatSend {
   margin-left: auto;
+}
+.chatControls .chatStop {
+  margin-left: auto;
+}
+/* ...and once Stop has taken it, Send must not push away from Stop again; the row's
+   8px `gap` is the whole separation they need. */
+.chatControls .chatStop ~ .chatSend {
+  margin-left: 0;
 }
 .chatTextarea {
   /* `flex: 1` here meant "take the leftover WIDTH" while the bar was a row. The bar is a
