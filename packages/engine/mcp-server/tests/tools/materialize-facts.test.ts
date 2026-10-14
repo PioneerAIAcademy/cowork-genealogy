@@ -771,6 +771,45 @@ describe("materialize_facts", () => {
     expect((p.facts ?? []).length).toBe(0); // the Couple relationship + fact is tree_edit's job
   });
 
+  // Only the exact string `marriage` was skipped, and matching was on the raw
+  // lowercased fact_type, so every other spelling of a couple event wrote a
+  // person-level fact. These three are not invented: each was emitted by a live
+  // e2e run, and each has a different separator shape. No fixture carries any of
+  // them, which is why nothing caught this.
+  it.each([
+    ["marriage_intention", "esther-leroux-marriage"],
+    ["marriage_bann", "sebastiano-mingazzini-son"],
+    ["marriage_date", "ferber-marriage"],
+    ["Marriage Banns", "a spelling no run has emitted yet"],
+    ["marriage_licence", "the British spelling of the dropped alias"],
+    ["divorce", "a divorce assertion is not written onto either spouse"],
+  ])("(21b) a `%s` assertion is skipped too (%s)", async (factType) => {
+    const stub = { id: "I2", gender: "Male", names: [{ id: "N2", given: "Thomas", surname: "Flynn" }] };
+    await writeProject(
+      tree({ persons: [stub] }),
+      research({
+        sources: [S1],
+        assertions: [
+          assertion("a_005", {
+            record_id: "REC-MARR",
+            record_role: "principal",
+            fact_type: factType,
+            date: "12 May 1843",
+            place: "Schuylkill County, Pennsylvania, United States",
+          }),
+        ],
+      }),
+    );
+
+    const result = single(await materializeFacts({ projectPath: dir, personId: "I2", recordId: "REC-MARR", recordRole: "principal" }));
+
+    expect(result.ok).toBe(true);
+    if (!result.ok) return;
+    expect(result.factsAdded).toBe(0);
+    const p = findPerson(await readTree(), "I2");
+    expect((p.facts ?? []).length).toBe(0);
+  });
+
   it("(22) a persona's OTHER assertions still materialize when a `marriage` assertion is mixed in", async () => {
     const stub = { id: "I2", gender: "Male", names: [{ id: "N2", given: "Thomas", surname: "Flynn" }] };
     await writeProject(

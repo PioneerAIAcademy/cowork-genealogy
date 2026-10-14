@@ -69,6 +69,7 @@ import {
   factText,
   materializesToPersonFact,
   type AssertionFactAttr,
+  factTypeKey,
 } from "../utils/record-persona.js";
 import type { SimplifiedGedcomX, SimplifiedFact } from "../types/gedcomx.js";
 import { recordBasisOf } from "../utils/record-basis.js";
@@ -3261,7 +3262,6 @@ const FACT_TYPE_ALIASES: Record<string, string> = {
   christeningplace: "christening",
   baptism: "christening",
   marriage: "marriage",
-  marriagelicense: "marriage",
 };
 
 /** Normalized keys of the place-of-event fact_type variants. When the model
@@ -3279,12 +3279,6 @@ const PLACE_VARIANT_KEYS = new Set([
   "christeningplace",
 ]);
 
-/** Reduce a label to its normalized comparison key: lowercase, then drop every
- *  non-alphanumeric character. */
-function labelKey(raw: string): string {
-  return raw.toLowerCase().replace(/[^a-z0-9]/g, "");
-}
-
 function isBlank(v: unknown): boolean {
   return typeof v !== "string" || v.trim() === "";
 }
@@ -3298,7 +3292,7 @@ function isBlank(v: unknown): boolean {
 function canonicalizeAssertionLabels(entry: Record<string, unknown>): void {
   const ft = entry.fact_type;
   if (typeof ft !== "string") return;
-  const key = labelKey(ft);
+  const key = factTypeKey(ft);
   // hasOwn, not a bare index — see the note on SECTIONS in applyOne. A bare
   // index on `constructor` yields `Object`, which is truthy, so the assignment
   // below would replace a string fact_type with a function.
@@ -4426,15 +4420,15 @@ export function reextractionKey(a: any): string | undefined {
         : undefined;
   if (who === undefined) return undefined;
   const log = typeof a.log_entry_id === "string" && a.log_entry_id !== "" ? a.log_entry_id : "";
-  const ftKey = labelKey(a.fact_type);
-  const fact = Object.hasOwn(FACT_TYPE_ALIASES, ftKey) ? labelKey(FACT_TYPE_ALIASES[ftKey]) : ftKey;
+  const ftKey = factTypeKey(a.fact_type);
+  const fact = Object.hasOwn(FACT_TYPE_ALIASES, ftKey) ? factTypeKey(FACT_TYPE_ALIASES[ftKey]) : ftKey;
   return [a.source_id, arkToBareId(a.record_id), log, who, fact].join("\u0000");
 }
 
 /** The canonical spelling of a fact_type for a message (the alias fold §3.7 applies). */
 function factLabel(ft: unknown): string {
   if (typeof ft !== "string") return String(ft);
-  const k = labelKey(ft);
+  const k = factTypeKey(ft);
   return Object.hasOwn(FACT_TYPE_ALIASES, k) ? FACT_TYPE_ALIASES[k] : ft;
 }
 
@@ -4926,7 +4920,7 @@ async function prepareOps(
           );
           continue;
         }
-        // No sidecar (record_read, PDF, image, pasted records, or a nil/negative
+        // No sidecar (an unstaged record_read, PDF, image, pasted records, or a nil/negative
         // search): the field must be absent or null — there is no persona
         // document to point at.
         if (entry.record_persona_id != null) {
@@ -4934,7 +4928,7 @@ async function prepareOps(
             fmt(
               i,
               `record_persona_id must be null — log entry '${logId}' has no results sidecar ` +
-                "(results_ref is null; record_read/PDF/image/pasted records carry no persona ids)",
+                "(results_ref is null; a record_read logged without stagedResultsRef, or a PDF/image/pasted record, has no persona document to point at)",
             ),
           );
           continue;
@@ -4942,7 +4936,7 @@ async function prepareOps(
       } else if (typeof ref === "string") {
         const results = await readSidecarResults(ref);
         if (results) {
-          // Only record_search stages GedcomX personas; its results key on
+          // record_search and record_read stage GedcomX personas; their results key on
           // `recordId`. fulltext_search / external_links_search stage transcript
           // text and links keyed on `id`, with no persona document — matching
           // them on `recordId` (a field they never carry) matched nothing every
