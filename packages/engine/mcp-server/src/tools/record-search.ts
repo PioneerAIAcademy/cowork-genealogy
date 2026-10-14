@@ -364,7 +364,8 @@ export function buildSearchUrl(input: RecordSearchInput): string {
   // `f.`, not `q.`: verified live 2026-10-14 (probe section G), the `q.` form
   // returns 0 for every hyphenated subdivision (`Aust-Agder`, `Sør-Trøndelag`)
   // while the `f.` facet filter honours them, and the two agree on every other
-  // value, including a nonexistent one, which still returns 0.
+  // value measured (totals and page-1 ids), including a nonexistent one, which
+  // still returns 0.
   if (input.recordSubdivision && input.recordCountry) {
     add(
       "f.recordSubcountry",
