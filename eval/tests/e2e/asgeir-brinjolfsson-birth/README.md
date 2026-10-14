@@ -73,7 +73,7 @@ names, ages and parish:
   tree's own 1835 source for Málfríður is "in entry for Sveinbjorn Jonsson"
   (`681T-ZV2K`).
 
-The church censuses of 1803–1835 all give 1777. The later ones (1842–1858)
+The church censuses of 1785–1835 give 1777, except 1828 and 1830 (1776). The later ones (1842–1858)
 and the 1860 national census (`1:1:62DW-VG76`, a widower) drift to 1776, the
 usual slippage in old age. The daughter christened in 1812 is named Sólveig,
 like Ásgeir's sister.
