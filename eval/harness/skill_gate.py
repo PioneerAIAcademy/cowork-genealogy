@@ -59,14 +59,27 @@ from harness.snapshot import diff_snapshot_vs_disk
 _SCORE_LABEL = {3: "pass", 2: "partial", 1: "fail", None: "n/a"}
 
 
+def gated_body_paths(skill: str) -> tuple[str, ...]:
+    """The files a gated edit lands in: the skill's SKILL.md, the plugin agent
+    body of the same name for a suite keyed on an agent (e.g. person-evidence,
+    which has no `skills/` dir), or a test-only skill's SKILL.md under
+    `eval/skills/` (e.g. extraction-append). All are listed so no kind reads as
+    drift or as "no edit"; a path that does not exist matches nothing."""
+    return (
+        f"packages/engine/plugin/skills/{skill}/SKILL.md",
+        f"packages/engine/plugin/agents/{skill}.md",
+        f"eval/skills/{skill}/SKILL.md",
+    )
+
+
 def stale_snapshot_paths(
     snapshot: dict[str, str], skill: str, repo_root: Path
 ) -> list[str]:
-    """Baseline paths that differ from disk, other than the gated skill's own SKILL.md."""
+    """Baseline paths that differ from disk, other than the gated skill's own body."""
     if not snapshot:
         return []
-    own = f"packages/engine/plugin/skills/{skill}/SKILL.md"
-    return [p for p in sorted(diff_snapshot_vs_disk(snapshot, repo_root)) if p != own]
+    own = gated_body_paths(skill)
+    return [p for p in sorted(diff_snapshot_vs_disk(snapshot, repo_root)) if p not in own]
 
 
 def drift_signal(signal: "GateSignal", snapshot_drifted: list[str]) -> "GateSignal":
@@ -435,14 +448,14 @@ def render_report(
 
 
 def _has_uncommitted_skill_edit(skill: str) -> bool:
-    """True if the working-tree SKILL.md has uncommitted changes vs `git HEAD` —
-    i.e. there is an edit to actually evaluate. A single `git diff --quiet` sanity
-    check (NOT the heavy tree machinery); on any git error, assume an edit exists
-    so the gate never blocks on a non-git checkout."""
-    rel = f"packages/engine/plugin/skills/{skill}/SKILL.md"
+    """True if the working-tree SKILL.md or agent body has uncommitted changes vs
+    `git HEAD` — i.e. there is an edit to actually evaluate. A single `git diff
+    --quiet` sanity check (NOT the heavy tree machinery); on any git error, assume
+    an edit exists so the gate never blocks on a non-git checkout."""
     try:
         r = subprocess.run(
-            ["git", "-C", str(REPO_ROOT), "diff", "--quiet", "HEAD", "--", rel]
+            ["git", "-C", str(REPO_ROOT), "diff", "--quiet", "HEAD", "--",
+             *gated_body_paths(skill)]
         )
     except (OSError, ValueError):
         return True
@@ -545,10 +558,10 @@ def main(argv: list[str] | None = None) -> int:
     no_edit = not _has_uncommitted_skill_edit(args.skill)
 
     # --- Snapshot drift: does the baseline match the current working tree? ---
-    # The gated skill's own SKILL.md always differs from the baseline (it IS
-    # the edit being gated), so exclude it. Any OTHER path differing means the
-    # baseline was recorded against different repo state — fixtures, other
-    # skills, agent bodies — and the comparison is stale.
+    # The gated skill's own body (SKILL.md or agent .md) always differs from the
+    # baseline (it IS the edit being gated), so exclude it. Any OTHER path
+    # differing means the baseline was recorded against different repo state —
+    # fixtures, other skills, other agent bodies — and the comparison is stale.
     snapshot_drifted = stale_snapshot_paths(baseline.snapshot, args.skill, REPO_ROOT)
 
     gate_specs = [mined_spec]
@@ -566,7 +579,7 @@ def main(argv: list[str] | None = None) -> int:
     signal = compute_signal(mined_rows, named_dimension=args.dimension)
     if no_edit and signal.verdict != "NEEDS YOUR EYES":
         signal = GateSignal("NEEDS YOUR EYES", [
-            "no uncommitted edit to this skill's SKILL.md — there is nothing to "
+            "no uncommitted edit to this skill's SKILL.md or agent body — there is nothing to "
             "evaluate (apply the improver's edits first). The baseline run-log may "
             "also predate the committed body; run a fresh `make eval-skill` if "
             "unsure.",
