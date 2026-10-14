@@ -151,11 +151,13 @@ tree_edit({
 
   // ── targeting (per operation) ──
   personId?: string,          // add_fact/update_fact (person-held facts — exactly one of
-                              //   personId | relationshipId), add_name, update_name, update_person
+                              //   personId | relationshipId), add_name, update_name, update_person,
+                              //   remove (scopes a shared factId to this person's copy)
   factId?: string,            // update_fact, remove
   nameId?: string,            // update_name
   relationshipId?: string,    // add_fact/update_fact (Couple-held facts — exactly one of
-                              //   personId | relationshipId), update_relationship, remove
+                              //   personId | relationshipId), update_relationship,
+                              //   remove (the edge itself, or scopes a shared factId to it)
   sourceId?: string,          // update_source
 
   // ── payloads (snake_case, NO id — the tool assigns) ──
@@ -567,18 +569,14 @@ Sequence (validate-before-persist, tree-only):
 | `add_fact` / `update_fact` targeting a `ParentChild` relationship, or `add_relationship` with facts on a `ParentChild` | input error — facts live only on Couple relationships |
 | A fact payload (any write path) with a non-string `date` / `standard_date` / `place` / `standard_place` / `value` — e.g. a nested `{ original, formal }` date object | input error naming the field and expected shape; write nothing (§4.1 "Fact payload shape") |
 | `add_person` inline fact / `add_relationship` fact carries an `id` | input error — the tool assigns `F` ids |
-<<<<<<< HEAD
 | `remove` with a `personId` and no `factId` (attempt to delete a person) | input error — use `merge_tree_persons` |
 | `remove` of a `factId` more than one holder carries, unscoped | input error naming every holder — pass `personId` or `relationshipId` |
 | `remove` with both `personId` and `relationshipId` | input error — one or the other scopes a `factId` |
-=======
-| `remove` with a `personId` (attempt to delete a person) | input error — use `merge_tree_persons` |
 | `update_relationship` with no `relationshipId` or no `subtype` | input error |
 | `update_relationship` with an empty or whitespace `subtype` | input error; write nothing |
 | `update_relationship` on a `relationshipId` not in the tree | staleness error; write nothing |
 | `update_relationship` on a Couple | input error — only a ParentChild edge carries a subtype |
 | `update_relationship` retype that would duplicate an edge already on the pair | input error naming that edge; write nothing |
->>>>>>> origin/3032-stage1a-relationship-model
 | `resolveStandardPlace` network call fails | best-effort: set `standard_place: null`, add a warning; never fail the edit on a place-resolution miss |
 | `projectPath` is a real directory holding **neither** project file | write nothing; `{ ok: false, reason: "no_project", errors }` — the user is not in a research project, so this is an answer rather than a failure and is **not** marked `isError`. A directory holding exactly one of the two files is a *broken* project and stays loud. Applies to `tree_correct` identically. See the write-boundary invariants in `guardrail-enforcement-spec.md` |
 | Resulting tree carries a **call-introduced** validation error | write nothing; return `{ ok: false, errors }`. A pre-existing error rides as a warning |
