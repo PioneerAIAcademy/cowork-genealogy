@@ -784,6 +784,39 @@ def test_a_detach_sentence_that_names_no_record_still_fails():
         raise AssertionError(f"a detach left attributed to the protected source passed: {reply!r}")
 
 
+# --- the detach guard: a detach term the report calls harmful ------------
+
+# The passage from `ut_source_evaluation_o3c` on `v2_2026-10-12_12-37-51.json`,
+# verbatim. It tells the researcher to keep the source, and the word "detaching"
+# appears only to say what detaching would cost. No negator precedes it.
+_O3C_PASSAGE = (
+    "The Minnesota Death Index is described as a database (no images) - there is "
+    "no scan to open within this collection. Go to the original death certificate "
+    "to read the date as it was written, then use FamilySearch's index-correction "
+    "path to fix the indexed year. Keep the source attached - the record is almost "
+    "certainly about this person, and detaching it loses the evidence."
+)
+
+
+def test_a_detach_term_the_report_calls_harmful_is_not_a_recommendation():
+    _no_detach(_O3C_PASSAGE, _TEST)
+
+
+def test_the_harm_wording_does_not_license_a_real_detach_recommendation():
+    """Both directions: the same words around a genuine recommendation still fail."""
+    for text in (
+        "The Minnesota Death Index entry has the wrong year. Detach this source; "
+        "it loses nothing for this person.",
+        "The Minnesota Death Index entry has the wrong year. Detach it and the "
+        "index error loses its place in the profile.",
+        "The Minnesota Death Index entry has the wrong year; detaching it loses nothing.",
+        "The Minnesota Death Index entry has the wrong year. Detaching it wastes nothing, so do it.",
+        "The Minnesota Death Index entry has the wrong year. Unlinking it drops no evidence for this person.",
+    ):
+        with pytest.raises(AssertionError):
+            _no_detach(text, _TEST)
+
+
 # --- person_warnings over the project tree (issue #2942) ------------------
 
 _pw_called = _VALIDATOR.test_project_warnings_called_on_tree_person
