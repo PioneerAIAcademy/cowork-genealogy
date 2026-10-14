@@ -6330,7 +6330,7 @@ describe("research_append (composite persist + enforcement)", () => {
   it("leaves a non-place phrase unstandardized: no sidecar copy, no geocode, no warning (#1962)", async () => {
     await writeProject(sidecarResearch());
     const rec = sidecarRecord();
-    rec.gedcomx.persons[0].facts.push({
+    rec.gedcomx.persons[0]!.facts!.push({
       id: "F2",
       type: "Residence",
       place: "Same House",
@@ -6355,7 +6355,7 @@ describe("research_append (composite persist + enforcement)", () => {
     expect(r.ok, JSON.stringify(r)).toBe(true);
     if (!r.ok || !("results" in r)) return;
     expect(r.resolvedPlaces ?? []).toEqual([]);
-    expect(JSON.stringify(r.warnings ?? [])).not.toContain("Same House");
+    expect(r.validation.warnings.join(" ")).not.toMatch(/Same House/);
     expect(vi.mocked(resolveStandardPlace)).not.toHaveBeenCalled();
     expect((await readResearch()).assertions[1].standard_place).toBeUndefined();
   });
