@@ -136,6 +136,13 @@ describe("family holes", () => {
     expect(at(1706)).toHaveLength(1);
   });
 
+  it("child_gap: several children before the marriage are the couple's own, so their gaps stay", () => {
+    const kids: [number, number][] = [[1860, 1930], [1868, 1940], [1870, 1945]];
+    const g = detectGaps(family(kids, { motherBirth: 1840, marriage: 1870 })).filter((x) => x.type === "child_gap");
+    expect(g).toHaveLength(1);
+    expect(g[0].yearRange).toEqual({ start: 1861, end: 1867 });
+  });
+
   it("child_gap: a 4-year spacing is not a gap", () => {
     expect(types(family([[1876, 1950], [1880, 1950]]))).not.toContain("child_gap");
   });
