@@ -88,8 +88,16 @@ fact's standard date, read by the same parser `person_warnings` uses:
   Baptism and the rest of `BIRTHLIKE_FACT_TYPES` in `utils/mob.ts`) bounds it
   from above only (born on or before);
 - death: every Death fact; with none, any other death-like fact (Burial,
-  Cremation, Funeral, Obituary, Probate — `DEATHLIKE_FACT_TYPES`) bounds it from
-  above only (died on or before).
+  Cremation, Funeral, Obituary, Probate, the registrations —
+  `DEATHLIKE_FACT_TYPES`) bounds it from above only (died on or before). **Will
+  is excluded**: `person_warnings` counts it as death-like, but a will is signed
+  by the living, so its date is no evidence the person had died. A death fact
+  with **no date at all** says the child died but not when: the child is
+  `undetermined`, never counted as living.
+
+When only such an upper bound exists and it straddles a census day, the
+`undetermined` reason says that a birth (or death) date would place the child,
+not that a fuller date is needed — the bound's date may already be exact.
 
 An open-ended date is not evidence for its open side: `Aft 1890` says nothing
 about how late, and `Bef 1895` nothing about how early, so that side is read as

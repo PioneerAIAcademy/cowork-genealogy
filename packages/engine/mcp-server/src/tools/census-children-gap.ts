@@ -96,6 +96,9 @@ interface ParsedChild {
   hasDeathDate: boolean;
   /** Set when the child cannot be placed against any census day. */
   problem?: string;
+  /** What would place a birth or death that straddles a census day. */
+  birthHint?: string;
+  deathHint?: string;
 }
 
 function validateCensuses(input: CensusChildrenGapInput): { errors: string[]; censuses: CensusChildCounts[] } {
@@ -186,12 +189,12 @@ function placeChild(child: ParsedChild, year: CensusYear, dayOf: CensusDayOf): C
   // A death before the census day proves the birth was before it too.
   if (child.death && child.death.latest < day) return "dead";
   if (child.birth.latest > day) {
-    return { reason: `the birth date cannot be placed before or after the ${year} census day (${iso}); give the month or day` };
+    return { reason: `the birth date cannot be placed before or after the ${year} census day (${iso}); ${child.birthHint ?? "give the month or day"}` };
   }
   if (!child.death) return "living";
   if (child.death.latest < day) return "dead";
   if (child.death.earliest >= day) return "living";
-  return { reason: `the death date cannot be placed before or after the ${year} census day (${iso}); give the month or day` };
+  return { reason: `the death date cannot be placed before or after the ${year} census day (${iso}); ${child.deathHint ?? "give the month or day"}` };
 }
 
 interface CensusTally {
@@ -413,15 +416,17 @@ function factKind(fact: SimplifiedFact): string {
 function factInterval(
   person: SimplifiedPerson,
   kinds: ReadonlySet<string>,
-): { interval: DayInterval | null; dates: string[]; unreadable: boolean } {
+): { interval: DayInterval | null; dates: string[]; unreadable: boolean; undated: boolean } {
   let interval: DayInterval | null = null;
   const dates: string[] = [];
   let unreadable = false;
+  let undated = false;
   for (const fact of person.facts ?? []) {
     if (!kinds.has(factKind(fact))) continue;
     const std = getStandardDate(fact);
     if (std === null) {
       if (fact.date) unreadable = true;
+      else undated = true;
       continue;
     }
     const range = getDayRange(std);
@@ -438,7 +443,7 @@ function factInterval(
       ? { earliest: Math.min(interval.earliest, earliest), latest: Math.max(interval.latest, latest) }
       : { earliest, latest };
   }
-  return { interval, dates, unreadable };
+  return { interval, dates, unreadable, undated };
 }
 
 const BIRTH_KINDS: ReadonlySet<string> = new Set(["Birth"]);
@@ -446,7 +451,9 @@ const BIRTH_KINDS: ReadonlySet<string> = new Set(["Birth"]);
 const BIRTH_BOUND_KINDS: ReadonlySet<string> = new Set([...BIRTHLIKE_FACT_TYPES].filter((k) => k !== "Birth"));
 const DEATH_KINDS: ReadonlySet<string> = new Set(["Death"]);
 /** Died on or before any of these. */
-const DEATH_BOUND_KINDS: ReadonlySet<string> = new Set([...DEATHLIKE_FACT_TYPES].filter((k) => k !== "Death"));
+const DEATH_BOUND_KINDS: ReadonlySet<string> = new Set(
+  [...DEATHLIKE_FACT_TYPES].filter((k) => k !== "Death" && k !== "Will"),
+);
 
 /** The mother's children from the tree, as placement input. Every ParentChild
  *  edge from her counts unless its subtype denies biological parentage, so a
@@ -504,6 +511,9 @@ function childrenFromTree(
     if (!problem && !deathInterval && (death.unreadable || deathBound.unreadable)) {
       problem = "its death date in the tree cannot be read";
     }
+    if (!problem && !deathInterval && (death.undated || deathBound.undated)) {
+      problem = "the tree records a death for this child with no date";
+    }
     if (!problem && birthInterval && deathInterval && deathInterval.latest < birthInterval.earliest) {
       problem = "its death date in the tree is before its birth date";
     }
@@ -513,6 +523,12 @@ function childrenFromTree(
       death: deathInterval,
       hasDeathDate: deathInterval !== null,
       ...(problem ? { problem } : {}),
+      ...(!birth.interval && birthBound.interval
+        ? { birthHint: "the tree has only a christening-type date, which shows the birth was on or before it; a birth date would place it" }
+        : {}),
+      ...(!death.interval && deathBound.interval
+        ? { deathHint: "the tree has only a burial-type date, which shows the death was on or before it; a death date would place it" }
+        : {}),
     });
   }
   return { children, used };

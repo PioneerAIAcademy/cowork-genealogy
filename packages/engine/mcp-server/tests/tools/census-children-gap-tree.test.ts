@@ -231,6 +231,45 @@ describe("census_children_gap tree mode", () => {
     expect(r.knownChildrenUsed?.[0].death).toBe("on or before Funeral 4 May 1897");
   });
 
+  it("a will is not evidence of death: a child who made one in 1905 is still living in 1910", async () => {
+    // Will is in DEATHLIKE_FACT_TYPES (person_warnings' anchor), but a will is
+    // signed by the living, so it must not bound the death.
+    await seed(tree([], {
+      persons: [person("W1", "Female", [
+        { id: "WB", type: "Birth", date: "12 Mar 1880", standard_date: "12 Mar 1880" },
+        { id: "WW", type: "Will", date: "4 May 1905", standard_date: "4 May 1905" },
+      ])],
+      relationships: [{ id: "R-M-W1", type: "ParentChild", parent: "M", child: "W1" }],
+    }));
+    const r = ok(await run("M", [
+      { year: 1900, childrenBorn: 1, childrenLiving: 1 },
+      { year: 1910, childrenBorn: 1, childrenLiving: 1 },
+    ]));
+    expect(r.conflicts).toEqual([]);
+    expect(r.totalMissing).toBe(0);
+  });
+
+  it("a death fact with no date makes the child undetermined, not living", async () => {
+    await seed(tree([], {
+      persons: [person("U1", "Female", [
+        { id: "UB", type: "Birth", date: "12 Mar 1880", standard_date: "12 Mar 1880" },
+        { id: "UD", type: "Death", place: "Ohio" },
+      ])],
+      relationships: [{ id: "R-M-U1", type: "ParentChild", parent: "M", child: "U1" }],
+    }));
+    const r = ok(await run("M", [{ year: 1900, childrenBorn: 1, childrenLiving: 0 }]));
+    expect(r.conflicts).toEqual([]);
+    expect(r.undetermined).toEqual([expect.objectContaining({ reason: "the tree records a death for this child with no date" })]);
+  });
+
+  it("an upper bound alone says what would place the child, not 'give the month or day'", async () => {
+    await seed(tree([{ id: "K", christening: "12 Jul 1902" }, { id: "Q", birth: "1880", burial: "3 Feb 1950" }]));
+    const r = ok(await run("M", [{ year: 1910, childrenBorn: 2, childrenLiving: 2 }, { year: 1900, childrenBorn: 1, childrenLiving: 1 }]));
+    const reasons = r.undetermined.map((u) => u.reason).join(" | ");
+    expect(reasons).not.toMatch(/give the month or day/);
+    expect(reasons).toMatch(/a birth date would place it|a death date would place it/);
+  });
+
   it("refuses a motherId that names a man", async () => {
     await seed(tree(MERCER_KIDS));
     const r = await run("D");
