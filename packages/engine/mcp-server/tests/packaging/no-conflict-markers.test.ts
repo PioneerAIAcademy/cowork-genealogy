@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { readFileSync, readdirSync, statSync } from "node:fs";
+import { readFileSync, readdirSync, lstatSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import { dirname, join, relative } from "node:path";
 
@@ -40,7 +40,15 @@ function collect(dir: string, out: string[] = []): string[] {
   for (const entry of readdirSync(dir)) {
     if (SKIP_DIRS.has(entry)) continue;
     const full = join(dir, entry);
-    if (statSync(full).isDirectory()) collect(full, out);
+    // lstat, and skip every symlink. `eval/.env` and the engine's
+    // `node_modules` are both links today. Following them risks a loop, and a
+    // DANGLING link makes `statSync` throw ENOENT — which fails this test for a
+    // reason that has nothing to do with conflict markers. A linked file's real
+    // content is either elsewhere in this tree, where it is scanned on its own,
+    // or outside it, where it is not ours to lint.
+    const st = lstatSync(full);
+    if (st.isSymbolicLink()) continue;
+    if (st.isDirectory()) collect(full, out);
     else if (SCANNED.has(entry.slice(entry.lastIndexOf(".")))) out.push(full);
   }
   return out;

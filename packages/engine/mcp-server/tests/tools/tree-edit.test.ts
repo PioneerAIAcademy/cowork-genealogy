@@ -992,11 +992,41 @@ describe("tree_edit", () => {
     if (!r.ok) expect(JSON.stringify(r)).toMatch(/not both/);
   });
 
-  it("remove scoped to a holder that does not carry the fact says who does", async () => {
+  it("remove scoped to an id that is not in the tree is refused", async () => {
+    // I3 is absent from sharedFactTree(), so this is the not-found arm — NOT
+    // the "says who does" one, which needs a person who exists and simply does
+    // not carry the fact. That case is the test below; without it, disabling
+    // the "it is on ..." throw left all 103 tests green.
     await writeProject(sharedFactTree());
     const r = await treeCorrect({ projectPath: dir, operation: "remove", factId: "F1", personId: "I3" } as any);
     expect(r.ok).toBe(false);
     if (!r.ok) expect(JSON.stringify(r)).toMatch(/person 'I3' not found in tree/);
+  });
+
+  it("remove scoped to a person who does not carry the fact names who does", async () => {
+    const t = sharedFactTree();
+    (t as any).persons.push({ id: "I3", names: [{ id: "N3", full: "Third Person" }], facts: [] });
+    await writeProject(t);
+    const r = await treeCorrect({ projectPath: dir, operation: "remove", factId: "F1", personId: "I3" } as any);
+    expect(r.ok).toBe(false);
+    if (!r.ok) {
+      expect(JSON.stringify(r)).toMatch(/is not carried by person 'I3'/);
+      expect(JSON.stringify(r)).toMatch(/person 'I1'/);
+      expect(JSON.stringify(r)).toMatch(/person 'I2'/);
+    }
+    // The refusal wrote nothing: both real holders keep their fact.
+    expect(((await readTree()) as any).persons.filter((p: any) => (p.facts ?? []).length === 1)).toHaveLength(2);
+  });
+
+  it("remove carrying both scopes and no factId complains about the scopes, not about persons", async () => {
+    await writeProject(sharedFactTree());
+    const r = await treeCorrect({
+      projectPath: dir, operation: "remove", personId: "I1", relationshipId: "R1",
+    } as any);
+    expect(r.ok).toBe(false);
+    // Not "remove does not delete persons" — that would send the caller to
+    // merge_tree_persons when the mistake was passing two scopes.
+    if (!r.ok) expect(JSON.stringify(r)).toMatch(/not both/);
   });
 
   it("add_relationship corroborating an existing edge swaps primary onto the new fact", async () => {

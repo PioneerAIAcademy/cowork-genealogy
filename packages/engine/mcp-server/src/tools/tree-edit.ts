@@ -862,13 +862,17 @@ async function applyOperation(
       // `personId` is refused only as a target of its own. With a `factId` it
       // SCOPES the removal — which holder's copy to drop — and that is the
       // whole point below.
-      if (input.personId && !input.factId) {
-        throw new TreeEditError("remove does not delete persons — use merge_tree_persons to collapse a person");
-      }
+      // Order matters: two scopes is the more specific complaint. Checked
+      // first so {personId, relationshipId} with no factId is not answered
+      // with "remove does not delete persons", which sends the caller to
+      // merge_tree_persons when their actual mistake was passing both scopes.
       if (input.personId && input.relationshipId) {
         throw new TreeEditError(
           "remove: pass `personId` OR `relationshipId` to scope a `factId`, not both",
         );
+      }
+      if (input.personId && !input.factId) {
+        throw new TreeEditError("remove does not delete persons — use merge_tree_persons to collapse a person");
       }
       // `factId` with `relationshipId` is a scoped fact removal, not two
       // targets; `{relationshipId}` alone still removes the edge itself.
