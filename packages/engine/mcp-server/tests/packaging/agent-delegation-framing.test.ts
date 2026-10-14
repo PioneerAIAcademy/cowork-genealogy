@@ -273,6 +273,33 @@ const DELEGATION_EDGES: Record<string, Edge> = {
     ],
   },
 
+  "research -> conflict-resolution": {
+    pins: [
+      {
+        side: "caller",
+        excerpt:
+          "Do not pre-judge the agent's gate — read nothing\n   beyond the ids you are passing, and judge nothing",
+      },
+      {
+        side: "caller",
+        excerpt: "Relay the agent's return as-is.",
+      },
+    ],
+    exempt: {
+      // Staleness here is NOT detected beyond the idiom check below — pin the
+      // agent's rule and delete this entry when the body gains one.
+      side: "agent",
+      reason:
+        "conflict-resolution.md is the skill folded verbatim, and the fold states no " +
+        "caller-pressure rule: the skill was always entered by the researcher's own words, " +
+        "never by a delegation that could pre-state a winner. The conversion adds no doctrine " +
+        "(the first body change after the unchanged-fold run is naming the resolution kind), " +
+        "so the rule is owed to the next paid run of this agent. Until then what binds is the " +
+        "write boundary, not the prose: research_append refuses a resolve that does not say " +
+        "how it was settled, and the plugin hook routes a conflict's analysis to this agent alone.",
+    },
+  },
+
   "research -> hypothesis-tracking": {
     pins: [
       {
@@ -483,10 +510,17 @@ const PROSE_MENTIONS = new Map<string, string>([
   // name unambiguous. None of them spells `@plugin:proof-conclusion`, so none
   // is a delegation being silenced -- verified per file before listing.
   // (A research-exhaustiveness row left when issue #2738 deleted that skill
-  // directory on 2026-10-08, and a timeline row left when issue #2797 deleted
-  // its skill directory on 2026-10-06 -- both are agent files now, outside
-  // this arm's skillFiles scan, so neither mention is checked here any more.)
-  ["conflict-resolution -> proof-conclusion", ""],
+  // directory on 2026-10-08, a timeline row left when issue #2797 deleted its
+  // skill directory on 2026-10-06, and a conflict-resolution row left when
+  // issue #3036 deleted ITS skill directory on 2026-10-13 -- all three are
+  // agent files now, outside this arm's skillFiles scan, so none of their
+  // mentions is checked here any more.)
+  // Bare-name mentions of `conflict-resolution`, visible to the prose arm since
+  // issue #1852 deleted the skill and made the name unambiguous. Boundary
+  // prose ("use conflict-resolution", "route to conflict-resolution"), not a
+  // delegation -- does not spell `@plugin:conflict-resolution` -- verified per
+  // file before listing.
+  ["search-records -> conflict-resolution", ""],
   // `search-wikipedia` (issue #2795) is the reverse of the `citation` shape: its
   // name is not an ordinary English word, so the arm DOES discriminate for it,
   // and the one mention below is boundary prose telling the reader this is the
@@ -512,7 +546,6 @@ const PROSE_MENTIONS = new Map<string, string>([
   // conversion; when the skill was deleted the name entered agentOnly and
   // every SKILL.md that references it now needs a registration. All are
   // bare-name mentions — none spell `@plugin:person-evidence`.
-  ["conflict-resolution -> person-evidence", ""],
   ["forget-and-rederive -> person-evidence", ""],
   ["record-extraction -> person-evidence", ""],
   ["search-records -> person-evidence", ""],
@@ -528,12 +561,10 @@ const PROSE_MENTIONS = new Map<string, string>([
   // "that is check-warnings' job"), none a delegation. The two real callers,
   // init-project and tree-edit, were registered edges; tree-edit's left when
   // issue #2805 deleted its skill, init-project's when issue #2122 did.
-  ["conflict-resolution -> check-warnings", ""],
   ["search-records -> check-warnings", ""],
   // tree-edit entered agentOnly when issue #2805 deleted its skill. The one
   // mention is a DO NOT clause ("Merging is ... a data operation (tree-edit)"),
   // not a delegation; it does not spell `@plugin:tree-edit`.
-  ["conflict-resolution -> tree-edit", ""],
   // convert-dates entered agentOnly when issue #2790 deleted its skill. All
   // three are routing-boundary prose naming it as the owner of a calendar
   // conversion ("use convert-dates", "route to convert-dates"), none spells
@@ -543,7 +574,6 @@ const PROSE_MENTIONS = new Map<string, string>([
   // agentOnly. Every mention below is bare-name boundary or next-step prose;
   // the one delegation, research's routing table, spells `@plugin:` and is a
   // registered edge above.
-  ["conflict-resolution -> question-selection", ""],
   ["forget-and-rederive -> question-selection", ""],
   ["research-plan -> question-selection", ""],
   // locality-guide (issue #2117): every one is a bare-name boundary or
@@ -552,9 +582,10 @@ const PROSE_MENTIONS = new Map<string, string>([
   ["research-plan -> locality-guide", ""],
   ["search-records -> locality-guide", ""],
   // hypothesis-tracking entered agentOnly when issue #2792 deleted its skill
-  // directory. The one mention is a bare-name mention — "(use
-  // hypothesis-tracking)" — and does not spell `@plugin:hypothesis-tracking`.
-  ["conflict-resolution -> hypothesis-tracking", ""],
+  // directory. The conflict-resolution and timeline mentions both left this
+  // scan when those two skills converted to agents in turn (issues #3036 and
+  // #2797) -- outside this arm's skillFiles scan now, like the other
+  // conversions noted above.
   // search-external-sites entered agentOnly when issue #2802 deleted its skill.
   // The one entry is routing-boundary prose naming it as the owner of an
   // external-site search ("use search-external-sites"), not a delegation.
@@ -573,14 +604,13 @@ const PROSE_MENTIONS = new Map<string, string>([
   //
   // timeline entered agentOnly when issue #2797 deleted its skill directory.
   // Routing-boundary mention of the AGENT, verified per file —
-  // conflict-resolution "build a timeline (use timeline)" and "(timeline)",
   // forget-and-rederive listing it among the sections a forget touches.
   // (A project-status row left when issue #2793 deleted that skill
   // directory, a question-selection row left when issue #2115 deleted that
-  // skill directory, and an init-project row left when issue #2122 deleted
-  // that skill directory -- all three are agent files now, outside this
-  // arm's skillFiles scan.)
-  ["conflict-resolution -> timeline", ""],
+  // skill directory, an init-project row left when issue #2122 deleted that
+  // skill directory, and a conflict-resolution row -- "build a timeline (use
+  // timeline)" and "(timeline)" -- left when issue #3036 did the same -- all
+  // four are agent files now, outside this arm's skillFiles scan.)
   ["forget-and-rederive -> timeline", ""],
   // research-exhaustiveness entered agentOnly when issue #2738 deleted its
   // skill directory. Both mentions below are bare-name mentions — neither
@@ -765,6 +795,8 @@ describe("agent delegation framing", () => {
   const PROSE_ARM_COVERS = [
     "check-warnings",
     "citation",
+    // ARRIVED when issue #1852 deleted skills/conflict-resolution/.
+    "conflict-resolution",
     "convert-dates",
     "gps-mentor",
     // ARRIVED when issue #2800 deleted skills/historical-context/.

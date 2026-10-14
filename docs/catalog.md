@@ -134,7 +134,7 @@ Tool specs live in `docs/specs/<tool>-tool-spec.md`.
 
 ## Skills
 
-The plugin ships 6 skills covering the full GPS research cycle. Skills
+The plugin ships 5 skills covering the full GPS research cycle. Skills
 are listed in roughly the order you'd use them in a research project.
 For a plain-language account of the research method itself — the GPS
 cycle, the judgment made at each stage, and what to expect from a
@@ -170,12 +170,12 @@ session — see [gps-research-flow.md](gps-research-flow.md).
 | Skill | What it does | Say this |
 |-------|-------------|----------|
 | **timeline** | Builds chronological timelines with distances between consecutive events. Surfaces gaps and geographic feasibility (logical impossibilities are check-warnings' job). | "Build a timeline" / "Do these events fit one life?" |
-| **conflict-resolution** | Analyzes conflicting evidence — independence analysis + preponderance hierarchy. | "These sources disagree" |
 
 ### Concluding
 
 Writing the conclusion itself is an agent rather than a skill — see
-`proof-conclusion` in the agent table below.
+`proof-conclusion` in the agent table below. So is resolving conflicting
+evidence — see `conflict-resolution` there.
 
 ### Benchmark suite (not shipped — repo-local dev tooling)
 
@@ -196,7 +196,7 @@ specified in [specs/e2e-test-spec.md](specs/e2e-test-spec.md).
 
 ## Agents
 
-The plugin ships twenty-eight Cowork agents. Unlike skills, an agent runs in
+The plugin ships twenty-nine Cowork agents. Unlike skills, an agent runs in
 fresh context and is invoked by the Cowork orchestrator, by `/research`
 when you ask for a second opinion, or by the skill that delegates to it — you
 don't load it explicitly.
@@ -225,6 +225,7 @@ don't load it explicitly.
 | **search-wikipedia** | Looks **one** topic up on Wikipedia — the general-purpose encyclopedia — and saves the article summary as a markdown file in your working folder. One tool call, a template it carries in its own body, one file. Asked for narrative history, a locality records survey or the FamilySearch wiki, it does no lookup and hands the request back by name. | "Look up Albert Einstein on Wikipedia" |
 | **convert-dates** | Converts **one** date, or compares dates, across calendar systems — Julian/Gregorian, Old Style/New Style year starts, Quaker numbered months, double-dated years — using the `convert_calendar` tool's adoption table for the record's jurisdiction. It writes nothing. Asked why a convention existed, whether a date string passes the schema, or about a same-calendar conflict, it hands the request back by name. | "Convert this date to Gregorian" / "Is 30 February 1712 a real date?" |
 | **hypothesis-tracking** | Tracks competing candidates with evidence for/against each. Manages elimination. | "Could this be the same person?" |
+| **conflict-resolution** | Resolves conflicting evidence — fact conflicts and identity conflicts where two candidate people genuinely compete. It analyses whether the sources are independent, weighs them by the preponderance hierarchy, and records how each conflict was settled: one record's version preferred, the tree's existing conclusion kept, or a value built from several records. It is the only caller allowed to record that analysis in the `conflicts` section; anything else may open a conflict but not resolve one. | "These sources disagree" / "Resolve this conflict" |
 | **tree-edit** | Direct corrections to the tree file — add or correct a fact, create a person or relationship, list a person's attached records and record matches, and check possible duplicates. Also executes person merges after proof-conclusion confirms identity. A write that would introduce an unjustified genealogical warning is refused by the tool itself. | "Fix this name" / "Merge these two persons" |
 | **validate-schema** | Validates both project files against the published schemas — required fields, enum values, ID prefixes, cross-references — and reports each error with a suggested fix. Read-only: it never edits a file. The writer tools already validate before they persist, so this is an on-demand audit of the whole project. Asked about genealogical impossibilities or GPS quality, it hands the request back by name. | "Validate the project files" / "Is the schema valid?" |
 | **source-evaluation** | Audits the sources already attached to a person's FamilySearch profile. Classifies each finding as an indexing error (re-read the original and correct the index), a genuinely misattributed source (detach), or un-actionable FamilySearch backend metadata (not a to-do) — and where the evidence does not decide between the first two, says so rather than picking one. A source that merely states a fact more precisely than the profile is reported as an improvement, not a contradiction. A disagreement between two attached sources is characterised and handed on with no verdict, since weighing them belongs to the conflict workflow. When the project tree holds the person, also reports the impossible-date warnings `person_warnings` finds there, outside the findings count. Closes with FamilySearch's own profile checklist — its completeness and source-tagging suggestions, grouped by category and kept out of the findings count, because they are suggestions rather than errors. Read-only. | "Evaluate the sources on this profile" / "Are these sources right?" |
@@ -245,7 +246,7 @@ don't load it explicitly.
                              here and are final at extraction)
 6. citation (agent)          Polish citations to Evidence Explained standards
 7. timeline                  Build chronological timeline, find gaps
-8. conflict-resolution       Resolve disagreements between sources
+8. conflict-resolution (agent) Resolve disagreements between sources
 9. hypothesis-tracking (agent) Track competing candidates
 10. research-exhaustiveness  Gate before proof — applies the seven
                              stop criteria. If not yet exhaustive, loop

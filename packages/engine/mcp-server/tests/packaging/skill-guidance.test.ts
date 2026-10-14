@@ -16,9 +16,11 @@ const canonicalPath = join(repoRoot, "plugin", "references", "places-guidance.md
 
 // Skills that carry a byte-identical copy of the canonical places guidance. Add
 // a skill here (and copy the file) when it starts using place tools or writing
-// places.
+// places. `timeline` left when issue #2797 converted it to an agent (moved to
+// AGENTS_WITH_PLACES_GUIDANCE below); `conflict-resolution` left when issue
+// #3036 did the same, but its new agent body does not inline this guidance at
+// all, so it is not in either list.
 const SKILLS_WITH_PLACES_GUIDANCE = [
-  "conflict-resolution",
   "record-extraction",
 ];
 
