@@ -1,0 +1,30 @@
+{
+  "test": {
+    "id": "ut_extraction_append_018",
+    "skill": "extraction-append",
+    "name": "Extract assertions by fetching record via ARK using record_read",
+    "type": "positive",
+    "description": "Converted from ut_record_extraction_005; extraction runs in code. When the user provides a FamilySearch record ARK, the skill should call record_read to fetch the full simplified GEDCOMX, then extract assertions from the returned data. Tests that the skill uses record_read as the data-fetch path when given a bare record ID or ARK rather than inline record text.",
+    "tags": [
+      "record-read",
+      "ark",
+      "gedcomx",
+      "1850-census"
+    ]
+  },
+  "input": {
+    "user_message": "Extract FamilySearch record ark:/61903/1:1:68Q9-K34P.",
+    "scenario": "extraction-workbench"
+  },
+  "mcp_fixtures": [
+    "record-read-68Q9-K34P"
+  ],
+  "judge_context": [
+    "Override for Correctness and Completeness: the test chooses which record the skill extracts. Do not lower any score because the record concerns people the project objective does not name.",
+    "The skill makes one extraction_append call and relays each record's summary verbatim. Grade that call and that relay; the classifications are decided in code and are checked by the expected_classifications validator, not by you."
+  ],
+  "execution": {
+    "max_turns": 10,
+    "max_wall_clock_seconds": 300
+  }
+}
