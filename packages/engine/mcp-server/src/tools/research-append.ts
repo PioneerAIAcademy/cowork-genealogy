@@ -466,7 +466,33 @@ const TIMELINE_1890_RE = /(?<!\d)1890(?!\d)/;
 // same check with a wider net -- a bare "census" entry on an all-1870s
 // timeline is refused here for being unverifiable, never because it is
 // mistaken for 1890.
-const TIMELINE_ANY_YEAR_RE = /(?<!\d)1[89]\d\d(?!\d)/;
+//
+// Matches any 4-digit year, not just 18xx/19xx -- round-8 review: the
+// earlier `1[89]\d\d` cut refused "1790 census", "census_1790", "1787
+// Denmark census" and "1769 census of Norway" for naming no year, when each
+// names a real, surviving year outside the 1800-1999 window this guard
+// happened to check. A census-type entry naming ANY year is verifiable
+// against something, so this arm has no business narrowing to two
+// centuries; the 1890-specific checks below are what actually decide
+// whether a given year is the non-surviving one.
+const TIMELINE_ANY_YEAR_RE = /(?<!\d)\d{4}(?!\d)/;
+// A year span/range that covers 1890 -- round-8 review: `ut_timeline_001`'s
+// bug (four surviving census years folded into one unverifiable entry) also
+// shows up written as a single range, "federal censuses 1870-1900" or
+// "censuses 1880 to 1900", which names two real years and never writes
+// "1890" literally, so `TIMELINE_1890_RE` cannot see that the range spans
+// the non-surviving year. Only a range connector ("-"/an en or em dash/"to")
+// counts -- "1880 and 1900 census" names two specific, surviving years with
+// no claim about anything in between, and must stay allowed; "and" is
+// deliberately not a range connector here.
+const TIMELINE_YEAR_SPAN_RE = /(?<!\d)(\d{4})\s*(?:-|–|—|\bto\b)\s*(\d{4})(?!\d)/i;
+function timelineSpanCovers1890(text: string): boolean {
+  const m = text.match(TIMELINE_YEAR_SPAN_RE);
+  if (!m) return false;
+  const a = parseInt(m[1], 10);
+  const b = parseInt(m[2], 10);
+  return Math.min(a, b) <= 1890 && 1890 <= Math.max(a, b);
+}
 const TIMELINE_VETERAN_RE = /veteran/i;
 const TIMELINE_NAMES_US_RE = /united states|u\.s\./i;
 const TIMELINE_NAMES_US_ABBREV_RE = /\bUS\b|\bUSA\b/;
@@ -595,7 +621,7 @@ export function timelineCensus1890Invariants(entry: any): string[] {
         );
         continue;
       }
-      if (!TIMELINE_1890_RE.test(text)) continue;
+      if (!TIMELINE_1890_RE.test(text) && !timelineSpanCovers1890(text)) continue;
       const namesUS = TIMELINE_NAMES_US_RE.test(text) || TIMELINE_NAMES_US_ABBREV_RE.test(text);
       if (!namesUS) {
         const otherJurisdiction = text.match(TIMELINE_NAMES_OTHER_JURISDICTION_RE);

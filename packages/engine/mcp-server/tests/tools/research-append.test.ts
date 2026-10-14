@@ -2208,6 +2208,45 @@ describe("research_append (Phase 3)", () => {
       expect(r.ok, `refused: ${JSON.stringify((r as any).errors)}`).toBe(true);
     });
 
+    // Round-8 review: the round-7 no-year check only recognized 18xx/19xx
+    // years, so a census-type entry naming a real, surviving year OUTSIDE
+    // that window -- the 1790 US federal census, Denmark's 1787, Norway's
+    // 1769 -- was wrongly refused for "naming no year", despite naming one.
+    it.each([
+      ["a real pre-1800 US year", "1790 census", usEvents],
+      ["the same year, underscore-joined", "census_1790", usEvents],
+      ["a foreign pre-1800 year", "1787 Denmark census", denmarkEvents],
+      ["a different foreign pre-1800 year", "1769 census of Norway", denmarkEvents],
+    ])("allows a census entry naming a real year outside 1800-1999: %s", async (_label, entry, events) => {
+      await writeProject();
+      const r = await appendWithGap([entry], events);
+      expect(r.ok, `refused: ${JSON.stringify((r as any).errors)}`).toBe(true);
+    });
+
+    // Round-8 review: a year RANGE that spans 1890 is the same ut_timeline_001
+    // bug (four surviving census years folded into one entry) written as a
+    // single string instead of a bare placeholder -- "federal censuses
+    // 1870-1900" names two real years and never writes "1890" literally, so
+    // TIMELINE_1890_RE cannot see that the range covers the non-surviving
+    // year. Only a range connector counts: "1880 and 1900 census" names two
+    // SPECIFIC years with no claim about what lies between them and must
+    // stay allowed.
+    it.each([
+      ["hyphen-joined range", "federal censuses 1870-1900"],
+      ["'to'-joined range", "censuses 1880 to 1900"],
+      ["range naming the US explicitly", "US census, every decade 1870-1900"],
+    ])("refuses a census entry naming a year range that spans 1890: %s", async (_label, entry) => {
+      await writeProject();
+      const r = await appendWithGap([entry]);
+      expect(r.ok).toBe(false);
+    });
+
+    it("still allows two specific years joined by 'and', which is not a range", async () => {
+      await writeProject();
+      const r = await appendWithGap(["1880 and 1900 census"]);
+      expect(r.ok, `refused: ${JSON.stringify((r as any).errors)}`).toBe(true);
+    });
+
     it("allows the same sentence when it is in `notes`, not `expected_events`", async () => {
       await writeProject();
       const r = await researchAppend({
