@@ -199,9 +199,10 @@ the switch. n = 1 pair; the figure is the projection, not the totals. The hosted
 Two pieces of work, in order:
 
 1. **Get the gateway onto agentgateway ≥ 1.6.0, then set `GATEWAY_TOOL_SEARCH=true`.**
-   The request to FamilySearch is drafted in `search-agent-prototype.md` "Open asks"
-   and has not been sent. It is the lead's to send. Until it lands, production pays for
-   the whole schema block on every call and Wave 2's schema trim is the only relief.
+   The first half is done: our PR fs-eng/tap-gateway#46 put TAP's EKS gateway on v1.6.0,
+   merged 2026-10-12, so the drafted request was never sent. The second half waits on the
+   handoff's U14 two-turn check on that gateway; until it passes, production pays for the
+   whole schema block on every call and Wave 2's schema trim is the only relief.
 2. **Done 2026-10-09 (above). Measure one e2e panel fixture with tool search off against the same fixture with
    it on**, on the harness, so the production gap is priced on this plan's basis. Do
    this before step 1 lands, because it decides how much of the gap is this lever's.
