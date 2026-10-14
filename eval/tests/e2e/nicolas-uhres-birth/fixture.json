@@ -15,5 +15,5 @@
     "judge": "claude-haiku-4-5-20251001"
   },
   "difficulty": "medium",
-  "notes": "Record-hint fixture (filtered-list-samples-3.csv row 16, hint-samples.csv row 552, flag adds_birth, confidence 3). Adjudicated 2026-10-14: true match, confirmed by 1900 Kehlen census household (ark:/61903/1:1:6BD5-5ZXB) showing Nicolas Uhres with wife Margreth Birgen and children Jean (1883) and Josephine (1885) of Keispelt."
+  "notes": "Record-hint fixture (filtered-list-samples-3.csv row 16, hint-samples.csv row 552, flag adds_birth, confidence 3). Re-adjudicated 2026-10-14: different answer — the hint record (6PBG-1Q63, 1880, born 1856) belongs to a separate Nicolas Uhres. The tree person GYGJ-D1C was born 13 May 1858 in Keispelt per the 1890 Kehlen census (ark:/61903/1:1:659M-7Z13). Two men named Nicolas Uhres coexisted in Kehlen; the 1885 census shows both simultaneously."
 }

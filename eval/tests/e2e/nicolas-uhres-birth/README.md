@@ -28,10 +28,14 @@ match strength.
 
 ## Notes for reviewers
 
-**TRUE MATCH.** Adjudicated 2026-10-14. The 1880 Kehlen census entry (`ark:/61903/1:1:6PBG-1Q63`) for Nicolas Uhres, single, born 1856 in Keispelt, is the correct tree person GYGJ-D1C.
+**DIFFERENT ANSWER — the hint record is the wrong person.** Re-adjudicated 2026-10-14 based on reviewer finding (florencemashipei). The 1880 Kehlen census entry (`ark:/61903/1:1:6PBG-1Q63`) for Nicolas Uhres, single, born 1856, does NOT belong to tree person GYGJ-D1C. It belongs to a distinct second man of the same name living in the same commune.
 
-The discriminating evidence is the 1900 Kehlen census (`ark:/61903/1:1:6BD5-5ZXB`), which shows a household headed by Nicolas Uhres (married, born ~1857, Keispelt) with wife Margreth Birgen (born ~1857, Keispelt) and children Jean (born 1883, Keispelt) and Josephine (born 1885, Keispelt). Jean and Josephine match the tree's Johann (5 December 1883, Keispelt) and Josephine (23 July 1885, Keispelt) exactly — same names, same birth years, same birthplace. Marguerite Birchen/Birgen is the wife the tree names. This household cannot be a coincidence or a different Nicolas Uhres.
+**Evidence of two men named Nicolas Uhres in Kehlen.** The 1885 Kehlen census contains two simultaneous separate entries: a married Nicolas Uhres born 1858 (`ark:/61903/1:1:6PBR-163T`) and a single Nicolas Uhres born 1859 in Keispelt (`ark:/61903/1:1:6PBR-JWBD`). These are plainly different people — different marital status, different birth years — proving the two men co-existed. Earlier censuses (1861, 1875) likewise carry two entries for Nicolas Uhres, one born 1856 and one born 1858.
 
-The 1885 Kehlen census (`ark:/61903/1:1:6PBR-163T`) corroborates: Nicolas Uhres, married, born 1858, Keispelt, Kehlen — consistent with the 1880 single entry. The birth year across records oscillates between 1856 and 1858, a common variation in Luxembourg census reporting.
+**The tree person is the one born 1858.** The 1890 Kehlen census (`ark:/61903/1:1:659M-7Z13`) gives the decisive record: Nicolas Uhres, married, born **13 May 1858** in Keispelt. The 1900 Kehlen census (`ark:/61903/1:1:6BD5-5ZXB`) confirms identity — same Nicolas, with wife Margreth Birgen/Birchen and children Jean (1883, Keispelt) and Josephine (1885, Keispelt) — matching the tree's Johann and Josephine exactly. The 1900 household proves who the tree person is; it does not establish that the 1880 single-man born 1856 is him.
 
-No indexed civil marriage record for Nicolas Uhres and Marguerite Birchen was found in FamilySearch Luxembourg collections (collection 5000012, the Kehlen civil register is 100% indexed). The 1900 household evidence makes this unnecessary: the children's identities alone settle the question. The Kehlen civil register was searched in both directions (groom and bride) with no result; the marriage may have been registered outside the indexed window or in a commune not yet fully indexed.
+**The hint record (6PBG-1Q63) belongs to the 1856 man.** He appears in the 1861, 1875, and 1880 censuses as born 1856; the 1885 and later censuses show him as a single man (born 1859 in the 1885 entry — birth year variance is common in Luxembourg census reporting). The correct tree person is the married 1858 man throughout.
+
+**Correct birth:** 13 May 1858 in Keispelt, Luxembourg, from the 1890 Kehlen census.
+
+No indexed civil marriage record for Nicolas Uhres and Marguerite Birchen was found in FamilySearch Luxembourg collections. The 1900 household evidence makes this unnecessary. The marriage may have been registered outside the indexed window or in a commune not yet fully indexed.
