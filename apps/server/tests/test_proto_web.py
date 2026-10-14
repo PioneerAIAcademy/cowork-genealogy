@@ -42,6 +42,7 @@ from web.app import (  # noqa: E402
     EventRow,
     IdentityMismatch,
     ProjectNotOwned,
+    SessionBusy,
     SessionRow,
     Turn,
     User,
@@ -57,6 +58,8 @@ from web.app import (  # noqa: E402
 T0 = datetime(2026, 9, 14, 12, 0, tzinfo=timezone.utc)
 
 # api.ts SessionSummary -- every key the SPA types (SessionList dereferences model and last_active).
+# `continuable` is left out on purpose: it is optional in api.ts, and the prototype omits it
+# (absent means not ended).
 SESSION_SUMMARY_KEYS = {
     "id", "title", "model", "status", "sandbox_id", "agent_session_id", "created", "updated", "last_active",
 }
@@ -142,6 +145,8 @@ class FakeStore:
         return row
 
     async def delete_session(self, session_id: str) -> bool:
+        if session_id in self.active:
+            raise SessionBusy(session_id)
         row = self.sessions.pop(session_id, None)
         if row is None:
             return False
@@ -1442,6 +1447,16 @@ async def test_delete_by_another_user_leaves_the_session_and_project_documents()
     async with make_client(store, queue, user=USER_B.id) as c:
         assert (await c.delete(f"/api/sessions/{row.session_id}")).status_code == 404
     assert row.session_id in store.sessions and row.project_id in store.docs
+
+
+async def test_deleting_a_session_with_a_running_turn_answers_409_and_keeps_it():
+    store, queue = FakeStore(), FakeQueue()
+    row = store.seed_session()
+    store.active.add(row.session_id)
+    async with make_client(store, queue) as c:
+        resp = await c.delete(f"/api/sessions/{row.session_id}")
+    assert resp.status_code == 409 and "press Stop" in resp.json()["detail"]
+    assert row.session_id in store.sessions
 
 
 async def test_deleting_one_of_two_sessions_keeps_the_other_visible():

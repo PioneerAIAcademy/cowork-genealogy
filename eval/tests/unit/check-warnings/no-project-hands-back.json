@@ -1,0 +1,27 @@
+{
+  "test": {
+    "id": "ut_check_warnings_023",
+    "skill": "check-warnings",
+    "name": "A tree check in a folder with no project hands back to init-project",
+    "type": "negative",
+    "description": "Issue #3260: a user can ask for a stand-alone tree check before any research project exists. person_warnings needs the project's tree, and check-warnings holds no file read, so it learns the folder is empty from person_warnings' own no_project answer, makes no other call, and hands back to init-project with the person id. It must never create the project itself (project_create has one caller by design). grade_on_invariant: true hands the verdict to the tag-gated validator test_no_project_hands_back_to_init_project; the judge is diagnostic.",
+    "tags": ["negative", "no-project", "direct-arm"]
+  },
+  "input": {
+    "delegation": "Check my tree for problems, starting with my great-grandfather KWCJ-RN4.\n\npersonId: KWCJ-RN4\n\nprojectPath: <workspace>",
+    "scenario": "empty-folder-no-project"
+  },
+  "mcp_fixtures": [],
+  "negative": {
+    "correct_skill": ["init-project"],
+    "grade_on_invariant": true,
+    "explanation": "With no research.json and no tree.gedcomx.json there is nothing for person_warnings to check, and check-warnings has no way to import a tree. The agent body says: when person_warnings returns reason no_project, make no further call and return `Hand-back: init-project — create a project for <the person id>, then check it`. init-project creates the project; the caller then re-delegates the check."
+  },
+  "judge_context": [
+    "The one person_warnings call answering no_project is expected: it is how this agent learns there is no project. It is not a failed tool call.",
+    "Should hand back with a caller-facing line naming init-project and the person id (KWCJ-RN4) before the final `---`, and make no other tool call.",
+    "Should NOT create a project, invent warnings, or describe a tree it never read.",
+    "The two researcher-facing paragraphs after the final `---` must name no skill, agent, tool or field."
+  ],
+  "judge_reads_files": true
+}

@@ -19,8 +19,6 @@ const canonicalPath = join(repoRoot, "plugin", "references", "places-guidance.md
 // places.
 const SKILLS_WITH_PLACES_GUIDANCE = [
   "timeline",
-  "conflict-resolution",
-  "record-extraction",
 ];
 
 // Agents that inline the canonical places guidance verbatim in their body

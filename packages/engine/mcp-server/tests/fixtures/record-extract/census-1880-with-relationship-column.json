@@ -1,0 +1,1081 @@
+{
+  "_why": "US 1880: schedule HAS a relationship column; head + wife + 12 children",
+  "_capturedFrom": "MNH8-SCH",
+  "element": {
+    "recordId": "MNH8-SCH",
+    "gedcomx": {
+      "persons": [
+        {
+          "id": "p_395579066",
+          "ark": "ark:/61903/1:1:MNH8-SHT",
+          "principal": true,
+          "gender": "Male",
+          "names": [
+            {
+              "id": "d870fa78-e32b-4056-9ac7-3e82e9895b44",
+              "type": "BirthName",
+              "given": "Charles",
+              "surname": "Miller"
+            }
+          ],
+          "facts": [
+            {
+              "type": "Race",
+              "value": "White"
+            },
+            {
+              "type": "Occupation",
+              "value": "Farmer"
+            },
+            {
+              "id": "b73178ff-e606-4388-9716-02f0d9cbceba",
+              "type": "Census",
+              "primary": true,
+              "date": "1880",
+              "standard_date": "1880",
+              "place": "Sharon, Portage, Wisconsin, United States"
+            },
+            {
+              "id": "c1dba082-6474-4527-965b-c5301c61b57b",
+              "type": "Birth",
+              "date": "1832",
+              "standard_date": "1832",
+              "place": "France"
+            }
+          ],
+          "sources": [
+            {
+              "ref": "sd_da1"
+            }
+          ]
+        },
+        {
+          "id": "p_395579067",
+          "ark": "ark:/61903/1:1:MNH8-SHY",
+          "principal": true,
+          "gender": "Female",
+          "names": [
+            {
+              "id": "1339eb01-8060-4151-9cbf-883ad2a3715e",
+              "type": "BirthName",
+              "given": "Theresa",
+              "surname": "Miller"
+            }
+          ],
+          "facts": [
+            {
+              "type": "Race",
+              "value": "White"
+            },
+            {
+              "type": "Occupation",
+              "value": "Keeps House"
+            },
+            {
+              "type": "MaritalStatus",
+              "value": "Married"
+            },
+            {
+              "id": "dd098cbf-a8a4-4b3f-8786-55fdd5b5b9ac",
+              "type": "Census",
+              "primary": true,
+              "date": "1880",
+              "standard_date": "1880",
+              "place": "Sharon, Portage, Wisconsin, United States"
+            },
+            {
+              "id": "34d8ed8c-994d-4b7a-a968-e33d8d8cfb03",
+              "type": "Birth",
+              "date": "1836",
+              "standard_date": "1836",
+              "place": "Germany"
+            }
+          ],
+          "sources": [
+            {
+              "ref": "sd_da2"
+            }
+          ]
+        },
+        {
+          "id": "p_395579068",
+          "ark": "ark:/61903/1:1:MNH8-SHB",
+          "principal": true,
+          "gender": "Female",
+          "names": [
+            {
+              "id": "7922c268-c4c8-47af-8af3-edc3162c4a28",
+              "type": "BirthName",
+              "given": "Mary Louise",
+              "surname": "Miller"
+            }
+          ],
+          "facts": [
+            {
+              "type": "MaritalStatus",
+              "value": "Single"
+            },
+            {
+              "type": "Race",
+              "value": "White"
+            },
+            {
+              "id": "fffa2e6b-3d33-40b5-922f-53cbff0ba51c",
+              "type": "Birth",
+              "date": "1857",
+              "standard_date": "1857",
+              "place": "France"
+            },
+            {
+              "id": "633e3add-9ca4-4dbf-8154-f1d648ac16a3",
+              "type": "Census",
+              "primary": true,
+              "date": "1880",
+              "standard_date": "1880",
+              "place": "Sharon, Portage, Wisconsin, United States"
+            }
+          ],
+          "sources": [
+            {
+              "ref": "sd_da2"
+            }
+          ]
+        },
+        {
+          "id": "p_395579069",
+          "ark": "ark:/61903/1:1:MNH8-SH1",
+          "principal": true,
+          "gender": "Female",
+          "names": [
+            {
+              "id": "12d0d47c-2653-42e7-9005-91a8faee040d",
+              "type": "BirthName",
+              "given": "Mary",
+              "surname": "Miller"
+            }
+          ],
+          "facts": [
+            {
+              "type": "Race",
+              "value": "White"
+            },
+            {
+              "type": "MaritalStatus",
+              "value": "Single"
+            },
+            {
+              "id": "e9b9031c-7be0-4f0b-8eff-d4ca5beceaca",
+              "type": "Birth",
+              "date": "1859",
+              "standard_date": "1859",
+              "place": "France"
+            },
+            {
+              "id": "408fd641-1a7b-4c9b-8ee6-1ba7d70c2a43",
+              "type": "Census",
+              "primary": true,
+              "date": "1880",
+              "standard_date": "1880",
+              "place": "Sharon, Portage, Wisconsin, United States"
+            }
+          ],
+          "sources": [
+            {
+              "ref": "sd_da2"
+            }
+          ]
+        },
+        {
+          "id": "p_395579070",
+          "ark": "ark:/61903/1:1:MNH8-SCM",
+          "principal": true,
+          "gender": "Female",
+          "names": [
+            {
+              "id": "4d63a208-5190-4edc-a05e-c0a9dfd8f138",
+              "type": "BirthName",
+              "given": "Mary Ann",
+              "surname": "Miller"
+            }
+          ],
+          "facts": [
+            {
+              "type": "Race",
+              "value": "White"
+            },
+            {
+              "type": "MaritalStatus",
+              "value": "Single"
+            },
+            {
+              "id": "f4391def-01d8-4a02-b091-0e54d3eb42e7",
+              "type": "Census",
+              "primary": true,
+              "date": "1880",
+              "standard_date": "1880",
+              "place": "Sharon, Portage, Wisconsin, United States"
+            },
+            {
+              "id": "6f52c115-03fd-499b-8cc1-476fecba7bc1",
+              "type": "Birth",
+              "date": "1861",
+              "standard_date": "1861",
+              "place": "France"
+            }
+          ],
+          "sources": [
+            {
+              "ref": "sd_da2"
+            }
+          ]
+        },
+        {
+          "id": "p_395579071",
+          "ark": "ark:/61903/1:1:MNH8-SC9",
+          "principal": true,
+          "gender": "Male",
+          "names": [
+            {
+              "id": "f19be4c6-c8bd-490e-9a90-e2fddaa45411",
+              "type": "BirthName",
+              "given": "John Jaen",
+              "surname": "Miller"
+            }
+          ],
+          "facts": [
+            {
+              "type": "Race",
+              "value": "White"
+            },
+            {
+              "type": "MaritalStatus",
+              "value": "Single"
+            },
+            {
+              "id": "74ca00c6-e9eb-430a-899a-7e472970a75c",
+              "type": "Census",
+              "primary": true,
+              "date": "1880",
+              "standard_date": "1880",
+              "place": "Sharon, Portage, Wisconsin, United States"
+            },
+            {
+              "id": "0dbd5c91-fead-4fed-8bfd-863c91b16089",
+              "type": "Birth",
+              "date": "1866",
+              "standard_date": "1866",
+              "place": "France"
+            }
+          ],
+          "sources": [
+            {
+              "ref": "sd_da2"
+            }
+          ]
+        },
+        {
+          "id": "p_395579072",
+          "ark": "ark:/61903/1:1:MNH8-SCS",
+          "principal": true,
+          "gender": "Male",
+          "names": [
+            {
+              "id": "4139fb54-0044-4e02-8851-071cef597294",
+              "type": "BirthName",
+              "given": "John Nichlos",
+              "surname": "Miller"
+            }
+          ],
+          "facts": [
+            {
+              "type": "Race",
+              "value": "White"
+            },
+            {
+              "type": "MaritalStatus",
+              "value": "Single"
+            },
+            {
+              "id": "03a65177-0b5f-47c1-885c-fb3a8f784aed",
+              "type": "Birth",
+              "date": "1865",
+              "standard_date": "1865",
+              "place": "France"
+            },
+            {
+              "id": "e6bc849e-1f8a-4631-a036-fbcd24ade8cf",
+              "type": "Census",
+              "primary": true,
+              "date": "1880",
+              "standard_date": "1880",
+              "place": "Sharon, Portage, Wisconsin, United States"
+            }
+          ],
+          "sources": [
+            {
+              "ref": "sd_da2"
+            }
+          ]
+        },
+        {
+          "id": "p_395579073",
+          "ark": "ark:/61903/1:1:MNH8-SC3",
+          "principal": true,
+          "gender": "Male",
+          "names": [
+            {
+              "id": "ef79591b-5320-49ad-a76c-76c22b0818a4",
+              "type": "BirthName",
+              "given": "Nikulous",
+              "surname": "Miller"
+            }
+          ],
+          "facts": [
+            {
+              "type": "Race",
+              "value": "White"
+            },
+            {
+              "type": "MaritalStatus",
+              "value": "Single"
+            },
+            {
+              "id": "3a399873-1a13-48a4-818e-dcb93ee3e780",
+              "type": "Birth",
+              "date": "1868",
+              "standard_date": "1868",
+              "place": "Wisconsin, United States"
+            },
+            {
+              "id": "f17fba37-a677-4dc4-a5e1-3455dbd77d87",
+              "type": "Census",
+              "primary": true,
+              "date": "1880",
+              "standard_date": "1880",
+              "place": "Sharon, Portage, Wisconsin, United States"
+            }
+          ],
+          "sources": [
+            {
+              "ref": "sd_da2"
+            }
+          ]
+        },
+        {
+          "id": "p_395579074",
+          "ark": "ark:/61903/1:1:MNH8-SCQ",
+          "principal": true,
+          "gender": "Female",
+          "names": [
+            {
+              "id": "f14bc744-f7a5-44db-a780-d0a89e3cd2f6",
+              "type": "BirthName",
+              "given": "Mary Theresa",
+              "surname": "Miller"
+            }
+          ],
+          "facts": [
+            {
+              "type": "MaritalStatus",
+              "value": "Single"
+            },
+            {
+              "type": "Race",
+              "value": "White"
+            },
+            {
+              "id": "c1b6889a-75fa-4e78-927b-c98fd9f2d744",
+              "type": "Census",
+              "primary": true,
+              "date": "1880",
+              "standard_date": "1880",
+              "place": "Sharon, Portage, Wisconsin, United States"
+            },
+            {
+              "id": "70a43b01-0f6a-4bba-b625-f7fb69f0683f",
+              "type": "Birth",
+              "date": "1869",
+              "standard_date": "1869",
+              "place": "Wisconsin, United States"
+            }
+          ],
+          "sources": [
+            {
+              "ref": "sd_da2"
+            }
+          ]
+        },
+        {
+          "id": "p_395579075",
+          "ark": "ark:/61903/1:1:MNH8-SC7",
+          "principal": true,
+          "gender": "Female",
+          "names": [
+            {
+              "id": "d556622d-c767-44c8-bae5-b3a3aad132e0",
+              "type": "BirthName",
+              "given": "Mary Margret",
+              "surname": "Miller"
+            }
+          ],
+          "facts": [
+            {
+              "type": "MaritalStatus",
+              "value": "Single"
+            },
+            {
+              "type": "Race",
+              "value": "White"
+            },
+            {
+              "id": "46a4eea3-e3db-454c-a132-b2206c6b6ccb",
+              "type": "Birth",
+              "date": "1871",
+              "standard_date": "1871",
+              "place": "Wisconsin, United States"
+            },
+            {
+              "id": "207c233c-edf3-410a-bdb8-578d38e24fbe",
+              "type": "Census",
+              "primary": true,
+              "date": "1880",
+              "standard_date": "1880",
+              "place": "Sharon, Portage, Wisconsin, United States"
+            }
+          ],
+          "sources": [
+            {
+              "ref": "sd_da2"
+            }
+          ]
+        },
+        {
+          "id": "p_395579076",
+          "ark": "ark:/61903/1:1:MNH8-SCW",
+          "principal": true,
+          "gender": "Male",
+          "names": [
+            {
+              "id": "f9ab816e-4830-4ab5-9119-6537f55a6357",
+              "type": "BirthName",
+              "given": "Henry",
+              "surname": "Miller"
+            }
+          ],
+          "facts": [
+            {
+              "type": "MaritalStatus",
+              "value": "Single"
+            },
+            {
+              "type": "Race",
+              "value": "White"
+            },
+            {
+              "id": "4b390e06-843b-4e86-a470-6aa6a7f72a4d",
+              "type": "Census",
+              "primary": true,
+              "date": "1880",
+              "standard_date": "1880",
+              "place": "Sharon, Portage, Wisconsin, United States"
+            },
+            {
+              "id": "3bea61dd-fac7-4236-b676-d93c30ffe69d",
+              "type": "Birth",
+              "date": "1873",
+              "standard_date": "1873",
+              "place": "Wisconsin, United States"
+            }
+          ],
+          "sources": [
+            {
+              "ref": "sd_da2"
+            }
+          ]
+        },
+        {
+          "id": "p_395579077",
+          "ark": "ark:/61903/1:1:MNH8-SC4",
+          "principal": true,
+          "gender": "Female",
+          "names": [
+            {
+              "id": "88e7f408-804e-4a5a-955d-a4356517e500",
+              "type": "BirthName",
+              "given": "Mary Rosa",
+              "surname": "Miller"
+            }
+          ],
+          "facts": [
+            {
+              "type": "Race",
+              "value": "White"
+            },
+            {
+              "type": "MaritalStatus",
+              "value": "Single"
+            },
+            {
+              "id": "646bb304-78a2-437d-bcd4-6487827a3cff",
+              "type": "Birth",
+              "date": "1874",
+              "standard_date": "1874",
+              "place": "Wisconsin, United States"
+            },
+            {
+              "id": "939fd59f-bc1a-4712-8c5d-a29f4668f5bc",
+              "type": "Census",
+              "primary": true,
+              "date": "1880",
+              "standard_date": "1880",
+              "place": "Sharon, Portage, Wisconsin, United States"
+            }
+          ],
+          "sources": [
+            {
+              "ref": "sd_da2"
+            }
+          ]
+        },
+        {
+          "id": "p_395579078",
+          "ark": "ark:/61903/1:1:MNH8-SCH",
+          "principal": true,
+          "gender": "Female",
+          "names": [
+            {
+              "id": "9bc68063-11bc-4c59-9c15-199801851e5b",
+              "type": "BirthName",
+              "given": "Mary Christeen",
+              "surname": "Miller"
+            }
+          ],
+          "facts": [
+            {
+              "type": "Race",
+              "value": "White"
+            },
+            {
+              "type": "MaritalStatus",
+              "value": "Single"
+            },
+            {
+              "id": "39615665-e98d-4072-bae3-17ac7bf05fd3",
+              "type": "Birth",
+              "date": "1876",
+              "standard_date": "1876",
+              "place": "Wisconsin, United States"
+            },
+            {
+              "id": "dbee9cf4-101c-441c-9bf1-1e1e56eecfb0",
+              "type": "Census",
+              "primary": true,
+              "date": "1880",
+              "standard_date": "1880",
+              "place": "Sharon, Portage, Wisconsin, United States"
+            }
+          ],
+          "sources": [
+            {
+              "ref": "sd_da2"
+            }
+          ]
+        },
+        {
+          "id": "p_395579079",
+          "ark": "ark:/61903/1:1:MNH8-SCC",
+          "principal": true,
+          "gender": "Female",
+          "names": [
+            {
+              "id": "752c9dc0-e16e-43bf-8c96-6baba444e203",
+              "type": "BirthName",
+              "given": "Mary Catherine",
+              "surname": "Miller"
+            }
+          ],
+          "facts": [
+            {
+              "type": "Race",
+              "value": "White"
+            },
+            {
+              "type": "MaritalStatus",
+              "value": "Single"
+            },
+            {
+              "id": "9f909fc9-01aa-47ac-b3f8-80fabd3a804e",
+              "type": "Birth",
+              "date": "1879",
+              "standard_date": "1879",
+              "place": "Wisconsin, United States"
+            },
+            {
+              "id": "4da08f17-3084-4a6d-9827-aeb623e3cbfe",
+              "type": "Census",
+              "primary": true,
+              "date": "1880",
+              "standard_date": "1880",
+              "place": "Sharon, Portage, Wisconsin, United States"
+            }
+          ],
+          "sources": [
+            {
+              "ref": "sd_da2"
+            }
+          ]
+        }
+      ],
+      "relationships": [
+        {
+          "id": "17346a29-5b58-454f-933e-25bec56ad564",
+          "type": "ParentChild",
+          "parent": "p_395579067",
+          "child": "p_395579068"
+        },
+        {
+          "id": "0deff501-7ddb-4b72-b06a-e32b13f4f460",
+          "type": "ParentChild",
+          "parent": "p_395579066",
+          "child": "p_395579068"
+        },
+        {
+          "id": "ab0133f3-e4fe-4488-a483-2a30cab5db0b",
+          "type": "ParentChild",
+          "parent": "p_395579067",
+          "child": "p_395579074"
+        },
+        {
+          "id": "79d97bb3-f7e2-402a-beb6-2b93a0ec4559",
+          "type": "ParentChild",
+          "parent": "p_395579066",
+          "child": "p_395579074"
+        },
+        {
+          "id": "ced67252-48b2-4c70-bb64-2d39bf2b0d86",
+          "type": "ParentChild",
+          "parent": "p_395579066",
+          "child": "p_395579072"
+        },
+        {
+          "id": "710c470f-34a3-4e41-987f-f400040a368c",
+          "type": "ParentChild",
+          "parent": "p_395579067",
+          "child": "p_395579072"
+        },
+        {
+          "id": "82cf7a30-825e-4391-802b-20534ee80744",
+          "type": "ParentChild",
+          "parent": "p_395579067",
+          "child": "p_395579076"
+        },
+        {
+          "id": "8368cf93-ae39-470e-bec2-135d21999e6a",
+          "type": "ParentChild",
+          "parent": "p_395579066",
+          "child": "p_395579076"
+        },
+        {
+          "id": "da7ef053-63ed-4834-983d-82718267a8a1",
+          "type": "ParentChild",
+          "parent": "p_395579066",
+          "child": "p_395579069"
+        },
+        {
+          "id": "538f7264-5f54-48f0-877f-2b365c5be6ed",
+          "type": "ParentChild",
+          "parent": "p_395579067",
+          "child": "p_395579069"
+        },
+        {
+          "id": "c004c7dc-3963-44fa-ba50-0405b468f6e4",
+          "type": "ParentChild",
+          "parent": "p_395579067",
+          "child": "p_395579070"
+        },
+        {
+          "id": "d06fef15-77ad-4607-93a9-0924d1cf9c7c",
+          "type": "ParentChild",
+          "parent": "p_395579066",
+          "child": "p_395579070"
+        },
+        {
+          "id": "a15a4c9a-7e2e-4758-a58a-9c2fc710022d",
+          "type": "ParentChild",
+          "parent": "p_395579066",
+          "child": "p_395579079"
+        },
+        {
+          "id": "1c7fb78a-c1d9-49c1-943b-18053d3d2fc6",
+          "type": "ParentChild",
+          "parent": "p_395579067",
+          "child": "p_395579079"
+        },
+        {
+          "id": "e033516c-efae-4c8f-b57d-3ffdc433c30e",
+          "type": "ParentChild",
+          "parent": "p_395579066",
+          "child": "p_395579071"
+        },
+        {
+          "id": "2efd0562-9fb6-4932-9772-59653952da8e",
+          "type": "ParentChild",
+          "parent": "p_395579066",
+          "child": "p_395579073"
+        },
+        {
+          "id": "56904123-da8f-41ab-a0d4-f163f80bc35d",
+          "type": "ParentChild",
+          "parent": "p_395579066",
+          "child": "p_395579078"
+        },
+        {
+          "id": "e4c25d05-a6e0-4072-9fb8-db04dc32f15a",
+          "type": "ParentChild",
+          "parent": "p_395579066",
+          "child": "p_395579077"
+        },
+        {
+          "id": "79765eca-ced3-4096-a915-5f024cfe6019",
+          "type": "Couple",
+          "person1": "p_395579066",
+          "person2": "p_395579067"
+        },
+        {
+          "id": "da00979a-3dd1-4aea-8dc2-745690bd781c",
+          "type": "ParentChild",
+          "parent": "p_395579066",
+          "child": "p_395579075"
+        },
+        {
+          "id": "de97ee52-4ec7-4c20-9eca-e47782901756",
+          "type": "ParentChild",
+          "parent": "p_395579067",
+          "child": "p_395579078"
+        },
+        {
+          "id": "11661bb1-2709-4d7b-b2a2-e0a2148ea2ad",
+          "type": "ParentChild",
+          "parent": "p_395579067",
+          "child": "p_395579071"
+        },
+        {
+          "id": "fb9004c6-4446-402f-a9ec-f84c39f313fa",
+          "type": "ParentChild",
+          "parent": "p_395579067",
+          "child": "p_395579077"
+        },
+        {
+          "id": "c0969bf3-ab24-4225-8cb0-42c22ce7dafe",
+          "type": "ParentChild",
+          "parent": "p_395579067",
+          "child": "p_395579075"
+        },
+        {
+          "id": "8b0adfa1-0011-4dce-810d-1eeaaf115848",
+          "type": "ParentChild",
+          "parent": "p_395579067",
+          "child": "p_395579073"
+        }
+      ],
+      "sources": [
+        {
+          "id": "src_r_224998716",
+          "resource_type": "Record",
+          "title": "Household of Charles Miller, \"United States, Census, 1880\"",
+          "citation": "\"United States, Census, 1880\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:MNH8-SHT : Wed Sep 09 15:31:40 UTC 2026), Entry for Charles Miller and Theresa Miller, 1880.",
+          "url": "https://www.familysearch.org/ark:/61903/1:2:MC4P-HJW",
+          "coverage": {
+            "place_rep_id": "5524857",
+            "date_range": "1880",
+            "record_type": "Census",
+            "standard_place": "Sharon, Portage, Wisconsin, United States"
+          }
+        },
+        {
+          "id": "sd_c_1417683",
+          "resource_type": "Collection",
+          "title": "United States, Census, 1880",
+          "url": "https://www.familysearch.org/service/cds/recapi/collections/1417683",
+          "coverage": {
+            "place_rep_id": "1",
+            "date_range": "1880/1880",
+            "record_type": "Census",
+            "standard_place": "United States"
+          }
+        },
+        {
+          "id": "sd_da1",
+          "resource_type": "DigitalArtifact",
+          "url": "https://www.familysearch.org/ark:/61903/3:1:33SQ-GYB9-K92",
+          "coverage": {
+            "place_rep_id": "372",
+            "date_range": "1880",
+            "record_type": "CensusIndex",
+            "standard_place": "Wisconsin, United States"
+          }
+        },
+        {
+          "id": "sd_da2",
+          "resource_type": "DigitalArtifact",
+          "url": "https://www.familysearch.org/ark:/61903/3:1:33S7-9YB9-K8R"
+        },
+        {
+          "id": "sd_p_395579068",
+          "resource_type": "Person",
+          "title": "Mary Louise Miller, \"United States, Census, 1880\"",
+          "citation": "\"United States, Census, 1880\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:MNH8-SHT : Wed Sep 09 15:31:40 UTC 2026), Entry for Charles Miller and Theresa Miller, 1880.",
+          "url": "https://www.familysearch.org/ark:/61903/1:1:MNH8-SHB"
+        },
+        {
+          "id": "sd_p_395579074",
+          "resource_type": "Person",
+          "title": "Mary Theresa Miller, \"United States, Census, 1880\"",
+          "citation": "\"United States, Census, 1880\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:MNH8-SHT : Wed Sep 09 15:31:40 UTC 2026), Entry for Charles Miller and Theresa Miller, 1880.",
+          "url": "https://www.familysearch.org/ark:/61903/1:1:MNH8-SCQ"
+        },
+        {
+          "id": "sd_p_395579072",
+          "resource_type": "Person",
+          "title": "John Nichlos Miller, \"United States, Census, 1880\"",
+          "citation": "\"United States, Census, 1880\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:MNH8-SHT : Wed Sep 09 15:31:40 UTC 2026), Entry for Charles Miller and Theresa Miller, 1880.",
+          "url": "https://www.familysearch.org/ark:/61903/1:1:MNH8-SCS"
+        },
+        {
+          "id": "sd_p_395579076",
+          "resource_type": "Person",
+          "title": "Henry Miller, \"United States, Census, 1880\"",
+          "citation": "\"United States, Census, 1880\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:MNH8-SHT : Wed Sep 09 15:31:40 UTC 2026), Entry for Charles Miller and Theresa Miller, 1880.",
+          "url": "https://www.familysearch.org/ark:/61903/1:1:MNH8-SCW"
+        },
+        {
+          "id": "sd_p_395579069",
+          "resource_type": "Person",
+          "title": "Mary Miller, \"United States, Census, 1880\"",
+          "citation": "\"United States, Census, 1880\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:MNH8-SHT : Wed Sep 09 15:31:40 UTC 2026), Entry for Charles Miller and Theresa Miller, 1880.",
+          "url": "https://www.familysearch.org/ark:/61903/1:1:MNH8-SH1"
+        },
+        {
+          "id": "sd_p_395579070",
+          "resource_type": "Person",
+          "title": "Mary Ann Miller, \"United States, Census, 1880\"",
+          "citation": "\"United States, Census, 1880\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:MNH8-SHT : Wed Sep 09 15:31:40 UTC 2026), Entry for Charles Miller and Theresa Miller, 1880.",
+          "url": "https://www.familysearch.org/ark:/61903/1:1:MNH8-SCM"
+        },
+        {
+          "id": "sd_p_395579079",
+          "resource_type": "Person",
+          "title": "Mary Catherine Miller, \"United States, Census, 1880\"",
+          "citation": "\"United States, Census, 1880\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:MNH8-SHT : Wed Sep 09 15:31:40 UTC 2026), Entry for Charles Miller and Theresa Miller, 1880.",
+          "url": "https://www.familysearch.org/ark:/61903/1:1:MNH8-SCC"
+        },
+        {
+          "id": "sd_p_395579066",
+          "resource_type": "Person",
+          "title": "Charles Miller, \"United States, Census, 1880\"",
+          "citation": "\"United States, Census, 1880\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:MNH8-SHT : Wed Sep 09 15:31:40 UTC 2026), Entry for Charles Miller and Theresa Miller, 1880.",
+          "url": "https://www.familysearch.org/ark:/61903/1:1:MNH8-SHT"
+        },
+        {
+          "id": "sd_p_395579078",
+          "resource_type": "Person",
+          "title": "Mary Christeen Miller, \"United States, Census, 1880\"",
+          "citation": "\"United States, Census, 1880\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:MNH8-SHT : Wed Sep 09 15:31:40 UTC 2026), Entry for Charles Miller and Theresa Miller, 1880.",
+          "url": "https://www.familysearch.org/ark:/61903/1:1:MNH8-SCH"
+        },
+        {
+          "id": "sd_p_395579071",
+          "resource_type": "Person",
+          "title": "John Jaen Miller, \"United States, Census, 1880\"",
+          "citation": "\"United States, Census, 1880\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:MNH8-SHT : Wed Sep 09 15:31:40 UTC 2026), Entry for Charles Miller and Theresa Miller, 1880.",
+          "url": "https://www.familysearch.org/ark:/61903/1:1:MNH8-SC9"
+        },
+        {
+          "id": "sd_p_395579067",
+          "resource_type": "Person",
+          "title": "Theresa Miller, \"United States, Census, 1880\"",
+          "citation": "\"United States, Census, 1880\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:MNH8-SHT : Wed Sep 09 15:31:40 UTC 2026), Entry for Charles Miller and Theresa Miller, 1880.",
+          "url": "https://www.familysearch.org/ark:/61903/1:1:MNH8-SHY"
+        },
+        {
+          "id": "sd_p_395579073",
+          "resource_type": "Person",
+          "title": "Nikulous Miller, \"United States, Census, 1880\"",
+          "citation": "\"United States, Census, 1880\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:MNH8-SHT : Wed Sep 09 15:31:40 UTC 2026), Entry for Charles Miller and Theresa Miller, 1880.",
+          "url": "https://www.familysearch.org/ark:/61903/1:1:MNH8-SC3"
+        },
+        {
+          "id": "sd_p_395579077",
+          "resource_type": "Person",
+          "title": "Mary Rosa Miller, \"United States, Census, 1880\"",
+          "citation": "\"United States, Census, 1880\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:MNH8-SHT : Wed Sep 09 15:31:40 UTC 2026), Entry for Charles Miller and Theresa Miller, 1880.",
+          "url": "https://www.familysearch.org/ark:/61903/1:1:MNH8-SC4"
+        },
+        {
+          "id": "sd_p_395579075",
+          "resource_type": "Person",
+          "title": "Mary Margret Miller, \"United States, Census, 1880\"",
+          "citation": "\"United States, Census, 1880\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:MNH8-SHT : Wed Sep 09 15:31:40 UTC 2026), Entry for Charles Miller and Theresa Miller, 1880.",
+          "url": "https://www.familysearch.org/ark:/61903/1:1:MNH8-SC7"
+        },
+        {
+          "id": "sd_auto_M9JT-92D",
+          "resource_type": "auto",
+          "title": "United States, Residences, Census, from 1793 to 1964",
+          "coverage": {
+            "place_rep_id": "1",
+            "date_range": "+1793-01-01T00:00:00Z/+1964-12-31T23:59:59Z",
+            "standard_place": "United States"
+          }
+        }
+      ],
+      "places": [
+        {
+          "id": "place_5524857"
+        }
+      ]
+    },
+    "indexFields": {
+      "p_395579066": {
+        "relationshipToHead": "Head",
+        "sortKey": "0000000005154200_00629_19898000_0000000224998716_000",
+        "personNbr": "0",
+        "lineNbr": "00050",
+        "householdId": "6639589",
+        "age": "48 years",
+        "fatherBirthPlace": "France",
+        "motherBirthPlace": "France"
+      },
+      "p_395579067": {
+        "relationshipToHead": "Wife",
+        "sortKey": "0000000005154200_00629_19898000_0000000224998716_001",
+        "personNbr": "1",
+        "lineNbr": "00051",
+        "householdId": "6639589",
+        "age": "44 years",
+        "fatherBirthPlace": "Germany",
+        "motherBirthPlace": "Germany"
+      },
+      "p_395579068": {
+        "relationshipToHead": "Daughter",
+        "sortKey": "0000000005154200_00629_19898000_0000000224998716_002",
+        "personNbr": "2",
+        "lineNbr": "00052",
+        "householdId": "6639589",
+        "age": "23 years",
+        "fatherBirthPlace": "Germany",
+        "motherBirthPlace": "France"
+      },
+      "p_395579069": {
+        "relationshipToHead": "Daughter",
+        "sortKey": "0000000005154200_00629_19898000_0000000224998716_003",
+        "personNbr": "3",
+        "lineNbr": "00053",
+        "householdId": "6639589",
+        "age": "21 years",
+        "fatherBirthPlace": "Germany",
+        "motherBirthPlace": "France"
+      },
+      "p_395579070": {
+        "relationshipToHead": "Daughter",
+        "sortKey": "0000000005154200_00629_19898000_0000000224998716_004",
+        "personNbr": "4",
+        "lineNbr": "00054",
+        "householdId": "6639589",
+        "age": "19 years",
+        "fatherBirthPlace": "Germany",
+        "motherBirthPlace": "France"
+      },
+      "p_395579071": {
+        "relationshipToHead": "Son",
+        "sortKey": "0000000005154200_00629_19898000_0000000224998716_005",
+        "personNbr": "5",
+        "lineNbr": "00055",
+        "householdId": "6639589",
+        "age": "14 years",
+        "fatherBirthPlace": "Germany",
+        "motherBirthPlace": "France"
+      },
+      "p_395579072": {
+        "relationshipToHead": "Son",
+        "sortKey": "0000000005154200_00629_19898000_0000000224998716_006",
+        "personNbr": "6",
+        "lineNbr": "00056",
+        "householdId": "6639589",
+        "age": "15 years",
+        "fatherBirthPlace": "Germany",
+        "motherBirthPlace": "France"
+      },
+      "p_395579073": {
+        "relationshipToHead": "Son",
+        "sortKey": "0000000005154200_00629_19898000_0000000224998716_007",
+        "personNbr": "7",
+        "lineNbr": "00057",
+        "householdId": "6639589",
+        "age": "12 years",
+        "fatherBirthPlace": "Germany",
+        "motherBirthPlace": "France"
+      },
+      "p_395579074": {
+        "relationshipToHead": "Daughter",
+        "sortKey": "0000000005154200_00629_19898000_0000000224998716_008",
+        "personNbr": "8",
+        "lineNbr": "00058",
+        "householdId": "6639589",
+        "age": "11 years",
+        "fatherBirthPlace": "Germany",
+        "motherBirthPlace": "France"
+      },
+      "p_395579075": {
+        "relationshipToHead": "Daughter",
+        "sortKey": "0000000005154200_00629_19898000_0000000224998716_009",
+        "personNbr": "9",
+        "lineNbr": "00059",
+        "householdId": "6639589",
+        "age": "9 years",
+        "fatherBirthPlace": "Germany",
+        "motherBirthPlace": "France"
+      },
+      "p_395579076": {
+        "relationshipToHead": "Son",
+        "sortKey": "0000000005154200_00629_19898000_0000000224998716_010",
+        "personNbr": "10",
+        "lineNbr": "00060",
+        "householdId": "6639589",
+        "age": "7 years",
+        "fatherBirthPlace": "Germany",
+        "motherBirthPlace": "France"
+      },
+      "p_395579077": {
+        "relationshipToHead": "Daughter",
+        "sortKey": "0000000005154200_00629_19898000_0000000224998716_011",
+        "personNbr": "11",
+        "lineNbr": "00061",
+        "householdId": "6639589",
+        "age": "6 years",
+        "fatherBirthPlace": "Germany",
+        "motherBirthPlace": "France"
+      },
+      "p_395579078": {
+        "relationshipToHead": "Daughter",
+        "sortKey": "0000000005154200_00629_19898000_0000000224998716_012",
+        "personNbr": "12",
+        "lineNbr": "00062",
+        "householdId": "6639589",
+        "age": "4 years",
+        "fatherBirthPlace": "Germany",
+        "motherBirthPlace": "France"
+      },
+      "p_395579079": {
+        "relationshipToHead": "Daughter",
+        "sortKey": "0000000005154200_00629_19898000_0000000224998716_013",
+        "personNbr": "13",
+        "lineNbr": "00063",
+        "householdId": "6639589",
+        "age": "1 years",
+        "fatherBirthPlace": "Germany",
+        "motherBirthPlace": "France"
+      }
+    }
+  }
+}

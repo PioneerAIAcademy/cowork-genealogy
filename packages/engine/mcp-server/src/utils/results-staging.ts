@@ -13,7 +13,7 @@
 import { join, resolve, dirname } from "path";
 import { randomUUID } from "node:crypto";
 import { getProjectStore } from "../store/project-store.js";
-import { isInsideProject, assertInsideProject, readProjectJson } from "./project-io.js";
+import { isInsideProject, assertInsideProject, projectRelativeRef, readProjectJson } from "./project-io.js";
 
 /** The mandatory staging subdirectory. Invisible to the validator orphan check
  *  (which scans results/ non-recursively for top-level *.json). */
@@ -41,10 +41,10 @@ export const STAGING_SEARCH_TOOLS = new Set([
  * producers. A transcription, a record fetched by ARK and a tree person read are
  * retained as a ONE-element `results[]` envelope, so finalize needs no second
  * shape. The acquisition producers carry none of the search notes:
- * record-extraction logs an upload as `user_provided` and a `record_read` with no
- * `stagedResultsRef`, and a `person_read` file is what `project_create` builds
- * the starting tree from (`personReadRef`, issue #2944) rather than something
- * logged, so a nag on any of them would contradict the shipped flow. An
+ * `extraction_append` logs each read it makes with that read's own staged ref,
+ * and an upload as `user_provided`, and a `person_read` file is staged for
+ * `project_create` to build the starting tree from (issue #2944's Stage B, not
+ * yet built) rather than logged, so there is nothing to nag about. An
  * unfinalized acquisition file is simply TTL-pruned.
  */
 export const STAGING_CAPABLE_TOOLS = new Set([
@@ -60,12 +60,23 @@ export const STAGING_CAPABLE_TOOLS = new Set([
  * or auto-fill `record_persona_id`. A whitelist, not a blacklist: the next
  * staging producer added is treated as persona-less until it is listed here,
  * which fails safe rather than silently matching nothing on a `recordId` field
- * it does not carry (#2038). `record_search` results key on `recordId`; the
- * persona-less producers (`fulltext_search`, `external_links_search`) key on
- * `id`. Mirrors `personaReachable` in research-append.ts and `_persona_reachable`
- * in the eval harness.
+ * it does not carry (#2038). `record_search` and `record_read` results key on
+ * `recordId`; the persona-less producers (`fulltext_search`,
+ * `external_links_search`) key on `id`. Mirrors `personaReachable` in
+ * research-append.ts and `_persona_reachable` in the eval harness.
+ *
+ * `record_read` was MISSING here until issue #2937, and both mirrors already
+ * counted it — `personaReachable` returns true on `logEntry.tool ===
+ * "record_read"`, and the harness's `_persona_reachable` says the same, each
+ * because the tool returns a `SimplifiedGedcomX` with a persons array. This set
+ * was the only one of the three that disagreed, so adding it is a CORRECTION,
+ * not a widening. The omission failed precisely and silently: `record_read`
+ * stages `{ recordId, gedcomx }` (record-read.ts), but a non-persona-bearing
+ * producer is matched on `r.id`, which that envelope does not carry — so every
+ * `record_read` sidecar matched nothing, and any `record_persona_id` on an
+ * assertion drawn from one was refused outright.
  */
-export const PERSONA_BEARING_PRODUCERS = new Set(["record_search"]);
+export const PERSONA_BEARING_PRODUCERS = new Set(["record_search", "record_read"]);
 
 export interface StagedHandle {
   resultsRef: string;
@@ -167,6 +178,7 @@ export async function checkStagedResults(args: {
       `stagedResultsRef '${stagedResultsRef}' is not inside ${STAGING_SUBDIR}/`,
     );
   }
+  const ref = projectRelativeRef(projectPath, stagedResultsRef);
 
   // 2. Read the staged envelope. A missing file is the common case (the ref was
   //    already logged, pruned, or never staged) and gets a message saying which
@@ -174,11 +186,11 @@ export async function checkStagedResults(args: {
   let envelope: StagingEnvelope;
   let text: string;
   try {
-    text = await store.readText(projectPath, stagedResultsRef);
+    text = await store.readText(projectPath, ref);
   } catch (e) {
     // Only an absent file gets the "logged once" advice; a store fault reading a
     // file that is there must not tell the agent to re-run a search it already has.
-    if (await store.exists(projectPath, stagedResultsRef)) {
+    if (await store.exists(projectPath, ref)) {
       throw new Error(
         `stagedResultsRef '${stagedResultsRef}' could not be read: ` +
           (e instanceof Error ? e.message : String(e)),
@@ -281,7 +293,7 @@ export async function consumeStagedResults(
 ): Promise<void> {
   const store = getProjectStore();
   for (const ref of stagedResultsRefs) {
-    await store.remove(projectPath, ref);
+    await store.remove(projectPath, projectRelativeRef(projectPath, ref));
   }
 }
 
@@ -318,7 +330,9 @@ export async function readStagedEnvelopeQuery(
   try {
     const abs = assertInsideProject(projectPath, stagedResultsRef);
     if (!isInsideProject(join(projectPath, STAGING_SUBDIR), abs)) return undefined;
-    const envelope = JSON.parse(await getProjectStore().readText(projectPath, stagedResultsRef));
+    const envelope = JSON.parse(
+      await getProjectStore().readText(projectPath, projectRelativeRef(projectPath, stagedResultsRef)),
+    );
     if (typeof envelope?.tool !== "string") return undefined;
     return { tool: envelope.tool, query: stripQueryPlumbing(envelope.payload?.query) };
   } catch {
@@ -644,7 +658,9 @@ export async function readStagedResults(
   }
   let envelope: { payload?: { results?: unknown[] } };
   try {
-    envelope = JSON.parse(await getProjectStore().readText(projectPath, stagedResultsRef));
+    envelope = JSON.parse(
+      await getProjectStore().readText(projectPath, projectRelativeRef(projectPath, stagedResultsRef)),
+    );
   } catch {
     throw new Error(
       `stagedResultsRef '${stagedResultsRef}' does not exist or is invalid JSON.`,

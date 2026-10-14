@@ -260,6 +260,16 @@ def test_should_continue_allows_when_mcp_unavailable():
     ) is False
 
 
+def test_should_continue_allows_when_there_is_no_research_json():
+    """#3274. Every other input says "nudge it onward" — budget left, progress since the
+    last nudge — and a missing or unreadable research.json still wins: there is no
+    project to resume, and the nudge tells the agent to re-read it."""
+    assert should_continue_run(
+        research=None, nudges_used=1, max_nudges=5,
+        tool_count=12, tool_count_at_last_nudge=8,
+    ) is False
+
+
 def test_mcp_unavailable_defaults_false_so_existing_callers_are_unchanged():
     """The flag is opt-in: the same inputs that vetoed a stop before still do."""
     assert should_continue_run(
@@ -319,14 +329,18 @@ def test_hand_back_key_is_a_counter_key_and_nothing_else():
 
 
 def test_terminal_reason_mirrors_should_continue_run_precedence():
-    """should_continue_run returns a bare bool for four reasons and only two are
+    """should_continue_run returns a bare bool for five reasons and only two are
     defects. These must agree on order or the counts attribute the wrong cause."""
     done = {"project": {"status": "completed"}}
     assert terminal_reason(research=done, nudges_used=0, max_nudges=40, mcp_unavailable=False) == "completed"
     # mcp_unavailable outranks everything, exactly as should_continue_run has it
     assert terminal_reason(research=done, nudges_used=0, max_nudges=40, mcp_unavailable=True) == "mcp_unavailable"
-    assert terminal_reason(research=None, nudges_used=40, max_nudges=40, mcp_unavailable=False) == "budget"
-    assert terminal_reason(research=None, nudges_used=1, max_nudges=40, mcp_unavailable=False) == "no_progress"
+    # An unfinished project, so the budget and the no-progress fall-through are what is
+    # being told apart. With no research.json neither is reachable (below).
+    assert terminal_reason(research=_INCOMPLETE, nudges_used=40, max_nudges=40, mcp_unavailable=False) == "budget"
+    assert terminal_reason(research=_INCOMPLETE, nudges_used=1, max_nudges=40, mcp_unavailable=False) == "no_progress"
+    # No research.json (#3274): `ok`, and ahead of the budget, which is spent here.
+    assert terminal_reason(research=None, nudges_used=40, max_nudges=40, mcp_unavailable=False) == "ok"
 
     # and only the two defect reasons are counted
     assert COUNTED_TERMINAL_REASONS == {"budget", "no_progress"}

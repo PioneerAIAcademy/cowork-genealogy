@@ -378,7 +378,8 @@ probe-agent-nesting: $(ENGINE_BUILD) ## Live probe: can a plugin agent spawn ano
 	#
 	# Answered 2026-09-23 (Claude Code 2.1.220, SDK 0.2.128): yes, at depth 2, and
 	# the tool is Agent -- a Task grant resolves to it. The SDK streams no depth-2
-	# messages. A driver spawning three real record-extractors in parallel ran
+	# messages. A driver spawning three real record-extractors (since retired; the
+	# extractor arms now spawn record-structurer) in parallel ran
 	# them concurrently: 694 s wall against ~1,419 s back to back, every write
 	# landed. Re-run when the CLI or the SDK moves.
 	cd apps/server && \
@@ -502,7 +503,7 @@ proto-smoke: proto-up-core ## D3 acceptance, no model cost: ok / fail / crash / 
 
 .PHONY: proto-test
 proto-test: ## Prototype offline tests: compose/conf/schema shape, the shim's decide(), the web tier, the worker
-	cd apps/server && uv run pytest -q tests/test_proto_config.py tests/test_proto_decide.py tests/test_proto_enqueue.py tests/test_proto_web.py tests/test_proto_worker.py tests/test_proto_worker_start.py tests/test_proto_shutdown.py tests/test_proto_d17.py tests/test_proto_demo.py tests/test_proto_kill.py tests/test_proto_d18.py tests/test_proto_auth.py tests/test_proto_bundles.py tests/test_eb_bundles.py tests/test_proto_grants.py tests/test_proto_grants_pg.py tests/test_proto_turn_users.py tests/test_proto_migrate.py tests/test_proto_migrate_pg.py tests/test_proto_bounds.py tests/test_proto_queue_pg.py tests/test_proto_fencing_pg.py tests/test_proto_session_store_pg.py tests/test_proto_rehearsal.py tests/test_proto_target.py
+	cd apps/server && uv run pytest -q tests/test_proto_config.py tests/test_proto_decide.py tests/test_proto_enqueue.py tests/test_proto_web.py tests/test_proto_worker.py tests/test_proto_worker_start.py tests/test_proto_shutdown.py tests/test_proto_d17.py tests/test_proto_demo.py tests/test_proto_kill.py tests/test_proto_d18.py tests/test_proto_auth.py tests/test_proto_bundles.py tests/test_eb_bundles.py tests/test_proto_grants.py tests/test_proto_grants_pg.py tests/test_proto_turn_users.py tests/test_proto_migrate.py tests/test_proto_migrate_pg.py tests/test_proto_bounds.py tests/test_proto_queue_pg.py tests/test_proto_fencing_pg.py tests/test_proto_session_store_pg.py tests/test_proto_delete_pg.py tests/test_proto_alarms.py tests/test_proto_alarms_pg.py tests/test_proto_rehearsal.py tests/test_proto_target.py
 
 # U3: the grant-lock tests against real Postgres -- the lock semantics are the point, and no
 # fake can prove pg_try_advisory_lock. U9's migration runner the same way: its lock, its
@@ -510,13 +511,14 @@ proto-test: ## Prototype offline tests: compose/conf/schema shape, the shim's de
 # admit_message on one session. U6's claim fence the same way: a superseded attempt's
 # worker writes, transcript append and tool-server commit (two `build/http.js` processes,
 # hence the build first) are no-ops, and its transcript append dedupes a retried batch by
-# uuid. A fresh database per test or module, dropped at teardown.
+# uuid. U19's delete_session the same way: the SDK-keyed transcript, its busy refusal under
+# the queue lock. A fresh database per test or module, dropped at teardown.
 # CI runs the same files against a postgres:16 container (server-tests.yml).
 .PHONY: proto-grants-test
 proto-grants-test: ## U3 + U6 + U9 + U23: the grant-lock interleavings, the claim fence, the migration runner and the held-message claim against the compose postgres (real advisory locks)
 	npm --prefix packages/engine/mcp-server run build
 	$(PROTO_COMPOSE) up -d --wait postgres
-	cd apps/server && PROTO_TEST_PG_DSN=postgresql://postgres:proto@localhost:5434/postgres uv run pytest -q tests/test_proto_grants_pg.py tests/test_proto_migrate_pg.py tests/test_proto_queue_pg.py tests/test_proto_fencing_pg.py tests/test_proto_session_store_pg.py
+	cd apps/server && PROTO_TEST_PG_DSN=postgresql://postgres:proto@localhost:5434/postgres uv run pytest -q tests/test_proto_grants_pg.py tests/test_proto_migrate_pg.py tests/test_proto_queue_pg.py tests/test_proto_fencing_pg.py tests/test_proto_session_store_pg.py tests/test_proto_delete_pg.py tests/test_proto_alarms_pg.py
 
 # U3: store an encrypted FamilySearch grant for the dev-login patron (EMAIL, default
 # dev@localhost, who owns every seeded project): a PKCE sign-in on the dev key through a
@@ -529,8 +531,9 @@ proto-grant: ## U3: sign in on the dev key and store the dev-login patron's gran
 
 # D9–10 acceptance, billed (two short Sonnet turns). Same `up` as proto-up (env.sh);
 # refuses to run without a model key. The Stop hook is off (AUTONOMOUS_MAX_NUDGES=0,
-# unless the caller sets it non-empty): a lookup on a project-less session is never
-# "completed", so the hook would veto every stop and end the turn no_progress. `:-0`,
+# unless the caller sets it non-empty). A lookup on a project-less session used to be
+# vetoed and end no_progress; a session with no research.json is no longer nudged (issue
+# #3274), but the pin stays because lifting it changes what a paid probe run does. `:-0`,
 # not `-0`: an empty value would reach compose's `:-60` on the web tier and turn it on.
 .PHONY: proto-turn
 proto-turn: $(ENGINE_DEPS) ## D9–10 acceptance: two real turns through web tier → queue → shim → worker, the second resuming the first (needs ANTHROPIC_API_KEY or eval/.env)
@@ -758,13 +761,30 @@ proto-store-test: proto-up-store ## D6–8 store: PgS3ProjectStore conformance +
 	cd $(ENGINE_DIR) && env -u AWS_ACCESS_KEY_ID -u AWS_SECRET_ACCESS_KEY \
 	  PROTO_PG_DSN=$(PROTO_PG_DSN) PROTO_S3_ENDPOINT=http://localhost:9000 \
 	  PROTO_S3_BUCKET=projects PROTO_S3_ACCESS_KEY=proto PROTO_S3_SECRET_KEY=protoproto \
-	  npx vitest run tests/store/pg-s3-project-store.test.ts tests/http/http-server-pg.test.ts
+	  npx vitest run tests/store/pg-s3-project-store.test.ts tests/http/http-server-pg.test.ts tests/store/pg-routing-store.test.ts tests/store/s3-orphan-sweep.test.ts
 	cd $(ENGINE_DIR) && env -u AWS_PROFILE -u AWS_SESSION_TOKEN \
 	  PROTO_PG_DSN=$(PROTO_PG_DSN) PROTO_S3_ENDPOINT=http://localhost:9000 PROTO_S3_BUCKET=projects \
 	  PROTO_S3_KEYLESS=1 PROTO_S3_ACCESS_KEY=proto PROTO_S3_SECRET_KEY=protoproto \
 	  AWS_ACCESS_KEY_ID=proto AWS_SECRET_ACCESS_KEY=protoproto \
 	  AWS_SHARED_CREDENTIALS_FILE=/nonexistent AWS_CONFIG_FILE=/nonexistent AWS_EC2_METADATA_DISABLED=true \
-	  npx vitest run tests/store/pg-s3-project-store.test.ts tests/http/http-server-pg.test.ts
+	  npx vitest run tests/store/pg-s3-project-store.test.ts tests/http/http-server-pg.test.ts tests/store/pg-routing-store.test.ts tests/store/s3-orphan-sweep.test.ts
+
+# U15: the whole engine suite with every tool's project I/O on PgS3ProjectStore
+# (PROTO_STORE=pg: tests/setup/proto-store.ts installs tests/helpers/pg-routing-store.ts),
+# failing on any skipped test, then the harness's --store pg cases, then
+# proto-store-test's keyless arm. CI's twin is engine-tests.yml's vitest-pg job.
+# Static keys, with exported AWS_* unset as above.
+.PHONY: engine-test-pg
+engine-test-pg: proto-up-store $(ENGINE_DEPS) ## U15: engine vitest suite on the Postgres/S3 store (compose postgres/minio), nothing may skip
+	cd $(ENGINE_DIR) && env -u AWS_ACCESS_KEY_ID -u AWS_SECRET_ACCESS_KEY PROTO_STORE=pg \
+	  PROTO_PG_DSN=$(PROTO_PG_DSN) PROTO_S3_ENDPOINT=http://localhost:9000 \
+	  PROTO_S3_BUCKET=projects PROTO_S3_ACCESS_KEY=proto PROTO_S3_SECRET_KEY=protoproto \
+	  npm test
+	cd eval/harness && env -u AWS_ACCESS_KEY_ID -u AWS_SECRET_ACCESS_KEY \
+	  PROTO_PG_DSN=$(PROTO_PG_DSN) PROTO_S3_ENDPOINT=http://localhost:9000 \
+	  PROTO_S3_BUCKET=projects PROTO_S3_ACCESS_KEY=proto PROTO_S3_SECRET_KEY=protoproto \
+	  uv run --frozen pytest -q -rs tests/unit/test_pg_store_switch.py
+	$(MAKE) proto-store-test
 
 .PHONY: engine-test
 engine-test: $(ENGINE_DEPS) ## Genealogy engine tests — packages/engine/mcp-server (vitest)
@@ -889,7 +909,7 @@ replay-collapse: $(ENGINE_BUILD) ## Replay each recorded research_query plan-log
 	cd eval/harness && uv run python -m e2e.replay_collapse $(if $(BASE),--base $(BASE),) $(if $(TEST),--test $(TEST),) $(if $(TRACKED_ONLY),--tracked-only,) $(if $(JSON),--json $(abspath $(JSON)),)
 
 .PHONY: eval-skill
-eval-skill: $(ENGINE_BUILD) ## Run the skill eval harness, rebuilding first: make eval-skill SKILL=tree-edit [CONCURRENCY=8]; SKILL="a b c" runs several in one pool
+eval-skill: $(ENGINE_BUILD) ## Run the skill eval harness, rebuilding first: make eval-skill SKILL=tree-edit [CONCURRENCY=8] [STORE=pg]; SKILL="a b c" runs several in one pool
 	# $(ENGINE_BUILD) rebuilds packages/engine/mcp-server/build/ only when its
 	# source/deps changed, so the harness's "mcp-server build is stale" check
 	# (exit 2) passes. A bare --skill run is releasable: writes a v{N}_<ts>.json
@@ -914,8 +934,12 @@ eval-skill: $(ENGINE_BUILD) ## Run the skill eval harness, rebuilding first: mak
 	#
 	# TOOL_SEARCH=0 loads every tool schema up front (default on, as the corpus
 	# runs). Experiment-only: the run log is a scratch_<ts>.json, never a candidate.
+	#
+	# STORE=pg (U15) runs every live tool on PgS3ProjectStore against the compose
+	# Postgres + MinIO, started here: non-releasable, logged to eval/runlogs/unit-pg/.
 	@test -n "$(SKILL)" || { echo "ERROR: set SKILL, e.g. make eval-skill SKILL=tree-edit" >&2; exit 1; }
-	cd eval/harness && uv run python run_tests.py --skill $(SKILL) $(if $(CONCURRENCY),--concurrency $(CONCURRENCY),) $(if $(filter 0 false no off,$(TOOL_SEARCH)),--no-tool-search,)
+	$(if $(filter pg,$(STORE)),$(MAKE) proto-up-store,@true)
+	cd eval/harness && $(if $(filter pg,$(STORE)),env -u AWS_ACCESS_KEY_ID -u AWS_SECRET_ACCESS_KEY PROTO_PG_DSN=$(PROTO_PG_DSN) PROTO_S3_ENDPOINT=http://localhost:9000 PROTO_S3_BUCKET=projects PROTO_S3_ACCESS_KEY=proto PROTO_S3_SECRET_KEY=protoproto,) uv run python run_tests.py --skill $(SKILL) $(if $(CONCURRENCY),--concurrency $(CONCURRENCY),) $(if $(filter 0 false no off,$(TOOL_SEARCH)),--no-tool-search,) $(if $(filter pg,$(STORE)),--store pg,)
 
 .PHONY: gate-skill
 gate-skill: $(ENGINE_BUILD) ## Gate a candidate SKILL.md edit vs its step-4 run-log baseline on the mined test (advisory; writes no run-logs): make gate-skill SKILL=tree-edit TEST=ut_tree_edit_007 [DIMENSION="Correctness"]
@@ -1000,15 +1024,6 @@ e2e-login: $(ENGINE_DEPS) ## Log in to FamilySearch (opens a browser; token last
 	# Login is host-global and ~24h-lived — a once-per-day act, not per run.
 	cd $(ENGINE_DIR) && npx tsx dev/e2e-login.ts
 
-.PHONY: e2e-thinking-probe
-e2e-thinking-probe: ## Reproduce the record-extractor runaway-thinking freeze in ~1 min (needs ANTHROPIC_API_KEY)
-	# Replays the exact delegation message that froze the frederick-munson run
-	# against sonnet-5 under three thinking configs (32k / off / 4k) with a
-	# stubbed tool loop, and reports which RAN AWAY vs ACTED. A one-turn API
-	# probe instead of a 15-min e2e run — settles the thinking-vs-model question.
-	# No MCP/FamilySearch calls; the API key comes from the shell or eval/.env.
-	cd eval/harness && uv run python -m e2e.try_record_extractor_thinking $(if $(MODEL),--model $(MODEL),)
-
 .PHONY: e2e-run
 e2e-run: $(ENGINE_BUILD) ## Run ONE e2e benchmark fixture against live FamilySearch (expensive): make e2e-run TEST=kenneth-quass-death
 	# Changed this recipe? Keep eval/RunE2E.bat in sync — it is the Windows
@@ -1090,13 +1105,18 @@ judge-report: ## Non-discrimination scan of the UNIT judge over committed run lo
 	cd eval/harness && uv run python -m judge_report $(if $(SKILL),--skill $(SKILL),) $(if $(SINCE),--since $(SINCE),)
 
 .PHONY: judge-regrade
-judge-regrade: ## Regrade committed unit run logs against the current judge prompt (satisfies rule 2b): make judge-regrade | SKILL=<name> | DRY=1
+judge-regrade: ## Regrade committed unit run logs against the current judge prompt (satisfies rule 2b): make judge-regrade | SKILL=<name> | DRY=1 | SCRATCH=<dir> [SCENARIO="a b"] [SLOT=readme]
 	# Issue #2479 PR 1. Rule 2b blocks on a judge-prompt-only PR; this target
 	# is the cheap satisfaction path (~$5 of judge-only spend vs ~$95 to re-run).
 	# DRY=1 renders + hashes every eligible prompt with NO model call — used by
 	# `make harness-test` to prove the renderer reads from disk on every call.
 	# A log that is already skill-side stale (rule 2) is REFUSED, not regraded.
-	cd eval/harness && uv run python -m judge_regrade $(if $(SKILL),--skill $(SKILL),) $(if $(DRY),--dry-run,)
+	# SCRATCH=<dir> regrades COPIES of the latest logs into <dir> and never writes
+	# a committed one; it waives both refusals, so a judge-input change that
+	# stales the snapshot (a scenario brief, #2478) can be A/B'd. One fresh dir
+	# per pass, given as an absolute path (the recipe runs from eval/harness).
+	# SCENARIO and SLOT=readme require SCRATCH.
+	cd eval/harness && uv run python -m judge_regrade $(if $(SKILL),--skill $(SKILL),) $(if $(DRY),--dry-run,) $(if $(SCRATCH),--runlogs-root "$(SCRATCH)",) $(foreach s,$(SCENARIO),--scenario $(s)) $(if $(SLOT),--slot $(SLOT),)
 
 .PHONY: e2e-calibrate
 e2e-calibrate: ## Run judge calibration against committed run annotations (maintainer step; needs an API key)
@@ -1473,6 +1493,12 @@ unit-report: ## Readable .txt per unit run log, into eval/runlogs/unit/<skill>/r
 	# The reports/ folders are gitignored — regenerate, don't commit.
 	cd eval/harness && uv run python -m unit_run_report $(if $(SKILL),--skill $(SKILL),) $(if $(FORCE),--force,)
 
+.PHONY: unit-pg-parity
+unit-pg-parity: ## U15: each skill's newest --store pg unit run vs its newest file-store run — flips, store faults: make unit-pg-parity [SKILL=<name>]
+	# Pure formatting, no API. Exit 1 when a live tool response reads as a store
+	# fault (Postgres, S3, the prelude, a ref the Postgres store refused).
+	cd eval/harness && uv run python -m unit_pg_parity $(if $(SKILL),--skill $(SKILL),)
+
 .PHONY: unit-compare
 unit-compare: ## Compare a skill's newest unit run with the one before it, printed: make unit-compare SKILL=<name> | BEFORE=a.json AFTER=b.json
 	# Pure formatting, no API. Per test in BOTH runs: result, cost, change %,
@@ -1586,9 +1612,10 @@ eb-bundles-smoke: ## Boot each bundle offline in Docker (AL2023 / node:24-slim):
 # `--frozen`: a group edited in pyproject.toml without `uv lock` fails here instead of
 # exporting the stale lock.
 .PHONY: proto-requirements
-proto-requirements: ## Export uv.lock's proto-web/proto-worker groups to apps/server/proto/{web,worker}/requirements.txt (hashes; commit both after any uv.lock change)
+proto-requirements: ## Export uv.lock's proto-web/proto-worker/sandbox groups to apps/server/{proto/web,proto/worker,sandbox}/requirements.txt (hashes; commit all three after any uv.lock change)
 	cd apps/server && uv export --quiet --locked --only-group proto-web --no-emit-project --format requirements-txt -o proto/web/requirements.txt
 	cd apps/server && uv export --quiet --locked --only-group proto-worker --no-emit-project --format requirements-txt -o proto/worker/requirements.txt
+	cd apps/server && uv export --quiet --locked --only-group sandbox --no-emit-project --format requirements-txt -o sandbox/requirements.txt
 
 # Builds and pushes the E2B agent image. `make deploy` runs this too, so the
 # control plane and the sandbox ship together; it stays a standalone target for
@@ -1659,7 +1686,7 @@ deploy-status: ## Health-check the deployed control plane (expect "db":"postgres
 	curl -s $(DEPLOY_URL)/api/health | jq
 
 # Runs on the Fly machine, which holds DATABASE_URL, so no database credential is needed
-# here. Reads turn_costs (apps/server/app/cost_report.py).
+# here. Reads api_calls and turn_costs (apps/server/app/cost_report.py).
 .PHONY: alpha-costs
-alpha-costs: ## Claude API cost of the hosted alpha: per day, per build, top sessions (DAYS=30)
+alpha-costs: ## Claude API cost of the hosted alpha: every call and every turn, per day and session (DAYS=30)
 	fly ssh console --app genealogy-workbench -C "sh -c 'cd /app/server && python -m app.cost_report --days $(or $(DAYS),30)'"

@@ -171,6 +171,10 @@ def build_snapshot(
     snapshot: dict[str, str] = {}
 
     skill_dir = repo_root / "packages" / "engine" / "plugin" / "skills" / skill
+    if not skill_dir.is_dir() and (repo_root / "eval" / "skills" / skill).is_dir():
+        # A test-only skill (lead, 2026-09-30): its body is what the suite runs,
+        # so editing it must flip the run log inactive, as for a plugin skill.
+        skill_dir = repo_root / "eval" / "skills" / skill
     _embed_tree(snapshot, skill_dir, repo_root)
 
     # Plugin-agent files the skill delegates to via `@plugin:<name>`.

@@ -5,27 +5,30 @@
   "test": {
     "id": "ut_research_exhaustiveness_d3c",
     "skill": "research-exhaustiveness",
-    "name": "Unresolved conflict blocks exhaustive declaration (direct-agent arm)",
+    "name": "Unresolved conflict writes blocked_by_conflict, not a stop-gate value",
     "type": "positive",
-    "description": "All planned searches for the parentage question have been completed and the evidence consistently names the same person as Patrick's father. However, an unresolved discrepancy such as a birthplace conflict is still open in the project. The skill must decline to declare exhaustive, naming the unresolved conflict as the specific blocker rather than a general \"not yet.\"",
+    "description": "The flynn-unresolved-conflict scenario has all planned searches for q_001 completed and strong evidence naming Thomas Flynn as Patrick's father, but c_001 (a birthplace conflict: Ireland vs. Pennsylvania) is open and blocks_question_ids includes q_001. The agent must persist stopped_because: \"blocked_by_conflict\" with stop_criteria: null and leave status: \"in_progress\" unchanged. A gate value is a FAIL; so is declining without writing anything.",
     "tags": [
       "conflict-resolution",
-      "decline-declaration",
+      "blocked-by-conflict",
       "stop-criteria",
       "declaration-honesty",
-      "no-exhaustive-declaration",
-      "direct-arm"
+      "no-gate-declaration"
     ]
   },
   "input": {
-    "delegation": "Declare question q_001 exhaustive and record the outcome. All planned searches are complete and the open conflict is collateral — it does not touch this question. Appropriate outcome: `declared: true`.\n\nquestionId: q_001\nprojectPath: <workspace>",
+    "delegation": "Assess whether question q_001 is reasonably exhaustive and record the outcome — declaring if all seven stop criteria are met, and recording the blocker if they are not.\n\nquestionId: q_001\nprojectPath: <workspace>",
     "scenario": "flynn-unresolved-conflict"
   },
   "mcp_fixtures": [
     "wiki-read-pennsylvania-vital-records"
   ],
   "judge_context": [
-    "The conflict_resolution stop criterion explicitly states that all discrepancies must be resolved before a declaration is valid unresolved conflicts block proof. This test checks whether Claude applies that criterion rather than declaring based on the weight of supporting evidence alone. Strong evidence in favor of a conclusion is not the same as having resolved every contradiction, and Claude should distinguish the two. The failure mode is Claude declaring exhaustive while treating the conflict as minor or already settled, or never mentioning it at all. A correct response keeps declared as false and names the unresolved conflict as the specific gap, not just a vague \"more work needed.\"",
-    "Stop criteria coverage on a DECLINE: grade the seven assessments wherever the agent put them — the persisted `exhaustive_declaration.stop_criteria` object when it recorded the outcome, the response prose when it did not — and do not require them twice. Per the rubric and #1843 a decline owes only the blocking entry, so the blocking criterion named with substance and tied to project state (c_001's `status`, `blocks_question_ids`, `preferred_assertion_id`, `resolution_rationale`) is at least **partial** and is never a fail. All seven, each tied to project state, is the **pass** shape. Apply that consistently: two responses naming the same number of criteria must receive the same score."
+    "The only correct write is stopped_because: \"blocked_by_conflict\" — c_001 (birthplace conflict, Ireland vs. Pennsylvania) is open, status is \"unresolved\", and its blocks_question_ids includes q_001. No stop-gate value (question_answered, record_exhausted, nothing_further_reachable) is acceptable while this conflict is unresolved.",
+    "stop_criteria must be null — blocked_by_conflict is a non-gate early termination and carries no per-criterion analysis.",
+    "status must remain \"in_progress\" — a non-gate stopped_because never permits exhaustive_declared.",
+    "A response that declines without persisting anything (stopped_because stays null) is a FAIL — the agent must record the outcome, not merely narrate it.",
+    "Stop criteria coverage on a blocked_by_conflict write: pass when the agent names the blocking conflict (c_001 by id or describing its fact_type and competing values) and ties its write to the conflict's presence. A vague 'conflicts remain' without identifying c_001 is partial.",
+    "The strong parentage evidence is not a reason to grant a gate value — the conflict_resolution stop criterion is not met while c_001 is open. Treating the conflict as minor or already settled is the failure mode."
   ]
 }
