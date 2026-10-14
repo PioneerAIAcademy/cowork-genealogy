@@ -14,14 +14,20 @@ out right 9 of 9 times, but the birth window it stated was wrong 3 of 9 times,
 and rewording the instruction changed nothing. This tool does the arithmetic so the
 caller only reports it.
 
-It is pure: offline, no `projectPath`, no FamilySearch read, and the same input
-always gives the same answer. It writes nothing.
+It is offline: no FamilySearch read, and the same input always gives the same
+answer. It writes nothing. It has two modes. **Explicit mode** takes the known
+children as input and is pure. **Tree mode** (`projectPath` + `motherId`) reads
+the mother's children and their dates from the project's `tree.gedcomx.json`, so
+no caller ever copies dates by hand — the transcription step the tool exists to
+remove.
 
 ## 2. Callers
 
 - `check-warnings` — the stand-alone tree check: reports the
   missing children next to `person_warnings`' errors whenever counts are
-  available.
+  available. It uses tree mode: it holds no file read, and no other read tool
+  returns birth dates (`project_context` gives a person's children, but no
+  dates).
 - `question-selection` — turns a result into a research question.
 
 `record-extractor` is deliberately not a caller (lead, 2026-10-08:
@@ -32,7 +38,8 @@ check-warnings owns errors, question-selection owns gaps).
 ```
 census_children_gap({
   censuses: [{ year: 1900 | 1910, childrenBorn, childrenLiving }],   // 1 or 2, distinct years
-  knownChildren?: [{ name?, birthDate, deathDate? }]
+  knownChildren?: [{ name?, birthDate, deathDate? }],   // explicit mode
+  projectPath?, motherId?                                // tree mode
 })
 ```
 
@@ -46,6 +53,8 @@ census_children_gap({
 | `knownChildren[].name` | string, optional | Used only to label output. |
 | `knownChildren[].birthDate` | `YYYY`, `YYYY-MM` or `YYYY-MM-DD` | **Required.** |
 | `knownChildren[].deathDate` | same, optional | Absent means the child is treated as living at both censuses (reported in `assumptions`). |
+| `motherId` | string, optional | **Tree mode.** A tree person id, or a FamilySearch id one tree person's `ark` links to (the same lookup `person_warnings` uses for its anchor). Not with `knownChildren`. |
+| `projectPath` | string | The project folder. Read only in tree mode; ignored otherwise (the eval harness injects one into every call). |
 
 **Where the counts come from.** Decided 2026-10-08 (review-ready): the tool takes the counts as parameters only. The caller supplies
 them from the user's message or from a 1900/1910 census record it has read.
@@ -65,7 +74,39 @@ days fall mid-year: a child born in 1900 cannot be placed before or after
 1 June 1900 from the year alone. When the year alone decides it, a bare year is
 enough.
 
-Unknown extra keys (the eval harness injects `projectPath`) are ignored.
+Unknown extra keys are ignored.
+
+**Tree mode.** The tool reads `tree.gedcomx.json`, finds the mother, and takes
+every child on a `ParentChild` relationship from her, unless its subtype denies
+biological parentage (adoptive, step, foster, guardian — read as `person_warnings`
+reads them, tolerating case and a `…Parent` suffix; an unknown subtype counts as
+biological). A child linked twice counts once. Starting from the mother, not the
+couple, is what includes children by an earlier husband. Dates come from each
+fact's standard date, read by the same parser `person_warnings` uses:
+
+- birth: every Birth fact; with none, any other birth-like fact (Christening,
+  Baptism and the rest of `BIRTHLIKE_FACT_TYPES` in `utils/mob.ts`) bounds it
+  from above only (born on or before);
+- death: every Death fact; with none, any other death-like fact (Burial,
+  Cremation, Funeral, Obituary, Probate — `DEATHLIKE_FACT_TYPES`) bounds it from
+  above only (died on or before).
+
+An open-ended date is not evidence for its open side: `Aft 1890` says nothing
+about how late, and `Bef 1895` nothing about how early, so that side is read as
+unbounded rather than at the parser's ten-year plausibility cap. Otherwise a
+child known only to be alive after 1890 would be counted dead by 1910.
+
+A child the tree cannot place — no birth evidence, a date that cannot be read,
+a death before its birth — is reported in `undetermined`, never as a failure of
+the whole call. Like any unplaceable child (§4.2) it takes each census it cannot
+be placed against out of the arithmetic, so a tree with one undated stub child
+returns no missing counts; the `undetermined` entry names the child whose date
+would unlock them, and contradictions the placed children already prove are
+still reported.
+
+The tool refuses a `motherId` that names a person recorded as male: the counts
+are the mother's, and walking a father's children would mix in children of
+another wife.
 
 ## 4. The rules
 
@@ -198,9 +239,15 @@ reports is ever negative.
   unresolved: [{ count, bornAfter, bornOnOrBefore, status1900, status1910, description }],
   conflicts: [{ census: 1900 | 1910 | "both", message }],
   undetermined: [{ census, child, reason }],
-  assumptions: string[] }
-| { ok: false, errors: string[] }
+  assumptions: string[],
+  mother?: { personId, name },                          // tree mode
+  knownChildrenUsed?: [{ personId, name, birth, death }] } // tree mode: the dates read
+| { ok: false, reason?: "no_project", errors: string[] }
 ```
+
+In tree mode `knownChildrenUsed` names each child and the standard dates read
+(`birth`/`death` are `null` when absent; a christening or burial stands in as
+`christened …` / `buried …`), so a caller can name them without reading the tree.
 
 `status1900` / `status1910` are `"dead" | "living" | "not_born" | "unknown"`.
 Groups with a count of 0 are left out.
@@ -216,10 +263,18 @@ pattern, listed in `OK_FALSE_IS_FAILURE`) for malformed input only:
 - `knownChildren` not an array, or a child with no `birthDate`
 - a date not in `YYYY`, `YYYY-MM` or `YYYY-MM-DD` form, or not a real date
 - a death date wholly before the birth date
+- tree mode: `motherId` together with `knownChildren`; a `motherId` that names no
+  tree person (or names a FamilySearch id linked to more than one); a missing
+  `projectPath`, a folder that does not exist, or a broken project (a missing or
+  unparseable tree)
+
+A folder that holds no project at all is not an error: tree mode answers
+`{ ok: false, reason: "no_project" }`, which the dispatch does not mark as an
+error, exactly as `person_warnings` does.
 
 ## 7. Not in scope
 
-- Reading the project or the tree; the caller passes the children.
+- Reading `research.json`, or any project file but the tree; writing anything.
 - Any census other than 1900 and 1910.
 - Deciding which known child is which census child, or naming the missing ones.
 - Putting the arithmetic back into agent prose when the tool errors: the caller
@@ -227,9 +282,13 @@ pattern, listed in `OK_FALSE_IS_FAILURE`) for malformed input only:
 
 ## 8. Files
 
-`src/tools/census-children-gap.ts`, `src/types/census-children-gap.ts`,
-`tests/tools/census-children-gap.test.ts`, `dev/try-census-children-gap.ts`.
-Registered in `src/tool-schemas.ts`, `src/server.ts`, `manifest.json`,
+`src/tools/census-children-gap.ts` (`censusChildrenGap`, the pure explicit mode;
+`censusChildrenGapTool`, the async entry point that adds tree mode),
+`src/types/census-children-gap.ts`, `tests/tools/census-children-gap.test.ts`,
+`tests/tools/census-children-gap-tree.test.ts`, `dev/try-census-children-gap.ts`.
+Tree mode reuses `findAnchor` and `isNonBiologicalSubtype` from
+`src/tools/person-warnings.ts` and the date parser in `src/utils/date-helpers.ts`;
+`tests/tools/no-project.test.ts` covers its folder states. Registered in `src/tool-schemas.ts`, `src/server.ts`, `manifest.json`,
 `src/tool-result.ts` (`OK_FALSE_IS_FAILURE`, `NOT_A_DOCUMENT_WRITER`),
 `dev/smoke-calls.ts`, and the eval harness's `mock_mcp.py` (`LIVE_TOOLS`,
 `_COMPILED_TOOLS`, `OK_FALSE_IS_FAILURE_LIVE`), so unit evals run the compiled

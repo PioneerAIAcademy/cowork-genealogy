@@ -862,6 +862,49 @@ def test_census_children_gap_runs_live(tmp_path):
     assert malformed.get("is_error") is True
 
 
+def test_census_children_gap_tree_mode_reads_the_workspace_tree(tmp_path):
+    """Tree mode (motherId) reads the mother's children from the WORKSPACE's
+    tree via the injected projectPath -- what check-warnings' census tests grade.
+    Also pins `_COMPILED_TOOLS` at the async `censusChildrenGapTool` export: the
+    sync `censusChildrenGap` would ignore motherId and see no children."""
+    if not (BUILD_TOOLS / "census-children-gap.js").exists():
+        pytest.skip("compiled MCP build absent")
+    (tmp_path / "research.json").write_text(
+        json.dumps({"project": {"id": "rp_001"}}), encoding="utf-8"
+    )
+    births = {"C1": "1889", "C2": "1891", "C3": "1893", "C4": "1896", "C5": "1898", "W6": "1906"}
+    persons = [{"id": "M", "gender": "Female", "facts": []}] + [
+        {"id": pid, "facts": [{"id": f"F{pid}", "type": "Birth", "date": y, "standard_date": y}]}
+        for pid, y in births.items()
+    ]
+    relationships = [
+        {"id": f"R{pid}", "type": "ParentChild", "parent": "M", "child": pid} for pid in births
+    ]
+    (tmp_path / "tree.gedcomx.json").write_text(
+        json.dumps({"persons": persons, "relationships": relationships, "sources": []}),
+        encoding="utf-8",
+    )
+    server, call_log, tools_by_name = create_mock_server(
+        [], FIXTURES_DIR, workspace=tmp_path
+    )
+    result = _invoke(
+        tools_by_name,
+        "census_children_gap",
+        {
+            "motherId": "M",
+            "censuses": [
+                {"year": 1900, "childrenBorn": 6, "childrenLiving": 5},
+                {"year": 1910, "childrenBorn": 8, "childrenLiving": 7},
+            ],
+        },
+    )
+    body = _extract_response_dict(result)
+    assert body.get("ok") is True, body
+    assert body["totalMissing"] == 2
+    assert [c["personId"] for c in body["knownChildrenUsed"]] == list(births)
+    assert call_log[-1]["matched"] == {"kind": "live", "index": None}
+
+
 def test_ok_false_gate_set_has_not_drifted_from_the_typescript_source():
     """The Python gate set must equal OK_FALSE_IS_FAILURE ∩ LIVE_TOOLS.
 

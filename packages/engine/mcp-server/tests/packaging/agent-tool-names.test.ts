@@ -830,9 +830,13 @@ const AGENT_PERMISSIONS: Record<string, { tools: string[]; denies: string[] }> =
   // The folded check-warnings skill (issue #2118). `person_quality` is absent by
   // lead ruling 2026-09-27. No `Read`: with it the agent read research.json and
   // the tree and reported what it found there instead of the tool's answer (4
-  // of 39 confirmation runs, 2026-09-28); callers pass person ids. Writes nothing.
+  // of 39 confirmation runs, 2026-09-28); callers pass person ids. Still no
+  // `Read` after issue #3260: `census_children_gap` reads the mother's children
+  // from the tree itself (tree mode), and an empty folder is detected from
+  // `person_warnings`' own `no_project` answer, so neither needs a file read.
+  // Writes nothing.
   "check-warnings.md": {
-    tools: ["person_warnings"],
+    tools: ["person_warnings", "census_children_gap"],
     denies: [],
   },
 
