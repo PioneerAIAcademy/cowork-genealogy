@@ -15,5 +15,5 @@
     "judge": "claude-haiku-4-5-20251001"
   },
   "difficulty": "medium",
-  "notes": "Record-hint fixture (filtered-list-samples-3.csv row 14, hint-samples.csv row 495, flag adds_marriage, confidence 3). Resolved 2026-10-14 as a true match: the 1 Feb 1868 Ballylooby parish marriage is corroborated by the civil registration of the same marriage (ark:/61903/1:1:QGV8-PQK7); decided from the indexes, image_basis off."
+  "notes": "Record-hint fixture (filtered-list-samples-3.csv row 14, hint-samples.csv row 495, flag adds_marriage, confidence 3). Resolved 2026-10-14 (#3336): true match. The 1 Feb 1868 Ballylooby parish marriage is corroborated by the civil registration of the same marriage (ark:/61903/1:1:QGV8-PQK7); decided from the indexes, image_basis off."
 }
