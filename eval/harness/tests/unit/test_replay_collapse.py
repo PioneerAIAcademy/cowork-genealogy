@@ -234,13 +234,13 @@ def test_exit_codes_and_their_precedence():
 
 def test_no_walk_groups_in_the_selection_is_a_usage_error(monkeypatch):
     monkeypatch.setattr(rc, "select_runs", lambda t, tr: ([(Path("x"), {"tool_calls": []})], 0))
-    assert rc.main(["--base-build", "/tmp", "--candidate-build", "/tmp"]) == 2
+    assert rc.main(["--rule", "plan-log", "--base-build", "/tmp", "--candidate-build", "/tmp"]) == 2
 
 
 @pytest.mark.requires_engine_build
 def test_the_real_engine_collapses_one_fixtures_walks(capsys):
     build = Path(__file__).resolve().parents[4] / "packages/engine/mcp-server/build"
-    code = rc.main(["--test", "anders-monsen-ancestry", "--tracked-only",
+    code = rc.main(["--rule", "plan-log", "--test", "anders-monsen-ancestry", "--tracked-only",
                     "--base-build", str(build), "--candidate-build", str(build)])
     out = capsys.readouterr().out
     assert code == 0, out
@@ -291,7 +291,8 @@ class PluralStub:
     """research_query over the research.json the comparator placed, with lists.
 
     `mode` plants one defect in the LIST answer (singular answers stay right),
-    except `singular-differs`, which breaks the singular answer itself."""
+    except `singular-differs`, which breaks the singular answer itself, and
+    `singular-content-differs`, which keeps its count but changes one item."""
 
     def __init__(self, label, project, mode="ok"):
         self.label, self.project, self.mode = label, project, mode
@@ -317,6 +318,8 @@ class PluralStub:
             items = [e for e in items if e.get(listed[0]) != listed[1][1]]
         if not is_list and self.mode == "singular-differs" and args.get("offset") is None:
             items = items[:-1]
+        if not is_list and self.mode == "singular-content-differs" and items:
+            items = items[:-1] + [dict(items[-1], rationale="changed")]
         offset = args.get("offset", 0)
         size = 1 if self.mode == "tiny-pages" else 50
         page = items[offset:offset + size]
@@ -488,6 +491,24 @@ def test_a_list_page_over_the_spill_size_is_spill(tmp_path):
 def test_base_and_candidate_disagreeing_on_a_singular_answer_is_an_integrity_error(tmp_path):
     with pytest.raises(IntegrityError, match="base count 2 != candidate 1"):
         _prun(tmp_path, _person_group(), mode="singular-differs")
+
+
+def test_base_and_candidate_disagreeing_on_a_singular_page_is_an_integrity_error(tmp_path):
+    """Counts agree, so the count gate passes; only the page content differs."""
+    with pytest.raises(IntegrityError, match="the singular answer differs between builds"):
+        _prun(tmp_path, _person_group(), mode="singular-content-differs")
+
+
+def test_the_spill_boundary_is_strictly_over_the_cap(tmp_path, monkeypatch):
+    """A page exactly at the cap is not a spill; one char over it is."""
+    big = {**P_STATE, "person_evidence": [dict(e, rationale="x" * 17_000) for e in P_STATE["person_evidence"]]}
+    groups, _ = _pgroups([_q("person_evidence", "personId", "I1", 2),
+                          _q("person_evidence", "personId", "I2", 1)], big)
+    size = _prun(tmp_path, groups[0]).largest_page
+    monkeypatch.setattr(rc, "SPILL_CHARS", size)
+    assert _prun(tmp_path, groups[0]).status == "collapsed"
+    monkeypatch.setattr(rc, "SPILL_CHARS", size - 1)
+    assert _prun(tmp_path, groups[0]).status == "spill"
 
 
 def test_a_pager_that_repeats_page_one_hits_the_cap(tmp_path):
