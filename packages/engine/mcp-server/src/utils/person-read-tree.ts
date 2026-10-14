@@ -22,9 +22,14 @@
 // named by FamilySearch PID. An `I<n>` the model wrote would otherwise land on
 // whichever staged person got that id, and no validator could tell.
 
-import type { SimplifiedFact } from "../types/gedcomx.js";
+import type { SimplifiedFact, SimplifiedRelationship } from "../types/gedcomx.js";
 import { treePidOfArk } from "./ark.js";
 import { collectFacts, standardizePlaces } from "./gedcomx-convert.js";
+// The one relationship identity. A private copy here keyed on type and
+// endpoints only, so an import carrying both a Biological and a Step parent on
+// one pair was refused as a repeat — the opposite of what the tree says
+// everywhere else (a Step edge beside a Biological one is a second edge).
+import { relationshipMatches } from "./merge-gedcomx.js";
 import { TREE_PERSON_FIELDS, TREE_SOURCE_FIELDS } from "../validation/tree-shape.js";
 
 export class TreeBuildError extends Error {}
@@ -153,10 +158,17 @@ interface StagedIndex {
   sources: Map<string, string>;
 }
 
-/** A relationship's identity: its type and endpoints (a Couple unordered). */
-function relationshipKey(r: Obj): string {
-  if (r.type === "Couple") return `Couple|${[r.person1, r.person2].map(String).sort().join("|")}`;
-  return `${String(r.type)}|${String(r.parent)}|${String(r.child)}`;
+/**
+ * How a repeated relationship reads in the refusal below.
+ *
+ * Built from the relationship's own fields rather than by de-mangling
+ * `relationshipKey`, whose internal `pc` marker and trailing subtype slot are
+ * not for a reader.
+ */
+function describeRelationship(r: Obj): string {
+  const sub = typeof r.subtype === "string" ? ` ${r.subtype}` : "";
+  if (r.type === "Couple") return `Couple${sub} ${[r.person1, r.person2].map(String).sort().join(" ")}`;
+  return `${String(r.type)}${sub} ${String(r.parent)} ${String(r.child)}`;
 }
 
 /**
@@ -493,7 +505,12 @@ function mergeAdditions(
     if (personRefs.length) out.sources = personRefs;
     tree.persons.push(out);
   }
-  const existing = new Set(tree.relationships.map(relationshipKey));
+  // Matched, not keyed. "Is this relationship already here" is the looser
+  // question: an untyped edge restating a staged Biological one IS a repeat,
+  // while a Step edge beside it is a second relationship. The exact
+  // `relationshipKey` answers a different question — which tree object is
+  // this — and keying on it here would let an untyped repeat through.
+  const existing: SimplifiedRelationship[] = [...tree.relationships];
   for (const r of relationships) {
     const where = `tree relationship ${typeof r.id === "string" ? r.id : ""}`.trim();
     const { id: _id, facts, sources: rs, ...rest } = r;
@@ -501,14 +518,13 @@ function mergeAdditions(
     for (const key of ["parent", "child", "person1", "person2"] as const) {
       if (key in out) out[key] = endpoint(out[key], `${where} ${key}`);
     }
-    const key = relationshipKey(out);
-    if (existing.has(key)) {
+    if (existing.some((e) => relationshipMatches(e, out as SimplifiedRelationship))) {
       throw new TreeBuildError(
-        `${where} repeats a relationship already in the tree (${key.replace(/\|/g, " ")}); ` +
+        `${where} repeats a relationship already in the tree (${describeRelationship(out)}); ` +
           "the read's relationships are imported already.",
       );
     }
-    existing.add(key);
+    existing.push(out as SimplifiedRelationship);
     const builtFacts = list(facts, `${where} facts`).map((f) => fact(f, `${where} fact`));
     if (builtFacts.length) out.facts = builtFacts;
     const relRefs = refs(rs, where);
