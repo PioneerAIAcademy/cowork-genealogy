@@ -551,6 +551,38 @@ _UNMATERIALIZABLE = frozenset(
     {"relationship", "marriage", "age", "parentage", "parentchild"}
 )
 
+# Couple events, as FOLDED keys — lowercased with non-alphanumerics stripped.
+# Mirrors COUPLE_EVENT_FACT_KEYS in
+# packages/engine/mcp-server/src/utils/record-persona.ts. A couple event belongs
+# on the Couple relationship, never on a person, so it can never be owed of a
+# persona. Folded rather than listed raw because `fact_type` is an open enum and
+# one event arrives spelled several ways: three live e2e runs emitted
+# `marriage_intention`, `marriage_bann` and `marriage_date`, three different
+# separator shapes that a raw-string match all missed.
+_COUPLE_EVENT_KEYS = frozenset(
+    {
+        "marriage",
+        "divorce",
+        "annulment",
+        "engagement",
+        "marriagebanns",
+        "separation",
+        "marriagebann",
+        "banns",
+        "bann",
+        "marriageintention",
+        "marriageintent",
+        "marriagelicense",
+        "marriagelicence",
+        "marriagedate",
+    }
+)
+
+
+def _fold(fact_type: str) -> str:
+    """A `fact_type` folded to its comparison key — the engine's `factTypeKey`."""
+    return "".join(c for c in fact_type.lower() if c.isalnum())
+
 
 def _ft(assertion: dict) -> str:
     """An assertion's `fact_type`, case-folded.
@@ -1000,7 +1032,11 @@ def test_matched_persona_is_materialized_onto_its_person(
         if e.get("person_id") not in existing_persons:
             continue
         fact_type = _ft(assertions.get(e.get("assertion_id")) or {})
-        if fact_type and fact_type not in _UNMATERIALIZABLE:
+        if (
+            fact_type
+            and fact_type not in _UNMATERIALIZABLE
+            and _fold(fact_type) not in _COUPLE_EVENT_KEYS
+        ):
             owed.add(e.get("person_id"))
     if not owed:
         pytest.skip(

@@ -82,6 +82,7 @@ import {
   GENDER_TYPES,
   NAME_TYPES,
   SKIP_TYPES,
+  isCoupleEventFactType,
   assertionFactAttr,
   assertionTreeFactType,
   candAsFact,
@@ -300,7 +301,11 @@ function applyMaterializeOp(
       continue;
     }
 
-    if (SKIP_TYPES.has(rawType)) continue;
+    // SKIP_TYPES matches the raw lowercased string; the couple-event check
+    // folds separators too, because one event arrives spelled several ways and
+    // only `marriage` was ever listed. A couple event belongs on the Couple
+    // relationship via tree_edit, never on a person.
+    if (SKIP_TYPES.has(rawType) || isCoupleEventFactType(rawType)) continue;
 
     // A value-bearing / event fact. Resolve provenance first (§4.2 step 2:
     // error, never null), then upsert by fact identity.
