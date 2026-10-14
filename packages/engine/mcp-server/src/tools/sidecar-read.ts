@@ -14,6 +14,7 @@
 // characters, whatever the raw text looks like.
 
 import { getProjectStore } from "../store/project-store.js";
+import { readStagedResults } from "../utils/results-staging.js";
 import {
   classifyProjectPath,
   MISSING_PROJECT_PATH_MESSAGE,
@@ -38,8 +39,12 @@ const NOT_TEXT_FFFD_FLOOR = 1;
 
 export interface SidecarReadInput {
   projectPath: string;
-  /** Project-relative POSIX path under `evaluations/` or `uploads/`. */
-  ref: string;
+  /** Project-relative POSIX path under `evaluations/` or `uploads/`, or a
+   *  `results/` ref holding a staged transcription. */
+  ref?: string;
+  /** Several refs in one call (the record-structurer agent's "read all" turn).
+   *  Each is read from its start; `offset` applies to `ref` only. */
+  refs?: string[];
   /** UTF-16 code-unit offset of the first character to return. Default 0. */
   offset?: number;
   /** Page size in UTF-16 code units. Default and hard cap SIDECAR_READ_MAX_CHARS
@@ -62,6 +67,10 @@ export type SidecarReadResult =
       /** `offset + content.length` — present only when `truncated`. */
       nextOffset?: number;
     }
+  | { ok: false; reason: SidecarReadFailureReason; errors: string[] };
+
+export type SidecarReadBatchResult =
+  | { ok: true; results: SidecarReadResult[] }
   | { ok: false; reason: SidecarReadFailureReason; errors: string[] };
 
 /** A failure the tool reports by RETURNING (`{ ok: false, reason }`), as
@@ -124,7 +133,7 @@ export function invalidRefMessage(ref: unknown): string | null {
   }
   const segments = ref.split("/");
   const prefix = segments[0];
-  if (!(SIDECAR_READ_PREFIXES as readonly string[]).includes(prefix)) {
+  if (prefix !== "results" && !(SIDECAR_READ_PREFIXES as readonly string[]).includes(prefix)) {
     const pointer = servedElsewhere(ref);
     return (
       `ref '${ref}' is not under ${SIDECAR_READ_PREFIXES.map((p) => `${p}/`).join(" or ")}.` +
@@ -217,8 +226,39 @@ function isLowSurrogate(code: number): boolean {
   return code >= 0xdc00 && code <= 0xdfff;
 }
 
-export async function sidecarRead(input: SidecarReadInput): Promise<SidecarReadResult> {
-  const { projectPath, ref } = input;
+/** The text of a staged transcription, or null when `ref` holds something else
+ *  (a record or search sidecar, which `record_read` serves). */
+async function stagedTranscriptionText(projectPath: string, ref: string): Promise<string | null> {
+  let rows: unknown[];
+  try {
+    rows = await readStagedResults(projectPath, ref);
+  } catch {
+    return null;
+  }
+  const texts = rows
+    .map((r) => (r && typeof r === "object" ? (r as { transcription?: unknown }).transcription : undefined))
+    .filter((t): t is string => typeof t === "string");
+  return texts.length > 0 ? texts.join("\n\n") : null;
+}
+
+export function sidecarRead(input: SidecarReadInput & { refs: string[] }): Promise<SidecarReadBatchResult>;
+export function sidecarRead(input: SidecarReadInput): Promise<SidecarReadResult>;
+export async function sidecarRead(input: SidecarReadInput): Promise<SidecarReadResult | SidecarReadBatchResult> {
+  if (input.refs !== undefined) {
+    if (input.ref !== undefined) {
+      return { ok: false, reason: "invalid_ref", errors: ["send `ref` or `refs`, not both"] };
+    }
+    if (!Array.isArray(input.refs) || input.refs.length === 0) {
+      return { ok: false, reason: "invalid_ref", errors: ["`refs` must be a non-empty list"] };
+    }
+    const results: SidecarReadResult[] = [];
+    for (const r of input.refs) {
+      results.push(await sidecarRead({ projectPath: input.projectPath, ref: r, maxChars: input.maxChars }));
+    }
+    return { ok: true, results };
+  }
+  const { projectPath } = input;
+  const ref = input.ref as string;
 
   const offset = input.offset === undefined ? 0 : requireWholeNumber("offset", input.offset, 0);
   const maxChars = Math.min(
@@ -245,7 +285,17 @@ export async function sidecarRead(input: SidecarReadInput): Promise<SidecarReadR
     // unreadable verdict would read as missing and the mentor would re-evaluate
     // over a live one. Read, and classify what the read throws.
     let raw: string;
-    try {
+    if (ref.startsWith("results/")) {
+      const t = await stagedTranscriptionText(projectPath, ref);
+      if (t === null) {
+        throw new SidecarReadFailure(
+          "invalid_ref",
+          `${ref} is not a staged transcription. Record and search sidecars under results/ ` +
+            "are served by `record_read({recordId, resultsRef})` and `rank_search_matches({resultsRef})`.",
+        );
+      }
+      raw = t;
+    } else try {
       raw = await getProjectStore().readText(projectPath, ref);
     } catch (e: any) {
       // ENOTDIR: an intermediate segment is a regular file — the ref is absent
@@ -308,7 +358,8 @@ export const sidecarReadSchema = {
     "researcher placed under `uploads/` (a transcription, a CSV, a note). Read-only; writes " +
     "nothing. `ref` is project-relative and must start with `evaluations/` or `uploads/`: " +
     "research.json and the tree are served by `research_query`/`project_context`, `results/` " +
-    "sidecars by `record_read`/`rank_search_matches`, and images by " +
+    "sidecars by `record_read`/`rank_search_matches` (except a staged TRANSCRIPTION, " +
+    "`results/…` from `image_transcribe`, whose text this tool returns), and images by " +
     "`image_read`/`image_transcribe`, so those refs are rejected with a pointer. Returns " +
     "`{ ref, totalChars, offset, content, truncated, nextOffset? }`: `content` is at most " +
     "40,000 characters (less when the text is heavy with quotes or backslashes, so the " +
@@ -327,8 +378,15 @@ export const sidecarReadSchema = {
         type: "string",
         description:
           "Project-relative POSIX path of the file, under `evaluations/` or `uploads/` " +
-          "(e.g. `evaluations/proof-critique-ps_001-2026-09-14.json`, `uploads/notes.txt`). " +
+          "(e.g. `evaluations/proof-critique-ps_001-2026-09-14.json`, `uploads/notes.txt`), " +
+          "or a `results/` ref holding a staged transcription. " +
           "Forward slashes only; no leading slash, no `..`.",
+      },
+      refs: {
+        type: "array",
+        items: { type: "string" },
+        description:
+          "Several refs in one call, each read from its start. Send `ref` or `refs`, not both.",
       },
       offset: {
         type: "number",
@@ -345,6 +403,6 @@ export const sidecarReadSchema = {
           "escaping; `truncated`/`nextOffset` are always right regardless.",
       },
     },
-    required: ["projectPath", "ref"],
+    required: ["projectPath"],
   },
 };

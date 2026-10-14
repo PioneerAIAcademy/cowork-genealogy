@@ -11,6 +11,7 @@ import {
 import { writerToolResult } from "../../src/tool-result.js";
 import { setProjectStore, type ProjectStore } from "../../src/store/project-store.js";
 import { NO_PROJECT_MESSAGE_READ } from "../../src/utils/project-io.js";
+import { ON_PG, fileStoreOnly } from "../helpers/store-backend.js";
 
 /** The CLI spills any tool result longer than this to a file (spec §4). */
 const CLI_SPILL_CHARS = 50_000;
@@ -66,12 +67,15 @@ describe("sidecar_read", () => {
     const verdict = JSON.stringify({ focus: "proof-critique", verdict: "not craft", notes: "x" });
     await put("evaluations/proof-critique-ps_001-2026-09-14.json", verdict);
     const r = await sidecarRead({ projectPath: dir, ref: "evaluations/proof-critique-ps_001-2026-09-14.json" });
+    // A jsonb document comes back as its value re-serialized, not the bytes written.
+    const content = ON_PG && r.ok ? r.content : verdict;
+    if (ON_PG) expect(JSON.parse(content)).toEqual(JSON.parse(verdict));
     expect(r).toEqual({
       ok: true,
       ref: "evaluations/proof-critique-ps_001-2026-09-14.json",
-      totalChars: verdict.length,
+      totalChars: content.length,
       offset: 0,
-      content: verdict,
+      content,
       truncated: false,
     });
   });
@@ -292,6 +296,7 @@ describe("sidecar_read", () => {
   }
 
   it("rejects a ref that names an existing directory as invalid_ref, not not_found", async () => {
+    fileStoreOnly("a ref naming a directory has no Postgres meaning: refs name rows");
     await put("uploads/scans/page-1.txt", "one");
     const r = await sidecarRead({ projectPath: dir, ref: "uploads/scans" });
     expect(r.ok).toBe(false);
@@ -312,6 +317,7 @@ describe("sidecar_read", () => {
   it.skipIf(process.platform === "win32")(
     "a symlink under uploads/ that leaves the project goes loud, never returns the target",
     async () => {
+      fileStoreOnly("a symlink has no Postgres meaning");
       // The tool's own §3 rule sees a clean ref; the store's real-path check is
       // the line that catches this one, and it throws rather than returning bytes.
       const outside = await mkdtemp(join(tmpdir(), "sidecar-read-outside-"));
@@ -349,6 +355,7 @@ describe("sidecar_read", () => {
   it.skipIf(process.platform === "win32")(
     "a segment longer than the filesystem allows (ENAMETOOLONG) is invalid_ref, not loud",
     async () => {
+      fileStoreOnly("ENAMETOOLONG is a filesystem limit; a Postgres key has none");
       // The parent must exist, or realpath fails with ENOENT on `uploads` first.
       await put("uploads/ok.txt", "ok");
       const r = await sidecarRead({ projectPath: dir, ref: "uploads/" + "a".repeat(300) });
@@ -448,5 +455,69 @@ describe("sidecar_read", () => {
     const r = await sidecarRead({ projectPath: "opaque-key", ref: "uploads/x.txt" });
     expect(r.ok && r.content).toBe("from the store");
     expect(calls).toEqual([["opaque-key", "uploads/x.txt"]]);
+  });
+});
+
+// ─── staged transcriptions and `refs` (issue #2939, spec §2 and §3) ──────────
+
+import { stageSearchResults } from "../../src/utils/results-staging.js";
+
+describe("sidecar_read: a staged transcription, and several refs", () => {
+  let dir: string;
+  beforeEach(async () => {
+    dir = await mkdtemp(join(tmpdir(), "sidecar-read-results-"));
+    await writeFile(join(dir, "research.json"), "{}", "utf-8");
+    await writeFile(join(dir, "tree.gedcomx.json"), "{}", "utf-8");
+    await mkdir(join(dir, "uploads"), { recursive: true });
+    await writeFile(join(dir, "uploads", "note.txt"), "a note", "utf-8");
+  });
+  afterEach(async () => {
+    await rm(dir, { recursive: true, force: true });
+  });
+
+  const stageTranscription = async (text: string) =>
+    (await stageSearchResults({
+      projectPath: dir,
+      tool: "image_transcribe",
+      response: {
+        query: { imageId: "004022578_00190" },
+        results: [{ id: "004022578_00190", source: { imageId: "004022578_00190" }, content_type: "image/jpeg", size_bytes: 1, model: "m", transcription: text }],
+      },
+    }))!.resultsRef;
+
+  it("returns a staged transcription's text, paged like any file", async () => {
+    const ref = await stageTranscription("x".repeat(45_000));
+    const r = await sidecarRead({ projectPath: dir, ref });
+    expect(r.ok).toBe(true);
+    if (!r.ok) return;
+    expect(r.totalChars).toBe(45_000);
+    expect(r.truncated).toBe(true);
+    expect(r.nextOffset).toBeGreaterThan(0);
+  });
+
+  it("still refuses a record or search sidecar, pointing at record_read", async () => {
+    const staged = await stageSearchResults({
+      projectPath: dir,
+      tool: "record_search",
+      response: { query: {}, results: [{ recordId: "MXHY-TP4", gedcomx: { persons: [] } }] },
+    });
+    const r = await sidecarRead({ projectPath: dir, ref: staged!.resultsRef });
+    expect(r.ok).toBe(false);
+    if (r.ok) return;
+    expect(r.reason).toBe("invalid_ref");
+    expect(r.errors[0]).toMatch(/not a staged transcription.*record_read/);
+  });
+
+  it("reads several refs in one call, each on its own", async () => {
+    const t = await stageTranscription("Harold Dean Whitaker, 91");
+    const r = await sidecarRead({ projectPath: dir, refs: [t, "uploads/note.txt", "uploads/missing.txt"] });
+    expect(r.ok).toBe(true);
+    if (!r.ok) return;
+    expect(r.results.map((x) => (x.ok ? x.content : x.reason))).toEqual(["Harold Dean Whitaker, 91", "a note", "not_found"]);
+  });
+
+  it("refuses `ref` and `refs` together, and an empty `refs`", async () => {
+    expect((await sidecarRead({ projectPath: dir, ref: "uploads/note.txt", refs: ["uploads/note.txt"] } as any)).ok).toBe(false);
+    expect((await sidecarRead({ projectPath: dir, refs: [] })).ok).toBe(false);
   });
 });

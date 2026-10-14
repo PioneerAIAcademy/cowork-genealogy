@@ -159,7 +159,7 @@ describe("plugin prose names only skills and agents that ship", () => {
     expect(tokens("the `citation` skill")).toEqual([]);
   });
 
-  // The arm the union hid. `record-extraction` is a real SKILL with no agent
+  // The arm the union hid. `search-records` is a real SKILL with no agent
   // file, so it resolves bare and must NOT resolve behind `@plugin:`. Without
   // this, the widening is satisfied by the skill half of every paired name and
   // catches nothing it was added to catch — deleting `agents/proof-conclusion.md`
@@ -167,8 +167,8 @@ describe("plugin prose names only skills and agents that ship", () => {
   it("resolves an @plugin: token against agents only, never the skill of the same name", () => {
     const { agents, all } = shippedNames();
 
-    expect(all.has("record-extraction"), "fixture assumption: it ships as a skill").toBe(true);
-    expect(agents.has("record-extraction"), "fixture assumption: no agent of that name").toBe(false);
+    expect(all.has("search-records"), "fixture assumption: it ships as a skill").toBe(true);
+    expect(agents.has("search-records"), "fixture assumption: no agent of that name").toBe(false);
 
     const resolve = (text: string): string[] => {
       const bad: string[] = [];
@@ -183,8 +183,8 @@ describe("plugin prose names only skills and agents that ship", () => {
       return bad;
     };
 
-    expect(resolve("route to `record-extraction`")).toEqual([]);
-    expect(resolve("spawn `@plugin:record-extraction`")).toEqual(["@plugin:record-extraction"]);
+    expect(resolve("route to `search-records`")).toEqual([]);
+    expect(resolve("spawn `@plugin:search-records`")).toEqual(["@plugin:search-records"]);
     // And a real agent still resolves behind the prefix.
     expect(resolve("spawn `@plugin:proof-conclusion`")).toEqual([]);
 

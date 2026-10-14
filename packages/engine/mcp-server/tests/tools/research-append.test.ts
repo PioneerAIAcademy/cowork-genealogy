@@ -1,4 +1,5 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
+import { LOCAL } from "../../src/auth/principal.js";
 import { singleOk, failure, errorsOf } from "../helpers/narrow.js";
 import { mkdtemp, writeFile, readFile, rm, mkdir, access } from "fs/promises";
 import { join } from "path";
@@ -398,7 +399,7 @@ describe("research_append (Phase 1)", () => {
       expect(r.filesWritten).not.toContain("tree.gedcomx.json");
     });
 
-    it("(8) fires through extraction_append too, not just research_append", async () => {
+    it("(8) is research_append's alone: extraction_append refuses a correction", async () => {
       await writeProject(withAssertion(backlinkAssertion()), treeWithBacklink());
 
       const r = await extractionAppend({
@@ -407,10 +408,10 @@ describe("research_append (Phase 1)", () => {
         op: "update",
         entryId: "a_011",
         fields: { standard_place: "Odessa, Francis No. 127, Saskatchewan, Canada" },
-      });
-      expect(r.ok).toBe(true);
-      if (!r.ok) return;
-      expect((await factF4()).standard_place).toBe("Odessa, Francis No. 127, Saskatchewan, Canada");
+      } as any, LOCAL);
+      expect(r.ok).toBe(false);
+      expect((r.errors ?? []).join(" ")).toMatch(/Correcting an existing assertion is not an extraction/);
+      expect((await factF4()).standard_place).not.toBe("Odessa, Francis No. 127, Saskatchewan, Canada");
     });
 
     it("(9) rewrites every fact carrying the id, and no fact carrying another", async () => {
@@ -1444,7 +1445,7 @@ const validQuestion = (id: string) => ({
   created: "2026-01-01",
   resolved: null,
   resolution_assertion_ids: [],
-  exhaustive_declaration: { declared: false, log_entry_ids: [] },
+  search_stop: { stopped_because: null, log_entry_ids: [], stop_criteria: null, not_reached: [] },
 });
 /** `items` defaults to EMPTY, which is only legal while something else in the
  *  same call fills it (a `plan_items` op) — the validator refuses a plan that
@@ -1662,6 +1663,7 @@ describe("research_append (Phase 2)", () => {
         weighing_analysis: "census outweighs the later record",
         resolution_rationale: "primary informant",
         preferred_assertion_id: "a_001",
+        resolution_kind: "competitor",
       },
     });
     expect(r.ok).toBe(true);
@@ -1787,6 +1789,15 @@ describe("research_append (Phase 2)", () => {
     expect(r.ok).toBe(false);
     if (r.ok) return;
     expect(r.errors.join(" ")).toMatch(/uncertain reading/);
+    // The only caller that can write a conflict's winner is the conflict-resolution
+    // agent, and the hook holds it off `assertions`. A refusal telling it to update
+    // the assertion sends it into a denied write (ut_conflict_resolution_016,
+    // 2026-10-05). Extraction writes assertions and they are final, so a confirmed
+    // reading is weighed in the conflict, never written back.
+    const uncertain = r.errors.find((e) => e.includes("uncertain reading")) ?? "";
+    expect(uncertain).toMatch(/not a correction/);
+    expect(uncertain).not.toMatch(/record-extraction/);
+    expect(uncertain).not.toMatch(/op: "update"/);
   });
 
   it("accepts a [?] preference corroborated by another record", async () => {
@@ -1814,6 +1825,7 @@ describe("research_append (Phase 2)", () => {
         weighing_analysis: "two records agree",
         resolution_rationale: "corroborated by second record",
         preferred_assertion_id: "a_001",
+        resolution_kind: "competitor",
       },
     });
     expect(r.ok).toBe(true);
@@ -1866,6 +1878,7 @@ describe("research_append (Phase 2)", () => {
         weighing_analysis: "census outweighs",
         resolution_rationale: "primary informant",
         preferred_assertion_id: "a_001",
+        resolution_kind: "competitor",
       },
     });
     expect(r.ok).toBe(true);
@@ -2029,9 +2042,13 @@ describe("research_append (Phase 2)", () => {
   });
 
   it("treats re-declaring an already-declared question as a no-op", async () => {
+    const sc = {
+      goal_alignment: "Yes.", repository_breadth: "All searched.", original_substitution: "Originals.",
+      independent_verification: "Three sources.", evidence_class: "Census.", conflict_resolution: "None.", overturn_risk: "Low.",
+    };
     const research = phase2Research();
     research.questions = [
-      { ...validQuestion("q_001"), status: "exhaustive_declared", exhaustive_declaration: { declared: true, log_entry_ids: ["log_001"], stop_criteria: {} } },
+      { ...validQuestion("q_001"), status: "exhaustive_declared", search_stop: { stopped_because: "question_answered", justification: "Done.", log_entry_ids: ["log_001"], stop_criteria: sc, not_reached: [] } },
     ];
     research.log = [
       { id: "log_001", plan_item_id: null, performed: "2026-01-01T00:00:00Z", tool: "record_search", query: {}, outcome: "negative", results_examined: 0, external_site: null, results_ref: null },
@@ -2043,7 +2060,7 @@ describe("research_append (Phase 2)", () => {
       section: "questions",
       op: "update",
       entryId: "q_001",
-      fields: { exhaustive_declaration: { declared: true, log_entry_ids: ["log_001", "log_002"], stop_criteria: {} } },
+      fields: { search_stop: { stopped_because: "question_answered", justification: "Done.", log_entry_ids: ["log_001", "log_002"], stop_criteria: sc, not_reached: [] } },
     });
     expect(r.ok).toBe(true);
     if (!r.ok) return;
@@ -2053,12 +2070,12 @@ describe("research_append (Phase 2)", () => {
 
   it("does NOT no-op a bundled update that re-declares AND changes another field", async () => {
     const sc = {
-      goal_alignment: true, repository_breadth: true, original_substitution: true,
-      independent_verification: true, evidence_class: true, conflict_resolution: true, overturn_risk: true,
+      goal_alignment: "Yes.", repository_breadth: "All searched.", original_substitution: "Originals.",
+      independent_verification: "Three sources.", evidence_class: "Census.", conflict_resolution: "None.", overturn_risk: "Low.",
     };
     const research = phase2Research();
     research.questions = [
-      { ...validQuestion("q_001"), status: "exhaustive_declared", priority: "high", exhaustive_declaration: { declared: true, log_entry_ids: ["log_001"], stop_criteria: sc } },
+      { ...validQuestion("q_001"), status: "exhaustive_declared", priority: "high", search_stop: { stopped_because: "question_answered", justification: "Done.", log_entry_ids: ["log_001"], stop_criteria: sc, not_reached: [] } },
     ];
     research.log = [
       { id: "log_001", plan_item_id: null, performed: "2026-01-01T00:00:00Z", tool: "record_search", query: {}, outcome: "negative", results_examined: 0, external_site: null, results_ref: null },
@@ -2069,7 +2086,7 @@ describe("research_append (Phase 2)", () => {
       section: "questions",
       op: "update",
       entryId: "q_001",
-      fields: { priority: "low", exhaustive_declaration: { declared: true, log_entry_ids: ["log_001"], stop_criteria: sc } },
+      fields: { priority: "low", search_stop: { stopped_because: "question_answered", justification: "Done.", log_entry_ids: ["log_001"], stop_criteria: sc, not_reached: [] } },
     });
     expect(r.ok).toBe(true);
     if (!r.ok) return;
@@ -2157,14 +2174,20 @@ describe("research_append (Phase 3)", () => {
         // setup these refuse for the other reason and prove nothing about
         // shortfall.
         const research = baseResearch();
+        const sc2 = {
+          goal_alignment: "Yes.", repository_breadth: "All searched.", original_substitution: "Originals.",
+          independent_verification: "Three sources.", evidence_class: "Census.", conflict_resolution: "None.", overturn_risk: "Low.",
+        };
         research.questions = [
           {
             ...validQuestion("q_001"),
             status: "exhaustive_declared",
-            exhaustive_declaration: {
-              declared: true,
+            search_stop: {
+              stopped_because: "question_answered",
+              justification: "Done.",
               log_entry_ids: ["log_001"],
-              stop_criteria: {},
+              stop_criteria: sc2,
+              not_reached: [],
             },
           },
         ];
@@ -2203,12 +2226,20 @@ describe("research_append (Phase 3)", () => {
       // Must be a CONCLUSIVE tier: on a lower one neither arm reaches the
       // comparison, so the loosened guard is indistinguishable there.
       const research = baseResearch();
+      const sc3 = {
+        goal_alignment: "Yes.", repository_breadth: "All searched.", original_substitution: "Originals.",
+        independent_verification: "Three sources.", evidence_class: "Census.", conflict_resolution: "None.", overturn_risk: "Low.",
+      };
       research.questions = [
         {
           ...validQuestion("q_001"),
           status: "exhaustive_declared",
-          exhaustive_declaration: {
-            declared: true, log_entry_ids: ["log_001"], stop_criteria: {},
+          search_stop: {
+            stopped_because: "question_answered",
+            justification: "Done.",
+            log_entry_ids: ["log_001"],
+            stop_criteria: sc3,
+            not_reached: [],
           },
         },
       ];
@@ -3107,8 +3138,8 @@ describe("research_append (Phase 3)", () => {
   });
 
   // docs/specs/guardrail-enforcement-spec.md §5 — tier/exhaustiveness cross-field guardrail.
-  it("rejects tier 'proved' when the question's exhaustive_declaration.declared is false", async () => {
-    await writeProject(); // phase3Research(): q_001 defaults to exhaustive_declaration.declared: false
+  it("rejects tier 'proved' when the question's stop gate is not satisfied", async () => {
+    await writeProject(); // phase3Research(): q_001 defaults to search_stop.stopped_because: null
     const before = await readFile(join(dir, "research.json"), "utf-8");
     const r = await researchAppend({
       projectPath: dir,
@@ -3127,7 +3158,7 @@ describe("research_append (Phase 3)", () => {
     });
     expect(r.ok).toBe(false);
     if (r.ok) return;
-    expect(r.errors.join(" ")).toMatch(/exhaustive_declaration\.declared === true/);
+    expect(r.errors.join(" ")).toMatch(/search_stop\.stopped_because/);
     expect(await readFile(join(dir, "research.json"), "utf-8")).toBe(before);
   });
 
@@ -3142,7 +3173,7 @@ describe("research_append (Phase 3)", () => {
           op: "update",
           entryId: "q_001",
           fields: {
-            exhaustive_declaration: { declared: true, log_entry_ids: ["log_001"], stop_criteria: {} },
+            search_stop: { stopped_because: "question_answered", justification: "Done.", log_entry_ids: ["log_001"], stop_criteria: fullStopCriteria(), not_reached: [] },
           },
         },
         {
@@ -3163,19 +3194,19 @@ describe("research_append (Phase 3)", () => {
     });
     expect(r.ok).toBe(false);
     if (r.ok) return;
-    expect(r.errors.join(" ")).toMatch(/exhaustive_declaration\.declared === true/);
+    expect(r.errors.join(" ")).toMatch(/search_stop\.stopped_because/);
     // All-or-nothing: neither op landed, including the exhaustiveness declaration.
     expect(await readFile(join(dir, "research.json"), "utf-8")).toBe(before);
   });
 
   const fullStopCriteria = () => ({
-    goal_alignment: true,
-    repository_breadth: true,
-    original_substitution: true,
-    independent_verification: true,
-    evidence_class: true,
-    conflict_resolution: true,
-    overturn_risk: true,
+    goal_alignment: "Yes.",
+    repository_breadth: "All searched.",
+    original_substitution: "Originals accessed.",
+    independent_verification: "Three independent sources.",
+    evidence_class: "1860 census, original/primary.",
+    conflict_resolution: "No conflicts identified.",
+    overturn_risk: "Low.",
   });
   const declaredExhaustiveLog = () => [
     {
@@ -3191,13 +3222,13 @@ describe("research_append (Phase 3)", () => {
     },
   ];
 
-  it("allows tier 'proved' when exhaustive_declaration.declared was already true from an earlier, separate call", async () => {
+  it("allows tier 'proved' when the stop gate was satisfied from an earlier, separate call", async () => {
     const r0 = phase3Research();
     r0.questions = [
       {
         ...validQuestion("q_001"),
         status: "exhaustive_declared",
-        exhaustive_declaration: { declared: true, log_entry_ids: ["log_001"], stop_criteria: fullStopCriteria() },
+        search_stop: { stopped_because: "question_answered", justification: "Done.", log_entry_ids: ["log_001"], stop_criteria: fullStopCriteria(), not_reached: [] },
       },
     ];
     r0.log = declaredExhaustiveLog();
@@ -3226,7 +3257,7 @@ describe("research_append (Phase 3)", () => {
       {
         ...validQuestion("q_001"),
         status: "exhaustive_declared",
-        exhaustive_declaration: { declared: true, log_entry_ids: ["log_001"], stop_criteria: fullStopCriteria() },
+        search_stop: { stopped_because: "question_answered", justification: "Done.", log_entry_ids: ["log_001"], stop_criteria: fullStopCriteria(), not_reached: [] },
       },
     ];
     r0.log = declaredExhaustiveLog();
@@ -3628,8 +3659,9 @@ describe("research_append (project singleton section)", () => {
     expect(msg).toMatch(/a_002/);
     expect(msg).toMatch(/q_001/);
     // And the shape that settles a conflict nobody can settle, since neither
-    // 'resolved' nor 'moot' reads true for one that was weighed and deferred.
-    expect(msg).toMatch(/preferred_assertion_id/);
+    // 'resolved' nor 'moot' reads true for one that was weighed and deferred:
+    // resolved with resolution_kind 'tree', which owes no winner.
+    expect(msg).toMatch(/resolution_kind 'tree'/);
     const research = await readResearch();
     expect(research.project.status).toBe("active"); // nothing written
   });
@@ -3687,7 +3719,7 @@ describe("research_append (project singleton section)", () => {
     created: "2026-01-01",
     resolved: "2026-01-02",
     resolution_assertion_ids: ["a_001"],
-    exhaustive_declaration: { declared: false, log_entry_ids: [], stop_criteria: {} },
+    search_stop: { stopped_because: null, log_entry_ids: [], stop_criteria: null, not_reached: [] },
   });
   const summary = (id = "ps_001", questionId = "q_001") => ({
     id,
@@ -4969,7 +5001,7 @@ describe("research_append (batch ops)", () => {
     // question's exhaustive declaration, and `planned` would repeat the search.
     const msg = (errorsOf(r) ?? []).join("\n");
     expect(msg).toMatch(/plan_items\[pli_002\]: an appended item cannot arrive 'completed'/);
-    expect(msg).toMatch(/exhaustive_declaration\.log_entry_ids/);
+    expect(msg).toMatch(/search_stop\.log_entry_ids/);
     expect(msg).not.toMatch(/leave this item 'in_progress'/);
   });
 
@@ -7215,7 +7247,7 @@ describe("research_append — detected core-identifier contradiction", () => {
   });
 
   /** The tree person attests Ireland; the record states somewhere else. */
-  async function write(stated: Record<string, unknown>) {
+  async function write(stated: Record<string, unknown>, treeBirth: Record<string, unknown> = {}) {
     const r = baseResearch();
     r.assertions = [
       ...r.assertions,
@@ -7232,7 +7264,7 @@ describe("research_append — detected core-identifier contradiction", () => {
     ] as any;
     await writeFile(join(dir, "research.json"), JSON.stringify(r, null, 2));
     const tree = JSON.parse(JSON.stringify(baseTree));
-    tree.persons[0].facts = [{ id: "F1", type: "Birth", date: "~1845", place: "Ireland" }];
+    tree.persons[0].facts = [{ id: "F1", type: "Birth", date: "~1845", place: "Ireland", ...treeBirth }];
     await writeFile(join(dir, "tree.gedcomx.json"), JSON.stringify(tree, null, 2));
     await attestEveryAssertion(dir);
   }
@@ -7291,6 +7323,50 @@ describe("research_append — detected core-identifier contradiction", () => {
   it("does NOT cap when the record states no place at all", async () => {
     await write({ place: null });
     expect((await researchAppend(link("confident"))).ok).toBe(true);
+  });
+
+  // 1,067 committed links were refused on place; nearly all were one place
+  // written with and without its country, or with an extra level above it.
+  it("does NOT cap a place written without the country the tree adds", async () => {
+    await write(
+      { place: "Staffordshire, England" },
+      { place: "West Bromwich, Staffordshire, England, United Kingdom" },
+    );
+    expect((await researchAppend(link("confident"))).ok).toBe(true);
+  });
+
+  it("does NOT cap a bare state against the same state with its country", async () => {
+    await write({ place: "Georgia" }, { place: "Georgia, United States" });
+    expect((await researchAppend(link("confident"))).ok).toBe(true);
+  });
+
+  it("does NOT cap equal text whose standard places were resolved differently", async () => {
+    await write(
+      { place: "Clydach, Wales", standard_place: "Clydach, Glamorgan, Wales, United Kingdom" },
+      { place: "Clydach, Wales", standard_place: "Clydach, Monmouthshire, Wales, United Kingdom" },
+    );
+    expect((await researchAppend(link("confident"))).ok).toBe(true);
+  });
+
+  it("does NOT cap an abbreviated state whose standard place is the tree's", async () => {
+    await write(
+      { place: "Ky", standard_place: "Kentucky, United States" },
+      { place: "Muhlenberg, Kentucky, United States", standard_place: "Muhlenberg, Kentucky, United States" },
+    );
+    expect((await researchAppend(link("confident"))).ok).toBe(true);
+  });
+
+  it("still caps two different counties of one country", async () => {
+    await write({ place: "Somerset, England" }, { place: "Gloucestershire, England" });
+    expect((await researchAppend(link("probable"))).ok).toBe(false);
+  });
+
+  it("still caps a town whose county appears in the tree only under another town", async () => {
+    await write(
+      { place: "Bristol, Gloucestershire" },
+      { place: "Bath, Somerset, England" },
+    );
+    expect((await researchAppend(link("probable"))).ok).toBe(false);
   });
 });
 
@@ -7617,7 +7693,7 @@ describe("research_append — worked examples are themselves valid", () => {
         created: "2026-07-18",
         resolved: null,
         resolution_assertion_ids: [],
-        exhaustive_declaration: { declared: false, justification: null, log_entry_ids: [], stop_criteria: null },
+        search_stop: { stopped_because: null, justification: null, log_entry_ids: [], stop_criteria: null, not_reached: [] },
       },
       {
         id: "q_003",
@@ -7631,7 +7707,7 @@ describe("research_append — worked examples are themselves valid", () => {
         created: "2026-07-18",
         resolved: null,
         resolution_assertion_ids: [],
-        exhaustive_declaration: { declared: false, justification: null, log_entry_ids: [], stop_criteria: null },
+        search_stop: { stopped_because: null, justification: null, log_entry_ids: [], stop_criteria: null, not_reached: [] },
       },
     ];
     r.plans = [
@@ -7850,7 +7926,7 @@ describe("research_append — evaluations verdict composite", () => {
         created: "2026-07-18",
         resolved: null,
         resolution_assertion_ids: [],
-        exhaustive_declaration: { declared: false, justification: null, log_entry_ids: [], stop_criteria: null },
+        search_stop: { stopped_because: null, justification: null, log_entry_ids: [], stop_criteria: null, not_reached: [] },
       },
     ];
     await writeFile(join(dir, "research.json"), JSON.stringify(r, null, 2));
@@ -8209,32 +8285,33 @@ describe("research_append — relationship direction and the sibling value (#253
     }
   });
 
-  it("binds extraction_append too, which is the path record-extractor uses", async () => {
-    // `extractionAppend` delegates to `researchAppend`, so one precondition
-    // covers both writers — but nothing tested the delegated path, and it is
-    // the one the agent this card edits actually calls.
+  it("binds extraction_append too: the sibling a document states passes it", async () => {
+    // `extractionAppend` writes through `researchAppend`, so the precondition
+    // binds it as well. It builds relationship assertions in code, so what is
+    // checked is that the assertion it builds for a stated sibling is one the
+    // precondition accepts.
     await writeProject();
     const r = await extractionAppend({
       projectPath: dir,
-      ops: [
-        {
-          section: "assertions",
-          op: "append",
-          entry: {
-            ...noId(validAssertion("x", "src_001")),
-            fact_type: "relationship",
-            value: "sibling of Grace (Whitaker) Tolman",
-            structured_value: {
-              relationship_type: "child",
-              related_person_role: "sibling_1",
-            },
-          },
+      documents: [{
+        recordId: "capture:tolman-obituary-1990",
+        document: {
+          recordType: "obituary",
+          documentForm: "verbatim_transcript",
+          source: { title: "Obituary of Grace (Whitaker) Tolman", repository: "Herald Journal" },
+          persons: [
+            { id: "p1", principal: true, gender: "female", names: [{ given: "Grace", surname: "Tolman" }], facts: [{ type: "death", date: "2 May 1990", place: "Logan, Cache, Utah" }] },
+            { id: "p2", gender: "male", statedRelation: "brother", names: [{ given: "Harold", surname: "Whitaker" }], facts: [] },
+          ],
+          relationships: [{ type: "sibling", person1: "p1", person2: "p2" }],
         },
-      ],
-    });
-    expect(r.ok).toBe(false);
-    if (r.ok) return;
-    expect(failure(r).errors?.join(" ")).toMatch(/states the subject is a sibling/);
+      }],
+    } as any, LOCAL);
+    expect(r.ok, JSON.stringify(r)).toBe(true);
+    const research = JSON.parse(await readFile(join(dir, "research.json"), "utf-8"));
+    const rels = research.assertions.filter((a: any) => a.fact_type === "relationship");
+    expect(rels.map((a: any) => a.structured_value?.relationship_type)).toContain("sibling");
+    expect(rels.some((a: any) => a.structured_value?.relationship_type === "child")).toBe(false);
   });
 
   it("refuses a capitalised value — the case-insensitive flag is load-bearing", async () => {
@@ -8812,14 +8889,13 @@ describe("research_append — sources-without-assertions nudge (#1478)", () => {
     expect(warned(r.validation.warnings)).toBe(false);
   });
 
-  it("fires through extraction_append with a tool-neutral message", async () => {
+  it("names no tool, so it reads right to a caller that does not hold research_append", async () => {
     await write(researchWith(3, 0));
-    const r = await extractionAppend({ projectPath: dir, section: "sources", op: "append", entry: noId(validSource("x")) });
+    const r = await researchAppend({ projectPath: dir, section: "sources", op: "append", entry: noId(validSource("x")) });
     expect(r.ok).toBe(true);
     if (!r.ok) return;
     const warn = r.validation.warnings.find((w) => WARN.test(w));
     expect(warn).toBeTruthy();
-    // record-extractor is denied research_append — the nudge must not name it
     expect(warn).not.toContain("research_append");
   });
 });
@@ -9426,8 +9502,8 @@ describe("research_append — the two exhaustiveness gates (#1335, Phase 4)", ()
     await writeFile(join(dir, "research.json"), JSON.stringify(research, null, 2));
     await writeFile(join(dir, "tree.gedcomx.json"), JSON.stringify(baseTree, null, 2));
   }
-  const DECLARATION = {
-    declared: true,
+  const STOP_DECISION = {
+    stopped_because: "question_answered",
     justification: "Census, vital and probate all searched; three independent sources agree.",
     log_entry_ids: ["log_001"],
     stop_criteria: {
@@ -9439,6 +9515,7 @@ describe("research_append — the two exhaustiveness gates (#1335, Phase 4)", ()
       conflict_resolution: "No conflicts identified.",
       overturn_risk: "Low.",
     },
+    not_reached: [],
   };
 
   // --- G2: the plan-completeness gate ------------------------------------
@@ -9450,7 +9527,7 @@ describe("research_append — the two exhaustiveness gates (#1335, Phase 4)", ()
       section: "questions",
       op: "update",
       entryId: "q_001",
-      fields: { exhaustive_declaration: DECLARATION },
+      fields: { search_stop: STOP_DECISION },
     });
     const errs = failure(r).errors.join(" ");
     expect(errs).toMatch(/pli_002/);
@@ -9477,7 +9554,7 @@ describe("research_append — the two exhaustiveness gates (#1335, Phase 4)", ()
         // refusal pre-empts the G2 one and this test stops exercising the
         // snapshot-read vector it exists for.
         { section: "plan_items", op: "update", planId: "pl_001", entryId: "pli_002", fields: { status: "skipped", skip_category: "answered" } },
-        { section: "questions", op: "update", entryId: "q_001", fields: { exhaustive_declaration: DECLARATION } },
+        { section: "questions", op: "update", entryId: "q_001", fields: { search_stop: STOP_DECISION } },
       ],
     } as any);
     const errs2 = failure(r).errors.join(" ");
@@ -9496,7 +9573,7 @@ describe("research_append — the two exhaustiveness gates (#1335, Phase 4)", ()
       section: "questions",
       op: "update",
       entryId: "q_001",
-      fields: { exhaustive_declaration: DECLARATION },
+      fields: { search_stop: STOP_DECISION },
     });
     expect(singleOk(r).ok).toBe(true);
   });
@@ -9512,7 +9589,7 @@ describe("research_append — the two exhaustiveness gates (#1335, Phase 4)", ()
       section: "questions",
       op: "update",
       entryId: "q_001",
-      fields: { exhaustive_declaration: DECLARATION },
+      fields: { search_stop: STOP_DECISION },
     })).errors.join(" ");
     expect(errs).toMatch(/cannot be declared exhaustive/);
     // BOTH ids, not just the first: a refusal naming one of two sends the
@@ -9534,7 +9611,7 @@ describe("research_append — the two exhaustiveness gates (#1335, Phase 4)", ()
       section: "questions",
       op: "update",
       entryId: "q_001",
-      fields: { exhaustive_declaration: DECLARATION },
+      fields: { search_stop: STOP_DECISION },
     })).errors.join(" ");
     expect(errs).toMatch(/pli_001[^.]*'in_progress'/);
     expect(errs).toMatch(/pli_002[^.]*'planned'/);
@@ -9550,7 +9627,7 @@ describe("research_append — the two exhaustiveness gates (#1335, Phase 4)", ()
       section: "questions",
       op: "update",
       entryId: "q_001",
-      fields: { exhaustive_declaration: DECLARATION },
+      fields: { search_stop: STOP_DECISION },
     });
     expect(singleOk(r).ok).toBe(true);
   });
@@ -9568,7 +9645,7 @@ describe("research_append — the two exhaustiveness gates (#1335, Phase 4)", ()
       section: "questions",
       op: "update",
       entryId: "q_001",
-      fields: { exhaustive_declaration: DECLARATION },
+      fields: { search_stop: STOP_DECISION },
     })).errors.join(" ");
     expect(errs).not.toMatch(/mark .{0,20}(completed|skipped)/i);
     expect(errs).not.toMatch(/updat\w* (its|the item's) status/i);
@@ -9577,11 +9654,11 @@ describe("research_append — the two exhaustiveness gates (#1335, Phase 4)", ()
 
   // --- G1: the declaration/status agreement gate ---------------------------
 
-  it("refuses status exhaustive_declared when the declaration does not carry it", async () => {
+  it("refuses status exhaustive_declared when the stop decision does not carry a gate value", async () => {
     // Synthetic — zero corpus instances across the 125 ops that set this
-    // status. The shape is reachable: exhaustive_declaration is a required
+    // status. The shape is reachable: search_stop is a required
     // question property so it is always present, and 219 corpus writes set
-    // declared:false.
+    // stopped_because:null.
     await writeProject(exhResearch(["completed"]));
     const errs = failure(await researchAppend({
       projectPath: dir,
@@ -9590,10 +9667,10 @@ describe("research_append — the two exhaustiveness gates (#1335, Phase 4)", ()
       entryId: "q_001",
       fields: { status: "exhaustive_declared" },
     })).errors.join(" ");
-    expect(errs).toMatch(/exhaustive_declaration\.declared/);
+    expect(errs).toMatch(/search_stop\.stopped_because/);
   });
 
-  it("allows the status and the declaration set in the SAME op", async () => {
+  it("allows the status and the stop decision set in the SAME op", async () => {
     // 123 of 125 corpus ops take this shape. A pre-call snapshot here would
     // refuse every one of them, which is why G1 reads the merged entry.
     await writeProject(exhResearch(["completed"]));
@@ -9602,7 +9679,7 @@ describe("research_append — the two exhaustiveness gates (#1335, Phase 4)", ()
       section: "questions",
       op: "update",
       entryId: "q_001",
-      fields: { status: "exhaustive_declared", exhaustive_declaration: DECLARATION },
+      fields: { status: "exhaustive_declared", search_stop: STOP_DECISION },
     });
     expect(singleOk(r).ok).toBe(true);
   });
@@ -9626,7 +9703,7 @@ describe("research_append — the two exhaustiveness gates (#1335, Phase 4)", ()
       section: "questions",
       op: "update",
       entryId: "q_001",
-      fields: { exhaustive_declaration: DECLARATION },
+      fields: { search_stop: STOP_DECISION },
     });
     expect(singleOk(r).ok).toBe(true);
   });
@@ -9642,17 +9719,17 @@ describe("research_append — the two exhaustiveness gates (#1335, Phase 4)", ()
       section: "questions",
       op: "update",
       entryId: "q_001",
-      fields: { exhaustive_declaration: DECLARATION },
+      fields: { search_stop: STOP_DECISION },
     })).ok).toBe(true);
   });
 
-  it("refuses lowering `declared` to false while the status still claims exhaustive", async () => {
+  it("refuses clearing stopped_because while the status still claims exhaustive", async () => {
     // The mirror image of the status-side vector, and the one a status-only
     // gate misses. It is the agent's own documented re-invocation path: write
-    // `declared: false`, leave `status` alone — which on an already-declared
+    // stopped_because:null, leave `status` alone — which on an already-declared
     // question leaves `exhaustive_declared` standing over nothing.
     const research = exhResearch(["completed"]);
-    (research.questions[0] as any).exhaustive_declaration = DECLARATION;
+    (research.questions[0] as any).search_stop = STOP_DECISION;
     (research.questions[0] as any).status = "exhaustive_declared";
     await writeProject(research);
     const errs = failure(await researchAppend({
@@ -9661,23 +9738,24 @@ describe("research_append — the two exhaustiveness gates (#1335, Phase 4)", ()
       op: "update",
       entryId: "q_001",
       fields: {
-        exhaustive_declaration: {
-          declared: false,
+        search_stop: {
+          stopped_because: null,
           justification: "Terminating: probate destroyed in an 1862 fire.",
           log_entry_ids: ["log_001"],
           stop_criteria: null,
+          not_reached: [],
         },
       },
     })).errors.join(" ");
-    expect(errs).toMatch(/exhaustive_declaration\.declared/);
+    expect(errs).toMatch(/search_stop\.stopped_because/);
   });
 
-  it("allows the status when the declaration landed in an EARLIER call", async () => {
+  it("allows the status when the stop decision landed in an EARLIER call", async () => {
     // The hannah-earnest-children / jens-nielsen shape: declare at one call,
     // flip the status at the next. Both were misread as violations while the
     // replay engine was dropping stripped updates.
     const research = exhResearch(["completed"]);
-    (research.questions[0] as any).exhaustive_declaration = DECLARATION;
+    (research.questions[0] as any).search_stop = STOP_DECISION;
     await writeProject(research);
     const r = await researchAppend({
       projectPath: dir,
@@ -9696,9 +9774,9 @@ describe("research_append — the declaring worked example is aimed, not blanket
   // caller refused on, say, a `resolved` write a full `declared: true` payload
   // — which on the main thread is the one shape the plugin hook denies. A hint
   // that teaches the next refusal is worse than no hint.
-  it("teaches the seven keys when the failing op named exhaustive_declaration", () => {
+  it("teaches the seven keys when the failing op named search_stop", () => {
     const hints = exampleHints([
-      { section: "questions", op: "update", fields: ["exhaustive_declaration"] },
+      { section: "questions", op: "update", fields: ["search_stop"] },
     ]);
     expect(hints.join("\n")).toContain("overturn_risk");
     expect(hints.join("\n")).toContain("goal_alignment");
@@ -9709,7 +9787,7 @@ describe("research_append — the declaring worked example is aimed, not blanket
       { section: "questions", op: "update", fields: ["status", "resolved"] },
     ]);
     expect(hints.join("\n")).not.toContain("overturn_risk");
-    expect(hints.join("\n")).not.toContain("declared: true");
+    expect(hints.join("\n")).not.toContain("stopped_because");
     expect(hints.join("\n")).toContain("only the fields you are changing");
   });
 
@@ -10009,6 +10087,7 @@ describe("supported evidence floor (#2086)", () => {
       fields: {
         status: "resolved",
         preferred_assertion_id: "a_133",
+        resolution_kind: "competitor",
         independence_analysis: "Two separately created records, no shared informant.",
         weighing_analysis: "The earlier enumeration is closer to the event.",
         resolution_rationale: "a_133 preferred; a_135 is a later derivative reading.",
@@ -10249,6 +10328,507 @@ describe("supported evidence floor (#2086)", () => {
 
 });
 
+// ─── Precondition 2: informant_proximity "unknown" ⟹ information_quality
+//     "indeterminate" (issue #2937) ────────────────────────────────────────
+//
+// Prose in `agents/record-extractor.md` from issue #2173's finding (now carried
+// by issue #2484). Prose did not hold: across the committed e2e corpus the model
+// broke the rule on 248 of 982 `unknown` assertions, which is what moved it into
+// code. The document tier mirrors this in `validator.test.ts`.
+
+describe("research_append — informant_proximity 'unknown' requires indeterminate quality", () => {
+  let dir: string;
+  beforeEach(async () => {
+    dir = await mkdtemp(join(tmpdir(), "research-append-prox-floor-"));
+    await writeFile(join(dir, "research.json"), JSON.stringify(baseResearch(), null, 2));
+    await writeFile(join(dir, "tree.gedcomx.json"), JSON.stringify(baseTree, null, 2));
+  });
+  afterEach(async () => {
+    await rm(dir, { recursive: true, force: true });
+  });
+
+  const FLOOR = /informant_proximity "unknown" but information_quality/;
+  const appendAssertion = (overrides: Record<string, unknown>) =>
+    researchAppend({
+      projectPath: dir,
+      section: "assertions",
+      op: "append",
+      entry: noId({ ...validAssertion("ignored"), ...overrides }),
+    });
+
+  // ── APPEND, broken three ways.
+
+  it("refuses unknown + secondary on append", async () => {
+    const r = await appendAssertion({
+      informant: "unknown",
+      informant_proximity: "unknown",
+      information_quality: "secondary",
+    });
+    expect(r.ok).toBe(false);
+    if (r.ok) return;
+    expect(r.errors.some((e) => FLOOR.test(e))).toBe(true);
+  });
+
+  it("refuses unknown + primary on append", async () => {
+    const r = await appendAssertion({
+      informant: "unknown",
+      informant_proximity: "unknown",
+      information_quality: "primary",
+    });
+    expect(r.ok).toBe(false);
+    if (r.ok) return;
+    expect(r.errors.some((e) => FLOOR.test(e))).toBe(true);
+  });
+
+  it("writes NOTHING when it refuses", async () => {
+    // A refusal that half-persisted would be worse than no guard.
+    const before = await readFile(join(dir, "research.json"), "utf-8");
+    const r = await appendAssertion({
+      informant: "unknown",
+      informant_proximity: "unknown",
+      information_quality: "secondary",
+    });
+    expect(r.ok).toBe(false);
+    expect(await readFile(join(dir, "research.json"), "utf-8")).toBe(before);
+  });
+
+  // ── UPDATE. The arm the issue calls out separately, and the one that
+  //    actually produced the corpus violations: flipping proximity to
+  //    "unknown" and leaving a stale `secondary` behind.
+
+  it("refuses an update that flips proximity to unknown, leaving a stale secondary", async () => {
+    const seed = baseResearch();
+    seed.assertions = [
+      {
+        ...validAssertion("a_001"),
+        informant_proximity: "family_not_present",
+        information_quality: "secondary",
+      },
+    ];
+    await writeFile(join(dir, "research.json"), JSON.stringify(seed, null, 2));
+    const r = await researchAppend({
+      projectPath: dir,
+      section: "assertions",
+      op: "update",
+      entryId: "a_001",
+      fields: { informant_proximity: "unknown" },
+    });
+    expect(r.ok).toBe(false);
+    if (r.ok) return;
+    expect(r.errors.some((e) => FLOOR.test(e))).toBe(true);
+  });
+
+  it("refuses an update that flips quality away from indeterminate under an unknown proximity", async () => {
+    const seed = baseResearch();
+    seed.assertions = [
+      {
+        ...validAssertion("a_001"),
+        informant: "unknown",
+        informant_proximity: "unknown",
+        information_quality: "indeterminate",
+      },
+    ];
+    await writeFile(join(dir, "research.json"), JSON.stringify(seed, null, 2));
+    const r = await researchAppend({
+      projectPath: dir,
+      section: "assertions",
+      op: "update",
+      entryId: "a_001",
+      fields: { information_quality: "primary" },
+    });
+    expect(r.ok).toBe(false);
+    if (r.ok) return;
+    expect(r.errors.some((e) => FLOOR.test(e))).toBe(true);
+  });
+
+  // ── The other direction. A guard fails two ways; breaking it tests one.
+
+  it("accepts unknown + indeterminate", async () => {
+    const r = await appendAssertion({
+      informant: "unknown",
+      informant_proximity: "unknown",
+      information_quality: "indeterminate",
+    });
+    expect(r.ok).toBe(true);
+  });
+
+  it("accepts indeterminate at a KNOWN proximity — not a biconditional", async () => {
+    // The decision tree's "CANNOT TELL" branch, reachable only once question 1
+    // answered YES. The ordinary census shape; an `iff` reading refuses it.
+    const r = await appendAssertion({
+      informant: "unknown household member (likely self or spouse)",
+      informant_proximity: "household_member",
+      information_quality: "indeterminate",
+    });
+    expect(r.ok).toBe(true);
+  });
+
+  it("accepts a stated 1880+ relationship", async () => {
+    // Named by the issue's Done-means as an explicit must-still-accept.
+    const r = await appendAssertion({
+      fact_type: "relationship",
+      value: "child of Thomas Doyle",
+      informant: "unknown household member",
+      informant_proximity: "household_member",
+      information_quality: "indeterminate",
+      record_basis: "stated",
+      structured_value: { relationship_type: "child", related_person_role: "head_of_household" },
+    });
+    expect(r.ok).toBe(true);
+  });
+
+  it("accepts a computed birth date at record_basis 'inferred'", async () => {
+    // The other Done-means must-still-accept: a birth YEAR derived from a
+    // stated age is `inferred`, and that is orthogonal to this rule.
+    const r = await appendAssertion({
+      fact_type: "birth",
+      value: "about 1818",
+      date: "~1818",
+      date_certainty: "approximate",
+      informant: "unknown",
+      informant_proximity: "unknown",
+      information_quality: "indeterminate",
+      record_basis: "inferred",
+    });
+    expect(r.ok).toBe(true);
+  });
+
+  it("leaves an out-of-enum quality to the enum error alone", async () => {
+    // Mirrors the validator-tier guard: `mid-research-flynn-bad-enum` a_001 is
+    // unknown + "tertiary", and ut_validate_schema_004 pins ONE error for it.
+    const r = await appendAssertion({
+      informant: "unknown",
+      informant_proximity: "unknown",
+      information_quality: "tertiary",
+    });
+    expect(r.ok).toBe(false);
+    if (r.ok) return;
+    expect(r.errors.some((e) => FLOOR.test(e))).toBe(false);
+  });
+});
+
+// ─── Advisory: a transcription with no image_filename (issue #2256 → #2937) ──
+
+describe("research_append — transcription without image_filename is advisory", () => {
+  let dir: string;
+  beforeEach(async () => {
+    dir = await mkdtemp(join(tmpdir(), "research-append-transcription-"));
+    await writeFile(join(dir, "research.json"), JSON.stringify(baseResearch(), null, 2));
+    await writeFile(join(dir, "tree.gedcomx.json"), JSON.stringify(baseTree, null, 2));
+  });
+  afterEach(async () => {
+    await rm(dir, { recursive: true, force: true });
+  });
+
+  const WARN = /records a transcription but no image_filename/;
+  const warned = (ws: string[]) => ws.some((w) => WARN.test(w));
+  const appendSource = (extra: Record<string, unknown>) =>
+    researchAppend({
+      projectPath: dir,
+      section: "sources",
+      op: "append",
+      entry: noId({ ...validSource("x"), ...extra }),
+    });
+
+  it("warns — and never blocks — for a transcription with a null image_filename", async () => {
+    const r = await appendSource({
+      transcription: "Thomas Doyle, aged 32, born Ireland.",
+      image_filename: null,
+    });
+    expect(r.ok).toBe(true);
+    if (!r.ok) return;
+    expect(warned(r.validation.warnings)).toBe(true);
+    // Advisory: the source still persisted.
+    expect(r.filesWritten).toContain("research.json");
+    const research = JSON.parse(await readFile(join(dir, "research.json"), "utf-8"));
+    expect(research.sources).toHaveLength(2);
+  });
+
+  it("warns when image_filename is omitted entirely", async () => {
+    const r = await appendSource({ transcription: "Thomas Doyle, aged 32." });
+    expect(r.ok).toBe(true);
+    if (!r.ok) return;
+    expect(warned(r.validation.warnings)).toBe(true);
+  });
+
+  it("names the offending source id, so a batch is actionable", async () => {
+    const r = await appendSource({ transcription: "text", image_filename: null });
+    expect(r.ok).toBe(true);
+    if (!r.ok) return;
+    const w = r.validation.warnings.find((x) => WARN.test(x))!;
+    expect(w).toMatch(/source 'src_\d+'/);
+  });
+
+  // ── The other direction, both shapes the absorbed text names explicitly.
+
+  it("stays silent for a source with no transcription", async () => {
+    const r = await appendSource({ transcription: null, image_filename: null });
+    expect(r.ok).toBe(true);
+    if (!r.ok) return;
+    expect(warned(r.validation.warnings)).toBe(false);
+  });
+
+  it("stays silent for a source that cites a ref", async () => {
+    const r = await appendSource({
+      transcription: "Thomas Doyle, aged 32.",
+      image_filename: "004022578_00190.jpg",
+    });
+    expect(r.ok).toBe(true);
+    if (!r.ok) return;
+    expect(warned(r.validation.warnings)).toBe(false);
+  });
+
+  it("stays silent for a whitespace-only transcription", async () => {
+    // Blank is not a transcription; warning here would nag a no-op field.
+    const r = await appendSource({ transcription: "   ", image_filename: null });
+    expect(r.ok).toBe(true);
+    if (!r.ok) return;
+    expect(warned(r.validation.warnings)).toBe(false);
+  });
+
+  it("does not nag a write that touches no source", async () => {
+    const r = await researchAppend({
+      projectPath: dir,
+      section: "assertions",
+      op: "append",
+      entry: noId(validAssertion("ignored")),
+    });
+    expect(r.ok).toBe(true);
+    if (!r.ok) return;
+    expect(warned(r.validation.warnings)).toBe(false);
+  });
+});
+
+describe("mintedFromThisRecord counts person-level refs (#2696)", () => {
+  const research = {
+    sources: [
+      { id: "src_1", gedcomx_source_description_id: "S1" },
+      { id: "src_2", gedcomx_source_description_id: "S2" },
+    ],
+    assertions: [
+      { source_id: "src_1", record_id: "REC-A" },
+      { source_id: "src_2", record_id: "REC-B" },
+    ],
+  };
+  const tree = (sources: unknown) => ({
+    persons: [{ id: "I9", gender: "Male", names: [{ id: "N1", given: "A", surname: "B" }], sources }],
+    sources: [{ id: "S1", title: "A" }, { id: "S2", title: "B" }],
+  });
+
+  it("a person whose only refs are person-level, all to this record, was minted from it", () => {
+    expect(mintedFromThisRecord("I9", "REC-A", research, tree([{ ref: "S1" }]))).toBe(true);
+  });
+
+  it("a person-level ref to another record means it was not minted from this one", () => {
+    expect(mintedFromThisRecord("I9", "REC-A", research, tree([{ ref: "S1" }, { ref: "S2" }]))).toBe(false);
+  });
+});
+
+describe("research_append — a resolve names how it was settled (resolution_kind, #1852)", () => {
+  let dir: string;
+  beforeEach(async () => {
+    dir = await mkdtemp(join(tmpdir(), "research-append-1852-"));
+  });
+  afterEach(async () => {
+    await rm(dir, { recursive: true, force: true });
+  });
+
+  const conflict = (over: Record<string, unknown> = {}) => ({
+    id: "c_001",
+    conflict_type: "fact",
+    description: "Patrick Flynn's birth year: 1845 (1850 census) vs. 1843 (delayed birth certificate)",
+    disputed_attribute: "birth_year",
+    identity_question: null,
+    competing_assertion_ids: ["a_013", "a_025"],
+    independence_analysis: null,
+    weighing_analysis: null,
+    preferred_assertion_id: null,
+    resolution_rationale: null,
+    status: "unresolved",
+    blocks_question_ids: [],
+    ...over,
+  });
+  const state = (c = conflict()) => ({
+    project: { objective: "x" },
+    questions: [{ id: "q_001", question: "When was Patrick born?", status: "open" }],
+    sources: [{ id: "src_001", citation: "1850 census" }, { id: "src_004", citation: "Delayed birth certificate" }],
+    assertions: [
+      { id: "a_013", source_id: "src_001", value: "1845" },
+      { id: "a_025", source_id: "src_004", value: "1843" },
+    ],
+    conflicts: [c],
+  });
+  const ANALYSES = {
+    independence_analysis: "Different informants, no shared derivation.",
+    weighing_analysis: "The census is closer to the event.",
+  };
+  async function writeProject(research: any) {
+    await writeFile(join(dir, "research.json"), JSON.stringify(research, null, 2));
+    await writeFile(join(dir, "tree.gedcomx.json"), JSON.stringify(baseTree, null, 2));
+  }
+  const resolve = (fields: Record<string, unknown>) =>
+    researchAppend({ projectPath: dir, section: "conflicts", op: "update", entryId: "c_001", fields });
+  const raw = () => readFile(join(dir, "research.json"), "utf-8");
+
+  it("refuses a resolve with no resolution_kind, naming all three kinds and what each requires, and writes nothing", async () => {
+    await writeProject(state());
+    const before = await raw();
+    const r = await resolve({
+      status: "resolved",
+      ...ANALYSES,
+      preferred_assertion_id: "a_013",
+      resolution_rationale: "The census wins.",
+    });
+    const msg = failure(r).errors.join(" ");
+    expect(msg).toContain("a resolved conflict requires 'resolution_kind'");
+    for (const kind of ["'competitor'", "'tree'", "'synthesis'"]) expect(msg).toContain(kind);
+    expect(msg).toContain("preferred_assertion_id");
+    expect(msg).toContain("resolved_value");
+    expect(msg).toContain("at least two src_/a_ ids");
+    expect(await raw()).toBe(before);
+  });
+
+  it("teaches the three worked resolves on that refusal", async () => {
+    await writeProject(state());
+    const r = await resolve({ status: "resolved", ...ANALYSES, resolution_rationale: "x" });
+    const msg = failure(r).errors.join("\n");
+    for (const kind of ['"competitor"', '"tree"', '"synthesis"']) expect(msg).toContain(`"resolution_kind": ${kind}`);
+  });
+
+  it("refuses an unknown kind", async () => {
+    await writeProject(state());
+    const r = await resolve({ status: "resolved", ...ANALYSES, resolution_kind: "vote", resolution_rationale: "x" });
+    expect(failure(r).errors.join(" ")).toMatch(/resolution_kind.*"vote"|not one of/);
+  });
+
+  it.each([
+    ["no winner", { preferred_assertion_id: null }],
+    ["a blank winner", { preferred_assertion_id: "  " }],
+  ])("refuses 'competitor' with %s", async (_label, over) => {
+    await writeProject(state());
+    const r = await resolve({
+      status: "resolved",
+      ...ANALYSES,
+      resolution_kind: "competitor",
+      resolution_rationale: "The census wins.",
+      ...over,
+    });
+    expect(failure(r).errors.join(" ")).toContain("resolution_kind 'competitor' requires preferred_assertion_id");
+  });
+
+  it("refuses 'competitor' whose winner is not a competing assertion", async () => {
+    await writeProject(state());
+    const r = await resolve({
+      status: "resolved",
+      ...ANALYSES,
+      resolution_kind: "competitor",
+      preferred_assertion_id: "a_099",
+      resolution_rationale: "x",
+    });
+    expect(failure(r).errors.join(" ")).toMatch(/competing_assertion_ids/);
+  });
+
+  it("refuses a bare 'synthesis': no resolved_value and a rationale citing fewer than two ids", async () => {
+    await writeProject(state());
+    const r = await resolve({
+      status: "resolved",
+      ...ANALYSES,
+      resolution_kind: "synthesis",
+      resolution_rationale: "Both records together suggest about 1844 (a_013).",
+    });
+    const msg = failure(r).errors.join(" ");
+    expect(msg).toContain("resolution_kind 'synthesis' requires resolved_value");
+    expect(msg).toContain("citing at least two distinct src_/a_ ids");
+    expect(msg).toContain("(it cites 1)");
+  });
+
+  it("does not count the same id twice toward the two a synthesis cites", async () => {
+    await writeProject(state());
+    const r = await resolve({
+      status: "resolved",
+      ...ANALYSES,
+      resolution_kind: "synthesis",
+      resolved_value: "about 1844",
+      resolution_rationale: "a_013 says 1845; a_013 again, read closely, allows 1844.",
+    });
+    expect(failure(r).errors.join(" ")).toContain("(it cites 1)");
+  });
+
+  it.each(["competitor", "tree", "synthesis"] as const)("accepts the shipped worked '%s' resolve", async (kind) => {
+    await writeProject(state());
+    const fields = JSON.parse(__testing.RESOLVE_EXAMPLES[kind]);
+    const r = await resolve(fields);
+    expect(r.ok, JSON.stringify(errorsOf(r))).toBe(true);
+    const c = JSON.parse(await raw()).conflicts[0];
+    expect(c.resolution_kind).toBe(kind);
+    if (kind === "synthesis") expect(c.resolved_value).toBe("about 1844");
+  });
+
+  it("accepts an append that lands resolved with a kind", async () => {
+    await writeProject(state());
+    const { id: _id, ...entry } = conflict({
+      ...ANALYSES,
+      status: "resolved",
+      resolution_kind: "competitor",
+      preferred_assertion_id: "a_013",
+      resolution_rationale: "The census wins.",
+    });
+    const r = await researchAppend({ projectPath: dir, section: "conflicts", op: "append", entry });
+    expect(r.ok, JSON.stringify(errorsOf(r))).toBe(true);
+  });
+
+  it("refuses an append that lands resolved with no kind", async () => {
+    await writeProject(state());
+    const { id: _id, ...entry } = conflict({
+      ...ANALYSES,
+      status: "resolved",
+      preferred_assertion_id: "a_013",
+      resolution_rationale: "The census wins.",
+    });
+    const r = await researchAppend({ projectPath: dir, section: "conflicts", op: "append", entry });
+    expect(failure(r).errors.join(" ")).toContain("a resolved conflict requires 'resolution_kind'");
+  });
+
+  it("leaves an unrelated edit to a conflict resolved before the rule alone", async () => {
+    await writeProject(
+      state(
+        conflict({
+          ...ANALYSES,
+          status: "resolved",
+          preferred_assertion_id: "a_013",
+          resolution_rationale: "Resolved before resolution_kind existed.",
+        }),
+      ),
+    );
+    const r = await resolve({ blocks_question_ids: ["q_001"] });
+    expect(r.ok, JSON.stringify(errorsOf(r))).toBe(true);
+  });
+
+  it("re-judges a legacy resolved conflict when an update touches its resolution", async () => {
+    await writeProject(
+      state(
+        conflict({
+          ...ANALYSES,
+          status: "resolved",
+          preferred_assertion_id: "a_013",
+          resolution_rationale: "Resolved before resolution_kind existed.",
+        }),
+      ),
+    );
+    const r = await resolve({ resolution_rationale: "Revised rationale." });
+    expect(failure(r).errors.join(" ")).toContain("a resolved conflict requires 'resolution_kind'");
+  });
+
+  it("leaves moot and unresolved writes to their own rules", async () => {
+    await writeProject(state());
+    const moot = await resolve({ status: "moot", resolution_rationale: "The second record is another family." });
+    expect(moot.ok, JSON.stringify(errorsOf(moot))).toBe(true);
+    await writeProject(state());
+    const open = await resolve({ ...ANALYSES });
+    expect(open.ok, JSON.stringify(errorsOf(open))).toBe(true);
+  });
+});
+
 describe("research_append — a conflict resolved in prose must reach conflicts[] (#2494)", () => {
   let dir: string;
   beforeEach(async () => {
@@ -10263,8 +10843,8 @@ describe("research_append — a conflict resolved in prose must reach conflicts[
     "the enumerator's rendering of Hendricks. No formal conflicts are registered. No unresolved " +
     "discrepancy blocks the conclusion.";
 
-  const declaration = (conflict_resolution: string) => ({
-    declared: true,
+  const stopDecision = (conflict_resolution: string) => ({
+    stopped_because: "question_answered",
     justification: "Census and vital records searched; the household is consistent.",
     log_entry_ids: ["log_001"],
     stop_criteria: {
@@ -10276,13 +10856,14 @@ describe("research_append — a conflict resolved in prose must reach conflicts[
       conflict_resolution,
       overturn_risk: "Low.",
     },
+    not_reached: [],
   });
 
   const state = (cr = TESTER_CR) => ({
     project: { objective: "x" },
     questions: [
-      { id: "q_001", question: "Who were Peter's parents?", status: "exhaustive_declared", exhaustive_declaration: declaration(cr) },
-      { id: "q_002", question: "Where was Peter born?", status: "open" },
+      { id: "q_001", question: "Who were Peter's parents?", status: "exhaustive_declared", search_stop: stopDecision(cr), depends_on: [], unblocks: [], created: "2026-01-01", resolved: null, resolution_assertion_ids: [] },
+      { id: "q_002", question: "Where was Peter born?", status: "open", search_stop: { stopped_because: null, log_entry_ids: [], stop_criteria: null, not_reached: [] }, depends_on: [], unblocks: [], created: "2026-01-01", resolved: null, resolution_assertion_ids: [] },
     ],
     log: [
       {
@@ -10328,6 +10909,7 @@ describe("research_append — a conflict resolved in prose must reach conflicts[
     weighing_analysis: "The baptism is an original record made at the event.",
     resolution_rationale: "Henricks is the enumerator's spelling of Hendricks.",
     preferred_assertion_id: "a_005",
+    resolution_kind: "competitor",
     blocks_question_ids: [],
   };
 
@@ -10397,7 +10979,7 @@ describe("research_append — a conflict resolved in prose must reach conflicts[
           section: "questions",
           op: "update",
           entryId: "q_002",
-          fields: { status: "exhaustive_declared", exhaustive_declaration: declaration(TESTER_CR) },
+          fields: { status: "exhaustive_declared", search_stop: stopDecision(TESTER_CR) },
         },
         { section: "proof_summaries", op: "append", entry: summary("q_002") },
       ],

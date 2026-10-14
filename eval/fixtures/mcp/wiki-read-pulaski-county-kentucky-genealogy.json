@@ -1,0 +1,11 @@
+{
+  "tool": "wiki_read",
+  "description": "Excerpt from the live Pulaski_County,_Kentucky_Genealogy page, probed 2026-10-10 at https://www.familysearch.org/en/wiki/Pulaski_County,_Kentucky_Genealogy. Verbatim contiguous excerpt covering county formation, record availability, and repositories.",
+  "args": {
+    "url": "~Pulaski_County,_Kentucky_Genealogy"
+  },
+  "response": {
+    "url": "https://www.familysearch.org/en/wiki/Pulaski_County,_Kentucky_Genealogy",
+    "content": "# Pulaski County, Kentucky Genealogy\n\n## County Background\n\nPulaski County was established on December 10, 1798, from [Lincoln](https://www.familysearch.org/en/wiki/Lincoln_County,_Kentucky_Genealogy) and [Green](https://www.familysearch.org/en/wiki/Green_County,_Kentucky_Genealogy) counties. The county seat is [Somerset](https://www.familysearch.org/en/wiki/Somerset,_Kentucky). Named for Kazimierz Pułaski, a Polish soldier who served in the American Revolution, the county is located in the south-central area of the state.\n\n## Record Availability\n\n| **Record Type** | **Earliest Date** |\n| --- | --- |\n| Birth | 1852 |\n| Marriage | 1799 |\n| Death | 1852 |\n| Court | 1799 |\n| Land | 1799 |\n| Probate | 1801 |\n| Census | 1810 |\n\n## Record Losses\n\nA disaster destroyed some records in 1838 and again in 1871.\n\n## Key Repositories\n\n- **Pulaski County Courthouse** — 100 N. Main Street, #208, Somerset, KY 42502. Holds marriage bonds, deeds, court orders, and wills from county formation.\n- **Pulaski County Historical Society** — maintains vertical files on each Pulaski County surname and holds the most comprehensive collection of church records and obituaries from local newspapers.\n- **Kentucky Department for Libraries and Archives (KDLA)** — holds microfilmed copies of many county records.\n\n## Online Resources\n\n- **FamilySearch** — early will books (1801–1929) have been digitized; marriage bonds and consent forms from 1799–1871 are available.\n- **Ancestry** — county tax lists, census records, and vital records indexes."
+  }
+}

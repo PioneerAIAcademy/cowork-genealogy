@@ -198,3 +198,84 @@ def test_survey_run_calls_both_collections_and_volume_search(tool_calls):
         f"records survey called {sorted(tools & {'collections_search', 'volume_search'})} "
         f"but not {missing} — both are required Step-3 calls (agents/locality-guide.md Step 3)"
     )
+
+
+def test_catalog_search_called_and_broadened(tool_calls, test):
+    """VR5 (issue #3107) — scoped to ut_locality_guide_028: the agent must call
+    catalog_search, and when it gets 0 hits, broaden by calling catalog_search
+    again on a wider standardPlace.
+
+    Grades call PRESENCE and COUNT, not the result content: the skill *making*
+    the initial call and then broadening is the behaviour under test. Skips for
+    all other tests — catalog_search is not registered in their fixtures, so they
+    cannot call it.
+    """
+    if (test.get("id") or "") != "ut_locality_guide_028":
+        pytest.skip("not the catalog-search broadening test")
+    calls = [
+        tc for tc in (tool_calls or [])
+        if bare_tool_name(tc.get("tool")) == "catalog_search"
+    ]
+    assert calls, (
+        "ut_locality_guide_028 must call catalog_search at least once"
+    )
+    places = [(tc.get("args") or {}).get("standardPlace") or "" for tc in calls]
+
+    def parts(place):
+        return [p.strip().lower() for p in place.split(",") if p.strip()]
+
+    def is_parent(broader, narrower):
+        b, n = parts(broader), parts(narrower)
+        return 0 < len(b) < len(n) and n[-len(b):] == b
+
+    assert any(
+        is_parent(places[j], places[i])
+        for i in range(len(places))
+        for j in range(i + 1, len(places))
+    ), (
+        f"catalog_search places in call order: {places}. After the 0-hit village "
+        "call, a later call must name one of its parent jurisdictions (the text "
+        "after its first comma), not a sibling or the same place"
+    )
+
+
+def test_single_jurisdiction_enforced(before_state, after_state, tool_calls, test):
+    """VR6 (issue #3186) — tag-gated (`single-jurisdiction`): when delegated
+    several separate jurisdictions, the agent must survey only one. Asserts:
+
+      1. Exactly one localities[] entry is persisted (not one per county).
+      2. volume_search standardPlace arguments target at most one county
+         (broadening to a parent jurisdiction is allowed).
+
+    Guards the context-overflow bug: surveying three counties in parallel
+    produces ~30 tool calls whose results exceed the agent's context window.
+    """
+    if "single-jurisdiction" not in (test.get("tags") or []):
+        pytest.skip("not a single-jurisdiction test")
+    # 1. Exactly one localities entry persisted
+    written = _written_localities(before_state, after_state)
+    assert len(written) == 1, (
+        f"expected exactly 1 localities entry, got {len(written)} — "
+        "the agent should survey one jurisdiction per call, not all of them"
+    )
+    # 2. volume_search calls target at most one county
+    vs_calls = [
+        tc for tc in (tool_calls or [])
+        if bare_tool_name(tc.get("tool")) == "volume_search"
+    ]
+    if vs_calls:
+        # Extract the most-specific component (first comma part) of each
+        # standardPlace argument. Broadening calls (e.g. "Kentucky, United
+        # States") have fewer components than county-level calls (e.g.
+        # "Pulaski, Kentucky, United States"), so only county-level calls
+        # (3+ components for US places) contribute a distinct first part.
+        county_firsts = set()
+        for tc in vs_calls:
+            sp = (tc.get("args") or {}).get("standardPlace") or ""
+            parts = [p.strip() for p in sp.split(",") if p.strip()]
+            if len(parts) >= 3:
+                county_firsts.add(parts[0].lower())
+        assert len(county_firsts) <= 1, (
+            f"volume_search called for multiple counties: {sorted(county_firsts)} — "
+            "the agent should survey only one jurisdiction per call"
+        )

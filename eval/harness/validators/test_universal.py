@@ -570,6 +570,95 @@ def _remap_collapsing(value, remap: dict[str, str]):
     return value
 
 
+def _explained_by_appends(before_section, after_section) -> bool:
+    """True when `after_section` is `before_section` plus new entries only.
+
+    What `extraction_append` does to each section it writes: it appends a
+    source, its assertions and its log entry, and changes nothing already there.
+    Keyed on entry `id`, so order does not matter; an entry with no `id`, an
+    existing entry changed or removed, or a section that is not a list fails
+    closed.
+    """
+    if not isinstance(before_section, list) or not isinstance(after_section, list):
+        return False
+    after_by_id: dict[str, dict] = {}
+    for e in after_section:
+        if not isinstance(e, dict) or not isinstance(e.get("id"), str):
+            return False
+        after_by_id[e["id"]] = e
+    for e in before_section:
+        if not isinstance(e, dict) or after_by_id.get(e.get("id")) != e:
+            return False
+    return len(after_section) > len(before_section)
+
+
+#: The assertion fields any caller may update through `research_append`.
+#: Mirrors CALLER_ASSERTION_FIELDS in research-append.ts; a literal because this
+#: plane is Python. A field added there and not here is refused here, which
+#: fails closed.
+_CALLER_ASSERTION_FIELDS = frozenset({"informant_bias_notes"})
+
+#: Fields `research_append`'s update arm may rewrite on the MERGED entry, so a
+#: notes-only update to a legacy assertion can change them too:
+#: normalizeDateFields, normalizeAccessDate and canonicalizeAssertionLabels.
+_UPDATE_NORMALIZED_FIELDS = frozenset({"date", "standard_date", "access_date", "fact_type", "place"})
+
+
+def _caller_notes_update_ids(tool_calls) -> set[str]:
+    """Assertion ids a `research_append` update op named with caller fields only."""
+    ids: set[str] = set()
+    for call in tool_calls or []:
+        if not isinstance(call, dict) or _bare_tool_name(call.get("tool", "")) != "research_append":
+            continue
+        args = call.get("args")
+        if not isinstance(args, dict):
+            continue
+        ops = args.get("ops")
+        if isinstance(ops, str):
+            try:
+                ops = json.loads(ops)
+            except (ValueError, TypeError):
+                ops = None
+        candidates = ops if isinstance(ops, list) else ([args] if args.get("section") else [])
+        for op in candidates:
+            if not isinstance(op, dict) or op.get("section") != "assertions" or op.get("op") != "update":
+                continue
+            fields = op.get("fields")
+            entry_id = op.get("entryId")
+            if isinstance(fields, dict) and fields and set(fields) <= _CALLER_ASSERTION_FIELDS and isinstance(entry_id, str):
+                ids.add(entry_id)
+    return ids
+
+
+def _explained_by_caller_assertion_update(before_section, after_section, updated_ids: set[str]) -> bool:
+    """True when the only change to `assertions` is the one write
+    `research_append` accepts from any caller: an update op naming an existing
+    entry with caller fields only, plus what the update arm's normalizers
+    rewrite on that entry. Same ids, no duplicates, nothing else changed.
+    """
+    if not isinstance(before_section, list) or not isinstance(after_section, list):
+        return False
+    before_ids = [e.get("id") if isinstance(e, dict) else None for e in before_section]
+    after_ids = [e.get("id") if isinstance(e, dict) else None for e in after_section]
+    if None in before_ids or None in after_ids or len(set(after_ids)) != len(after_ids):
+        return False
+    if set(before_ids) != set(after_ids) or len(before_ids) != len(after_ids):
+        return False
+    before_by_id = dict(zip(before_ids, before_section))
+    changed = False
+    for e in after_section:
+        old = before_by_id[e["id"]]
+        diff = {k for k in set(old) | set(e) if old.get(k) != e.get(k)}
+        if not diff:
+            continue
+        if e["id"] not in updated_ids or not diff & _CALLER_ASSERTION_FIELDS:
+            return False
+        if diff - _CALLER_ASSERTION_FIELDS - _UPDATE_NORMALIZED_FIELDS:
+            return False
+        changed = True
+    return changed
+
+
 def _explained_by_merge(before_section, after_section, remap: dict[str, str]) -> bool:
     """True when the section's whole delta is the merge's id permutation.
 
@@ -605,8 +694,14 @@ def test_ownership_table(before_state, after_state, skill_frontmatter, test, too
     `research_append` — strictly more than the merge needs, and it reopens the
     failure the `person_evidence` row names.
 
-    Scoped to research.json. `test_tree_ownership_table` does NOT take this
-    path: the tree rows already list `merge_tree_persons` among their
+    `extraction_append` is the second tool-identity path: it decides roles and
+    classifications in code, so which skill calls it does not matter, and it is
+    authorized for appends only (`_explained_by_appends`). The third is
+    `research_append`'s one caller write to `assertions`, an update of
+    `informant_bias_notes` alone (`_explained_by_caller_assertion_update`).
+
+    The merge path is scoped to research.json. `test_tree_ownership_table` does
+    NOT take it: the tree rows already list `merge_tree_persons` among their
     `writerTools` *and* name tree-edit a caller, so the clause would authorize
     nothing there that is not already authorized, while silently widening
     `materialize_facts` and `tree_forget` to callers that have never asked.
@@ -681,6 +776,18 @@ def test_ownership_table(before_state, after_state, skill_frontmatter, test, too
             if "merge_tree_persons" in (identity_tools.get(section) or set()) and (
                 "merge_tree_persons" in called
             ) and _explained_by_merge(before.get(section), after.get(section), remap):
+                continue
+            # extraction_append: roles and classifications are set in code, so
+            # any skill may call it. Authorized only for appends.
+            if "extraction_append" in (identity_tools.get(section) or set()) and (
+                "extraction_append" in called
+            ) and _explained_by_appends(before.get(section), after.get(section)):
+                continue
+            # research_append: any caller may update an assertion's
+            # caller-writable fields and nothing else.
+            if section == "assertions" and _explained_by_caller_assertion_update(
+                before.get(section), after.get(section), _caller_notes_update_ids(tool_calls)
+            ):
                 continue
             unauthorized.append(section)
 
@@ -959,6 +1066,14 @@ def test_tree_ownership_table(before_state, after_state, skill_frontmatter, test
             )
         ):
             continue
+        # extraction_append mints each `S` entry beside the `src_` it writes.
+        if (
+            section == "sources"
+            and "extraction_append" in (identity_tools.get(section) or set())
+            and "extraction_append" in called
+            and _explained_by_appends(before.get(section), after.get(section))
+        ):
+            continue
         unauthorized.append(section)
 
     if unauthorized:
@@ -1232,9 +1347,9 @@ def test_no_main_thread_subagent_only_calls(blocked_context_calls):
     the run. Image reads must be delegated to the image-reader subagent, which
     absorbs the base64 in a throwaway context and returns text.
 
-    `extraction_append` writes the extracted assertions and sources. That is
-    the record-extractor subagent's job; a main-thread call is the router
-    substituting for a failed spawn and doing the extraction itself (#942).
+    `extraction_append` was the other guarded tool (#942) until issue #2937
+    routed indexed-record extraction through code called from the main thread.
+    It is no longer in `SUBAGENT_ONLY_TOOLS`, so it can no longer appear here.
 
     This is the deterministic half of what the LLM judge used to grade by
     transcript inference — badly: across the 2026-07-16 runs it caught the
@@ -1255,10 +1370,6 @@ def test_no_main_thread_subagent_only_calls(blocked_context_calls):
         "image_read": (
             "image_read → @plugin:image-reader, so the base64 never enters the "
             "router's context"
-        ),
-        "extraction_append": (
-            "extraction_append → @plugin:record-extractor; if that subagent "
-            "failed to spawn, report the failure rather than extracting here"
         ),
     }
     offending_tools = sorted({c.get("tool", "?") for c in blocked_context_calls})
@@ -1416,7 +1527,7 @@ def report_direct_delegation_extra_text(test, builtin_tool_calls):
 
 # --- A Skill call must name a skill that ships ---------------------------
 
-def test_skill_calls_name_a_shipped_skill(builtin_tool_calls):
+def test_skill_calls_name_a_shipped_skill(builtin_tool_calls, test=None):
     """Every main-thread `Skill` call names a directory under plugin/skills/.
 
     A skill converted to an agent loses its directory, but a caller body left
@@ -1426,9 +1537,13 @@ def test_skill_calls_name_a_shipped_skill(builtin_tool_calls):
     (issue #2118, where three `tree-edit` sites were nearly missed). Main thread
     only: a subagent record carries `agent_id`. A call whose name cannot be read
     is skipped here; the runner already surfaces it as `unread_skill_calls`.
+    A test-only skill (`eval/skills/`) counts only in its own suite, the one
+    place the harness stages it.
     """
     from harness.skill_runner import read_skill_tool_input
-    from harness.workspace import DEFAULT_PLUGIN_SKILLS
+    from harness.workspace import DEFAULT_PLUGIN_SKILLS, TEST_ONLY_SKILLS
+
+    suite = (test or {}).get("skill")
 
     missing = []
     for call in builtin_tool_calls or []:
@@ -1438,8 +1553,11 @@ def test_skill_calls_name_a_shipped_skill(builtin_tool_calls):
         if not name:
             continue
         bare = name.rsplit(":", 1)[-1]
-        if not (DEFAULT_PLUGIN_SKILLS / bare / "SKILL.md").is_file():
-            missing.append(name)
+        if (DEFAULT_PLUGIN_SKILLS / bare / "SKILL.md").is_file():
+            continue
+        if bare == suite and (TEST_ONLY_SKILLS / bare / "SKILL.md").is_file():
+            continue
+        missing.append(name)
     assert not missing, (
         f"Skill call(s) to {sorted(set(missing))}, which ship no "
         f"plugin/skills/<name>/SKILL.md. A converted skill is an agent now: "
@@ -1463,14 +1581,16 @@ def test_hand_back_names_its_owner(tool_calls, text_response, test, agent_return
     graded, because a routed reply may reword it. WHOSE reply is graded is
     `subject_reply_text`: on a direct test, the agent's own return and nothing
     else.
+
+    An empty `correct_skill` means the owner is not a skill (extraction is a
+    tool call and an agent; genealogist ruling 2026-09-30, option B), so the
+    reply must carry a `Hand-back:` line without a name to look for.
     """
     from harness.skill_runner import subject_reply_text
 
     if "hand-back" not in test.get("tags", []):
         pytest.skip("not a hand-back test")
     owners = (test.get("negative") or {}).get("correct_skill") or []
-    assert owners, "a hand-back test must name its owner in negative.correct_skill"
-    owner = owners[0]
 
     assert (tool_calls or []) == [], (
         "a hand-back makes no tool call; got "
@@ -1478,6 +1598,10 @@ def test_hand_back_names_its_owner(tool_calls, text_response, test, agent_return
         + ", ".join(c.get("tool", "?") for c in (tool_calls or []))
     )
     reply = subject_reply_text(agent_returns, text_response, test.get("skill") or "", test)
+    if not owners:
+        assert "hand-back:" in reply.lower(), "the reply carries no `Hand-back:` line"
+        return
+    owner = owners[0]
     assert owner in reply.lower(), (
         f"the reply never names {owner}, so the caller cannot tell which owner "
         "to spawn"
@@ -1809,9 +1933,9 @@ def test_parent_child_age_plausibility_flagged(before_state, after_state):
     dropped pending issue #1837.
 
     A relationship this flags must carry a `notes[]` entry using inference/
-    uncertainty language (see _UNCERTAINTY_MARKERS) -- the same shape as
-    test_pre1880_census_structure_marked_inferred's marker check, applied to
-    the tree side rather than the search log.
+    uncertainty language (see _UNCERTAINTY_MARKERS) -- the shape the search-log
+    pre-1880 census check had before it moved into research_log_append (issue
+    #3054), applied to the tree side rather than the search log.
     """
     before_tree = before_state.get("tree_gedcomx_json") or before_state.get(
         "tree_gedcomx"

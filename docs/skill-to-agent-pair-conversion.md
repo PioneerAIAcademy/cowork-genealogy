@@ -18,7 +18,9 @@ wherever it says "the routing skill", read "the caller" — on the deleted-skill
 path that is the orchestrator or the main thread.
 
 **Three exemptions predate the restatement:** `research` (the orchestrator),
-`record-extraction` (ruled 2026-09-21), and `forget-and-rederive` (ruled
+`record-extraction` (ruled 2026-09-21, and since retired: extraction runs in
+code, through `extraction_append` and the `record-structurer` agent), and
+`forget-and-rederive` (ruled
 2026-09-25, issue #2791), whose confirmation step and its rule never to read
 the FamilySearch tree for the rest of the project must bind the main thread
 after setup, which an agent's single return cannot do. They stay until a
@@ -355,8 +357,8 @@ the defect in one line; a judge gives an opinion that moves between runs.
 
 ## 5. Folded size sizes the work; it does not disqualify
 
-There is no size ceiling. `wc -c` on `record-extractor.md` gives the largest
-agent body shipped so far — precedent, not a limit — and it moves (53,845 bytes,
+There is no size ceiling. `wc -c` on `record-extractor.md` (since retired) gave the
+largest agent body shipped — precedent, not a limit — and it moved (53,845 bytes,
 then 58,541, then 57,229), so a candidate measured against it crosses in either
 direction without anyone touching the candidate. Nor do agent bodies only grow:
 roughly a quarter of that file's committed revisions shrank it.
@@ -413,7 +415,6 @@ Every one below fails CI if skipped. Put the whole list in the card.
 | `docs/specs/schemas/ownership.json` | an `agentCallers` entry on every row the agent writes |
 | `tests/packaging/enum-drift.test.ts` | any closed-enum declaration the fold moved into the agent body |
 | `tests/packaging/agent-return-contract.test.ts` | a `summary_for_user` return-contract heading, or a `PENDING` entry naming when it lands |
-| `tests/packaging/prompt-sizes.json` | regenerated (`prompt-budget.test.ts`) |
 | `docs/architecture.md`, `docs/skill-dataflow.md` | the agent count and any per-tool agent tally — re-measure, do not increment |
 | `make agent-smoke` | the only check that reads what the runtime resolved; **no CI job runs it** |
 
@@ -453,8 +454,8 @@ up while the body ran on the main thread, and each cost a run to find.
   lines" paged through the whole file and then skipped the section queries the
   body requires. Telling it *how* to read does not hold; fix the tool.
 - **The narration line is a file read.** It sends the agent into
-  `research.json` for a fixed house-style string. `record-extractor` carries
-  none; drop it from an agent that should not read that file.
+  `research.json` for a fixed house-style string. `record-extractor` (since
+  retired) carried none; drop it from an agent that should not read that file.
 - **A rule the delegation contradicts loses some of the time.** The agent
   observed a plan item `in_progress`, said so, and wrote the dependent
   question anyway because the delegation called the search done — on some runs
@@ -520,16 +521,18 @@ up while the body ran on the main thread, and each cost a run to find.
    the router can copy "everything after the final `---`" without judging what
    is researcher-facing. The router prints only that, verbatim, and appends the
    hand-back literal issue #2292 rules; it never summarizes, and no label or
-   field name reaches the researcher. `agents/record-extractor.md`'s
-   "Return contract" is the worked form, and
+   field name reaches the researcher. `agents/citation.md`'s "Return contract"
+   is the worked form, and
    `packages/engine/mcp-server/tests/packaging/agent-return-contract.test.ts`
    refuses an agent body without the heading once its name leaves that test's
-   pending list. Three agents are EXCLUDED from the contract rather than
+   pending list. Four agents are EXCLUDED from the contract rather than
    pending: `image-reader`, which by spec returns a transcription and nothing
    else, and, under lead ruling "PS return: A" (2026-09-24, issue #2793),
    `project-status` and `source-evaluation` (issue #2796), which write nothing,
    so their id-bearing reports ARE their whole output — conforming would push
    them below the caller's print line, where a production relay drops them.
+   `record-structurer` is excluded too: its whole return is `extraction_append`'s
+   code-written summary, verbatim (lead, 2026-09-29).
    Each goes in that test's `EXCLUDED` with its reason and carries no `---`
    section. Exclusion silences the lint in both directions, so a green run
    says nothing about an excluded body; read it.
@@ -571,22 +574,20 @@ up while the body ran on the main thread, and each cost a run to find.
 - **Nothing enforces the routing-skill contents list.** A routing skill that grows a
   gate back fails no test, and the acceptance check is applied by a reader. Both
   *thin-routing* pairs — `proof-conclusion` and `research-exhaustiveness` — were
-  written before the rule and both violate it. `record-extraction` is the third
-  pair and is not one of these: it acquires, triages and logs before batching one
-  extractor per record, so the list above does not describe it and the
-  orchestrator still routes it as a skill. **This is a settled ruling, not an
-  open question (#2491, 2026-09-15): the fan-out loop stays in the skill as the
-  sanctioned exception.** It was tested — moving the loop into `/research`
-  (Shape B) vs leaving it in the skill (Shape A) — and the measured effect
-  ceiling is ~0.1%: `record-extraction/SKILL.md` is ~15.5 KB (~4k tokens),
+  written before the rule and both violate it. `record-extraction` was the third
+  pair and was not one of these: it acquired, triaged and logged before batching one
+  extractor per record, so the list above did not describe it. **The ruling that
+  kept its fan-out loop in the skill (#2491, 2026-09-15) is moot: both the skill and
+  the agent are retired, and extraction runs in code through `extraction_append`.**
+  It was tested — moving the loop into `/research` (Shape B) vs leaving it in the
+  skill (Shape A) — and the measured effect ceiling was ~0.1%:
+  `record-extraction/SKILL.md` was ~15.5 KB (~4k tokens),
   invoked 0–2× per run (0× in 50 committed runs, 1× in 105, 2× in 17), against a
   median main-thread `cache_read_input_tokens` of 8.0M — so the entire
   main-thread saving is ≤~8k tokens against ~8M, which is why the run's
   peak-window metric saturated at the SDK auto-compaction ceiling and could not
-  discriminate the two shapes at any affordable sample size. Do not re-open this
-  as an unmeasured paid comparison. (After #2490 strips acquisition paths 2–4
-  from the skill, the question may re-enter as a free **doctrine** call inside
-  #2490's own design — never again as a paid comparison.)
+  discriminate the two shapes at any affordable sample size. The measurement stands
+  for any future skill-vs-orchestrator fan-out question.
 - **The direct route dominates but does not displace the routed one.** Over
   every committed e2e run dated on or after 2026-08-20: 15 runs reach
   `research-exhaustiveness`, 14 spawn it directly and one reaches it only via

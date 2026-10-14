@@ -92,6 +92,10 @@
       "type": "boolean",
       "description": "Whether the run deferred tool schemas (ENABLE_TOOL_SEARCH): true by default, false under run_tests.py --no-tool-search, which loads every schema up front and makes the run a non-releasable scratch log. Optional: absent on run logs written before the field existed, all of which ran with it on."
     },
+    "store": {
+      "enum": ["pg"],
+      "description": "The project store the live tools ran on, when it was not the file store: \"pg\" under run_tests.py --store pg (U15), every live tool call on PgS3ProjectStore via eval/harness/harness/pg_store_prelude.mjs. Such a run is non-releasable and written under eval/runlogs/unit-pg/<skill>/. Absent means the file store, as every earlier log ran."
+    },
     "tests": {
       "type": "array",
       "items": { "$ref": "#/$defs/test_entry" }
@@ -345,7 +349,7 @@
           }
         },
         "agent_returns": {
-          "description": "What each spawned subagent returned, in call order. On the direct-agent arm this is the AGENT's own text, where `text_response` is the main-thread dispatcher relaying it. Absent on a run where the agent under test returned nothing. A ROUTED run can spawn agents too (`ut_timeline_008` spawns `record-extractor`), and the judge still grades `text_response` there -- so presence of this field is not the same as \"this run was direct\".",
+          "description": "What each spawned subagent returned, in call order. On the direct-agent arm this is the AGENT's own text, where `text_response` is the main-thread dispatcher relaying it. Absent on a run where the agent under test returned nothing. A ROUTED run can spawn agents too (`ut_timeline_008` spawned `record-extractor`, since retired), and the judge still grades `text_response` there -- so presence of this field is not the same as \"this run was direct\".",
           "type": "array",
           "items": {
             "type": "object",
@@ -433,7 +437,7 @@
           "required": ["kind"],
           "additionalProperties": false,
           "properties": {
-            "kind": { "enum": ["predicate", "none", "live"] },
+            "kind": { "enum": ["predicate", "none", "live", "staged_ref_refused"] },
             "index": { "type": ["integer", "null"], "minimum": 0 }
           }
         },

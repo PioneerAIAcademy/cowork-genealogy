@@ -82,6 +82,7 @@ Current live tools:
 from __future__ import annotations
 
 import json
+import os
 import re
 import subprocess
 import sys
@@ -123,6 +124,17 @@ LIVE_TOOLS: set[str] = {
     # allowed_tools' callee-fixture check exempts LIVE_TOOLS members.
     "person_quality",
     "project_context",
+    # The bounded-delivery signal. Live rather than fixture-backed because the
+    # tool IS inert by contract -- no network, no auth, no project write; it
+    # returns a fixed acknowledgement (`research-delivered.ts`) -- so running the
+    # real one is both free and more faithful than a canned answer.
+    #
+    # It was advertised NOWHERE in this harness until now, which is why #2813
+    # item 1 reached alpha untested: the hosted Stop hook only allows a bounded
+    # turn to stop when the model calls this tool, and a model that cannot see
+    # the tool cannot call it. Every unit eval therefore graded the skill on
+    # prose it had no way to act on.
+    "research_delivered",
     # Read-only projection over the workspace's own research.json — same shape
     # as project_context, and deterministic, so mocking it would only invite
     # drift. Added when search-records / research were pointed at it in place of
@@ -153,10 +165,11 @@ LIVE_TOOLS: set[str] = {
     # whenever tool_calls is empty, so the defect switched off the dimension that
     # covers it. conflict-resolution declares it too. Issue #1654 (deep dive).
     "convert_calendar",
-    # Same rationale as convert_calendar: pure census arithmetic whose computed
-    # answer (how many children are missing, and each birth window) is exactly what
-    # its callers' unit tests will grade once check-warnings and question-selection
-    # are granted it. A canned fixture would grade a number the test author typed.
+    # Census arithmetic whose computed answer (how many children are missing, and
+    # each birth window) is exactly what check-warnings' tests grade; a canned
+    # fixture would grade a number the test author typed. Unlike convert_calendar
+    # it reads workspace state in tree mode (motherId): the injected projectPath
+    # points it at the test's own tree.
     "census_children_gap",
     # Same rationale as convert_calendar: URL-templating with no network
     # dependency, so a canned fixture would supply the exact URL string
@@ -289,6 +302,82 @@ NODE_EVAL_TIMEOUT_LONG = 60
 NODE_EVAL_TIMEOUT_PATTERN = re.compile(r"timed out after [\d.]+ seconds")
 
 
+#: Preloaded into every node subprocess under ``run_tests.py --store pg`` (U15):
+#: it installs a PgS3ProjectStore-backed store, so the live tools read and write
+#: Postgres + S3 instead of the workspace directory.
+PG_STORE_PRELUDE = Path(__file__).resolve().parent / "pg_store_prelude.mjs"
+
+
+def _store_import_args() -> list[str]:
+    """``["--import", <prelude>]`` when the run is on the Postgres store, else ``[]``.
+
+    Keyed on ``PROTO_STORE=pg``, which ``run_tests.py --store pg`` sets in the
+    harness process (and its node children) after checking the stack's
+    variables. A file URL, so a Windows drive-letter path loads too.
+    """
+    if os.environ.get("PROTO_STORE") != "pg":
+        return []
+    return ["--import", PG_STORE_PRELUDE.as_uri()]
+
+
+def seed_pg_workspace(workspace: Path) -> None:
+    """Under ``--store pg``, write a freshly built workspace into its Postgres
+    project before the agent runs; a no-op on the file store.
+
+    The prelude seeds a workspace on its first store call, so this is that call,
+    made at a known moment: every file the harness staged is in the project, and
+    nothing the agent writes later with its own Write tool is (on the hosted path
+    no such file reaches the store either). Raises with node's stderr on failure,
+    because a run whose seed failed would grade a store that holds nothing.
+    """
+    if os.environ.get("PROTO_STORE") != "pg":
+        return
+    ps_js = _MCP_BUILD / "store" / "project-store.js"
+    posix = str(ps_js).replace("\\", "/").replace("'", "\\'")
+    url = ("file:///" + posix) if sys.platform == "win32" else posix
+    ws = str(workspace).replace("\\", "/").replace("'", "\\'")
+    script = (
+        f"import {{ getProjectStore }} from '{url}';"
+        f" const c = await getProjectStore().classifyProject('{ws}');"
+        " process.stdout.write(JSON.stringify({ c }));"
+    )
+    proc = _run_node_eval(script, timeout=NODE_EVAL_TIMEOUT_LONG)
+    if proc.returncode != 0 or not proc.stdout.strip():
+        raise RuntimeError(
+            f"--store pg: seeding the workspace into Postgres failed: "
+            f"{(proc.stderr or 'no output').strip()[:1000]}"
+        )
+
+
+def pg_store_faults(workspace: Path) -> list[dict[str, str]]:
+    """The store faults the prelude recorded for `workspace` under
+    ``--store pg`` (``HARNESS_PG_FAULT_LOG``, one JSON line each); [] on the
+    file store or when there were none.
+
+    Read from every node process the test spawned — the live tools and the
+    mock-side staging and scoring pipelines alike, which swallow their own
+    failures — so a fault there reaches the run log instead of surfacing a step
+    later as "nothing staged" read as model wobble.
+    """
+    log = os.environ.get("HARNESS_PG_FAULT_LOG")
+    if os.environ.get("PROTO_STORE") != "pg" or not log:
+        return []
+    try:
+        lines = Path(log).read_text(encoding="utf-8").splitlines()
+    except OSError:
+        return []
+    want = os.path.realpath(workspace)
+    out: list[dict[str, str]] = []
+    for line in lines:
+        try:
+            entry = json.loads(line)
+        except json.JSONDecodeError:
+            continue
+        if isinstance(entry, dict) and os.path.realpath(str(entry.get("dir", ""))) == want:
+            out.append({"op": str(entry.get("op", "")), "message": str(entry.get("message", ""))})
+    return out
+
+
 def _run_node_eval(
     script: str, input_str: str | None = None, timeout: int = NODE_EVAL_TIMEOUT_DEFAULT
 ) -> subprocess.CompletedProcess[str]:
@@ -306,13 +395,22 @@ def _run_node_eval(
     only the subprocess invocation itself is shared.
     """
     return subprocess.run(
-        ["node", "--input-type=module", "--eval", script],
+        ["node", *_store_import_args(), "--input-type=module", "--eval", script],
         input=input_str,
         capture_output=True,
         text=True,
         encoding="utf-8",
         timeout=timeout,
     )
+
+
+def _node_module_url(p: Path | str) -> str:
+    """A compiled module's path as a Node ESM import specifier, safe to embed in
+    a single-quoted JS string. Windows needs a ``file:///`` URL: Node rejects a
+    bare drive-letter path (``C:/...``) with ERR_UNSUPPORTED_ESM_URL_SCHEME.
+    The one copy every ``node --eval`` site here uses."""
+    posix = str(p).replace("\\", "/").replace("'", "\\'")
+    return ("file:///" + posix) if sys.platform == "win32" else posix
 
 
 _build_tool_catalog_cache: dict[str, dict[str, Any]] | None = None
@@ -357,8 +455,7 @@ def _load_build_tool_catalog_uncached() -> dict[str, dict[str, Any]]:
     schemas_js = _MCP_BUILD / "tool-schemas.js"
     if not schemas_js.exists():
         return {}
-    sjs_posix = str(schemas_js).replace("\\", "/").replace("'", "\\'")
-    schemas_url = ("file:///" + sjs_posix) if sys.platform == "win32" else sjs_posix
+    schemas_url = _node_module_url(schemas_js)
     script = (
         f"import {{ allToolSchemas }} from '{schemas_url}';"
         " const out = allToolSchemas.map("
@@ -468,6 +565,80 @@ NIL_SEARCH_NEEDS_LOG_NOTE = (
 )
 
 
+# `surnameVariantHints` (issue #3054): the abbreviated forms of a -datter/-dotter
+# patronymic, which the real record_search adds to a search that did not find
+# its subject. The whole rule — trigger, field list and content — is the
+# engine's `surnameVariantHints`, run out of the compiled build inside a node
+# process this file already spawns for the call, so the agent sees what
+# production would send for the arguments it actually used, and no fixture
+# carries a hand-written copy to drift. One case gates in Python: a nil search
+# with no projectPath, which spawns no process today, spawns one only when
+# `_fixture_is_nil` holds. That predicate treats a fixture with no
+# `totalMatches` as nil where production (whose total is always a number) would
+# not; the compiled function re-checks `totalMatches === 0` itself, so such a
+# fixture simply gets no hint.
+SURNAME_VARIANT_HINTS_KEY = "surnameVariantHints"
+_SURNAME_HINTS_JS = _MCP_BUILD / "utils" / "surname-variant-hints.js"
+_warned_no_surname_hints_module = False
+
+
+def _surname_hints_module_present() -> bool:
+    """Whether the build carries the module. Warns once when it does not: a build
+    older than #3054 serves every nil with no hint, which reads as the model
+    ignoring one."""
+    global _warned_no_surname_hints_module
+    if _SURNAME_HINTS_JS.exists():
+        return True
+    if not _warned_no_surname_hints_module:
+        _warned_no_surname_hints_module = True
+        warnings.warn(
+            f"{_SURNAME_HINTS_JS} is missing — rebuild packages/engine/mcp-server; "
+            "record_search responses will carry no surnameVariantHints",
+            stacklevel=2,
+        )
+    return False
+
+
+def _surname_variant_hints(args: dict[str, Any], response: dict[str, Any]) -> dict[str, Any] | None:
+    """The hint for a nil `record_search` with no projectPath — the one path that
+    spawns no node process of its own. None when it does not apply or node fails
+    (with a warning: a harness fault must not look like the model ignoring it)."""
+    if not _surname_hints_module_present():
+        return None
+    script = (
+        f"import {{ surnameVariantHints }} from '{_node_module_url(_SURNAME_HINTS_JS)}';"
+        " import { readFileSync } from 'node:fs';"
+        " const input = JSON.parse(readFileSync(0, 'utf-8'));"
+        " process.stdout.write(JSON.stringify("
+        " { hint: surnameVariantHints(input.args, input.response) ?? null }));"
+    )
+    try:
+        proc = _run_node_eval(
+            script,
+            json.dumps({"args": args, "response": response}),
+            timeout=NODE_EVAL_TIMEOUT_LONG,
+        )
+        return json.loads(proc.stdout.strip()).get("hint")
+    except Exception as exc:  # noqa: BLE001 — advisory, never fails the call
+        warnings.warn(f"mock record_search could not compute surnameVariantHints ({exc})", stacklevel=2)
+        return None
+
+
+def _place_before_results(response: dict[str, Any], key: str) -> dict[str, Any]:
+    """`response` with `key` moved immediately before `results` — where the real
+    record_search serializes `surnameVariantHints`, after the pre-`results` notes."""
+    value = response[key]
+    reordered: dict[str, Any] = {}
+    for k, v in response.items():
+        if k == key:
+            continue
+        if k == "results":
+            reordered[key] = value
+        reordered[k] = v
+    reordered.setdefault(key, value)
+    return reordered
+
+
 # Compaction the real search tool applies to its INLINE results once they are
 # staged, per tool. Both are exported from the compiled build so this harness
 # runs the production function rather than a Python restatement of it: a mock
@@ -529,9 +700,7 @@ def _record_match_score(
     if not (sp_js.exists() and ms_js.exists() and pio_js.exists()):
         return False
 
-    def _url(path: Path) -> str:
-        posix = str(path).replace("\\", "/").replace("'", "\\'")
-        return ("file:///" + posix) if sys.platform == "win32" else posix
+    _url = _node_module_url
 
     payload = {
         "projectPath": str(workspace).replace("\\", "/"),
@@ -589,6 +758,8 @@ def _stage_and_compact_search_results(
     tool_name: str,
     response: dict[str, Any],
     ranked: dict[str, Any] | None = None,
+    *,
+    args: dict[str, Any] | None = None,
 ) -> tuple[
     dict[str, Any] | None,
     dict[str, Any],
@@ -622,15 +793,20 @@ def _stage_and_compact_search_results(
     `annotateResultsWithRanking` inside the process already running: a second
     node process per search is the cost #2025 warns about, and a Python
     restatement of the shaping is what eval/CLAUDE.md forbids.
+
+    `args` (the call's own arguments) lets the same process compute
+    `surnameVariantHints` over the shaped response and its `ranked` block; the
+    hint comes back INSIDE `response`, so the arity stays four. On this path it
+    can only fire on `ranked.subjectResolvable === false`, which needs a staged
+    response — so returning the untouched response when staging fails loses no
+    hint production would have sent.
     """
     stager_js = _MCP_BUILD / "utils" / "results-staging.js"
     compactor_js = _MCP_BUILD / "utils" / "staged-compaction.js"
     if not stager_js.exists():
         return None, response, [], ranked
 
-    def _url(p: Path) -> str:
-        posix = str(p).replace("\\", "/").replace("'", "\\'")
-        return ("file:///" + posix) if sys.platform == "win32" else posix
+    _url = _node_module_url
 
     compactor = _STAGED_COMPACTORS.get(tool_name)
     if compactor and compactor_js.exists():
@@ -662,11 +838,23 @@ def _stage_and_compact_search_results(
     else:
         annotate = " const rankedOut = input.ranked;"
 
+    if args is not None and tool_name == "record_search" and _surname_hints_module_present():
+        compact_import += (
+            f"import {{ surnameVariantHints }} from '{_url(_SURNAME_HINTS_JS)}';"
+        )
+        hint = (
+            " const surnameHint = r ? (surnameVariantHints(input.args,"
+            " { ...input.response, ranked: rankedOut }) ?? null) : null;"
+        )
+    else:
+        hint = " const surnameHint = null;"
+
     input_obj = {
         "projectPath": str(workspace).replace("\\", "/"),
         "tool": tool_name,
         "response": response,
         "ranked": ranked,
+        "args": args,
     }
     script = (
         f"import {{ stageSearchResults, unloggedStagedSearches }} from '{_url(stager_js)}';"
@@ -682,25 +870,31 @@ def _stage_and_compact_search_results(
         # `ranked` this call will fold in. The ANNOTATED ROWS cross back, which
         # is the whole output now -- there is no drop verdict any more.
         f"{annotate}"
-        " process.stdout.write(JSON.stringify({ staged: r, unlogged, response: input.response, ranked: rankedOut }));"
+        f"{hint}"
+        " process.stdout.write(JSON.stringify({ staged: r, unlogged, response: input.response,"
+        " ranked: rankedOut, surnameHint }));"
     )
     try:
         proc = _run_node_eval(script, json.dumps(input_obj), timeout=NODE_EVAL_TIMEOUT_LONG)
         out = proc.stdout.strip()
         if not out:
+            warnings.warn(f"mock search staging printed nothing: {proc.stderr[:300]}", stacklevel=2)
             return None, response, [], ranked
         parsed = json.loads(out)
         unlogged = parsed.get("unlogged") or []
         staged = parsed.get("staged")  # StagedHandle, or null -> None
         if staged is None:
             return None, response, unlogged, ranked
+        shaped = parsed.get("response", response)
+        if parsed.get("surnameHint"):
+            shaped = {**shaped, SURNAME_VARIANT_HINTS_KEY: parsed["surnameHint"]}
         return (
             staged,
-            parsed.get("response", response),
+            shaped,
             unlogged,
             parsed.get("ranked", ranked),
         )
-    except Exception:
+    except Exception as exc:
         # Four values, like every other return here and like the caller's unpack.
         # This arm exists to ABSORB a node failure, and its own recorded failure
         # was a MISCOUNT: it once returned six against an unpack of five, which
@@ -708,40 +902,97 @@ def _stage_and_compact_search_results(
         # and made the degrade path itself the crash. Flagged 2026-09-11 and
         # unexercised until test_stage_and_compact_degrades_on_node_failure,
         # which asserts the arity rather than trusting it.
+        warnings.warn(f"mock search staging/compaction failed in node ({exc})", stacklevel=2)
         return None, response, [], ranked
 
 
-def _unlogged_staged_handles(workspace: Path) -> list[dict[str, Any]]:
-    """The staged backlog for a call that stages nothing (a nil search).
+def _stage_record_read(
+    workspace: Path, args: dict[str, Any], response: dict[str, Any]
+) -> dict[str, Any]:
+    """Stage a canned live `record_read` the way `record-read.ts` does, and
+    return the response with `staged` beside the record.
+
+    The payload is production's: `{ query: { recordId }, results: [{ recordId,
+    gedcomx, indexFields? }] }` under tool `record_read`. It goes through the
+    same compiled `stageSearchResults` the search tools use. A fixture may carry
+    `indexFields` beside the GedcomX (a captured `record_read` sidecar does);
+    it is staged and kept off the inline response, which production never
+    returns it on. On a node failure the read comes back with `staged: null`
+    and a `stagingError`, matching production's best-effort staging.
+    """
+    record_id = str(args.get("recordId") or "").strip()
+    gedcomx = {k: v for k, v in response.items() if k not in ("indexFields", "staged", "imageArk")}
+    element: dict[str, Any] = {"recordId": record_id, "gedcomx": gedcomx}
+    index_fields = response.get("indexFields")
+    if isinstance(index_fields, dict) and index_fields:
+        element["indexFields"] = index_fields
+    payload = {"query": {"recordId": record_id}, "results": [element]}
+    staged, _payload, _unlogged, _ranked = _stage_and_compact_search_results(
+        workspace, "record_read", payload
+    )
+    inline = {k: v for k, v in response.items() if k != "indexFields"}
+    if staged is None:
+        return {**inline, "staged": None, "stagingError": "mock: staging the canned record failed"}
+    return {**inline, "staged": staged}
+
+
+def _unlogged_staged_handles(
+    workspace: Path,
+    *,
+    args: dict[str, Any] | None = None,
+    response: dict[str, Any] | None = None,
+) -> tuple[list[dict[str, Any]], dict[str, Any] | None]:
+    """The staged backlog for a call that stages nothing (a nil search), and —
+    when `args` is given (a record_search) — its `surnameVariantHints`.
 
     Runs the compiled `unloggedStagedSearches` on its own. That is one node
     process where a nil search currently spawns none, so the per-call subprocess
     count does not rise — the concern behind #2025 was a SECOND process per call,
-    not a first. Returns [] on any failure; this is advisory.
+    not a first; the hint rides in the same process for the same reason. Returns
+    `([], None)` on any failure, with a warning; both halves are advisory.
     """
     stager_js = _MCP_BUILD / "utils" / "results-staging.js"
     if not stager_js.exists():
-        return []
+        return [], None
 
-    posix = str(stager_js).replace("\\", "/").replace("'", "\\'")
-    url = ("file:///" + posix) if sys.platform == "win32" else posix
+    with_hint = args is not None and _surname_hints_module_present()
     script = (
-        f"import {{ unloggedStagedSearches }} from '{url}';"
-        " import { readFileSync } from 'node:fs';"
+        f"import {{ unloggedStagedSearches }} from '{_node_module_url(stager_js)}';"
+        + (
+            f" import {{ surnameVariantHints }} from '{_node_module_url(_SURNAME_HINTS_JS)}';"
+            if with_hint
+            else ""
+        )
+        + " import { readFileSync } from 'node:fs';"
         " const input = JSON.parse(readFileSync(0, 'utf-8'));"
-        " process.stdout.write(JSON.stringify("
-        " { unlogged: await unloggedStagedSearches(input.projectPath) }));"
+        " process.stdout.write(JSON.stringify({"
+        " unlogged: await unloggedStagedSearches(input.projectPath),"
+        + (
+            " surnameHint: surnameVariantHints(input.args, input.response) ?? null"
+            if with_hint
+            else " surnameHint: null"
+        )
+        + " }));"
     )
     try:
         proc = _run_node_eval(
             script,
-            json.dumps({"projectPath": str(workspace).replace("\\", "/")}),
+            json.dumps({
+                "projectPath": str(workspace).replace("\\", "/"),
+                "args": args,
+                "response": response or {},
+            }),
             timeout=NODE_EVAL_TIMEOUT_LONG,
         )
         out = proc.stdout.strip()
-        return list(json.loads(out).get("unlogged") or []) if out else []
-    except Exception:
-        return []
+        if not out:
+            warnings.warn(f"mock nil-search node call printed nothing: {proc.stderr[:300]}", stacklevel=2)
+            return [], None
+        parsed = json.loads(out)
+        return list(parsed.get("unlogged") or []), parsed.get("surnameHint")
+    except Exception as exc:  # noqa: BLE001 — advisory, never fails the call
+        warnings.warn(f"mock nil-search node call failed ({exc})", stacklevel=2)
+        return [], None
 
 
 #: Fixture-backed tools that read a staged/finalized sidecar by ref in
@@ -791,8 +1042,7 @@ def _staged_ref_error(workspace: Path, tool: str, args: dict[str, Any]) -> str |
     staging_js = _MCP_BUILD / "utils" / "results-staging.js"
     if not staging_js.exists():
         return None
-    posix = str(staging_js).replace("\\", "/").replace("'", "\\'")
-    url = ("file:///" + posix) if sys.platform == "win32" else posix
+    url = _node_module_url(staging_js)
     script = (
         f"import {{ readStagedResults }} from '{url}';"
         " import { readFileSync } from 'node:fs';"
@@ -831,8 +1081,7 @@ def _stage_person_read(
         _warn_unstaged(f"no engine build at {person_read_js}")
         return response
 
-    posix = str(person_read_js).replace("\\", "/").replace("'", "\\'")
-    url = ("file:///" + posix) if sys.platform == "win32" else posix
+    url = _node_module_url(person_read_js)
     script = (
         f"import {{ stagePersonRead }} from '{url}';"
         " import { readFileSync } from 'node:fs';"
@@ -935,6 +1184,7 @@ def create_mock_server(
         if tool_name == "person_quality":
             continue  # served by _make_person_quality_handler below
         predicated = list(bucket["predicated"])
+        is_error_flags = list(bucket.get("is_error") or [False] * len(predicated))
         # Input schema precedence: the compiled production schema wins (the
         # single source of truth), so fixture-backed tools advertise exactly
         # what production does. A fixture-provided input_schema is honored only
@@ -950,6 +1200,7 @@ def create_mock_server(
         async def handler(
             args,
             _predicated=predicated,
+            _is_error=is_error_flags,
             _name=tool_name,
             _workspace=workspace,
             _rank_predicated=rank_predicated,
@@ -1054,7 +1305,7 @@ def create_mock_server(
                     _unlogged_staged,
                     _rank_resp,
                 ) = _stage_and_compact_search_results(
-                    _workspace, _name, response, ranked=_rank_resp
+                    _workspace, _name, response, ranked=_rank_resp, args=dict(args)
                 )
                 if staged is not None:
                     response = {**response, "staged": staged}
@@ -1066,9 +1317,44 @@ def create_mock_server(
             ):
                 # Nil search: nothing staged, so the combined helper above never
                 # ran and the backlog still has to be read for the note below.
-                _unlogged_staged = _unlogged_staged_handles(_workspace)
+                # The same process computes record_search's surnameVariantHints.
+                _unlogged_staged, _surname_hint = _unlogged_staged_handles(
+                    _workspace,
+                    args=dict(args) if _name == "record_search" else None,
+                    response=response,
+                )
+                if _surname_hint:
+                    response = {**response, SURNAME_VARIANT_HINTS_KEY: _surname_hint}
             else:
                 _unlogged_staged = []
+                # A nil record_search with no projectPath spawns no process
+                # otherwise; it gets one only when there is a nil to hint on.
+                if (
+                    _name == "record_search"
+                    and isinstance(response, dict)
+                    and "error" not in response
+                    and _fixture_is_nil(response)
+                ):
+                    _surname_hint = _surname_variant_hints(dict(args), response)
+                    if _surname_hint:
+                        response = {**response, SURNAME_VARIANT_HINTS_KEY: _surname_hint}
+
+            # A LIVE record_read given a projectPath stages the record and returns
+            # `staged.resultsRef` beside it, and extraction_append's extractor mode
+            # reads that sidecar. Without this the canned read staged nothing, the
+            # extractor refused ("no results sidecar"), and every FamilySearch
+            # record in the unit suite fell back to record-extractor, so no
+            # committed run could exercise the code path. A read WITH `resultsRef`
+            # is a sidecar read and stages nothing, exactly as production.
+            if (
+                _name == "record_read"
+                and _workspace is not None
+                and "error" not in response
+                and args.get("projectPath")
+                and not args.get("resultsRef")
+                and isinstance(response.get("persons"), list)
+            ):
+                response = _stage_record_read(_workspace, args, response)
 
             # Fold in the ranking the real record_search performs when the
             # caller names a subject. Matched against the test's own
@@ -1164,14 +1450,25 @@ def create_mock_server(
                         reordered.setdefault(_key, _value)
                     response = reordered
 
+            # Production serializes surnameVariantHints immediately before
+            # `results`, after the pre-`results` notes above — placed last so
+            # the order matches.
+            if isinstance(response, dict) and SURNAME_VARIANT_HINTS_KEY in response:
+                response = _place_before_results(response, SURNAME_VARIANT_HINTS_KEY)
+
             entry["response"] = response
             entry["response_fixture"] = source_name
             call_log.append(entry)
-            return {
+            envelope: dict[str, Any] = {
                 "content": [
                     {"type": "text", "text": json.dumps(response)},
                 ],
             }
+            # A fixture marked `is_error` stands for a THROWN tool error, which
+            # production's catch arms return with `isError: true` beside `{error}`.
+            if entry["matched"]["kind"] == "predicate" and _is_error[entry["matched"]["index"]]:
+                envelope["is_error"] = True
+            return envelope
 
         # Prefer the production description; fall back to a generic stub
         # if the tool is not in the catalog (e.g., aspirational tools
@@ -1197,7 +1494,7 @@ def create_mock_server(
     fixture_backed = set(manifest.keys())
     for live_tool_name in sorted(LIVE_TOOLS - fixture_backed - {"person_quality"}):
         live_handler = _make_live_handler(
-            live_tool_name, workspace, call_log,
+            live_tool_name, workspace, call_log, manifest,
             place_predicated=list((manifest.get("place_search") or {}).get("predicated") or []),
         )
         description = tool_descriptions.get(
@@ -1242,7 +1539,6 @@ def create_mock_server(
 #: extraction_append's lane restriction (issue #695) lives inside its export,
 #: so calling it directly here — bypassing index.ts — still enforces the lane.
 _COMPILED_TOOLS: dict[str, tuple[str, str]] = {
-    "extraction_append": ("extraction-append.js", "extractionAppend"),
     "tree_edit": ("tree-edit.js", "treeEdit"),
     "tree_correct": ("tree-correct.js", "treeCorrect"),
     "materialize_facts": ("materialize-facts.js", "materializeFacts"),
@@ -1252,10 +1548,13 @@ _COMPILED_TOOLS: dict[str, tuple[str, str]] = {
     "research_query": ("research-query.js", "researchQuery"),
     "project_create": ("project-create.js", "projectCreate"),
     "convert_calendar": ("convert-calendar.js", "convertCalendar"),
-    "census_children_gap": ("census-children-gap.js", "censusChildrenGap"),
+    "census_children_gap": ("census-children-gap.js", "censusChildrenGapTool"),
     "build_external_search_url": ("build-external-search-url.js", "buildExternalSearchUrlTool"),
     "sidecar_read": ("sidecar-read.js", "sidecarRead"),
     "get_name_variants": ("name-variants.js", "getNameVariants"),
+    # Takes only `{summary}`; the handler's injected `projectPath` is the inert
+    # extra key convert_calendar already tolerates.
+    "research_delivered": ("research-delivered.js", "researchDelivered"),
 }
 
 #: Compiled tools whose `projectPath` is optional and changes what the call
@@ -1287,9 +1586,12 @@ def _make_live_handler(
     tool_name: str,
     workspace: Path | None,
     call_log: list[dict[str, Any]],
+    manifest: dict[str, Any] | None = None,
     place_predicated: list | None = None,
 ):
     """Return an async handler for a live tool."""
+    if tool_name == "extraction_append":
+        return _make_extraction_append_handler(workspace, call_log, manifest or {})
     if tool_name == "validate_research_schema":
         return _make_validate_handler(workspace, call_log)
     if tool_name == "research_log_append":
@@ -1362,10 +1664,7 @@ def _make_validate_handler(workspace: Path | None, call_log: list[dict[str, Any]
             }
         else:
             project_path = str(_ws).replace("\\", "/").replace("'", "\\'")
-            # Node.js ESM requires file:// URLs for absolute imports on Windows;
-            # bare drive-letter paths like C:/... fail with ERR_UNSUPPORTED_ESM_URL_SCHEME.
-            vjs_posix = str(_vjs).replace("\\", "/").replace("'", "\\'")
-            validator_url = ("file:///" + vjs_posix) if sys.platform == "win32" else vjs_posix
+            validator_url = _node_module_url(_vjs)
             script = (
                 f"import {{ validateResearchSchema }} from '{validator_url}';"
                 f" const r = await validateResearchSchema({{ projectPath: '{project_path}' }});"
@@ -1425,8 +1724,7 @@ def _make_log_append_handler(workspace: Path | None, call_log: list[dict[str, An
                 "errors": [f"research_log_append: {reason}"],
             }
         else:
-            ajs_posix = str(_ajs).replace("\\", "/").replace("'", "\\'")
-            append_url = ("file:///" + ajs_posix) if sys.platform == "win32" else ajs_posix
+            append_url = _node_module_url(_ajs)
 
             # Override projectPath with workspace; pipe the full input via
             # stdin so no value needs JS-string escaping.
@@ -1490,8 +1788,7 @@ def _make_research_append_handler(workspace: Path | None, call_log: list[dict[st
                 "errors": [f"research_append: {reason}"],
             }
         else:
-            ajs_posix = str(_ajs).replace("\\", "/").replace("'", "\\'")
-            append_url = ("file:///" + ajs_posix) if sys.platform == "win32" else ajs_posix
+            append_url = _node_module_url(_ajs)
 
             # Override projectPath with workspace; pipe the full input via
             # stdin so no value needs JS-string escaping.
@@ -1499,7 +1796,7 @@ def _make_research_append_handler(workspace: Path | None, call_log: list[dict[st
             input_obj["projectPath"] = str(_ws).replace("\\", "/")
 
             script = (
-                f"import {{ researchAppend }} from '{append_url}';"
+                f"import {{ researchAppendFromCaller as researchAppend }} from '{append_url}';"
                 " import { readFileSync } from 'node:fs';"
                 " const input = JSON.parse(readFileSync(0, 'utf-8'));"
                 " const r = await researchAppend(input);"
@@ -1577,8 +1874,7 @@ def _make_person_quality_handler(
         if not _js.exists():
             response = {"ok": False, "errors": [f"person_quality: build not found: {_js}"]}
         else:
-            js_posix = str(_js).replace("\\", "/").replace("'", "\\'")
-            js_url = ("file:///" + js_posix) if sys.platform == "win32" else js_posix
+            js_url = _node_module_url(_js)
             input_obj = dict(args)
             # Rebase only a projectPath the skill actually sent: filling one in
             # would hide a skill that drops it, which in production quietly
@@ -1658,8 +1954,7 @@ def _make_compiled_tool_handler(
                 "errors": [f"{tool_name}: {reason}"],
             }
         else:
-            tjs_posix = str(_tjs).replace("\\", "/").replace("'", "\\'")
-            tool_url = ("file:///" + tjs_posix) if sys.platform == "win32" else tjs_posix
+            tool_url = _node_module_url(_tjs)
 
             # Override projectPath with workspace; pipe the full input via
             # stdin so no value needs JS-string escaping.
@@ -1672,10 +1967,7 @@ def _make_compiled_tool_handler(
             # harness is one user per process, so LOCAL is the right one — the same
             # binding the stdio dispatcher makes. Nothing typechecks this script, so
             # a signature change here surfaces only at harness runtime.
-            principal_js = str(_MCP_BUILD / "auth" / "principal.js").replace("\\", "/")
-            principal_url = (
-                ("file:///" + principal_js) if sys.platform == "win32" else principal_js
-            )
+            principal_url = _node_module_url(_MCP_BUILD / "auth" / "principal.js")
             takes_principal = tool_name in _COMPILED_TOOLS_WITH_PRINCIPAL
             principal_import = (
                 f" import {{ LOCAL }} from '{principal_url}';" if takes_principal else ""
@@ -1690,8 +1982,7 @@ def _make_compiled_tool_handler(
             stdin_obj: Any = input_obj
             table_import = ""
             if place_table is not None:
-                resolver_js = str(_MCP_BUILD / "utils" / "place-resolver.js").replace("\\", "/")
-                resolver_url = ("file:///" + resolver_js) if sys.platform == "win32" else resolver_js
+                resolver_url = _node_module_url(_MCP_BUILD / "utils" / "place-resolver.js")
                 table_import = (
                     f" import {{ __usePlaceTableForTests }} from '{resolver_url}';"
                     " __usePlaceTableForTests(payload.placeTable);"
@@ -1738,6 +2029,97 @@ def _make_compiled_tool_handler(
         }
         call_log.append(entry)
         return _tool_envelope(tool_name, response)
+
+    return handler
+
+
+def _make_extraction_append_handler(
+    workspace: Path | None,
+    call_log: list[dict[str, Any]],
+    manifest: dict[str, Any],
+):
+    """The live `extraction_append`, reading FamilySearch records from the test's
+    `record_read` fixtures instead of the network (lead, 2026-09-30).
+
+    `recordIds` makes the tool read each record live. Here each id is matched
+    against the loaded `record_read` fixtures, the canned response is staged
+    through `_stage_record_read` (the compiled stager, so `staged` is real), and
+    the staged responses cross into the node script as a JSON map keyed by the
+    id exactly as the call sent it. `runExtractionAppend`'s injected `readRecord`
+    serves from that map, so every other step (the resend skip, the log batch,
+    the per-record writes, the summary) is the compiled production code. A call
+    with no `recordIds` goes through the same script with an empty map.
+    Principal is `LOCAL`: the harness is one user per process.
+    """
+    tool_js = _MCP_BUILD / "tools" / "extraction-append.js"
+    principal_js = _MCP_BUILD / "auth" / "principal.js"
+
+    def _url(p: Path) -> str:
+        posix = str(p).replace("\\", "/").replace("'", "\\'")
+        return ("file:///" + posix) if sys.platform == "win32" else posix
+
+    async def handler(args, _ws=workspace):
+        if _ws is None or not tool_js.exists():
+            reason = "workspace not provided" if _ws is None else f"build not found: {tool_js}"
+            response: dict[str, Any] = {"ok": False, "errors": [f"extraction_append: {reason}"]}
+        else:
+            input_obj = dict(args)
+            input_obj["projectPath"] = str(_ws).replace("\\", "/")
+            records: dict[str, Any] = {}
+            predicated = (manifest.get("record_read") or {}).get("predicated") or []
+            for rid in input_obj.get("recordIds") or []:
+                if not isinstance(rid, str):
+                    continue
+                key = rid.strip()
+                canned = next(
+                    (resp for pred, resp, *_ in predicated if matches(pred, {"recordId": key})),
+                    None,
+                )
+                if canned is None:
+                    records[key] = {"__error": f"no record_read fixture matches {key}"}
+                else:
+                    records[key] = _stage_record_read(
+                        _ws, {"recordId": key, "projectPath": input_obj["projectPath"]}, canned
+                    )
+            input_obj["__records"] = records
+            script = (
+                f"import {{ runExtractionAppend }} from '{_url(tool_js)}';"
+                f" import {{ LOCAL }} from '{_url(principal_js)}';"
+                " import { readFileSync } from 'node:fs';"
+                " const input = JSON.parse(readFileSync(0, 'utf-8'));"
+                " const records = input.__records; delete input.__records;"
+                " const deps = { readRecord: async ({ recordId }) => {"
+                "   const r = records[String(recordId).trim()];"
+                "   if (!r) throw new Error(`no record_read fixture for ${recordId}`);"
+                "   if (r.__error) throw new Error(r.__error);"
+                "   return r;"
+                " } };"
+                " const r = await runExtractionAppend(input, deps, LOCAL);"
+                " process.stdout.write(JSON.stringify(r));"
+            )
+            try:
+                proc = _run_node_eval(script, json.dumps(input_obj), timeout=NODE_EVAL_TIMEOUT_LONG)
+                if proc.stdout.strip():
+                    response = json.loads(proc.stdout)
+                else:
+                    stderr_msg = proc.stderr.strip()[:500] if proc.stderr else "no output"
+                    response = {
+                        "ok": False,
+                        "errors": [f"extraction_append: node produced no output (exit {proc.returncode}): {stderr_msg}"],
+                    }
+            except Exception as e:
+                response = {"ok": False, "errors": [f"extraction_append: {e}"]}
+        call_log.append(
+            {
+                "tool": "mcp__genealogy__extraction_append",
+                "args": dict(args),
+                "expected_args": None,
+                "matched": {"kind": "live", "index": None},
+                "response_fixture": "live:extraction_append",
+                "response": response,
+            }
+        )
+        return _tool_envelope("extraction_append", response)
 
     return handler
 

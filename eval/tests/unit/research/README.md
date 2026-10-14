@@ -187,9 +187,11 @@ grades a positive test `fail` whatever the router does (issue #3116, fix PR #314
 Restore the prefix once that lands and this becomes the e2e entry form exactly.
 
 **What they do NOT cover, and cannot:** that a bounded turn ends with the
-`delivered` outcome. `research_delivered` is not in this harness's `LIVE_TOOLS` and
-no Stop hook binds here, so the outcome is unobservable in a unit test regardless of
-which plane implements it. Both hosted planes now halt on the signal — the prototype
+`delivered` OUTCOME. `research_delivered` IS in this harness's `LIVE_TOOLS` now, so the
+CALL is observable and `test_a_bounded_turn_ends_with_the_delivery_signal` grades it
+(gated on the `ends-with-delivery` tag). What stays unobservable is the effect: no hook
+binds here, so nothing halts the turn and the outcome is whatever the run would otherwise
+have been. Both hosted planes now halt on the signal — the prototype
 via its own `PreToolUse` arm plus `DELIVERY_GUIDANCE`, the alpha via `count_only` and
 `should_continue_run(delivered=...)` — and that half is covered by
 `apps/server/tests/test_alpha_stop_hook.py`, not here.

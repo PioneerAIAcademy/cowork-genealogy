@@ -1,0 +1,88 @@
+{
+  "test": {
+    "id": "ut_extraction_append_004",
+    "skill": "extraction-append",
+    "name": "Extract assertions from 1850 census household (record-in-user-message)",
+    "type": "positive",
+    "description": "Converted from ut_record_extraction_001: the record the user pasted is now served as a record_read fixture (the 1850 census household of Thomas Flynn, Schuylkill County), and extraction runs in code. Extract assertions from a 1850 census household provided in the user message. The 1850 census does NOT have a relationship column — relationships must be inferred from household position, making them indirect evidence. Tests assertion atomicity (one fact per assertion), informant identification (the household member who answered, not the enumerator), and evidence type accuracy (indirect for inferred relationships).",
+    "tags": [
+      "census",
+      "1850",
+      "extraction",
+      "indirect-evidence",
+      "household",
+      "no-relationship-assertions"
+    ]
+  },
+  "input": {
+    "user_message": "Extract FamilySearch record ark:/61903/1:1:MXHY-TQ2.",
+    "scenario": "extraction-workbench"
+  },
+  "mcp_fixtures": [
+    "record-read-flynn-1850-thomas-mary-patrick-mxhy-tq2"
+  ],
+  "judge_context": [
+    "Override for Correctness and Completeness: the test chooses which record the skill extracts. Do not lower any score because the record concerns people the project objective does not name.",
+    "The skill makes one extraction_append call with the record id and relays each record's summary verbatim. Grade that call and that relay; the classifications are decided in code and are checked by the expected_classifications validator, not by you."
+  ],
+  "execution": {
+    "max_turns": 10,
+    "max_wall_clock_seconds": 300
+  },
+  "expected_classifications": [
+    {
+      "record_role": "head_of_household",
+      "fact_type": "name",
+      "record_basis": "stated"
+    },
+    {
+      "record_role": "head_of_household",
+      "fact_type": "age",
+      "record_basis": "stated"
+    },
+    {
+      "record_role": "head_of_household",
+      "fact_type": "occupation",
+      "value": "miner",
+      "record_basis": "stated"
+    },
+    {
+      "record_role": "head_of_household",
+      "fact_type": "birth",
+      "attribute": "place",
+      "value": "Ireland",
+      "record_basis": "stated"
+    },
+    {
+      "record_role": "head_of_household",
+      "fact_type": "birth",
+      "attribute": "date",
+      "record_basis": "inferred",
+      "optional": true
+    },
+    {
+      "record_role": "wife",
+      "fact_type": "age",
+      "record_basis": "stated"
+    },
+    {
+      "record_role": "wife",
+      "fact_type": "birth",
+      "attribute": "place",
+      "value": "Ireland",
+      "record_basis": "stated"
+    },
+    {
+      "record_role": "child_1",
+      "fact_type": "age",
+      "record_basis": "stated"
+    },
+    {
+      "record_role": "child_1",
+      "fact_type": "birth",
+      "attribute": "place",
+      "value": "Ireland",
+      "record_basis": "stated"
+    }
+  ]
+}
