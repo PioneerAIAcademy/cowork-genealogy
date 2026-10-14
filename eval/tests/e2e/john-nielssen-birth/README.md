@@ -1,4 +1,4 @@
-# John Nielssen — birth 1844, Åseral, Norway
+# John Nielssen — birth 1844, Bygland or Åseral, Norway
 
 **Source PID:** `KHKC-867`
 **John Nielssen is deceased.** (FamilySearch ToS requires
@@ -28,7 +28,7 @@ match strength.
 
 ## Notes for reviewers
 
-**Resolved 2026-10-14 (#3339): true match, fuller answer (outcome 2).** The hint record is about the tree's John Nielssen. It is "Norway, Church Books, 1797-1958", the Bygland baptism on 17 October 1877 of Torjus (born 24 May), son of Jon Nilson, born 1846, and Anne Torjusdatter, born 1852, of Klep (`ark:/61903/1:1:683T-H1R2`). Its 1846 is the wrong year. John was born in **1844 in Åseral parish**. The hint batch was `filtered-list-samples-3.csv` row 18, `hint-samples.csv` row 616, flag `adds_birth`, confidence 3.
+**Resolved 2026-10-14 (#3339): true match, fuller answer (outcome 2).** The hint record is about the tree's John Nielssen. It is "Norway, Church Books, 1797-1958", the Bygland baptism on 17 October 1877 of Torjus (born 24 May), son of Jon Nilson, born 1846, and Anne Torjusdatter, born 1852, of Klep (`ark:/61903/1:1:683T-H1R2`). Its 1846 is the wrong year. John was born in **1844, in Bygland or Åseral parish**; the records conflict on the parish. The hint batch was `filtered-list-samples-3.csv` row 18, `hint-samples.csv` row 616, flag `adds_birth`, confidence 3.
 
 **Baseline.** The tree's sources are the 1870 and 1872 "Norway, Baptisms, 1634-1927" entries for Ingeborg and Nils (`ark:/61903/1:1:NCWK-B8T`, `ark:/61903/1:1:NHF2-9RV` and their re-indexes). They name John Nielssen / John Nilsen and Anne Torjusdr / Thorgjusdr but give no ages and no farm. The hint record is attached to no tree person (`source_attachments`), so it is not a re-index of an existing source.
 
@@ -37,13 +37,20 @@ match strength.
 - **Household 02:** John Nilsen, married, born 1844 in "Aaserals S og Prgj" (person `pf01052207002762`); wife Anne Torjusdatter, born 1852; Nils Johnsen, born 1872; Ingeborg Johnsdatter, born 1870. The last three were all born in "Aardal S Bygland Prgj". This is the household the issue asked for: the tree's wife and both of the tree's children.
 - **Household 01:** his father Nils Johnsen, born 1821 in Åseral; Ingeborg Grundesdatter, born 1813; and Gunstein (1856) and Birgit (1854) Nilsen/Nilsdatter, both born in Åseral.
 
-**The year: 1844, not 1846.** There are three independent witnesses, and the two closest to the event agree:
+**The year: 1844, not 1846.** There are three witnesses, and the two closest to the event agree:
 
 - **1844 baptism** (`ark:/61903/1:1:683T-XFQ9`): John Nielsen Klefs, born 19 March, baptized 4 April 1844 in Bygland, son of Niels Johnsen and Ingeborg Grundsdatter of Klep. These are the same parents as the 1865 and 1875 households. It is recorded at the event, so it is the best witness for the date.
 - **1865 census** (`ark:/61903/1:1:DDCG-V3ZM`): John Niltsøn, born 1843 in Åseral, single, at Klep in the household of Nils Johnsøn (born 1818), Ingeborg Grundesdatter and siblings Torgrim (1847), Berit (1849), Birgit (1853) and Gunstein (1855), all born in Åseral. That census recorded age, not birth year, so 1843 is one year from 1844.
 - **1877 baptism** (the hint): 1846, a parent's age entered in his son's baptism 33 years later. This is the outlier.
 
-**The place: Åseral, with one conflict noted.** Both censuses give Åseral as his birth parish, as they do for every sibling born 1847–1855. The 1844 baptism, however, was entered in Bygland's church book, with the family resident at Klep. A baptism place is not a birthplace, and two independent censuses ten years apart agree, so the finding names Åseral parish. A run that names Bygland as the birthplace on the strength of the baptism has misread the baptism.
+**The place: Bygland or Åseral; the records conflict.** The finding accepts either parish.
+
+- **For Bygland:** the 1844 baptism is the only record made at his birth. It was entered in Bygland's church book and puts the family at Klep, in Bygland, sixteen days after he was born.
+- **For Åseral:** both censuses (1865 and 1875) give his birth parish as Åseral.
+- **Why the censuses may be wrong for John:** the family's Åseral years come after 1844. His brother Torgrim was baptized at Breland in Åseral on 5 November 1848, born 24 September (`ark:/61903/1:1:6831-YXLF`, indexed as "Torgerine Ayesn", parents Niels Johnsen and Ingeborg). Gunstein was baptized in Åseral on 19 October 1856, born 20 September (`ark:/61903/1:1:68QM-DBKP`, indexed as "Gunstein Agenes", parents Nils Johnsen and Ingborg Gundersdatter). So "Aaseralds Prgj." is right for the children born 1847–1855 and may simply have been repeated for John.
+- **The censuses are not independent:** both come from the same family on the same farm.
+
+Nothing found settles it, so a run that names either parish, or reports the conflict, is right.
 
 **The identity.** The 1875 household above settles it. The 1900 census confirms it after Jon's death (household `ark:/61903/1:2:4NLJ-PMN2`, "Klep, Nedenes"):
 

@@ -3,17 +3,17 @@
     {
       "id": "f1",
       "type": "fact",
-      "description": "John Nielssen was born in 1844 in Åseral parish, Vest-Agder, Norway.",
+      "description": "John Nielssen was born in 1844, in Bygland (Aust-Agder) or Åseral (Vest-Agder) parish, Norway.",
       "details": {
         "subject_person": "John Nielssen (KHKC-867)",
         "fact_type": "Birth",
         "date": "1844",
-        "place": "Åseral, Vest-Agder, Norway"
+        "place": "Bygland, Aust-Agder, Norway or Åseral, Vest-Agder, Norway"
       },
       "supporting_sources": [
+        "Norway, Church Books, 1797-1958 — baptism 4 Apr 1844, Bygland, of John Nielsen Klefs, born 19 Mar, son of Niels Johnsen and Ingeborg Grundsdatter of Klep, ark:/61903/1:1:683T-XFQ9",
         "Folketelling 1875 for 0938P Bygland prestegjeld (Digitalarkivet), Klep, household 02 — John Nilsen, born 1844 in Aaserals S og Prgj, with wife Anne Torjusdatter and children Nils and Ingeborg; https://www.digitalarkivet.no/census/person/pf01052207002762",
-        "Norway, Census, 1865 — John Niltsøn, born 1843 in Aaseralds Prgj., in the Klep household of his father Nils Johnsøn, ark:/61903/1:1:DDCG-V3ZM",
-        "Norway, Church Books, 1797-1958 — baptism 4 Apr 1844, Bygland, of John Nielsen Klefs, born 19 Mar, son of Niels Johnsen and Ingeborg Grundsdatter of Klep, ark:/61903/1:1:683T-XFQ9"
+        "Norway, Census, 1865 — John Niltsøn, born 1843 in Aaseralds Prgj., in the Klep household of his father Nils Johnsøn, ark:/61903/1:1:DDCG-V3ZM"
       ],
       "required": true
     }
