@@ -1282,6 +1282,25 @@ describe("research_append (Phase 1)", () => {
     expect(updated.fact_type).toBe("name");
   });
 
+  // Pins the dropped `marriagelicense: "marriage"` alias. A licence is a
+  // distinct event from the marriage it licenses, and folding it away lost
+  // that. Without this test, putting the alias back leaves the whole engine
+  // suite and the harness suite green.
+  it("marriagelicense keeps its own fact_type", async () => {
+    await writeProject();
+    const r = await researchAppend({
+      projectPath: dir,
+      section: "assertions",
+      op: "update",
+      entryId: "a_001",
+      fields: { fact_type: "marriage_license" as any },
+    });
+    expect(r.ok).toBe(true);
+    if (!r.ok) return;
+    const updated = (await readResearch()).assertions.find((a: any) => a.id === "a_001");
+    expect(updated.fact_type).toBe("marriage_license");
+  });
+
   it("appends a person_evidence link, stamps created, references an existing assertion + tree person", async () => {
     await writeProject();
     await attestPairing(dir);
