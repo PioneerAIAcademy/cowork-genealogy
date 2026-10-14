@@ -19,8 +19,9 @@
 - **Delegation:** a call to a plugin subagent; a **foreground** one blocks the main thread.
 - **Tool search:** the CLI loading tool schemas on demand.
 - **The review:** FamilySearch's architecture review draft (ARB, SC-12457, 2026-09-07 copy).
-- **TAP:** APT's Bedrock gateway (`fs-eng/tap-agentgateway`). A **local copy** runs its
-  `/bedrock` route config on our machine.
+- **TAP:** APT's Bedrock gateway: `fs-eng/tap-agentgateway` on Fargate, which every probe
+  here used, and since its EKS port `fs-eng/tap-gateway`, which callers are moving to (APT-1880
+  retires Fargate). A **local copy** runs its `/bedrock` route config on our machine.
 
 ## Bottom line
 
@@ -101,7 +102,7 @@
 | 2 | Cache across resume and past the TTL? | Resume reads it (P3k). Via agentgateway the TTL is 5 min regardless (P3j). The review's 4.6× cost blocker rests on 1-hour writes, which the gateway never gives; at 5 minutes the corpus loses 2.2–2.3% of run cost (below). | P3j/P3k: 2026-09-25, local agentgateway v1.5.0, TAP's route |
 | 3 | Where to checkpoint? | **The patron turn.** No tool call exceeds 1,800 s; skill/agent segments p99 1,488 s, 4 over 1,800 s. | Corpus at `e18d99b10` (2026-09-07): 8,898 calls, 51 instrumented runs, 947 segments, autonomous only; `apps/server/dev/review_figures_runlogs.py` |
 | 4 | Oversized result, no shell? | Spilled to a file; the agent `Read`s or `Grep`s it, never stranded. | P2, 2026-09-10, **current stack**, n=3. Prototype on Beanstalk: the spill file lives only for its attempt; killed between the spill and its read, the redelivery found the file gone, re-ran the call and answered correctly, then closed `no_progress` after two empty nudges, a recorded departure (U13, 2026-10-08, n=1, 1 try). |
-| 5 | Bedrock? | Direct: yes. TAP's route, local copy: yes, tool search off (broken before agentgateway v1.6.0-alpha.1; TAP pins v1.5.0). Off cost +18% on one turn (P3i), 2.2× on P3b's short arm. | P3 2026-09-10; P3b 2026-09-11 (passthrough proxy to the Anthropic API); P3f/P3i 2026-09-25; n=1 per arm. **Not the deployed gateway.** |
+| 5 | Bedrock? | Direct: yes. TAP's route, local copy: yes, tool search off (broken before agentgateway v1.6.0-alpha.1; TAP's Fargate stack pins v1.5.0, its EKS stack runs v1.6.0 since 2026-10-12, unmeasured). Off cost +18% on one turn (P3i), 2.2× on P3b's short arm. | P3 2026-09-10; P3b 2026-09-11 (passthrough proxy to the Anthropic API); P3f/P3i 2026-09-25; n=1 per arm. **Not the deployed gateway.** |
 | 6 | Commit-time ledger? | **Buys nothing.** After a commit, resume wrote nothing; before it, resume re-decided (17 of 20 ops identical, 3 rephrased). | P1, 2026-09-10, n=1 |
 
 ## Cost and quality (D18, 2026-09-24)
@@ -196,28 +197,31 @@ The review (not in this repo) carries none of these; handoff U22 applies them.
 
 ## Open questions for FamilySearch
 
-Numbers are the handoff's; Richard routes them to FamilySearch. "Sent" means sent 2026-09-18; none had a reply as of 2026-09-28.
+Numbers are the handoff's; Richard routes them to FamilySearch. "Sent" means sent 2026-09-18; none had a reply as of 2026-09-28, and none is recorded since. Rechecked against TAP's EKS gateway config on 2026-10-14: F2 is done and F4 answered (below), and F1, F3, F5 and F13 are reworded.
 
 **Sent or drafted:**
 
-- **F1, APT:** integ gateway URL and key; our workers in the APT-1512 batch. Unblocks U14, U18. Batch sent; URL and key drafted, not sent.
-- **F2, APT:** a date for agentgateway ≥ v1.6.0 (tool search). Unblocks production cost. Drafted, not sent. FYI: the gateway also drops forced `tool_choice` and the 1 h TTL (upstream agentgateway issue #3670).
-- **F3, APT:** `maxBufferSize` 32 MiB; at 2 MiB a session dies at its third page scan. Unblocks U14 and image-heavy sessions. Drafted, not sent.
-- **F4, APT:** admit our three model ids; is Sonnet 5 enabled; pin no `model:`. Unblocks U14. Allowlist drafted, not sent; rest not yet asked.
-- **F5, APT:** which account, the invoke role (ETA December), where quota goes, gateway scaling; the account's applied quotas, the per-day quota raised with TPM, metric access for the load run, and whether the gateway retries or limits 429s itself. Unblocks U18. Account and role sent; the rest not yet asked.
+- **F1, APT:** a consumer key, and the shared `/bedrock` route or our own product route and Langfuse lane (Atrium's pattern); our workers in the APT-1512 batch. The URL is known: `tap-gateway.fs108-trusted-agentic-platform-int.um.fslocal.org`. Unblocks U14, U18. Batch sent; key and route drafted, not sent.
+- **F3, APT:** `maxBufferSize` 32 MiB; at 2 MiB a session dies at its third page scan (v1.5.0; still unset on the EKS gateway). Unblocks U14 and image-heavy sessions. Drafted, not sent. FYI: the gateway also drops forced `tool_choice` and the 1 h TTL (upstream agentgateway issue #3670).
+- **F5, APT:** the EKS gateway invokes Bedrock as its own role in TAP's account, with no per-consumer role, so: is our invoke role (ETA December) still planned, or is TAP's shared pool the design? Where quota goes, gateway scaling; the account's applied quotas, the per-day quota raised with TPM, metric access for the load run. Unblocks U18. Account and role sent; the rest not yet asked. The config answers the rest: no per-route rate limit or retry policy, and usage traced but not `max_tokens`.
 - **F6, APT:** `guardContent` for tool results: yes or no, and when? Unblocks the ARB injection answer. Sent.
 - **F7, InfoSec:** Langfuse keeps prompts at 100%: acceptable, and what retention? P3l (2026-09-25, local collector, n=1): tool results and images don't leave; patron names and record details do (~700k characters per 11-call turn). The sent ask wrongly said images leave. Unblocks security review. Correction and retention not sent.
 - **F9, ACE and FS legal:** may OCR stay on OpenRouter; record-custodian terms. Unblocks U20. Provider sent; the `bedrock-exception-*` role in the same ask withdrawn 2026-09-29, ACE not yet told; terms not yet asked.
 - **F10, Help team:** how they handle DTM concurrency for SSE. Unblocks F11. Sent.
+
+**Answered without asking (2026-10-14):**
+
+- **F2:** agentgateway v1.6.0 runs on TAP's EKS gateway since our PR fs-eng/tap-gateway#46 merged 2026-10-12. Tool search through it is unmeasured: U14.
+- **F4:** no model allowlist exists, no `model:` is pinned and Sonnet 5 is aliased, so our ids pass. Sonnet 5 enabled is inferred; U14's first call shows it.
 
 **Not yet asked:**
 
 - **F8, InfoSec:** live bearer on every internal hop, grant at rest, tool-server isolation: acceptable? Unblocks U3, U4.
 - **F11, FS platform:** the SSE edge probe, only if F10 says they bypass DTM.
 - **F12, FS platform and DTL:** which Beanstalk platform and AMI; does Blueprint keep our sqsd and nginx overrides? Unblocks any FamilySearch deploy (R9: "weeks").
-- **F13, FS network:** VPC, egress and gateway allowlists, internal names past Imperva, HAProxy idle timer. Unblocks U14.
+- **F13, FS network:** VPC, egress and gateway allowlists (the gateway admits the VPN /14 and named security groups in its own shared VPC, so our VPC decides the ask), internal names past Imperva, HAProxy idle timer. Unblocks U14.
 - **F14, Blueprint:** Postgres, S3, SQS and DLQ, secrets, IAM; every worker-to-tools idle timeout, including the tool-server LB, ≥ 1,800 s; static S3 keys? For the scaling metric (U18): two Simple Scaling policies on different SQS metrics, a custom or metric-math metric, worker-set scale-in protection, the T3 credit mode. Unblocks any deploy.
-- **F15, FS OAuth owners (team unknown):** production client and redirect; confirm the 8 h / 24 h lifetime and revoke-on-refresh; re-sign-in past 24 h? Unblocks U2, U3.
+- **F15, FS OAuth owners (team unknown):** an integ client with our https redirect (F18), later production. The lifetimes are documented and revoke-on-refresh was measured, so only the client is asked. Unblocks U2, U3.
 - **F16, fs-eng:** host `wiki-query-api` and Pop Stats. Unblocks four tools, which until then call a developer's personal host.
 - **F17, ARB, InfoSec, PRIA, AI Working Group, PM:** ARB scheduling, SLA exception, retention, DR, telemetry, service identity, CAS/TARS entitlement for the email allowlist, mobile. Unblocks go-live. Goes with U22.
 - **F18, FS platform:** web hostname, TLS, edge route. Unblocks integ sign-in.

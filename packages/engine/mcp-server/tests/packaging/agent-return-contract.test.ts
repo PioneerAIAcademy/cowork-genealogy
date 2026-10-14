@@ -36,6 +36,8 @@ const HEADING = /^#{2,4}\s+`summary_for_user`\s*$/m;
 
 const EXCLUDED: Record<string, string> = {
   "image-reader.md": "returns a full transcription and nothing else, by spec",
+  "record-structurer.md":
+    "returns extraction_append's code-written summary verbatim (lead, 2026-09-29)",
   "project-status.md":
     "returns the user-friendly and detailed summaries, warnings first, as its whole output, by its own contract",
   // Issue #2796, applying issue #2793's "PS return: A" ruling (2026-09-24): the

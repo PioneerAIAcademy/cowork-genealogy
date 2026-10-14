@@ -534,6 +534,38 @@ def test_v5_still_fires_on_browse_only_in_the_collections_own_bracket():
     with pytest.raises(AssertionError, match="2513529"):
         check_v5(before, after, _DK_SERVED)
 
+
+_DK_PROBATE_SERVED = [_call("collections_search", _collections([
+    {"id": "2015318", "title": "Denmark, Probate Indexes, 1674-1851", "personCount": 1310442},
+]))]
+
+
+def test_v5_ignores_browse_only_bound_to_a_later_volume():
+    """ut_research_plan_015, 2026-10-14, pli_008, verbatim: "browse-only"
+    describes volume 004392710, not the collection cited before it."""
+    before, after = _states([_item("pli_008", rationale=(
+        "If the probate index (pli_007, collection 2015318) does not return an "
+        "entry for Niels of Blyeberg, or if the index entry is not linked to "
+        "images, browse volume 004392710, which covers Hassing Herred probate "
+        "records 1690-1850 and is browse-only (personCount 0)."
+    ))])
+    check_v5(before, after, _DK_PROBATE_SERVED)
+
+
+def test_v5_ignores_not_indexed_bound_to_a_volume():
+    before, after = _states([_item("pli_008", rationale=(
+        "Volume 004392710 is not indexed, but collection 2015318 is indexed."
+    ))])
+    check_v5(before, after, _DK_PROBATE_SERVED)
+
+
+def test_v5_still_fires_on_browse_only_bound_to_the_collection_before_a_volume():
+    before, after = _states([_item("pli_008", rationale=(
+        "Collection 2015318 is browse-only, unlike volume 004392710."
+    ))])
+    with pytest.raises(AssertionError, match="2015318"):
+        check_v5(before, after, _DK_PROBATE_SERVED)
+
 def test_v5_ignores_a_coverage_percentage():
     before, after = _states([_item("pli_006", rationale=_UT007_RUN0_PLI006)])
     check_v5(before, after, _SERVED)

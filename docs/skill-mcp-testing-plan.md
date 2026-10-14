@@ -237,7 +237,7 @@ These are **excluded** from cross-PR comparison (plan §2.10), from the `.github
 
 ### Per-skill-family extensions (4-6 domain dimensions)
 
-Example for record-extraction skills:
+Example for evidence-analysis skills (e.g. source-evaluation):
 - Correctness (facts cited match the record; no fabricated details)
 - Completeness (all extractable fields captured; no silent omissions)
 - Citation discipline

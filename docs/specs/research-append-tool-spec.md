@@ -74,7 +74,7 @@ the re-serialize-and-revalidate loop this tool direction exists to kill:
   turns "validation failure, fix, re-serialize" into "rejected with a clear error,
   nothing written."
 - **Multi-entry / multi-file writes re-serialize large JSON** — `record-extraction`
-  writes a source + many assertions and is told to "write first persona, then
+  (since retired) wrote a source + many assertions and was told to "write first persona, then
   Edit-append the rest" — the same large-JSON failure mode the log tool removed.
 
 ---
@@ -335,7 +335,7 @@ same tolerance to its `ops` and single-op nested objects (and to
 
 ### 3.4 Composite persist (`sourceDescription`) — D1
 
-The record-extraction unit of work is one record = one tree `S` entry + one
+The extraction unit of work is one record = one tree `S` entry + one
 research source + N assertions. The composite makes that ONE call — the tool, not
 the model, owns every id and every cross-file link (decision D1 of the
 record-extraction consolidation; see
@@ -482,7 +482,7 @@ assertion reads as **independent corroboration** — the failure a proof conclus
 cannot see. The D17 live run (2026-09-23, `docs/plan/search-agent-prototype.md`) wrote
 one record three times onto one `src_`: the killed attempt's write committed after its
 worker died, the resumed turn re-delegated and wrote again, and every batch took the
-`updated_existing` fold. `record-extractor.md` already says "never a second assertion
+`updated_existing` fold. `record-extractor.md` (since retired) said "never a second assertion
 for the same fact"; this makes it a precondition (ADR-0011).
 
 **When it engages.** Only on a batch that **re-persists a record already persisted on
@@ -530,7 +530,7 @@ persona, so its key cannot tell two absent people apart.
   append it in a call that does not re-send the source; never `update` over a
   different value.
 - A re-extraction logged under a **new** log entry is not caught (the key includes the
-  log). The record-extraction router appends a log entry per record fetch, so a later
+  log). `extraction_append` logs its own `record_read` entry for every record it reads, so a later
   session's re-extraction takes this path. Measured miss (same replay): 27 of the 145 folding calls — 19 because one side carries no
   `log_entry_id`, 8 a retry logged under a new `record_read` entry; none persisted a
   duplicate in its run's final file. A retry that names an explicit
@@ -546,10 +546,10 @@ tool enforces the sidecar matrix (spec'd, not vibes — decision D2):
 
 | Log entry state | `record_persona_id` supplied | `record_persona_id` omitted/null |
 |---|---|---|
-| **Sidecar present from a persona-bearing producer** (`record_search`; `results_ref` set), `record_id` matches a result (canonical ARK matching via `arkToBareId`) | Verified against the record's `gedcomx.persons[]`; a contradiction is a **hard error naming the expected persona ids** (and the primary persona). | **Auto-filled** with the matched result's `primaryId` when the `record_id` matches exactly one result, that `primaryId` resolves to a persona in the record's `gedcomx.persons[]`, **and the stamp cannot be wrong**: the record holds a single persona, or the batch's assertion appends all cite one canonical `record_id` **and** one distinct `record_role` (a single-focus extraction — sidecar personas carry no role labels, so batch shape is the only sound proxy for "this assertion is about the searched persona"). A multi-persona record in a batch spanning multiple `record_role`s/`record_id`s is a **hard error naming the searched persona** ("supply `record_persona_id` per assertion") — unscoped auto-fill stamped the focus persona's id onto other household members' assertions (observed silent corruption). A degenerate sidecar whose `primaryId` is missing/unresolvable leaves the field null rather than persisting a value the validator would reject. |
+| **Sidecar present from a persona-bearing producer** (`record_search`, `record_read`; `results_ref` set), `record_id` matches a result (canonical ARK matching via `arkToBareId`) | Verified against the record's `gedcomx.persons[]`; a contradiction is a **hard error naming the expected persona ids** (and the primary persona). | **Auto-filled** with the matched result's `primaryId` when the `record_id` matches exactly one result, that `primaryId` resolves to a persona in the record's `gedcomx.persons[]`, **and the stamp cannot be wrong**: the record holds a single persona, or the batch's assertion appends all cite one canonical `record_id` **and** one distinct `record_role` (a single-focus extraction — sidecar personas carry no role labels, so batch shape is the only sound proxy for "this assertion is about the searched persona"). A multi-persona record in a batch spanning multiple `record_role`s/`record_id`s is a **hard error naming the searched persona** ("supply `record_persona_id` per assertion") — unscoped auto-fill stamped the focus persona's id onto other household members' assertions (observed silent corruption). A degenerate sidecar whose `primaryId` is missing/unresolvable leaves the field null rather than persisting a value the validator would reject. |
 | **Sidecar present** (persona-bearing), `record_id` matches **no** result | **Hard error naming the sidecar's stored recordIds** — a claimed persona cannot be verified against a record that isn't there. | No error — a `record_id` outside the sidecar is legal without a persona claim (e.g. a negative assertion naming the collection searched). |
 | **Sidecar present from a persona-less producer** (`fulltext_search`, `external_links_search` — results carry transcript text, names and places but no GedcomX personas) | **Hard error**: `record_persona_id` must be null; the message names the producer and that its results carry no personas. Never the empty `expected one of:` list a `recordId`-only match produced for these sidecars (they key on `id`, never `recordId`). | No error — the persona stays null, and when `record_id` matches a result (on the result's `id`) it is canonicalized to that stored form. |
-| **No sidecar** (`results_ref: null` — record_read, PDF, image, pasted records, most unit fixtures) | **Hard error**: the field must be absent or null; there is no persona document to point at. | No error. |
+| **No sidecar** (`results_ref: null` — an unstaged record_read, PDF, image, pasted records, most unit fixtures) | **Hard error**: the field must be absent or null; there is no persona document to point at. | No error. |
 
 Additionally, when the `record_id` matches a sidecar result, it is
 **canonicalized to the sidecar's stored form** (the result's `recordId` for
@@ -583,7 +583,9 @@ append op (deliberately simple):
 - **Lever B — sidecar copy first, never re-geocode what the record resolved.**
   When the op carries a `place` but omits `standard_place` (**strictly absent**;
   `standard_place: null` is an explicit per-entry opt-out that skips resolution
-  and the guard):
+  and the guard; a non-place phrase such as "Same House" or "Do", tested by
+  `isNonPlacePhrase` in `place-resolver.ts`, skips both steps below and stays
+  unset with no warning):
   1. if the op's sidecar-matched record (§3.5) has a fact whose `place` equals the
      op's place string (trimmed, case-insensitive), its converter-resolved
      `standard_place` is **copied** — no geocoding call;
@@ -822,8 +824,8 @@ one project both read the pre-write state, both allocate the same next id, and
 the losing write is **silently lost** — the losing caller still gets a success
 naming ids that ended up on the other writer's record, and validation passes
 afterward because a lost update leaves a consistent file that merely omits a
-record. `/research` and `record-extraction` actively encourage batching across
-records with parallel subagents, so this is reached by following the skills'
+record. `/research` and `record-extraction` (since retired) actively encouraged batching across
+records with parallel subagents, so this was reached by following the skills'
 own guidance.
 
 The whole tool body — from the first read to the last write — is therefore
@@ -851,7 +853,7 @@ allowed.
 a retryable error). CAS changes the error contract of all six tools, and
 `record-extractor.md`'s "fix ONLY the ops named in `errors`" / "never retry
 blindly" instructions mean a conflict error — which names no op — only works if
-that agent body and `record-extraction/SKILL.md` are edited too, flipping the
+that agent body and `record-extraction/SKILL.md` (both since retired) were edited too, flipping the
 record-extraction run log inactive and buying a fresh paid eval + annotation.
 Serialization needs no skill or agent edit. Prose-only ("delegate serially") was
 also rejected as unenforceable and leaves the gap on the `nothing-checks`
@@ -894,15 +896,17 @@ audit's recommendation #5):
 
 | Section / op | Invariant (reject if violated) | Source |
 |--------------|-------------------------------|--------|
+| `assertions`, any op, from an MCP caller | **Assertions are extraction's.** `research_append` as a caller reaches it (`researchAppendFromCaller`, used by the MCP dispatch and the eval mock) refuses every `assertions` op except an `update` whose `fields` are exactly `informant_bias_notes`, the one way to record a re-reading or a doubt on an existing assertion. The whole call is refused, op-indexed in a batch, before anything is read. `extraction_append` calls `researchAppend` directly and never meets the check. Removes the advertised "correct an assertion's place/date/value" path: a disputed reading is a conflict, not an edit. Found by `ut_conflict_resolution_016`, where the skill overwrote a transcribed name with the user's reading in 2 of 3 runs although its body forbade it | genealogist ruling 2026-10-05 (option B); `ownership.json` assertions row |
 | `assertions` append or update, `fact_type: relationship` | **`structured_value.relationship_type` must not contradict what `value` says about the record SUBJECT.** `relationship_type` is the subject's own role and `related_person_role` is the other party's, so a death certificate naming the father is `"child"` on the deceased, not `"parent"`. The legal categories are `parent`, `child`, `spouse` and `sibling` — `sibling` included, which earlier guidance omitted, and the omission is the live defect: 5 sightings across three of the five current record-extraction run logs, every one a sister typed `child`. **Position decides whose role the value names**, and that is why two earlier guards on this field were abandoned: `child of Jim Neal` states the subject's role, while `father named as Casper` and `father: Jan Roelfs` label the other party and are skipped. Comparing relation words without regard to position refused 22 of the 37 it flagged over the e2e run logs, and 27 of 47 over the full population below — re-derivable with `measure_relationship_direction.py --counterfactual`. Unknown spellings fail open, never refused — 63 assertions across 16 spellings over the e2e run logs, 73 across 18 over the full population (`grandparent`, `ParentChild`, `administrator`, `ward`, `grandchild` are the commonest; `stepfather` and `father_in_law` occur nowhere in any of them and are not useful examples). Forward direction only, on the ops being written, so a project holding an assertion written before this rule stays writable | Refuses **21 of 2586 (0.8%)** across the e2e run logs, the unit run logs, the scenario fixtures and the hosted seed — 19 distinct assertions, since a unit log carries an id-less write op beside its persisted copy; **0** in the fixtures and **0** in the seed. All read individually, all true positives. Measured at 1d5656fe3 by `eval/harness/scripts/measure_relationship_direction.py`. ADR-0011 |
+| `assertions` append or update | **`informant_proximity: "unknown"` implies `information_quality: "indeterminate"`.** If the informant cannot be identified, neither firsthand knowledge nor its absence has been established, so the Layer-2 decision tree terminates at its first question and never reaches the primary/secondary split. **Forward only, and deliberately not a biconditional**: `indeterminate` does NOT imply `unknown` — a NAMED informant whose relationship to the specific fact cannot be established is the tree's "cannot tell" branch at a known proximity, which is the ordinary census shape, and an `iff` reading would refuse it. Fires only for the two in-enum values that claim a determination: a missing `information_quality` is `checkRequired`'s error and an out-of-enum one is `checkEnum`'s, and adding this on top would name the wrong fix — not hypothetical, `mid-research-flynn-bad-enum` a_001 is `unknown` + `tertiary` and `ut_validate_schema_004` pins the validator at exactly ONE error for it. The update arm validates the MERGED entry, which is the case the rule exists for: flipping proximity to `unknown` and leaving a stale `secondary` behind | Prose in `record-extractor.md` (since retired), and prose did not hold: the model broke it on **248 of 982** `unknown` assertions across the committed e2e corpus. Mirrored at the document tier in `validator.ts`; six scenario assertions backfilled with it |
 | `conflicts` append (fact) | ≥2 `competing_assertion_ids`; identity ≥1 | `validateResearch` (`"fact conflict requires at least 2 competing_assertion_ids"`) |
 | `conflicts` append (fact), or an update that (re)sets `competing_assertion_ids` | **no competing pair whose `place` values are in a containment relationship, when the dispute is about place** — "Ireland" and "County Cork, Ireland" are one claim at two levels of precision, not a disagreement, so the entry asserts a dispute the sources do not have. Three conditions, each load-bearing. **(a) `disputed_attribute` must name place and nothing else**, matched against an exact allow-list: the field is free text — 28 distinct values across the 102 corpus fact conflicts, including whole sentences and two compounds (`birth_year_and_birthplace`) — so a dispute about the *year* between two places in containment is a real dispute, and refusing it with a message saying they "do not disagree" is false about the axis actually in dispute. **(b) no pair may disagree at all**: `compatiblePlace` is true for EQUAL places as well as for containment, so the canonical Flynn conflict (Ireland / Ireland / Pennsylvania) has two compatible Irelands beside a Pennsylvania that genuinely disagrees. **(c) at least one pair must be a *strict* containment** — compatible with differing hierarchy depth, counted in normalized segments via `placeSegments`, which is what the comparator itself counts; a raw comma count disagrees with it in both directions ("Ireland" vs "Ireland," wrongly refused, "Cork, Ireland" vs "Ireland," wrongly allowed). A place that is blank or comma-only is "no place" and is skipped, not read as a disagreement, which would silently disable the guard for the whole entry. Reads free-text `place` because that is the value the comparator is built for and the one every assertion carries however it was authored — not because `standard_place` is empty (it is empty on the hand-authored fixtures only; `research_append` resolves and writes it itself on every assertion append carrying a place). Siblings ("Schuylkill, Pennsylvania" vs "Allegheny, Pennsylvania") are incompatible and stay allowed. Scoped to ops that set the pairing, so a conflict written before the rule existed stays editable. `conflict_type: "identity"` is out of scope | Alpha feedback 2026-08-28: the agent filed a country-vs-county pair as a birthplace dispute, and corrected itself only when the researcher pushed back. Measured cost: **0 of 37** corpus fact conflicts are refused, and 0 of the 102 fact conflicts across the wider 406-document corpus. A predicate keyed on any-compatible-pair — the first revision — refused **35 of 37** |
 | `conflicts` update → `resolved` | `independence_analysis`, `weighing_analysis`, `resolution_rationale` all set — each a **non-blank string**, trimmed, since a whitespace-only value satisfies the field and states nothing and a non-string satisfies no emptiness comparison at all; `preferred_assertion_id` ∈ `competing_assertion_ids` **when non-null**. Null is legal and load-bearing: a conflict the researcher weighed and honestly could not settle is recorded `resolved` with the three analyses, `resolution_rationale` saying why it cannot be settled and what would settle it, and no preferred assertion — a deferral is a finding (`gps-research-flow.md`, "A conflict that can't be resolved yet is written down as a finding"), and it is not `moot`, which asserts the conflict no longer matters. The completion gate below refuses on such a conflict while it stays `unresolved`, so this is the shape that clears it. Since the resolution-kind row below, that deferral names `resolution_kind: "tree"` — the tree's existing conclusion stands for now — which owes nothing more, so the shape stays satisfiable | audit; `validator.ts` NULLABLE set; `conflictInvariants` checks membership only under `preferred_assertion_id != null` |
 | `conflicts` append landing `resolved`, or update touching the resolution (`status`, `resolution_kind`, `preferred_assertion_id`, `resolved_value`, `resolution_rationale`) on a conflict that stands `resolved` | **`resolution_kind` names how it was settled**, and each kind carries its own proof. `competitor`: `preferred_assertion_id` is a non-blank string and one of `competing_assertion_ids`. `tree`: the tree's existing conclusion stands against the competing records; nothing more is owed. `synthesis`: no single assertion wins, so `resolved_value` is a non-blank string and `resolution_rationale` cites at least two distinct `src_`/`a_` ids — the records the value is built from, so the label cannot be reached for to dodge naming a winner. An unrelated edit to a conflict resolved before this rule existed is not re-judged; an update touching its resolution is. `moot` is not this rule's (the row above). The refusal names all three kinds and what each requires, and the rejection hint shows one worked resolve per kind | `guardrail-enforcement-spec.md` §5; `resolutionKindInvariants`; worked resolves in `research-append-examples.ts` |
 | `conflicts` update → `moot` | `resolution_rationale` set to a **non-blank string**, trimmed, on the same reading as the `resolved` row above — say why the conflict no longer bears on the question. Only that one field: there is nothing to weigh or to declare independent once the conflict has stopped bearing on the question, which is what separates `moot` from `resolved`. `moot` settles a conflict for every gate that reads `status`, the completion gate below included, and was the one settling write with no precondition at all — so a bare `{status: "moot"}` cleared that gate while asserting nothing | Found reviewing the completion gate's derived arm, which raised the population reaching this escape from 5 conflicts to 14. Measured cost: **0 of 1** — the corpus holds one moot conflict (`ogletree-children` c_006) and it carries a rationale. Trimming both rows is free on the same scan: **0 of 85** resolved conflicts and **0 of 1** moot carry a blank or non-string analysis field, across the e2e final states, the unit run logs, the scenario fixtures and the e2e starting documents; measured at 07f1fd31d. ADR-0011 |
-| `conflicts` append, or update that (re)sets `preferred_assertion_id` or `status` | **`preferred_assertion_id` may not name an assertion whose `value` contains `[?]` unless a corroborating assertion exists.** Corroboration requires all four: (1) the corroborator's own value carries no `[?]`; (2) it is on a different record (`record_id ?? source_id`); (3) same `fact_type`, value equal once `[?]` stripped, whitespace collapsed and case folded; (4) same person — in `competing_assertion_ids`, or linked via live `person_evidence` to a `person_id` the preferred assertion is also linked to. Null `preferred_assertion_id` is legal (deferral: `unresolved`, or `resolved` with `resolution_kind: "tree"` under the row below). The refusal sends a confirmed reading back to record-extraction, which owns `assertions`, rather than telling the caller to update the assertion itself. Applies at any `status` including `moot`. Reads live `research`. Scoped to ops that set `preferred_assertion_id` or `status`, so an unrelated edit to a conflict written before this rule is not refused | Alpha feedback 2026-09-23: a single OCR pass overruled the user's reading of an image. Corpus check (2026-09-28): **0 of 56** preferred resolutions across 194 committed e2e runs would be refused; 6 of 91 conflicts have a `[?]` competitor |
+| `conflicts` append, or update that (re)sets `preferred_assertion_id` or `status` | **`preferred_assertion_id` may not name an assertion whose `value` contains `[?]` unless a corroborating assertion exists.** Corroboration requires all four: (1) the corroborator's own value carries no `[?]`; (2) it is on a different record (`record_id ?? source_id`); (3) same `fact_type`, value equal once `[?]` stripped, whitespace collapsed and case folded; (4) same person — in `competing_assertion_ids`, or linked via live `person_evidence` to a `person_id` the preferred assertion is also linked to. Null `preferred_assertion_id` is legal (deferral: `unresolved`, or `resolved` with `resolution_kind: "tree"` under the row below). The refusal tells the caller a user-confirmed reading is one more reading to weigh in the conflict, never a correction: extraction writes `assertions` and they are final, so it never tells the caller to update the assertion itself. Applies at any `status` including `moot`. Reads live `research`. Scoped to ops that set `preferred_assertion_id` or `status`, so an unrelated edit to a conflict written before this rule is not refused | Alpha feedback 2026-09-23: a single OCR pass overruled the user's reading of an image. Corpus check (2026-09-28): **0 of 56** preferred resolutions across 194 committed e2e runs would be refused; 6 of 91 conflicts have a `[?]` competitor |
 | `hypotheses` update → `ruled_out`/`status: ruled_out` | `ruled_out_reason` non-empty | `validateResearch` (`"ruled_out is true but ruled_out_reason is missing"`) |
-| `hypotheses` append/update setting **`status: "supported"`** | the mechanical evidence floor of `research-schema-spec.md` §5.9, both halves: **(a)** no `conflicts[]` entry whose `competing_assertion_ids` overlap this hypothesis's `supporting_assertion_ids` **or** `contradicting_assertion_ids` is still unresolved (`resolved` and `moot` both settle it), and **(b)** either ≥1 supporting assertion carries `record_basis: "stated"`, or ≥2 carry `record_basis: "inferred"` and cite ≥2 distinct `source_id` values. **Conflicts are matched by assertion overlap, never by shared `question_id`** — `eval/fixtures/scenarios/flynn-unresolved-conflict` is the fixture that separates the two: its `h_001` is `supported` while `c_001` is unresolved and blocks the same `q_001`, but names entirely different assertions, so a question-keyed predicate refuses a shipped, correct fixture. **Forward direction only** (lead ruling 2026-09-07): a hypothesis that clears the floor and was left `active` is untouched, and the spec's third condition — evidence consistency, no logical or geographic impossibility — is a genealogist's judgment call and is not attempted. Gated on **any of the three coupled fields** — `status`, `supporting_assertion_ids` or `contradicting_assertion_ids` — not on `status` alone: the invariant couples the status to both id lists, so an op touching a list breaks it without naming the status, which is the skill's own documented re-invocation path ("only link the evidence and leave the status unchanged"). A narrative-only update naming none of the three is not refused. An empty `supporting_assertion_ids` at `supported` is **refused** (it carries no evidence), contrary to the issue's accept-list wording; a dangling id that resolves to no assertion simply counts as nothing. Read from the **pre-call snapshot**, both halves, per ADR-0011's criterion: `conflicts` belongs to `agent:conflict-resolution` and `assertions` to `skill:record-extraction`, neither of them this author's own prior step — so a live read would let a session satisfy this gate with a write made inside the very call it gates (the `conflicts` hook arm denies a main-thread resolve where a hook binds, which is not every plane, and does not change who must satisfy the precondition). A same-batch resolve-then-promote is therefore refused, and the refusal says to settle the conflict in an earlier call. **Both halves' refusals say so**, since both read the snapshot: a batch that appends a valid `direct` assertion and promotes on it is refused saying there is no direct assertion, so half (b)'s message ends "Assertions appended in THIS call do not count — append them in an earlier call, then promote". The refusal names which half failed and the ids involved; the same wording as the eval validator, with ids bracketed and comma-joined, plus a remedy clause the pytest-facing Python text does not carry | The rule shipped as SKILL.md prose and an eval validator (`test_supported_requires_evidence_floor`) and bound in neither Cowork nor hosted. **Measured cost: 0 of 9.** 17 ops set `status: "supported"` across 13 calibration run logs, of which **9 landed** (7 returned `ok: false`, 1 capture stripped) — a refused call is not a write (`replay.py`) — and none of the 9 fails either half. Corroborated by 0 of 44 `supported` hypotheses over 276 committed final states and fixtures. The snapshot read costs 0 further refusals: no calibration batch appends an assertion ahead of the promote, and neither batch carrying a `conflicts` op ahead of it is affected. The one batch it would refuse is in `_2491-exploratory-quarantine`, exploratory-only by lead ruling 2026-09-15. **Measured at 587d3c98d**, 2026-09-17, `eval/harness/scripts/count_supported_floor.py`; re-derive before quoting. ADR-0011 |
+| `hypotheses` append/update setting **`status: "supported"`** | the mechanical evidence floor of `research-schema-spec.md` §5.9, both halves: **(a)** no `conflicts[]` entry whose `competing_assertion_ids` overlap this hypothesis's `supporting_assertion_ids` **or** `contradicting_assertion_ids` is still unresolved (`resolved` and `moot` both settle it), and **(b)** either ≥1 supporting assertion carries `record_basis: "stated"`, or ≥2 carry `record_basis: "inferred"` and cite ≥2 distinct `source_id` values. **Conflicts are matched by assertion overlap, never by shared `question_id`** — `eval/fixtures/scenarios/flynn-unresolved-conflict` is the fixture that separates the two: its `h_001` is `supported` while `c_001` is unresolved and blocks the same `q_001`, but names entirely different assertions, so a question-keyed predicate refuses a shipped, correct fixture. **Forward direction only** (lead ruling 2026-09-07): a hypothesis that clears the floor and was left `active` is untouched, and the spec's third condition — evidence consistency, no logical or geographic impossibility — is a genealogist's judgment call and is not attempted. Gated on **any of the three coupled fields** — `status`, `supporting_assertion_ids` or `contradicting_assertion_ids` — not on `status` alone: the invariant couples the status to both id lists, so an op touching a list breaks it without naming the status, which is the skill's own documented re-invocation path ("only link the evidence and leave the status unchanged"). A narrative-only update naming none of the three is not refused. An empty `supporting_assertion_ids` at `supported` is **refused** (it carries no evidence), contrary to the issue's accept-list wording; a dangling id that resolves to no assertion simply counts as nothing. Read from the **pre-call snapshot**, both halves, per ADR-0011's criterion: `conflicts` belongs to `agent:conflict-resolution` and `assertions` is written by `extraction_append` (it was `skill:record-extraction`'s, since retired, when this was decided), neither of them this author's own prior step — so a live read would let a session satisfy this gate with a write made inside the very call it gates (the `conflicts` hook arm denies a main-thread resolve where a hook binds, which is not every plane, and does not change who must satisfy the precondition). A same-batch resolve-then-promote is therefore refused, and the refusal says to settle the conflict in an earlier call. **Both halves' refusals say so**, since both read the snapshot: a batch that appends a valid `direct` assertion and promotes on it is refused saying there is no direct assertion, so half (b)'s message ends "Assertions appended in THIS call do not count — append them in an earlier call, then promote". The refusal names which half failed and the ids involved; the same wording as the eval validator, with ids bracketed and comma-joined, plus a remedy clause the pytest-facing Python text does not carry | The rule shipped as SKILL.md prose and an eval validator (`test_supported_requires_evidence_floor`) and bound in neither Cowork nor hosted. **Measured cost: 0 of 9.** 17 ops set `status: "supported"` across 13 calibration run logs, of which **9 landed** (7 returned `ok: false`, 1 capture stripped) — a refused call is not a write (`replay.py`) — and none of the 9 fails either half. Corroborated by 0 of 44 `supported` hypotheses over 276 committed final states and fixtures. The snapshot read costs 0 further refusals: no calibration batch appends an assertion ahead of the promote, and neither batch carrying a `conflicts` op ahead of it is affected. The one batch it would refuse is in `_2491-exploratory-quarantine`, exploratory-only by lead ruling 2026-09-15. **Measured at 587d3c98d**, 2026-09-17, `eval/harness/scripts/count_supported_floor.py`; re-derive before quoting. ADR-0011 |
 | `questions` update → `exhaustive_declared` | `search_stop.stopped_because` is a stop-gate value ⇒ `log_entry_ids` non-empty and `stop_criteria` non-null; a re-declare on an already-declared question is a **no-op short-circuit** (don't overwrite a settled GPS Component-1 record). Renamed from `exhaustive_declaration.declared` (2026-10-07) | `validateResearch` + audit |
 | `questions` append/update marking the question **resolved** | a `proof_summaries[]` entry must already carry this question's id in `question_id`. **Both spellings of resolved are gated** — `status: "resolved"` and a truthy `resolved` date — because they are one transition, and gating only the enum leaves the date as an ungated synonym an agent refused on one can reach through the other. Read **live**, not snapshotted: the summary and the resolve are two halves of one author's conclusion, so a batch that appends the summary first satisfies it. Concluding is the only way to close a question; one closed with nothing found still gets a `not_proved` summary saying so | `status: "resolved"` is the orchestrator's stop condition and was a free write — 150 questions reached it across 154 runs from **11 different skill contexts**, neither owning skill claiming it. Measured cost: **0 of 146** corpus writes refused (142 status, 4 date-only). ADR-0011 |
 | `plans` append | at most **one active plan per question** — a second `active` plan for the same `question_id` is rejected | `research-append.ts` ("already has an active plan"); [`skill-rewrites-for-persistence-tools-spec.md`](skill-rewrites-for-persistence-tools-spec.md) |
@@ -914,7 +918,7 @@ audit's recommendation #5):
 | `person_evidence` append/update declaring `core_identifier_conflict` | rejected unless `confidence` is `speculative`. Reads the entry's own field and nothing else — no tree read, no re-reading of the record — which is what makes it a precondition rather than a prompt rule (ADR-0011's first question). The cap applies to `confident` **and** `probable`; a whitespace-only or null value is not a declaration. Clearing the field to null is the escape when the conflict is explained and does not bear on identity | The prose form did not bind, twice: `agents/person-evidence.md` carried "a qualitative conflict caps confidence regardless of score" using the same 0.85 figure as the failing test, and a Step 3 forcing function that made the agent WRITE the verdict still let it argue past the verdict in the next clause (`ut_person_evidence_012`, `_024`; single-test rounds 2026-09-23). **Refuses zero existing writes**: the field is new, so no committed entry carries it — compare the score requirement in the row above, which was `personEvidenceScoreWarnings` until it graduated on 2026-09-24; the reason a CONTRADICTION cap stays measured-first is that `speculative` is 344 of 22,050 committed person_evidence writes (1.6%) and an inferred cap would hit live traffic. **A surname arm on this row was measured and set aside** — refusing a `confident` link when the project documents the person under another surname does not reach the link it was written for (in the motivating `jimmie-jewel-neal` fixture that link is `confident` only in the two runs where the tree records the person under a single surname, and a `Couple`-with-`Marriage` escape clears her in all six regardless), while inside that same fixture it refuses 80 other links, 74 of them on the fixture's own subject. For scale it fires on 858 of 5,752 (14.9%) committed confident links, measured at 8296d1527 over 204 committed e2e final states — context rather than the reason, since ADR-0011 limit 2 rules that a rate never substitutes for inspection. The three facts, the escape-arm breakdown, and the one earlier argument deliberately not carried forward (the patronymic half, which inverts shipped doctrine) are in `guardrail-enforcement-spec.md` §9, "Options set aside"; re-derive with `dev/measure-surname-arm.ts` |
 | `person_evidence` append, or update setting `confidence`, `move_bridge`, `assertion_id` or `person_id`, at `confident` across an unexplained move between countries | rejected unless `move_bridge` names what explains the move. The move is read from the documents: the country of the linked party's own residence/census assertion on the record (failing that, the household head's), against the countries of the tree person's Residence and Census facts. A fact counts only through a source other than the record being judged and not one linked to this person only below `confident`, so neither the record nor a capped link vouches for itself. Countries come from `canonicalCountry` (place-resolver), with US states and state codes read as the United States, and border-shifting countries grouped (British Isles incl. Ireland; Germany, Poland, Austria, Hungary, Russia, Switzerland; Norway, Sweden, Denmark). An unrecognized name reads as no country and the check stays silent. `probable` is never refused, and an update that touches none of those four fields is not re-checked: a re-pointed link is a new pairing, as the score gate reads it | The prose cap in `agents/person-evidence.md` held about two runs in three (`ut_person_evidence_g7m`, suites 2026-10-06), each failure a different misreading. **Refuses 0 of 5,893** committed confident links across 310 fixture and e2e documents (2,617 with a recognized country on both sides). A first version reading every last place segment as a country refused 147, all place-name variants (Norge/Norway, México/Mexico, NJ, a bare town), which is why it fails open |
 | `person_evidence` append/update at `confident`/`probable` | rejected when the record's own assertions about the SAME party state a birth place, or a birth/christening date, that contradicts the tree person's birth fact. Place compares `birth` only (a christening place is the church, not the birthplace). Two places agree on their text or, when both carry one, on their resolved `standard_place`, and they agree when one is `compatiblePlace` with the other or when the top level one names appears in the other with every level below matching, so a place written without its country ("Staffordshire, England" against "West Bromwich, Staffordshire, England, United Kingdom"; "Georgia" against "Georgia, United States") is not a contradiction. Date compares birth and christening alike (a baptism follows birth closely) at a 5-year threshold, since the tree side is routinely a circa year. Silent when the contradicting claim is `information_quality: secondary` or an informant with no proximity to the birth. A two-party relationship assertion is checked on the **date** arm only, and only when another live link (the document's, with this call's appends and updates replayed over it) ties a one-party assertion of the same record party to the same person: the link is then about the assertion's own party. With no such sibling it is silent, because which of the two people the link names is not decidable from the documents. An `update` that sets `superseded_by` is exempt, since it retires a link; an `append` is never exempt, whatever `superseded_by` it carries | Refuses **0 of 323** committed confident/probable fixture entries. Over the 323 committed fixture and e2e documents (10,086 confident/probable links) the place arm refused **1,067** with `compatiblePlace` alone, almost all one place written with and without its country, and refuses **138** with the alignment above, nothing it did not refuse before (2026-10-12). The four scopings and what each removed are in `guardrail-enforcement-spec.md` §8. Replaces three prose attempts and one self-declared field, each measured not to bind (`ut_person_evidence_012`, `_024`). The two-party arm adds 11 refusals over 302 committed fixture and e2e documents (9,736 confident/probable links), every one already refused for that persona by the one-party arm; running its place arm too would add 247, every one a less specific place that `compatiblePlace`'s country-first comparison reads as a contradiction |
-| `person_evidence` append/update → `confident` | rejected when the linked assertion's `value` carries an uncertain reading (`[?]`) **and** no other live `person_evidence` row ties that `person_id` to a distinct record. Conjunctive on purpose: a `confident` link off a single *clean* record is the ordinary case and stays legal | audit theme 8; `record-extractor.md` epistemic cap |
+| `person_evidence` append/update → `confident` | rejected when the linked assertion's `value` carries an uncertain reading (`[?]`) **and** no other live `person_evidence` row ties that `person_id` to a distinct record. Conjunctive on purpose: a `confident` link off a single *clean* record is the ordinary case and stays legal | audit theme 8; `record-extractor.md` (since retired) epistemic cap |
 | `proof_summaries` append/update setting `tier: proved`/`disproved` | the referenced question must already carry `search_stop.stopped_because` set to a stop-gate value (`question_answered`, `record_exhausted`, or `nothing_further_reachable`) **as of the start of this call**. Renamed from `exhaustive_declaration.declared === true` (2026-10-07) | `guardrail-enforcement-spec.md` §5; `proofSummaryInvariants` |
 | `proof_summaries` append/update, **any tier** | when the summary's question carries a `search_stop.stop_criteria.conflict_resolution` claiming a conflict was resolved (positive resolution language; an honest "no conflicts" or a sentence opening by negating a resolution does not claim one), **`conflicts[]` must hold a record of it**: a settled (`resolved`/`moot`) conflict cited on this summary's `resolved_conflict_ids` or naming this question in `blocks_question_ids`; or the `c_` id the stop-criterion names, at any status; or, when it names none, any `conflicts[]` entry. Read from the **live** document, so a conflict recorded earlier in the same batch satisfies it, and scoped to the summary written, never the whole document. It asks whether the conflict was persisted, not whether it was resolved: a `not_proved` summary over a recorded, open conflict passes. The refusal names the question, quotes the stop-criterion and points at conflict-resolution, the sole writer of `conflicts[]`; it never suggests rewording the stop-criterion. Labelled cases, shared with the harness detector it graduated from: `packages/engine/mcp-server/tests/guard-cases/unpersisted-conflict-resolution.json` | `guardrail-enforcement-spec.md` §5; `unpersistedConflictResolutionInvariants` |
 | `questions` append/update touching **either** `status` or `search_stop` | `status: "exhaustive_declared"` requires `search_stop.stopped_because` to be a stop-gate value (`question_answered`, `record_exhausted`, or `nothing_further_reachable`). Checked on the post-merge entry (**live**, not snapshotted): the declaration and the status are two halves of one author's own step, and 123 of 125 corpus ops set both in the same op. Gated on EITHER field, because the invariant couples two and an op touching one can break it without naming the other — the agent's own re-invocation path sets a non-gate `stopped_because` value and leaves `status` alone. Renamed from `exhaustive_declaration` (2026-10-07) | A zero-violation arm: **0 of 125** corpus ops refused. The converse (gate-value ⇒ status) has been asserted by the unit validator since it shipped and nothing asserted this direction, which is the one that leaves a question looking finished with no declaration behind it. ADR-0011 |
@@ -1053,10 +1057,10 @@ that did nothing.
   a run that draws 1 assertion from 13 sources does not warn; that
   partial-extraction shape is out of scope for this warning.
 - **Tool-neutral, because it fires for `extraction_append` too.**
-  `extraction_append` routes through `researchAppend` (§11), and its
-  `record-extractor` caller is denied `research_append`, so the message names no
-  specific write tool — it says "append the assertions this evidence supports,"
-  correct whether the caller reaches for `research_append` or `extraction_append`.
+  `extraction_append` routes through `researchAppend` (§11), and `research_append`
+  refuses every assertions write from a caller except an `informant_bias_notes`-only
+  update, so the message names no specific write tool — it says "append the
+  assertions this evidence supports," which only `extraction_append` can now do.
 - **Warnings can be rationalized away.** This surfaces the imbalance; it does not
   compel extraction (`guardrail-enforcement-spec.md` §2). It is the proportionate
   first lever, not the last word.
@@ -1165,6 +1169,27 @@ A **warning** — never a rejection — emitted when this call's `assertions`
   several, and the one-assertion backlink would be the wrong shape for it.
 
 ---
+
+### 5.4 Transcription-without-a-page nudge (warning, not a precondition)
+
+A `sources` op that lands a non-empty `transcription` with no `image_filename`
+emits one `validation.warnings` line naming the source id and where the value
+comes from (`imageRef`, which `image_read` / `image_transcribe` return when
+called with a `projectPath`). A transcription is a claim about a page, and the
+page it came from is normally nameable.
+
+**Never a refusal**, and the reason is not squeamishness: two legitimate shapes
+reach here with no filename — a PDF capture, and an `image_transcribe` run with
+no `projectPath`, which stages nothing and so has no file to name. Refusing
+either would block correct work to catch a documentation gap.
+
+Fires on `update` as well as `append` — a transcription added later is the same
+gap — and reads the PERSISTED entry rather than the op's `fields`, so an update
+setting only `transcription` is judged against the `image_filename` already on
+disk instead of re-warning about one that is there. One line per offending
+entry, so a batch sourcing several records names each.
+
+Marked advisory in `guardrail-enforcement-spec.md`'s instrument table.
 
 ## 6. Decisions recorded
 
@@ -1305,12 +1330,10 @@ dispatch in `src/index.ts`, name in `manifest.json` (packaging drift test enforc
 parity). Reuses `atomicWriteJson` + `validateParsed`; share the per-prefix max-id
 helper with `tree_edit`/the merge core (lift `maxIdNum` to a shared util).
 
-Consumers — the skills whose hand-written section writes it replaces
-(`record-extraction` reaches this machinery through `extraction_append`, §11,
-not through `research_append` itself):
-`record-extraction` (sources + assertions + classification field updates —
-classification merged from the former assertion-classification skill,
-2026-07-11), `person-evidence` (`pe_` links + supersede), `conflict-resolution`
+Consumers — the skills whose hand-written section writes it replaces. Extraction
+(sources + assertions) reaches this machinery only through `extraction_append`
+(§11), never through `research_append` itself, which refuses every assertions write
+from a caller except an `informant_bias_notes`-only update: `person-evidence` (`pe_` links + supersede), `conflict-resolution`
 (conflict append + resolve), `hypothesis-tracking`, `research-exhaustiveness`
 (search_stop), `question-selection`/`research-plan` (questions, plans,
 plan-items), `proof-conclusion` (question resolution). Their SKILL.md rewrites are a
@@ -1321,10 +1344,11 @@ this tool's landing.
 
 ## 11. `extraction_append` — the lane-scoped variant
 
-`extraction_append` is this tool restricted to the two sections the
-`record-extractor` agent owns: **`sources` and `assertions`**. Same
-implementation, same input surface, same validate-once/write-once semantics; the
-other eleven sections are simply not reachable through it.
+`extraction_append` is this tool restricted to two sections: **`sources` and
+`assertions`**. Same writer underneath (`researchAppend` with a section gate) and
+same validate-once/write-once semantics, but not the same input surface: it takes
+no hand-built ops, only `recordIds`, `documents` or `absences` (§11.6–§11.7), and
+code builds the ops. The other eleven sections are simply not reachable through it.
 
 **"Same implementation" includes the tree writes.** Two behaviours reach
 `tree.gedcomx.json` through this tool, and both are `research_append`'s,
@@ -1333,7 +1357,7 @@ entry, and an `assertions` `update` op rewrites the tree fact minted from that
 assertion (§3.1). Neither is a widening of the lane — the sections this
 tool may write are still `sources` and `assertions` — but both mean a successful
 `extraction_append` can return `tree.gedcomx.json` in `filesWritten`. The
-ownership manifest deliberately does **not** name `record-extraction` as a
+ownership manifest deliberately names no skill or agent as a
 `tree.gedcomx.json`/`persons` caller for it: a skill-granular grant would also
 authorize adding an unsourced person and setting `primary`. The two tools are
 authorized there by TOOL identity instead, and only for the rewrite's own delta. The rewrite is not a rare path here: of the
@@ -1361,8 +1385,9 @@ Three ways to express a lane, and only one holds:
 | A parameter on the tool input | **No** — the caller supplies the input, so it can widen its own lane |
 | Tool identity | **Yes** — the agent's `tools:` frontmatter omits the broad writer, so there is no call it can emit |
 
-The lane is therefore the *tool*, and the extractor's frontmatter simply omits
-`research_append`. **The omission is the whole mechanism.** This spec used to say
+The lane is therefore the *tool*, and the extracting agent's frontmatter simply omits
+`research_append` (today `record-structurer`, which holds `extraction_append` and
+`sidecar_read` only; the `record-extractor` agent, since retired, did the same). **The omission is the whole mechanism.** This spec used to say
 the opposite — that a deny is enforced under
 `permission_mode="bypassPermissions"` and "an omission alone is not." Probed
 2026-08-30 against Claude Code 2.1.220 / SDK 0.2.128 (`make
@@ -1477,7 +1502,7 @@ Since 2026-09-01 the plugin's `PreToolUse` hook carries `person_evidence` in
 that hook reaches production — Cowork and hosted both. The rule denies unless
 the caller is the `person-evidence` agent, and the main thread has no `agent_id`
 key at all, so a router's own append resolves to the empty caller and is
-refused. Prose in `record-extraction/SKILL.md` is no longer the only mitigation.
+refused. Prose in `record-extraction/SKILL.md` (since retired) stopped being the only mitigation.
 
 What is still open is one call earlier, and it is not a `research_append`
 problem: `owner_denied` inspects only `research_append`, so `materialize_facts`
@@ -1489,7 +1514,7 @@ enforcement point for identity.
 
 One behavior *does* surface for `extraction_append`: the sources-without-
 assertions nudge (§5.1) fires whenever a call leaves ≥3 sources and zero
-assertions, including calls the `record-extractor` agent makes here — which is
+assertions, including calls made through `extraction_append` — which is
 why its message names no write tool.
 
 `match_score` also remains fabricable by `person-evidence` itself. It is not
@@ -1589,3 +1614,568 @@ server entry (`apps/server/proto/worker/options.py`), so on that path the bound 
 is never set in production: the Beanstalk packaging guard refuses any
 `GENEALOGY_DEBUG_*` variable in an `eb-web`, `eb-worker` or `eb-tools` template
 (`DEV_PREFIXES`, `scripts/eb_bundles/layout.py`).
+
+### 11.6 Extractor mode — a FamilySearch record extracted in code
+
+> **Removed:** the `logEntryId` mode described in the next paragraph no longer
+> exists. `extraction_append` now rejects `logEntryId`, `recordId` and `ops`, and
+> takes only `recordIds`, `documents` or `absences`; the FamilySearch path is the
+> `recordIds` batch below. The paragraph is kept as the record of how it worked.
+
+Supplying `logEntryId` switched `extraction_append` out of the ops form: it
+resolves the record from that log entry's sidecar, decides roles, the three
+classification layers and every assertion **in code**, and persists the source
+plus the assertions through the ordinary writer. Sending `logEntryId` and `ops`
+together is refused naming both — they describe the same write from opposite
+ends, and preferring one silently would make the ignored half invisible.
+
+**Why code.** Measured over the committed e2e corpus: across repeat runs of one
+fixture the model gives the same persona the same exact role only 62.9% of the
+time (81.8% by role class), and disagrees with itself on `record_basis` 15.6%,
+`informant_proximity` 22.6% and `information_quality` 21.4%. Code is identical
+every time.
+
+**The input must be a LIVE `record_read` sidecar.** `record_read` returns early
+through `readFromSidecar` whenever `resultsRef` is supplied, and that path stages
+nothing; only the live branch stages. And a `record_search` response populates
+`fields[]` for the **searched persona only** — every co-resident comes back with
+names and facts and nothing else, measured 1-of-6, 1-of-8 and 1-of-4 across three
+census collections against 6/6, 8/8 and 4/4 from the raw `record_read` body. A
+search sidecar therefore cannot feed a per-person role rule. Evidence:
+`packages/engine/mcp-server/dev/probe-census-persona-fields.ts`.
+
+**What that costs, stated rather than assumed.** Requiring a live read adds one
+FamilySearch round trip per record that a search had already returned. What it
+removes is a `record-extractor` spawn: about 136 s per document, 82% of it model
+reasoning, and 2.10 spawns per run across the committed corpus. The trade is
+heavily favourable — a round trip against an episode — but it is a real addition
+on a card whose warrant is turns and latency, and a reader should see both
+numbers rather than only the saving.
+
+#### The batch call shape (lead, 2026-09-29): `recordIds` and `absences`
+
+The FamilySearch path is **one call**: `extraction_append({ projectPath,
+recordIds, questionIds?, absentPersons? })`. It replaces the three-turn
+`record_read` → `research_log_append` → `extraction_append` sequence. The
+`logEntryId` mode above was its predecessor and has been removed, together with
+the `record-extraction` skill that called it.
+
+In order:
+
+1. **Resend skip, first.** Before any read or log write, each id is looked up
+   by `sourceIdsForRecordIds`, the one derivation of "already extracted" that
+   §3.4.1's reuse detection also uses. An id with a source is skipped and named.
+2. **Reads,** in parallel, through `record_read`'s own live code with
+   `projectPath`, so staging is identical. A read that errors, or returns
+   `staged: null`, is reported and skipped; the others proceed.
+3. **One `research_log_append` batch** logs every read (`tool: "record_read"`),
+   finalizing each staged file into its sidecar. A record an accepted
+   FamilySearch hint already logged is the exception: the
+   positive `person_record_matches` entry naming its ark, which no assertion
+   cites yet, is the record's own log entry. The record is still read and
+   staged, but no second `record_read` entry is written; the source and
+   assertions cite the hint's `logId`, and the assertions carry a null
+   `record_persona_id`, because that entry keeps no sidecar for a persona id to
+   resolve against (§3.5). A rejected hint, a hint for another record, and a
+   hint an assertion already cites are not reused. Without this the hint's
+   entry would never be referenced by an assertion, and the router's
+   "log entry with no assertion referencing it" row would send the record back
+   to extraction on every pass.
+4. **One `research_append` call per record.** `research_append` accepts exactly
+   one sources append per call, so there is no batch-wide write. A refusal on
+   record *k* leaves the records before it written; the resend skip makes a
+   corrected resend of the whole batch safe.
+
+`absentPersons` entries carry a `recordId`, naming the record the person was
+expected on.
+
+**`absences`** records people a search expected and did not find, when there is
+no record to extract (genealogist ruling, 2026-09-30). Each entry is
+`{ collection, place?, name, note?, logEntryId, questionIds?, repository?,
+sourceClassification? }`. The nil search's log entry must already exist and is
+not written again.
+
+`sourceClassification` says what was searched (genealogist ruling,
+2026-09-30, option B): `derivative` (the default) for an index search, and
+`original` when the page images themselves were browsed, which is stronger
+negative evidence.
+
+Each nil search is **its own source**: the assertion's `record_id` is
+`<collection> [<logEntryId>]`. §3.4.1's reuse detection keys on `record_id`,
+so keyed on the collection alone, an index search and a later image browse
+would merge, and the second would overwrite the first's classification. One
+log entry given two classifications is refused.
+
+Code writes one source per (collection, log entry), and one negative
+assertion per person with the fixed classification a negative always takes:
+`record_role: "absent"`, `record_basis: "absent"`, informant "the researcher"
+at `researcher`, `indeterminate`.
+
+**Return:** `{ ok, records: [{ recordId, status, srcId?, logId?, summary,
+errors?, warnings? }] }`. `status` is one of `extracted`, `already_extracted`,
+`read_failed` or `refused`. `summary` is written by code (`summarizeExtraction`)
+for the caller to relay verbatim. It covers what the record is; its event date
+and place; each person by role, with the facts written about them; computed
+values marked; parent-birthplace claims labelled with how many lines state
+them; a differently-surnamed household head as a lead; notes; and a count of
+defaulted classifications. `ok` is true when at least one record was extracted
+or found already extracted.
+
+The reader is injected (`runExtractionAppend(input, deps, principal)`), so the
+eval harness can serve `record_read` fixtures. It is a function parameter, not
+a schema field, so no model can reach it.
+
+#### The census relationship-column year table
+
+| Jurisdiction | Schedule states a relationship from |
+|---|---|
+| United States | **1880** |
+| England and Wales | **1851** |
+
+Hard-coded, by lead ruling 2026-09-27, and decided from jurisdiction and year —
+**never** from whether `PR_RELATIONSHIP_TO_HEAD` is populated. A jurisdiction not
+in the table returns `null`, and the caller treats relationships as unstated,
+which withholds assertions rather than inventing them.
+
+Reading the field's presence instead is not a near-miss, it is wrong on a real
+and common record: the **1870 US census has no relationship column, yet the
+FamilySearch index supplies `PR_RELATIONSHIP_TO_HEAD="Head"` on 8 of 8 probed
+records**. A presence-keyed rule would call 1870 a stated-relationship census and
+emit parent-child assertions the schedule never made. The converse is equally
+real — a blank indexer cell on one person of an 1880 household looks identical to
+a schedule with no column.
+
+Corroborated where the table does apply, one household per collection: the field
+is on 6/6 US-1880 personas, 4/4 E&W-1861, and 0/8 US-1850. The boundary years the
+table actually turns on — E&W 1851, E&W 1841, and 1880 from the 1870 side — rest
+on the ruling, not on that probe, which read 1861 and not 1851.
+
+#### Roles
+
+Per household, grouped by `SOURCE_HOUSEHOLD_ID_ORIG` — a record can hold more
+than one — and ordered by `FS_SORT_KEY`, then `SOURCE_PERSON_NBR_ORIG`, then
+`PR_EXT_LINE_NBR_ORIG`, then array order.
+
+`FS_SORT_KEY` is the ordering key and `SOURCE_PERSON_NBR` is not, though the
+latter is the obvious candidate: it is **absent on US 1850 and E&W 1861**, which
+are exactly the no-relationship-column schedules the positional rule exists for.
+The sort key was present on 24/24 probed households and ends in a zero-padded
+person ordinal matching `SOURCE_PERSON_NBR_ORIG` wherever both exist. **The sort
+was never observed to differ from array order** (0 of 24); it is kept because the
+issue reports array order is sometimes scrambled, which that sample neither
+reproduces nor refutes.
+
+- **Census WITH the column** — read the stated relation: Head/Self →
+  `head_of_household`, Wife → `wife`, Son/Daughter → `child_N`, Boarder →
+  `boarder_N`, otherwise the stated relation, numbered.
+- **Census WITHOUT the column** — first in order is `head_of_household`; the next
+  adult of the opposite sex sharing the head's surname with a plausible age gap is
+  `wife`; later persons with the head's surname young enough to be the couple's
+  are `child_N`; everyone else is `household_member_N`. The same tokens a later
+  census states, per the 2026-09-27 ruling. "First is the head" is measured, not
+  assumed: where a probed record stated a Head at all, it was the sort-first
+  person in 8 of 8 households.
+- **Marriage** — the Couple edge **carrying the Marriage fact** is the marrying
+  pair (a marriage record routinely states the parents' marriages too, and the
+  parents' edge is often listed first); their ParentChild edges give
+  `father_of_groom` and siblings of that form; everyone else `witness_N`.
+- **Death / burial** — principal → `deceased`; parents and grandparents from
+  edges; everyone else `other_N`.
+- **Birth / christening** — principal → `child`; parents and grandparents from
+  edges; everyone else `other_N`.
+- **Draft registration** — principal → `registrant`.
+
+`record_role` is an **open** enum, so these need no closed-enum migration; the
+`record_role_recommended` description lists them.
+
+#### Relationship assertions
+
+A census's relationship claims come from the **stated column** or from nowhere.
+Its `relationships[]` edges are the indexer's reading of household position —
+the same inference the positional rule makes — so **no census persists an edge**.
+Pre-1880 that is the no-relationship-assertion rule verbatim; on an 1880 record it stops
+the stated tie and the inferred edge being written twice for one marriage.
+
+Every relationship assertion carries `structured_value.related_person_role`, or
+`materialize_facts`' persona arm cannot corroborate it, and a
+`relationship_type` naming the **record subject's own** role — the direction
+§5's relationship row enforces.
+
+The extractor **never** emits the literal `record_role: "absent"`. Negative
+evidence is a claim about a person the record does not contain, which no document
+can supply; the caller passes `absentPersons` and those entries are built from it.
+
+#### Classification
+
+Keyed on record type × role family × fact class. Measured against the 255
+`expected_classifications` cells in the 19 unit fixtures that pin them: 249/255
+agree. **That figure is in-sample** — the table was built by reading the same
+cells the eval checks, so it states internal consistency, not predictive
+accuracy.
+
+| Record type | Fact class | informant | proximity | quality |
+|---|---|---|---|---|
+| census | residence / the census event | census enumerator | `witness` | `primary` |
+| census | everything else | unknown household member | `household_member` | `indeterminate` |
+| census | a parent's birthplace, from the parent-birthplace columns (see below) | unknown household member | `household_member` | `secondary` |
+| marriage | a party's or parent's facts | the party | `self` | `primary` |
+| marriage | a witness's facts | the witness | `witness` | `primary` |
+| death | the death event | the certifying official | `official_duty` | `primary` |
+| death | the cause of death, and the last illness's duration | the certifying physician | `official_duty` | `primary` |
+| death | the decedent's biography | the personal informant | `family_not_present` | `secondary` |
+| burial, church register | the burial event | the officiant | `official_duty` | `primary` |
+| burial, church register | everything else | unknown | `unknown` | `indeterminate` |
+| burial, cemetery or grave index | anything | unknown | `unknown` | `indeterminate` |
+| christening | the christening event | the officiant | `official_duty` | `primary` |
+| christening | a godparent's or sponsor's facts (any non-family party) | the officiant | `official_duty` | `primary` |
+| christening | everything else | the presenting parent | `household_member` | `primary` |
+| birth | anything, the birth included | the informant (usually a parent) | `household_member` | `primary` |
+| birth, delayed (title says "Delayed") | anything | the informant | `household_member` | `secondary` |
+| **anything else** | **anything** | **unknown** | **`unknown`** | **`indeterminate`** |
+
+**Parent-birthplace columns** (genealogist ruling, 2026-09-30). A census with a
+relationship column also carries "father's birthplace" and "mother's
+birthplace" on each person's line. These are written **only when that parent
+is in the household**, as a birth-place assertion on the parent's own persona.
+They are always `secondary`, because no household respondent could have
+witnessed a parent's birth. The parent is matched from the stated relation
+alone:
+
+- a son or daughter of the head: the head, or the head's spouse, by sex;
+- the head: the member stated "father" or "mother";
+- the head's wife: the member stated "father-in-law" or "mother-in-law".
+
+Anyone else (grandchild, stepchild, boarder) writes nothing. So does a parent
+who is missing or matched more than once, and the summary says how many
+columns went unwritten. Identical claims about one parent collapse into **one**
+assertion, which names how many lines state it: repeated cells from one
+respondent are one piece of evidence. The parent's own-line birthplace is still
+written separately, so where the two disagree the record is seen disagreeing
+with itself. The captured 1880 household does exactly that: its twelve children's
+columns give the father's and mother's birthplaces the reverse way round from
+the parents' own lines.
+
+The burial rows are real rows, not the default, so neither is listed as a gap.
+A cemetery or grave index names no informant at all (a funeral director is an
+informant only on a death certificate that names one). On a church burial
+register, the officiant recorded the burial they conducted, so the event is
+theirs, as on the christening row (genealogist ruling, 2026-09-29). The two are
+told apart by collection title, in `burialSourceKind`: cemetery words win, then
+church words (`church`, `catholic`, `parish`, `diocese`, `Kirchenbücher`,
+`Burials`, …), and a title matching neither is read as an index, since `unknown`
+claims less. Over the 20 burial-typed scorer-corpus records, that gives 12
+indexes (Find a Grave 11, Chile Cemetery Records 1) and 8 registers.
+A record carrying **both** a Death and a Burial fact is typed by its collection
+title, because both shapes are common: a burial index states the death date, and
+a death certificate states the burial. 20 of the 319 role-scorer corpus records
+carry both. Find a Grave (11) and Norway Burials (2) are burial indexes, and NYC
+and Texas Deaths are death records.
+
+The census row is `household_member` and never `self` because a pre-1940 census
+does not record who answered. The christening row is never `self` because a
+christened infant cannot report.
+
+The christening and birth rows are the genealogist's rulings (2026-09-30):
+
+- **Birth vs christening.** A civil registrar recorded the birth but did not
+  witness it, so a birth record's birth comes from its informant, not the
+  official.
+- **Godparents.** They are recorded by the officiant. Every non-family party on
+  a christening takes that row, because the index does not label a godparent
+  apart from a witness.
+- **Delayed records.** A delayed birth record is recollection filed long after
+  the birth, so it is `secondary`. It is told apart by its collection title.
+  The scorer corpus holds no delayed title, so that match rests on the title
+  alone.
+
+**A defaulted row is named in the output.** Every assertion that took the last
+row rather than a real one is listed in the result and echoed into
+`validation.warnings`. This is load-bearing rather than tidy: `unknown` switches
+off `contradictionIsCredible`, so a silently-defaulted row weakens a guard on
+exactly the record types — probate, obituary, military — where the informant is
+often knowable. About 10% of corpus assertions are on types with no row today;
+genealogists add rows over time, and a missing one must show up.
+
+**The medical section is the physician's** (genealogist ruling, 2026-09-30).
+The law required the attending or examining physician to complete the cause of
+death, so it takes their row even though the FamilySearch index rarely names
+them. Everything else on the certificate stays the personal informant's.
+
+`record_basis` is `stated` for anything the record puts in a field. The one
+`inferred` value is a birth **year** computed from a stated age — and because
+FamilySearch folds that year and the birthplace into one `Birth` fact, the
+extractor splits them: the place is its own `stated` assertion, the year its own
+`inferred` one at `date_certainty: "approximate"`. They cannot share a basis.
+
+Which birth years are computed (genealogist rulings, 2026-09-30):
+
+- **A census:** a bare year (`1845`, `about 1845`) is computed. A date carrying a
+  month (`January 1845`, from the 1900 schedule's month-and-year column) was
+  written on the schedule, and is `stated`.
+- **A death or burial record:** a bare birth year is computed from the age at
+  death.
+- **A marriage record:** a bare birth year is computed only where the party's age
+  is on the record and the year is the marriage year less that age, give or take
+  one. Otherwise it is `stated`: a register can record a year, and nothing shows
+  this one is arithmetic.
+- **A birth or christening record:** the date is the record's own event, and is
+  `stated`.
+
+**Couple events.** A FamilySearch marriage index carries the marriage on the
+Couple relationship, not on either person. Each fact there is written once per
+spouse, through the same rows as a persona fact.
+
+**`source_classification` is `derivative`, always.** What was read is
+FamilySearch's index of the record, not the schedule or register; `original`
+would claim an examination that did not happen. A researcher who then reads the
+page image has examined the original and may upgrade it — a later, evidenced
+edit, not this tool's guess.
+
+#### Return
+
+`extraction`: the record type, `censusStatesRelationships` for a census, the
+assertion count, the distinct roles assigned, and any notes. The caller never
+sees the record, so reporting the extraction is its job and `results[]` alone
+would say how many entries landed without saying what they say.
+
+### 11.7 Document mode — unindexed sources extracted in code
+
+> **Status:** specified, not built. It lands in the same merge to `main` as §11.6's call shape (lead, 2026-09-29).
+
+§11.6 extracts FamilySearch records. Document mode runs **the same extractor** on
+sources with no index: image transcriptions, full-text hits, external sites,
+pasted prose. The `record-structurer` agent (`record-structurer-agent-spec.md`)
+reads the text and builds one **document** per source. This tool validates each
+document, turns it into an `ExtractDocument`, runs `extractRecord`, and writes
+the result. Roles, the three classification layers, field expansion and the
+census relationship doctrine are therefore one code path, indexed or not.
+
+**One call per batch.** The agent sends every source it read in one call, and
+the tool writes them all. Nothing calls `research_log_append` first: **this tool
+writes the log entry** for each source, as it does on the FamilySearch path
+(§11.6). It is a writer of the `log` section, with its row in
+`docs/specs/schemas/ownership.json`.
+
+**Entered on `documents`.** Sending `documents` together with `recordIds` (the
+FamilySearch path), `absences`, or the older `logEntryId` / `ops` forms (which
+the same merge removes) is refused, naming what was sent.
+
+**Inline, not staged.** A model cannot stage a sidecar. `results_ref` is
+host-written only (`finalizeStagedResults` in `results-staging.ts`), so each
+document travels as a tool parameter.
+
+#### Inputs
+
+| Parameter | Required | Meaning |
+|---|---|---|
+| `documents` | yes | A non-empty list, one entry per source: `{ recordId, document, transcriptionRef?, imageFilename? }`. |
+| `documents[].recordId` | yes | The `capture:<descriptive>`, `ancestry:<collection>:<id>` or ARK that identifies the source. |
+| `documents[].document` | yes | The document below. |
+| `documents[].transcriptionRef` | no | The `results/` ref of the `StagedTranscription` the agent read. The tool finalizes it into this source's log entry (`tool: "image_transcribe"`, `stagedResultsRef`), and copies its `transcription` into the source entry, so no model re-emits the page text. |
+| `documents[].imageFilename` | no | Written to the source's `image_filename`. It is `image_transcribe`'s `imageRef`, relayed. §5.4's warning still fires when a transcription lands without one. |
+| `questionIds` | no | Stamped on every assertion in the batch, as in §11.6. |
+| `absentPersons` | no | Expected-but-absent persons, keyed by `recordId`, as in §11.6. |
+
+A source with no `transcriptionRef` (pasted prose, PDF text, external-site text)
+is logged `tool: "user_provided"` with no sidecar.
+
+**Validated before any write.** Every document is validated before anything is
+written: one malformed document refuses the call, naming its index and JSON
+path, and writes nothing. After validation, the writes are §11.6's. There is one
+log batch, then one `research_append` per source, so a refusal on document *k*
+leaves the earlier ones written. The resend skip (a `recordId` that already has
+a source is skipped and named) makes a corrected resend of the whole batch
+safe.
+
+#### The document
+
+camelCase at the wire, like every tool parameter. The GedcomX-subset keys are
+chosen to be single words (`type`, `date`, `place`, `value`, `given`,
+`surname`, `gender`), so no key has a casing to get wrong.
+`additionalProperties: false` at **every** level.
+
+```
+document: {
+  recordType:   RecordType,            // closed: record-extract.ts's union, plus "obituary"
+  recordLabel?: string,                // free text for the citation: "probate packet", "county history"
+  documentForm: "page_image" | "verbatim_transcript" | "index_entry" | "abstract" | "compiled_work",
+  census?:      { jurisdiction: string, year: number },   // required iff recordType is "census"
+  source: {
+    title: string, repository: string,
+    creator?: string, created?: string, locator?: string, url?: string, notes?: string,
+  },
+  informant?:   { name: string, relation?: string },       // an informant the text NAMES
+  persons: [{                          // IN SOURCE ORDER — array order is enumeration order
+    id: string,                        // local only; relationships refer to it
+    principal?: true,
+    household?: string,                // only when one text covers several households
+    names:  [{ given?: string, surname?: string, uncertain?: true, note?: string }],
+    gender?: "male" | "female",
+    statedRelation?: string,           // the text's own word: "son", "wife", "daughter-in-law", "consent signer", "neighbor"
+    fatherBirthPlace?: string,         // a census's parent-birthplace columns, as written on this person's line
+    motherBirthPlace?: string,
+    facts:  [{
+      type: string,                    // "birth", "death", "residence", "occupation", "age", "marital_status", …
+      value?: string, date?: string, place?: string,
+      computed?: ("value" | "date" | "place")[],   // which attributes the text does NOT give
+      uncertain?: true,                // the reading is doubted: [?] stays in the value; no layer changes
+      note?: string,
+    }],
+  }],
+  relationships?: [{ type: "couple" | "parent_child" | "sibling", person1: string, person2: string, note?: string }],
+  absentPersons?: [{ name: string, factType?: string, note?: string }],
+}
+```
+
+**This is a superset of a sidecar, not the same shape.** A sidecar has none of
+`recordType`, `documentForm`, `census`, `computed`, `uncertain` or
+`statedRelation`. It carries a collection title instead, and `SimplifiedFact`
+has no stated/computed field. The adapter builds an `ExtractDocument` and
+passes these fields to `extractRecord` **alongside** it, as a document-mode
+options argument. The shape is never widened to fit them.
+
+**What the document cannot say** is the reason it exists. It has no key for
+`record_role`, `record_basis`, `informant_proximity`, `information_quality`,
+`informant`, `source_classification` or `record_persona_id`, so a model that
+tries to classify is refused by the schema. It is not left to a prompt.
+
+#### Validation — reject, write nothing
+
+`{ ok: false, errors }` names the JSON path, as the ops form does. It refuses:
+
+- any unknown key, at any depth — the classification fields above included;
+- `recordType` or `documentForm` outside its enum;
+- `recordType: "census"` without `census`, or `census` on anything else;
+- a person with no `names[0]`, or a name with neither `given` nor `surname`;
+- a relationship naming an `id` not in `persons`, or naming one person twice;
+- a `computed` entry naming an attribute the fact does not carry;
+- an empty `persons`.
+
+#### What code decides from the document
+
+| Decision | From | Rule |
+|---|---|---|
+| record type | `recordType` | Taken as given. `detectRecordType` is not run: there is no collection title to read. |
+| census column | `census.jurisdiction`, `census.year` | `censusStatedRelationships`, unchanged. When the table says the schedule had no column, every `statedRelation` is **ignored and named in `notes`**. A model cannot bring a relationship in through a column the schedule did not have. |
+| order | array order of `persons` | Replaces `FS_SORT_KEY`. |
+| roles | `recordType`, `principal`, `statedRelation`, relationships | §11.6's rules. Where those name a party only as `other_N` or `witness_N`, a `statedRelation` is mapped through `roleFromRelationship` instead: `son_in_law_1`, `consent_signer_1`, `neighbor_1`. An `obituary` principal is `deceased`. |
+| `record_basis` | `computed` | `inferred` for a computed attribute, `stated` otherwise. A fact whose attributes differ in mark is **split**, one assertion per group. This is §11.6's birth split, now keyed on the mark and no longer on record type. |
+| `date_certainty` | `computed` includes `date` | `approximate`. |
+| information layer | the §11.6 table | The table keyed on record type × role family × fact class, with one document-only override: `informant.name`, when present, replaces the table's generic informant string. **`uncertain` changes no classification** (genealogist ruling, 2026-09-30): information quality measures what the informant knew, not how well the page was read. The doubt stays in the `[?]` in the value and in `informant_bias_notes`. |
+| `informant_bias_notes` | `note` | Copied verbatim. |
+| `source_classification` | `documentForm` | `compiled_work` → `authored`. **Everything else → `derivative`** (genealogist ruling, 2026-09-30). A transcript someone else made is a step from the original and can carry copying errors. A page image reaches this path only as `image_transcribe`'s machine transcription, which can misread. `documentForm` is still recorded in the source's `notes` (e.g. "read from a machine transcription of the page image"), so it is clear what was examined. Nothing on this path is `original`. |
+| relationship assertions | `relationships` | §11.6's arms, plus `sibling`. Census: none from edges, as §11.6. |
+| `record_persona_id` | — | **Never set.** Local ids name nothing outside the document. |
+| negative evidence | both `absentPersons` lists | Merged. The caller's entries come first, and duplicates by `name` are dropped. |
+
+#### Classification rows this path adds
+
+The §11.6 table gains the rows this path needs. They are code and ship with it,
+and no genealogist sign-off gates them.
+
+| Record type | Fact class | informant | proximity | quality |
+|---|---|---|---|---|
+| obituary | **recent family knowledge:** the decedent's name, the death date and place, residence at death, the funeral and burial (date, place, cemetery), the surviving spouse's name, and each survivor's name and residence | the obituary's author (usually unnamed family) | `household_member` | `indeterminate` |
+| obituary | **life history:** birth, parents, the marriage date, occupation, military service, church membership | the obituary's author | `family_not_present` | `secondary` |
+| probate | **the will's own statements**: the testator's relationships to heirs, heirs' names, residence, bequests | the testator | `self` | `primary` |
+| probate | the will's execution (signing date and place) and the witnesses' names | the witnesses | `witness` | `primary` |
+| probate | the court's acts: will proved, letters granted, date and court | the court clerk | `official_duty` | `primary` |
+| probate | a petition's or administration's statement of the death (date, place) | the petitioner (executor or administrator) | `household_member` | `indeterminate` |
+| probate | heirs named in an intestate petition | the petitioner | `household_member` | `primary` |
+| newspaper announcement | **the announced event and its people**: the principals' names and residences, the date and place, officiant, attendants and guests, the parents' names | the announcement's submitter (usually unnamed family) | `household_member` | `indeterminate` |
+| newspaper announcement | **life history**: the principals' birthplaces and birth dates, education, occupations, earlier residences | the announcement's submitter | `family_not_present` | `secondary` |
+
+When `informant.name` is present it replaces the generic informant string, as
+on every row.
+
+The newspaper-announcement rows (birth, engagement, wedding and anniversary
+notices; obituaries have their own) are the genealogist's ruling (2026-09-30),
+following the obituary split. The parents' names sit with the event: the
+submitting family knows them firsthand, as with a surviving spouse's name.
+`newspaper_announcement` joins the `RecordType` union.
+
+**Roles and obituary corners on this path** (genealogist ruling, 2026-09-30):
+
+- **The principal's role:** `deceased` on an obituary. On probate, `testator`
+  when the file holds a will and `decedent` when it is intestate. On a
+  newspaper announcement, the event's subject: `child` for a birth, `bride` /
+  `groom` for an engagement or wedding, `husband` / `wife` for an
+  anniversary, and `principal` otherwise.
+- **Other parties' roles** come from `statedRelation` through
+  `roleFromRelationship` (son → `child_N`, daughter-in-law →
+  `daughter_in_law_N`, executor, `heir_N`, `witness_N`). A party the text
+  gives no relation for is `other_N`.
+- **A couple's parents** on a wedding, engagement or anniversary notice are
+  named by side, as on an indexed marriage: `father_of_groom`,
+  `mother_of_bride`, `father_of_husband`. Without it, two stated fathers were
+  `father` and `father_1`, with nothing saying whose each was.
+- **Obituary corners:** the decedent's residence at death is recent family
+  knowledge, and **earlier** residences are life history (a residence dated
+  before the death year). A **predeceased** spouse's or child's name is life
+  history. The **parents' names** are life history.
+
+**Interpretations the genealogist confirmed** (2026-09-30), where the rows
+above leave a case open:
+
+- Intestate probate: a fact other than a name, a relationship or the death
+  (e.g. the decedent's residence) is the petitioner's, at
+  `household_member` / `indeterminate`. The administrator's own name is
+  `household_member` / `primary`, as the heirs' row.
+- Probate with a will: an heir's residence or a bequest is the testator's,
+  at `self` / `primary`. A file holds a will when its label says "will" or
+  "testament", or it carries a `will` fact.
+- Obituary: a survivor's facts beyond name and residence are life history.
+  "Parents" and "predeceased" are the parent role, or a stated relation
+  containing "late", "deceased" or "predeceased".
+- Newspaper: a non-principal's fact of the event's own type (the parents'
+  marriage in a wedding notice) is recent family knowledge.
+- A named informant replaces the generic string on the family rows only
+  (`household_member`, `family_not_present`), never on an officiant's,
+  clerk's, enumerator's or witness's row.
+
+The probate rows are the genealogist's ruling (2026-09-30), split by who
+produced each part of the file. A petitioner's statement of the death follows
+the obituary's reading: family, but the file does not say who was present.
+Heirs named by the petitioner are `primary`, like a marriage party naming their
+own parents. `probate` joins the `RecordType` union, and the rows apply on both
+paths.
+
+The obituary split is the genealogist's ruling (2026-09-29, option C). What the
+family knew firsthand and recently is `household_member`, and `indeterminate`
+because the notice does not say who was present. Life history is secondhand
+recollection. The surviving spouse's **name** is recent knowledge, but the
+**marriage date** is life history.
+
+**The census parent-birthplace columns follow §11.6's rule unchanged**
+(genealogist ruling, 2026-09-30): written only when the parent is in the
+household, onto the parent's own persona, `secondary`, one claim per parent.
+A transcribed census carries them as `fatherBirthPlace` / `motherBirthPlace`
+on the person whose line states them. The table's format therefore becomes
+record type × role family × fact class, with an optional field-level
+override, where a row names the field it narrows to.
+
+#### Calendar flag
+
+The summary names every date that the calendar route may apply to, on both
+paths (genealogist ruling, 2026-09-30, the broad trigger):
+
+- any date carrying a day and month before 1752, anywhere;
+- any Quaker numbered month ("3rd month");
+- any double-dated year ("1749/50").
+
+A year-only date never fires, because there is no day or month for a
+correction to act on. The extractor holds **no country table**: `convert-dates`
+owns the cutoffs and gives the verdict, and it clears the dates that needed
+nothing, such as a Catholic country's post-1582 dates. The flag tells the
+caller to run `convert-dates` and correct the assertion. It changes no date
+itself.
+
+#### Return
+
+The **summary** §11.6 returns, one entry per source, written by code: the
+record, the people on it, the key facts extracted, any defaulted-
+classification warnings, every `[suspicious text …]` marker a document
+carried, and a household head whose surname differs from the principal's. That
+last is a lead for hypothesis-tracking, never a relationship. It is not every assertion and not bare counts. The
+agent returns it verbatim, and the caller relays it and decides what comes
+next without a follow-up read.

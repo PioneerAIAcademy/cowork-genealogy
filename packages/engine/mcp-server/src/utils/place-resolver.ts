@@ -116,6 +116,27 @@ function normalizeKey(s: string): string {
   return s.trim().toLowerCase().replace(/\s+/g, " ");
 }
 
+/**
+ * Census and register answers that stand where a place should but name none:
+ * "Same House" (1940 census, residence in 1935), "Do" (ditto). Resolved, they
+ * become a real place that happens to share the word ("Same House" -> "Same,
+ * Manufahi, Timor-Leste", "Do" -> "Dominican Republic"). Matched against the
+ * WHOLE place text only: "Same Place, Wayne, Ohio" still standardizes to Wayne.
+ */
+const NON_PLACE_PHRASES = new Set([
+  "same", "same house", "same place", "same city", "same town", "same township",
+  "same county", "same state", "same farm", "same as above", "same as head",
+  "do", "ditto", "home", "at home", "farm", "rural", "rural route", "rfd", "r f d",
+  "unknown", "not stated", "not given", "none", "n/a", "blank",
+  "different place", "other place",
+]);
+
+/** The place text is a non-place phrase (NON_PLACE_PHRASES), case, spacing and
+ *  periods ignored ("R.F.D.", "Do."). Such a place is never standardized. */
+export function isNonPlacePhrase(place: string): boolean {
+  return NON_PLACE_PHRASES.has(normalizeKey(place.replace(/\./g, " ")));
+}
+
 /** Strip a trailing `(Type)` suffix that `describeCandidates` appends.
  *  The `\)\s*$` anchor forces the LAST parenthesised group to be the type;
  *  the group admits one nested pair because FamilySearch types include `Island(s)`. */
@@ -508,6 +529,7 @@ export async function resolveStandardPlace(
   originalText: string,
   opts: ResolveOpts = {},
 ): Promise<string | null> {
+  if (isNonPlacePhrase(originalText)) return null;
   if (placeTableForTests) return placeTableForTests.get(normalizeKey(originalText)) ?? null;
   if (!normalizeKey(originalText)) return null;
   if (placeSegments(originalText).length === 1 && !opts.contextName) {

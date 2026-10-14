@@ -109,7 +109,7 @@ PLUGIN_DIR = SERVER.parents[1] / "packages" / "engine" / "plugin"
 ORCHESTRATOR = SERVER.parents[1] / "eval" / "harness" / "e2e" / "orchestrator.py"
 
 TRANSIENT = frozenset({"text_delta", "thinking_delta", "task_progress"})
-AGENTS = {"check-warnings", "citation", "conflict-resolution", "convert-dates", "gps-mentor", "historical-context", "hypothesis-tracking", "image-reader", "init-project", "locality-guide", "person-evidence", "project-status", "proof-conclusion", "question-selection", "record-extractor", "research-exhaustiveness", "search-external-sites", "search-familysearch-wiki", "search-full-text", "search-hints", "search-images", "search-wikipedia", "source-evaluation", "survey-surname", "translation", "tree-edit", "tree-survey", "validate-schema"}
+AGENTS = {"check-warnings", "citation", "conflict-resolution", "convert-dates", "gps-mentor", "historical-context", "hypothesis-tracking", "image-reader", "init-project", "locality-guide", "person-evidence", "project-status", "proof-conclusion", "question-selection", "record-structurer", "research-exhaustiveness", "search-external-sites", "search-familysearch-wiki", "search-full-text", "search-hints", "search-images", "search-wikipedia", "source-evaluation", "survey-surname", "translation", "tree-edit", "tree-survey", "validate-schema"}
 
 
 # ── fakes ─────────────────────────────────────────────────────────────────────────
@@ -996,27 +996,27 @@ def _info(agents: set[str], skills: int, extra_agents: tuple[str, ...] = ()) -> 
 
 
 def test_registration_passes_with_every_bare_agent_and_every_skill():
-    assert options.check_registration(_info(AGENTS, 7, ("general-purpose", "genealogy-research:gps-mentor")),
-                                      expected_agents=AGENTS, expected_skills=7) == []
+    assert options.check_registration(_info(AGENTS, 6, ("general-purpose", "genealogy-research:gps-mentor")),
+                                      expected_agents=AGENTS, expected_skills=6) == []
 
 
 def test_registration_fails_on_a_missing_bare_agent_or_a_missing_skill():
-    problems = options.check_registration(_info(AGENTS - {"gps-mentor"}, 7, ("genealogy-research:gps-mentor",)),
-                                          expected_agents=AGENTS, expected_skills=7)
+    problems = options.check_registration(_info(AGENTS - {"gps-mentor"}, 6, ("genealogy-research:gps-mentor",)),
+                                          expected_agents=AGENTS, expected_skills=6)
     assert problems and "gps-mentor" in problems[0] and "bare" in problems[0]
-    problems = options.check_registration(_info(AGENTS, 6), expected_agents=AGENTS, expected_skills=7)
-    assert problems == ["6 genealogy-research:* commands registered, expected 7"]
-    assert options.check_registration(None, expected_agents=AGENTS, expected_skills=7)
+    problems = options.check_registration(_info(AGENTS, 5), expected_agents=AGENTS, expected_skills=6)
+    assert problems == ["5 genealogy-research:* commands registered, expected 6"]
+    assert options.check_registration(None, expected_agents=AGENTS, expected_skills=6)
 
 
-def test_the_plugin_ships_twenty_eight_agents_and_six_skills():
+def test_the_plugin_ships_twenty_eight_agents_and_five_skills():
     from proto.worker.plugin_agents import load_agent_definitions
 
     assert set(load_agent_definitions(PLUGIN_DIR)) == AGENTS
-    assert worker.count_skills(str(PLUGIN_DIR)) == worker.EXPECTED_SKILLS == 6
+    assert worker.count_skills(str(PLUGIN_DIR)) == worker.EXPECTED_SKILLS == 5
     # A literal in the source, not an expression over the plugin dir (the mutation the
     # review named: both sides of the check shrinking together).
-    assert "\nEXPECTED_SKILLS = 6\n" in Path(worker.__file__).read_text(encoding="utf-8")
+    assert "\nEXPECTED_SKILLS = 5\n" in Path(worker.__file__).read_text(encoding="utf-8")
 
 
 def test_expected_agents_is_the_shipped_set():
@@ -1051,24 +1051,24 @@ def test_a_plugin_missing_an_agent_is_refused_at_load_not_narrowed_to_what_loade
 
 
 def test_registration_problems_compares_against_the_constants_not_the_loaded_set(tmp_path):
-    # Twenty-eight agents and 6 skills registered: clean. Twenty-seven, or 5: the miss, whatever loaded --
+    # Twenty-eight agents and 5 skills registered: clean. Twenty-seven, or 4: the miss, whatever loaded --
     # the helper takes neither an agents argument nor a skill count, so neither figure
     # from the image can reach it.
-    assert worker.registration_problems(_info(AGENTS, 6)) == []
-    problems = worker.registration_problems(_info(AGENTS - {"gps-mentor"}, 6, ("genealogy-research:gps-mentor",)))
+    assert worker.registration_problems(_info(AGENTS, 5)) == []
+    problems = worker.registration_problems(_info(AGENTS - {"gps-mentor"}, 5, ("genealogy-research:gps-mentor",)))
     assert problems == ["agents not registered under their bare names: ['gps-mentor']"]
-    assert worker.registration_problems(_info(AGENTS, 5)) == ["5 genealogy-research:* commands registered, expected 6"]
+    assert worker.registration_problems(_info(AGENTS, 4)) == ["4 genealogy-research:* commands registered, expected 5"]
     import inspect
 
     assert list(inspect.signature(worker.registration_problems).parameters) == ["info"]
     # The mutation the first build let through: a plugin copy short one skill folder
-    # registers 5, and a count of that same copy would have expected 5.
+    # registers 4, and a count of that same copy would have expected 4.
     copy = tmp_path / "plugin"
     shutil.copytree(PLUGIN_DIR / "skills", copy / "skills")
     shutil.rmtree(next(d for d in sorted((copy / "skills").iterdir()) if (d / "SKILL.md").is_file()))
-    assert worker.count_skills(str(copy)) == 5
+    assert worker.count_skills(str(copy)) == 4
     assert worker.registration_problems(_info(AGENTS, worker.count_skills(str(copy)))) == [
-        "5 genealogy-research:* commands registered, expected 6"
+        "4 genealogy-research:* commands registered, expected 5"
     ]
 
 
@@ -2871,6 +2871,30 @@ def test_the_two_price_tables_share_three_rates_and_differ_by_cache_ttl():
         tokens,
     )))
     assert worker.price_usd(tokens) == pytest.approx(theirs - tokens[1] / 1_000_000 * 0.75 * base)
+
+    # The per-model table the alpha's credential proxy prices by: the same models at the
+    # same input and output rates, with the harness's cache read and 1-hour write at the
+    # ratios `rates_for` derives the rest from.
+    from app.agent import spend
+
+    assert set(spend.MODEL_RATES) == set(pricing.MODEL_RATES), \
+        "the two per-model tables price different models"
+    for model, (input_rate, output_rate) in spend.MODEL_RATES.items():
+        theirs = pricing.MODEL_RATES[model]
+        assert (input_rate, output_rate) == (theirs["input_tokens"], theirs["output_tokens"]), model
+        assert theirs["cache_read_input_tokens"] == pytest.approx(0.1 * input_rate), model
+        assert theirs["cache_creation_input_tokens"] == pytest.approx(2 * input_rate), model
+
+
+def test_a_call_is_priced_at_its_own_models_rates():
+    from app.agent import spend
+
+    one_m_each = (1_000_000,) * 4
+    assert spend.price_usd(one_m_each, "claude-sonnet-5") == pytest.approx(2 + 2.5 + 0.2 + 10)
+    assert spend.price_usd(one_m_each, "claude-haiku-4-5-20251001") == pytest.approx(1 + 1.25 + 0.1 + 5)
+    assert spend.price_usd(one_m_each, "claude-sonnet-4-6") == pytest.approx(spend.price_usd(one_m_each))
+    assert spend.rates_for("claude-unknown-9") is spend.PRICE_PER_MTOK
+    assert spend.rates_for(None) is spend.PRICE_PER_MTOK
 
 
 def test_price_usd_is_linear_and_reads_the_four_token_classes_in_order():

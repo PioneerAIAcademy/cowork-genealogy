@@ -1,0 +1,85 @@
+{
+  "tool": "record_read",
+  "description": "FamilySearch record_read response for record XZR1-JZP: the 1890 Hamilton County marriage index entry for Wm. H. Ferber and Emma Becker, which records no parents. Shaped like a live read (a Record and a Collection source description, per-persona indexFields).",
+  "args": {
+    "recordId": "~XZR1-JZP"
+  },
+  "response": {
+    "persons": [
+      {
+        "id": "p_1",
+        "gender": "Male",
+        "names": [
+          {
+            "id": "n_1",
+            "type": "BirthName",
+            "given": "Wm. H.",
+            "surname": "Ferber"
+          }
+        ],
+        "principal": true,
+        "sources": [
+          {
+            "ref": "src_r_1"
+          }
+        ]
+      },
+      {
+        "id": "p_2",
+        "gender": "Female",
+        "names": [
+          {
+            "id": "n_2",
+            "type": "BirthName",
+            "given": "Emma",
+            "surname": "Becker"
+          }
+        ],
+        "principal": true,
+        "sources": [
+          {
+            "ref": "src_r_1"
+          }
+        ]
+      }
+    ],
+    "relationships": [
+      {
+        "id": "r_1",
+        "type": "Couple",
+        "person1": "p_1",
+        "person2": "p_2",
+        "facts": [
+          {
+            "type": "Marriage",
+            "date": "1890",
+            "place": "Hamilton, Ohio, United States"
+          }
+        ]
+      }
+    ],
+    "sources": [
+      {
+        "id": "src_r_1",
+        "resource_type": "Record",
+        "title": "Entry for Wm. H. Ferber and Emma Becker, \"Ohio, County Marriages, 1789-2016\"",
+        "citation": "\"Ohio, County Marriages, 1789-2016\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:XZR1-JZP : accessed 30 September 2026), Entry for Wm. H. Ferber and Emma Becker.",
+        "url": "https://www.familysearch.org/ark:/61903/1:1:XZR1-JZP"
+      },
+      {
+        "id": "sd_c_1",
+        "resource_type": "Collection",
+        "title": "Ohio, County Marriages, 1789-2016"
+      }
+    ],
+    "places": [],
+    "indexFields": {
+      "p_1": {
+        "sortKey": "0000000000000001_00001_00001_0000000000000001_000"
+      },
+      "p_2": {
+        "sortKey": "0000000000000001_00001_00001_0000000000000001_001"
+      }
+    }
+  }
+}
