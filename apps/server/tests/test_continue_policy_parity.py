@@ -117,9 +117,9 @@ def test_project_completed_agrees_including_the_shapes_that_are_not_dicts(copies
 
 
 def test_terminal_reason_agrees_wherever_the_harness_has_an_opinion(copies):
-    """The harness's four reasons must still come out of the shared copy unchanged. The
-    shared one has three MORE -- stopped, queued, decision -- which it can only reach
-    through flags the harness has no parameter for, so they cannot collide."""
+    """The harness's five reasons must still come out of the shared copy unchanged. The
+    shared one has four MORE -- stopped, queued, decision, delivered -- which it can only
+    reach through flags the harness has no parameter for, so they cannot collide."""
     shared, harness = copies
     for kw in _cases():
         call = {k: kw[k] for k in ("research", "nudges_used", "max_nudges", "mcp_unavailable")}
@@ -136,16 +136,27 @@ def test_the_shared_copy_is_the_one_with_the_new_clauses(copies):
     The sweep above only exercises the harness's 5-parameter signature, so a clause
     that exists ONLY in the shared copy would be invisible to it by construction, and
     this test is the sole compensator: any such clause has to be added here by hand or
-    it is unguarded."""
+    it is unguarded.
+
+    The base is an ACTIVE project, not None: with no research.json the policy allows every
+    stop (issue #3274), so a None base would let a deleted flag clause pass on that alone."""
     shared, _ = copies
-    base = dict(research=None, nudges_used=0, max_nudges=5, tool_count=0,
-                tool_count_at_last_nudge=-1)
+    base = dict(research={"project": {"status": "active"}}, nudges_used=0, max_nudges=5,
+                tool_count=0, tool_count_at_last_nudge=-1)
     for flag, reason in (("stopped", "stopped"), ("pending_user_message", "queued"),
                          ("pending_decision", "decision"), ("delivered", "delivered"),
                          ("mcp_unavailable", "mcp_unavailable")):
         assert shared["should_continue_run"](**{**base, flag: True}) is False, flag
+        # research=None on purpose: each flag outranks the no-research.json clause.
         assert shared["terminal_reason"](
             research=None, nudges_used=0, max_nudges=5, **{flag: True}) == reason
+    # The clause itself. The sweep above compares the two copies, so it cannot see the
+    # clause go from both at once; this can.
+    assert shared["terminal_reason"](research=None, nudges_used=0, max_nudges=5) == "ok"
+    # `is None`, not falsiness: an empty document is a project that has not started, and is
+    # still nudged. The sweep cannot tell the two apart for the same reason.
+    assert shared["should_continue_run"](**{**base, "research": {}}) is True
+    assert shared["terminal_reason"](research={}, nudges_used=0, max_nudges=5) == "no_progress"
 
 
 def test_the_harness_stop_hook_has_one_reply_and_it_is_the_workers(copies):

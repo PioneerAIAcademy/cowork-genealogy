@@ -1,0 +1,35 @@
+{
+  "tool": "place_search",
+  "description": "place_search for Javorje — returns multiple matches across Slovenia. The Škofja Loka result is the one matching the delegation 'Javorje nad Škofjo Loko'. Trimmed from full 16-result response. Measured live 2026-10-07 with placeSearchTool({ placeName: 'Javorje nad Škofjo Loko, Slovenia' }).",
+  "args": {
+    "placeName": "~Javorje"
+  },
+  "response": {
+    "results": [
+      {
+        "standardPlace": "Javorje, Škofja Loka, Slovenia",
+        "type": "Populated Place",
+        "dateRange": "+1991/",
+        "latitude": 46.15,
+        "longitude": 14.18333,
+        "familysearchUrl": "https://www.familysearch.org/en/research/places/?text=Javorje&focusedId=2075132"
+      },
+      {
+        "standardPlace": "Javorje, Gorenja Vas-Poljane, Slovenia",
+        "type": "Populated Place",
+        "dateRange": "+1991/",
+        "latitude": 46.15,
+        "longitude": 14.18333,
+        "familysearchUrl": "https://www.familysearch.org/en/research/places/?text=Javorje&focusedId=2075133"
+      },
+      {
+        "standardPlace": "Javorje, Škofja Loka, Slovenia, Yugoslavia",
+        "type": "Populated Place",
+        "dateRange": "/+1991",
+        "latitude": 46.15,
+        "longitude": 14.18333,
+        "familysearchUrl": "https://www.familysearch.org/en/research/places/?text=Javorje&focusedId=7050282"
+      }
+    ]
+  }
+}

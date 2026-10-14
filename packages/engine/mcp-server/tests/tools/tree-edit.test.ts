@@ -866,6 +866,24 @@ describe("tree_edit", () => {
     if (!r.ok) expect(JSON.stringify(r)).toMatch(/would duplicate 'R1'/);
   });
 
+  it("update_relationship refuses a non-string subtype rather than throwing", async () => {
+    // The batch loop re-throws anything that is not a TreeEditError, so a bare
+    // `.trim()` on a malformed op escaped as an unhandled TypeError instead of
+    // a refusal naming the op. Every other check in the switch is a truthiness
+    // test or `===`, which are safe on any value; this is the one method call.
+    const t = twoPersons();
+    (t as any).relationships = [
+      { id: "R1", type: "ParentChild", parent: "I1", child: "I2", sources: [{ ref: "S1" }] },
+    ];
+    await writeProject(t);
+    for (const subtype of [5, true, { a: 1 }, ["Step"]]) {
+      const r = await treeCorrect({ projectPath: dir, operation: "update_relationship", relationshipId: "R1", subtype } as any);
+      expect(r.ok).toBe(false);
+      if (!r.ok) expect(JSON.stringify(r)).toMatch(/`subtype` must be a string/);
+    }
+    expect(((await readTree()) as any).relationships[0].subtype).toBeUndefined();
+  });
+
   it("update_relationship refuses an empty subtype", async () => {
     // `relationshipMatches` reads any DEFINED subtype as explicit, so "" would
     // match an absent subtype but never match 'Biological' — an edge that pairs
@@ -979,6 +997,88 @@ describe("tree_edit", () => {
     const r = await treeCorrect({ projectPath: dir, operation: "remove", factId: "F1", personId: "I3" } as any);
     expect(r.ok).toBe(false);
     if (!r.ok) expect(JSON.stringify(r)).toMatch(/person 'I3' not found in tree/);
+  });
+
+  it("add_relationship corroborating an existing edge swaps primary onto the new fact", async () => {
+    // The positive twin of the must-not-fire case above: on the matched edge the
+    // swap add_fact performs does run, so one Marriage stays primary.
+    const t = twoPersons();
+    (t as any).relationships = [
+      {
+        id: "R1",
+        type: "Couple",
+        person1: "I1",
+        person2: "I2",
+        sources: [{ ref: "S1" }],
+        facts: [{ id: "F1", type: "Marriage", date: "1850", primary: true, sources: [{ ref: "S1" }] }],
+      },
+    ];
+    await writeProject(t);
+    const r = await treeEdit({
+      projectPath: dir,
+      operation: "add_relationship",
+      relationship: {
+        type: "Couple",
+        person1: "I1",
+        person2: "I2",
+        sources: [{ ref: "S2" }],
+        facts: [{ type: "Marriage", date: "1852", primary: true, sources: [{ ref: "S2" }] }],
+      },
+    });
+    expect(r.ok).toBe(true);
+    const facts: any[] = (await readTree() as any).relationships[0].facts;
+    expect(facts).toHaveLength(2);
+    expect(facts.find((f) => f.id === "F1").primary).toBeUndefined();
+    expect(facts.find((f) => f.id !== "F1").primary).toBe(true);
+  });
+
+  it("add_relationship corroborating an existing edge keeps the caller's notes", async () => {
+    const t = twoPersons();
+    (t as any).relationships = [
+      { id: "R1", type: "ParentChild", parent: "I1", child: "I2", notes: ["from the tree"], sources: [{ ref: "S1" }] },
+    ];
+    await writeProject(t);
+    const r = await treeEdit({
+      projectPath: dir,
+      operation: "add_relationship",
+      relationship: {
+        type: "ParentChild",
+        parent: "I1",
+        child: "I2",
+        notes: ["1860 census lists her as step-daughter", "from the tree"],
+        sources: [{ ref: "S2" }],
+      },
+    });
+    expect(r.ok).toBe(true);
+    const tree: any = await readTree();
+    expect(tree.relationships).toHaveLength(1);
+    expect(tree.relationships[0].notes).toEqual(["from the tree", "1860 census lists her as step-daughter"]);
+  });
+
+  it("update_relationship retypes an edge from a batch", async () => {
+    const t = twoPersons();
+    (t as any).relationships = [
+      { id: "R1", type: "ParentChild", parent: "I1", child: "I2", sources: [{ ref: "S1" }] },
+    ];
+    await writeProject(t);
+    const r = await treeCorrect({
+      projectPath: dir,
+      ops: [{ operation: "update_relationship", relationshipId: "R1", subtype: "Adopted" }],
+    } as any);
+    expect(r.ok).toBe(true);
+    expect((await readTree() as any).relationships[0].subtype).toBe("Adopted");
+  });
+
+  it("update_relationship refuses a Couple, which carries no subtype", async () => {
+    const t = twoPersons();
+    (t as any).relationships = [
+      { id: "R1", type: "Couple", person1: "I1", person2: "I2", sources: [{ ref: "S1" }] },
+    ];
+    await writeProject(t);
+    const r = await treeCorrect({ projectPath: dir, operation: "update_relationship", relationshipId: "R1", subtype: "Step" } as any);
+    expect(r.ok).toBe(false);
+    if (!r.ok) expect(JSON.stringify(r)).toMatch(/only a ParentChild edge carries a subtype/);
+    expect((await readTree() as any).relationships[0].subtype).toBeUndefined();
   });
 
   it("add_relationship: rejects a caller-supplied fact id", async () => {

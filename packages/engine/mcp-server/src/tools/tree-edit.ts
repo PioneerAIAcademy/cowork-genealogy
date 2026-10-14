@@ -705,6 +705,11 @@ async function applyOperation(
         if (rel.sources?.length) {
           matched.sources = dedupSourceRefs([...(matched.sources ?? []), ...rel.sources]);
         }
+        // Notes are often where the researcher records why; unioned exactly as
+        // `dedupRelationships` unions them, so both paths keep the same trail.
+        if (rel.notes?.length) {
+          matched.notes = [...new Set([...(matched.notes ?? []), ...rel.notes])];
+        }
         // The matched edge's subtype never changes here: retyping is
         // `update_relationship`'s job, and silently adopting one would turn an
         // untyped import into a biological claim with nothing behind it. Say so
@@ -810,6 +815,17 @@ async function applyOperation(
       if (input.subtype === undefined) {
         throw new TreeEditError("update_relationship requires a `subtype` — it is the only field it sets");
       }
+      // Types are trusted everywhere else in this switch because every other
+      // check is a truthiness test or `===`, both safe on any value. `.trim()`
+      // below is a method call, so a non-string `subtype` from a malformed op
+      // would raise a TypeError — and the batch loop re-throws anything that is
+      // not a TreeEditError, so it would escape as an unhandled exception
+      // instead of a refusal naming the op.
+      if (typeof input.subtype !== "string") {
+        throw new TreeEditError(
+          `update_relationship: \`subtype\` must be a string, got ${typeof input.subtype}`,
+        );
+      }
       // An empty string is not "clear the subtype": `relationshipMatches` reads
       // any defined subtype as an explicit one, so `""` would match an absent
       // subtype but never match 'Biological' — a phantom type that pairs with
@@ -823,6 +839,11 @@ async function applyOperation(
       }
       const rel = (tree.relationships ?? []).find((r) => r.id === input.relationshipId);
       if (!rel) throw new TreeEditError(`relationship '${input.relationshipId}' not found in tree`);
+      if (rel.type !== "ParentChild") {
+        throw new TreeEditError(
+          `update_relationship: '${rel.id}' is a ${rel.type} — only a ParentChild edge carries a subtype`,
+        );
+      }
       // A retype that would collide with an edge already on the pair is refused
       // rather than silently creating a duplicate the dedup would later fold.
       const clash = (tree.relationships ?? []).find(
@@ -1170,7 +1191,7 @@ export const treeEditSchema = {
     "Add to the project's tree.gedcomx.json — add a fact or name, add a person or " +
     "relationship, or add a source. " +
     "ADDITIVE ONLY: corrections and removals " +
-    "(update_fact/update_name/update_person/update_source/remove) live in the " +
+    "(update_fact/update_name/update_person/update_source/update_relationship/remove) live in the " +
     "tree_correct tool. add_fact targets a person (personId) or an existing Couple " +
     "relationship (relationshipId) — a Marriage/Divorce fact lives on the Couple, " +
     "never duplicated onto each spouse. Use materialize_facts to write a record " +

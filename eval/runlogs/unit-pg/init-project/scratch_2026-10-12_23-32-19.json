@@ -1,0 +1,2041 @@
+{
+  "schema_version": 3,
+  "skill": "init-project",
+  "version": null,
+  "released": false,
+  "releasable": false,
+  "invocation": "test",
+  "timestamp": "2026-10-12_23-32-19",
+  "harness_version": "0.1.0",
+  "model": "claude-sonnet-4-6",
+  "judge_prompt_hash": "0ec4cfbbfee949ee39d19136867fe47e26cc377bc3697cf58c148f42371468f8",
+  "snapshot": {
+    "packages/engine/plugin/agents/init-project.md": "b097a2b6971d185cb4ddd463011e4b0f579dc5ccb57a14f7a9168d82d076b935",
+    "eval/tests/unit/init-project/check-warnings-relative-impossibility.json": "4523176b3d0deca9da30e6a6a2297ff59de9289f7b58a8da78f58e9b3d992fe5",
+    "eval/tests/unit/init-project/direct-objective-not-taken-from-caller.json": "84f3f24dcb49acd8adef851d56b3ccb0a5e87809522b97001d2c163fb4a5aa41",
+    "eval/tests/unit/init-project/forget-rederive-build-full-not-omit.json": "c4f9fbcecdac158fb2e2cebd92d8c64571feb99baeed4a930cddca0d679018d7",
+    "eval/tests/unit/init-project/from-objective-only.json": "8fa9541468e4b13e3a3de9eb7c5f241788a9caae91ac154fb1daeb193a65456c",
+    "eval/tests/unit/init-project/holdings-survey-from-tree.json": "1fbf1e54fb0162cb02b39f5f8c348e123288ad83b5b85957d1708fd507a0b471",
+    "eval/tests/unit/init-project/negative-start-research.json": "433068c8bdda64f10234dfb14c7cc95fd4ee52d839388ba66e60d1fcc46befd9",
+    "eval/tests/unit/init-project/new-project-from-search.json": "845a559d28bddad7be62d87a5e86f60f038e8fd0a91a0988e4bbd924fb38a8b7",
+    "eval/tests/unit/init-project/new-project-from-tree.json": "6c9ce857e87701541c6beae63b1a09aeb4284717a7504d39d961c3ed4f2fef05",
+    "eval/tests/unit/init-project/no-relatives.json": "7660dbcf2ea2eade86eca5ef24d8e7a71031c3896385b741a058b1fe81b2443a",
+    "eval/tests/unit/init-project/objective-defaults-on-bare-pid.json": "4078da600f9703988e0b9055c831e6c26bd08eec44a76eaeccb416cb1d07541a",
+    "eval/tests/unit/init-project/person-level-sources-not-conflated.json": "93ce672e4db4a78a12d5bac211644fa7235f1c429004ce98264173b988a348d9",
+    "eval/tests/unit/init-project/place-standardization.json": "a075375fa9c41ae5c7f5455f796b934cee38e55db284786ca9eb43413a4614c2",
+    "eval/tests/unit/init-project/rubric.md": "7a56005b1a986a2c98a6f962ac6fbbd6ac6c1b60d429f119a648153f8b2fb33e",
+    "eval/tests/unit/init-project/unified-interview-single-turn.json": "378171bfdddd47a46cfd79effb16babb331c15356f99da32ad0c2d6f816ee4c0",
+    "eval/tests/unit/init-project/volunteered-access-normalizes.json": "3e4cd120f719f1b4fdb478571ab775f33011b5653ddc5364a1429c3e1ed45b21",
+    "eval/fixtures/scenarios/mid-research-flynn/README.md": "f7020ae65e077c8a6c1a25013de7f884210cffc17fea88eae2c8b48558702ddc",
+    "eval/fixtures/scenarios/mid-research-flynn/research.json": "e3e19c382517435b52ef58c3675a0fece91d25c78b28311f7dc4e9d0cfaa2cda",
+    "eval/fixtures/scenarios/mid-research-flynn/tree.gedcomx.json": "efb4f78453dd94f4d94c6ff8d2bd16ae9519b67a6a8aa179d9e9bf41d1326d86",
+    "eval/fixtures/mcp/person-read-doyle-relative-impossibility.json": "5635e16b0a11cb56fd1a6147e4bae5b43b255843afa552817215cd6aeb5734b6",
+    "eval/fixtures/mcp/person-read-flynn.json": "74b5707d7f0456f53a02bbbebde2f1084f29e8a31cecd617456cc7ac4b80eb58",
+    "eval/fixtures/mcp/person-read-flynn-family.json": "b7ea18e308b63f5c6a5f1a0671e595b0fd3d620f6a469563a48607044d3bc415",
+    "eval/fixtures/mcp/person-read-moreau-person-level-sources.json": "d77d0c53b577510cb8c0d91a5b273ddc59cb928afb793b017751e7b260ddaa05",
+    "eval/fixtures/mcp/person-search-brennan-none.json": "d5c918299ad25cab7aeda123829ded5fcf06b56ef0bce4db500a5f79875bcd83",
+    "eval/fixtures/mcp/person-search-donovan-none.json": "04a7fc595bc8752a82afef8dc90ece802e25e46cdbaa53ffc5f611e5cea395c5",
+    "eval/fixtures/mcp/person-search-flynn.json": "7f26ad0146e22a67db37800306581459f6bf2dd9420528fc9d1085e171017f0f",
+    "eval/fixtures/mcp/person-search-hennessy-none.json": "95157ea2e78edbe6479a9fb536bbf77e3a4832420dc40de557c148983fab33a0",
+    "eval/fixtures/mcp/place-search-boston.json": "3ca4f94d742e8d7461a6fcec3d31b29e06bb4d52854fe9c6d746bef18c130a52"
+  },
+  "tests": [
+    {
+      "test_id": "ut_init_project_009",
+      "test_type": "negative",
+      "expected_outcome": "pass",
+      "scenario": "mid-research-flynn",
+      "mcp_fixtures": [],
+      "outcome": "pass",
+      "flaky": false,
+      "outcome_summary": {
+        "per_run_outcomes": [
+          "pass"
+        ],
+        "aggregated_dimensions": [
+          {
+            "source": "base",
+            "name": "Correctness",
+            "score": 3,
+            "rationale": "Claude correctly identified that a project already exists and declined to initialize a new one. The response accurately states 'This folder already holds a research project, so I did not start a new one.' This is the correct behavior for a negative test where init-project should detect an existing research.json and route to project-status instead. No fabricated claims or unsupported assertions were made."
+          },
+          {
+            "source": "base",
+            "name": "Completeness",
+            "score": 3,
+            "rationale": "Claude fully addressed the negative test requirement: it declined to perform init-project's task, routed to project-status via the 'Hand-back: project-status' line, and provided a plain-language explanation that a project already exists without naming files, tools, or fields. All required elements of the correct decline behavior are present."
+          },
+          {
+            "source": "base",
+            "name": "Tool Arguments",
+            "score": null,
+            "rationale": "No MCP tool calls were made. The test explicitly required zero tool calls (no person_read, person_search, place_search, or project_create), and Claude correctly made none. This is the expected behavior for a negative test that should decline early. N/A applies because no tool calls occurred."
+          }
+        ],
+        "review_dimensions": [
+          {
+            "source": "base",
+            "name": "Correctness",
+            "score": 3,
+            "rationale": "Claude correctly identified that a project already exists and declined to initialize a new one. The response accurately states 'This folder already holds a research project, so I did not start a new one.' This is the correct behavior for a negative test where init-project should detect an existing research.json and route to project-status instead. No fabricated claims or unsupported assertions were made."
+          },
+          {
+            "source": "base",
+            "name": "Completeness",
+            "score": 3,
+            "rationale": "Claude fully addressed the negative test requirement: it declined to perform init-project's task, routed to project-status via the 'Hand-back: project-status' line, and provided a plain-language explanation that a project already exists without naming files, tools, or fields. All required elements of the correct decline behavior are present."
+          },
+          {
+            "source": "base",
+            "name": "Tool Arguments",
+            "score": null,
+            "rationale": "No MCP tool calls were made. The test explicitly required zero tool calls (no person_read, person_search, place_search, or project_create), and Claude correctly made none. This is the expected behavior for a negative test that should decline early. N/A applies because no tool calls occurred."
+          }
+        ]
+      },
+      "totals": {
+        "duration_ms": 10521.003166999435,
+        "duration_api_ms": 10246.0,
+        "judge_duration_ms": 3925.357375002932,
+        "wall_clock_ms": 14691.711902618408,
+        "num_turns": 2,
+        "input_tokens": 540,
+        "cached_input_tokens": 39692,
+        "cache_creation_input_tokens": 25017,
+        "output_tokens": 416,
+        "judge_input_tokens": 11142,
+        "judge_cached_input_tokens": 0,
+        "judge_output_tokens": 363,
+        "skill_cost_usd": 0.11237535,
+        "judge_cost_usd": 0.012957000000000002,
+        "total_cost_usd": 0.12533235
+      },
+      "runs": [
+        {
+          "run_index": 0,
+          "run_id": "run_ut_init_project_009_2026-10-12_23-32-19_0",
+          "outcome": "pass",
+          "aborted_reason": null,
+          "error": null,
+          "duration_ms": 10521.003166999435,
+          "duration_api_ms": 10246.0,
+          "num_turns": 2,
+          "skill_attempts": 1,
+          "input_tokens": 540,
+          "cached_input_tokens": 39692,
+          "cache_creation_input_tokens": 25017,
+          "output_tokens": 416,
+          "model_usage": {
+            "claude-haiku-4-5-20251001": {
+              "inputTokens": 533,
+              "outputTokens": 14,
+              "cacheReadInputTokens": 0,
+              "cacheCreationInputTokens": 0,
+              "webSearchRequests": 0,
+              "costUSD": 0.000603,
+              "contextWindow": 200000,
+              "maxOutputTokens": 32000
+            },
+            "claude-sonnet-4-6": {
+              "inputTokens": 7,
+              "outputTokens": 402,
+              "cacheReadInputTokens": 39692,
+              "cacheCreationInputTokens": 25017,
+              "webSearchRequests": 0,
+              "costUSD": 0.11177235,
+              "contextWindow": 200000,
+              "maxOutputTokens": 32000
+            }
+          },
+          "no_result_message": false,
+          "subagents": [
+            {
+              "agent_type": "init-project",
+              "description": "Initialize genealogy research project",
+              "num_assistant_turns": 2,
+              "max_output_tokens": 126,
+              "hit_output_cap": false,
+              "runaway_thinking": false,
+              "usage": {
+                "input_tokens": 4,
+                "output_tokens": 174,
+                "cache_read_input_tokens": 11797,
+                "cache_creation_input_tokens": 11940
+              },
+              "peak_window_tokens": 11941,
+              "compactions": [],
+              "models": [
+                "claude-sonnet-4-6"
+              ],
+              "duration_seconds": 4.637
+            }
+          ],
+          "subagent_capture_status": "captured",
+          "main_thread": {
+            "peak_window_tokens": 20642,
+            "compactions": [],
+            "models": [
+              "claude-sonnet-4-6"
+            ]
+          },
+          "skill_cost_usd": 0.11237535,
+          "output": {
+            "text_response": "This folder already holds a research project, so a new one was not started. The agent can review where it stands or choose the next research question \u2014 if you'd like either of those, just let me know!",
+            "activated": true,
+            "skills_invoked": [],
+            "tool_calls": [],
+            "files_created": [],
+            "builtin_tool_calls": [
+              {
+                "tool": "Agent",
+                "args": {
+                  "description": "Initialize genealogy research project",
+                  "prompt": "Start research on this project \u2014 where do things stand and what should I work on next?\n\nprojectPath: <workspace>",
+                  "subagent_type": "init-project"
+                }
+              },
+              {
+                "tool": "Read",
+                "args": {
+                  "file_path": "/private/var/folders/ml/615yqgf91nb_nb5lzkw2dtmc0000gp/T/eval-ut_init_project_009-0-0-0_tubo2j/research.json",
+                  "limit": "1"
+                },
+                "agent_id": "a1b5a927855ef5de3"
+              }
+            ],
+            "agent_returns": [
+              {
+                "subagent_type": "init-project",
+                "text": "Hand-back: project-status \u2014 a project already exists here\n\n\"This folder already holds a research project, so I did not start a new one. I can review where it stands or choose the next research question.\""
+              }
+            ]
+          },
+          "validators": {
+            "passed": true,
+            "results": [
+              {
+                "name": "test_activated_run_produces_response",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_decline_response_nonempty",
+                "passed": true,
+                "error": "skipped: grade_on_invariant test \u2014 routing is not gated",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_direct_delegation_relayed_verbatim",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_direct_test_spawned_its_agent",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_hand_back_names_its_owner",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_id_references_resolve",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_log_append_only",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_no_duplicate_tree_ids",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_no_entries_deleted",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_no_main_thread_subagent_only_calls",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_no_out_of_lane_section_writes",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_no_raw_writes_to_protected_files",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_ownership_table",
+                "passed": true,
+                "error": "skipped: ownership is not checked on negative tests \u2014 writes belong to the routed-to skill, not the skill under test",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_parent_child_age_plausibility_flagged",
+                "passed": true,
+                "error": "skipped: no new ParentChild relationships",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_project_file_changes_route_through_writer_tools",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_project_files_pass_full_validation",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_research_json_validates_schema",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_skill_calls_name_a_shipped_skill",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_tool_allowlist",
+                "passed": true,
+                "error": "skipped: allowlist is not checked on negative tests \u2014 tool calls belong to the routed-to skill, not the skill under test",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_tree_facts_agree_with_linked_assertions",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_tree_gedcomx_json_validates_schema",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_tree_ownership_table",
+                "passed": true,
+                "error": "skipped: ownership is not checked on negative tests \u2014 writes belong to the routed-to skill, not the skill under test",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_write_then_validate",
+                "passed": true,
+                "error": "skipped: negative test \u2014 tool calls belong to the routed-to skill",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_both_project_files_created",
+                "passed": true,
+                "error": "skipped: file-existence rules apply only to positive tests",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_every_fact_and_relationship_is_sourced",
+                "passed": true,
+                "error": "skipped: sourcing rules apply only to positive tests",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_existing_project_is_not_reinitialized",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_init_empty_sections",
+                "passed": true,
+                "error": "skipped: not an init-empty-sections scenario",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_narration_guidance_is_the_house_style",
+                "passed": true,
+                "error": "skipped: no researcher_profile written",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_objective_default_verbatim",
+                "passed": true,
+                "error": "skipped: not an objective-default scenario",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_objective_kept_in_the_users_words",
+                "passed": true,
+                "error": "skipped: not an objective-stated scenario",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_person_level_sources_carried",
+                "passed": true,
+                "error": "skipped: no imported person carries person-level sources",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_profile_defaults_when_all_default",
+                "passed": true,
+                "error": "skipped: not an all-defaults scenario",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_project_files_written_through_the_writer_tools",
+                "passed": true,
+                "error": "skipped: write-path rules apply only to positive tests",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_returned_sources_reach_the_tree_without_notes",
+                "passed": true,
+                "error": "skipped: no source descriptions returned",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_search_before_stubs",
+                "passed": true,
+                "error": "skipped: not an expects-person-search scenario",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_standard_date_survives_from_the_tool",
+                "passed": true,
+                "error": "skipped: no person_read response to compare against",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_standard_place_came_from_a_tool",
+                "passed": true,
+                "error": "skipped: no standard_place in the written tree",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_tree_ark_is_canonical_and_traceable",
+                "passed": true,
+                "error": "skipped: no person_read response, so no ark is expected",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_volunteered_subscriptions_normalized",
+                "passed": true,
+                "error": "skipped: not a volunteered-access scenario",
+                "outcome": "skipped"
+              }
+            ]
+          },
+          "judge": {
+            "skipped": false,
+            "dimensions": [
+              {
+                "source": "base",
+                "name": "Correctness",
+                "score": 3,
+                "rationale": "Claude correctly identified that a project already exists and declined to initialize a new one. The response accurately states 'This folder already holds a research project, so I did not start a new one.' This is the correct behavior for a negative test where init-project should detect an existing research.json and route to project-status instead. No fabricated claims or unsupported assertions were made."
+              },
+              {
+                "source": "base",
+                "name": "Completeness",
+                "score": 3,
+                "rationale": "Claude fully addressed the negative test requirement: it declined to perform init-project's task, routed to project-status via the 'Hand-back: project-status' line, and provided a plain-language explanation that a project already exists without naming files, tools, or fields. All required elements of the correct decline behavior are present."
+              },
+              {
+                "source": "base",
+                "name": "Tool Arguments",
+                "score": null,
+                "rationale": "No MCP tool calls were made. The test explicitly required zero tool calls (no person_read, person_search, place_search, or project_create), and Claude correctly made none. This is the expected behavior for a negative test that should decline early. N/A applies because no tool calls occurred."
+              }
+            ],
+            "judge_cost_usd": 0.012957000000000002,
+            "duration_ms": 3925.357375002932,
+            "error": null,
+            "input_tokens": 11142,
+            "cached_input_tokens": 0,
+            "output_tokens": 363
+          },
+          "started_at": 1791848174.656686,
+          "ended_at": 1791848189.348398
+        }
+      ],
+      "grading_mode": "invariant",
+      "dimensions_gate_outcome": false
+    },
+    {
+      "test_id": "ut_init_project_008",
+      "test_type": "positive",
+      "expected_outcome": "pass",
+      "scenario": null,
+      "mcp_fixtures": [
+        "person-read-flynn"
+      ],
+      "outcome": "pass",
+      "flaky": false,
+      "outcome_summary": {
+        "per_run_outcomes": [
+          "pass"
+        ],
+        "aggregated_dimensions": [
+          {
+            "source": "base",
+            "name": "Correctness",
+            "score": 3,
+            "rationale": "All persisted facts are accurate and sourced correctly. Patrick Flynn's birth (~1845, Ireland), death (1908, Schuylkill County, Pennsylvania), gender (Male), and name are all correctly extracted from person_read and written to tree.gedcomx.json with proper S1 source references at quality 1. The objective matches the user's stated goal. No fabricated material or unsupported claims."
+          },
+          {
+            "source": "base",
+            "name": "Completeness",
+            "score": 3,
+            "rationale": "The skill addressed all required elements: person_read was called to fetch Patrick Flynn's data, project_create was invoked with the correct objective and title, researcher_profile was populated with novice level and house-style narration guidance, and both research.json and tree.gedcomx.json were created. The response notes the isolation (no parents, siblings, spouse, or children) and explains the next research step."
+          },
+          {
+            "source": "base",
+            "name": "Tool Arguments",
+            "score": 3,
+            "rationale": "All three tool calls passed correct arguments. person_read received the correct personId (LZNY-BRF). project_create received the correct objective, title, personReadRef (the staged results reference), and subjectPersonIds. research_append received correct section, op, and fields for researcher_profile. No fixture_not_found errors; all calls matched their expected predicates or live routes."
+          },
+          {
+            "source": "rubric",
+            "name": "Stub & tree fidelity",
+            "score": 3,
+            "rationale": "The tree.gedcomx.json contains exactly one person (I1) with all known fields populated: name (Patrick Flynn, preferred), gender (Male), living (false), and two facts (Birth and Death) with dates, places, and sources. Unknown fields (parents, siblings, spouse, children) are correctly omitted. FamilySearch-derived facts are sourced to S1 at quality 1. Local I ID is used. The ARK is preserved. No fabrication or placeholder stubs created."
+          },
+          {
+            "source": "rubric",
+            "name": "Project section seeding & schema validity",
+            "score": 3,
+            "rationale": "research.json project block is complete: id (rp_001), title (Patrick Flynn's Parents\u2014concise and appropriate, not a full sentence), objective (Identify the parents of Patrick Flynn.), status (active), created/updated (2026-10-12), and subject_person_ids ([I1]). The researcher_profile section is populated with experience_level (novice) and narration_guidance (house-style string verbatim). All required sections present. File conforms to schema on inspection."
+          },
+          {
+            "source": "rubric",
+            "name": "Researcher profile",
+            "score": 3,
+            "rationale": "experience_level is novice (correct, not influenced by user). narration_guidance is the house-style string verbatim, stored exactly as required. The objective was stated by the user (Identify the parents of Patrick Flynn), so no defaulting was needed. subscriptions is absent, which is correct because the user volunteered no access beyond FamilySearch. No user-profile questions were asked."
+          },
+          {
+            "source": "rubric",
+            "name": "Place standardization",
+            "score": 3,
+            "rationale": "Both places in the tree came from person_read and carry the exact standard_place values the tool returned: Ireland (for birth) and Schuylkill, Pennsylvania, United States (for death). These are preserved verbatim in the written tree, not altered or fabricated. The tool's standardized values differ from the raw place text (e.g., Schuylkill County \u2192 Schuylkill), confirming the correct values were used."
+          },
+          {
+            "source": "rubric",
+            "name": "Known-holdings capture",
+            "score": null,
+            "rationale": "The test does not involve known holdings. The user did not volunteer any documents, prior research, GEDCOMs, or oral knowledge, so the survey was correctly skipped. This dimension is N/A."
+          }
+        ],
+        "review_dimensions": [
+          {
+            "source": "base",
+            "name": "Correctness",
+            "score": 3,
+            "rationale": "All persisted facts are accurate and sourced correctly. Patrick Flynn's birth (~1845, Ireland), death (1908, Schuylkill County, Pennsylvania), gender (Male), and name are all correctly extracted from person_read and written to tree.gedcomx.json with proper S1 source references at quality 1. The objective matches the user's stated goal. No fabricated material or unsupported claims."
+          },
+          {
+            "source": "base",
+            "name": "Completeness",
+            "score": 3,
+            "rationale": "The skill addressed all required elements: person_read was called to fetch Patrick Flynn's data, project_create was invoked with the correct objective and title, researcher_profile was populated with novice level and house-style narration guidance, and both research.json and tree.gedcomx.json were created. The response notes the isolation (no parents, siblings, spouse, or children) and explains the next research step."
+          },
+          {
+            "source": "base",
+            "name": "Tool Arguments",
+            "score": 3,
+            "rationale": "All three tool calls passed correct arguments. person_read received the correct personId (LZNY-BRF). project_create received the correct objective, title, personReadRef (the staged results reference), and subjectPersonIds. research_append received correct section, op, and fields for researcher_profile. No fixture_not_found errors; all calls matched their expected predicates or live routes."
+          },
+          {
+            "source": "rubric",
+            "name": "Stub & tree fidelity",
+            "score": 3,
+            "rationale": "The tree.gedcomx.json contains exactly one person (I1) with all known fields populated: name (Patrick Flynn, preferred), gender (Male), living (false), and two facts (Birth and Death) with dates, places, and sources. Unknown fields (parents, siblings, spouse, children) are correctly omitted. FamilySearch-derived facts are sourced to S1 at quality 1. Local I ID is used. The ARK is preserved. No fabrication or placeholder stubs created."
+          },
+          {
+            "source": "rubric",
+            "name": "Project section seeding & schema validity",
+            "score": 3,
+            "rationale": "research.json project block is complete: id (rp_001), title (Patrick Flynn's Parents\u2014concise and appropriate, not a full sentence), objective (Identify the parents of Patrick Flynn.), status (active), created/updated (2026-10-12), and subject_person_ids ([I1]). The researcher_profile section is populated with experience_level (novice) and narration_guidance (house-style string verbatim). All required sections present. File conforms to schema on inspection."
+          },
+          {
+            "source": "rubric",
+            "name": "Researcher profile",
+            "score": 3,
+            "rationale": "experience_level is novice (correct, not influenced by user). narration_guidance is the house-style string verbatim, stored exactly as required. The objective was stated by the user (Identify the parents of Patrick Flynn), so no defaulting was needed. subscriptions is absent, which is correct because the user volunteered no access beyond FamilySearch. No user-profile questions were asked."
+          },
+          {
+            "source": "rubric",
+            "name": "Place standardization",
+            "score": 3,
+            "rationale": "Both places in the tree came from person_read and carry the exact standard_place values the tool returned: Ireland (for birth) and Schuylkill, Pennsylvania, United States (for death). These are preserved verbatim in the written tree, not altered or fabricated. The tool's standardized values differ from the raw place text (e.g., Schuylkill County \u2192 Schuylkill), confirming the correct values were used."
+          },
+          {
+            "source": "rubric",
+            "name": "Known-holdings capture",
+            "score": null,
+            "rationale": "The test does not involve known holdings. The user did not volunteer any documents, prior research, GEDCOMs, or oral knowledge, so the survey was correctly skipped. This dimension is N/A."
+          }
+        ]
+      },
+      "totals": {
+        "duration_ms": 30861.001500001294,
+        "duration_api_ms": 29795.0,
+        "judge_duration_ms": 13008.38704200578,
+        "wall_clock_ms": 44718.99604797363,
+        "num_turns": 2,
+        "input_tokens": 558,
+        "cached_input_tokens": 70975,
+        "cache_creation_input_tokens": 34400,
+        "output_tokens": 1498,
+        "judge_input_tokens": 4920,
+        "judge_cached_input_tokens": 5810,
+        "judge_output_tokens": 1073,
+        "skill_cost_usd": 0.1731985,
+        "judge_cost_usd": 0.010866,
+        "total_cost_usd": 0.18406450000000002
+      },
+      "runs": [
+        {
+          "run_index": 0,
+          "run_id": "run_ut_init_project_008_2026-10-12_23-32-19_0",
+          "outcome": "pass",
+          "aborted_reason": null,
+          "error": null,
+          "duration_ms": 30861.001500001294,
+          "duration_api_ms": 29795.0,
+          "num_turns": 2,
+          "skill_attempts": 1,
+          "input_tokens": 558,
+          "cached_input_tokens": 70975,
+          "cache_creation_input_tokens": 34400,
+          "output_tokens": 1498,
+          "model_usage": {
+            "claude-haiku-4-5-20251001": {
+              "inputTokens": 549,
+              "outputTokens": 14,
+              "cacheReadInputTokens": 0,
+              "cacheCreationInputTokens": 0,
+              "webSearchRequests": 0,
+              "costUSD": 0.000619,
+              "contextWindow": 200000,
+              "maxOutputTokens": 32000
+            },
+            "claude-sonnet-4-6": {
+              "inputTokens": 9,
+              "outputTokens": 1484,
+              "cacheReadInputTokens": 70975,
+              "cacheCreationInputTokens": 34400,
+              "webSearchRequests": 0,
+              "costUSD": 0.17257950000000002,
+              "contextWindow": 200000,
+              "maxOutputTokens": 32000
+            }
+          },
+          "no_result_message": false,
+          "subagents": [
+            {
+              "agent_type": "init-project",
+              "description": "Init genealogy project for Patrick Flynn",
+              "num_assistant_turns": 9,
+              "max_output_tokens": 295,
+              "hit_output_cap": false,
+              "runaway_thinking": false,
+              "usage": {
+                "input_tokens": 6,
+                "output_tokens": 1076,
+                "cache_read_input_tokens": 50618,
+                "cache_creation_input_tokens": 13573
+              },
+              "peak_window_tokens": 13574,
+              "compactions": [],
+              "models": [
+                "claude-sonnet-4-6"
+              ],
+              "duration_seconds": 21.784
+            }
+          ],
+          "subagent_capture_status": "captured",
+          "main_thread": {
+            "peak_window_tokens": 20828,
+            "compactions": [],
+            "models": [
+              "claude-sonnet-4-6"
+            ]
+          },
+          "skill_cost_usd": 0.1731985,
+          "output": {
+            "text_response": "A new research project has been created for **Patrick Flynn** (FamilySearch ID: LZNY-BRF). Here's a summary of what was set up:\n\n- **Project folder:** `/private/var/folders/ml/615yqgf91nb_nb5lzkw2dtmc0000gp/T/eval-ut_init_project_008-0-0-08b0od_2`\n- **Persons in tree:** 1 (Patrick Flynn only)\n- **Objective:** Identify the parents of Patrick Flynn\n\n**What we know about Patrick so far:**\n- Born approximately 1845 in Ireland\n- Died 1908 in Schuylkill County, Pennsylvania\n- No parents, siblings, spouse, or children are recorded in FamilySearch\n- No sources are currently attached to his profile\n\nThe next step is to formulate the first research question to work toward identifying his parents. Would you like to proceed with question selection or jump straight into searching records?",
+            "activated": true,
+            "skills_invoked": [],
+            "tool_calls": [
+              {
+                "tool": "mcp__genealogy__person_read",
+                "args": {
+                  "personId": "LZNY-BRF",
+                  "projectPath": "/private/var/folders/ml/615yqgf91nb_nb5lzkw2dtmc0000gp/T/eval-ut_init_project_008-0-0-08b0od_2"
+                },
+                "expected_args": {
+                  "personId": "LZNY-BRF"
+                },
+                "matched": {
+                  "kind": "predicate",
+                  "index": 0
+                },
+                "response_fixture": "person-read-flynn",
+                "response": {
+                  "persons": [
+                    {
+                      "id": "LZNY-BRF",
+                      "ark": "ark:/61903/4:1:LZNY-BRF",
+                      "gender": "Male",
+                      "living": false,
+                      "names": [
+                        {
+                          "preferred": true,
+                          "given": "Patrick",
+                          "surname": "Flynn"
+                        }
+                      ],
+                      "facts": [
+                        {
+                          "type": "Birth",
+                          "date": "~1845",
+                          "standard_date": "Abt 1845",
+                          "place": "Ireland",
+                          "standard_place": "Ireland"
+                        },
+                        {
+                          "type": "Death",
+                          "date": "1908",
+                          "standard_date": "1908",
+                          "place": "Schuylkill County, Pennsylvania, United States",
+                          "standard_place": "Schuylkill, Pennsylvania, United States"
+                        }
+                      ]
+                    }
+                  ],
+                  "relationships": [],
+                  "sources": [],
+                  "staged": {
+                    "resultsRef": "results/.staging/4f5f9e79-50fd-4e6a-bdcb-524a447924f4.json",
+                    "returnedCount": 1
+                  }
+                }
+              },
+              {
+                "tool": "mcp__genealogy__project_create",
+                "args": {
+                  "projectPath": "/private/var/folders/ml/615yqgf91nb_nb5lzkw2dtmc0000gp/T/eval-ut_init_project_008-0-0-08b0od_2",
+                  "objective": "Identify the parents of Patrick Flynn.",
+                  "title": "Patrick Flynn's Parents",
+                  "personReadRef": "results/.staging/4f5f9e79-50fd-4e6a-bdcb-524a447924f4.json",
+                  "subjectPersonIds": [
+                    "LZNY-BRF"
+                  ]
+                },
+                "expected_args": null,
+                "matched": {
+                  "kind": "live",
+                  "index": null
+                },
+                "response_fixture": "live:project_create",
+                "response": {
+                  "ok": true,
+                  "projectId": "rp_001",
+                  "filesWritten": [
+                    "tree.gedcomx.json",
+                    "research.json",
+                    "starting-tree.gedcomx.json"
+                  ],
+                  "counts": {
+                    "persons": 1,
+                    "relationships": 0,
+                    "sources": 1
+                  },
+                  "idMap": {
+                    "persons": {
+                      "LZNY-BRF": "I1"
+                    },
+                    "sources": {},
+                    "additions": {},
+                    "familySearchTreeSource": "S1"
+                  },
+                  "validation": {
+                    "valid": true,
+                    "warnings": []
+                  }
+                }
+              },
+              {
+                "tool": "mcp__genealogy__research_append",
+                "args": {
+                  "projectPath": "/private/var/folders/ml/615yqgf91nb_nb5lzkw2dtmc0000gp/T/eval-ut_init_project_008-0-0-08b0od_2",
+                  "section": "researcher_profile",
+                  "op": "update",
+                  "fields": {
+                    "experience_level": "novice",
+                    "narration_guidance": "Plain language for someone who has never done genealogy. No identifiers, file names, tool names or field names. Never write GPS, proof, proved or exhaustive: say genealogy standards; call an answer a conclusion when it is well established and a finding otherwise; say what we searched and what we could not reach. Do not describe your own instructions or checks. Do not narrate between actions; report once when the step is done: what was found, in one paragraph, and what happens next in one sentence."
+                  }
+                },
+                "expected_args": null,
+                "matched": {
+                  "kind": "live",
+                  "index": null
+                },
+                "response_fixture": "live:research_append",
+                "response": {
+                  "ok": true,
+                  "section": "researcher_profile",
+                  "op": "update",
+                  "entryId": "researcher_profile",
+                  "filesWritten": [
+                    "research.json"
+                  ],
+                  "validation": {
+                    "valid": true,
+                    "warnings": []
+                  }
+                }
+              }
+            ],
+            "files_created": [
+              "results/.staging/4f5f9e79-50fd-4e6a-bdcb-524a447924f4.json",
+              "starting-tree.gedcomx.json"
+            ],
+            "builtin_tool_calls": [
+              {
+                "tool": "Agent",
+                "args": {
+                  "description": "Init genealogy project for Patrick Flynn",
+                  "prompt": "init-project: Start a new research project for Patrick Flynn, FamilySearch ID LZNY-BRF. I want to identify his parents.\n\nprojectPath: <workspace>\n",
+                  "subagent_type": "init-project"
+                }
+              },
+              {
+                "tool": "Read",
+                "args": {
+                  "file_path": "/private/var/folders/ml/615yqgf91nb_nb5lzkw2dtmc0000gp/T/eval-ut_init_project_008-0-0-08b0od_2/research.json",
+                  "limit": "1"
+                },
+                "agent_id": "ab8ac4e4d7545159e"
+              }
+            ],
+            "agent_returns": [
+              {
+                "subagent_type": "init-project",
+                "text": "Project folder: /private/var/folders/ml/615yqgf91nb_nb5lzkw2dtmc0000gp/T/eval-ut_init_project_008-0-0-08b0od_2\nPersons: 1, Relationships: 0, Sources: 1\nObjective: \"Identify the parents of Patrick Flynn.\" (stated by user)\n\n---\n\nA new research project was created for Patrick Flynn, born around 1845 in Ireland and died in 1908 in Schuylkill County, Pennsylvania. He is the only person in the tree at this stage \u2014 FamilySearch has no parents, siblings, spouse, or children recorded for him, and no sources are attached to his profile. The tree is currently isolated to Patrick alone.\n\nThe next step is the first research question: the single fact we go after first to work toward your objective, which is to identify Patrick Flynn's parents."
+              }
+            ],
+            "file_changes": {
+              "research.json": {
+                "sections_modified": [
+                  "project"
+                ],
+                "diff": {
+                  "project": {
+                    "added": [
+                      {
+                        "id": "rp_001",
+                        "title": "Patrick Flynn's Parents",
+                        "status": "active",
+                        "created": "2026-10-12",
+                        "updated": "2026-10-12",
+                        "objective": "Identify the parents of Patrick Flynn.",
+                        "subject_person_ids": [
+                          "I1"
+                        ]
+                      }
+                    ],
+                    "modified": [],
+                    "deleted": []
+                  }
+                }
+              },
+              "tree.gedcomx.json": {
+                "sections_modified": [
+                  "persons",
+                  "sources"
+                ],
+                "diff": {
+                  "persons": {
+                    "added": [
+                      {
+                        "id": "I1",
+                        "ark": "ark:/61903/4:1:LZNY-BRF",
+                        "facts": [
+                          {
+                            "id": "F1",
+                            "date": "~1845",
+                            "type": "Birth",
+                            "place": "Ireland",
+                            "sources": [
+                              {
+                                "ref": "S1",
+                                "quality": 1
+                              }
+                            ],
+                            "standard_date": "Abt 1845",
+                            "standard_place": "Ireland"
+                          },
+                          {
+                            "id": "F2",
+                            "date": "1908",
+                            "type": "Death",
+                            "place": "Schuylkill County, Pennsylvania, United States",
+                            "sources": [
+                              {
+                                "ref": "S1",
+                                "quality": 1
+                              }
+                            ],
+                            "standard_date": "1908",
+                            "standard_place": "Schuylkill, Pennsylvania, United States"
+                          }
+                        ],
+                        "names": [
+                          {
+                            "id": "N1",
+                            "given": "Patrick",
+                            "surname": "Flynn",
+                            "preferred": true
+                          }
+                        ],
+                        "gender": "Male",
+                        "living": false
+                      }
+                    ],
+                    "modified": [],
+                    "deleted": []
+                  },
+                  "sources": {
+                    "added": [
+                      {
+                        "id": "S1",
+                        "url": "https://www.familysearch.org/tree",
+                        "title": "FamilySearch Family Tree (read from Patrick Flynn, LZNY-BRF)",
+                        "citation": "FamilySearch Family Tree (https://www.familysearch.org/tree : accessed 12 October 2026), read from the page of Patrick Flynn (LZNY-BRF)."
+                      }
+                    ],
+                    "modified": [],
+                    "deleted": []
+                  }
+                }
+              }
+            }
+          },
+          "validators": {
+            "passed": true,
+            "results": [
+              {
+                "name": "test_activated_run_produces_response",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_decline_response_nonempty",
+                "passed": true,
+                "error": "skipped: positive test",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_direct_delegation_relayed_verbatim",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_direct_test_spawned_its_agent",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_hand_back_names_its_owner",
+                "passed": true,
+                "error": "skipped: not a hand-back test",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_id_references_resolve",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_log_append_only",
+                "passed": true,
+                "error": "skipped: Missing research.json for diff",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_no_duplicate_tree_ids",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_no_entries_deleted",
+                "passed": true,
+                "error": "skipped: Missing research.json for diff",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_no_main_thread_subagent_only_calls",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_no_out_of_lane_section_writes",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_no_raw_writes_to_protected_files",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_ownership_table",
+                "passed": true,
+                "error": "skipped: Missing research.json for ownership diff",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_parent_child_age_plausibility_flagged",
+                "passed": true,
+                "error": "skipped: missing tree.gedcomx.json for diff",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_project_file_changes_route_through_writer_tools",
+                "passed": true,
+                "error": "skipped: Missing research.json/tree.gedcomx.json for diff",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_project_files_pass_full_validation",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_research_json_validates_schema",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_skill_calls_name_a_shipped_skill",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_tool_allowlist",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_tree_facts_agree_with_linked_assertions",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_tree_gedcomx_json_validates_schema",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_tree_ownership_table",
+                "passed": true,
+                "error": "skipped: Missing tree.gedcomx.json for ownership diff",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_write_then_validate",
+                "passed": true,
+                "error": "skipped: skill does not declare validate_research_schema",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_both_project_files_created",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_every_fact_and_relationship_is_sourced",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_existing_project_is_not_reinitialized",
+                "passed": true,
+                "error": "skipped: not a refuse-if-exists scenario",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_init_empty_sections",
+                "passed": true,
+                "error": "skipped: not an init-empty-sections scenario",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_narration_guidance_is_the_house_style",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_objective_default_verbatim",
+                "passed": true,
+                "error": "skipped: not an objective-default scenario",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_objective_kept_in_the_users_words",
+                "passed": true,
+                "error": "skipped: not an objective-stated scenario",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_person_level_sources_carried",
+                "passed": true,
+                "error": "skipped: no imported person carries person-level sources",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_profile_defaults_when_all_default",
+                "passed": true,
+                "error": "skipped: not an all-defaults scenario",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_project_files_written_through_the_writer_tools",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_returned_sources_reach_the_tree_without_notes",
+                "passed": true,
+                "error": "skipped: no source descriptions returned",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_search_before_stubs",
+                "passed": true,
+                "error": "skipped: not an expects-person-search scenario",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_standard_date_survives_from_the_tool",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_standard_place_came_from_a_tool",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_tree_ark_is_canonical_and_traceable",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_volunteered_subscriptions_normalized",
+                "passed": true,
+                "error": "skipped: not a volunteered-access scenario",
+                "outcome": "skipped"
+              }
+            ]
+          },
+          "judge": {
+            "skipped": false,
+            "dimensions": [
+              {
+                "source": "base",
+                "name": "Correctness",
+                "score": 3,
+                "rationale": "All persisted facts are accurate and sourced correctly. Patrick Flynn's birth (~1845, Ireland), death (1908, Schuylkill County, Pennsylvania), gender (Male), and name are all correctly extracted from person_read and written to tree.gedcomx.json with proper S1 source references at quality 1. The objective matches the user's stated goal. No fabricated material or unsupported claims."
+              },
+              {
+                "source": "base",
+                "name": "Completeness",
+                "score": 3,
+                "rationale": "The skill addressed all required elements: person_read was called to fetch Patrick Flynn's data, project_create was invoked with the correct objective and title, researcher_profile was populated with novice level and house-style narration guidance, and both research.json and tree.gedcomx.json were created. The response notes the isolation (no parents, siblings, spouse, or children) and explains the next research step."
+              },
+              {
+                "source": "base",
+                "name": "Tool Arguments",
+                "score": 3,
+                "rationale": "All three tool calls passed correct arguments. person_read received the correct personId (LZNY-BRF). project_create received the correct objective, title, personReadRef (the staged results reference), and subjectPersonIds. research_append received correct section, op, and fields for researcher_profile. No fixture_not_found errors; all calls matched their expected predicates or live routes."
+              },
+              {
+                "source": "rubric",
+                "name": "Stub & tree fidelity",
+                "score": 3,
+                "rationale": "The tree.gedcomx.json contains exactly one person (I1) with all known fields populated: name (Patrick Flynn, preferred), gender (Male), living (false), and two facts (Birth and Death) with dates, places, and sources. Unknown fields (parents, siblings, spouse, children) are correctly omitted. FamilySearch-derived facts are sourced to S1 at quality 1. Local I ID is used. The ARK is preserved. No fabrication or placeholder stubs created."
+              },
+              {
+                "source": "rubric",
+                "name": "Project section seeding & schema validity",
+                "score": 3,
+                "rationale": "research.json project block is complete: id (rp_001), title (Patrick Flynn's Parents\u2014concise and appropriate, not a full sentence), objective (Identify the parents of Patrick Flynn.), status (active), created/updated (2026-10-12), and subject_person_ids ([I1]). The researcher_profile section is populated with experience_level (novice) and narration_guidance (house-style string verbatim). All required sections present. File conforms to schema on inspection."
+              },
+              {
+                "source": "rubric",
+                "name": "Researcher profile",
+                "score": 3,
+                "rationale": "experience_level is novice (correct, not influenced by user). narration_guidance is the house-style string verbatim, stored exactly as required. The objective was stated by the user (Identify the parents of Patrick Flynn), so no defaulting was needed. subscriptions is absent, which is correct because the user volunteered no access beyond FamilySearch. No user-profile questions were asked."
+              },
+              {
+                "source": "rubric",
+                "name": "Place standardization",
+                "score": 3,
+                "rationale": "Both places in the tree came from person_read and carry the exact standard_place values the tool returned: Ireland (for birth) and Schuylkill, Pennsylvania, United States (for death). These are preserved verbatim in the written tree, not altered or fabricated. The tool's standardized values differ from the raw place text (e.g., Schuylkill County \u2192 Schuylkill), confirming the correct values were used."
+              },
+              {
+                "source": "rubric",
+                "name": "Known-holdings capture",
+                "score": null,
+                "rationale": "The test does not involve known holdings. The user did not volunteer any documents, prior research, GEDCOMs, or oral knowledge, so the survey was correctly skipped. This dimension is N/A."
+              }
+            ],
+            "judge_cost_usd": 0.010866,
+            "duration_ms": 13008.38704200578,
+            "error": null,
+            "input_tokens": 4920,
+            "cached_input_tokens": 5810,
+            "output_tokens": 1073
+          },
+          "started_at": 1791847939.356239,
+          "ended_at": 1791847984.0752351
+        }
+      ],
+      "grading_mode": "dimensions",
+      "dimensions_gate_outcome": true
+    },
+    {
+      "test_id": "ut_init_project_wzk",
+      "test_type": "positive",
+      "expected_outcome": "pass",
+      "scenario": null,
+      "mcp_fixtures": [
+        "person-read-flynn"
+      ],
+      "outcome": "pass",
+      "flaky": false,
+      "outcome_summary": {
+        "per_run_outcomes": [
+          "pass"
+        ],
+        "aggregated_dimensions": [
+          {
+            "source": "base",
+            "name": "Correctness",
+            "score": 3,
+            "rationale": "All persisted facts are accurate and well-sourced. Patrick Flynn's birth (~1845, Ireland), death (1908, Schuylkill County, Pennsylvania), gender (Male), and name are correctly extracted from person_read and written to tree.gedcomx.json with proper FamilySearch source attribution (S1, quality: 1). The objective accurately reflects the user's stated goal. No fabricated material or unsupported claims."
+          },
+          {
+            "source": "base",
+            "name": "Completeness",
+            "score": 3,
+            "rationale": "The skill completed all required work: read the FamilySearch person (LZNY-BRF), created the project with the user-stated objective, initialized both research.json and tree.gedcomx.json, and seeded the researcher profile with fixed defaults. The user's stated objective ('identify his parents') was captured verbatim, not replaced with a generic default. No required elements were omitted."
+          },
+          {
+            "source": "base",
+            "name": "Tool Arguments",
+            "score": 3,
+            "rationale": "All three tool calls passed correct arguments. person_read received the correct personId (LZNY-BRF). project_create received the correct objective, title, personReadRef (the staged results reference from person_read), and subjectPersonIds. research_append correctly updated researcher_profile with the fixed experience_level (novice) and house-style narration_guidance string verbatim. No critical identifiers were wrong; no calls landed in fixture_not_found."
+          },
+          {
+            "source": "rubric",
+            "name": "Stub & tree fidelity",
+            "score": 3,
+            "rationale": "The tree faithfully represents Patrick Flynn with all known facts populated: birth date (~1845), birth place (Ireland), death date (1908), death place (Schuylkill County, Pennsylvania, United States), gender (Male), and preferred name. All FamilySearch-derived facts are sourced to S1 at quality: 1. Local ID I1 is used. No unknown fields are guessed; no relatives are fabricated. The ARK correctly links to the FamilySearch source."
+          },
+          {
+            "source": "rubric",
+            "name": "Project section seeding & schema validity",
+            "score": 3,
+            "rationale": "research.json project block is complete: id (rp_001), title ('Patrick Flynn's parents' \u2014 concise and specific, not a full sentence), objective (user-stated, specific), subject_person_ids ([I1]), status (active), created and updated timestamps. All required sections are present (researcher_profile, known_holdings as empty array, etc.). The written file conforms to schema on inspection with correct types and no extraneous fields."
+          },
+          {
+            "source": "rubric",
+            "name": "Researcher profile",
+            "score": 3,
+            "rationale": "experience_level is correctly set to 'novice' (not 'experienced' despite the user's claim). narration_guidance is the fixed house-style string verbatim. subscriptions is absent (correct, since no site access was volunteered). The user's stated objective was captured directly without asking for clarification or mentioning a default. No questions were asked about the researcher's background."
+          },
+          {
+            "source": "rubric",
+            "name": "Place standardization",
+            "score": 3,
+            "rationale": "Both places in the tree came from person_read and are preserved exactly as returned: 'Ireland' for birth and 'Schuylkill, Pennsylvania, United States' for death, with their standard_place values intact. No hand-entered places required standardization. The tool-supplied standard_place values were kept verbatim without alteration or fabrication."
+          },
+          {
+            "source": "rubric",
+            "name": "Known-holdings capture",
+            "score": null,
+            "rationale": "The test does not involve known holdings. The user volunteered no documents, prior research, GEDCOMs, or oral knowledge, so the survey was correctly skipped and known_holdings is absent from the persisted state (or empty array). N/A."
+          }
+        ],
+        "review_dimensions": [
+          {
+            "source": "base",
+            "name": "Correctness",
+            "score": 3,
+            "rationale": "All persisted facts are accurate and well-sourced. Patrick Flynn's birth (~1845, Ireland), death (1908, Schuylkill County, Pennsylvania), gender (Male), and name are correctly extracted from person_read and written to tree.gedcomx.json with proper FamilySearch source attribution (S1, quality: 1). The objective accurately reflects the user's stated goal. No fabricated material or unsupported claims."
+          },
+          {
+            "source": "base",
+            "name": "Completeness",
+            "score": 3,
+            "rationale": "The skill completed all required work: read the FamilySearch person (LZNY-BRF), created the project with the user-stated objective, initialized both research.json and tree.gedcomx.json, and seeded the researcher profile with fixed defaults. The user's stated objective ('identify his parents') was captured verbatim, not replaced with a generic default. No required elements were omitted."
+          },
+          {
+            "source": "base",
+            "name": "Tool Arguments",
+            "score": 3,
+            "rationale": "All three tool calls passed correct arguments. person_read received the correct personId (LZNY-BRF). project_create received the correct objective, title, personReadRef (the staged results reference from person_read), and subjectPersonIds. research_append correctly updated researcher_profile with the fixed experience_level (novice) and house-style narration_guidance string verbatim. No critical identifiers were wrong; no calls landed in fixture_not_found."
+          },
+          {
+            "source": "rubric",
+            "name": "Stub & tree fidelity",
+            "score": 3,
+            "rationale": "The tree faithfully represents Patrick Flynn with all known facts populated: birth date (~1845), birth place (Ireland), death date (1908), death place (Schuylkill County, Pennsylvania, United States), gender (Male), and preferred name. All FamilySearch-derived facts are sourced to S1 at quality: 1. Local ID I1 is used. No unknown fields are guessed; no relatives are fabricated. The ARK correctly links to the FamilySearch source."
+          },
+          {
+            "source": "rubric",
+            "name": "Project section seeding & schema validity",
+            "score": 3,
+            "rationale": "research.json project block is complete: id (rp_001), title ('Patrick Flynn's parents' \u2014 concise and specific, not a full sentence), objective (user-stated, specific), subject_person_ids ([I1]), status (active), created and updated timestamps. All required sections are present (researcher_profile, known_holdings as empty array, etc.). The written file conforms to schema on inspection with correct types and no extraneous fields."
+          },
+          {
+            "source": "rubric",
+            "name": "Researcher profile",
+            "score": 3,
+            "rationale": "experience_level is correctly set to 'novice' (not 'experienced' despite the user's claim). narration_guidance is the fixed house-style string verbatim. subscriptions is absent (correct, since no site access was volunteered). The user's stated objective was captured directly without asking for clarification or mentioning a default. No questions were asked about the researcher's background."
+          },
+          {
+            "source": "rubric",
+            "name": "Place standardization",
+            "score": 3,
+            "rationale": "Both places in the tree came from person_read and are preserved exactly as returned: 'Ireland' for birth and 'Schuylkill, Pennsylvania, United States' for death, with their standard_place values intact. No hand-entered places required standardization. The tool-supplied standard_place values were kept verbatim without alteration or fabrication."
+          },
+          {
+            "source": "rubric",
+            "name": "Known-holdings capture",
+            "score": null,
+            "rationale": "The test does not involve known holdings. The user volunteered no documents, prior research, GEDCOMs, or oral knowledge, so the survey was correctly skipped and known_holdings is absent from the persisted state (or empty array). N/A."
+          }
+        ]
+      },
+      "totals": {
+        "duration_ms": 29856.197290995624,
+        "duration_api_ms": 28727.0,
+        "judge_duration_ms": 12486.340750008821,
+        "wall_clock_ms": 43308.46118927002,
+        "num_turns": 2,
+        "input_tokens": 562,
+        "cached_input_tokens": 70925,
+        "cache_creation_input_tokens": 34407,
+        "output_tokens": 1505,
+        "judge_input_tokens": 4962,
+        "judge_cached_input_tokens": 0,
+        "judge_output_tokens": 1070,
+        "skill_cost_usd": 0.17321074999999997,
+        "judge_cost_usd": 0.010312,
+        "total_cost_usd": 0.18352274999999996
+      },
+      "runs": [
+        {
+          "run_index": 0,
+          "run_id": "run_ut_init_project_wzk_2026-10-12_23-32-19_0",
+          "outcome": "pass",
+          "aborted_reason": null,
+          "error": null,
+          "duration_ms": 29856.197290995624,
+          "duration_api_ms": 28727.0,
+          "num_turns": 2,
+          "skill_attempts": 1,
+          "input_tokens": 562,
+          "cached_input_tokens": 70925,
+          "cache_creation_input_tokens": 34407,
+          "output_tokens": 1505,
+          "model_usage": {
+            "claude-haiku-4-5-20251001": {
+              "inputTokens": 552,
+              "outputTokens": 25,
+              "cacheReadInputTokens": 0,
+              "cacheCreationInputTokens": 0,
+              "webSearchRequests": 0,
+              "costUSD": 0.000677,
+              "contextWindow": 200000,
+              "maxOutputTokens": 32000
+            },
+            "claude-sonnet-4-6": {
+              "inputTokens": 10,
+              "outputTokens": 1480,
+              "cacheReadInputTokens": 70925,
+              "cacheCreationInputTokens": 34407,
+              "webSearchRequests": 0,
+              "costUSD": 0.17253374999999996,
+              "contextWindow": 200000,
+              "maxOutputTokens": 32000
+            }
+          },
+          "no_result_message": false,
+          "subagents": [
+            {
+              "agent_type": "init-project",
+              "description": "Initialize genealogy project for LZNY-BRF",
+              "num_assistant_turns": 6,
+              "max_output_tokens": 291,
+              "hit_output_cap": false,
+              "runaway_thinking": false,
+              "usage": {
+                "input_tokens": 7,
+                "output_tokens": 1070,
+                "cache_read_input_tokens": 50564,
+                "cache_creation_input_tokens": 13555
+              },
+              "peak_window_tokens": 13556,
+              "compactions": [],
+              "models": [
+                "claude-sonnet-4-6"
+              ],
+              "duration_seconds": 21.395
+            }
+          ],
+          "subagent_capture_status": "captured",
+          "main_thread": {
+            "peak_window_tokens": 20853,
+            "compactions": [],
+            "models": [
+              "claude-sonnet-4-6"
+            ]
+          },
+          "skill_cost_usd": 0.17321074999999997,
+          "output": {
+            "text_response": "- **Project folder:** `/private/var/folders/ml/615yqgf91nb_nb5lzkw2dtmc0000gp/T/eval-ut_init_project_wzk-0-0-vhsoypcg`\n- **Persons:** 1 | **Relationships:** 0 | **Sources:** 1\n- **Objective:** \"Identify the parents of Patrick Flynn (LZNY-BRF).\"\n\n---\n\nA new project has been created for **Patrick Flynn**, a man born around 1845 in Ireland who died in 1908 in Schuylkill County, Pennsylvania. He is the only person in the tree at this point \u2014 FamilySearch shows no parents, spouse, children, or siblings recorded for him, and no sources are attached to his profile.\n\nThe goal is to identify his parents. The next step is to define the first research question \u2014 the single fact to pursue first to make progress toward that goal.",
+            "activated": true,
+            "skills_invoked": [],
+            "tool_calls": [
+              {
+                "tool": "mcp__genealogy__person_read",
+                "args": {
+                  "personId": "LZNY-BRF",
+                  "projectPath": "/private/var/folders/ml/615yqgf91nb_nb5lzkw2dtmc0000gp/T/eval-ut_init_project_wzk-0-0-vhsoypcg"
+                },
+                "expected_args": {
+                  "personId": "LZNY-BRF"
+                },
+                "matched": {
+                  "kind": "predicate",
+                  "index": 0
+                },
+                "response_fixture": "person-read-flynn",
+                "response": {
+                  "persons": [
+                    {
+                      "id": "LZNY-BRF",
+                      "ark": "ark:/61903/4:1:LZNY-BRF",
+                      "gender": "Male",
+                      "living": false,
+                      "names": [
+                        {
+                          "preferred": true,
+                          "given": "Patrick",
+                          "surname": "Flynn"
+                        }
+                      ],
+                      "facts": [
+                        {
+                          "type": "Birth",
+                          "date": "~1845",
+                          "standard_date": "Abt 1845",
+                          "place": "Ireland",
+                          "standard_place": "Ireland"
+                        },
+                        {
+                          "type": "Death",
+                          "date": "1908",
+                          "standard_date": "1908",
+                          "place": "Schuylkill County, Pennsylvania, United States",
+                          "standard_place": "Schuylkill, Pennsylvania, United States"
+                        }
+                      ]
+                    }
+                  ],
+                  "relationships": [],
+                  "sources": [],
+                  "staged": {
+                    "resultsRef": "results/.staging/f36c1fa8-e27d-4ac7-9579-66838a058af7.json",
+                    "returnedCount": 1
+                  }
+                }
+              },
+              {
+                "tool": "mcp__genealogy__project_create",
+                "args": {
+                  "projectPath": "/private/var/folders/ml/615yqgf91nb_nb5lzkw2dtmc0000gp/T/eval-ut_init_project_wzk-0-0-vhsoypcg",
+                  "objective": "Identify the parents of Patrick Flynn (LZNY-BRF).",
+                  "title": "Patrick Flynn's parents",
+                  "personReadRef": "results/.staging/f36c1fa8-e27d-4ac7-9579-66838a058af7.json",
+                  "subjectPersonIds": [
+                    "LZNY-BRF"
+                  ]
+                },
+                "expected_args": null,
+                "matched": {
+                  "kind": "live",
+                  "index": null
+                },
+                "response_fixture": "live:project_create",
+                "response": {
+                  "ok": true,
+                  "projectId": "rp_001",
+                  "filesWritten": [
+                    "tree.gedcomx.json",
+                    "research.json",
+                    "starting-tree.gedcomx.json"
+                  ],
+                  "counts": {
+                    "persons": 1,
+                    "relationships": 0,
+                    "sources": 1
+                  },
+                  "idMap": {
+                    "persons": {
+                      "LZNY-BRF": "I1"
+                    },
+                    "sources": {},
+                    "additions": {},
+                    "familySearchTreeSource": "S1"
+                  },
+                  "validation": {
+                    "valid": true,
+                    "warnings": []
+                  }
+                }
+              },
+              {
+                "tool": "mcp__genealogy__research_append",
+                "args": {
+                  "projectPath": "/private/var/folders/ml/615yqgf91nb_nb5lzkw2dtmc0000gp/T/eval-ut_init_project_wzk-0-0-vhsoypcg",
+                  "section": "researcher_profile",
+                  "op": "update",
+                  "fields": {
+                    "experience_level": "novice",
+                    "narration_guidance": "Plain language for someone who has never done genealogy. No identifiers, file names, tool names or field names. Never write GPS, proof, proved or exhaustive: say genealogy standards; call an answer a conclusion when it is well established and a finding otherwise; say what we searched and what we could not reach. Do not describe your own instructions or checks. Do not narrate between actions; report once when the step is done: what was found, in one paragraph, and what happens next in one sentence."
+                  }
+                },
+                "expected_args": null,
+                "matched": {
+                  "kind": "live",
+                  "index": null
+                },
+                "response_fixture": "live:research_append",
+                "response": {
+                  "ok": true,
+                  "section": "researcher_profile",
+                  "op": "update",
+                  "entryId": "researcher_profile",
+                  "filesWritten": [
+                    "research.json"
+                  ],
+                  "validation": {
+                    "valid": true,
+                    "warnings": []
+                  }
+                }
+              }
+            ],
+            "files_created": [
+              "results/.staging/f36c1fa8-e27d-4ac7-9579-66838a058af7.json",
+              "starting-tree.gedcomx.json"
+            ],
+            "builtin_tool_calls": [
+              {
+                "tool": "Agent",
+                "args": {
+                  "description": "Initialize genealogy project for LZNY-BRF",
+                  "prompt": "init-project: Start a new project for FamilySearch ID LZNY-BRF. I want to identify his parents. About me: I'm experienced.\n\nprojectPath: <workspace>",
+                  "subagent_type": "init-project"
+                }
+              },
+              {
+                "tool": "Read",
+                "args": {
+                  "file_path": "/private/var/folders/ml/615yqgf91nb_nb5lzkw2dtmc0000gp/T/eval-ut_init_project_wzk-0-0-vhsoypcg/research.json",
+                  "limit": "1"
+                },
+                "agent_id": "ac904a56f7591f765"
+              }
+            ],
+            "agent_returns": [
+              {
+                "subagent_type": "init-project",
+                "text": "- Project folder: `/private/var/folders/ml/615yqgf91nb_nb5lzkw2dtmc0000gp/T/eval-ut_init_project_wzk-0-0-vhsoypcg`\n- Persons: 1, Relationships: 0, Sources: 1\n- Objective: \"Identify the parents of Patrick Flynn (LZNY-BRF).\" (stated by you)\n\n---\n\nA new project was created for Patrick Flynn, a man born around 1845 in Ireland who died in 1908 in Schuylkill County, Pennsylvania. He is the only person in the tree at this point \u2014 FamilySearch shows no parents, spouse, children, or siblings recorded for him, and no sources are attached to his profile. The goal is to identify his parents.\n\nYour objective is to find Patrick Flynn's parents. The next step is the first research question \u2014 the single fact we go after first to make progress toward that goal."
+              }
+            ],
+            "file_changes": {
+              "research.json": {
+                "sections_modified": [
+                  "project"
+                ],
+                "diff": {
+                  "project": {
+                    "added": [
+                      {
+                        "id": "rp_001",
+                        "title": "Patrick Flynn's parents",
+                        "status": "active",
+                        "created": "2026-10-12",
+                        "updated": "2026-10-12",
+                        "objective": "Identify the parents of Patrick Flynn (LZNY-BRF).",
+                        "subject_person_ids": [
+                          "I1"
+                        ]
+                      }
+                    ],
+                    "modified": [],
+                    "deleted": []
+                  }
+                }
+              },
+              "tree.gedcomx.json": {
+                "sections_modified": [
+                  "persons",
+                  "sources"
+                ],
+                "diff": {
+                  "persons": {
+                    "added": [
+                      {
+                        "id": "I1",
+                        "ark": "ark:/61903/4:1:LZNY-BRF",
+                        "facts": [
+                          {
+                            "id": "F1",
+                            "date": "~1845",
+                            "type": "Birth",
+                            "place": "Ireland",
+                            "sources": [
+                              {
+                                "ref": "S1",
+                                "quality": 1
+                              }
+                            ],
+                            "standard_date": "Abt 1845",
+                            "standard_place": "Ireland"
+                          },
+                          {
+                            "id": "F2",
+                            "date": "1908",
+                            "type": "Death",
+                            "place": "Schuylkill County, Pennsylvania, United States",
+                            "sources": [
+                              {
+                                "ref": "S1",
+                                "quality": 1
+                              }
+                            ],
+                            "standard_date": "1908",
+                            "standard_place": "Schuylkill, Pennsylvania, United States"
+                          }
+                        ],
+                        "names": [
+                          {
+                            "id": "N1",
+                            "given": "Patrick",
+                            "surname": "Flynn",
+                            "preferred": true
+                          }
+                        ],
+                        "gender": "Male",
+                        "living": false
+                      }
+                    ],
+                    "modified": [],
+                    "deleted": []
+                  },
+                  "sources": {
+                    "added": [
+                      {
+                        "id": "S1",
+                        "url": "https://www.familysearch.org/tree",
+                        "title": "FamilySearch Family Tree (read from Patrick Flynn, LZNY-BRF)",
+                        "citation": "FamilySearch Family Tree (https://www.familysearch.org/tree : accessed 12 October 2026), read from the page of Patrick Flynn (LZNY-BRF)."
+                      }
+                    ],
+                    "modified": [],
+                    "deleted": []
+                  }
+                }
+              }
+            }
+          },
+          "validators": {
+            "passed": true,
+            "results": [
+              {
+                "name": "test_activated_run_produces_response",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_decline_response_nonempty",
+                "passed": true,
+                "error": "skipped: positive test",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_direct_delegation_relayed_verbatim",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_direct_test_spawned_its_agent",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_hand_back_names_its_owner",
+                "passed": true,
+                "error": "skipped: not a hand-back test",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_id_references_resolve",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_log_append_only",
+                "passed": true,
+                "error": "skipped: Missing research.json for diff",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_no_duplicate_tree_ids",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_no_entries_deleted",
+                "passed": true,
+                "error": "skipped: Missing research.json for diff",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_no_main_thread_subagent_only_calls",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_no_out_of_lane_section_writes",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_no_raw_writes_to_protected_files",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_ownership_table",
+                "passed": true,
+                "error": "skipped: Missing research.json for ownership diff",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_parent_child_age_plausibility_flagged",
+                "passed": true,
+                "error": "skipped: missing tree.gedcomx.json for diff",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_project_file_changes_route_through_writer_tools",
+                "passed": true,
+                "error": "skipped: Missing research.json/tree.gedcomx.json for diff",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_project_files_pass_full_validation",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_research_json_validates_schema",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_skill_calls_name_a_shipped_skill",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_tool_allowlist",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_tree_facts_agree_with_linked_assertions",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_tree_gedcomx_json_validates_schema",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_tree_ownership_table",
+                "passed": true,
+                "error": "skipped: Missing tree.gedcomx.json for ownership diff",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_write_then_validate",
+                "passed": true,
+                "error": "skipped: skill does not declare validate_research_schema",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_both_project_files_created",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_every_fact_and_relationship_is_sourced",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_existing_project_is_not_reinitialized",
+                "passed": true,
+                "error": "skipped: not a refuse-if-exists scenario",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_init_empty_sections",
+                "passed": true,
+                "error": "skipped: not an init-empty-sections scenario",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_narration_guidance_is_the_house_style",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_objective_default_verbatim",
+                "passed": true,
+                "error": "skipped: not an objective-default scenario",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_objective_kept_in_the_users_words",
+                "passed": true,
+                "error": "skipped: not an objective-stated scenario",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_person_level_sources_carried",
+                "passed": true,
+                "error": "skipped: no imported person carries person-level sources",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_profile_defaults_when_all_default",
+                "passed": true,
+                "error": "skipped: not an all-defaults scenario",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_project_files_written_through_the_writer_tools",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_returned_sources_reach_the_tree_without_notes",
+                "passed": true,
+                "error": "skipped: no source descriptions returned",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_search_before_stubs",
+                "passed": true,
+                "error": "skipped: not an expects-person-search scenario",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_standard_date_survives_from_the_tool",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_standard_place_came_from_a_tool",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_tree_ark_is_canonical_and_traceable",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_volunteered_subscriptions_normalized",
+                "passed": true,
+                "error": "skipped: not a volunteered-access scenario",
+                "outcome": "skipped"
+              }
+            ]
+          },
+          "judge": {
+            "skipped": false,
+            "dimensions": [
+              {
+                "source": "base",
+                "name": "Correctness",
+                "score": 3,
+                "rationale": "All persisted facts are accurate and well-sourced. Patrick Flynn's birth (~1845, Ireland), death (1908, Schuylkill County, Pennsylvania), gender (Male), and name are correctly extracted from person_read and written to tree.gedcomx.json with proper FamilySearch source attribution (S1, quality: 1). The objective accurately reflects the user's stated goal. No fabricated material or unsupported claims."
+              },
+              {
+                "source": "base",
+                "name": "Completeness",
+                "score": 3,
+                "rationale": "The skill completed all required work: read the FamilySearch person (LZNY-BRF), created the project with the user-stated objective, initialized both research.json and tree.gedcomx.json, and seeded the researcher profile with fixed defaults. The user's stated objective ('identify his parents') was captured verbatim, not replaced with a generic default. No required elements were omitted."
+              },
+              {
+                "source": "base",
+                "name": "Tool Arguments",
+                "score": 3,
+                "rationale": "All three tool calls passed correct arguments. person_read received the correct personId (LZNY-BRF). project_create received the correct objective, title, personReadRef (the staged results reference from person_read), and subjectPersonIds. research_append correctly updated researcher_profile with the fixed experience_level (novice) and house-style narration_guidance string verbatim. No critical identifiers were wrong; no calls landed in fixture_not_found."
+              },
+              {
+                "source": "rubric",
+                "name": "Stub & tree fidelity",
+                "score": 3,
+                "rationale": "The tree faithfully represents Patrick Flynn with all known facts populated: birth date (~1845), birth place (Ireland), death date (1908), death place (Schuylkill County, Pennsylvania, United States), gender (Male), and preferred name. All FamilySearch-derived facts are sourced to S1 at quality: 1. Local ID I1 is used. No unknown fields are guessed; no relatives are fabricated. The ARK correctly links to the FamilySearch source."
+              },
+              {
+                "source": "rubric",
+                "name": "Project section seeding & schema validity",
+                "score": 3,
+                "rationale": "research.json project block is complete: id (rp_001), title ('Patrick Flynn's parents' \u2014 concise and specific, not a full sentence), objective (user-stated, specific), subject_person_ids ([I1]), status (active), created and updated timestamps. All required sections are present (researcher_profile, known_holdings as empty array, etc.). The written file conforms to schema on inspection with correct types and no extraneous fields."
+              },
+              {
+                "source": "rubric",
+                "name": "Researcher profile",
+                "score": 3,
+                "rationale": "experience_level is correctly set to 'novice' (not 'experienced' despite the user's claim). narration_guidance is the fixed house-style string verbatim. subscriptions is absent (correct, since no site access was volunteered). The user's stated objective was captured directly without asking for clarification or mentioning a default. No questions were asked about the researcher's background."
+              },
+              {
+                "source": "rubric",
+                "name": "Place standardization",
+                "score": 3,
+                "rationale": "Both places in the tree came from person_read and are preserved exactly as returned: 'Ireland' for birth and 'Schuylkill, Pennsylvania, United States' for death, with their standard_place values intact. No hand-entered places required standardization. The tool-supplied standard_place values were kept verbatim without alteration or fabrication."
+              },
+              {
+                "source": "rubric",
+                "name": "Known-holdings capture",
+                "score": null,
+                "rationale": "The test does not involve known holdings. The user volunteered no documents, prior research, GEDCOMs, or oral knowledge, so the survey was correctly skipped and known_holdings is absent from the persisted state (or empty array). N/A."
+              }
+            ],
+            "judge_cost_usd": 0.010312,
+            "duration_ms": 12486.340750008821,
+            "error": null,
+            "input_tokens": 4962,
+            "cached_input_tokens": 0,
+            "output_tokens": 1070
+          },
+          "started_at": 1791847939.3563058,
+          "ended_at": 1791847982.664767
+        }
+      ],
+      "grading_mode": "dimensions",
+      "dimensions_gate_outcome": true
+    }
+  ],
+  "totals": {
+    "duration_ms": 71238.20195799635,
+    "duration_api_ms": 68768.0,
+    "judge_duration_ms": 29420.085167017533,
+    "num_turns": 6,
+    "input_tokens": 1660,
+    "cached_input_tokens": 181592,
+    "cache_creation_input_tokens": 93824,
+    "output_tokens": 3419,
+    "judge_input_tokens": 21024,
+    "judge_cached_input_tokens": 5810,
+    "judge_output_tokens": 2506,
+    "skill_cost_usd": 0.4587846,
+    "judge_cost_usd": 0.034135000000000006,
+    "total_cost_usd": 0.4929196,
+    "wall_clock_ms": 249992.1588897705
+  },
+  "judge_model": "claude-haiku-4-5-20251001",
+  "tool_search": true,
+  "store": "pg"
+}

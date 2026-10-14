@@ -394,9 +394,9 @@ function endpointKey(r: SimplifiedRelationship): string {
  *
  * One predicate, two callers: `add_relationship` corroborates into the first
  * match rather than writing a second edge (plan Decision 37), and
- * `dedupRelationships` folds by the same rule, so a tree merged from two
- * documents and a tree built by two `add_relationship` calls end up the same
- * shape.
+ * `dedupRelationships` folds by the same rule. They differ only in the
+ * subtype: a merge adopts the more specific one, while `add_relationship`
+ * keeps the existing edge's and warns.
  */
 export function relationshipMatches(
   a: SimplifiedRelationship,

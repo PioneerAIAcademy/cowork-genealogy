@@ -70,6 +70,10 @@ PRICE_PER_MTOK = {
 # voluntary yield, 31% of runs never yield, and it resets on every attempt. There is
 # deliberately no in-session grant flow: a session at the bound stops, and the way on is a
 # new session on the same project. 0 switches the cap off.
+#
+# A trigger, not a ceiling: it is checked before each tool call, and a response is priced
+# only once it lands, so a session closes above it by one tool-free stretch (a delegation
+# composing its result): $0.05 to $0.56 over a $1 cap (U23, U13, U19; n=1 each).
 SPEND_CAP_USD = _spend_env("SESSION_SPEND_CAP_USD", 35.0)
 
 TOKEN_CLASSES = ("input", "cache_write", "cache_read", "output")
