@@ -24,21 +24,30 @@ const MARKER = new RegExp(String.raw`^(?:${OPEN}|${CLOSE})(?: |$)`, "m");
 const here = dirname(fileURLToPath(import.meta.url));
 const repoRoot = join(here, "..", "..", "..", "..", "..");
 
-// `.claude` holds worktrees — full copies of this repo, whose own run of this
-// test covers them.
+// Only `.claude/worktrees` is skipped — those are full copies of this repo,
+// whose own run of this test covers them. `.claude` itself holds 41 tracked
+// files (our skills, agents and commands), so skipping the whole directory hid
+// them.
 const SKIP_DIRS = new Set([
-  "node_modules", ".git", ".claude", "build", "dist", "coverage",
+  "node_modules", ".git", "build", "dist", "coverage",
   "releases", ".venv", "venv", "__pycache__", ".turbo", ".next", ".pytest_cache",
 ]);
 
 const SCANNED = new Set([
   ".ts", ".tsx", ".js", ".mjs", ".cjs", ".json", ".md", ".py",
-  ".yml", ".yaml", ".sh", ".txt", ".html", ".css", ".toml",
+  ".yml", ".yaml", ".sh", ".txt", ".html", ".css", ".toml", ".bat", ".sql",
+]);
+
+// Tracked text files that carry no extension at all, so no extension list can
+// reach them. All six are merge-prone.
+const SCANNED_NAMES = new Set([
+  "Makefile", "Dockerfile", "Procfile", "CODEOWNERS", "LICENSE", "post-checkout",
 ]);
 
 function collect(dir: string, out: string[] = []): string[] {
   for (const entry of readdirSync(dir)) {
     if (SKIP_DIRS.has(entry)) continue;
+    if (entry === "worktrees" && dir.endsWith(".claude")) continue;
     const full = join(dir, entry);
     // lstat, and skip every symlink. `eval/.env` and the engine's
     // `node_modules` are both links today. Following them risks a loop, and a
@@ -49,7 +58,7 @@ function collect(dir: string, out: string[] = []): string[] {
     const st = lstatSync(full);
     if (st.isSymbolicLink()) continue;
     if (st.isDirectory()) collect(full, out);
-    else if (SCANNED.has(entry.slice(entry.lastIndexOf(".")))) out.push(full);
+    else if (SCANNED.has(entry.slice(entry.lastIndexOf("."))) || SCANNED_NAMES.has(entry)) out.push(full);
   }
   return out;
 }
