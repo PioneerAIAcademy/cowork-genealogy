@@ -90,18 +90,21 @@ delivered-exit enforcement) and #3393 (the nudge cap), so it measured a differen
 Free, and the step most likely to invalidate the whole exercise. On
 familysearch.org, signed in normally — this needs no working app sign-in:
 
-- [ ] Open **G13G-P68** (Mary E. McAndrew) on the live tree.
-- [ ] Count the children attached to her and John Mogan. The 2026-09-29 check found
+- [x] Open **G13G-P68** (Mary E. McAndrew) on the live tree.
+- [x] Count the children attached to her and John Mogan. The 2026-09-29 check found
       **exactly five**.
-- [ ] If the count is still five, condition 3 holds: the tree cannot say whether five is
+- [x] If the count is still five, condition 3 holds: the tree cannot say whether five is
       all of them.
-- [ ] **If a sixth has been attached since**, the question is now partly answerable by
+- [ ] (not triggered) **If a sixth has been attached since**, the question is now partly answerable by
       reading, and the objective is burned. Switch to `9VX4-1C3` or `KN3K-9Q3` and repeat
       this checklist against it.
-- [ ] Record the date and the count here before run 1, so the condition is evidenced
+- [x] Record the date and the count here before run 1, so the condition is evidenced
       rather than asserted.
 
-Verified: ____________  count: ____  by: ____________
+**Verified 2026-10-14 by Praise: five children, unchanged from the 2026-09-29 check.**
+The question stays unanswerable by reading the tree, so condition 3 holds and the three
+runs may start. If this is being read after a later date, re-count before trusting it —
+an attached sixth child burns the objective.
 
 ## Running it
 
