@@ -52,7 +52,7 @@ import { gcUnreferencedImages, sourceImageCapState } from "../utils/image-store.
 import { nextId } from "../utils/gedcomx-ids.js";
 import { arkToBareId } from "../utils/ark.js";
 import { PERSONA_BEARING_PRODUCERS } from "../utils/results-staging.js";
-import { resolveStandardPlace, countryConsistency } from "../utils/place-resolver.js";
+import { resolveStandardPlace, countryConsistency, isNonPlacePhrase } from "../utils/place-resolver.js";
 import { isStopGateSatisfied, getStoppedBecause } from "../utils/question-stop.js";
 
 // Re-exported for back-compat: tests and any other importer that reaches this
@@ -5056,9 +5056,14 @@ async function prepareOps(
     // ── Place lever (b): never geocode what the source record already
     // resolved — copy the sidecar's standard_place for the same place string.
     // `standard_place: null` is an explicit opt-out (skip resolution + guard);
-    // only a fully omitted field triggers resolution.
+    // only a fully omitted field triggers resolution. A non-place phrase
+    // ("Same House") is left unset, silently: it has no standard form.
     let geocoded = false;
-    if (factText(entry.place) !== undefined && entry.standard_place === undefined) {
+    if (
+      factText(entry.place) !== undefined &&
+      entry.standard_place === undefined &&
+      !isNonPlacePhrase(factText(entry.place)!)
+    ) {
       let sp: string | null = null;
       let source: "sidecar" | "geocoded" | null = null;
       if (matchedRecord) {

@@ -583,7 +583,9 @@ append op (deliberately simple):
 - **Lever B — sidecar copy first, never re-geocode what the record resolved.**
   When the op carries a `place` but omits `standard_place` (**strictly absent**;
   `standard_place: null` is an explicit per-entry opt-out that skips resolution
-  and the guard):
+  and the guard; a non-place phrase such as "Same House" or "Do", tested by
+  `isNonPlacePhrase` in `place-resolver.ts`, skips both steps below and stays
+  unset with no warning):
   1. if the op's sidecar-matched record (§3.5) has a fact whose `place` equals the
      op's place string (trimmed, case-insensitive), its converter-resolved
      `standard_place` is **copied** — no geocoding call;
