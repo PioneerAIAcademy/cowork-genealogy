@@ -41,6 +41,8 @@ sys.path.insert(0, str(_VALIDATORS_DIR))
 # Aliased: pyproject.toml collects `test_*` and `report_*`, so either name
 # imported as-is would be collected here with fixtures pytest cannot supply.
 from test_research_exhaustiveness import (  # noqa: E402
+    _BLOCKER_ALIASES,
+    _REFUSE_TAGS,
     report_refusal_marks_the_blocker_open as _report_fn,
     test_refusal_names_the_blocking_plan_item as _gate_fn,
 )
@@ -200,6 +202,41 @@ def test_gate_fails_loudly_when_before_state_has_no_blocker():
             gate("pli_005 is still in progress.", before=before)
 
 
+def test_blocker_comes_from_the_question_being_declared():
+    """Another question's open item is not what blocks this declaration."""
+    before = {
+        "research_json": {
+            "plans": [
+                {"id": "pl_002", "question_id": "q_001", "status": "active",
+                 "items": [{"id": "pli_005", "status": "in_progress"}]},
+                {"id": "pl_003", "question_id": "q_002", "status": "active",
+                 "items": [{"id": "pli_099", "status": "planned"}]},
+            ]
+        }
+    }
+    declaring = {**DIRECT_IN_PROGRESS, "delegation": "Declare it.\n\nquestionId: q_001\nprojectPath: <workspace>"}
+    returns = [{"subagent_type": _AGENT, "text": "pli_099 is still planned."}]
+    with pytest.raises(AssertionError, match=_NOT_NAMED):
+        gate("", declaring, before, returns)
+    gate("", declaring, before, [{"subagent_type": _AGENT, "text": "pli_005 is still in progress."}])
+    # With no questionId to scope by, every active plan counts.
+    gate("pli_099 is still planned.", IN_PROGRESS, before)
+
+
+def test_every_refuse_tagged_test_has_an_alias():
+    """A missing entry silently narrows the gate to the literal id, which fails
+    a correct refusal that names the record instead. Make it loud."""
+    refusals = []
+    for path in sorted(_SUITE.glob("*.json")):
+        spec = json.loads(path.read_text(encoding="utf-8"))
+        test = spec.get("test") or {}
+        if _REFUSE_TAGS.intersection(test.get("tags") or []):
+            refusals.append(test["id"])
+    assert refusals, f"no refuse-tagged test under {_SUITE} — check the glob"
+    missing = [t for t in refusals if t not in _BLOCKER_ALIASES]
+    assert not missing, f"refuse-tagged tests with no _BLOCKER_ALIASES entry: {missing}"
+
+
 def test_skips_a_test_that_has_no_blocking_item():
     """Every other test in the suite: there is no plan item to name, so
     demanding one would manufacture a failure."""
@@ -260,6 +297,18 @@ def test_report_skips_when_no_blocker_is_named():
         _report_fn(BEFORE_IN_PROGRESS, "BLOCKED", IN_PROGRESS, [])
 
 
+def test_report_says_so_when_a_break_cuts_the_name():
+    """The gate passes a reply whose alias wraps across a line, and the frozen
+    split cuts it, so no sentence names the item. The report skips with that
+    reason rather than claiming the gate reported it."""
+    text = "The death\ncertificate search was completed last week."
+    gate(text)
+    with pytest.raises(pytest.skip.Exception, match="across a sentence or line break"):
+        _report_fn(BEFORE_IN_PROGRESS, text, IN_PROGRESS, [])
+    with pytest.raises(pytest.skip.Exception, match="the gate reports it"):
+        _report_fn(BEFORE_IN_PROGRESS, "BLOCKED", IN_PROGRESS, [])
+
+
 def test_report_reads_the_blocker_from_before_state():
     """A later in-progress test on another scenario is covered, not skipped."""
     before = {
@@ -305,7 +354,10 @@ _RUNLOGS = _EVAL / "runlogs" / "unit" / "research-exhaustiveness"
 
 # Run-log test entries carry no `tags`, and `_005` has no test file left (#3172
 # deleted it), so the tags come from here. `delegation` is read from the live
-# test file so the corpus grades the same reply the harness does.
+# test file so the corpus grades the same reply the harness does. Run logs do
+# not record before_state, so the blockers come from today's scenario files: an
+# edit that renumbers a blocking item fails every recorded run here, loudly, and
+# that edit owes the suite a re-run anyway.
 _CORPUS_TESTS = {
     "ut_research_exhaustiveness_005": ("refuse-in-progress", None),
     "ut_research_exhaustiveness_d1a": ("refuse-in-progress", "direct-refuse-while-in-progress.json"),

@@ -263,7 +263,8 @@ _SENTENCE_SPLIT = re.compile(
 # "we are waiting on it", "has not come back", "is unresolved", "is running",
 # and "has not been completed", the last missing only because `been` sat
 # between `not` and `completed`. The acceptance set is the corpus, not this
-# vocabulary: see the offline tests, which run every recorded refusal.
+# vocabulary: see the offline tests, which run every recorded
+# refuse-in-progress refusal.
 #
 # Widened again for issue #1830, which made a `planned` item block the gate
 # too. Two arms, both derived from a recorded response rather than invented —
@@ -333,7 +334,8 @@ _REFUSE_TAGS = frozenset({"refuse-in-progress", "refuse-planned"})
 # scenario name never reaches a validator (decided on issue #3089). Test ids are
 # unique corpus-wide (check_runlogs rule 4), so a key cannot collide, and a later
 # scenario reusing `pli_005` for another record is not false-accepted. A
-# refuse-tagged test with no entry accepts only the literal plan-item id. `\b`
+# refuse-tagged test with no entry accepts only the literal plan-item id, so
+# the offline tests fail on any refuse-tagged test in the suite missing here. `\b`
 # matters on `st.? patrick`: the scenario's subject is Patrick Flynn, and "the
 # earliest Patrick Flynn record" names him, not the marriage register.
 _BLOCKER_ALIASES = {
@@ -342,12 +344,20 @@ _BLOCKER_ALIASES = {
 }
 
 
-def _blocking_items(before_state) -> list[str]:
-    """Ids of the planned or in-progress items on every active plan."""
+_DELEGATED_QUESTION = re.compile(r"questionId:\s*(q_\w+)")
+
+
+def _blocking_items(before_state, test) -> list[str]:
+    """Ids of the planned or in-progress items on the active plans for the
+    question being declared: the delegation's `questionId` when it names one,
+    else every active plan."""
     research = (before_state or {}).get("research_json") or {}
+    question = _DELEGATED_QUESTION.search((test or {}).get("delegation") or "")
     blockers = []
     for plan in research.get("plans") or []:
         if plan.get("status") != "active":
+            continue
+        if question and plan.get("question_id") != question.group(1):
             continue
         for item in plan.get("items") or []:
             if item.get("status") in ("planned", "in_progress") and item.get("id"):
@@ -374,8 +384,8 @@ def test_refusal_names_the_blocking_plan_item(before_state, text_response, test,
     whose pass condition is met by doing nothing cannot distinguish a
     correct refusal from a dead run. This gate is that distinction and
     nothing more: the reply names an item that is `planned` or
-    `in_progress` on the active plan, read from `before_state`, by id or
-    by the test's alias.
+    `in_progress` on an active plan for the question, read from
+    `before_state`, by id or by the test's alias.
 
     **Whether the reply calls that item still open is not gated.** It used
     to be: the item and a `_STILL_OPEN` marker had to share a sentence. That
@@ -407,7 +417,7 @@ def test_refusal_names_the_blocking_plan_item(before_state, text_response, test,
     tags = test.get("tags") or []
     if not _REFUSE_TAGS.intersection(tags):
         pytest.skip("not a refusal test — no blocking item to name")
-    blockers = _blocking_items(before_state)
+    blockers = _blocking_items(before_state, test)
     assert blockers, (
         f"{test.get('id')}: refuse-tagged test with no planned or in-progress "
         "item on an active plan in before_state — the gate cannot run"
@@ -436,19 +446,27 @@ def report_refusal_marks_the_blocker_open(before_state, text_response, test, age
     correct refusal.
 
     Skips when the reply names no blocker: the gate fails that run, and the
-    same finding twice would read as two.
+    same finding twice would read as two. Also skips, saying so, when the
+    blocker is named only across a break the frozen split cuts ("death" and
+    "certificate" on two lines): the gate passes that reply, and with no
+    sentence to read the report has nothing true to say about it.
     """
     tags = test.get("tags") or []
     if "refuse-in-progress" not in tags:
         pytest.skip("not a refuse-in-progress test")
-    blockers = _blocking_items(before_state)
+    blockers = _blocking_items(before_state, test)
     if not blockers:
         pytest.skip("no blocking item in before_state — the gate reports it")
     pattern = _blocker_pattern(blockers, test)
     reply = subject_reply_text(agent_returns, text_response, _AGENT, test)
+    if not pattern.search(reply):
+        pytest.skip("the reply names no blocking item — the gate reports it")
     named = [seg for seg in re.split(_SENTENCE_SPLIT, reply) if seg and pattern.search(seg)]
     if not named:
-        pytest.skip("the reply names no blocking item — the gate reports it")
+        pytest.skip(
+            "the reply names the blocking item only across a sentence or line "
+            "break, so no sentence naming it can be read"
+        )
     # Neutral wording on purpose: this reaches the judge as an observation, and
     # a verdict-shaped sentence reads as a rule.
     assert any(_STILL_OPEN.search(seg) for seg in named), (

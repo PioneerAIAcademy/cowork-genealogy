@@ -787,8 +787,9 @@ The judge reads it on every direct test. **Validators do not yet, uniformly.**
 to `text_response`, so a **routed** test -- whose reply genuinely is the
 subject's -- is unaffected. `research-exhaustiveness`'s
 `test_refusal_names_the_blocking_plan_item` and
-`report_refusal_marks_the_blocker_open` read `subject_reply_text`, which does
-the same (issue #3089). A validator edit does not touch a suite's eval slot
+`report_refusal_marks_the_blocker_open` read `subject_reply_text` (issue
+#3089), which is stricter on a direct test: an empty agent return grades as
+nothing, with no fallback to `text_response`. A validator edit does not touch a suite's eval slot
 (`check_runlogs.py` does not count `eval/harness/validators/` as a touched
 path), so any validator grading reply shape on a direct test should move to
 `agent_return_text` or `subject_reply_text` when next edited.
