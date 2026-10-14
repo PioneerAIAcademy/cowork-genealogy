@@ -299,7 +299,7 @@
       "record_role": "principal",
       "fact_type": "name",
       "value": "James Tarrent or Taurent",
-      "information_quality": "secondary",
+      "information_quality": "indeterminate",
       "informant": "Pension Office clerk abstracting the file",
       "informant_proximity": "unknown",
       "extracted_for_question_ids": [
@@ -316,7 +316,7 @@
       "record_role": "principal",
       "fact_type": "military_service",
       "value": "Served in Capt. Joseph Price's Co., Tennessee Militia, War of 1812",
-      "information_quality": "secondary",
+      "information_quality": "indeterminate",
       "informant": "Pension Office clerk abstracting the file",
       "informant_proximity": "unknown",
       "extracted_for_question_ids": [
@@ -335,7 +335,7 @@
       "record_role": "principal",
       "fact_type": "pension",
       "value": "Survivor's pension: application S.O. 21083, certificate S.C. 15209; bounty land in separate file",
-      "information_quality": "secondary",
+      "information_quality": "indeterminate",
       "informant": "Pension Office clerk abstracting the file",
       "informant_proximity": "unknown",
       "extracted_for_question_ids": [
