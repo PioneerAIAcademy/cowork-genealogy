@@ -66,20 +66,41 @@ describe('theme contrast', () => {
     expect(worstPairs(THEMES.dark)).toEqual([])
   })
 
-  it('light: primary and secondary clear 4.5 on every surface', () => {
-    // Scoped deliberately. `--text-tertiary` in LIGHT is 2.63 on `--bg-code` and under
-    // the bar on most surfaces -- a real, PRE-EXISTING failure affecting ~19 elements,
-    // not something this work introduced. Fixing it darkens muted text on every screen
-    // of the default theme, which is a design decision rather than a bug fix, so it is
-    // recorded here with its number rather than silently skipped. Widen this test to all
-    // of `--text-*` the moment that call is made.
-    const failing = worstPairs(THEMES.light).filter((f) => !f.pair.startsWith('--text-tertiary'))
-    expect(failing).toEqual([])
+  it('light: every text token clears 4.5 on every surface', () => {
+    expect(worstPairs(THEMES.light)).toEqual([])
   })
 
-  it('records where light tertiary actually stands, so the gap cannot be forgotten', () => {
-    const tertiary = worstPairs(THEMES.light).filter((f) => f.pair.startsWith('--text-tertiary'))
-    expect(tertiary.length).toBeGreaterThan(0)      // if this empties, delete the exemption above
-    expect(Math.min(...tertiary.map((t) => t.ratio))).toBeLessThan(4.5)
+  it('keeps three VISIBLE muted levels in both themes', () => {
+    // The other half of a contrast fix, and the half I got wrong first time round.
+    // Raising dark `--text-tertiary` for contrast pushed it to within 1.16 of
+    // `--text-secondary` -- both tokens passed the bar and rendered as the same colour,
+    // so a fix for readability silently removed a distinction the design uses. Contrast
+    // alone cannot see that; this does.
+    for (const [name, block] of Object.entries(THEMES)) {
+      const t = tokensOf(block)
+      const sep = (a: string, b: string): number => ratio(hex(t[a]), hex(t[b]))
+      expect(`${name} primary/secondary ${sep('--text-primary', '--text-secondary').toFixed(2)}`)
+        .toBe(`${name} primary/secondary ${Math.max(sep('--text-primary', '--text-secondary'), 1.3).toFixed(2)}`)
+      expect(`${name} secondary/tertiary ${sep('--text-secondary', '--text-tertiary').toFixed(2)}`)
+        .toBe(`${name} secondary/tertiary ${Math.max(sep('--text-secondary', '--text-tertiary'), 1.3).toFixed(2)}`)
+    }
+  })
+
+  it('badge text is readable on its own badge fill', () => {
+    // Badges carry small text on a tinted chip, which is its own surface and therefore
+    // invisible to the text-on-background sweep above.
+    for (const [name, block] of Object.entries(THEMES)) {
+      const t = tokensOf(block)
+      const bad: string[] = []
+      for (const key of Object.keys(t)) {
+        const m = /^--badge-(\w+)-text$/.exec(key)
+        if (!m) continue
+        const fill = t[`--badge-${m[1]}-bg`]
+        if (!fill) continue
+        const r = ratio(hex(t[key]), hex(fill))
+        if (r < 4.5) bad.push(`${name} ${key} on fill: ${r.toFixed(2)}`)
+      }
+      expect(bad).toEqual([])
+    }
   })
 })

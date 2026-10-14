@@ -23,8 +23,11 @@
 
   /* Ink tones */
   --text-primary: #2c2419;
-  --text-secondary: #6b6055;
-  --text-tertiary: #9a9188;
+  /* The muted scale was shifted on 2026-10-14 so all three levels clear 4.5 on every
+     light surface while STAYING three visible levels. Lifting tertiary alone would have
+     made it #6b635a -- a 1.04 separation from secondary, i.e. the same colour. */
+  --text-secondary: #4f4740;
+  --text-tertiary: #6e665c;
   --text-link: #8b5e34;
 
   /* Warm borders */
@@ -46,13 +49,13 @@
   --badge-green-bg: #dce8d4;
   --badge-green-text: #3d6b2e;
   --badge-amber-bg: #f0e0c0;
-  --badge-amber-text: #8b6914;
+  --badge-amber-text: #7a5c10;
   --badge-red-bg: #ebd4d0;
   --badge-red-text: #963b30;
   --badge-blue-bg: #d4dde8;
   --badge-blue-text: #3d5f8b;
   --badge-gray-bg: #e5e0d8;
-  --badge-gray-text: #7a7267;
+  --badge-gray-text: #615a51;
   --badge-purple-bg: #ddd4e8;
   --badge-purple-text: #6b4f8b;
 
@@ -84,7 +87,10 @@
   --accent-gold-ink: #2c2419;
   --accent-gold-soft: rgba(184, 134, 11, 0.12);
   /* AA-compliant variant for small text on warm paper (~6.0:1 vs #faf8f4) */
-  --accent-gold-strong: #8a6608;
+  /* Also the link colour (Linkify, Pill, PersonCard, the sidecar cards). #8a6608 was
+     4.40 on the tinted surfaces it lands on -- just under -- so this darkens every link
+     slightly as well as the footer toggle. */
+  --accent-gold-strong: #7a5a07;
   --accent-burgundy: #7b2d3b;
   --divider-ornament: #cfc6b8;
 }
@@ -101,7 +107,9 @@
   --bg-code: #2a2620;
 
   --text-primary: #e8e0d4;
-  --text-secondary: #a89e90;
+  /* Lifted with tertiary. Raising tertiary to #9c9284 for contrast had squeezed the
+     secondary/tertiary separation to 1.16 -- two levels rendering as one. 1.46 now. */
+  --text-secondary: #bcb2a4;
   /* Was #706860, which gave 3.03-3.26 against the three surfaces it actually sits on
      (#1a1714, #1e1b17, #211e1a) -- under the 4.5 bar for small text, and this token
      carries the table headers, every count badge, the timestamps and the research-log
