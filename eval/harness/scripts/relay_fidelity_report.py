@@ -88,7 +88,6 @@ from harness.skill_runner import strip_agent_return_trailer  # noqa: E402
 from harness.snapshot import hash_file  # noqa: E402
 from harness.since_window import (  # noqa: E402
     add_since_arg,
-    parse_since,
     describe_window,
     filter_since,
 )
@@ -665,11 +664,17 @@ def main() -> int:
     )
     add_since_arg(parser)
     args = parser.parse_args()
-    # Compare against the CONVERTED default, not the raw one: `add_since_arg`
-    # runs its string default through `parse_since`, so `args.since` is a date
-    # and `get_default("since")` is still "14" — they never compare equal, and
-    # a naive check fires on every bare invocation.
-    since_supplied = args.since != parse_since(parser.get_default("since"))
+    # Detect SUPPLY, not a value change. Comparing `args.since` against the
+    # converted default misses `--since 14` and `--since=14` — 14 IS the
+    # default, so the two compare equal and the flag is silently ignored at
+    # exactly the value the Makefile help lists first. Comparing against the
+    # RAW default is worse: `add_since_arg` runs its string default through
+    # `parse_since`, so a date never equals "14" and every bare invocation
+    # errors. argv is the only thing that distinguishes supplied-and-equal
+    # from not-supplied.
+    since_supplied = any(
+        a == "--since" or a.startswith("--since=") for a in sys.argv[1:]
+    )
     if (args.test or since_supplied) and not args.production:
         # Accepting a flag and ignoring it is the "exit 0 having done nothing"
         # shape this PR exists to remove, not to add.

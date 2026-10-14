@@ -232,3 +232,41 @@ def test_each_call_is_scored_against_its_own_window_not_the_whole_run():
     assert c["agent_calls"] == 9, "the two-call log adds two"
     assert c["exact"] == 2, "one from 10-00-00, one from 19-00-00's first call"
     assert c["dropped"] == 3, "19-00-00's second call must land here"
+
+
+def test_since_and_test_are_refused_when_they_would_do_nothing():
+    """They apply to `--production` only; accepting and ignoring one is the
+    "exit 0 having done nothing" shape this report exists to remove.
+
+    Pinned because it was wrong twice. Comparing `args.since` against the RAW
+    default errors on every bare invocation (`add_since_arg` converts its
+    string default, so a date never equals "14"). Comparing against the
+    CONVERTED default misses `--since 14` and `--since=14` — 14 IS the default,
+    so they compare equal and the flag is silently ignored at exactly the value
+    the Makefile help lists first. Only argv distinguishes supplied-and-equal
+    from not-supplied.
+
+    Driven through explicit argv, never a shell loop: a shell loop reported
+    `--since 14` as exit 2 while the program exited 0, and that false reading
+    reached a commit message.
+    """
+    import subprocess
+    import sys
+
+    script = SCRIPT
+
+    def run(*argv):
+        return subprocess.run(
+            [sys.executable, str(script), *argv],
+            capture_output=True, text=True, encoding="utf-8",
+        ).returncode
+
+    assert run() == 0, "the bare unit arm must still work"
+    for argv in (
+        ("--since", "14"),
+        ("--since=14"),
+        ("--since", "all"),
+        ("--test", "alpha"),
+    ):
+        argv = (argv,) if isinstance(argv, str) else argv
+        assert run(*argv) == 2, f"{argv} should be refused without --production"
