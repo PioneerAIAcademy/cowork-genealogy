@@ -28,17 +28,20 @@ match strength.
 
 ## Notes for reviewers
 
-**DRAFT PENDING ADJUDICATION.** This fixture comes from a hint batch
-(`filtered-list-samples-3.csv` row 14, `hint-samples.csv` row 495,
-flags `adds_marriage`, confidence 3) in which roughly half the hint records are
-**false matches**, and the authors do not know which.
-`expected-findings.json` was transcribed from the hint record — "Ireland, Catholic Parish Registers, 1740-1900", a marriage entry for Thomam Hanrahan and Johan Ryan on 1 February 1868, indexed to the Ballylooby (Tubbrid) marriage register, County Tipperary, which runs May 1828–July 1880.
-The genealogist + developer teams must decide (a) true match — keep the
-findings; (b) different answer — edit `expected-findings.json`; or (c) no
-findable answer — replace the findings with a `"polarity": "avoid"` guard
-naming the February 1868 Ballylooby marriage, plus a `required` finding that the report documents
-the rejection.
+**Resolved 2026-10-14: true match.** The hint record (`ark:/61903/1:1:6267-W22Q`), the 1 February 1868 Ballylooby (Tubbrid) Catholic parish marriage of "Thomam Hanrahan" and "Johan Ryan", is the marriage of tree person Thomas Hanrahan `KHGX-XWG` and Johanna Ryan `KC1J-LVB`. f1 stands as drafted; its `supporting_sources` now carry the hint's ark and the civil registration's ark. The identity call was made by the assigned genealogist (@Emruthwill). Retrieval was tool-assisted (`packages/engine/mcp-server/dev/try-*.ts` against live FamilySearch), plus the genealogist's own reading of the civil register page on irishgenealogy.ie.
 
-A plausible candidate on place and timing, thin on identifiers. "Thomam" and "Johan" are the Latin register forms (accusative *Thomam*, a clipped *Joannam*) read as names, so the names match the tree's Thomas Hanrahan and Johanna Ryan exactly. The tree's own baptism sources put this couple in south Tipperary right after the marriage date: Mary in 1871 (`ark:/61903/1:1:F5GR-QBN`) and John on 28 November 1872 at Ardfinnan (`ark:/61903/1:1:F5YK-84C`), and Ardfinnan is about 5 miles from Ballylooby. A February 1868 marriage fits a first child in 1869. Neither baptism is a re-index of this entry; the tree holds no marriage source at all.
+**What decided it — the civil marriage registration the draft named as the discriminating check:**
+- **The same event, independently registered.** "Ireland, Civil Registration, 1845-1913" indexes the marriage of Thomas Hanrahan and Judy Ryan on 1 February 1868 in the Roman Catholic chapel of Ballylooby, Clogheen registration district (`ark:/61903/1:1:QGV8-PQK7`; irishgenealogy.ie Group Registration ID 2989302; also in the civil index, `ark:/61903/1:1:FY97-HTY`, Clogheen 1868). Same date, same chapel, same couple as the parish entry.
+- **Judy is Johanna.** Both registers record one marriage. The parish register's Latin "Johan[nam]" gives her name as Johanna, and the civil return gives her familiar name, Judy.
+- **Fathers:** John Hanrahan (groom) and Thomas Ryan (bride). Neither appears in the tree, so they neither confirm nor contradict the match.
+- **No competing couple.** A search of the civil marriages 1862–1872 (Hanrahan, spouse anchored as Johanna Ryan, top 300 of 1,578 results) found this as the only Thomas Hanrahan × Ryan marriage. The other Hanrahan–Ryan couples were John × Margaret, John Ryan × Johanna Hanrahan and William Ryan × Catherine Hanrahan.
+- **Place and timing.** Ballylooby is about 5 miles from Ardfinnan. There, the tree's son John was born on 28 November 1872 to Thomas Hanrahan and Johanna Ryan (`1:1:F5YK-84C`; civil birth `1:1:QPJL-5TVM`), and daughter Mary on 17 February 1871 (`1:1:F5GR-QBN`). A February 1868 marriage fits the first child in 1869. Neither of those records re-indexes the hint, and the tree held no marriage source.
 
-What is thin: the index carries no ages, parents, residences or witnesses, and Hanrahan and Ryan are both very common surnames in that corner of Tipperary, so a second Thomas-and-Johanna couple is a real possibility. The tree also contradicts itself — the 1880 census gives Elizabeth (1869) and Thomas (1870) as born in New York, which does not sit with a family baptising children in Tipperary in 1871 and 1872 — but that strains the census, not this marriage. The discriminating check is the matching civil marriage registration for 1 February 1868 (Catholic marriages were civilly registered from 1864): it gives both parties' ages, residences and fathers' names. Ages near 28 and 23 and a residence in the Ardfinnan–Ballylooby area would settle it; ages that miss the tree's 1840 and 1845 by a decade would make this a different couple.
+**The page image: what it could and could not settle.** The civil register images on FamilySearch (`3:1:3Q9M-C9BX-6SCX-X`) and the parish image (`3:1:3Q9M-CSR6-M3SY-1`) both returned 403, so the genealogist read the civil page (page 782) on irishgenealogy.ie instead. Before relying on the reading, three other entries on the same page were checked against the FamilySearch index (names, fathers, date), and all matched:
+- No. 14, Bernard Kelly × Kate Mulvey, 25 Jan 1868 (`1:1:QGV8-F2DW`)
+- No. 15, Timothy Burke × Judy Hennessy, 1 Feb 1868 (`1:1:QGV8-N654`)
+- No. 17, John Mullany × Kate Cunneen, 1 Feb 1868
+
+Row 16 gives both parties as **"full age"**, not a number. That means 21 or over: consistent with the tree's 28 and 23 (born 1840 and 1845), but it cannot confirm them, so the age check the draft hoped for is not available. The row also gives Thomas as a farmer of **Castlegrace**, a townland near Ardfinnan, and the witnesses as Thomas White and Ellen Wall. Under the image-reading rule the residence is unlicensed, so the verdict does not rest on it. The call rests on the indexed civil entry, so `image_basis` is off.
+
+**Left open.** The 1880 census gives Elizabeth (1869) and Thomas (1870) as born in New York, which does not sit with a family registering births in Tipperary in 1871 and 1872. That strains the census, not this marriage. A search for an Irish birth for either child with these parents found none, but it looked only at the top 15 results per search.
