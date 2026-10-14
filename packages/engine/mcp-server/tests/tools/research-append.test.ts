@@ -9515,6 +9515,10 @@ describe("research_append — capture-pending plan item not terminal (#1226, #24
     expect(errs).toMatch(/pli_001/);
     expect(errs).toMatch(/awaiting a capture/);
     expect(errs).toMatch(/#1226/);
+    // The message names the way through, so an autonomous skip is not steered
+    // back into the stall (EdmondOware review).
+    expect(errs).toMatch(/skip_category: "inaccessible"/);
+    expect(errs).toMatch(/user_declined/);
   });
 
   it("refuses 'completed' in the same state", async () => {

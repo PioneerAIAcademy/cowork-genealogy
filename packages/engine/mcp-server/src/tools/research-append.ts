@@ -2416,8 +2416,10 @@ export function planItemCapturePendingInvariants(entry: any, research: any): str
     `plan_items[${pid}]: its latest external-site search (${latest.id}) is still awaiting a ` +
       `capture (capture_received=false), so marking it '${entry.status}' claims a paywalled ` +
       `search that has not happened — research-exhaustiveness would then read the question as ` +
-      `exhaustively searched. Leave it 'in_progress' until the capture arrives as a later log ` +
-      `entry (or re-plan). See #1226.`,
+      `exhaustively searched. The way through: if no user can make the capture or the site ` +
+      `cannot be reached, skip it with skip_category: "inaccessible"; if the user asked to skip ` +
+      `it, skip_category: "user_declined"; otherwise leave it 'in_progress' until the capture ` +
+      `arrives as a later log entry (or re-plan). See #1226.`,
   ];
 }
 
