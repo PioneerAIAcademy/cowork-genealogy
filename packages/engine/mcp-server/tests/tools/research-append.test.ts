@@ -6429,6 +6429,39 @@ describe("research_append (composite persist + enforcement)", () => {
     );
   });
 
+  it("leaves a non-place phrase unstandardized: no sidecar copy, no geocode, no warning (#1962)", async () => {
+    await writeProject(sidecarResearch());
+    const rec = sidecarRecord();
+    rec.gedcomx.persons[0]!.facts!.push({
+      id: "F2",
+      type: "Residence",
+      place: "Same House",
+      standard_place: "Same, Manufahi, Timor-Leste",
+    });
+    await writeSidecar([rec]);
+    const r = await researchAppend({
+      projectPath: dir,
+      ops: [
+        {
+          section: "assertions",
+          op: "append",
+          entry: {
+            ...noId(validAssertion("x", "src_001")),
+            record_id: "ark:/61903/1:1:ABCD-123",
+            log_entry_id: "log_001",
+            place: "Same House",
+          },
+        },
+      ],
+    });
+    expect(r.ok, JSON.stringify(r)).toBe(true);
+    if (!r.ok || !("results" in r)) return;
+    expect(r.resolvedPlaces ?? []).toEqual([]);
+    expect(r.validation.warnings.join(" ")).not.toMatch(/Same House/);
+    expect(vi.mocked(resolveStandardPlace)).not.toHaveBeenCalled();
+    expect((await readResearch()).assertions[1].standard_place).toBeUndefined();
+  });
+
   it("rejects a geocode whose country contradicts the place text (England → Cameroon), writes nothing", async () => {
     await writeProject();
     const before = await readFile(join(dir, "research.json"), "utf-8");
