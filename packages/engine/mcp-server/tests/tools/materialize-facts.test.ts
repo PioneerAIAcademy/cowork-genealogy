@@ -782,6 +782,7 @@ describe("materialize_facts", () => {
     ["marriage_date", "ferber-marriage"],
     ["Marriage Banns", "a spelling no run has emitted yet"],
     ["marriage_licence", "the British spelling of the dropped alias"],
+    ["divorce", "a divorce assertion is not written onto either spouse"],
   ])("(21b) a `%s` assertion is skipped too (%s)", async (factType) => {
     const stub = { id: "I2", gender: "Male", names: [{ id: "N2", given: "Thomas", surname: "Flynn" }] };
     await writeProject(

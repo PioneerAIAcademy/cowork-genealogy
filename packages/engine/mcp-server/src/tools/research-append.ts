@@ -3279,8 +3279,6 @@ const PLACE_VARIANT_KEYS = new Set([
   "christeningplace",
 ]);
 
-/** Reduce a label to its normalized comparison key: lowercase, then drop every
- *  non-alphanumeric character. */
 function isBlank(v: unknown): boolean {
   return typeof v !== "string" || v.trim() === "";
 }
