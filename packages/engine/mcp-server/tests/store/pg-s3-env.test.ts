@@ -74,6 +74,39 @@ describe("readPgS3Env", () => {
     expect(readPgS3Env({ ...BASE, GENEALOGY_S3_FORCE_PATH_STYLE: "" }).invalid).toEqual([]);
   });
 
+  it("defaults the orphan sweep to hourly with a day's grace, and takes whole seconds", () => {
+    expect(readPgS3Env(BASE).orphanSweep).toEqual({ intervalS: 3600, graceS: 86_400 });
+    expect(
+      readPgS3Env({ ...BASE, GENEALOGY_ORPHAN_SWEEP_INTERVAL_S: "", GENEALOGY_ORPHAN_GRACE_S: " " }).orphanSweep,
+    ).toEqual({ intervalS: 3600, graceS: 86_400 });
+    const r = readPgS3Env({ ...BASE, GENEALOGY_ORPHAN_SWEEP_INTERVAL_S: "0", GENEALOGY_ORPHAN_GRACE_S: " 7200 " });
+    expect(r.invalid).toEqual([]);
+    expect(r.orphanSweep).toEqual({ intervalS: 0, graceS: 7200 });
+    expect(readPgS3Env({ ...BASE, GENEALOGY_ORPHAN_GRACE_S: "3600" }).orphanSweep.graceS).toBe(3600);
+    // setTimeout's longest wait, and a grace far beyond it (a grace is never a timer).
+    expect(readPgS3Env({ ...BASE, GENEALOGY_ORPHAN_SWEEP_INTERVAL_S: "2147483" }).orphanSweep.intervalS).toBe(2_147_483);
+    expect(readPgS3Env({ ...BASE, GENEALOGY_ORPHAN_GRACE_S: "31536000" }).orphanSweep.graceS).toBe(31_536_000);
+  });
+
+  it("refuses an orphan sweep value that is not whole seconds, and a grace under an hour", () => {
+    for (const value of ["abc", "-1", "NaN", "1e3", "3600.5", "0x10", "Infinity", "9".repeat(400)]) {
+      for (const name of ["GENEALOGY_ORPHAN_SWEEP_INTERVAL_S", "GENEALOGY_ORPHAN_GRACE_S"]) {
+        expect(readPgS3Env({ ...BASE, [name]: value }).invalid, `${name}=${value}`).toEqual([name]);
+      }
+    }
+    // Past setTimeout's 2^31 - 1 ms the timer fires after 1 ms: passes would run back to back.
+    for (const value of ["2147484", "31536000"]) {
+      expect(readPgS3Env({ ...BASE, GENEALOGY_ORPHAN_SWEEP_INTERVAL_S: value }).invalid, value).toEqual([
+        "GENEALOGY_ORPHAN_SWEEP_INTERVAL_S",
+      ]);
+    }
+    for (const value of ["0", "60", "3599"]) {
+      expect(readPgS3Env({ ...BASE, GENEALOGY_ORPHAN_GRACE_S: value }).invalid, value).toEqual([
+        "GENEALOGY_ORPHAN_GRACE_S",
+      ]);
+    }
+  });
+
   it("defaults the region to us-east-1 and takes an override", () => {
     expect(readPgS3Env(BASE).backendOptions.s3.region).toBe("us-east-1");
     expect(readPgS3Env({ ...BASE, GENEALOGY_S3_REGION: "" }).backendOptions.s3.region).toBe("us-east-1");

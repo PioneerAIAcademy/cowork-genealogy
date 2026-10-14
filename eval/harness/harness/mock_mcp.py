@@ -82,6 +82,7 @@ Current live tools:
 from __future__ import annotations
 
 import json
+import os
 import re
 import subprocess
 import sys
@@ -123,6 +124,17 @@ LIVE_TOOLS: set[str] = {
     # allowed_tools' callee-fixture check exempts LIVE_TOOLS members.
     "person_quality",
     "project_context",
+    # The bounded-delivery signal. Live rather than fixture-backed because the
+    # tool IS inert by contract -- no network, no auth, no project write; it
+    # returns a fixed acknowledgement (`research-delivered.ts`) -- so running the
+    # real one is both free and more faithful than a canned answer.
+    #
+    # It was advertised NOWHERE in this harness until now, which is why #2813
+    # item 1 reached alpha untested: the hosted Stop hook only allows a bounded
+    # turn to stop when the model calls this tool, and a model that cannot see
+    # the tool cannot call it. Every unit eval therefore graded the skill on
+    # prose it had no way to act on.
+    "research_delivered",
     # Read-only projection over the workspace's own research.json — same shape
     # as project_context, and deterministic, so mocking it would only invite
     # drift. Added when search-records / research were pointed at it in place of
@@ -289,6 +301,82 @@ NODE_EVAL_TIMEOUT_LONG = 60
 NODE_EVAL_TIMEOUT_PATTERN = re.compile(r"timed out after [\d.]+ seconds")
 
 
+#: Preloaded into every node subprocess under ``run_tests.py --store pg`` (U15):
+#: it installs a PgS3ProjectStore-backed store, so the live tools read and write
+#: Postgres + S3 instead of the workspace directory.
+PG_STORE_PRELUDE = Path(__file__).resolve().parent / "pg_store_prelude.mjs"
+
+
+def _store_import_args() -> list[str]:
+    """``["--import", <prelude>]`` when the run is on the Postgres store, else ``[]``.
+
+    Keyed on ``PROTO_STORE=pg``, which ``run_tests.py --store pg`` sets in the
+    harness process (and its node children) after checking the stack's
+    variables. A file URL, so a Windows drive-letter path loads too.
+    """
+    if os.environ.get("PROTO_STORE") != "pg":
+        return []
+    return ["--import", PG_STORE_PRELUDE.as_uri()]
+
+
+def seed_pg_workspace(workspace: Path) -> None:
+    """Under ``--store pg``, write a freshly built workspace into its Postgres
+    project before the agent runs; a no-op on the file store.
+
+    The prelude seeds a workspace on its first store call, so this is that call,
+    made at a known moment: every file the harness staged is in the project, and
+    nothing the agent writes later with its own Write tool is (on the hosted path
+    no such file reaches the store either). Raises with node's stderr on failure,
+    because a run whose seed failed would grade a store that holds nothing.
+    """
+    if os.environ.get("PROTO_STORE") != "pg":
+        return
+    ps_js = _MCP_BUILD / "store" / "project-store.js"
+    posix = str(ps_js).replace("\\", "/").replace("'", "\\'")
+    url = ("file:///" + posix) if sys.platform == "win32" else posix
+    ws = str(workspace).replace("\\", "/").replace("'", "\\'")
+    script = (
+        f"import {{ getProjectStore }} from '{url}';"
+        f" const c = await getProjectStore().classifyProject('{ws}');"
+        " process.stdout.write(JSON.stringify({ c }));"
+    )
+    proc = _run_node_eval(script, timeout=NODE_EVAL_TIMEOUT_LONG)
+    if proc.returncode != 0 or not proc.stdout.strip():
+        raise RuntimeError(
+            f"--store pg: seeding the workspace into Postgres failed: "
+            f"{(proc.stderr or 'no output').strip()[:1000]}"
+        )
+
+
+def pg_store_faults(workspace: Path) -> list[dict[str, str]]:
+    """The store faults the prelude recorded for `workspace` under
+    ``--store pg`` (``HARNESS_PG_FAULT_LOG``, one JSON line each); [] on the
+    file store or when there were none.
+
+    Read from every node process the test spawned — the live tools and the
+    mock-side staging and scoring pipelines alike, which swallow their own
+    failures — so a fault there reaches the run log instead of surfacing a step
+    later as "nothing staged" read as model wobble.
+    """
+    log = os.environ.get("HARNESS_PG_FAULT_LOG")
+    if os.environ.get("PROTO_STORE") != "pg" or not log:
+        return []
+    try:
+        lines = Path(log).read_text(encoding="utf-8").splitlines()
+    except OSError:
+        return []
+    want = os.path.realpath(workspace)
+    out: list[dict[str, str]] = []
+    for line in lines:
+        try:
+            entry = json.loads(line)
+        except json.JSONDecodeError:
+            continue
+        if isinstance(entry, dict) and os.path.realpath(str(entry.get("dir", ""))) == want:
+            out.append({"op": str(entry.get("op", "")), "message": str(entry.get("message", ""))})
+    return out
+
+
 def _run_node_eval(
     script: str, input_str: str | None = None, timeout: int = NODE_EVAL_TIMEOUT_DEFAULT
 ) -> subprocess.CompletedProcess[str]:
@@ -306,7 +394,7 @@ def _run_node_eval(
     only the subprocess invocation itself is shared.
     """
     return subprocess.run(
-        ["node", "--input-type=module", "--eval", script],
+        ["node", *_store_import_args(), "--input-type=module", "--eval", script],
         input=input_str,
         capture_output=True,
         text=True,
@@ -1065,6 +1153,7 @@ def create_mock_server(
         if tool_name == "person_quality":
             continue  # served by _make_person_quality_handler below
         predicated = list(bucket["predicated"])
+        is_error_flags = list(bucket.get("is_error") or [False] * len(predicated))
         # Input schema precedence: the compiled production schema wins (the
         # single source of truth), so fixture-backed tools advertise exactly
         # what production does. A fixture-provided input_schema is honored only
@@ -1080,6 +1169,7 @@ def create_mock_server(
         async def handler(
             args,
             _predicated=predicated,
+            _is_error=is_error_flags,
             _name=tool_name,
             _workspace=workspace,
             _rank_predicated=rank_predicated,
@@ -1321,11 +1411,16 @@ def create_mock_server(
             entry["response"] = response
             entry["response_fixture"] = source_name
             call_log.append(entry)
-            return {
+            envelope: dict[str, Any] = {
                 "content": [
                     {"type": "text", "text": json.dumps(response)},
                 ],
             }
+            # A fixture marked `is_error` stands for a THROWN tool error, which
+            # production's catch arms return with `isError: true` beside `{error}`.
+            if entry["matched"]["kind"] == "predicate" and _is_error[entry["matched"]["index"]]:
+                envelope["is_error"] = True
+            return envelope
 
         # Prefer the production description; fall back to a generic stub
         # if the tool is not in the catalog (e.g., aspirational tools
@@ -1410,6 +1505,9 @@ _COMPILED_TOOLS: dict[str, tuple[str, str]] = {
     "build_external_search_url": ("build-external-search-url.js", "buildExternalSearchUrlTool"),
     "sidecar_read": ("sidecar-read.js", "sidecarRead"),
     "get_name_variants": ("name-variants.js", "getNameVariants"),
+    # Takes only `{summary}`; the handler's injected `projectPath` is the inert
+    # extra key convert_calendar already tolerates.
+    "research_delivered": ("research-delivered.js", "researchDelivered"),
 }
 
 #: Compiled tools whose `projectPath` is optional and changes what the call
