@@ -136,6 +136,12 @@ export default function SessionList({
                 <div className="sessionCardTitle">{s.title}</div>
                 <div className="sessionCardMeta">
                   <span className="pill">{s.model.replace('claude-', '')}</span>
+                  {/* Strictly false: the prototype omits the field, and absent is not ended. */}
+                  {s.continuable === false && (
+                    <span className="pill pillEnded" title="More than 24 hours old: you can read it, but not continue it">
+                      ended
+                    </span>
+                  )}
                   <span className="muted">active {relativeTime(s.last_active)}</span>
                 </div>
                 <button
