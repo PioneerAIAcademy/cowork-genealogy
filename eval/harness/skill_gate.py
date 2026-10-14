@@ -58,14 +58,16 @@ from harness.snapshot import diff_snapshot_vs_disk
 _SCORE_LABEL = {3: "pass", 2: "partial", 1: "fail", None: "n/a"}
 
 
-def gated_body_paths(skill: str) -> tuple[str, str]:
-    """The files a gated edit lands in: the skill's SKILL.md, or the plugin agent
-    body of the same name, for a suite keyed on an agent (e.g. person-evidence,
-    which has no `skills/` dir). Both are listed so neither kind reads as drift
-    or as "no edit"; a path that does not exist matches nothing."""
+def gated_body_paths(skill: str) -> tuple[str, ...]:
+    """The files a gated edit lands in: the skill's SKILL.md, the plugin agent
+    body of the same name for a suite keyed on an agent (e.g. person-evidence,
+    which has no `skills/` dir), or a test-only skill's SKILL.md under
+    `eval/skills/` (e.g. extraction-append). All are listed so no kind reads as
+    drift or as "no edit"; a path that does not exist matches nothing."""
     return (
         f"packages/engine/plugin/skills/{skill}/SKILL.md",
         f"packages/engine/plugin/agents/{skill}.md",
+        f"eval/skills/{skill}/SKILL.md",
     )
 
 

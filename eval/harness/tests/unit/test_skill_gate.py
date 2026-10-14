@@ -286,6 +286,24 @@ def test_snapshot_drift_excludes_gated_agent_body_only(tmp_path):
     assert drifted == [other_rel], "another agent's body must still read as drift"
 
 
+def test_snapshot_drift_excludes_gated_test_only_skill_md(tmp_path):
+    """A test-only skill lives under eval/skills/<skill>/ (extraction-append),
+    which the snapshot embeds: its SKILL.md is the gated file, not drift."""
+    skill = "extraction-append"
+    own_rel = f"eval/skills/{skill}/SKILL.md"
+    other_rel = "eval/skills/other-test-only-skill/SKILL.md"
+    for rel in (own_rel, other_rel):
+        p = tmp_path / rel.replace("/", os.sep)
+        p.parent.mkdir(parents=True, exist_ok=True)
+        p.write_text("edited body\n", encoding="utf-8")
+
+    snapshot = {own_rel: "f" * 64, other_rel: "0" * 64}
+
+    drifted = stale_snapshot_paths(snapshot, skill, tmp_path)
+    assert own_rel not in drifted, "the gated test-only SKILL.md must be excluded from drift"
+    assert drifted == [other_rel], "another test-only skill must still read as drift"
+
+
 def test_uncommitted_edit_check_covers_agent_body(monkeypatch):
     """The no-edit check must diff the agent body too, or an agent-keyed suite
     always reads as "no edit" and the gate can never print LOOKS GOOD."""
@@ -302,6 +320,7 @@ def test_uncommitted_edit_check_covers_agent_body(monkeypatch):
     assert skill_gate._has_uncommitted_skill_edit("person-evidence") is True
     assert "packages/engine/plugin/agents/person-evidence.md" in seen[0]
     assert "packages/engine/plugin/skills/person-evidence/SKILL.md" in seen[0]
+    assert "eval/skills/person-evidence/SKILL.md" in seen[0]
 
 
 # ---- drift_signal ----------------------------------------------------------
