@@ -36,7 +36,7 @@ match strength.
 
 **Why the hint is wrong.** The hint's index gives no age, spouse or civil status. Its entry, *P. nº 14*, registered 14 January 1906, begins at the foot of `ark:/61903/3:1:33S7-9TRK-36K` and continues at the top of `ark:/61903/3:1:33S7-9TRK-348`. There the register calls the deceased "varón, ladino, de diez y ocho días de nacido, hijo ilegítimo de Santos López", who died the day before of influenza in the Valle del Zapote.
 
-- **Calibration.** The two other indexed entries on `…-348` match the index on name, parents and date:
+- **Calibration.** The two other indexed entries on `…-348` match the index on name, named relatives (parents for Felicita Rivas, the wife for Vicente Casco) and date:
   - Felicita Rivas, daughter of Julián Rivas and Dolores Landaverde, died 13 January 1906 (`ark:/61903/1:1:QP7Z-BTQL`);
   - Vicente Casco, widower of Juana N., died 14 January 1906 (`ark:/61903/1:1:QP7Z-BTQT`).
 
@@ -44,7 +44,7 @@ match strength.
 - **The index confirms it without the image.** The same infant was independently indexed at his civil birth registration: Inocente de José López, born 28 December 1905 at Suchitoto, mother Santos López, no father named (`ark:/61903/1:1:QGF2-WRZP`). That makes him sixteen days old at death against the eighteen stated, a small slip in what the informant gave.
 - **No source conflict.** The hint's `1:1:` id is not among the tree's cited sources.
 
-**The real death.** A search of the civil registers for Inocente López with spouse Virginia Mendoza returned `ark:/61903/1:1:QPHJ-JVY1`: Ynocente Lopez Carpio, died 22 September 1916, death registered at Suchitoto, spouse **Virginia Mendoza**, parents Matías López and Mauricia Carpio (register image `ark:/61903/3:1:33SQ-GTRF-NTF`, entry P. nº 382). It is not attached in the tree. A second index of the same death, `ark:/61903/1:1:655Y-1SYB` (image `ark:/61903/3:1:3QHK-1Q52-59S4-G`), gives the same parents, 23 September 1916, and a computed birth year of 1844. The two indexes disagree by one day, and nothing licensed settles which is right, so f1 accepts either day.
+**The real death.** A search of the civil registers for Inocente López with spouse Virginia Mendoza returned `ark:/61903/1:1:QPHJ-JVY1`: Ynocente Lopez Carpio, died 22 September 1916, death registered at Suchitoto, spouse **Virginia Mendoza**, parents Matías López and Mauricia Carpio (register image `ark:/61903/3:1:33SQ-GTRF-NTF`). It is not attached in the tree. A second index of the same death, `ark:/61903/1:1:655Y-1SYB` (image `ark:/61903/3:1:3QHK-1Q52-59S4-G`), gives the same parents, 23 September 1916, and a computed birth year of 1844. The two indexes disagree by one day, and nothing licensed settles which is right, so f1 accepts either day.
 
 The identification rests on the indexes:
 
