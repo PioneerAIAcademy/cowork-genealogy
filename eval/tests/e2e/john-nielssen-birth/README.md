@@ -42,9 +42,9 @@ The hint's mother — Anne Torjusdatter, born 1852, of Klep — is matched indep
 
 **What stays thin: the year.** 1846 has one witness, the 1877 baptism. Nothing contradicts it, and nothing independently confirms it. These searches came up empty:
 
-- **1865 census** (collection 3756102): no Jon Nilsen born 1845–1847 anywhere in Setesdal. Surname spellings are normalised, so all variants return one set, and every page was read. Anne Thorjusdatter, born 1851, is in her widowed mother Mari Olsdatter's Bygland household (`ark:/61903/1:1:DDCT-VG6Z`). Jon may have been born outside Bygland and married onto Klep.
+- **1865 census** (collection 3756102): no Jon Nilsen born 1845–1847 anywhere in Setesdal. Surname spellings are normalised, so all variants return one set, and every page was read. Anne Thorjusdatter, born 1851, is in the Bygland household of the widow Mari Olsdatter, with four other Thorjus children (the index gives no relationships) (`ark:/61903/1:1:DDCT-VG6Z`). Jon may have been born outside Bygland and married onto Klep.
 - **Marriage, 1865–1872:** none for the couple in Agder.
-- **Burial in Bygland, 1877–1900:** none for Jon Nilsen.
+- **Burial, 1877–1900:** none found. The country-wide death search has 3,949 results and only the top 100 were read; filtering by Bygland as the death place returned no burial records at all. Not proved absent.
 - **1891 census:** neither Jon nor the Klep household appears in the index.
 
 A run that reports "born about 1846, birthplace not found" is right. A run that names a birthplace needs a record this search did not find.
