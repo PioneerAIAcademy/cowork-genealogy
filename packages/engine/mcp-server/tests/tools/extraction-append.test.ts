@@ -642,6 +642,39 @@ describe("extraction_append: recordIds and absences", () => {
     expect(after.assertions.every((a: any) => a.log_entry_id === "log_002")).toBe(true);
   });
 
+  it("does not reuse a hint a later verdict rejected", async () => {
+    const census = element("census-1850-no-relationship-column");
+    await seedLog([hintEntry("log_001", census.recordId), hintEntry("log_002", census.recordId, "negative")]);
+    const r = await runExtractionAppend({ projectPath: dir, recordIds: [census.recordId] }, readerFor([census]) as any, LOCAL);
+    expect(r.records[0].logId).toBe("log_003");
+    const after = await research();
+    expect(after.log.map((e: any) => e.tool)).toEqual(["person_record_matches", "person_record_matches", "record_read"]);
+  });
+
+  it("still writes the hint record when the log batch for the others is refused", async () => {
+    const census = element("census-1850-no-relationship-column");
+    const death = element("death");
+    await seedLog([hintEntry("log_001", death.recordId)]);
+    const reader = readerFor([census, death]);
+    const badRef = {
+      readRecord: async (i: any, p: any) =>
+        arkToBareId(i.recordId) === arkToBareId(census.recordId)
+          ? { ...census.gedcomx, staged: { resultsRef: "results/.staging/missing.json" } }
+          : reader.readRecord(i),
+    };
+    const r = await runExtractionAppend(
+      { projectPath: dir, recordIds: [census.recordId, death.recordId] },
+      badRef as any,
+      LOCAL,
+    );
+    expect(r.records.map((o) => o.status)).toEqual(["refused", "extracted"]);
+    expect(r.records[1].srcId).toMatch(/^src_/);
+    const after = await research();
+    expect(after.log.map((e: any) => e.id)).toEqual(["log_001"]);
+    expect(after.sources).toHaveLength(1);
+    expect(after.assertions.every((a: any) => a.log_entry_id === "log_001")).toBe(true);
+  });
+
   it("logs one entry for the record with no hint and reuses the hint for the one with", async () => {
     const census = element("census-1850-no-relationship-column");
     const death = element("death");

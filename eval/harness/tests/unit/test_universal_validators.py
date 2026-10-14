@@ -226,7 +226,9 @@ def test_extraction_append_does_not_reach_a_section_it_does_not_write():
     assert "conflicts" in str(e.value)
 
 
-_RESEARCH_APPEND = [{"tool": "mcp__genealogy__research_append", "args": {"section": "assertions", "op": "update"}}]
+def _notes_update(entry_id="a_001", fields=None):
+    op = {"section": "assertions", "op": "update", "entryId": entry_id, "fields": fields or {"informant_bias_notes": "user reads T"}}
+    return [{"tool": "mcp__genealogy__research_append", "args": {"projectPath": "/w", **op}}]
 
 
 def test_an_informant_bias_notes_update_is_authorized_for_any_caller():
@@ -234,27 +236,44 @@ def test_an_informant_bias_notes_update_is_authorized_for_any_caller():
     setting only informant_bias_notes (ut_conflict_resolution_016)."""
     before = research(assertions=[{"id": "a_001", "value": "Tannetje [?]"}])
     after = research(assertions=[{"id": "a_001", "value": "Tannetje [?]", "informant_bias_notes": "user reads T"}])
-    check_research(before, after, {"name": "conflict-resolution"}, POSITIVE, tool_calls=_RESEARCH_APPEND)
+    check_research(before, after, {"name": "conflict-resolution"}, POSITIVE, tool_calls=_notes_update())
+
+
+def test_a_notes_update_tolerates_what_the_update_arm_normalizes():
+    """The update arm re-runs canonicalizeAssertionLabels on the merged entry, so
+    a legacy `birthplace` becomes `birth` with its place lifted from `value`."""
+    before = research(assertions=[{"id": "a_001", "fact_type": "birthplace", "value": "Cork, Ireland"}])
+    after = research(assertions=[{
+        "id": "a_001", "fact_type": "birth", "value": "Cork, Ireland", "place": "Cork, Ireland",
+        "informant_bias_notes": "n",
+    }])
+    check_research(before, after, {"name": "conflict-resolution"}, POSITIVE, tool_calls=_notes_update())
+    batched = [{"tool": "mcp__genealogy__research_append", "args": {"projectPath": "/w", "ops": json.dumps([
+        {"section": "assertions", "op": "update", "entryId": "a_001", "fields": {"informant_bias_notes": "n"}},
+    ])}}]
+    check_research(before, after, {"name": "conflict-resolution"}, POSITIVE, tool_calls=batched)
 
 
 def test_a_notes_update_does_not_license_any_other_assertion_change():
-    before = research(assertions=[{"id": "a_001", "value": "Tannetje [?]"}])
-    for after in (
-        research(assertions=[{"id": "a_001", "value": "Tannetje", "informant_bias_notes": "user reads T"}]),
-        research(assertions=[{"id": "a_001", "value": "Tannetje [?]"}, {"id": "a_002"}]),
-        research(assertions=[]),
+    before = research(assertions=[{"id": "a_001", "value": "Tannetje [?]"}, {"id": "a_002", "value": "x"}])
+    notes = {"informant_bias_notes": "user reads T"}
+    for after, calls, why in (
+        (research(assertions=[{"id": "a_001", "value": "Tannetje", **notes}, {"id": "a_002", "value": "x"}]),
+         _notes_update(), "a value change"),
+        (research(assertions=[{"id": "a_001", "value": "Tannetje [?]", **notes}, {"id": "a_002", "value": "x"}, {"id": "a_003"}]),
+         _notes_update(), "an added assertion"),
+        (research(assertions=[{"id": "a_001", "value": "Tannetje [?]"}, {"id": "a_001", "value": "Tannetje [?]", **notes}]),
+         _notes_update(), "a deletion hidden behind a duplicate id"),
+        (research(assertions=[{"id": "a_001", "value": "Tannetje [?]"}, {"id": "a_002", "value": "x", **notes}]),
+         _notes_update(), "notes on an assertion the op did not name"),
+        (research(assertions=[{"id": "a_001", "value": "Tannetje [?]", **notes}, {"id": "a_002", "value": "x"}]),
+         _notes_update(fields={"informant_bias_notes": "n", "value": "Tannetje"}), "an op that also set value"),
+        (research(assertions=[{"id": "a_001", "value": "Tannetje [?]", **notes}, {"id": "a_002", "value": "x"}]),
+         [], "no research_append call"),
     ):
         with pytest.raises(AssertionError) as e:
-            check_research(before, after, {"name": "conflict-resolution"}, POSITIVE, tool_calls=_RESEARCH_APPEND)
-        assert "assertions" in str(e.value)
-
-
-def test_a_notes_update_without_a_research_append_call_fails():
-    before = research(assertions=[{"id": "a_001"}])
-    after = research(assertions=[{"id": "a_001", "informant_bias_notes": "n"}])
-    with pytest.raises(AssertionError) as e:
-        check_research(before, after, {"name": "conflict-resolution"}, POSITIVE, tool_calls=[])
-    assert "assertions" in str(e.value)
+            check_research(before, after, {"name": "conflict-resolution"}, POSITIVE, tool_calls=calls)
+        assert "assertions" in str(e.value), why
 
 
 # ── tree.gedcomx.json ──────────────────────────────────────────────────────

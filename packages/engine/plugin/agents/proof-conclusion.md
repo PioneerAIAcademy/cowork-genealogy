@@ -179,9 +179,9 @@ cost in this skill. Scope every lookup to the question/persons at hand:
 - `research_query({ section: "person_evidence", personId })` — per person the
   question concerns (one call per person; `person_evidence` has no
   `questionId` filter, so key off the persons the assertions above name).
-- `research_query({ section: "conflicts", questionId })` — conflicts blocking
-  this question (`blocks_question_ids`); check `status` for which are
-  already resolved.
+- `research_query({ section: "conflicts", questionId })` — conflicts that name
+  this question in `blocks_question_ids` or dispute one of its assertions;
+  check `status` for which are already resolved.
 - `research_query({ section: "hypotheses", questionId })` — related
   hypotheses.
 - `research_query({ section: "questions", questionId })` — the question

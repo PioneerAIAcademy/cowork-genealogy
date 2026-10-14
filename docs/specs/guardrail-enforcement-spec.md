@@ -1359,11 +1359,12 @@ subsection governs none of them.** `questionResolvedInvariants` and the
 disputed-source tier rule both read a shared `source_id` via `disputedSourceIds`
 (which counts `moot` as disputing, unlike this gate); `question-selection`'s
 prioritization reads `blocks_question_ids` only; and the `proof-conclusion` agent
-queries conflicts by `blocks_question_ids` only, which is the one with a
-behavioural consequence — it is the writer of the tier, and it cannot see a
-derived blocker before writing a tier the disputed-source rule will refuse.
-`research_query`'s `conflicts.questionId` filter is narrower than this gate for
-the same reason and is an advertised contract.
+queries conflicts through `research_query`'s `conflicts.questionId` filter, which
+matches `blocks_question_ids` or a disputed assertion of the question at any
+status, but not a shared `source_id`. That last gap is the one with a
+behavioural consequence — proof-conclusion is the writer of the tier, and it
+cannot see a source-level blocker before writing a tier the disputed-source rule
+will refuse.
 
 ### `relationship_type` must not contradict its own `value`
 

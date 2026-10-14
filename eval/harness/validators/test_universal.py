@@ -598,28 +598,64 @@ def _explained_by_appends(before_section, after_section) -> bool:
 #: fails closed.
 _CALLER_ASSERTION_FIELDS = frozenset({"informant_bias_notes"})
 
+#: Fields `research_append`'s update arm may rewrite on the MERGED entry, so a
+#: notes-only update to a legacy assertion can change them too:
+#: normalizeDateFields, normalizeAccessDate and canonicalizeAssertionLabels.
+_UPDATE_NORMALIZED_FIELDS = frozenset({"date", "standard_date", "access_date", "fact_type", "place"})
 
-def _explained_by_caller_assertion_update(before_section, after_section) -> bool:
-    """True when the only change to `assertions` is caller-writable fields on
-    existing entries — the one assertions write `research_append` accepts from
-    any caller. Same ids, same count, every other field identical.
+
+def _caller_notes_update_ids(tool_calls) -> set[str]:
+    """Assertion ids a `research_append` update op named with caller fields only."""
+    ids: set[str] = set()
+    for call in tool_calls or []:
+        if not isinstance(call, dict) or _bare_tool_name(call.get("tool", "")) != "research_append":
+            continue
+        args = call.get("args")
+        if not isinstance(args, dict):
+            continue
+        ops = args.get("ops")
+        if isinstance(ops, str):
+            try:
+                ops = json.loads(ops)
+            except (ValueError, TypeError):
+                ops = None
+        candidates = ops if isinstance(ops, list) else ([args] if args.get("section") else [])
+        for op in candidates:
+            if not isinstance(op, dict) or op.get("section") != "assertions" or op.get("op") != "update":
+                continue
+            fields = op.get("fields")
+            entry_id = op.get("entryId")
+            if isinstance(fields, dict) and fields and set(fields) <= _CALLER_ASSERTION_FIELDS and isinstance(entry_id, str):
+                ids.add(entry_id)
+    return ids
+
+
+def _explained_by_caller_assertion_update(before_section, after_section, updated_ids: set[str]) -> bool:
+    """True when the only change to `assertions` is the one write
+    `research_append` accepts from any caller: an update op naming an existing
+    entry with caller fields only, plus what the update arm's normalizers
+    rewrite on that entry. Same ids, no duplicates, nothing else changed.
     """
     if not isinstance(before_section, list) or not isinstance(after_section, list):
         return False
-    if len(before_section) != len(after_section):
+    before_ids = [e.get("id") if isinstance(e, dict) else None for e in before_section]
+    after_ids = [e.get("id") if isinstance(e, dict) else None for e in after_section]
+    if None in before_ids or None in after_ids or len(set(after_ids)) != len(after_ids):
         return False
-    before_by_id = {e.get("id"): e for e in before_section if isinstance(e, dict)}
+    if set(before_ids) != set(after_ids) or len(before_ids) != len(after_ids):
+        return False
+    before_by_id = dict(zip(before_ids, before_section))
     changed = False
     for e in after_section:
-        old = before_by_id.get(e.get("id")) if isinstance(e, dict) else None
-        if old is None:
+        old = before_by_id[e["id"]]
+        diff = {k for k in set(old) | set(e) if old.get(k) != e.get(k)}
+        if not diff:
+            continue
+        if e["id"] not in updated_ids or not diff & _CALLER_ASSERTION_FIELDS:
             return False
-        for key in set(old) | set(e):
-            if old.get(key) == e.get(key):
-                continue
-            if key not in _CALLER_ASSERTION_FIELDS:
-                return False
-            changed = True
+        if diff - _CALLER_ASSERTION_FIELDS - _UPDATE_NORMALIZED_FIELDS:
+            return False
+        changed = True
     return changed
 
 
@@ -749,8 +785,8 @@ def test_ownership_table(before_state, after_state, skill_frontmatter, test, too
                 continue
             # research_append: any caller may update an assertion's
             # caller-writable fields and nothing else.
-            if section == "assertions" and "research_append" in called and (
-                _explained_by_caller_assertion_update(before.get(section), after.get(section))
+            if section == "assertions" and _explained_by_caller_assertion_update(
+                before.get(section), after.get(section), _caller_notes_update_ids(tool_calls)
             ):
                 continue
             unauthorized.append(section)

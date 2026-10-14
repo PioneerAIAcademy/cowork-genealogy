@@ -93,13 +93,14 @@ def _is_negated(text: str, at: int) -> bool:
 # this person, and detaching it loses the evidence" (run
 # v2_2026-10-12_12-37-51, ut_source_evaluation_o3c). No negator precedes the
 # term there, so `_is_negated` cannot see it. Matched only when the harm verb
-# follows the term directly (at most a pronoun or "this source" between), so
-# "detach this source; it loses nothing for this person" is still a
-# recommendation.
+# follows the term directly (at most a pronoun or "this source" between), and
+# not when the harm is denied: "detach this source; it loses nothing" and
+# "detaching it loses nothing" are both still recommendations.
 _DISPARAGED_DETACH = re.compile(
     r"^\s*(?:it|this|that|the)?\s*(?:source|record|entry)?\s*"
     r"(?:would |will |can |could )?"
     r"(?:loses?|discards?|throws? away|destroys?|wastes?|drops?)\b"
+    r"(?!\s+(?:nothing|no|none|little)\b)"
 )
 
 

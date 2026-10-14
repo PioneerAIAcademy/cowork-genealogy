@@ -809,6 +809,9 @@ def test_the_harm_wording_does_not_license_a_real_detach_recommendation():
         "it loses nothing for this person.",
         "The Minnesota Death Index entry has the wrong year. Detach it and the "
         "index error loses its place in the profile.",
+        "The Minnesota Death Index entry has the wrong year; detaching it loses nothing.",
+        "The Minnesota Death Index entry has the wrong year. Detaching it wastes nothing, so do it.",
+        "The Minnesota Death Index entry has the wrong year. Unlinking it drops no evidence for this person.",
     ):
         with pytest.raises(AssertionError):
             _no_detach(text, _TEST)

@@ -208,24 +208,26 @@ function srcIdOf(result: ResearchAppendResult): string | undefined {
 }
 
 /**
- * The log entry an accepted FamilySearch hint left for this record: a positive
- * `person_record_matches` entry naming the record's ark that no assertion cites
- * yet. `search-hints` logs it with no sidecar, because the hint stages nothing;
+ * The log entry an accepted FamilySearch hint left for this record: the LATEST
+ * `person_record_matches` verdict naming the record's ark, when it is positive
+ * and no assertion cites it yet. A later negative verdict rejects the hint, so
+ * an earlier positive one is not reused. `search-hints` logs it with no
+ * sidecar, because the hint stages nothing;
  * extraction cites it instead of logging a second `record_read` for the same
  * record, which would leave the hint's own entry unreferenced and send the
  * router back to extract the record again on every pass.
  */
 function acceptedHintLogId(research: any, bareId: string, citedLogIds: ReadonlySet<unknown>): string | undefined {
   const log: any[] = Array.isArray(research.log) ? research.log : [];
-  const hit = log.find(
+  const verdicts = log.filter(
     (e) =>
       e?.tool === "person_record_matches" &&
-      e?.outcome === "positive" &&
       typeof e?.query?.recordId === "string" &&
-      arkToBareId(e.query.recordId) === bareId &&
-      !citedLogIds.has(e.id),
+      arkToBareId(e.query.recordId) === bareId,
   );
-  return typeof hit?.id === "string" ? hit.id : undefined;
+  const latest = verdicts[verdicts.length - 1];
+  if (latest?.outcome !== "positive" || citedLogIds.has(latest.id)) return undefined;
+  return typeof latest.id === "string" ? latest.id : undefined;
 }
 
 /**
@@ -329,53 +331,56 @@ async function recordIdsMode(
         fresh[i].logId = lr.logId;
         fresh[i].stagedRef = lr.resultsRef ?? fresh[i].stagedRef;
       });
+    }
 
-      // 4. One research_append per record.
-      for (const o of staged) {
-        let doc: ExtractDocument | undefined;
-        try {
-          const rows = await readStagedResults(input.projectPath, o.stagedRef!);
-          const key = arkToBareId(o.recordId);
-          doc = rows.find((r: any) => {
-            const id = r?.recordId ?? r?.id;
-            return typeof id === "string" && arkToBareId(id) === key;
-          }) as ExtractDocument | undefined;
-        } catch (e) {
-          o.status = "refused";
-          o.summary = `${o.recordId}: logged as ${o.logId}, but its sidecar could not be read: ${e instanceof Error ? e.message : String(e)}.`;
-          continue;
-        }
-        if (!doc) {
-          o.status = "refused";
-          o.summary = `${o.recordId}: logged as ${o.logId}, but its sidecar does not hold that record.`;
-          continue;
-        }
-        const absent = (input.absentPersons ?? []).filter(
-          (p) => p.recordId !== undefined && arkToBareId(p.recordId) === arkToBareId(o.recordId),
-        );
-        const { ops, sourceDescription, extraction } = buildExtractionOps(
-          { recordId: doc.recordId ?? o.recordId, gedcomx: doc.gedcomx ?? {}, indexFields: doc.indexFields },
-          { logEntryId: o.logId!, questionIds: input.questionIds, absentPersons: absent },
-        );
-        // A hint's log entry keeps no sidecar, and a persona id must resolve
-        // against one: an assertion under it carries none.
-        if (reusedHint.has(o.recordId)) {
-          for (const op of ops as any[]) if (op?.entry && "record_persona_id" in op.entry) op.entry.record_persona_id = null;
-        }
-        const written = await researchAppend(
-          { projectPath: input.projectPath, ops, sourceDescription } as ResearchAppendInput,
-          { allowedSections: EXTRACTION_SECTIONS, toolName: "extraction_append" },
-        );
-        if (!written.ok) {
-          o.status = "refused";
-          o.errors = written.errors;
-          o.summary = `${o.recordId}: read and logged as ${o.logId}, but the write was refused: ${written.errors.join("; ")}.`;
-          continue;
-        }
-        o.srcId = srcIdOf(written);
-        o.summary = summarizeExtraction(doc, extraction);
-        o.warnings = [...written.validation.warnings, ...extraction.defaultedClassifications];
+    // 4. One research_append per logged record. A record reusing a hint's
+    //    entry does not depend on the batch above, so a refused batch leaves
+    //    it to be written.
+    for (const o of staged) {
+      if (o.status !== "extracted" || !o.logId) continue;
+      let doc: ExtractDocument | undefined;
+      try {
+        const rows = await readStagedResults(input.projectPath, o.stagedRef!);
+        const key = arkToBareId(o.recordId);
+        doc = rows.find((r: any) => {
+          const id = r?.recordId ?? r?.id;
+          return typeof id === "string" && arkToBareId(id) === key;
+        }) as ExtractDocument | undefined;
+      } catch (e) {
+        o.status = "refused";
+        o.summary = `${o.recordId}: logged as ${o.logId}, but its sidecar could not be read: ${e instanceof Error ? e.message : String(e)}.`;
+        continue;
       }
+      if (!doc) {
+        o.status = "refused";
+        o.summary = `${o.recordId}: logged as ${o.logId}, but its sidecar does not hold that record.`;
+        continue;
+      }
+      const absent = (input.absentPersons ?? []).filter(
+        (p) => p.recordId !== undefined && arkToBareId(p.recordId) === arkToBareId(o.recordId),
+      );
+      const { ops, sourceDescription, extraction } = buildExtractionOps(
+        { recordId: doc.recordId ?? o.recordId, gedcomx: doc.gedcomx ?? {}, indexFields: doc.indexFields },
+        { logEntryId: o.logId!, questionIds: input.questionIds, absentPersons: absent },
+      );
+      // A hint's log entry keeps no sidecar, and a persona id must resolve
+      // against one: an assertion under it carries none.
+      if (reusedHint.has(o.recordId)) {
+        for (const op of ops as any[]) if (op?.entry && "record_persona_id" in op.entry) op.entry.record_persona_id = null;
+      }
+      const written = await researchAppend(
+        { projectPath: input.projectPath, ops, sourceDescription } as ResearchAppendInput,
+        { allowedSections: EXTRACTION_SECTIONS, toolName: "extraction_append" },
+      );
+      if (!written.ok) {
+        o.status = "refused";
+        o.errors = written.errors;
+        o.summary = `${o.recordId}: read and logged as ${o.logId}, but the write was refused: ${written.errors.join("; ")}.`;
+        continue;
+      }
+      o.srcId = srcIdOf(written);
+      o.summary = summarizeExtraction(doc, extraction);
+      o.warnings = [...written.validation.warnings, ...extraction.defaultedClassifications];
     }
   }
 
