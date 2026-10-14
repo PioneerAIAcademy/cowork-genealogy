@@ -78,6 +78,10 @@
 
   /* Decorative */
   --accent-gold: #b8860b;
+  /* Text drawn ON the gold fill. The gold is a MID tone in both themes, so dark ink wins
+     in both -- but the two golds differ enough that one hardcoded value is not safe, and
+     `#fff` (what the feedback button used) scored 3.25 here and 2.36 in dark. */
+  --accent-gold-ink: #2c2419;
   --accent-gold-soft: rgba(184, 134, 11, 0.12);
   /* AA-compliant variant for small text on warm paper (~6.0:1 vs #faf8f4) */
   --accent-gold-strong: #8a6608;
@@ -98,7 +102,14 @@
 
   --text-primary: #e8e0d4;
   --text-secondary: #a89e90;
-  --text-tertiary: #706860;
+  /* Was #706860, which gave 3.03-3.26 against the three surfaces it actually sits on
+     (#1a1714, #1e1b17, #211e1a) -- under the 4.5 bar for small text, and this token
+     carries the table headers, every count badge, the timestamps and the research-log
+     times. #9c9284 gives 4.66-5.83 on EVERY dark surface (including --bg-hover,
+     which a DOM sweep never sampled and where #968c80 still scored 4.33) while staying
+     visibly dimmer than --text-secondary
+     (#a89e90), so the three-level hierarchy survives. */
+  --text-tertiary: #9c9284;
   --text-link: #d4a060;
 
   --border-color: #3a342c;
@@ -113,7 +124,9 @@
   --badge-blue-bg: #1e2a38;
   --badge-blue-text: #78a0c8;
   --badge-gray-bg: #2e2a24;
-  --badge-gray-text: #908878;
+  /* #908878 scored 4.06 on its own #2e2a24 fill -- just under the 4.5 bar for the small
+     text a badge carries. #9c9484 gives 4.74 and is still the quietest badge of the set. */
+  --badge-gray-text: #9c9484;
   --badge-purple-bg: #2a2238;
   --badge-purple-text: #a890c8;
 
@@ -130,6 +143,7 @@
   --sidebar-active-bg: #2e2a22;
 
   --accent-gold: #d4a040;
+  --accent-gold-ink: #1a1714;
   --accent-gold-soft: rgba(212, 160, 64, 0.15);
   /* AA-compliant variant for small text on dark paper (~7.2:1 vs #1a1714) */
   --accent-gold-strong: #e8b75c;
