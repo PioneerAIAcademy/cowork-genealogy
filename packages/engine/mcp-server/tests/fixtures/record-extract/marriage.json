@@ -1,0 +1,313 @@
+{
+  "_why": "Ohio county marriage: Couple pair -> groom/bride, ParentChild edges on BOTH sides -> father_of_groom / mother_of_bride etc., plus two further persons that fall to witness_N",
+  "_capturedFrom": "Z838-9RN2",
+  "element": {
+    "recordId": "Z838-9RN2",
+    "gedcomx": {
+      "persons": [
+        {
+          "id": "p_226800860000",
+          "ark": "ark:/61903/1:1:Z838-9RN2",
+          "principal": true,
+          "gender": "Male",
+          "names": [
+            {
+              "id": "545e189f-4073-414a-9e57-73f5e2eff78f",
+              "type": "BirthName",
+              "given": "Chancey F.",
+              "surname": "Miller"
+            }
+          ],
+          "facts": [
+            {
+              "type": "MaritalStatus",
+              "value": "Single"
+            },
+            {
+              "id": "6fe16d82-1d15-49be-a5f2-c99765bca51e",
+              "type": "Birth",
+              "date": "1889",
+              "standard_date": "1889",
+              "place": ", Defiance, OH"
+            }
+          ],
+          "sources": [
+            {
+              "ref": "sd_da1"
+            }
+          ]
+        },
+        {
+          "id": "p_226800860100",
+          "ark": "ark:/61903/1:1:Z838-9R2M",
+          "principal": true,
+          "gender": "Female",
+          "names": [
+            {
+              "id": "21fdf3ea-319d-4659-9ab6-c2f19dc29703",
+              "type": "BirthName",
+              "given": "Olive E.",
+              "surname": "Durfey"
+            }
+          ],
+          "facts": [
+            {
+              "type": "MaritalStatus",
+              "value": "Widowed"
+            },
+            {
+              "id": "f064338e-91f7-491a-af1b-3f5daf6d5bab",
+              "type": "Birth",
+              "date": "1889",
+              "standard_date": "1889",
+              "place": "Crane Tp., Paulding, OH"
+            }
+          ],
+          "sources": [
+            {
+              "ref": "sd_da1"
+            }
+          ]
+        },
+        {
+          "id": "p_226800860200",
+          "ark": "ark:/61903/1:1:Z838-9RPZ",
+          "gender": "Male",
+          "names": [
+            {
+              "id": "298f4be3-ee6a-4708-9772-1295630abea7",
+              "type": "BirthName",
+              "given": "Frank",
+              "surname": "Miller"
+            }
+          ],
+          "sources": [
+            {
+              "ref": "sd_da1"
+            }
+          ]
+        },
+        {
+          "id": "p_226800860300",
+          "ark": "ark:/61903/1:1:Z838-9RT2",
+          "gender": "Female",
+          "names": [
+            {
+              "id": "9c70fed4-3ffa-46fe-8f4f-2e1cfebe0782",
+              "type": "BirthName",
+              "given": "Ellen",
+              "surname": "Traxler"
+            }
+          ],
+          "sources": [
+            {
+              "ref": "sd_da1"
+            }
+          ]
+        },
+        {
+          "id": "p_226800860400",
+          "ark": "ark:/61903/1:1:Z838-9TMM",
+          "gender": "Male",
+          "names": [
+            {
+              "id": "fa75f8a7-575c-419b-b2ba-c32a521702d8",
+              "type": "BirthName",
+              "given": "S.d.",
+              "surname": "Jackson"
+            }
+          ],
+          "sources": [
+            {
+              "ref": "sd_da1"
+            }
+          ]
+        },
+        {
+          "id": "p_226800860500",
+          "ark": "ark:/61903/1:1:Z838-9T3Z",
+          "gender": "Female",
+          "names": [
+            {
+              "id": "2e07fc99-ecac-4a10-bef1-a5dd21ccec3c",
+              "type": "BirthName",
+              "surname": "Banks"
+            }
+          ],
+          "sources": [
+            {
+              "ref": "sd_da1"
+            }
+          ]
+        }
+      ],
+      "relationships": [
+        {
+          "id": "49114c9c-5239-424c-969f-75bffcef6215",
+          "type": "ParentChild",
+          "parent": "p_226800860300",
+          "child": "p_226800860000"
+        },
+        {
+          "id": "3c3976b1-c0dc-4e1d-8f0f-d508b4b95f65",
+          "type": "Couple",
+          "person1": "p_226800860200",
+          "person2": "p_226800860300"
+        },
+        {
+          "id": "2ccd95b4-5504-4758-8e0c-10414b52cd48",
+          "type": "Couple",
+          "person1": "p_226800860400",
+          "person2": "p_226800860500"
+        },
+        {
+          "id": "f28bc7cb-7eaa-4c46-a6f4-1b863f9f702d",
+          "type": "ParentChild",
+          "parent": "p_226800860500",
+          "child": "p_226800860100"
+        },
+        {
+          "id": "fe71d8f1-7246-4b51-8ca5-f52583b6e9b7",
+          "type": "ParentChild",
+          "parent": "p_226800860400",
+          "child": "p_226800860100"
+        },
+        {
+          "id": "de71bdc1-6853-4a7d-aa02-ecab0659877b",
+          "type": "Couple",
+          "person1": "p_226800860000",
+          "person2": "p_226800860100",
+          "facts": [
+            {
+              "id": "63f7502e-8b0e-43fe-82d5-6d855f488fbb",
+              "type": "Marriage",
+              "primary": true,
+              "date": "11 10 1910",
+              "standard_date": "1910",
+              "place": "Paulding, Ohio, United States"
+            }
+          ]
+        },
+        {
+          "id": "067ac2c1-051c-4576-85d6-0cde58dd3f19",
+          "type": "ParentChild",
+          "parent": "p_226800860200",
+          "child": "p_226800860000"
+        }
+      ],
+      "sources": [
+        {
+          "id": "src_r_350184144",
+          "resource_type": "Record",
+          "title": "Entry for Chancey F. Miller and Olive E. Durfey, \"Ohio, County Marriages, 1789-2016\"",
+          "citation": "\"Ohio, County Marriages, 1789-2016\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:Z838-9RN2 : Sun Mar 10 22:59:10 UTC 2024), Entry for Chancey F. Miller and Olive E. Durfey, 11 10 1910.",
+          "url": "https://www.familysearch.org/ark:/61903/1:2:MXDC-PX5",
+          "coverage": {
+            "record_type": "Marriage"
+          }
+        },
+        {
+          "id": "sd_c_1614804",
+          "resource_type": "Collection",
+          "title": "Ohio, County Marriages, 1789-2016",
+          "url": "https://www.familysearch.org/service/cds/recapi/collections/1614804",
+          "coverage": {
+            "place_rep_id": "357",
+            "date_range": "1789/2016",
+            "record_type": "Marriage",
+            "standard_place": "Ohio, United States"
+          }
+        },
+        {
+          "id": "sd_da1",
+          "resource_type": "DigitalArtifact",
+          "url": "https://www.familysearch.org/ark:/61903/3:1:9392-S5WC-HT",
+          "coverage": {
+            "place_rep_id": "394840",
+            "date_range": "1908–1914",
+            "record_type": "Marriage",
+            "standard_place": "Paulding, Ohio, United States"
+          }
+        },
+        {
+          "id": "sd_p_226800860300",
+          "resource_type": "Person",
+          "title": "Ellen Traxler, \"Ohio, County Marriages, 1789-2016\"",
+          "citation": "\"Ohio, County Marriages, 1789-2016\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:Z838-9RN2 : Sun Mar 10 22:59:10 UTC 2024), Entry for Chancey F. Miller and Olive E. Durfey, 11 10 1910.",
+          "url": "https://www.familysearch.org/ark:/61903/1:1:Z838-9RT2"
+        },
+        {
+          "id": "sd_p_226800860500",
+          "resource_type": "Person",
+          "title": "Banks, \"Ohio, County Marriages, 1789-2016\"",
+          "citation": "\"Ohio, County Marriages, 1789-2016\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:Z838-9RN2 : Sun Mar 10 22:59:10 UTC 2024), Entry for Chancey F. Miller and Olive E. Durfey, 11 10 1910.",
+          "url": "https://www.familysearch.org/ark:/61903/1:1:Z838-9T3Z"
+        },
+        {
+          "id": "sd_p_226800860400",
+          "resource_type": "Person",
+          "title": "S.d. Jackson, \"Ohio, County Marriages, 1789-2016\"",
+          "citation": "\"Ohio, County Marriages, 1789-2016\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:Z838-9RN2 : Sun Mar 10 22:59:10 UTC 2024), Entry for Chancey F. Miller and Olive E. Durfey, 11 10 1910.",
+          "url": "https://www.familysearch.org/ark:/61903/1:1:Z838-9TMM"
+        },
+        {
+          "id": "sd_p_226800860000",
+          "resource_type": "Person",
+          "title": "Chancey F. Miller, \"Ohio, County Marriages, 1789-2016\"",
+          "citation": "\"Ohio, County Marriages, 1789-2016\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:Z838-9RN2 : Sun Mar 10 22:59:10 UTC 2024), Entry for Chancey F. Miller and Olive E. Durfey, 11 10 1910.",
+          "url": "https://www.familysearch.org/ark:/61903/1:1:Z838-9RN2"
+        },
+        {
+          "id": "sd_p_226800860100",
+          "resource_type": "Person",
+          "title": "Olive E. Durfey, \"Ohio, County Marriages, 1789-2016\"",
+          "citation": "\"Ohio, County Marriages, 1789-2016\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:Z838-9RN2 : Sun Mar 10 22:59:10 UTC 2024), Entry for Chancey F. Miller and Olive E. Durfey, 11 10 1910.",
+          "url": "https://www.familysearch.org/ark:/61903/1:1:Z838-9R2M"
+        },
+        {
+          "id": "sd_p_226800860200",
+          "resource_type": "Person",
+          "title": "Frank Miller, \"Ohio, County Marriages, 1789-2016\"",
+          "citation": "\"Ohio, County Marriages, 1789-2016\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:Z838-9RN2 : Sun Mar 10 22:59:10 UTC 2024), Entry for Chancey F. Miller and Olive E. Durfey, 11 10 1910.",
+          "url": "https://www.familysearch.org/ark:/61903/1:1:Z838-9RPZ"
+        },
+        {
+          "id": "sd_auto_M9JR-1K6",
+          "resource_type": "auto",
+          "title": "United States, Ohio, Marriages, from 1600 to 2023",
+          "coverage": {
+            "place_rep_id": "357",
+            "date_range": "+1600-01-01T00:00:00Z/+2023-12-31T23:59:59Z",
+            "standard_place": "Ohio, United States"
+          }
+        }
+      ],
+      "places": [
+        {
+          "id": "place_394840"
+        }
+      ]
+    },
+    "indexFields": {
+      "p_226800860000": {
+        "sortKey": "0000000004017328_00157_00092_0000000350184144_000",
+        "age": "21 years"
+      },
+      "p_226800860100": {
+        "sortKey": "0000000004017328_00157_00092_0000000350184144_001"
+      },
+      "p_226800860200": {
+        "sortKey": "0000000004017328_00157_00092_0000000350184144_002"
+      },
+      "p_226800860300": {
+        "sortKey": "0000000004017328_00157_00092_0000000350184144_003"
+      },
+      "p_226800860400": {
+        "sortKey": "0000000004017328_00157_00092_0000000350184144_004"
+      },
+      "p_226800860500": {
+        "sortKey": "0000000004017328_00157_00092_0000000350184144_005"
+      }
+    }
+  }
+}

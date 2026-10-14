@@ -17,7 +17,7 @@
  */
 import fs from 'node:fs/promises';
 import path from 'node:path';
-import { pluginAgentsDir, pluginSkillsDir, testsUnitDir } from './paths';
+import { pluginAgentsDir, pluginSkillsDir, testOnlySkillsDir, testsUnitDir } from './paths';
 import { PathEscapeError, resolveWithin } from './fs/safe-path';
 import type { SkillInfo, SkillRubricDimension } from './types';
 
@@ -197,6 +197,7 @@ export function parseRubric(content: string, filePath: string): SkillRubricDimen
 async function readSkillMd(skillName: string): Promise<{ frontmatter: SkillFrontmatter; body: string } | null> {
   const candidates = [
     path.join(pluginSkillsDir(), skillName, 'SKILL.md'),
+    path.join(testOnlySkillsDir(), skillName, 'SKILL.md'),
     path.join(pluginAgentsDir(), `${skillName}.md`),
   ];
   for (const filePath of candidates) {

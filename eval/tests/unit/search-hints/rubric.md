@@ -2,7 +2,7 @@
 
 Grading dimensions for search-hints unit tests. Evaluated by the LLM judge alongside the base rubric (correctness, completeness, tool arguments).
 
-search-hints reviews the FamilySearch hints on one tree person. A hint is a **pending** record match, returned by `person_record_matches` with `status: ["pending"]`. The agent runs in two modes, one per spawn, because it returns once and cannot ask the researcher anything mid-run: **triage** recommends `accept`, `reject` or `not enough information to judge` for each hint and writes nothing; **record** logs one entry per verdict the researcher stated and recommends nothing. Accepted hints flow on to record-extraction through their positive log entries; the agent extracts nothing itself.
+search-hints reviews the FamilySearch hints on one tree person. A hint is a **pending** record match, returned by `person_record_matches` with `status: ["pending"]`. The agent runs in two modes, one per spawn, because it returns once and cannot ask the researcher anything mid-run: **triage** recommends `accept`, `reject` or `not enough information to judge` for each hint and writes nothing; **record** logs one entry per verdict the researcher stated and recommends nothing. Accepted hints flow on to extraction through their positive log entries; the agent extracts nothing itself.
 
 Harness note: the fixtures are static. `record_read` returns a fixed persona per hint ark, and `image_transcribe` returns the death certificate's image only for its `imageArk`. Whether `status: ["pending"]` was sent, whether the image was read, and the shape of the log entries are checked deterministically (`eval/harness/validators/test_search_hints.py`); do not re-grade those mechanics here.
 

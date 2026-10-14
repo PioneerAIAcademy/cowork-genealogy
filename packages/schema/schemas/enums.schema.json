@@ -37,6 +37,10 @@
     "conflict_status": {
       "enum": ["unresolved", "resolved", "moot"]
     },
+    "resolution_kind": {
+      "description": "How a resolved conflict was settled: `competitor` — one of the competing assertions wins (`preferred_assertion_id` names it); `tree` — the tree's existing conclusion stands against the competing records; `synthesis` — no single assertion wins and the resolution is a value built from several (`resolved_value`, with a `resolution_rationale` citing at least two `src_`/`a_` ids).",
+      "enum": ["competitor", "tree", "synthesis"]
+    },
     "hypothesis_status": {
       "enum": ["active", "supported", "ruled_out"]
     },
@@ -195,7 +199,7 @@
       ]
     },
     "record_role_recommended": {
-      "description": "Open enum for record_role. Use lowercase_with_underscores. Numbered roles use the pattern {role}_{n}. Standard roles include head_of_household, wife, child_{n}, deceased, informant, father_of_bride, mother_of_bride, father_of_groom, mother_of_groom, grantee, grantor, testator, heir_{n}, witness_{n}, godparent_{n}, absent (for negative evidence — a person expected but not found in the record).",
+      "description": "Open enum for record_role. Use lowercase_with_underscores. Numbered roles use the pattern {role}_{n}. Standard roles include head_of_household, wife, husband, child_{n}, household_member_{n}, boarder_{n}, servant_{n}, deceased, informant, bride, groom, father_of_bride, mother_of_bride, father_of_groom, mother_of_groom, father, mother, grandfather, grandmother, grantee, grantor, registrant, testator, heir_{n}, witness_{n}, godparent_{n}, other_{n}, absent (for negative evidence — a person expected but not found in the record).",
       "type": "string",
       "pattern": "^[a-z][a-z0-9_]*$"
     },

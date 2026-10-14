@@ -3,11 +3,11 @@
 // Thin module over the shared core in tree-edit.ts (executeTreeOps): identical
 // batched-op, id-rule, and validate-on-write semantics — only the
 // admitted op set differs. tree_correct accepts ONLY update_fact, update_name,
-// update_person, update_source, and remove; the additive ops (add_*) live in
-// tree_edit. The split exists so write authority is allowlist-enforceable:
-// a context granted only tree_edit (e.g. the record-extractor agent) is
-// structurally unable to rewrite identity or delete evidence (the ut_013
-// rename incident). Spec: docs/specs/tree-edit-tool-spec.md
+// update_person, update_source, update_relationship, and remove; the additive
+// ops (add_*) live in tree_edit. The split exists so write authority is
+// allowlist-enforceable: a context granted only tree_edit (e.g. the
+// record-extractor agent) is structurally unable to rewrite identity or delete
+// evidence (the ut_013 rename incident). Spec: docs/specs/tree-edit-tool-spec.md
 // § "The tree_edit / tree_correct split".
 
 import {
@@ -38,7 +38,8 @@ export const treeCorrectSchema = {
   name: "tree_correct",
   description:
     "Correct or remove entries in the project's tree.gedcomx.json — update a " +
-    "fact, name, person (gender/ark), or source in place, or remove a " +
+    "fact, name, person (gender/ark), or source in place, retype a " +
+    "relationship (update_relationship), or remove a " +
     "fact/relationship on a tier downgrade. CORRECTIONS/REMOVALS ONLY: " +
     "additions (add_fact/add_name/add_person/add_relationship/add_source) live " +
     "in the tree_edit tool. update_fact targets a person (personId) or an " +
@@ -73,6 +74,7 @@ export const treeCorrectSchema = {
           "update_name",
           "update_person",
           "update_source",
+          "update_relationship",
           "remove",
         ],
         description: "The correction/removal to perform. Additions: use tree_edit.",
@@ -89,9 +91,15 @@ export const treeCorrectSchema = {
         type: "string",
         description:
           "Target relationship id — for update_fact on a Couple relationship's own facts " +
-          "(exactly one of personId or relationshipId), and for remove.",
+          "(exactly one of personId or relationshipId), for update_relationship, and for remove.",
       },
       sourceId: { type: "string", description: "Target source id — for update_source." },
+      subtype: {
+        type: "string",
+        description:
+          "New ParentChild subtype — for update_relationship only (e.g. \"Biological\", \"Step\"); a Couple has none. " +
+          "The only field it sets; endpoints identify the edge and are never changed.",
+      },
       fact: {
         type: "object",
         description:
@@ -131,6 +139,7 @@ export const treeCorrectSchema = {
                 "update_name",
                 "update_person",
                 "update_source",
+                "update_relationship",
                 "remove",
               ],
               description: "The correction/removal to perform. Additions: use tree_edit.",
@@ -140,6 +149,7 @@ export const treeCorrectSchema = {
             nameId: { type: "string" },
             relationshipId: { type: "string" },
             sourceId: { type: "string" },
+            subtype: { type: "string" },
             fact: { type: "object" },
             name: { type: "object" },
             source: { type: "object" },
