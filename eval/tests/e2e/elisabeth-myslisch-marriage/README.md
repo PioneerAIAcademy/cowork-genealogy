@@ -124,6 +124,6 @@ reviewing the evidence above they revised it to "probably a true match, but
 not proved". They accepted it as a true match provided the finding labels it
 probable. The card's instruction not to call a true match from the index alone
 is knowingly overridden, because the image is restricted and so cannot be the
-deciding check. A second opinion was requested on #3334.
+deciding check.
 
 The geography tag is `PL`: Oxhöft is today Oksywie in Gdynia, Poland, following the corpus's Posen fixture, although the hint batch's country column says Germany and the collection is filed under Prussia.
