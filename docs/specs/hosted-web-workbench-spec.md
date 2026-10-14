@@ -281,7 +281,10 @@ and web (WebSocket transport).
 > 3. **The chat WS is not proxied.** The browser opens **one authenticated WSS
 >    straight to the sandbox** — `POST /api/sessions/{id}/connect` resumes it,
 >    exposes port 8080, mints a per-sandbox HMAC token, and returns
->    `{wssUrl, token, familysearch}`; the control plane is then out of the
+>    `{wssUrl, token, familysearch}` — except for a session more than 24 h past
+>    `projects.created`, which it refuses with 410 before resuming
+>    (`SESSION_MAX_AGE` in `app/sessions.py`; `/resume` and the read endpoints
+>    stay open, so an ended session's research can still be read); the control plane is then out of the
 >    streaming path entirely (affinity-free, the AWS-no-sticky requirement). The
 >    in-sandbox server is `apps/server/app/sandbox_server.py`. Full rationale:
 >    `docs/realtime-architecture.md`.

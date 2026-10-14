@@ -200,7 +200,7 @@ it by name.
    every other entry is a `Skill` call.**
    Writing "proceed to research-exhaustiveness" or "proceed directly
    to proof-conclusion" and then hand-authoring the fields that skill
-   would have written (an `exhaustive_declaration`, a `proof_summaries`
+   would have written (a `search_stop`, a `proof_summaries`
    entry, the concluded tree relationship/fact) is not invoking it — it
    is skipping it while leaving state that looks like it ran. See the
    **Exhaustiveness/proof-conclusion contract** below.
@@ -215,7 +215,7 @@ it by name.
    | A plan item targets a **digitized-but-unindexed** FamilySearch record set (browse-only images — `volume_search` shows image groups with ~0% record-searchable), or indexed/full-text search has been exhausted and the remaining path is reading register pages directly | `search-images` (browses the volume page-by-page: `volume_search` → `image_search` → `image_read`) |
    | **Any** log entry with a positive/partial outcome and no assertion referencing it — even one such entry, even if other entries from the same or a later search already went through extraction | `record-extraction` (see the enforced contract below) |
    | Assertions not yet linked to persons | `@plugin:person-evidence` — **always the agent, never inline.** You (the orchestrator) never write `person_evidence` entries or add record-derived facts/relationships to tree persons yourself: person-evidence owns the identity decision and scores every cross-record link with `same_person` before it links. Writing `pe_` links inline skips that check — it is exactly how a same-named stranger's record gets attached to the subject (a b. 1814 man was given a 1918 death, age 104, this way). The record-extractor agent deliberately cannot and does not link; its output ALWAYS flows through person-evidence next |
-   | Evidence conflicts present | `conflict-resolution` |
+   | Evidence conflicts present | `@plugin:conflict-resolution` |
    | Identity uncertainty across assertions | `@plugin:hypothesis-tracking` |
    | Analyzed evidence now plausibly answers the active question | `@plugin:research-exhaustiveness` (consult the stop criteria *before* draining the rest of the plan; it sends you back to `research-plan` if the question — e.g. a completeness "did they have *any other* children?" question — is not yet reasonably exhausted) |
    | All plan items for a question are `completed` or `skipped`, and analysis above is done | `@plugin:research-exhaustiveness` |
@@ -258,7 +258,7 @@ it by name.
    citation and tier checks for proof-conclusion), and a hand-authored
    `research_append` reproducing their expected output fields skips that
    analysis while still passing schema validation. Concretely: never write
-   `exhaustive_declaration` on a question, a `proof_summaries` entry, or the
+   `search_stop` on a question, a `proof_summaries` entry, or the
    tree relationship/fact a proof concludes, except as the direct result of
    spawning `@plugin:research-exhaustiveness` or `@plugin:proof-conclusion`
    in this same run. If you catch yourself narrating "proceed to
@@ -271,7 +271,8 @@ it by name.
    **Every spawn names `projectPath` and the id the agent works on** — a
    `questionId` for `@plugin:research-exhaustiveness` and
    `@plugin:proof-conclusion`, the assertion ids for
-   `@plugin:person-evidence`, the `h_`/`c_`/assertion ids at issue for
+   `@plugin:person-evidence`, the conflict or competing assertion ids for
+   `@plugin:conflict-resolution`, the `h_`/`c_`/assertion ids at issue for
    `@plugin:hypothesis-tracking`, one jurisdiction and its period per call for
    `@plugin:locality-guide` (several jurisdictions mean several separate calls in the same turn), and the `planItemId` (plus the parish page as
    `baseUrl` when one is known, `userPresent` (`no` only when you are running autonomously and will not wait for the researcher, otherwise `yes`), and for a returned capture its

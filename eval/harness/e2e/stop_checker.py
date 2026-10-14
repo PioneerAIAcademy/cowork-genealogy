@@ -90,8 +90,9 @@ def should_continue_run(
     True  → block the Stop: the run is unfinished and a nudge may help.
     False → allow the Stop: the project is complete, the nudge budget is
             spent, the previous nudge produced no tool call (the agent
-            isn't making progress, so another nudge won't either), or the
-            genealogy MCP surface is gone (issue #941 — see below).
+            isn't making progress, so another nudge won't either), there is
+            no research.json (issue #3274 — see below), or the genealogy MCP
+            surface is gone (issue #941 — see below).
 
     Kept pure so the orchestrator's Stop hook stays a thin wrapper and this
     is unit-testable without a live agent.
@@ -103,6 +104,12 @@ def should_continue_run(
     # is dispatched after that — but a hook already in flight when the abort
     # lands must not nudge the agent back into an empty tool set.
     if mcp_unavailable:
+        return False
+    # #3274: with no research.json there is no project to resume, and the nudge says to
+    # re-read it. `is None`, not a falsy test, so an empty `{}` still reads as an unfinished
+    # project. Same place as in the shared copy (apps/server/app/agent/continue_policy.py),
+    # which `test_continue_policy_parity.py` pins.
+    if research is None:
         return False
     if project_completed(research):
         return False
@@ -159,15 +166,18 @@ def terminal_reason(
 ) -> str:
     """Why `should_continue_run` is about to return False.
 
-    That function returns a bare bool for FOUR different reasons and only two of them
+    That function returns a bare bool for FIVE different reasons and only two of them
     are defects. 134 of the 181 committed e2e run logs stop on `completed` — counting
     those as hand-back defects would make the rate dominated by successes, and the live
-    acceptance run (which must end `completed`) would log one against itself.
+    acceptance run (which must end `completed`) would log one against itself. `ok` is the
+    fifth: no research.json, so no project for a hand-back to be a defect against.
 
     Mirrors should_continue_run's own order, which is what keeps the two in agreement.
     """
     if mcp_unavailable:
         return "mcp_unavailable"
+    if research is None:
+        return "ok"
     if project_completed(research):
         return "completed"
     if nudges_used >= max_nudges:
@@ -176,8 +186,8 @@ def terminal_reason(
 
 
 #: Terminal reasons whose hand-back is worth counting. `completed` is the successful
-#: path and `mcp_unavailable` is infrastructure (#941) — neither says anything about
-#: how the agent handed back.
+#: path, `mcp_unavailable` is infrastructure (#941) and `ok` has no project (#3274) —
+#: none of them says anything about how the agent handed back.
 COUNTED_TERMINAL_REASONS = frozenset({"budget", "no_progress"})
 
 
