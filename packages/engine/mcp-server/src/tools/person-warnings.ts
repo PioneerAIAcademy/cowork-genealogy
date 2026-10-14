@@ -129,7 +129,7 @@ async function loadAnchor(
  * FamilySearch id still reaches them. Two persons linked to the same id is a
  * pending merge, not a choice to make silently.
  */
-function findAnchor(persons: SimplifiedPerson[], personId: string): SimplifiedPerson {
+export function findAnchor(persons: SimplifiedPerson[], personId: string): SimplifiedPerson {
   const byId = persons.find((p) => p.id === personId);
   if (byId) return byId;
   const wanted = personId.trim().toUpperCase();
@@ -557,7 +557,7 @@ const NON_BIOLOGICAL_PARENT_SUBTYPES: ReadonlySet<string> = new Set([
  *  and the upstream `…Parent` suffix. An unrecognized value counts as
  *  biological: it may mean anything, and assuming otherwise would silently
  *  drop a real second-father from the count. */
-function isNonBiologicalSubtype(sub: unknown): boolean {
+export function isNonBiologicalSubtype(sub: unknown): boolean {
   if (typeof sub !== "string") return false;
   const normalized = sub.trim().replace(/parent$/i, "").toLowerCase();
   return NON_BIOLOGICAL_PARENT_SUBTYPES.has(normalized);
