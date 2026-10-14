@@ -637,7 +637,7 @@ export default function ChatPane({
               {outcome}
               {spendStopped && projectId && onContinueOnProject && (
                 <button
-                  className="btnGhost"
+                  className="chatContinue"
                   disabled={continuing}
                   onClick={() => {
                     setContinuing(true)

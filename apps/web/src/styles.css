@@ -797,6 +797,38 @@ button {
   background: var(--bg-elev);
 }
 
+/* "Continue on this project", offered after a spend stop. It used `btnGhost`, which is
+   `background: transparent` with a transparent border -- so the one action available on a
+   stopped session rendered as a line of bold text and read as a heading, not something to
+   click. Reported from the screen.
+
+   Outlined rather than filled: it is the way forward, but it starts a new session that
+   spends money, so it should look deliberate rather than inviting a reflex click. Sized
+   and spaced like the composer's own buttons so it belongs to the same family. */
+.chatContinue {
+  display: inline-block;
+  margin-top: 8px;
+  padding: 7px 14px;
+  border: 1px solid var(--accent);
+  border-radius: 8px;
+  background: var(--bg-card);
+  color: var(--accent);
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.12s, color 0.12s, border-color 0.12s;
+}
+
+.chatContinue:hover:not(:disabled) {
+  background: var(--accent);
+  color: var(--bg-primary);
+}
+
+.chatContinue:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
+
 .chatControls {
   display: flex;
   align-items: center;
