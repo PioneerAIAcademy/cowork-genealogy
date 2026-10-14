@@ -460,13 +460,6 @@ def _build_is_stale() -> bool:
             REPO_ROOT / "packages" / "engine" / "mcp-server" / "build",
         )
     )
-    for ts in src.rglob("*.ts"):
-        if ts.name.endswith(".d.ts"):
-            continue
-        js = build / ts.relative_to(src).with_suffix(".js")
-        if not js.exists() or js.stat().st_mtime < ts.stat().st_mtime:
-            return True
-    return False
 
 
 # --------------------------------------------------------------------------
