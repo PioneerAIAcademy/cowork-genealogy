@@ -10,7 +10,7 @@ Mined from issue #3177, puzzle 1 (Family Tree GHLT-TFG, James Tarrant, b. 1792 S
 
 ## This is a constructed carve, not the literal pre-failure state
 
-The real project was messier when proof-conclusion ran. It had 10 positive log entries never extracted, 11 unlinked assertions (the Danville 1814 enlistment and four 1812 service cards), and 4 plan items still `in_progress`. In that state the table's first row is `record-extraction`. The operator could not say whether the run reached its interim draft unprompted, so this carve isolates the #3177 failure instead:
+The real project was messier when proof-conclusion ran. It had 10 positive log entries never extracted, 11 unlinked assertions (the Danville 1814 enlistment and four 1812 service cards), and 4 plan items still `in_progress`. In that state the table's first row is extraction, `@plugin:record-structurer`. The operator could not say whether the run reached its interim draft unprompted, so this carve isolates the #3177 failure instead:
 
 - Every unextracted log entry, with its source and assertions, was removed. So were the plan items that pointed at them.
 - The remaining plan items were set to `completed`.
