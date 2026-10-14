@@ -44,24 +44,27 @@ def test_image_read_message_names_the_image_reader_and_the_reason():
     assert "base64" in msg
 
 
-def test_extraction_append_message_names_the_extractor_and_says_report():
-    """Not "delegate differently" — the delegation is what failed (#942)."""
+def test_extraction_append_has_no_bespoke_fix_line_any_more():
+    """Issue #2937 removed it from SUBAGENT_ONLY_TOOLS.
+
+    The hook can no longer record one, so a bespoke fix line here would be dead
+    prose telling a reader to re-delegate a call nothing denies. If one is ever
+    recorded anyway — a stale runlog replayed, say — it must fall through to the
+    generic line rather than resurrect the retired #942 advice.
+    """
     with pytest.raises(AssertionError) as e:
         check([_call("extraction_append")])
     msg = str(e.value)
     assert "extraction_append" in msg
-    assert "@plugin:record-extractor" in msg
-    assert "report the failure" in msg
-    # The image_read fix must not leak into an extraction_append failure.
-    assert "@plugin:image-reader" not in msg
-    assert "base64" not in msg
+    assert "@plugin:record-extractor" not in msg
+    assert "report the failure" not in msg
 
 
-def test_both_offenders_each_get_their_own_fix():
+def test_repeat_offences_are_counted():
+    """One guarded tool remains, so the count is what two calls exercise."""
     with pytest.raises(AssertionError) as e:
-        check([_call("extraction_append"), _call("image_read")])
+        check([_call("image_read"), _call("image_read")])
     msg = str(e.value)
-    assert "@plugin:record-extractor" in msg
     assert "@plugin:image-reader" in msg
     assert "2 call(s)" in msg
 

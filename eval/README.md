@@ -137,7 +137,7 @@ Then open <http://127.0.0.1:3000>. The CRUD UI reads + writes the same `eval/` t
 - `--list-skills` — list every skill directory that has at least one runnable test JSON, then exit.
 - `--runlogs-root <dir>` — write run logs somewhere other than the default. Useful for one-off experiments that shouldn't pollute the committed tree.
 - `--tests-dir <dir>` — point the harness at a non-default test corpus.
-- `--max-cost-usd <n>` — suite-wide spend cap. Default 50. When projected cost exceeds it the remaining tests are skipped; the run still exits on the outcomes seen so far, so a capped run can exit 0 without covering the whole suite.
+- `--max-cost-usd <n>` — suite-wide spend cap. Default 50 per selected skill. When projected cost exceeds it the remaining tests are skipped, the run exits 3, and every skill left with an unrun test writes a `scratch_` log rather than a releasable candidate.
 - `--max-wall-clock-seconds <n>` — suite-wide wall-clock cap. Default 14400 (4 hours). Same skip-the-rest behavior as the cost cap.
 
 ### Harness exit codes

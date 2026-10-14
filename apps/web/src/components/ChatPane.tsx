@@ -13,6 +13,9 @@ import {
   turnOutcomeLabel
 } from './chatEvents'
 
+export const SESSION_EXPIRED_TEXT =
+  "This session is more than 24 hours old and can't be continued. Start a new session."
+
 // How close to the bottom still counts as "at the bottom". Deliberately not an
 // equality check: fractional device pixel ratios and sub-pixel scrollHeight
 // leave scrollTop + clientHeight a pixel or two short even when fully pinned.
@@ -165,6 +168,9 @@ export default function ChatPane({
   // event being folded, not as of the last render. See trackLiveTask.
   const liveTasksRef = useRef<ReadonlySet<string>>(new Set())
   const [connState, setConnState] = useState<'open' | 'reconnecting'>('open')
+  // Set when /connect refused the session as more than 24 h old (#3406). The
+  // connection never opens, so the composer is replaced for good.
+  const [expired, setExpired] = useState<string | null>(null)
   // 1c: the label for how the last turn ended, or null for an ordinary finish.
   const [outcome, setOutcome] = useState<string | null>(null)
   // 1b: the server is holding a message for this session. Distinct from the per-bubble
@@ -196,7 +202,7 @@ export default function ChatPane({
     // ends with no content: a Stop taken before the first token.
     if (kind === 'turn_start') return
     // Subagent lifecycle. Not chat content — this drives the status line, so a
-    // long delegation reads as "record-extractor · person_read · 12 tools"
+    // long delegation reads as "record-structurer · sidecar_read · 2 tools"
     // instead of an unattributed spinner.
     if (kind === 'task_started' || kind === 'task_progress') {
       liveTasksRef.current = trackLiveTask(liveTasksRef.current, kind, ev)
@@ -250,6 +256,16 @@ export default function ChatPane({
       else if (msg.type === 'status' && msg.state === 'turn_queued') setQueuedOnServer(true)
       else if (msg.type === 'status' && msg.state === 'turn_unqueued') setQueuedOnServer(false)
       else if (msg.type === 'conn_state') setConnState(msg.state as 'open' | 'reconnecting')
+      else if (msg.type === 'status' && msg.state === 'session_expired') {
+        // A turn may have been running when the old socket dropped; nothing will
+        // ever end it, so clear every indicator that would keep ticking.
+        setReady(false)
+        setConnState('open')
+        setBusy(false)
+        setQueuedOnServer(false)
+        setOutcome(null)
+        setExpired(String(msg.message ?? SESSION_EXPIRED_TEXT))
+      }
       else if (msg.type === 'status' && msg.state === 'chat_error') {
         setReady(false)
         // Reconnect attempts are over — stop the "Reconnecting…" spinner so the
@@ -341,9 +357,11 @@ export default function ChatPane({
           {messages.length === 0 && (
             <div className="chatPlaceholder">
               <p className="muted small">
-                {ready
-                  ? 'Say who you want to research and what you want to find out.'
-                  : 'Connecting to the agent…'}
+                {expired
+                  ? "This session's chat can't be shown."
+                  : ready
+                    ? 'Say who you want to research and what you want to find out.'
+                    : 'Connecting to the agent…'}
               </p>
             </div>
           )}
@@ -447,76 +465,82 @@ export default function ChatPane({
 
       {uploadError && <div className="chatUploadError">{uploadError}</div>}
 
-      <form
-        className="chatInputBar"
-        onSubmit={(e) => {
-          e.preventDefault()
-          send(input)
-        }}
-      >
-        <input
-          ref={fileInputRef}
-          type="file"
-          style={{ display: 'none' }}
-          onChange={(e) => {
-            const f = e.target.files?.[0]
-            if (f) void handleFile(f)
+      {expired ? (
+        <div className="chatExpired" role="status">
+          {expired}
+        </div>
+      ) : (
+        <form
+          className="chatInputBar"
+          onSubmit={(e) => {
+            e.preventDefault()
+            send(input)
           }}
-        />
-        <label className="chatAdvanced" title="Show the model's reasoning blocks">
+        >
           <input
-            type="checkbox"
-            checked={showThinking}
-            onChange={(e) => setShowThinking(e.target.checked)}
+            ref={fileInputRef}
+            type="file"
+            style={{ display: 'none' }}
+            onChange={(e) => {
+              const f = e.target.files?.[0]
+              if (f) void handleFile(f)
+            }}
           />
-          Reasoning
-        </label>
-        <button
-          type="button"
-          className="chatAttach"
-          onClick={() => fileInputRef.current?.click()}
-          disabled={busy || uploading || !ready}
-          title="Attach a document or image for the agent to read"
-          aria-label="Attach a document or image"
-        >
-          {uploading ? '…' : '📎'}
-        </button>
-        <textarea
-          className="chatTextarea"
-          placeholder={
-            !ready
-              ? 'Connecting…'
-              : isNew && messages.length === 0
-                ? 'Who do you want to research, and what do you want to find out?'
-                : 'Message the agent…'
-          }
-          value={input}
-          rows={2}
-          onChange={(e) => setInput(e.target.value)}
-          onKeyDown={(e) => {
-            if (e.key === 'Enter' && !e.shiftKey) {
-              e.preventDefault()
-              send(input)
-            }
-          }}
-        />
-        {/* 1b: Send sits BESIDE Stop while a turn runs, it does not replace it.
-            Under continuous work a turn is the whole job, so a composer that
-            only offers Stop for 53 minutes is a composer you cannot use. */}
-        {busy && (
-          <button className="chatStop" type="button" onClick={stop} title="Stop the current turn">
-            Stop
+          <label className="chatAdvanced" title="Show the model's reasoning blocks">
+            <input
+              type="checkbox"
+              checked={showThinking}
+              onChange={(e) => setShowThinking(e.target.checked)}
+            />
+            Reasoning
+          </label>
+          <button
+            type="button"
+            className="chatAttach"
+            onClick={() => fileInputRef.current?.click()}
+            disabled={busy || uploading || !ready}
+            title="Attach a document or image for the agent to read"
+            aria-label="Attach a document or image"
+          >
+            {uploading ? '…' : '📎'}
           </button>
-        )}
-        <button
-          className="chatSend"
-          type="submit"
-          disabled={!input.trim()}
-          title={busy ? 'The agent is working — this is queued, not dropped' : 'Send'}
-        >
-          Send
-        </button>
-      </form>
+          <textarea
+            className="chatTextarea"
+            placeholder={
+              !ready
+                ? 'Connecting…'
+                : isNew && messages.length === 0
+                  ? 'Who do you want to research, and what do you want to find out?'
+                  : 'Message the agent…'
+            }
+            value={input}
+            rows={2}
+            onChange={(e) => setInput(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault()
+                send(input)
+              }
+            }}
+          />
+          {/* 1b: Send sits BESIDE Stop while a turn runs, it does not replace it.
+              Under continuous work a turn is the whole job, so a composer that
+              only offers Stop for 53 minutes is a composer you cannot use. */}
+          {busy && (
+            <button className="chatStop" type="button" onClick={stop} title="Stop the current turn">
+              Stop
+            </button>
+          )}
+          <button
+            className="chatSend"
+            type="submit"
+            disabled={!input.trim()}
+            title={busy ? 'The agent is working — this is queued, not dropped' : 'Send'}
+          >
+            Send
+          </button>
+        </form>
+      )}
     </div>
   )
 }

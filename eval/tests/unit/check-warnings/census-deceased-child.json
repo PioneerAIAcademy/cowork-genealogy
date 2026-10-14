@@ -1,0 +1,25 @@
+{
+  "test": {
+    "id": "ut_check_warnings_021",
+    "skill": "check-warnings",
+    "name": "Census born-minus-living names a child who died before 1900 as missing",
+    "type": "positive",
+    "description": "Re-authored from ut_init_project_q4v (issue #3260): the standalone tree check now owns the census missing-children report. Given 1900 and 1910 US census fertility counts for Margaret Mercer, check-warnings must call census_children_gap in tree mode (motherId, no hand-copied children) and report TWO missing children: one born and died before the June 1900 enumeration, and one living child born between the censuses. The failure this guards: reading living-count parity with the tree (5 living in 1900 == 5 tree children) as 'accounted for' and never naming the pre-1900 deceased child. The mother is named by her FamilySearch id while the scenario keys her I1 (project_create's form), so the tool's ark lookup is exercised.",
+    "tags": ["census-gap", "direct-arm"]
+  },
+  "input": {
+    "delegation": "Check Margaret Mercer's tree for problems. Two census records describe her children: the 1900 US census records 6 children born and 5 still living, and the 1910 US census records 8 children born and 7 still living. Which of her children are missing from the tree?\n\npersonId: MRCR-MOM\n\nprojectPath: <workspace>",
+    "scenario": "census-mercer-family"
+  },
+  "mcp_fixtures": [],
+  "judge_context": [
+    "The census arithmetic is the census_children_gap tool's job, not the agent's. The reply must report the tool's answer: TWO missing children. Do not reward arithmetic the agent did itself in place of the tool, and do not penalise the agent for quoting the tool's birth windows verbatim (they are written as ISO dates such as 1900-06-01).",
+    "One missing child was BORN AND DIED before the 1 June 1900 enumeration: the 1900 census's 6 born minus 5 living is one child dead by 1900, and no child in the tree died before 1900 (the five tree children born before 1900 are the survivors, not proof the family is complete).",
+    "The other missing child is LIVING and was born between the censuses (after 1 June 1900, on or before 15 April 1910): the 1910 census's 7 living children exceed the 6 children in the tree by one, and William (b. 1906) is already in the tree, so William is NOT the missing child.",
+    "The deceased child of 1900 is the same child still counted among the dead in 1910, not a second deceased child. Reasoning that shows the 1900-to-1910 delta (two more births, the dead count holding at one) is correct and must not be penalised.",
+    "Naming only the living child born between the censuses while missing the child who died before 1900 is a FAIL, not a partial.",
+    "A missing child's birth window must be bounded by the census days, never by siblings' birth years ('born between Grace (1898) and William (1906)' is wrong for either child).",
+    "The missing children are research targets, not tree errors: they must not be presented as warnings or contradictions. person_warnings finding nothing on this tree is the expected result and is not an omission."
+  ],
+  "judge_reads_files": true
+}

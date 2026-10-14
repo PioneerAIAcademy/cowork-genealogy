@@ -1,0 +1,29 @@
+{
+  "test": {
+    "id": "ut_extraction_append_021",
+    "skill": "extraction-append",
+    "name": "Negative evidence — Patrick absent from 1870 census",
+    "type": "positive",
+    "description": "Converted from ut_record_extraction_002; extraction runs in code. When a person is expected in a record but not found, the absence itself can be an assertion. Tests the negative-evidence convention from research-schema-spec.md §5.6: record_role='absent', record_basis='absent', value describes the expected-but-missing information.",
+    "tags": [
+      "extraction",
+      "negative-evidence",
+      "absent-role",
+      "1870-census"
+    ]
+  },
+  "input": {
+    "user_message": "My search of the United States, Census, 1870 for Patrick Flynn in Schuylkill, Pennsylvania (logged as log_006) found no record of him, though he should have been about 25 and likely still in the area. Record his absence as negative evidence.",
+    "scenario": "mid-research-flynn-1870-nil-search"
+  },
+  "mcp_fixtures": [],
+  "judge_context": [
+    "Override for Correctness and Completeness: the test chooses which record the skill extracts. Do not lower any score because the record concerns people the project objective does not name.",
+    "The skill makes one extraction_append call and relays each record's summary verbatim. Grade that call and that relay; the classifications are decided in code and are checked by the expected_classifications validator, not by you.",
+    "There is no record to extract: the call is extraction_append with `absences`, citing log_006, not `recordIds`."
+  ],
+  "execution": {
+    "max_turns": 10,
+    "max_wall_clock_seconds": 300
+  }
+}

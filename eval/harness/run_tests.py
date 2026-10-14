@@ -19,7 +19,9 @@ Exit codes:
   3  any test was aborted for an execution reason
      (max_turns / wall clock / tool calls / tokens / error).
      Also returned when the abort-storm breaker trips (--no-abort-breaker
-     to override).
+     to override), and when a suite cap (--max-cost-usd,
+     --max-wall-clock-seconds) left a skill's tests unrun: that skill's log
+     is a `scratch_<ts>.json`, never a releasable candidate.
   130  the run was interrupted with Ctrl-C (SIGINT). Completed tests are
      saved as a partial `scratch_<ts>.json` run log per skill; in-flight tests
      are NOT cancelled — the pool joins them (#1016 measured ~2 min) — and
@@ -271,9 +273,9 @@ def _build_parser() -> argparse.ArgumentParser:
     parser.add_argument(
         "--max-cost-usd",
         type=float,
-        default=50.0,
+        default=None,
         help="Suite-level budget cap in USD. Remaining tests are skipped when "
-        "cumulative cost exceeds this. Default: 50.",
+        "cumulative cost exceeds this. Default: 50 per selected skill.",
     )
     parser.add_argument(
         "--max-wall-clock-seconds",
@@ -373,6 +375,10 @@ _BREAKER_RATIO = 0.20
 # is function-local; no test enforces the match — a divergence is a latent
 # bug. Promote it to module scope and import it if a third consumer appears.
 _TRANSIENT_ABORT_REASONS = frozenset({"error", "sdk_stream_silence"})
+
+# The default --max-cost-usd, per selected skill. A flat $50 for one invocation
+# of nine skills (154 tests, ~$59) skipped 22 tests on 2026-10-14.
+_DEFAULT_COST_CAP_PER_SKILL_USD = 50.0
 
 
 def _est_test_seconds(spec, actuals: dict[str, float] | None = None) -> float:
@@ -933,6 +939,12 @@ def main(argv: list[str] | None = None) -> int:
     _COST_WINDOW = 5
     recent_costs: list[float] = []
 
+    max_cost_usd = (
+        args.max_cost_usd
+        if args.max_cost_usd is not None
+        else _DEFAULT_COST_CAP_PER_SKILL_USD * len({s.skill for s in specs})
+    )
+
     concurrency, conc_source, conc_detail = _resolve_concurrency(args.concurrency)
     concurrency = min(concurrency, len(specs))
     print(
@@ -1144,9 +1156,9 @@ def main(argv: list[str] | None = None) -> int:
             saw_budget_skip = True
             return True
         projected = cumulative_cost + (spec.runs_per_test * _avg_cost())
-        if projected > args.max_cost_usd:
+        if projected > max_cost_usd:
             print(
-                f"  ! suite cost cap ${args.max_cost_usd:.2f} would be "
+                f"  ! suite cost cap ${max_cost_usd:.2f} would be "
                 f"exceeded by {spec.id} (projected ${projected:.4f}); "
                 f"not starting more tests",
                 file=sys.stderr,
@@ -1452,12 +1464,26 @@ def main(argv: list[str] | None = None) -> int:
         return 130  # interrupted
 
     # --- Write one run log per skill --------------------------------------
+    # A suite cap leaves specs unsubmitted, and a releasable log must cover its
+    # whole suite, so a skill missing any test writes scratch.
+    cut_short = Counter(
+        spec.skill for idx, spec in enumerate(specs) if idx not in results_by_index
+    )
+    if cut_short:
+        saw_exec_abort = True
     written_paths: list[Path] = []
     for skill, entries in per_skill_entries.items():
+        skill_releasable = releasable and skill not in cut_short
+        if releasable and not skill_releasable:
+            print(
+                f"  ! {skill}: {cut_short[skill]} test(s) not run under the suite "
+                f"cap, so its log is scratch; re-run it with a higher "
+                f"--max-cost-usd"
+            )
         skill_runlog_dir = paths.runlogs_root / unit_dir_name(store) / skill
         filename, version = next_filename_for(
             skill_runlog_dir=skill_runlog_dir,
-            releasable=releasable,
+            releasable=skill_releasable,
             timestamp=invocation_timestamp,
         )
         # Only a releasable run carries a review sample. A scratch run is
@@ -1467,14 +1493,14 @@ def main(argv: list[str] | None = None) -> int:
             _review_sample_for(
                 skill, entries, skill_runlog_dir, invocation_timestamp
             )
-            if releasable
+            if skill_releasable
             else None
         )
         log = build_run_log(
             skill=skill,
             version=version,
             released=False,
-            releasable=releasable,
+            releasable=skill_releasable,
             invocation=mode,
             timestamp=invocation_timestamp,
             harness_version=HARNESS_VERSION,

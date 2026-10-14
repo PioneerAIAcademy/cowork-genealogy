@@ -179,10 +179,22 @@ part of `staged`.
 - `image_transcribe` — `payload: { query: { imageId | ark | memoryArtifactUrl | file, lookingFor? },
   results: [ { id, source, content_type, size_bytes, model, transcription, truncated?, found? } ] }`,
   where `id` is the FamilySearch identifier or `capture:<basename>` for an uploaded file (the
-  record-extraction id convention). The tool also returns a `digest` beside the handle.
-- `record_read` — `payload: { query: { recordId }, results: [ { recordId, gedcomx } ] }`: the same
-  element shape `record_search` stages, so `record_read({ recordId, resultsRef })` reads it back
-  unchanged.
+  extraction id convention, as `record-structurer` uses it). The tool also returns a `digest` beside the handle.
+- `record_read` — `payload: { query: { recordId }, results: [ { recordId, gedcomx, indexFields? } ] }`:
+  `record_search`'s element shape plus one field, so `record_read({ recordId, resultsRef })` still
+  reads it back unchanged.
+
+  `indexFields` maps each persona's `gedcomx.persons[].id` to the per-person index values the raw
+  FamilySearch body carries in `fields[]` and `toSimplified` drops — `relationshipToHead`,
+  `sortKey`, `personNbr`, `lineNbr`, `householdId`, `age`, `fatherBirthPlace`, `motherBirthPlace`,
+  each optional. It is omitted entirely when no persona carries any, so a record type with no
+  index data stages what it always did.
+
+  **Only `record_read` stages it, and that asymmetry is the point.** A `record_search` response
+  populates `fields[]` for the searched persona alone; every co-resident arrives with names and
+  facts and nothing else. Code that assigns a role per household therefore cannot be fed from a
+  search sidecar, which is why the record extractor takes a `record_read` sidecar. Evidence:
+  `packages/engine/mcp-server/dev/probe-census-persona-fields.ts`.
 - `person_read` — `payload: { query: { personId, relatives, sourceDescriptions }, results: [ { personId, gedcomx } ] }`,
   where the element `personId` is the post-redirect id and `gedcomx` is the whole response minus
   `staged`/`stagingError` (`person-read-tool-spec.md`, "Staging the read").
@@ -327,8 +339,8 @@ same ground truth production does.
   gedcomx from the staged/finalized sidecar — no live FS fetch — returning the
   search stage's standardized places as-is (a live read uses pure `toSimplified`,
   keeping only the record's own normalized places, never resolver-derived ones);
-  used by record-extraction /
-  search-records to avoid re-fetching a record they already searched). Both share
+  used by search-records to avoid re-fetching a record it already searched;
+  `extraction_append` does not use it — it always reads the record live). Both share
   the dual-location read helper `readStagedResults` (staged handle OR finalized
   `results/<log_id>.json`) and never unlink, so a staged handle can still be
   finalized afterward.
