@@ -2796,6 +2796,30 @@ def test_the_two_price_tables_share_three_rates_and_differ_by_cache_ttl():
     )))
     assert worker.price_usd(tokens) == pytest.approx(theirs - tokens[1] / 1_000_000 * 0.75 * base)
 
+    # The per-model table the alpha's credential proxy prices by: the same models at the
+    # same input and output rates, with the harness's cache read and 1-hour write at the
+    # ratios `rates_for` derives the rest from.
+    from app.agent import spend
+
+    assert set(spend.MODEL_RATES) == set(pricing.MODEL_RATES), \
+        "the two per-model tables price different models"
+    for model, (input_rate, output_rate) in spend.MODEL_RATES.items():
+        theirs = pricing.MODEL_RATES[model]
+        assert (input_rate, output_rate) == (theirs["input_tokens"], theirs["output_tokens"]), model
+        assert theirs["cache_read_input_tokens"] == pytest.approx(0.1 * input_rate), model
+        assert theirs["cache_creation_input_tokens"] == pytest.approx(2 * input_rate), model
+
+
+def test_a_call_is_priced_at_its_own_models_rates():
+    from app.agent import spend
+
+    one_m_each = (1_000_000,) * 4
+    assert spend.price_usd(one_m_each, "claude-sonnet-5") == pytest.approx(2 + 2.5 + 0.2 + 10)
+    assert spend.price_usd(one_m_each, "claude-haiku-4-5-20251001") == pytest.approx(1 + 1.25 + 0.1 + 5)
+    assert spend.price_usd(one_m_each, "claude-sonnet-4-6") == pytest.approx(spend.price_usd(one_m_each))
+    assert spend.rates_for("claude-unknown-9") is spend.PRICE_PER_MTOK
+    assert spend.rates_for(None) is spend.PRICE_PER_MTOK
+
 
 def test_price_usd_is_linear_and_reads_the_four_token_classes_in_order():
     one_m = (1_000_000, 0, 0, 0)
