@@ -24,6 +24,7 @@ import re
 
 import pytest
 
+from harness.skill_runner import subject_reply_text
 from validators_lib import (
     _questions_by_id,
     bare_tool_name,
@@ -241,7 +242,8 @@ def test_fetches_registration_start_date(tool_calls, test):
 # `U.S.` and a decimal version break a naive split the same way.
 #
 # KNOWN CONSERVATIVE MISS, pinned in the offline tests: a refusal that puts the
-# item on one list line and its status on the next fails, because a line break
+# item on one list line and its status on the next draws
+# `report_refusal_marks_the_blocker_open`'s observation, because a line break
 # is a hard boundary and that is what closes the neighbouring-sentence hole. No
 # response in the committed corpus is shaped that way. If one ever is, the fix
 # is to name the status on the same line, not to widen the window — a window
@@ -320,11 +322,46 @@ _STILL_OPEN = re.compile(
     re.I | re.M,
 )
 
-_BLOCKER_TOKEN = re.compile(r"pli_005|death\s+certificate", re.I)
+_AGENT = "research-exhaustiveness"
+
+_REFUSE_TAGS = frozenset({"refuse-in-progress", "refuse-planned"})
+
+# What else a reply may call the blocking item, keyed on the test id because the
+# scenario name never reaches a validator (decided on issue #3089). Test ids are
+# unique corpus-wide (check_runlogs rule 4), so a key cannot collide, and a later
+# scenario reusing `pli_005` for another record is not false-accepted. A
+# refuse-tagged test with no entry accepts only the literal plan-item id. `\b`
+# matters on `st.? patrick`: the scenario's subject is Patrick Flynn, and "the
+# earliest Patrick Flynn record" names him, not the marriage register.
+_BLOCKER_ALIASES = {
+    "ut_research_exhaustiveness_d1a": r"\bdeath\s+certificate",
+    "ut_research_exhaustiveness_d6f": r"\bmarriage\s+register|\bst\.?\s+patrick",
+}
 
 
-def test_refusal_names_the_blocking_plan_item(text_response, test):
-    """A refusal must say what is blocking it, and that it is still open.
+def _blocking_items(before_state) -> list[str]:
+    """Ids of the planned or in-progress items on every active plan."""
+    research = (before_state or {}).get("research_json") or {}
+    blockers = []
+    for plan in research.get("plans") or []:
+        if plan.get("status") != "active":
+            continue
+        for item in plan.get("items") or []:
+            if item.get("status") in ("planned", "in_progress") and item.get("id"):
+                blockers.append(item["id"])
+    return blockers
+
+
+def _blocker_pattern(blockers: list[str], test) -> re.Pattern:
+    arms = [rf"\b{re.escape(b)}\b" for b in blockers]
+    alias = _BLOCKER_ALIASES.get(test.get("id"))
+    if alias:
+        arms.append(alias)
+    return re.compile("|".join(arms), re.I)
+
+
+def test_refusal_names_the_blocking_plan_item(before_state, text_response, test, agent_returns):
+    """A refusal must name what is blocking it. That is all this gate asks.
 
     `no-exhaustive-declaration` asserts only that no declaration was
     written, which a null response satisfies. Probing ut_005 with a
@@ -332,16 +369,22 @@ def test_refusal_names_the_blocking_plan_item(text_response, test):
     "BLOCKED" — no tool calls, nothing written — and it scored pass:
     Correctness 3, Completeness 3, Declaration honesty 3. A refusal test
     whose pass condition is met by doing nothing cannot distinguish a
-    correct refusal from a dead run.
+    correct refusal from a dead run. This gate is that distinction and
+    nothing more: the reply names an item that is `planned` or
+    `in_progress` on the active plan, read from `before_state`, by id or
+    by the test's alias.
 
-    `judge_context` already asks the judge to check this ("Claude should
-    specifically identify pli_005 as the in-progress plan item blocking
-    the declaration") and the judge scored it 3 anyway, so the positive
-    assertion has to be deterministic.
+    **Whether the reply calls that item still open is not gated.** It used
+    to be: the item and a `_STILL_OPEN` marker had to share a sentence. That
+    regex failed three correct refusals in two days, each graded 3 on every
+    judge dimension, and was widened after each one (issue #3089). The
+    property is semantic and a marker list over free prose cannot express
+    it. By the lead's ruling of 2026-10-06 (option C) it moved, frozen,
+    into `report_refusal_marks_the_blocker_open`, which hands the judge an
+    observation instead of failing the run.
 
-    **Naming the item is not enough, and a bare substring is the wrong
-    check.** Reviewed on PR #2613, where two responses passed an
-    earlier version that only looked for the token anywhere in the text:
+    This gate therefore knowingly passes the two PR #2613 counterexamples,
+    pinned as passing in the offline tests:
 
         "I cannot declare exhaustive because the 1860 census has not been
          checked. Separately, the death certificate we already hold is a
@@ -351,44 +394,60 @@ def test_refusal_names_the_blocking_plan_item(text_response, test):
          certificate search was completed last week, so that is not the
          issue."
 
-    The first refuses for the wrong reason. The second asserts the death
-    certificate search is COMPLETE — the opposite of the blocker — and
-    still satisfied a guard whose only job is to confirm the agent
-    identified it as blocking. A substring cannot tell "is blocking"
-    from "is done".
+    Neither shape appears in any refusal in the committed run logs, and
+    the report still fires on both.
 
-    So the item and a still-open marker must appear in the SAME sentence.
-    Either spelling of the item still counts — `pli_005` IS the
-    death-certificate plan item in `flynn-plan-in-progress` — which keeps
-    the phrasing freedom that pinning to the literal id would cost.
+    A refuse-tagged test whose `before_state` yields no blocking item fails
+    here rather than skipping: an empty lookup would otherwise switch the
+    dead-run check off without a sound.
+    """
+    tags = test.get("tags") or []
+    if not _REFUSE_TAGS.intersection(tags):
+        pytest.skip("not a refusal test — no blocking item to name")
+    blockers = _blocking_items(before_state)
+    assert blockers, (
+        f"{test.get('id')}: refuse-tagged test with no planned or in-progress "
+        "item on an active plan in before_state — the gate cannot run"
+    )
+    reply = subject_reply_text(agent_returns, text_response, _AGENT, test)
+    assert _blocker_pattern(blockers, test).search(reply), (
+        "the refusal did not name what is blocking the declaration — none of "
+        f"{blockers} appears in the response. A refusal that names nothing is "
+        f"indistinguishable from a dead run. Response: {reply[:200]!r}"
+    )
 
-    **The acceptance check is the corpus, not the vocabulary.** A marker
-    list can only be measured against phrasings it was not written from,
-    so the offline tests run this over all eight `_005`/`_d1a` responses
-    in the committed run logs — every one graded pass — and require all
-    eight, while both counterexamples above and a marker in a
-    neighbouring sentence still fail. The first tightening was checked
-    against seven of the eight and reported as the whole corpus; it
-    failed the eighth on an abbreviation. Re-derive from the run logs
-    rather than from a hand-written list.
+
+def report_refusal_marks_the_blocker_open(before_state, text_response, test, agent_returns):
+    """Tier 2 — reports, never gates (issue #3089, lead ruling 2026-10-06).
+
+    The same-sentence check the gate used to make, kept as an observation for
+    the judge: the reply names the in-progress item, and some sentence naming
+    it marks it as still open. `_STILL_OPEN` and `_SENTENCE_SPLIT` are frozen
+    as they stood when this moved; widening them is what issue #3089 stopped.
+
+    Scoped to `refuse-in-progress`. On the committed `refuse-planned` refusals
+    the marker list fires on every one, because they say the item is "still in
+    `planned` status", which no arm matches, while the judge graded each a
+    pass. Extending the scope would hand the judge a false observation on every
+    correct refusal.
+
+    Skips when the reply names no blocker: the gate fails that run, and the
+    same finding twice would read as two.
     """
     tags = test.get("tags") or []
     if "refuse-in-progress" not in tags:
-        pytest.skip("not a refuse-in-progress test — no blocking item to name")
-    text = text_response or ""
-    named = [
-        seg for seg in re.split(_SENTENCE_SPLIT, text) if _BLOCKER_TOKEN.search(seg)
-    ]
-    assert named, (
-        "the refusal did not name what is blocking the declaration — "
-        "neither `pli_005` nor the death certificate search appears in the "
-        "response. A refusal that names nothing is indistinguishable from a "
-        f"dead run. Response: {text[:200]!r}"
-    )
+        pytest.skip("not a refuse-in-progress test")
+    blockers = _blocking_items(before_state)
+    if not blockers:
+        pytest.skip("no blocking item in before_state — the gate reports it")
+    pattern = _blocker_pattern(blockers, test)
+    reply = subject_reply_text(agent_returns, text_response, _AGENT, test)
+    named = [seg for seg in re.split(_SENTENCE_SPLIT, reply) if seg and pattern.search(seg)]
+    if not named:
+        pytest.skip("the reply names no blocking item — the gate reports it")
+    # Neutral wording on purpose: this reaches the judge as an observation, and
+    # a verdict-shaped sentence reads as a rule.
     assert any(_STILL_OPEN.search(seg) for seg in named), (
-        "the refusal names the blocking item but never says it is still "
-        "open — no in-progress marker appears in the same sentence. A "
-        "response that mentions the death certificate in passing, or says "
-        "that search is finished, must not satisfy this check. Sentences "
-        f"naming it: {[seg.strip()[:120] for seg in named]!r}"
+        "the reply names the in-progress item but no sentence naming it marks "
+        f"it as still open. Sentences naming it: {[seg.strip()[:120] for seg in named]!r}"
     )
