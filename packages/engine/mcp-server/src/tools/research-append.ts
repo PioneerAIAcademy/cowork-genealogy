@@ -2032,11 +2032,11 @@ function oneSummaryPerQuestion(entry: any, research: any, appendedId: string | u
 }
 
 /** A `proof_summaries` write when the persons this proof bears on — its
- *  `claims[].relationship.child` entries (when `claims[]` is present), or the
- *  project's `subject_person_ids` (for a scalar proof with no `claims[]`) —
- *  have more than two distinct `ParentChild` parents in the pre-call tree, while
- *  no hypothesis in `preCallResearch` lists the proof's `question_id` in
- *  `related_question_ids`.
+ *  `claims[].relationship.child` entries (when `claims[]` is present; scalar
+ *  proofs with no `claims[]` are not in scope, as assertions carry no
+ *  `relationship` field) — have more than two distinct `ParentChild` parents in
+ *  the pre-call tree, while no hypothesis in `preCallResearch` lists the proof's
+ *  `question_id` in `related_question_ids`.
  *
  *  Uses the pre-call tree and pre-call research snapshots so a same-batch
  *  hypothesis write does not satisfy the precondition. */
@@ -2052,8 +2052,10 @@ export function competingParentSetsInvariants(
   if (typeof qid !== "string" || qid === "") return [];
 
   // In-scope: only persons whose parentage this proof is actually concluding.
-  // Claims-based: persons named as a child in a ParentChild claim.
-  // Scalar: persons named as a child in a supporting ParentChild assertion.
+  // Claims-based proofs: persons named as a child in a ParentChild claim.
+  // Scalar proofs (no claims[]) are not in scope — assertions have no
+  // `relationship` field, so there is no reliable way to derive the child
+  // person id from supporting_assertion_ids alone.
   // Subject_person_ids alone is too broad — it includes parents and siblings,
   // causing false refusals on children/marriage proofs where the subject happens
   // to have a data-quality tree issue unrelated to the question.
@@ -2061,20 +2063,6 @@ export function competingParentSetsInvariants(
   for (const c of Array.isArray(entry.claims) ? entry.claims : []) {
     if (c?.relationship?.type === "ParentChild" && typeof c.relationship.child === "string") {
       extraPersonIds.add(c.relationship.child);
-    }
-  }
-  const supportingIds = new Set<string>(
-    Array.isArray(entry.supporting_assertion_ids) ? entry.supporting_assertion_ids : [],
-  );
-  if (supportingIds.size > 0) {
-    for (const a of Array.isArray(preCallResearch?.assertions) ? preCallResearch.assertions : []) {
-      if (
-        supportingIds.has(a?.id) &&
-        a?.relationship?.type === "ParentChild" &&
-        typeof a.relationship.child === "string"
-      ) {
-        extraPersonIds.add(a.relationship.child);
-      }
     }
   }
   if (extraPersonIds.size === 0) return [];
