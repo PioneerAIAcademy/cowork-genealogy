@@ -207,7 +207,8 @@ it by name.
 
    | If research.json has... | Invoke |
    |-------------------------|--------|
-   | **No `research.json` at all** | `@plugin:init-project`. With one present, do NOT invoke it: the project exists and the delegation is wasted |
+   | **No `research.json` at all**, and the message states **no objective** (no person and question to research) | `@plugin:tree-survey`, passing the FamilySearch id if one was given and no `projectPath`. Relay its suggestions and stop for the researcher's pick; then `@plugin:init-project` with that person and question as the objective |
+   | **No `research.json` at all**, and the message states a person or objective | `@plugin:init-project`. With one present, do NOT invoke it: the project exists and the delegation is wasted |
    | Objective but no questions | `@plugin:question-selection`. **Even when the message already states the question**, it is not a question until question-selection WRITES it: `research-plan` may not write `questions`, and a plan referencing an unregistered one is refused by the validator. Registration, not derivation |
    | A question with no plan, and **no `localities` entry yet for its target jurisdiction** | `@plugin:locality-guide` (survey the place first — it persists a `loc_` entry with the how-to-search facts and quirks that research-plan then plans from) |
    | A question with no plan, and its jurisdiction **already has a `localities` entry** | `research-plan` |
@@ -278,7 +279,7 @@ it by name.
    `baseUrl` when one is known, `userPresent` (`no` only when you are running autonomously and will not wait for the researcher, otherwise `yes`), and for a returned capture its
    file path or the results text) for `@plugin:search-external-sites`, and the
    `personId` (and, on the second spawn, the researcher's verdicts) for
-   `@plugin:search-hints`. The agent runs in fresh context and reads the
+   `@plugin:search-hints`. A `@plugin:tree-survey` spawn takes no `projectPath`. The agent runs in fresh context and reads the
    project itself; a delegation missing `projectPath` fails on its first tool
    call.
 
@@ -501,9 +502,10 @@ what it rests on.
   person-linking, person-linking precedes conflict detection, conflict
   resolution precedes proof. Shortcuts break the audit trail.
 - It does not interview the user for project setup. If
-  `research.json` does not exist, route to `@plugin:init-project` first,
-  passing the researcher's own words verbatim, plus `projectPath`, and
-  nothing else.
+  `research.json` does not exist and the message states an objective, route to
+  `@plugin:init-project` first, passing the researcher's own words verbatim, plus
+  `projectPath`, and nothing else. With no objective stated, the first row of the
+  table applies.
 
 ## Re-invocation behavior
 
