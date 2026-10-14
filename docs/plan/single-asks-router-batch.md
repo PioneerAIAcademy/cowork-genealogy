@@ -106,7 +106,12 @@ prototype-only. Pricing a description change is a separate decision, not taken h
 
 **The fifth stop condition has to be worded carefully.** PR #3147 deliberately kept
 `research_delivered` out of skill bodies, so the new stop condition can only say "end your
-turn" — it must NOT name the tool. On the hosted path a toolless voluntary stop is vetoed
+turn" — it must NOT name the tool. **Superseded 2026-10-12.** The paragraph below correctly
+identified that a toolless voluntary stop is vetoed and nudged, and concluded the pairing
+works "only because the per-turn `DELIVERY_GUIDANCE` names the tool". The field says it did
+not: alpha reported the agent answering a bounded question and carrying on. "End your turn"
+in the body and "call `research_delivered`" in the prompt competed, and the body won. The
+router's bounded close names the tool now. On the hosted path a toolless voluntary stop is vetoed
 and nudged with `CONTINUE_REASON` ("invoke the next GPS sub-skill now"), which contradicts
 the rule being added mid-run. The pairing works only because the per-turn `DELIVERY_GUIDANCE`
 names the tool; the prototype-worker acceptance bullet is what catches it if the two drift.
@@ -193,10 +198,18 @@ found"). It does **not** hold for the fourth:
 
 > An extraction that gets interrupted is either finished or named in the reply as unsaved.
 
-`grep -rn interrupted packages/engine/plugin/skills/ packages/engine/plugin/agents/` returns
-**nothing**. That clause is implemented in no skill and no agent. It is not in this PR either,
-and this PR never claimed it: item 5 is out of scope here. What was wrong was the *reason*
-given for dropping it, which would have told the next reader there was nothing left to do.
+At the time this was written, `grep -rn interrupted packages/engine/plugin/skills/
+packages/engine/plugin/agents/` returned **nothing**, and the clause was implemented in no skill
+and no agent. It was not in this PR either, and this PR never claimed it: item 5 was out of scope
+here. What was wrong was the *reason* given for dropping it, which would have told the next reader
+there was nothing left to do.
+
+**Landed since (2026-10-07, PR #3235).** The clause now sits at the close of a bounded turn, in
+`research/SKILL.md` beside "When a bounded request is met, **end your turn**", together with
+clause 3. It is NOT delivered at the interruption site itself: `record-extraction/SKILL.md:257`
+still says only "report it and stop". Nothing mechanical enforces either clause; a validator was
+attempted in that PR and removed, because a word list cannot tell which record a "not saved" is
+about.
 
 Whoever picks item 5 up should also decide where it belongs, which is not obvious: the clause
 is a property of the REPLY, and the orchestrator writes the reply while `record-extraction`
@@ -229,8 +242,9 @@ in fresh context**."* Every callee is stubbed — `route-no-questions.json` carr
 - item 6's "candidates with match strength" — the reporting happens downstream of a stub.
 - item 5's test goes with item 5.
 
-Also: `research_delivered` is **not advertised in the unit harness at all**
-(`eval/harness/harness/mock_mcp.py`, absent from `LIVE_TOOLS`), so "the turn ends
+**Superseded 2026-10-12:** the tool is a `LIVE_TOOL` in the unit harness now, so it is
+advertised and callable there. It remains inert — no hook binds — so what a unit test
+can grade is whether the model MADE the call, not what the call did.
 `delivered`" is unobservable here and must not appear in a unit-test description.
 
 **Keep in `eval/tests/unit/research/` — two tests:**
@@ -271,9 +285,7 @@ new tests make wrong.
   fails `test_calibrate_judge_does_not_import_agent_sdk` with "No module named 'e2e'"
   (its subprocess inherits the cwd), an artifact that reads exactly like a regression.
   An earlier draft stated this backwards.
-- `npx vitest run tests/packaging` in `packages/engine/mcp-server` — `prompt-budget` will
-  red until `prompt-sizes.json` is regenerated, because SKILL.md's byte count changes.
-  **Regenerate with `UPDATE_PROMPT_SIZES=1`, never by hand.**
+- `npx vitest run tests/packaging` in `packages/engine/mcp-server`.
 - `~/.claude/projects/-home-praise-cowork-genealogy/mutation-check.sh` with the suite that
   GUARDS these files (the harness suite, not the engine one). **It lives outside the repo**,
   so a `git grep` for it returns nothing — review flagged it as non-existent on exactly that
@@ -317,8 +329,15 @@ a coverage hole and does not need a card to hold it.
 
 **What item 5's drop loses, recorded so it is not silently gone:** item 5 also carried a
 reply contract — "the reply names what was saved and where", and "an interrupted extraction
-is either finished or named in the reply as unsaved". That exists nowhere in
-`search-records` and is not covered by this batch.
+is either finished or named in the reply as unsaved". That existed nowhere in `search-records`
+and was not covered by this batch.
+
+**Both landed 2026-10-07 in PR #3235**, as one sentence at the bounded-turn close in
+`research/SKILL.md`, not in `search-records`. Item 5's clause 1 (a found record goes in as a
+source through `record-extraction`) is **not built on the BOUNDED path**: it exists as
+routing-table row `research/SKILL.md:186`, as this file says at :55-63, but a bounded request
+never walks that table (`research/SKILL.md:107`, "Do not walk the routing table from the top for
+one"). An earlier revision of this line said "built nowhere", which contradicted :55-63.
 
 Dropped from the first draft: *"a bounded first message creates a project with no questions
 and no plans"* — that is **item 3's** acceptance, because the web path's first message never

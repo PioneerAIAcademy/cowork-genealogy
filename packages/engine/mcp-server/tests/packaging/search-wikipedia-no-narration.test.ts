@@ -32,7 +32,7 @@
  * glob that quietly matches nothing) would leave this file green while scanning
  * nothing, which is CLAUDE.md's "a check that cannot fail reads as coverage".
  * The agent-side arm is deliberately "some other agent", not "every other
- * agent": six carry no line, so the stronger claim would be a lint failing on
+ * agent": eight others carry no line, so the stronger claim would be a lint failing on
  * the corpus it ships with.
  */
 

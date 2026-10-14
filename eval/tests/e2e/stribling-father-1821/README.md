@@ -427,7 +427,7 @@ Read these before attributing a failed headless run.
   result.** `stop_reason: completed`; 78.7 min, $10.32 — above the guide's 20–60 min /
   $3–10 envelope, which is the depth warning landing. Blind grade: **f1 `true`, f2 `true`,
   f3 `true`, f4 `false`** — 3 of 4, so `partial`. Compliance **FAIL** on nine guardrail
-  bypasses: an `exhaustive_declaration` written without `research-exhaustiveness`, a
+  bypasses: an `search_stop` written without `research-exhaustiveness`, a
   conflict carrying `conflict-resolution`'s analytical product without that skill running,
   and six new persons carrying `person_evidence` links with `same_person` never called, so
   every identity was asserted rather than scored. Per spec §14 compliance does not bear on
@@ -448,8 +448,8 @@ Read these before attributing a failed headless run.
   are never rewritten.
 - **2026-08-18 — second scored run (`run-2026-08-18_02-03-06`), and run 1 re-graded.**
   `stop_reason: cost_cap`, but the cap fired at the *end* of a completed trajectory, not
-  mid-flow: `research-exhaustiveness`, `proof-conclusion` and the mandatory `gps-mentor`
-  critique all ran, `question-selection` declared an autonomous stop point, and
+  mid-flow: `research-exhaustiveness`, `proof-conclusion` and the `gps-mentor`
+  critique (then mandatory) all ran, `question-selection` declared an autonomous stop point, and
   `project.status` was set to `completed` before the cap. Read it as a finished run that
   ran out of budget on the way out, not as a truncated one. Blind grade: **f1 `true`,
   f2 `true`, f3 `false`, f4 `true`** — 3 of 4, so `partial`. Proof quality **3 of 3**:

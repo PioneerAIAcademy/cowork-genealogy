@@ -25,6 +25,7 @@ import { imageTranscribeToolSchema } from "./tools/image-transcribe.js";
 import { recordSearchToolSchema } from "./tools/record-search.js";
 import { personSearchToolSchema } from "./tools/person-search.js";
 import { personAncestorsToolSchema } from "./tools/person-ancestors.js";
+import { treeGapsToolSchema } from "./tools/tree-gaps.js";
 import { samePersonSchema } from "./tools/same-person.js";
 import {
   personRecordMatchesSchema,
@@ -47,6 +48,7 @@ import { volumeSearchSchema } from "./tools/volume-search.js";
 import { mergeTreePersonsSchema } from "./tools/merge-tree-persons.js";
 import { researchLogAppendSchema } from "./tools/research-log-append.js";
 import { convertCalendarSchema } from "./tools/convert-calendar.js";
+import { censusChildrenGapSchema } from "./tools/census-children-gap.js";
 import { treeEditSchema } from "./tools/tree-edit.js";
 import { treeCorrectSchema } from "./tools/tree-correct.js";
 import { treeForgetSchema } from "./tools/tree-forget.js";
@@ -69,6 +71,13 @@ export const ALWAYS_LOAD: ReadonlySet<string> = new Set([
   "research_append", // most-loaded tool; 76 of its 82 re-loads follow a compaction
   "research_log_append", // logs every search; 67 of its 68 re-loads follow a compaction
   "record_read", // 2.3 KB and loaded in 31/34 runs. record_search stays deferred at 20.6 KB
+  // 802 B -- the 11th smallest of the 54 schemas the server ships, and under a third
+  // of record_read above (2,363 B). Not the smallest: logout is 185 B.
+  // Deferred, it costs a ToolSearch round trip at the one moment that must not
+  // fail: a bounded turn ending. The hosted Stop hook allows that stop ONLY on
+  // this call, so a model that has not loaded the schema gets nudged onward
+  // instead (#2813 item 1).
+  "research_delivered",
 ]);
 
 export const allToolSchemas = [
@@ -90,6 +99,7 @@ export const allToolSchemas = [
   recordSearchToolSchema,
   personSearchToolSchema,
   personAncestorsToolSchema,
+  treeGapsToolSchema,
   samePersonSchema,
   personRecordMatchesSchema,
   recordPersonMatchesSchema,
@@ -110,6 +120,7 @@ export const allToolSchemas = [
   mergeTreePersonsSchema,
   researchLogAppendSchema,
   convertCalendarSchema,
+  censusChildrenGapSchema,
   treeEditSchema,
   treeCorrectSchema,
   treeForgetSchema,

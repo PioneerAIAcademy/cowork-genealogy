@@ -44,14 +44,16 @@ import {
   type MatchScoreFile,
 } from "../utils/match-scores.js";
 import { compatiblePlace } from "../utils/date-comparison.js";
+import { normalizeString } from "../utils/string-similarity.js";
 import { getDayRange, isABeforeB } from "../utils/date-helpers.js";
-import { placeSegments } from "../utils/place-resolver.js";
+import { placeSegments, canonicalCountry } from "../utils/place-resolver.js";
 import { exampleHints } from "./research-append-examples.js";
 import { gcUnreferencedImages, sourceImageCapState } from "../utils/image-store.js";
 import { nextId } from "../utils/gedcomx-ids.js";
 import { arkToBareId } from "../utils/ark.js";
 import { PERSONA_BEARING_PRODUCERS } from "../utils/results-staging.js";
-import { resolveStandardPlace, countryConsistency } from "../utils/place-resolver.js";
+import { resolveStandardPlace, countryConsistency, isNonPlacePhrase } from "../utils/place-resolver.js";
+import { isStopGateSatisfied, getStoppedBecause } from "../utils/question-stop.js";
 
 // Re-exported for back-compat: tests and any other importer that reaches this
 // check via research-append.ts (its original home) keep working unchanged.
@@ -67,6 +69,7 @@ import {
   factText,
   materializesToPersonFact,
   type AssertionFactAttr,
+  factTypeKey,
 } from "../utils/record-persona.js";
 import type { SimplifiedGedcomX, SimplifiedFact } from "../types/gedcomx.js";
 import { recordBasisOf } from "../utils/record-basis.js";
@@ -401,6 +404,88 @@ function conflictInvariants(entry: any): string[] {
   return errs;
 }
 
+/** The `conflicts` fields a resolve can set. An update naming none of them
+ *  leaves the resolution as it stood, so the kind rule does not re-judge it. */
+const RESOLUTION_FIELDS = [
+  "status",
+  "resolution_kind",
+  "preferred_assertion_id",
+  "resolved_value",
+  "resolution_rationale",
+] as const;
+
+/** Distinct `src_` / `a_` ids a rationale cites. */
+function citedEvidenceIds(text: string): Set<string> {
+  return new Set([...text.matchAll(/\b(?:src|a)_\d+\b/gi)].map((m) => m[0].toLowerCase()));
+}
+
+/** A resolve must say how it was settled (research-append-tool-spec.md §5).
+ *
+ *  `resolution_kind` is required on a conflict that lands `resolved`, and each
+ *  kind carries its own proof: `competitor` names the winning assertion
+ *  (`preferred_assertion_id`, one of `competing_assertion_ids`); `tree` keeps
+ *  the tree's existing conclusion and owes nothing more; `synthesis` builds a
+ *  value no single assertion states (`resolved_value`), and its
+ *  `resolution_rationale` cites at least two distinct `src_`/`a_` ids. Before
+ *  this rule a resolve could name no winner and say nothing about why — 12 of
+ *  68 resolved conflicts in the committed e2e corpus do.
+ *
+ *  Scoped like the place-containment rule below: an append that lands
+ *  resolved, and an update that touches the resolution (status, the kind, the
+ *  winner, the value or the rationale). An unrelated edit to a conflict
+ *  resolved before this rule existed is not refused. `moot` is untouched:
+ *  `conflictInvariants` owns it. No override (ADR-0011, 2026-08-24). */
+function resolutionKindInvariants(entry: any, op: { op: string; fields?: Record<string, unknown> }): string[] {
+  if (entry?.status !== "resolved") return [];
+  const fields = op.fields ?? {};
+  if (op.op !== "append" && !RESOLUTION_FIELDS.some((f) => Object.hasOwn(fields, f))) return [];
+  const requirements =
+    "Name how it was settled with resolution_kind: 'competitor' — one competing assertion wins, " +
+    "named in preferred_assertion_id (one of competing_assertion_ids); 'tree' — the tree's existing " +
+    "conclusion stands and nothing more is owed; 'synthesis' — no single assertion wins, so give the " +
+    "value built from several in resolved_value and cite at least two src_/a_ ids in " +
+    "resolution_rationale.";
+  const kind = entry.resolution_kind;
+  if (!VALIDATOR_ENUMS.resolution_kind.has(kind)) {
+    return [
+      `a resolved conflict requires 'resolution_kind'${kind == null ? "" : ` (got ${JSON.stringify(kind)})`}. ${requirements}`,
+    ];
+  }
+  const competing = Array.isArray(entry.competing_assertion_ids) ? entry.competing_assertion_ids : [];
+  if (kind === "competitor") {
+    const winner = entry.preferred_assertion_id;
+    if (typeof winner !== "string" || winner.trim() === "" || !competing.includes(winner)) {
+      return [
+        "resolution_kind 'competitor' requires preferred_assertion_id naming one of " +
+          `competing_assertion_ids (${competing.join(", ") || "none"}). If no single assertion wins, ` +
+          "use 'tree' (the tree's existing conclusion stands) or 'synthesis' (a value built from " +
+          "several, with resolved_value and a rationale citing at least two src_/a_ ids).",
+      ];
+    }
+    return [];
+  }
+  if (kind === "synthesis") {
+    const errs: string[] = [];
+    const value = entry.resolved_value;
+    if (typeof value !== "string" || value.trim() === "") {
+      errs.push(
+        "resolution_kind 'synthesis' requires resolved_value — the value the evidence supports " +
+          "when no single assertion states it (e.g. \"about 1844\").",
+      );
+    }
+    const rationale = typeof entry.resolution_rationale === "string" ? entry.resolution_rationale : "";
+    const cited = citedEvidenceIds(rationale);
+    if (cited.size < 2) {
+      errs.push(
+        "resolution_kind 'synthesis' requires a resolution_rationale citing at least two distinct " +
+          `src_/a_ ids — the records the value is built from (it cites ${cited.size}).`,
+      );
+    }
+    return errs;
+  }
+  return [];
+}
+
 /** A [?] assertion cannot win a conflict on its own evidence — it needs
  *  corroboration from a different record with the same fact_type, same value
  *  (once [?] is stripped, whitespace collapsed and case folded), no [?] of its
@@ -465,10 +550,13 @@ function uncertainPreferenceInvariants(entry: any, research: any): string[] {
   return [
     `preferred_assertion_id '${entry.preferred_assertion_id}' carries an uncertain reading ` +
       `([?]) and no assertion from a different record corroborates it. To settle the conflict: ` +
-      `find a second record whose reading agrees, or update the assertion (op: "update", ` +
-      `entryId: "${entry.preferred_assertion_id}", fields: {value: "<confirmed reading>"}) to ` +
-      `remove the [?] once the user confirms the reading. Leaving preferred_assertion_id null ` +
-      `— a deferral is a finding, not an omission — stays legal.`,
+      `find a second record whose reading agrees. A reading the user confirms is one more reading ` +
+      `to weigh in this conflict's rationale, not a correction: assertion ` +
+      `'${entry.preferred_assertion_id}' was written by extraction and is final, and a conflict ` +
+      `write cannot change an assertion. Leaving ` +
+      `preferred_assertion_id null — a deferral is a finding, not an omission — stays legal: leave ` +
+      `the conflict unresolved, or resolve it with resolution_kind 'tree' when the tree's existing ` +
+      `conclusion stands.`,
   ];
 }
 
@@ -526,11 +614,13 @@ function planActiveInvariants(entry: any, research: any): string[] {
  *  when the precondition must be satisfied by someone else. Read live when it is
  *  the same author's own prior step." Neither half is this author's own step —
  *  `ownership.json` gives `hypotheses.callers` as `["agent:hypothesis-tracking"]`
- *  while `conflicts` belongs to `skill:conflict-resolution` and `assertions` to
- *  `skill:record-extraction`. Both of those sections are `enforceableAt:
- *  ["unit"]` only (no hook arm, no tool arm), so under a live read nothing would
- *  stop a session from writing the satisfying conflict or assertion in the same
- *  batch as the promote and clearing this gate from inside the call it gates.
+ *  while `conflicts` belongs to `skill:conflict-resolution` and `assertions` is
+ *  written only by `extraction_append`. `conflicts` is `enforceableAt: ["unit"]`
+ *  only (no hook arm, no tool arm), so under a live read nothing would stop a
+ *  session from writing the satisfying conflict in the same batch as the promote
+ *  and clearing this gate from inside the call it gates. (`assertions` gained a
+ *  tool arm on 2026-10-05: a caller's assertions write is refused before this
+ *  runs, so only `extraction_append`'s own batches can carry one.)
  *
  *  Measured cost of the snapshot read: **0 refusals** across the calibration
  *  corpus — no batch appends an assertion ahead of the promote, and neither of
@@ -720,10 +810,9 @@ function yearOf(value: unknown): number | null {
  *  omitted while the higher tier was written anyway (measured 2026-09-23 —
  *  `_012` wrote `probable` with the field present and null).
  *
- *  Place uses `compatiblePlace` + `placeSegments`, the SAME comparator
- *  `placeContainmentErrors` uses, for the reason its docstring gives: equality
- *  and containment are both compatible, so only an outright disagreement counts.
- *  A place-less assertion states nothing and is skipped.
+ *  Place uses `birthPlacesAgree`: equality and containment are both
+ *  compatible, so only an outright disagreement counts. A place-less assertion
+ *  states nothing and is skipped.
  *
  *  Scope is deliberately narrow: only the record's own assertions, only against
  *  the tree person's BIRTH fact, and only where both sides actually state a
@@ -737,6 +826,42 @@ function yearOf(value: unknown): number | null {
  *  contradiction. The DATE arm is the other way round -- a christening follows
  *  birth closely, so its date IS comparable. */
 const BIRTH_PLACE_FACT_TYPES: ReadonlySet<string> = new Set(["birth"]);
+
+/** Whether a record's birth place and the tree's agree, on their text or, when
+ *  both carry one, on their resolved `standard_place` -- either agreeing is
+ *  enough, since two resolutions of the same text can differ. Two places agree
+ *  when one is `compatiblePlace` with the other, or when the top level one of
+ *  them names appears in the other and every level below it matches. That second
+ *  test is what lets "Staffordshire, England" agree with "West Bromwich,
+ *  Staffordshire, England, United Kingdom" and "Georgia" with "Georgia, United
+ *  States": `compatiblePlace` lines the two up from the country, so a place
+ *  written without its country, or with an extra level above it, read as a
+ *  different place. Over the committed fixture and e2e documents that refused
+ *  1,067 confident/probable links on place, almost all of them that shape. */
+function birthPlacesAgree(assertion: any, birth: any): boolean {
+  const agree = (a: string, b: string): boolean =>
+    compatiblePlace(a, b) || alignedBelowTop(a, b) || alignedBelowTop(b, a);
+  if (agree(String(assertion.place), String(birth.place))) return true;
+  const sa = assertion?.standard_place;
+  const sb = birth?.standard_place;
+  return (
+    typeof sa === "string" && placeSegments(sa).length > 0 &&
+    typeof sb === "string" && placeSegments(sb).length > 0 &&
+    agree(sa, sb)
+  );
+}
+
+/** True when `x`'s least-specific level appears in `y` and each level of `x`
+ *  below it matches the level of `y` at the same depth. */
+function alignedBelowTop(x: string, y: string): boolean {
+  const xs = placeSegments(x).map(normalizeString).reverse();
+  const ys = placeSegments(y).map(normalizeString).reverse();
+  const at = ys.indexOf(xs[0]);
+  if (at < 0) return false;
+  const n = Math.min(xs.length, ys.length - at);
+  for (let k = 0; k < n; k++) if (xs[k] !== ys[at + k]) return false;
+  return true;
+}
 
 /** An informant with no proximity to the birth cannot contradict it. Senior
  *  genealogist ruling 2026-09-23 (John Mark Peter-Brown): "A baptismal record
@@ -935,7 +1060,7 @@ export function coreIdentifierContradictionInvariants(
       if (!BIRTH_PLACE_FACT_TYPES.has(String(a.fact_type ?? "").toLowerCase())) continue;
       if (!contradictionIsCredible(a)) continue;
       if (typeof a.place !== "string" || placeSegments(a.place).length === 0) continue;
-      if (!compatiblePlace(a.place, birth.place)) {
+      if (!birthPlacesAgree(a, birth)) {
         findings.push(
           `the record states '${a.place}' (assertion '${a.id}') where the tree person ` +
             `attests '${birth.place}'`,
@@ -980,6 +1105,176 @@ export function coreIdentifierContradictionInvariants(
       `score, and the user is asked before it stands. Use 'speculative' and name the ` +
       `contradiction in the rationale, or resolve it first — a confident wrong identity is ` +
       `worse than a flagged uncertain one.`,
+  ];
+}
+
+const US_STATES: ReadonlySet<string> = new Set([
+  "alabama", "alaska", "arizona", "arkansas", "california", "colorado", "connecticut", "delaware",
+  "district of columbia", "florida", "georgia", "hawaii", "idaho", "illinois", "indiana", "iowa",
+  "kansas", "kentucky", "louisiana", "maine", "maryland", "massachusetts", "michigan", "minnesota",
+  "mississippi", "missouri", "montana", "nebraska", "nevada", "new hampshire", "new jersey",
+  "new mexico", "new york", "north carolina", "north dakota", "ohio", "oklahoma", "oregon",
+  "pennsylvania", "rhode island", "south carolina", "south dakota", "tennessee", "texas", "utah",
+  "vermont", "virginia", "washington", "west virginia", "wisconsin", "wyoming",
+]);
+const US_STATE_CODES: ReadonlySet<string> = new Set([
+  "al", "ak", "az", "ar", "ca", "co", "ct", "de", "dc", "fl", "ga", "hi", "id", "il", "in", "ia",
+  "ks", "ky", "la", "me", "md", "ma", "mi", "mn", "ms", "mo", "mt", "ne", "nv", "nh", "nj", "nm",
+  "ny", "nc", "nd", "oh", "ok", "or", "pa", "ri", "sc", "sd", "tn", "tx", "ut", "vt", "va", "wa",
+  "wv", "wi", "wy",
+]);
+/** Countries whose borders moved across the years genealogy records cover, so a
+ *  place named under one and a later record under another can be the same
+ *  village. A move inside one group is never read as a move between countries:
+ *  Ireland was in the United Kingdom until 1922, Prussian Posen is Polish
+ *  Poznań, and Norway shared a crown with Denmark and then Sweden. */
+const COUNTRY_GROUPS: ReadonlyMap<string, string> = new Map([
+  ...["united kingdom", "england", "scotland", "wales", "northern ireland", "ireland"].map(
+    (c) => [c, "british isles"] as [string, string],
+  ),
+  ...["germany", "poland", "austria", "hungary", "russia", "switzerland"].map(
+    (c) => [c, "central europe"] as [string, string],
+  ),
+  ...["norway", "sweden", "denmark"].map((c) => [c, "scandinavia"] as [string, string]),
+]);
+
+/** The country group a free-text place names, or null when its last comma
+ *  segment is not a country `canonicalCountry` recognizes (or a US state or
+ *  state code, read as the United States). Country, never state: a state line
+ *  is crossed by a short move as often as a long one, and the tool cannot tell
+ *  which (#2537). */
+export function placeCountry(place: unknown): string | null {
+  if (typeof place !== "string") return null;
+  const segments = placeSegments(place);
+  const last = segments[segments.length - 1];
+  if (!last) return null;
+  const lower = last.toLowerCase();
+  if (US_STATES.has(lower) || US_STATE_CODES.has(lower)) return "united states";
+  const country = canonicalCountry(last);
+  if (!country) return null;
+  return COUNTRY_GROUPS.get(country) ?? country;
+}
+
+const HEAD_ROLES: ReadonlySet<string> = new Set(["head", "principal", "self"]);
+
+const RESIDENCE_FACT_TYPES: ReadonlySet<string> = new Set(["residence", "census"]);
+const TREE_RESIDENCE_FACT_TYPES: ReadonlySet<string> = new Set(["residence", "census"]);
+
+/** A `confident` link across an unexplained move between countries is refused.
+ *
+ *  The move is read from the documents alone (ADR-0011's first question): the
+ *  record's residence country, from any residence or census assertion on the
+ *  linked record, against the countries of the Residence facts the tree person
+ *  carries. A Residence fact whose every source is a record this person is linked
+ *  to only below `confident` does not count, so the first capped link cannot
+ *  vouch for the next record in the same new place. No attested residence, no
+ *  cluster, no refusal. The agent clears it by naming what bridges the move in
+ *  `move_bridge`; `probable` is never refused. The body's prose cap held about
+ *  two runs in three (ut_person_evidence_g7m, 2026-10-06), which is why it is
+ *  enforced here. */
+export function unexplainedMoveInvariants(
+  entry: any,
+  research: any,
+  tree: any,
+  batchAssertions?: Map<string, any>,
+): string[] {
+  if (entry?.confidence !== "confident") return [];
+  if (typeof entry.move_bridge === "string" && entry.move_bridge.trim() !== "") return [];
+  const assertionById = new Map<string, any>();
+  for (const a of (research?.assertions ?? []) as any[]) {
+    if (a && typeof a.id === "string") assertionById.set(a.id, a);
+  }
+  if (batchAssertions) for (const [id, a] of batchAssertions) assertionById.set(id, { ...a, id });
+  const linked = assertionById.get(entry.assertion_id);
+  if (!linked) return [];
+  const recordId = linked.record_id ?? linked.source_id ?? null;
+  if (recordId == null) return [];
+
+  // The linked party's own residence; failing that, the household head's (a
+  // census lists the residence once, on the head). Never another party's: an
+  // informant living elsewhere says nothing about where the subject lived.
+  const residenceOf = (pick: (a: any) => boolean) => {
+    const countries = new Set<string>();
+    let place: string | null = null;
+    for (const a of assertionById.values()) {
+      if ((a.record_id ?? a.source_id ?? null) !== recordId) continue;
+      if (!RESIDENCE_FACT_TYPES.has(String(a.fact_type ?? "").toLowerCase())) continue;
+      if (!pick(a)) continue;
+      const c = placeCountry(a.place);
+      if (c) {
+        countries.add(c);
+        place ??= a.place;
+      }
+    }
+    return { countries, place };
+  };
+  const linkedParty = partyKey(linked);
+  let { countries: recordCountries, place: recordPlace } = residenceOf(
+    (a) => linkedParty !== null && partyKey(a) === linkedParty,
+  );
+  if (recordCountries.size === 0) {
+    ({ countries: recordCountries, place: recordPlace } = residenceOf((a) =>
+      HEAD_ROLES.has(String(a.record_role ?? "").toLowerCase()),
+    ));
+  }
+  if (recordCountries.size === 0) return [];
+
+  const person = ((tree?.persons ?? []) as any[]).find((p: any) => p?.id === entry.person_id);
+  if (!person) return [];
+
+  // Tree S id -> research source id, and which research sources carry a
+  // confident link to this person.
+  const researchSourceByTreeRef = new Map<string, string>();
+  for (const src of (research?.sources ?? []) as any[]) {
+    if (src && typeof src.gedcomx_source_description_id === "string" && typeof src.id === "string") {
+      researchSourceByTreeRef.set(src.gedcomx_source_description_id, src.id);
+    }
+  }
+  const linkedBelowConfident = new Set<string>();
+  const linkedConfident = new Set<string>();
+  for (const pe of (research?.person_evidence ?? []) as any[]) {
+    // The entry under write is already in the array; it must not vouch for itself.
+    if (!pe || pe === entry || (entry.id && pe.id === entry.id)) continue;
+    if (pe.person_id !== entry.person_id || pe.superseded_by) continue;
+    const a = assertionById.get(pe.assertion_id);
+    if (!a || typeof a.source_id !== "string") continue;
+    (pe.confidence === "confident" ? linkedConfident : linkedBelowConfident).add(a.source_id);
+  }
+
+  const residenceCountries = new Set<string>();
+  let residencePlace: string | null = null;
+  for (const f of (person.facts ?? []) as any[]) {
+    const kind = typeof f?.type === "string" ? f.type.split("/").pop()!.toLowerCase() : "";
+    if (!TREE_RESIDENCE_FACT_TYPES.has(kind)) continue;
+    const c = placeCountry(f.place);
+    if (!c) continue;
+    // A Residence fact vouches only through a source other than the record being
+    // judged, and not one this person is linked to only below confident. An
+    // unmapped ref (a tree source with no research entry) is pre-existing
+    // evidence and vouches; so does a fact with no sources at all.
+    const refs = ((f.sources ?? []) as any[]).map((r: any) => researchSourceByTreeRef.get(r?.ref) ?? null);
+    const vouches =
+      refs.length === 0 ||
+      refs.some(
+        (id) =>
+          id === null ||
+          (id !== linked.source_id && !(linkedBelowConfident.has(id) && !linkedConfident.has(id))),
+      );
+    if (!vouches) continue;
+    residenceCountries.add(c);
+    residencePlace ??= f.place;
+  }
+  if (residenceCountries.size === 0) return [];
+  for (const c of recordCountries) if (residenceCountries.has(c)) return [];
+
+  return [
+    `confidence 'confident' is not available on this link: the record places the person in ` +
+      `'${recordPlace}' while the tree attests residence only in '${residencePlace}', a move ` +
+      `between countries that nothing on the entry explains. Measure it (place_search, then ` +
+      `place_distance), read the destination's {Jurisdiction}_Emigration_and_Immigration wiki ` +
+      `page, and look for a record of the move. If a page sentence naming arrivals from the ` +
+      `person's prior country, or a record, bridges it, quote it in move_bridge and keep ` +
+      `'confident'; otherwise write 'probable' and name the gap in the rationale.`,
   ];
 }
 
@@ -1175,6 +1470,10 @@ function personEvidenceScoreInvariants(
  *     `gedcomx.persons[]` at write time (§3.5), so the persona exists;
  *   - `record_read` — returns a SimplifiedGedcomX with a persons array, so the
  *     record can be re-opened from its `record_id`;
+ *   - `person_record_matches` — a FamilySearch hint the researcher accepted
+ *     (search-hints' record mode). Its ark is a `1:1:` record persona, which is
+ *     how record-extraction fetches it (`record_read`), so it re-opens the same
+ *     way;
  *   - `record_search` with a retained `results_ref` — the sidecar result carries
  *     the record's `gedcomx`.
  *
@@ -1195,7 +1494,7 @@ export function personaReachable(entry: any, research: any): boolean {
   const log: any[] = research.log ?? [];
   const logEntry = log.find((l: any) => l?.id === assertion.log_entry_id);
   if (!logEntry) return true; // no log entry — provenance unknown
-  if (logEntry.tool === "record_read") return true;
+  if (logEntry.tool === "record_read" || logEntry.tool === "person_record_matches") return true;
   if (logEntry.tool === "record_search" && logEntry.results_ref) return true;
   return false;
 }
@@ -1323,10 +1622,50 @@ function sourcesWithoutAssertionsWarning(research: any, applied: AppliedOp[]): s
   );
 }
 
+/** ADVISORY ONLY (issue #2256, folded into #2937): a `sources` entry that lands
+ *  a non-empty `transcription` with no `image_filename` is worth a line saying
+ *  where that text came from — a transcription is a claim about a page, and the
+ *  page it came from is normally nameable.
+ *
+ *  **Never a refusal, and the reason matters.** Two legitimate shapes reach here
+ *  with no filename: a PDF capture, and an `image_transcribe` run with no
+ *  `projectPath` (nothing was staged, so there is no file to name). Refusing
+ *  either would block correct work to catch a documentation gap, which is the
+ *  wrong trade for a provenance nudge — `guardrail-enforcement-spec.md` marks it
+ *  advisory in the instrument table for exactly that reason.
+ *
+ *  Returns one warning per offending entry, so a batch sourcing several records
+ *  names each rather than collapsing to a count the caller cannot act on. Fires
+ *  on `update` as well as `append`: a transcription added to an existing source
+ *  by a later op is the same gap. Reads the persisted entry rather than the op's
+ *  `fields`, so an update that sets only `transcription` is judged against the
+ *  `image_filename` already on disk instead of re-warning about one that is
+ *  there. */
+function transcriptionWithoutImageWarnings(research: any, applied: AppliedOp[]): string[] {
+  const sources = Array.isArray(research.sources) ? research.sources : [];
+  const out: string[] = [];
+  for (const a of applied) {
+    if (a.section !== "sources" || a.noop) continue;
+    const entry = sources.find((s: any) => s && s.id === a.entryId);
+    if (!entry) continue;
+    if (factText(entry.transcription) === undefined) continue;
+    if (factText(entry.image_filename) !== undefined) continue;
+    out.push(
+      `source '${a.entryId}' records a transcription but no image_filename — name the ` +
+        `page the text was read from, so a later reader can check it. The value is the ` +
+        `stored image's filename, which image_read/image_transcribe return as ` +
+        `\`imageRef\` when called with a projectPath. Leave it null only when there is ` +
+        `genuinely no stored page (a PDF capture, or a transcribe run without a ` +
+        `projectPath); this is advisory and nothing is blocked either way.`,
+    );
+  }
+  return out;
+}
+
 /** Tier/exhaustiveness cross-field guardrail (docs/specs/guardrail-enforcement-spec.md
  *  §4.2). `proved`/`disproved` claim the research is reasonably exhaustive by
  *  definition, so either tier requires the referenced question's
- *  `exhaustive_declaration.declared` to already be `true` — checked against
+ *  `search_stop.stopped_because` to already be a stop-gate value — checked against
  *  `preCallExhaustiveDeclared`, a snapshot taken BEFORE this call's ops began
  *  applying, never the live-mutating `research` object. Checking the live
  *  object would let one batch call both declare exhaustiveness and consume it
@@ -1349,7 +1688,9 @@ function sourcesWithoutAssertionsWarning(research: any, applied: AppliedOp[]): s
  * **Why it reads `research` LIVE, unlike the sibling completion gates.** Those
  * snapshot before the call so a batch cannot satisfy its own precondition. That
  * discipline is right when the precondition must be met by a *different actor* —
- * a `gps-mentor` verdict is not something the writer may append for itself. Here
+ * the exhaustive-search declaration a proof summary needs is
+ * research-exhaustiveness's to write, not something the proof's author may
+ * append for itself in the same batch. Here
  * the summary and the resolve are two halves of one author's single conclusion,
  * and requiring separate calls would be friction with no safety gained.
  * Measured: 7 of 154 resolve-calls append the summary in the same batch, and all
@@ -1498,7 +1839,10 @@ const ASCII_EDGE_WHITESPACE_RE = /^[ \t\n\r\f\v]+|[ \t\n\r\f\v]+$/g;
 
 /** The stop-criterion text when it claims a conflict was resolved, else null. */
 function claimedConflictResolution(question: any): string | null {
-  const cr = question?.exhaustive_declaration?.stop_criteria?.conflict_resolution;
+  // New shape first; fall back to legacy for documents written before #2539.
+  const cr =
+    question?.search_stop?.stop_criteria?.conflict_resolution ??
+    question?.exhaustive_declaration?.stop_criteria?.conflict_resolution;
   if (typeof cr !== "string") return null;
   const crl = cr.replace(ASCII_EDGE_WHITESPACE_RE, "").toLowerCase();
   if (NO_CONFLICT_EXACT.has(crl)) return null;
@@ -1512,7 +1856,7 @@ const conflictKey = (value: unknown): string | null =>
   typeof value === "string" && value !== "" ? value.toLowerCase() : null;
 
 /** A `proof_summaries` write whose question's
- *  `exhaustive_declaration.stop_criteria.conflict_resolution` claims a conflict
+ *  `search_stop.stop_criteria.conflict_resolution` claims a conflict
  *  was resolved, while `conflicts[]` holds no record of it — the resolution lives
  *  only in prose, the viewer's Conflicts section is blank, and every conflict
  *  gate here passes vacuously because each one iterates the array that was never
@@ -1588,7 +1932,7 @@ export function unpersistedConflictResolutionInvariants(entry: any, research: an
       : "conflicts[] is empty";
   return [
     `proof_summaries ${entry.id ?? "(new entry)"}: question ${qid}'s ` +
-      `exhaustive_declaration.stop_criteria.conflict_resolution says a conflict was resolved — ` +
+      `search_stop.stop_criteria.conflict_resolution says a conflict was resolved — ` +
       `"${quote}" — but conflicts[] holds no record of it (${missing}). A resolution that lives ` +
       `only in prose never reaches the Conflicts section, and no conflict gate can see it. ` +
       `Record the conflict and its resolution with conflict-resolution, the only writer of ` +
@@ -1687,41 +2031,43 @@ function oneSummaryPerQuestion(entry: any, research: any, appendedId: string | u
   ];
 }
 
-/** A question's `status` may not claim an exhaustiveness that its declaration
+/** A question's `status` may not claim an exhaustiveness that its stop decision
  *  does not carry.
  *
  *  **Why both spellings need gating.** `status: "exhaustive_declared"` is what
  *  every downstream reader treats as "GPS Component 1 is satisfied", and
- *  `exhaustive_declaration.declared` is the record that is supposed to back it.
+ *  `search_stop.stopped_because` being a gate value is the record that backs it.
  *  The harness has asserted one direction since the validator shipped —
- *  `test_declared_implies_exhaustive_declared_status`, declared ⟹ status — and
+ *  `test_declared_implies_exhaustive_declared_status`, gate value ⟹ status — and
  *  nothing has ever asserted the other, which is the direction that leaves a
- *  question looking finished with no declaration behind it.
+ *  question looking finished with no stop decision behind it.
  *
  *  **Reads the MERGED entry, deliberately.** `applyOne` shallow-merges `fields`
- *  before invariants run, so `entry.exhaustive_declaration` is "set by this op,
- *  or already true from an earlier call" — exactly the live read ADR-0011
+ *  before invariants run, so `entry.search_stop` is "set by this op,
+ *  or already gate-valued from an earlier call" — exactly the live read ADR-0011
  *  prescribes when the precondition is the same author's own prior step. A
  *  pre-call snapshot would refuse the 123 corpus writes that declare and set the
  *  status in one op, which is the common and correct shape.
  *
  *  **A zero-violation arm, and named as one.** Replayed over 157 committed e2e
  *  runs: 125 ops set this status and none of them would be refused. It ships as
- *  a cheap invariant closing a reachable hole — `exhaustive_declaration` is a
- *  required question property so it is always present, and 219 corpus writes set
- *  `declared: false` — not as a gate with demonstrated catches. Its test vector
- *  is synthetic for that reason. */
+ *  a cheap invariant closing a reachable hole — `search_stop` is a required
+ *  question property so it is always present, and corpus writes use non-gate
+ *  `stopped_because` values — not as a gate with demonstrated catches. Its test
+ *  vector is synthetic for that reason. */
 function declarationStatusInvariants(entry: any): string[] {
   if (entry?.status !== "exhaustive_declared") return [];
-  if (entry?.exhaustive_declaration?.declared === true) return [];
+  if (isStopGateSatisfied(entry)) return [];
+  const sb = getStoppedBecause(entry);
   return [
-    `status 'exhaustive_declared' requires exhaustive_declaration.declared === true on ` +
+    `status 'exhaustive_declared' requires search_stop.stopped_because to be a stop-gate value ` +
+      `('question_answered', 'record_exhausted', or 'nothing_further_reachable') on ` +
       `question '${entry?.id}', and it is ` +
-      `${entry?.exhaustive_declaration === undefined ? "absent" : JSON.stringify(entry?.exhaustive_declaration?.declared)}. ` +
+      `${sb === null ? "absent or null" : JSON.stringify(sb)}. ` +
       "That status is what every later reader treats as GPS Component 1 satisfied, so it may " +
-      "not stand without the declaration that backs it. Set both in this call, or leave the " +
-      "status alone: an honest early termination writes `declared: false` and keeps " +
-      "`status: \"in_progress\"`.",
+      "not stand without the stop decision that backs it. Set both in this call, or leave the " +
+      "status alone: an honest early termination sets stopped_because to a non-gate value and " +
+      "keeps `status: \"in_progress\"`.",
   ];
 }
 
@@ -1738,13 +2084,26 @@ function declarationStatusInvariants(entry: any): string[] {
  *  a researcher who believes the search is done has no way to say so. Issue
  *  #1821 owns that fix.
  *
- *  **`planned` does NOT block, and that is load-bearing.** `research/SKILL.md`
- *  routes here deliberately before the plan is drained — "even with plan items
- *  still `planned` → research-exhaustiveness (consult the stop criteria before
- *  draining the rest of the plan)" — and 122 corpus items sit at `planned`
- *  across 31 declarations that are all correct. The skill body's opening
- *  sentence is stricter than its own operative rule; the operative rule and the
- *  orchestrator agree, and this follows them.
+ *  **`planned` BLOCKS, decided 2026-10-05 on issue #1830.** It did not until
+ *  then. Dallan's `c78efb0b7` (#1847, 23 August) put "`planned` does NOT block"
+ *  here and the #1843 ruling shipped it, both resting on a skip having nowhere
+ *  to record its reason — the same ruling deferred the skip-reason field to
+ *  #1830 because it was a schema change. `skip_category` is that field, so the
+ *  premise lapsed and the ruling with it.
+ *
+ *  What decided it was not the vote. Six genealogists chose this and none chose
+ *  otherwise, but their shared argument — an unexplained leftover cannot be told
+ *  from a forgotten one — was already written in the skill bodies as prose, and
+ *  across 199 committed e2e runs it produced 38 leftover `planned` items and
+ *  ZERO recorded reasons. A rule with no compliance in prose belongs at the
+ *  write boundary. The decision, the case against it and the conditions it
+ *  ships under are on issue #1830.
+ *
+ *  The orchestrator still consults this gate BEFORE the plan is drained
+ *  (`research/SKILL.md:146`, unchanged): the judgement stays here, and only the
+ *  route taken on a refusal changed, to dispose of the named items rather than
+ *  extend the plan. Were disposal to happen first, the planner would be making
+ *  this gate's call for it.
  *
  *  **Reads the PRE-CALL snapshot, unlike the sibling above, and the asymmetry is
  *  the whole gate.** Plan-item completion is the search work's step, not this
@@ -1761,33 +2120,70 @@ function declarationStatusInvariants(entry: any): string[] {
  *  looser reading that also counts unattached plans is indistinguishable today —
  *  it is pinned here and by a synthetic test rather than by the corpus. */
 function planCompleteInvariants(entry: any, preCallResearch: any): string[] {
-  if (entry?.exhaustive_declaration?.declared !== true) return [];
+  if (!isStopGateSatisfied(entry)) return [];
   const qid = entry?.id;
   if (typeof qid !== "string" || qid === "") return [];
-  const inFlight = activePlanInProgressItems(preCallResearch, (plan) => plan.question_id === qid).map(
-    (item) => item.itemId,
+  // Of `plan_item_status`'s four, the two that are not disposed. Derived from
+  // the enum rather than listed so a status added later blocks by default: this
+  // gate should not wave through an item whose disposition it has never heard
+  // of, and a block here is recoverable — the plan's owner disposes of it —
+  // where a silent pass is the exhaustive declaration #1830 exists to stop.
+  const blocking = activePlanItems(
+    preCallResearch,
+    (plan) => plan.question_id === qid,
+    [...VALIDATOR_ENUMS.plan_item_status].filter((s) => s !== "completed" && s !== "skipped"),
   );
-  if (inFlight.length === 0) return [];
-  const ids = inFlight.sort().join(", ");
+  const inFlight = blocking.filter((i) => i.status === "in_progress").map((i) => i.itemId);
+  const undisposed = blocking.filter((i) => i.status === "planned").map((i) => i.itemId);
+  if (inFlight.length === 0 && undisposed.length === 0) return [];
+
+  // Both arms name the blocking items and stop. Neither tells the caller to
+  // change a status: the exhaustiveness agent holds `questions` and no
+  // `plan_items` write, so a refusal naming an action it cannot take names a
+  // locked door — which `guard_project_files.py`'s OWNER_REASON records as the
+  // thing that produces bypasses. Pinned by "the refusal names no plan_items
+  // action". Disposal is the plan owner's, reached through research/SKILL.md's
+  // route for a refused declaration.
+  const clauses: string[] = [];
+  if (inFlight.length > 0) {
+    const ids = inFlight.sort().join(", ");
+    clauses.push(
+      `${ids} ${inFlight.length === 1 ? "is" : "are"} still 'in_progress' — the plan says that ` +
+        "search has not finished, so the declaration would rest on work still running",
+    );
+  }
+  if (undisposed.length > 0) {
+    const ids = undisposed.sort().join(", ");
+    const one = undisposed.length === 1;
+    clauses.push(
+      `${ids} ${one ? "is" : "are"} still 'planned' — ${one ? "it has" : "they have"} not been ` +
+        `disposed of, so the record cannot say whether ${one ? "it was" : "they were"} answered ` +
+        `by what you already hold or simply never run (#1830)`,
+    );
+  }
   return [
-    `question '${qid}' cannot be declared exhaustive while ${ids} ` +
-      `${inFlight.length === 1 ? "is" : "are"} still 'in_progress' — the plan says that ` +
-      "search has not finished, so the declaration would rest on work still running. " +
-      `Report ${inFlight.length === 1 ? "this item" : "these items"} as the blocker and let ` +
-      "the search finish; declaring is available on the next call once the plan reflects it. " +
-      "Items still at `planned` do not block — consulting the stop criteria before draining " +
-      "the plan is the sanctioned path.",
+    `question '${qid}' cannot be declared exhaustive while ${clauses.join("; and ")}. ` +
+      `Report ${inFlight.length + undisposed.length === 1 ? "this item" : "these items"} as the ` +
+      "blocker and hand back; the plan's owner disposes of what is left, and declaring is " +
+      "available on the next call once the plan reflects it.",
   ];
 }
 
-/** Every `in_progress` item on an ACTIVE plan the predicate accepts, read from
- *  the given snapshot. Shared by the two in-flight gates so which plans and
- *  items count as in flight is decided once. */
-function activePlanInProgressItems(
+/** Every item on an ACTIVE plan the predicate accepts whose status is in
+ *  `statuses`, read from the given snapshot. Shared by the in-flight gates so
+ *  which plans and items count is decided once.
+ *
+ *  `statuses` defaults to `in_progress` alone, which is what the new-question
+ *  gate below asks for. `planCompleteInvariants` additionally passes `planned`
+ *  (issue #1830): an undisposed item leaves the record unable to say whether it
+ *  was answered by what is already held or simply never run. The two gates ask
+ *  different questions of the same plan, so the status set is the caller's. */
+function activePlanItems(
   research: any,
   includePlan: (plan: any) => boolean,
-): { itemId: string; questionId: unknown }[] {
-  const inFlight: { itemId: string; questionId: unknown }[] = [];
+  statuses: readonly string[] = ["in_progress"],
+): { itemId: string; questionId: unknown; status: string }[] {
+  const found: { itemId: string; questionId: unknown; status: string }[] = [];
   for (const plan of Array.isArray(research?.plans) ? research.plans : []) {
     if (!plan || !includePlan(plan)) continue;
     // ONLY the active plan blocks, and this is what keeps the gate escapable.
@@ -1803,12 +2199,13 @@ function activePlanInProgressItems(
     // is not the plan the question is being worked from.
     if (plan.status !== "active") continue;
     for (const item of Array.isArray(plan.items) ? plan.items : []) {
-      if (item?.status === "in_progress" && typeof item?.id === "string") {
-        inFlight.push({ itemId: item.id, questionId: plan.question_id });
+      if (typeof item?.id !== "string" || typeof item?.status !== "string") continue;
+      if (statuses.includes(item.status)) {
+        found.push({ itemId: item.id, questionId: plan.question_id, status: item.status });
       }
     }
   }
-  return inFlight;
+  return found;
 }
 
 /** A new question may not be created while any unresolved question has an
@@ -1842,7 +2239,7 @@ function newQuestionWhileSearchInFlightInvariants(entry: any, preCallResearch: a
     if (c?.status !== "unresolved" || !Array.isArray(c.blocks_question_ids)) continue;
     for (const q of c.blocks_question_ids) if (typeof q === "string") conflictBlocked.add(q);
   }
-  const refused = activePlanInProgressItems(
+  const refused = activePlanItems(
     preCallResearch,
     (plan) =>
       unresolvedQuestions.has(plan.question_id) &&
@@ -1933,7 +2330,7 @@ function planItemLogAttributionInvariants(
       `plan_items[${pid}]: an appended item cannot arrive 'completed' — its id is assigned in ` +
         `this call, so no log[] entry can name it. Don't add a plan item for a search that ` +
         `was already done: cite that search's log id in the question's ` +
-        `exhaustive_declaration.log_entry_ids when you declare. If the search has not been ` +
+        `search_stop.log_entry_ids when you declare. If the search has not been ` +
         `done yet, append the item as 'planned', then complete it after logging the search ` +
         `with research_log_append({ planItemId: "<its id>", ... }).`,
     ];
@@ -1946,6 +2343,81 @@ function planItemLogAttributionInvariants(
       `search was already logged with planItemId: null, leave this item 'in_progress' ` +
       `rather than logging the same search twice.`,
   ];
+}
+
+/** The seven `skip_category` values, for the refusal message. Kept as a literal
+ *  rather than read from the schema: the validator already enforces membership,
+ *  and what this list is for is telling the agent what to pick. */
+const SKIP_CATEGORIES =
+  "answered, inaccessible, no_coverage, fallback_not_triggered, out_of_scope, " +
+  "premise_invalidated, user_declined";
+
+/** A `skipped` item must say WHY it was skipped, and must not say it in
+ *  `rationale`.
+ *
+ *  Why this is a writer precondition and not prose (ADR-0011's first question):
+ *  it is decidable from the entry alone. Six skills may write a plan item's
+ *  status, so a prose rule would have to be repeated in six bodies and would
+ *  bind in none of them reliably; the tool covers all six at once and cannot be
+ *  argued with.
+ *
+ *  Without it, `skipped` is a way to satisfy the exhaustiveness gate without
+ *  searching: the gate treats `completed`-or-`skipped` as a disposed item, and
+ *  a bare `skipped` tells it nothing about whether the source was ever reached.
+ *  Once every new skip carries a category, the gate has something to read —
+ *  which is why the gate itself was NOT changed to treat a missing value as
+ *  "not searched" (lead ruling 2026-09-30). Existing projects carry bare
+ *  `skipped` items that will never gain one, and `research-exhaustiveness` is
+ *  not a permitted writer of `plan_items`, so a question blocked that way would
+ *  have no route to repair — the unrecoverable false deny ADR-0011's first
+ *  limit exists to prevent.
+ *
+ *  The `rationale` clause is the other half of the same defect. `rationale`
+ *  means why the item was PLANNED and is required; with nowhere else to put it,
+ *  the model was observed rewriting it with the skip reason, destroying the
+ *  planning record to store something `skip_reason` now holds.
+ */
+function planItemSkipInvariants(
+  item: any,
+  fields: Record<string, unknown>,
+  isAppend: boolean,
+  storedRationale?: unknown,
+): string[] {
+  const pid = item?.id ?? "(new)";
+  const errors: string[] = [];
+  if (item?.status === "skipped" && !item?.skip_category) {
+    errors.push(
+      `plan_items[${pid}]: status 'skipped' needs a skip_category saying why, or the ` +
+        `exhaustiveness gate cannot tell a source you decided against from one you could ` +
+        `not reach. Pick one of: ${SKIP_CATEGORIES}. Put the detail in skip_reason — not ` +
+        `in rationale, which records why the item was planned.`,
+    );
+  }
+  // Narrowed to a SKIP deliberately, not every status move. The defect is the
+  // model folding the skip reason into `rationale` for want of anywhere else,
+  // and `skip_reason` is the place to send it instead — so on a skip the
+  // refusal names a remedy. On a `completed` or `in_progress` move there is no
+  // such field, so the same refusal would be a deny with no route out, which is
+  // the false deny ADR-0011's first limit exists to prevent. Re-wording the
+  // rationale while completing an item is a documented, legitimate edit
+  // (`(d4-logattr) ACCEPTS an update re-sending status: completed …`).
+  //
+  // It fires on a CHANGED rationale, not merely a present one. An agent that
+  // re-sends the whole entry unchanged alongside the status move has destroyed
+  // nothing, and refusing it would be a refusal for no defect — the shape a
+  // batched update takes most naturally (review, 2026-10-01).
+  const rationaleTouched =
+    Object.prototype.hasOwnProperty.call(fields ?? {}, "rationale") &&
+    fields.rationale !== storedRationale;
+  if (!isAppend && fields?.status === "skipped" && rationaleTouched) {
+    errors.push(
+      `plan_items[${pid}]: this op sets status 'skipped' and rewrites rationale in the same ` +
+        `call. rationale is why the item was PLANNED — overwriting it while disposing of the ` +
+        `item destroys the planning record. Leave rationale alone and put why it was skipped ` +
+        `in skip_reason.`,
+    );
+  }
+  return errors;
 }
 
 /** The two tiers that are a final answer rather than a stalled one: `proved`
@@ -1992,10 +2464,11 @@ function proofSummaryInvariants(
   const declaredBeforeThisCall = preCallExhaustiveDeclared?.get(entry?.question_id) === true;
   if (!declaredBeforeThisCall) {
     return [
-      `tier '${tier}' requires question '${entry?.question_id}' to already carry ` +
-        `exhaustive_declaration.declared === true from BEFORE this call (a batch may not ` +
-        `declare exhaustiveness and consume it for a tier in the same call) — invoke ` +
-        `research-exhaustiveness first, in its own call.`,
+      `tier '${tier}' requires question '${entry?.question_id}' to already have its stop gate ` +
+        `satisfied (search_stop.stopped_because is 'question_answered', 'record_exhausted', or ` +
+        `'nothing_further_reachable') from BEFORE this call (a batch may not declare exhaustiveness ` +
+        `and consume it for a tier in the same call) — invoke research-exhaustiveness first, in its ` +
+        `own call.`,
     ];
   }
   return [];
@@ -2089,6 +2562,25 @@ interface BatchSuccess {
   resolvedPlaces?: ResolvedPlaceEcho[];
   filesWritten: string[];
   validation: { valid: true; warnings: string[] };
+  /** Set only by `extraction_append`'s EXTRACTOR MODE, which builds its own ops
+   *  from a record's sidecar. The caller never sees that record, so `results[]`
+   *  alone would tell it how many entries landed without saying what they say —
+   *  and reporting the extraction is the caller's job. `research_append` never
+   *  sets this. */
+  extraction?: ExtractionEcho;
+}
+
+/** What extractor mode extracted, for the caller to report. */
+export interface ExtractionEcho {
+  recordType: string;
+  /** Present only for a census: whether the schedule stated relationships,
+   *  decided by the hard-coded year table rather than by reading the field. */
+  censusStatesRelationships?: boolean;
+  assertionCount: number;
+  /** Distinct roles assigned, so a reader can see the household shape without
+   *  the assertions. */
+  roles: string[];
+  notes: string[];
 }
 export type ResearchAppendResult =
   | SingleSuccess
@@ -2770,7 +3262,6 @@ const FACT_TYPE_ALIASES: Record<string, string> = {
   christeningplace: "christening",
   baptism: "christening",
   marriage: "marriage",
-  marriagelicense: "marriage",
 };
 
 /** Normalized keys of the place-of-event fact_type variants. When the model
@@ -2788,12 +3279,6 @@ const PLACE_VARIANT_KEYS = new Set([
   "christeningplace",
 ]);
 
-/** Reduce a label to its normalized comparison key: lowercase, then drop every
- *  non-alphanumeric character. */
-function labelKey(raw: string): string {
-  return raw.toLowerCase().replace(/[^a-z0-9]/g, "");
-}
-
 function isBlank(v: unknown): boolean {
   return typeof v !== "string" || v.trim() === "";
 }
@@ -2807,7 +3292,7 @@ function isBlank(v: unknown): boolean {
 function canonicalizeAssertionLabels(entry: Record<string, unknown>): void {
   const ft = entry.fact_type;
   if (typeof ft !== "string") return;
-  const key = labelKey(ft);
+  const key = factTypeKey(ft);
   // hasOwn, not a bare index — see the note on SECTIONS in applyOne. A bare
   // index on `constructor` yields `Object`, which is truthy, so the assignment
   // below would replace a string fact_type with a function.
@@ -2924,6 +3409,61 @@ function validateNegativeEvidenceRole(entry: Record<string, unknown>): void {
   if (errors.length) throw new ResearchAppendError(errors);
 }
 
+/** PRECONDITION 2 — `informant_proximity: "unknown"` implies
+ *  `information_quality: "indeterminate"`.
+ *
+ *  If you cannot identify the informant, you cannot have established that they
+ *  witnessed the fact, nor that they did not: the Layer-2 decision tree's
+ *  question 1 ("do we know the informant?") answers NO and terminates at
+ *  `indeterminate` without ever reaching question 2. So `unknown` paired with
+ *  `primary` or `secondary` is not a judgment call this tool is second-guessing
+ *  — it is a claim that contradicts its own premise.
+ *
+ *  **Why a writer precondition and not SKILL.md prose.** ADR-0011's first
+ *  question — can this be decided by reading the project documents alone? —
+ *  answers yes: both fields are on the entry in hand, so nothing needs a record
+ *  re-read. It lived as prose (the burial-index paragraph in
+ *  `agents/record-extractor.md`) from the finding in issue #2173, now carried by
+ *  issue #2484, and prose did not hold: across the committed e2e corpus the
+ *  model broke the rule on **248 of 982** `unknown` assertions. That is the
+ *  measurement behind moving it into code (issue #2937).
+ *
+ *  **FORWARD ONLY, and deliberately not a biconditional.** `indeterminate` does
+ *  NOT imply `unknown`: a NAMED informant whose relationship to the specific
+ *  fact cannot be established is `indeterminate` at a known proximity — the
+ *  decision tree's "CANNOT TELL" branch at question 2, which is reached only
+ *  when question 1 answered YES. Tightening this into "iff" would refuse that
+ *  whole branch, which is the ordinary shape of a census record read through
+ *  the table in `research-append-tool-spec.md`.
+ *
+ *  Fires ONLY for the two in-enum values that claim a determination was made.
+ *  A missing `information_quality` is already the schema's `required` error and
+ *  an out-of-enum one is its enum error; reporting this on top of either would
+ *  name the wrong fix. That is not hypothetical — `mid-research-flynn-bad-enum`
+ *  a_001 is `unknown` + `tertiary`, and `ut_validate_schema_004` pins the
+ *  validator at exactly ONE error for it. */
+function validateInformantQualityFloor(entry: Record<string, unknown>): void {
+  if (entry.informant_proximity !== "unknown") return;
+  if (
+    entry.information_quality !== "primary" &&
+    entry.information_quality !== "secondary"
+  ) {
+    return;
+  }
+  throw new ResearchAppendError(
+    `assertion has informant_proximity "unknown" but information_quality ` +
+      `'${entry.information_quality}' — an unidentified informant cannot be shown to ` +
+      `have witnessed the fact OR to have not witnessed it, so the classification ` +
+      `terminates at "indeterminate". Either set information_quality to ` +
+      `"indeterminate", or — if you can in fact name who supplied this fact — set ` +
+      `informant_proximity to what they were (self, witness, household_member, ` +
+      `family_not_present, official_duty) and keep the quality you chose. Do NOT ` +
+      `reach for "unknown" because the SOURCE is an index or a transcript: an index ` +
+      `of a marriage register still carries the register's informant, and indexing ` +
+      `changed who stated the fact not at all.`,
+  );
+}
+
 /** `structured_value.relationship_type` names the record subject's OWN role;
  *  `related_person_role` names the other party's (research-schema-spec.md
  *  §5.6.1). Nothing stated that until issue #2535, and the corpus wrote both
@@ -3018,7 +3558,6 @@ function applyOne(
   op: ResearchAppendOp,
   appendedThisBatch?: Set<string>,
   preCallExhaustiveDeclared?: Map<string, boolean>,
-  preCallCritiquedSummaryIds?: Set<string>,
   preCallBlockingConflicts?: any[],
   preCallResearch?: any,
   // The tree is needed by `coreIdentifierContradictionInvariants`, which
@@ -3127,8 +3666,8 @@ function applyOne(
       // Refuse on the UNION of the pre-call and live blocking sets, not on live
       // alone. `applyOne` mutates `research` in place per op, so a live-only read
       // let one batch resolve the conflict and complete in the same call — the
-      // gate grading its own homework, the exact defect the sibling mentor gate
-      // below was built to avoid. The union is strictly stronger than either
+      // gate grading its own homework, the defect every pre-call snapshot in
+      // this tool exists to prevent. The union is strictly stronger than either
       // half: the snapshot catches a conflict settled mid-batch, and the live
       // read still catches one this batch newly introduced.
       const blockingIds = new Set<string>(live.map((c: any) => c.id));
@@ -3150,91 +3689,16 @@ function applyOne(
           `cannot set project.status = "completed": unresolved blocking conflict(s) ${names}. ` +
             "GPS Component 4 requires conflicting evidence to be resolved before concluding. " +
             "Run conflict-resolution for each — set its status to 'resolved' (with " +
-            "independence_analysis, weighing_analysis, and resolution_rationale) or 'moot' " +
-            "(with a rationale for why it no longer matters) — then retry completing the project. " +
-            "A conflict you weighed and could not settle is still recorded as 'resolved' with all " +
-            "three analyses, saying in resolution_rationale why it cannot be settled and what " +
-            "would settle it, and leaving preferred_assertion_id null — a deferral is a finding, " +
-            "not an omission, but it is not 'moot', which means the conflict no longer matters. " +
+            "independence_analysis, weighing_analysis, resolution_rationale and a resolution_kind: " +
+            "'competitor' naming the winning assertion, 'tree' where the tree's existing conclusion " +
+            "stands, or 'synthesis' with a resolved_value) or 'moot' (with a rationale for why it " +
+            "no longer matters) — then retry completing the project. A conflict you weighed and " +
+            "could not settle is still recorded as 'resolved' with all three analyses and " +
+            "resolution_kind 'tree', saying in resolution_rationale why it cannot be settled and " +
+            "what would settle it — a deferral is a finding, not an omission, but it is not " +
+            "'moot', which means the conflict no longer matters. " +
             "A conflict settled in the same batch as this update does not count; complete it in " +
             "a later call.",
-        );
-      }
-
-      // Mentor gate: every proof summary backing a RESOLVED question must carry
-      // a gps-mentor `proof-critique` verdict before the project may complete.
-      //
-      // A pure foreign key — proof_summaries[].question_id joins the question
-      // (a question entry carries no ps_id), and evaluations[].target_id joins
-      // the summary. It reads only data already in memory, so unlike the
-      // sibling same_person gate there is nothing to invent and no new field to
-      // persist.
-      //
-      // **The critique set is the PRE-CALL snapshot, deliberately.** Read live,
-      // one batch could append its own proof-critique evaluation and consume it
-      // for the completed transition in the same call — the gate would grade its
-      // own homework. Same discipline as proofSummaryInvariants.
-      //
-      // Prose was tried on exactly this rule and lost: research/SKILL.md has
-      // carried "verify BOTH gates, in order — do not write completed until both
-      // hold" since PR #811 (merged 2026-07-23; #1029 touched this file but not
-      // that row), and 29 of 128 completed runs in the committed e2e corpus
-      // reach `completed` with at least one uncritiqued summary anyway — 23%.
-      // Date-split, that 23% is 23/70 before the prose existed, 6/53 with the
-      // prose and no enforcement, and 0/5 since this precondition went live:
-      // the prose cut the rate by two thirds, and the live window is n=5.
-      //
-      // A superseded verdict does not count: if a newer verdict replaced it, the
-      // newer one is itself in evaluations[] and satisfies the gate; if nothing
-      // replaced it, the critique genuinely no longer stands.
-      // `resolved` is an ISO date string or null, never a boolean, so the old
-      // `=== true` was unsatisfiable dead code — the same shape as the
-      // `identity_question === true` bug, written up on `isIdentityConflict` in
-      // `utils/question-state.ts` (it used to sit in the sibling gate above,
-      // which now shares that helper). `Boolean(q.resolved)`
-      // is what `question-state.ts` already uses to answer the same question,
-      // and the two disagreeing is how a question could read as resolved to
-      // `project_context` while this gate never counted it. Widening the set can
-      // only require MORE critiques; measured over the corpus it newly refuses
-      // nothing (4 date-only resolved questions, all already critiqued).
-      const resolvedQuestionIds = new Set(
-        (Array.isArray(research.questions) ? research.questions : [])
-          .filter((q: any) => q && (q.status === "resolved" || Boolean(q.resolved)))
-          .map((q: any) => q.id),
-      );
-      const uncritiqued = (
-        Array.isArray(research.proof_summaries) ? research.proof_summaries : []
-      )
-        .filter(
-          (ps: any) =>
-            ps &&
-            resolvedQuestionIds.has(ps.question_id) &&
-            !preCallCritiquedSummaryIds?.has(ps.id),
-        )
-        .map((ps: any) => ps.id);
-      // A resolved question with NO proof summary passes vacuously — but that
-      // state is no longer REACHABLE through this tool, so the vacuous pass now
-      // only covers documents seeded that way (fixtures, hand-authored state).
-      // `questionResolvedInvariants` refuses the transition, on either spelling
-      // of resolved, unless a summary references the question.
-      //
-      // That is the deliberate resolution of a contradiction these two gates
-      // used to carry: this comment claimed "closed a side question with no
-      // candidates" as a legitimate terminal state while its sibling made it
-      // unwritable. Concluding is the only way to close a question — a question
-      // closed with nothing found gets a `not_proved` summary saying so, which
-      // is a GPS-valid finding rather than a non-answer. Neither state occurs in
-      // the committed corpus: 0 of 154 runs ever reach `resolved` without a
-      // summary, seeded or produced.
-      if (uncritiqued.length > 0) {
-        throw new ResearchAppendError(
-          `cannot set project.status = "completed": proof summary/summaries ` +
-            `${uncritiqued.join(", ")} have no gps-mentor verdict. ` +
-            "Every proof summary backing a resolved question must be critiqued before " +
-            "the project is completed. Invoke the gps-mentor agent with " +
-            "focus: proof-critique on each id above — it appends the verdict to " +
-            "evaluations[] — then retry completing the project. A verdict appended in " +
-            "the same batch as this update does not count; complete it in a later call.",
         );
       }
     }
@@ -3325,6 +3789,7 @@ function applyOne(
     normalizeAccessDate(newEntry);
     canonicalizeAssertionLabels(newEntry);
     validateNegativeEvidenceRole(newEntry);
+    validateInformantQualityFloor(newEntry);
     validateRelationshipDirection(newEntry);
     const stamp = config.stampTimestamp;
     if (stamp && newEntry[stamp.field] === undefined) {
@@ -3367,11 +3832,14 @@ function applyOne(
 
     // Questions: re-declaring exhaustiveness on an already-declared question is
     // a no-op — never overwrite a settled GPS Component-1 record. Only when the
-    // declaration is the SOLE field being set, so a bundled update that also
+    // stop decision is the SOLE field being set, so a bundled update that also
     // changes other fields is not silently dropped.
     if (section === "questions" && Object.keys(op.fields).length === 1) {
-      const newEd = op.fields.exhaustive_declaration as any;
-      if (existing.exhaustive_declaration?.declared === true && newEd?.declared === true) {
+      const newSs = op.fields.search_stop;
+      if (
+        isStopGateSatisfied(existing) &&
+        isStopGateSatisfied(newSs !== undefined ? { search_stop: newSs } : op.fields)
+      ) {
         return {
           section,
           op: op.op,
@@ -3390,6 +3858,12 @@ function applyOne(
     normalizeAccessDate(existing);
     canonicalizeAssertionLabels(existing);
     validateNegativeEvidenceRole(existing);
+    // The update arm validates the MERGED entry, so an op that sets only one of
+    // the pair is checked against the value already on disk — which is the case
+    // the rule exists for: flipping `informant_proximity` to "unknown" while
+    // leaving a stale `secondary` behind is exactly how the 248 corpus
+    // violations were reached.
+    validateInformantQualityFloor(existing);
     // Scoped to ops that set one of the three inputs it compares.
     // `fact_type` is one of them because it decides whether the guard
     // applies at all, so a retype INTO `relationship` would otherwise move
@@ -3445,7 +3919,7 @@ function applyOne(
     // re-trigger either. `append` always sets both.
     const declarationTouchedThisOp =
       op.op === "append" ||
-      Object.prototype.hasOwnProperty.call(fields, "exhaustive_declaration");
+      Object.prototype.hasOwnProperty.call(fields, "search_stop");
     if (declarationTouchedThisOp) {
       invariantErrors.push(...planCompleteInvariants(resultEntry, preCallResearch));
     }
@@ -3456,18 +3930,19 @@ function applyOne(
       op.op === "append" || Object.prototype.hasOwnProperty.call(fields, "status");
     // EITHER side, because the invariant couples two fields and an op that
     // touches one can break it without naming the other. Gating on `status`
-    // alone left the mirror-image hole open: an update lowering
-    // `exhaustive_declaration.declared` to false on a question already sitting
-    // at `status: "exhaustive_declared"` never ran the check and persisted
-    // exactly the state it forbids. That is not hypothetical — it is the
-    // agent's own documented re-invocation path, which writes `declared: false`
-    // and is told to leave `status` alone.
+    // alone left the mirror-image hole open: an update changing
+    // `search_stop.stopped_because` to a non-gate value on a question already
+    // sitting at `status: "exhaustive_declared"` never ran the check and
+    // persisted exactly the state it forbids. That is not hypothetical — it is
+    // the agent's own documented re-invocation path, which may change the stop
+    // reason and is told to leave `status` alone.
     if (statusTouchedThisOp || declarationTouchedThisOp) {
       invariantErrors.push(...declarationStatusInvariants(resultEntry));
     }
   }
   if (section === "conflicts") {
     invariantErrors.push(...conflictInvariants(resultEntry));
+    invariantErrors.push(...resolutionKindInvariants(resultEntry, op));
     // Place containment: on append, and on an update that (re)sets the pairing.
     // Scoped that way so an unrelated edit to a conflict written before this
     // rule existed is not refused — the freeze #2354 had to design around.
@@ -3533,9 +4008,21 @@ function applyOne(
           .filter((it: any) => it && it.status === "completed")
           .map((it: any) => it.id),
       );
+      const alreadySkipped = new Set(
+        (Array.isArray(storedPlan?.items) ? storedPlan.items : [])
+          .filter((it: any) => it && it.status === "skipped")
+          .map((it: any) => it.id),
+      );
       for (const item of Array.isArray(resultEntry?.items) ? resultEntry.items : []) {
         if (item && alreadyCompleted.has(item.id)) continue;
         invariantErrors.push(...planItemLogAttributionInvariants(item, research));
+        // Inline `items[]` on a `plans` op reaches the same field, so the skip
+        // rule has to hold here too or it is one `{ ...entry }` spread away
+        // from being bypassed. `isAppend: true` — an item arriving inline has
+        // no prior rationale to overwrite, so only the category clause applies.
+        if (item && !alreadySkipped.has(item.id)) {
+          invariantErrors.push(...planItemSkipInvariants(item, {}, true));
+        }
       }
     }
   }
@@ -3567,6 +4054,25 @@ function applyOne(
     if (statusTouchedThisOp && !wasCompleted) {
       invariantErrors.push(
         ...planItemLogAttributionInvariants(resultEntry, research, op.op === "append"),
+      );
+    }
+    // A `skipped` item must carry a category. Gated the same way, and
+    // additionally skipped when the item was ALREADY `skipped` before this
+    // call: re-stating a bare skip written before this rule existed changes
+    // nothing, and refusing it would strand every pre-existing project. Only a
+    // NEW skip is held to it.
+    const storedItem = (Array.isArray(preCallResearch?.plans) ? preCallResearch.plans : [])
+      .flatMap((pl: any) => (pl && Array.isArray(pl.items) ? pl.items : []))
+      .find((it: any) => it && it.id === resultEntry?.id);
+    const wasSkipped = op.op === "update" && storedItem?.status === "skipped";
+    if (statusTouchedThisOp && !wasSkipped) {
+      invariantErrors.push(
+        ...planItemSkipInvariants(
+          resultEntry,
+          itemFields,
+          op.op === "append",
+          storedItem?.rationale,
+        ),
       );
     }
   }
@@ -3644,6 +4150,19 @@ function applyOne(
       ...(op.op === "update" && resultEntry.superseded_by
         ? []
         : coreIdentifierContradictionInvariants(resultEntry, research, tree, personLinks, batchAssertions)),
+    );
+    // An update re-checks the move only when it sets the tier or the bridge, or
+    // re-points the link (a new pairing, as the score gate below reads it), so a
+    // rationale edit on a link written before this rule stays possible.
+    const touchesMove =
+      op.op !== "update" ||
+      ["confidence", "move_bridge", "assertion_id", "person_id"].some((f) =>
+        Object.prototype.hasOwnProperty.call(op.fields ?? {}, f),
+      );
+    invariantErrors.push(
+      ...((op.op === "update" && resultEntry.superseded_by) || !touchesMove
+        ? []
+        : unexplainedMoveInvariants(resultEntry, research, tree, batchAssertions)),
     );
     // #1731 step 3. The two halves have different scope, and collapsing them
     // into "append only" left the CIRCULAR arm reachable in two calls: append
@@ -3901,15 +4420,15 @@ export function reextractionKey(a: any): string | undefined {
         : undefined;
   if (who === undefined) return undefined;
   const log = typeof a.log_entry_id === "string" && a.log_entry_id !== "" ? a.log_entry_id : "";
-  const ftKey = labelKey(a.fact_type);
-  const fact = Object.hasOwn(FACT_TYPE_ALIASES, ftKey) ? labelKey(FACT_TYPE_ALIASES[ftKey]) : ftKey;
+  const ftKey = factTypeKey(a.fact_type);
+  const fact = Object.hasOwn(FACT_TYPE_ALIASES, ftKey) ? factTypeKey(FACT_TYPE_ALIASES[ftKey]) : ftKey;
   return [a.source_id, arkToBareId(a.record_id), log, who, fact].join("\u0000");
 }
 
 /** The canonical spelling of a fact_type for a message (the alias fold §3.7 applies). */
 function factLabel(ft: unknown): string {
   if (typeof ft !== "string") return String(ft);
-  const k = labelKey(ft);
+  const k = factTypeKey(ft);
   return Object.hasOwn(FACT_TYPE_ALIASES, k) ? FACT_TYPE_ALIASES[k] : ft;
 }
 
@@ -4157,17 +4676,7 @@ async function prepareOps(
       detectionEngaged = true;
       // Existing sources covering any of the batch's record ids, in
       // research.sources array order (deterministic "first match").
-      const sourceIdsForRecords = new Set<string>();
-      for (const a of Array.isArray(research.assertions) ? research.assertions : []) {
-        if (
-          a &&
-          typeof a.record_id === "string" &&
-          typeof a.source_id === "string" &&
-          batchRecordKeys.has(arkToBareId(a.record_id))
-        ) {
-          sourceIdsForRecords.add(a.source_id);
-        }
-      }
+      const sourceIdsForRecords = sourceIdsForRecordIds(research, batchRecordKeys);
       const matched = (Array.isArray(research.sources) ? research.sources : []).filter(
         (s: any) => s && typeof s === "object" && sourceIdsForRecords.has(s.id),
       );
@@ -4411,7 +4920,7 @@ async function prepareOps(
           );
           continue;
         }
-        // No sidecar (record_read, PDF, image, pasted records, or a nil/negative
+        // No sidecar (an unstaged record_read, PDF, image, pasted records, or a nil/negative
         // search): the field must be absent or null — there is no persona
         // document to point at.
         if (entry.record_persona_id != null) {
@@ -4419,7 +4928,7 @@ async function prepareOps(
             fmt(
               i,
               `record_persona_id must be null — log entry '${logId}' has no results sidecar ` +
-                "(results_ref is null; record_read/PDF/image/pasted records carry no persona ids)",
+                "(results_ref is null; a record_read logged without stagedResultsRef, or a PDF/image/pasted record, has no persona document to point at)",
             ),
           );
           continue;
@@ -4427,7 +4936,7 @@ async function prepareOps(
       } else if (typeof ref === "string") {
         const results = await readSidecarResults(ref);
         if (results) {
-          // Only record_search stages GedcomX personas; its results key on
+          // record_search and record_read stage GedcomX personas; their results key on
           // `recordId`. fulltext_search / external_links_search stage transcript
           // text and links keyed on `id`, with no persona document — matching
           // them on `recordId` (a field they never carry) matched nothing every
@@ -4541,9 +5050,14 @@ async function prepareOps(
     // ── Place lever (b): never geocode what the source record already
     // resolved — copy the sidecar's standard_place for the same place string.
     // `standard_place: null` is an explicit opt-out (skip resolution + guard);
-    // only a fully omitted field triggers resolution.
+    // only a fully omitted field triggers resolution. A non-place phrase
+    // ("Same House") is left unset, silently: it has no standard form.
     let geocoded = false;
-    if (factText(entry.place) !== undefined && entry.standard_place === undefined) {
+    if (
+      factText(entry.place) !== undefined &&
+      entry.standard_place === undefined &&
+      !isNonPlacePhrase(factText(entry.place)!)
+    ) {
       let sp: string | null = null;
       let source: "sidecar" | "geocoded" | null = null;
       if (matchedRecord) {
@@ -4740,6 +5254,66 @@ export interface ResearchAppendOptions {
   toolName?: string;
 }
 
+/**
+ * The ids of the existing sources that already cover any of `bareRecordIds`,
+ * read off the assertions that cite them (§3.4.1). The one derivation of
+ * "is this record already extracted", shared by source-reuse detection here and
+ * by `extraction_append`'s resend skip, so the two cannot disagree.
+ */
+export function sourceIdsForRecordIds(research: any, bareRecordIds: ReadonlySet<string>): Set<string> {
+  const out = new Set<string>();
+  for (const a of Array.isArray(research?.assertions) ? research.assertions : []) {
+    if (
+      a &&
+      typeof a.record_id === "string" &&
+      typeof a.source_id === "string" &&
+      bareRecordIds.has(arkToBareId(a.record_id))
+    ) {
+      out.add(a.source_id);
+    }
+  }
+  return out;
+}
+
+/** The one field a direct `research_append` call may change on an assertion. */
+const CALLER_ASSERTION_FIELDS = new Set(["informant_bias_notes"]);
+
+/** `research_append` as an MCP caller reaches it. Assertions are written only by
+ *  `extraction_append`, which calls `researchAppend` directly and so never meets
+ *  this check. A caller may update one existing assertion's
+ *  `informant_bias_notes`, to record a re-reading or a doubt; any other
+ *  `assertions` write is refused, whole call, before anything is read
+ *  (genealogist ruling 2026-10-05, option B). */
+export async function researchAppendFromCaller(
+  input: ResearchAppendInput,
+): Promise<ResearchAppendResult> {
+  input.ops = coerceJsonArg(input.ops) as ResearchAppendOp[] | undefined;
+  input.fields = coerceJsonArg(input.fields) as Record<string, unknown> | undefined;
+  const isBatch = input.ops !== undefined;
+  const ops = isBatch
+    ? (Array.isArray(input.ops) ? input.ops : [])
+    : [{ section: input.section, op: input.op, fields: input.fields } as ResearchAppendOp];
+  const errors: string[] = [];
+  ops.forEach((op, i) => {
+    if (!op || (op as { section?: unknown }).section !== "assertions") return;
+    const fields = (op as { fields?: unknown }).fields;
+    const keys = fields && typeof fields === "object" && !Array.isArray(fields) ? Object.keys(fields) : [];
+    const notesOnly =
+      (op as { op?: unknown }).op === "update" && keys.length > 0 && keys.every((k) => CALLER_ASSERTION_FIELDS.has(k));
+    if (notesOnly) return;
+    const msg =
+      "research_append does not write assertions: extraction_append writes them (a FamilySearch " +
+      "record by recordIds; any other source through the record-structurer agent). The one change " +
+      "allowed here is an update that sets only informant_bias_notes on an existing assertion, to " +
+      "record a re-reading or a doubt. A disputed reading belongs in a conflict, not in the assertion's value.";
+    errors.push(isBatch ? `ops[${i}]: ${msg}` : msg);
+  });
+  if (errors.length > 0) {
+    return isBatch ? { ok: false, errors, opsReceived: ops.length } : { ok: false, errors };
+  }
+  return researchAppend(input);
+}
+
 export async function researchAppend(
   input: ResearchAppendInput,
   options: ResearchAppendOptions = {},
@@ -4780,15 +5354,10 @@ export async function researchAppend(
     const preCallExhaustiveDeclared = new Map<string, boolean>(
       (Array.isArray(research.questions) ? research.questions : []).map((q: any) => [
         q?.id,
-        q?.exhaustive_declaration?.declared === true,
+        isStopGateSatisfied(q),
       ]),
     );
-    // Same discipline, for the mentor gate on project.status = "completed":
-    // the proof summaries that already carry a gps-mentor proof-critique
-    // verdict, as of BEFORE this call's ops. Snapshotting is what stops a
-    // single batch appending the verdict and consuming it for the completion
-    // transition in one call.
-    // Same discipline again, for the conflict half of the completion gate: the
+    // Same discipline, for the conflict gate on project.status = "completed": the
     // conflicts that were blocking BEFORE this call's ops. Without it a single
     // batch could resolve the conflict and complete in one go.
     // Widened with the live arm, not instead of it: the gate refuses on the
@@ -4798,14 +5367,6 @@ export async function researchAppend(
     const preCallBlockingConflicts = (
       Array.isArray(research.conflicts) ? research.conflicts : []
     ).filter((c: any) => c && conflictBlocksCompletion(c, preCallTiedAssertionIds));
-    const preCallCritiquedSummaryIds = new Set<string>(
-      (Array.isArray(research.evaluations) ? research.evaluations : [])
-        .filter(
-          (e: any) =>
-            e && e.focus === "proof-critique" && !e.superseded_by && typeof e.target_id === "string",
-        )
-        .map((e: any) => e.target_id as string),
-    );
     // Heal legacy tree shapes in memory; the healed document is what a tree
     // write persists (same one-shot migration as tree_edit). Two things write
     // it: the composite `sourceDescription` S entry, and an assertion `update`
@@ -4883,7 +5444,6 @@ export async function researchAppend(
             ops[i],
             appendedThisBatch,
             preCallExhaustiveDeclared,
-            preCallCritiquedSummaryIds,
             preCallBlockingConflicts,
             beforeResearch,
             tree,
@@ -4942,8 +5502,8 @@ export async function researchAppend(
     const anyMutation = applied.some((a) => !a.noop) || treeMutated;
 
     // Tree-encoding completion check (issue #1490), shadow → WARNING. Only when
-    // THIS call sets project.status = "completed" — the same trigger the mentor
-    // and conflict gates use — so it never re-warns on a later write to an
+    // THIS call sets project.status = "completed" — the same trigger the
+    // conflict gate uses — so it never re-warns on a later write to an
     // already-completed project. Reads the write-once baseline; fails open (no
     // warning) when the project predates it.
     const completingNow = ops.some(
@@ -5052,9 +5612,14 @@ export async function researchAppend(
     // Persistence nudge (#1478): sources landing with no assertions drawn.
     // Non-blocking — rides validation.warnings, never touches `ok`.
     const persistenceWarning = anyMutation ? sourcesWithoutAssertionsWarning(research, applied) : null;
+    // Provenance nudge (#2256): a transcription with no page named. Advisory,
+    // like the one above — it rides validation.warnings and never touches `ok`.
+    const transcriptionWarnings = anyMutation
+      ? transcriptionWithoutImageWarnings(research, applied)
+      : [];
     const validationBlock = {
       valid: true as const,
-      warnings: [...validationWarnings, ...opWarnings, ...rewriteWarnings, ...treeEncodingWarnings, ...(persistenceWarning ? [persistenceWarning] : [])],
+      warnings: [...validationWarnings, ...opWarnings, ...rewriteWarnings, ...treeEncodingWarnings, ...(persistenceWarning ? [persistenceWarning] : []), ...transcriptionWarnings],
     };
     const extras: Pick<BatchSuccess, "sourceDescriptionId" | "sourceReuse" | "resolvedPlaces"> = {};
     if (prep.sourceDescriptionId) extras.sourceDescriptionId = prep.sourceDescriptionId;
@@ -5153,23 +5718,13 @@ export const researchAppendSchema = {
     "whole project, and writes atomically. Returns a compact summary; on any failure " +
     "nothing is written.\n" +
     "\n" +
-    "To persist a whole record in ONE call, pass an `ops` array (each op is " +
-    "`{ section, op, entry?/entryId?/fields?, planId? }`): one sources append plus one " +
-    "assertions append per fact, with the top-level `sourceDescription: { title, " +
-    "author?, url? }`. The tool then creates the tree.gedcomx.json source description " +
-    "(assigning the S id), stamps the source op's `gedcomx_source_description_id` and " +
-    "every assertion's `source_id`, auto-fills/verifies `record_persona_id` and " +
-    "canonicalizes `record_id` against the log entry's results sidecar, resolves " +
-    "`standard_place` for assertion places (copying the sidecar's resolution when " +
-    "present; resolved values are echoed in `resolvedPlaces`), validates ONCE, and " +
-    "writes tree.gedcomx.json + research.json together. Source reuse is " +
-    "auto-detected: when the batch's assertions cite a record_id an existing source " +
-    "already covers, the tool updates that source in place (same repository) or " +
-    "reuses its S entry (different repository) instead of duplicating — always " +
-    "supply `sourceDescription` and relay the echoed `sourceReuse` " +
-    "({ action: created | updated_existing | new_source_reused_s, srcId, sId }). " +
-    "To cite a specific known S entry explicitly, omit `sourceDescription` and set " +
-    "the sources op's `gedcomx_source_description_id` to that S id. Batches are " +
+    "Assertions are written by extraction_append, never here: the one assertions " +
+    "change accepted is an update that sets only `informant_bias_notes` on an existing " +
+    "assertion, to record a re-reading or a doubt. Any other assertions write is " +
+    "refused, and a disputed reading belongs in a conflict.\n" +
+    "\n" +
+    "To apply several mutations in one call, pass an `ops` array (each op is " +
+    "`{ section, op, entry?/entryId?/fields?, planId? }`). Batches are " +
     "all-or-nothing: on failure nothing is written and errors name the failing ops " +
     "(`ops[i]: <msg>`) plus `opsReceived` so you can confirm no op was dropped.",
   inputSchema: {
@@ -5191,9 +5746,7 @@ export const researchAppendSchema = {
         type: "string",
         enum: ["append", "update"],
         description:
-          "append a new entry (tool assigns the id) or update an existing one by id. " +
-          "Correcting an assertion's place/standard_place/date/value also updates the " +
-          "tree fact materialized from it — no separate tree_correct call.",
+          "append a new entry (tool assigns the id) or update an existing one by id.",
       },
       entry: {
         type: "object",
@@ -5229,8 +5782,7 @@ export const researchAppendSchema = {
               type: "string",
               enum: ["append", "update"],
               description:
-                "append (tool assigns id) or update by id. An assertions update also " +
-                "updates the tree fact materialized from that assertion.",
+                "append (tool assigns id) or update by id.",
             },
             entry: { type: "object", description: "append: the new entry in snake_case, WITHOUT an id." },
             entryId: { type: "string", description: "update: the id of the existing entry to modify." },

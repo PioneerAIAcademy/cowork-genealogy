@@ -20,7 +20,11 @@ signature contract.
 
 from __future__ import annotations
 
+import re
+
 import pytest
+
+from harness.skill_runner import agent_return_text
 
 
 # --- Tool allowlist ---
@@ -124,7 +128,7 @@ def test_q001_probable_tier(after_state, test):
 def test_q001_proved_tier(after_state, test):
     """For the proved-tier-with-exhaustive-search test: the proof summary
     for q_001 must have tier == 'proved'. The flynn-resolved scenario
-    has exhaustive_declaration populated with stop_criteria and the
+    has search_stop populated with stop_criteria and the
     negative-probate search completed — the search is reasonably
     exhaustive and three independent sources converge."""
     if "tier-proved-q001" not in test.get("tags", []):
@@ -631,7 +635,7 @@ def test_shortfall_matches_document_state(after_state, test):
     is whether the value is RIGHT, and a well-formed wrong value is the failure
     mode that matters: `ceiling` says *the reachable record is exhausted, a
     higher tier is not obtainable*, and asserting that over a question whose own
-    `exhaustive_declaration.declared` is false is exactly the overclaim this
+    `search_stop.stopped_because` is null is exactly the overclaim this
     field was added to expose.
 
     Three rules, each read off the document rather than off the tier alone:
@@ -646,10 +650,12 @@ def test_shortfall_matches_document_state(after_state, test):
        ``blocks_question_ids`` forces ``conflict``. Question-scoped, matching
        proof-conclusion's decision rules: a conflict open on another question
        does not bear on this conclusion.
-    3. ``ceiling`` requires ``declared is True``. Only ``ceiling`` makes the
-       finished-searching claim, so only ``ceiling`` is constrained — ``gap``
-       is always permitted, including on a declared-exhaustive question, where
-       a reachable source may still be named as unreached.
+    3. ``ceiling`` requires ``search_stop.stopped_because`` to be a stop-gate value
+       (``question_answered``, ``record_exhausted``, or ``nothing_further_reachable``).
+       Only ``ceiling`` makes the finished-searching claim, so only ``ceiling``
+       is constrained — ``gap`` is always permitted, including on a
+       declared-exhaustive question, where a reachable source may still be
+       named as unreached.
 
     Deliberately NOT checked: that ``gap`` names its outstanding source. That is
     a judgement about prose, which is the rubric's job (ADR-0011 limit 1 — a
@@ -714,15 +720,18 @@ def test_shortfall_matches_document_state(after_state, test):
             # Nothing to check the ceiling claim against; a dangling
             # question_id is a different validator's business.
             continue
-        declared = (question.get("exhaustive_declaration") or {}).get("declared")
+        _STOP_GATE_VALUES = frozenset({"question_answered", "record_exhausted", "nothing_further_reachable"})
+        ss = question.get("search_stop") or {}
+        stopped_because = ss.get("stopped_because")
+        is_gate = stopped_because in _STOP_GATE_VALUES
 
         def _check_ceiling(value, where):
             if value == "ceiling":
-                assert declared is True, (
+                assert is_gate, (
                     f"{sid}{where}: shortfall 'ceiling' claims the reachable "
                     f"record is exhausted, but {qid}'s "
-                    f"exhaustive_declaration.declared is {declared!r}. Use 'gap' "
-                    f"while a reachable source remains unsearched — 'ceiling' "
+                    f"search_stop.stopped_because is {stopped_because!r} (not a stop-gate value). "
+                    f"Use 'gap' while a reachable source remains unsearched — 'ceiling' "
                     f"is the stronger claim and the document does not support it"
                 )
 
@@ -731,3 +740,51 @@ def test_shortfall_matches_document_state(after_state, test):
         for i, claim in enumerate(ps.get("claims") or []):
             if isinstance(claim, dict) and "shortfall" in claim:
                 _check_ceiling(claim["shortfall"], f" claims[{i}]")
+
+
+# --- summary_for_user on the completing call (issue #2951) -------------
+
+_BANNED_USER_WORDS = re.compile(r"\b(proofs?|GPS|exhaustive(?:ly)?)\b", re.IGNORECASE)
+
+
+def _summary_for_user(text: str) -> str | None:
+    """The text after the last line that is exactly `---`, or None."""
+    lines = text.splitlines()
+    marks = [i for i, line in enumerate(lines) if line.strip() == "---"]
+    if not marks:
+        return None
+    return "\n".join(lines[marks[-1] + 1 :]).strip()
+
+
+def _project_status(state) -> str | None:
+    return ((state.get("research_json") or {}).get("project") or {}).get("status")
+
+
+def test_completion_summary_offers_second_opinion(
+    before_state, after_state, agent_returns, text_response, test
+):
+    """Every call that moves `project.status` to `completed` ends its
+    user-facing summary with a second-opinion offer — gps-mentor is off the
+    default path, so this sentence is the user's only route to it — and never
+    says "proof", "GPS" or "exhaustive". Read from the documents, not from a
+    tag, so it binds on every test whose run completes the project. A test
+    tagged `summary-for-user-completion` must also complete it. Reads the
+    agent's own return, not the main thread's relay of it, falling back to
+    `text_response` when the agent returned nothing."""
+    tagged = "summary-for-user-completion" in test.get("tags", [])
+    before, after = _project_status(before_state), _project_status(after_state)
+    if tagged:
+        assert after == "completed", (
+            f"concluding the project's only question should set project.status to "
+            f"'completed'; got {after!r}"
+        )
+    elif not (after == "completed" and before != "completed"):
+        pytest.skip("this call did not complete the project")
+    reply = agent_return_text(agent_returns, "proof-conclusion") or (text_response or "")
+    summary = _summary_for_user(reply)
+    assert summary, "no summary_for_user: the reply has no line that is exactly `---`"
+    assert re.search(r"second opinion", summary, re.IGNORECASE), (
+        "the completing summary_for_user does not offer a second opinion"
+    )
+    banned = sorted({m.group(0) for m in _BANNED_USER_WORDS.finditer(summary)})
+    assert not banned, f"summary_for_user uses words kept out of user text: {banned}"

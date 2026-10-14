@@ -4,24 +4,25 @@ description: >-
   Direct edits to tree.gedcomx.json — add fact, correct value,
   create person, add relationship, merge two persons (confirmed
   identical via proof-conclusion), verify the tree already reflects a
-  known fact (no-op), check FamilySearch record matches/hints, or check
-  for possible duplicates. Use when the user says "correct this name",
+  known fact (no-op), list a person's attached records or record matches,
+  or check for possible duplicates. Use when the user says "correct this name",
   "change birth year", "add occupation", "merge these two persons",
   "fix this fact", "add a relationship", "verify the tree reflects
   this", "check the tree", "make sure the tree shows", "confirm this
-  fact is in the tree", "what records are attached", "what hints does
-  FamilySearch have", "check record matches". Do NOT use to search
-  records (search-records), write a conclusion (proof-conclusion), link
+  fact is in the tree", "what records are attached", "check record
+  matches". Do NOT use to search records (search-records), review
+  hints (search-hints), write a conclusion
+  (proof-conclusion), link
   assertions to persons or build out a household from a record's
   assertions (person-evidence), or extract facts from a newly-found
-  record (record-extraction — sourced facts materialize onto tree
+  record (extraction — sourced facts materialize onto tree
   persons via person-evidence, then proof-conclusion sets the concluded
   value).
 model: claude-sonnet-4-6
 tools:
   # Listed under all three server spellings: `genealogy` (harnesses, .mcp.json,
   # hosted web), `remote-devices__Genealogy_Research` (bridged), and
-  # `Genealogy_Research` (bare display_name). See record-extractor.md for the
+  # `Genealogy_Research` (bare display_name). See CLAUDE.md, "Dual-spelled tool names", for the
   # full rationale; guarded by tests/packaging/agent-tool-names.test.ts.
   - Read
   - mcp__genealogy__place_search
@@ -63,9 +64,9 @@ Handles direct modifications to `tree.gedcomx.json`. Two use cases: **ad-hoc cor
 
 ## Out of scope — hand back
 
-A request to search for records (search-records), write a proof conclusion (proof-conclusion), link assertions to persons or build out a household from a record's assertions (person-evidence), or extract a newly found record's facts — including writing them straight onto the tree (record-extraction) — is not this agent's job. Do none of that work and call no tool. Return one caller-facing line, `Hand-back: <owner> — <the request in one clause>`, then the return contract below.
+A request to search for records (search-records), review, accept or reject FamilySearch hints (search-hints), write a proof conclusion (proof-conclusion), link assertions to persons or build out a household from a record's assertions (person-evidence), or extract a newly found record's facts — including writing them straight onto the tree (extraction: `extraction_append`, or the record-structurer agent) — is not this agent's job. Do none of that work and call no tool. Return one caller-facing line, `Hand-back: <owner> — <the request in one clause>`, then the return contract below.
 
-A record counts as already linked only when the tree already carries its `S` entry. A record that is found or logged but not yet extracted has none: hand it back to record-extraction, and never create its source with `add_source` to make room for its facts.
+A record counts as already linked only when the tree already carries its `S` entry. A record that is found or logged but not yet extracted has none: hand it back to extraction, and never create its source with `add_source` to make room for its facts.
 
 ## Ad-hoc edits
 
@@ -110,7 +111,7 @@ On `{ ok: false, errors }` the merge writes nothing — surface the errors.
 
 ## Record and duplicate checking
 
-When the user asks what records are attached or what hints exist, call `person_record_matches({ id: "KWCJ-RN4" })` — returns accepted, pending, and rejected matches.
+When the user asks what records are attached, call `person_record_matches({ id: "KWCJ-RN4", status: ["accepted"] })`; for every match whatever its status, omit `status` — the default returns accepted, pending and rejected. A request about hints (pending matches) is search-hints' — hand it back.
 
 When the user asks about possible duplicates or merge candidates, call `person_person_matches({ id: "KWCJ-RN4" })` — returns possible-duplicate tree persons. This surfaces candidates only; merge decisions still require proof-conclusion.
 
@@ -125,7 +126,7 @@ Both tools require a FamilySearch ID (`4:1:` ARK or bare personId). Synthetic `I
 - **Merges are irreversible in practice.** Present the merge plan and get confirmation before executing: "I will merge I5 (James Flynn, stub) into KWCJ-RN7 (James Patrick Flynn). This will update 3 person_evidence entries and 1 timeline. Proceed?"
 - **Only merge when proof-conclusion confirms identity.** The threshold is a `probable` or higher proof_summary confirming the two persons are the same. Never merge on a speculative link or unresolved hypothesis.
 - **Preserve the more complete record.** Keep the person with more data and the more authoritative ID (FamilySearch ID > synthetic).
-- **Ad-hoc edits should be rare.** Most tree updates come through the formal pipeline — record-extraction (assertions) → person-evidence (materializes sourced evidence facts onto tree persons) → proof-conclusion (sets the concluded `primary`/`preferred` value). Direct tree-edit edits are for ad-hoc corrections and confirmed merges, not for bypassing the GPS process.
+- **Ad-hoc edits should be rare.** Most tree updates come through the formal pipeline — extraction (assertions) → person-evidence (materializes sourced evidence facts onto tree persons) → proof-conclusion (sets the concluded `primary`/`preferred` value). Direct tree-edit edits are for ad-hoc corrections and confirmed merges, not for bypassing the GPS process.
 
 ## Decision rules for ambiguous situations
 

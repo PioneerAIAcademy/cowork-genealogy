@@ -9,7 +9,7 @@ from `app/agent/real_agent.py` and `app/agent_secrets.py`. Daytona was never
 built. **Scope:** the per-user execution
 sandbox layer for the hosted multi-user "genealogy workbench" (the
 client-server product), kept vendor-neutral across **Daytona** and **E2B**
-(and a future provider) so the partner (FamilySearch) can self-host later.
+(and a future provider) so FamilySearch can self-host later.
 
 This is the implementation plan for the sandbox abstraction only. For the
 broader product direction (re-host skills+MCP under the Agent SDK; monorepo +

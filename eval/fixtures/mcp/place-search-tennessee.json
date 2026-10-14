@@ -1,0 +1,18 @@
+{
+  "tool": "place_search",
+  "description": "FamilySearch place data for Tennessee, United States, used by person-evidence's geographic-plausibility lookup (issue #2537) to resolve a residence or record place to a standardPlace before place_distance.",
+  "args": {
+    "placeName": "~Tennessee"
+  },
+  "response": {
+    "results": [
+      {
+        "standardPlace": "Tennessee, United States",
+        "type": "State",
+        "latitude": 35.86,
+        "longitude": -86.35,
+        "familysearchUrl": "https://www.familysearch.org/en/research/places/?text=Tennessee"
+      }
+    ]
+  }
+}

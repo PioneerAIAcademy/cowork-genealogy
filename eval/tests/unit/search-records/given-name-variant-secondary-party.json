@@ -24,7 +24,9 @@
     "record-search-unna-exact-zero-results",
     "record-search-urna-variant-marriage-match",
     "rank-search-matches-anders-unna-marriage",
-    "record-read-urna-anders-1786-marriage"
+    "record-read-urna-anders-1786-marriage",
+    "catalog-search-empty",
+    "catalog-search-empty-keywords"
   ],
   "execution": {
     "max_wall_clock_seconds": 600

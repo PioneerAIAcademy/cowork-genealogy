@@ -1,0 +1,13 @@
+{
+  "per_finding": {
+    "f1": "true",
+    "f2": "partial"
+  },
+  "proof_quality_score": null,
+  "notes": {
+    "f2": "Parent-child relationship and Norway birth + 1877 immigration recovered. Birth year off (~1878 vs 1876), no Akershus county, no maiden name Westby, no exact birth date."
+  },
+  "annotator": "mercybocumy2000@gmail.com",
+  "findings_hash": "8282b99585e85550c9a239b680abd2df42e7db75ad8ad2b1401ef4324ac71eda",
+  "blind_bundle_digest": "689318b698759496f89597e7f3f960eb173f003221305df1bd1c68b3283e6160"
+}

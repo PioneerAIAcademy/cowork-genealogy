@@ -5,7 +5,7 @@ that take some subset of `before_state`, `after_state`, `tool_calls`,
 and `skill_frontmatter`, then raise `AssertionError` on failure.
 
 The first two seed validators (test_conflict_resolution.py,
-test_record_extraction.py) duplicated diff logic, append-only checks,
+extraction_validators.py) duplicated diff logic, append-only checks,
 and foreign-key reference checks across files. As the corpus grows to
 23 skills, that drift compounds — a fix in one file silently misses
 the others. These helpers centralise the patterns.
@@ -155,7 +155,7 @@ def new_section_entries(
     content changed in place (research_append op:"update").
 
     The general form of `new_log_entries` below, which is now a thin alias for
-    `section="log"`. Generalised rather than copied when `test_record_extraction`
+    `section="log"`. Generalised rather than copied when `extraction_validators`
     needed the same diff over `sources`; `include_modified` was added for
     `localities`, which locality-guide can rewrite in place, so an update is not
     silently skipped. `include_modified` defaults False, so `new_log_entries` and
@@ -511,3 +511,46 @@ def assert_topical_fixture_used(
         f"fell through to a fallback. Fixtures actually served: {sorted(set(s for s in hit if isinstance(s, str)))}"
     )
     return expected
+
+
+# --- Shared: no-exhaustive-declaration guard ----------------------------
+
+
+def _questions_by_id(state: dict) -> dict[str, dict]:
+    return {q.get("id"): q for q in (state or {}).get("questions") or [] if q.get("id")}
+
+
+def check_no_gate_stop(before_state: dict, after_state: dict) -> list[str]:
+    """Return a list of violation messages when a test tagged
+    ``no-exhaustive-declaration`` writes a declaration it should not.
+
+    Shared between the ``research-exhaustiveness`` and ``research``
+    validator suites (issue #2738).  Each caller gates on the tag itself
+    so that ``tag_gated_validator_tags`` can parse the gate line with AST,
+    and each caller also skips when either state has no ``research_json``
+    BEFORE calling this.  Keep that skip in the callers: an empty list here
+    means "no violation found", and ``validator_runner`` records that as
+    ``outcome: "passed"`` -- which is not what an unreadable or absent
+    research.json should report.  ``workspace.snapshot_files`` sets the key
+    to None on a JSONDecodeError as well as on a missing file.
+    """
+    before = before_state.get("research_json")
+    after = after_state.get("research_json")
+    if before is None or after is None:
+        return []
+    _STOP_GATE_VALUES = frozenset(
+        {"question_answered", "record_exhausted", "nothing_further_reachable"}
+    )
+    before_by_id = _questions_by_id(before)
+    bad: list[str] = []
+    for q in (after.get("questions") or []):
+        qid = q.get("id")
+        prev = before_by_id.get(qid, {})
+        prev_gate = (prev.get("search_stop") or {}).get("stopped_because") in _STOP_GATE_VALUES
+        new_sb = (q.get("search_stop") or {}).get("stopped_because")
+        new_gate = new_sb in _STOP_GATE_VALUES
+        if not prev_gate and new_gate:
+            bad.append(f"{qid}: set stop-gate stopped_because={new_sb!r} when decline expected")
+        if prev.get("status") != "exhaustive_declared" and q.get("status") == "exhaustive_declared":
+            bad.append(f"{qid}: status set to exhaustive_declared when decline expected")
+    return bad

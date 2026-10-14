@@ -16,7 +16,7 @@ been deleted rather than carried struck through: a three-letter minimum per
 name field, a four-`*` cap, wildcards being disabled in Ellis Island
 collections, and wildcards working only at the innermost place level. None is
 enforced. What measurement did establish:
-- **Wildcards + `Exact: true`: the wildcard still expands, and the variant
+- **Wildcards + `surnameExact: true`: the wildcard still expands, and the variant
   interpretation is what switches off.** Now measured rather than asserted, by
   reading whole pools rather than sampling them: in a scope small enough to read
   in full, a fuzzy `Smith` search contained every one of the `Smyth` records in
@@ -25,9 +25,9 @@ enforced. What measurement did establish:
   variants and leaves the pattern match intact — the two mechanisms are
   independent.
 
-## Default fuzzy matching (without `Exact: true`)
+## Default fuzzy matching (without a name's `*Exact` toggle)
 
-Without `Exact: true`, the API auto-applies:
+Without a name's `*Exact` toggle, the API auto-applies:
 - **Diacritic stripping:** "RENÉE" matches "Renee"
 - **Case insensitivity**
 - **Space/punctuation ignored:** "MacDonald" = "Mac Donald";
@@ -48,7 +48,7 @@ Without `Exact: true`, the API auto-applies:
   should stay fuzzy.
 - **Soundex** is part of default fuzzy (no separate toggle)
 
-Adding `Exact: true` to a name parameter disables all of the above for
+Turning on a name's `*Exact` toggle disables all of the above for
 that parameter. Each parameter can be set to exact independently
 (e.g., exact surname with fuzzy given name). **Disabling it is rarely
 what you want:** it narrows the count, and it re-shuffles the records it
@@ -66,15 +66,17 @@ claim.
 
 - **Surname only:** Allowed. Recommended when given name was indexed
   as "Baby," "Infant," or initials.
-- **Given name only:** Not allowed standalone — requires at least one
-  other parameter (place, date, parent, spouse).
+- **Given name only:** refused unless `recordCountry` or `batchNumber` is
+  set (every search needs one of `surname`, `recordCountry`, `batchNumber`;
+  `validateInput` in `record-search.ts`). A place or a date is not an anchor,
+  so `givenName` + `birthPlace` alone is refused.
 
 ## Initials
 
 - `givenName=J*` — the three-letter minimum this once cited is **not enforced** (see Constraints above; measured on `surname`). Whether a one-letter given-name stem behaves the same was not measured.
 - `givenName=J W` works as a literal match against records indexed
   with initials
-- `Exact: true` on the given name keeps only records indexed in that literal
+- `givenNameExact: true` on the given name keeps only records indexed in that literal
   initials form — useful in census and directory collections, and empty in
   collections that spell names out. Start fuzzy; add it to cut the pool once
   you know the index uses initials

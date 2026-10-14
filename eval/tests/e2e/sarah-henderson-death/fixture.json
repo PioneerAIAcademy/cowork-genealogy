@@ -1,0 +1,19 @@
+{
+  "id": "sarah-henderson-death",
+  "name": "Sarah Maud Henderson — death in March 1928, Toronto, Canada",
+  "genre": "record-hint",
+  "source_pid": "GF6Z-JC8",
+  "captured": "2026-10-12",
+  "researcher_question": "When and where did Sarah Maud Henderson die? Born about 1885 in Ontario, she married George Coleman in Toronto on 11 October 1906 and was living in Toronto with him and their children William and Margaret Maud in 1911.",
+  "tags": {
+    "question_type": "death_date",
+    "era": "1920s",
+    "geography": "CA-ON"
+  },
+  "model": {
+    "agent": "claude-sonnet-4-6",
+    "judge": "claude-haiku-4-5-20251001"
+  },
+  "difficulty": "medium",
+  "notes": "Record-hint fixture (filtered-list-samples-3.csv row 5, hint-samples.csv row 162, flags adds_death/adds_burial, confidence 3). Resolved 2026-10-13 (issue #3328): the hint is a true match. The 1928 Ontario civil death registration (ark:/61903/1:1:JKW2-LBP) names the deceased's parents as Alexander Henderson and Margaret Draper, the parents the tree's own 1906 marriage record gives the bride."
+}

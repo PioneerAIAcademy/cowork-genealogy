@@ -48,6 +48,7 @@ from __future__ import annotations
 import dataclasses
 import json
 import os
+import re
 import sys
 from collections.abc import Callable, Mapping
 from typing import Any
@@ -226,7 +227,8 @@ def provider_env(worker_env: Mapping[str, str]) -> tuple[str | None, dict[str, s
         "ANTHROPIC_MODEL": GATEWAY_MODEL,
         "ANTHROPIC_DEFAULT_HAIKU_MODEL": GATEWAY_SMALL_MODEL,
         # agentgateway < 1.6 cannot parse tool_reference, so tool search fails on
-        # its second turn (plan P3f); tap-agentgateway pins 1.5.0.
+        # its second turn (plan P3f). TAP's Fargate stack pins 1.5.0; its EKS stack
+        # (tap-gateway) runs 1.6.0, where tool search is unverified (handoff U14).
         "ENABLE_TOOL_SEARCH": (worker_env.get("GATEWAY_TOOL_SEARCH") or "false").strip().lower(),
     }
 
@@ -244,13 +246,18 @@ def gateway_agent_models(agents: Mapping[str, Any]) -> dict[str, Any]:
 
 
 # D16 (PR #2659): the shared Streamable HTTP tool server, the compose `tools` service. Its
-# contract is the two headers the entrypoint reads, both per request and never process
-# state: `Authorization: Bearer <patron token>` becomes the request's principal, and
+# contract is four headers the entrypoint reads, all per request and never process state:
+# `Authorization: Bearer <patron token>` becomes the request's principal, and
 # `X-Genealogy-Project-Id` becomes the request's PgS3ProjectStore. Missing, the project
-# tools answer an instruction naming the header; malformed, the request is a 400. No turn
-# header. The CLI opens the MCP session once per process, once per turn. TOOL_SERVER_URL
-# has no default (U11): a guessed host would be handed the patron's bearer.
+# tools answer an instruction naming the header; malformed, the request is a 400.
+# U6: `X-Genealogy-Turn-Id` and `X-Genealogy-Claim-Epoch` are the attempt's claim fence --
+# both or neither, else a 400 -- and the store refuses to commit a write once a newer claim
+# of that turn holds it. They are fixed per attempt (one mcp.json per attempt), which is
+# exactly an epoch's scope. The CLI opens the MCP session once per process, once per turn.
+# TOOL_SERVER_URL has no default (U11): a guessed host would be handed the patron's bearer.
 PROJECT_ID_HEADER = "X-Genealogy-Project-Id"
+TURN_ID_HEADER = "X-Genealogy-Turn-Id"
+CLAIM_EPOCH_HEADER = "X-Genealogy-Claim-Epoch"
 # The http entry's per-server `timeout` (ms). Without it CLI 2.1.220 aborts every
 # non-GET HTTP MCP request at 60 s, where the harness's stdio server is cut only by its
 # 1,800,000 ms idle limit (the engine sends no progress notifications, so idle is the
@@ -268,14 +275,25 @@ def tool_server_url(worker_env: Mapping[str, str]) -> str:
     return url
 
 
-def tool_server_headers(*, project_id: str, bearer: str) -> dict[str, str]:
-    """``Authorization: Bearer <grant token>`` and ``X-Genealogy-Project-Id``. An empty
-    bearer raises ValueError: the server reads it as an empty principal and answers every
-    FamilySearch call with the reconnect instruction, a sign-in problem the patron cannot
-    fix by signing in."""
+def tool_server_headers(*, project_id: str, bearer: str, turn_id: str, claim_epoch: int) -> dict[str, str]:
+    """``Authorization: Bearer <grant token>``, ``X-Genealogy-Project-Id`` and the claim
+    fence (U6). An empty bearer raises ValueError: the server reads it as an empty principal
+    and answers every FamilySearch call with the reconnect instruction, a sign-in problem
+    the patron cannot fix by signing in. An empty turn id or an epoch below 1 raises too:
+    every claim mints an epoch of at least 1, and the server refuses a fence it cannot
+    match."""
     if not bearer:
         raise ValueError("refusing to build the tool server entry with an empty bearer")
-    return {"Authorization": f"Bearer {bearer}", PROJECT_ID_HEADER: project_id}
+    if not turn_id:
+        raise ValueError("refusing to build the tool server entry with an empty turn id")
+    if int(claim_epoch) < 1:
+        raise ValueError(f"refusing to build the tool server entry with claim epoch {claim_epoch}")
+    return {
+        "Authorization": f"Bearer {bearer}",
+        PROJECT_ID_HEADER: project_id,
+        TURN_ID_HEADER: turn_id,
+        CLAIM_EPOCH_HEADER: str(int(claim_epoch)),
+    }
 
 
 def tool_server_entry(
@@ -283,15 +301,18 @@ def tool_server_entry(
     *,
     project_id: str,
     bearer: str,
+    turn_id: str,
+    claim_epoch: int,
 ) -> dict[str, Any]:
     """The ``genealogy`` MCP server entry: the shared Streamable HTTP tool server, one
-    process for every turn, at ``TOOL_SERVER_URL`` with the bearer as ``Authorization``
-    and the turn's project id as ``X-Genealogy-Project-Id``. Its per-user config is the
-    ``tools`` service's own environment, not the request's."""
+    process for every turn, at ``TOOL_SERVER_URL`` with the bearer as ``Authorization``,
+    the turn's project id as ``X-Genealogy-Project-Id`` and the attempt's claim fence.
+    Its per-user config is the ``tools`` service's own environment, not the request's."""
     return {
         "type": "http",
         "url": tool_server_url(worker_env),
-        "headers": tool_server_headers(project_id=project_id, bearer=bearer),
+        "headers": tool_server_headers(project_id=project_id, bearer=bearer, turn_id=turn_id,
+                                       claim_epoch=claim_epoch),
         "timeout": MCP_HTTP_TIMEOUT_MS,
     }
 
@@ -536,6 +557,29 @@ def make_pretool_hook(
     return _pretool
 
 
+# U19's reauth alarm: a FamilySearch tool's result carrying the engine's sign-in
+# instruction (auth/refresh.ts's "Call the login tool", the hosted "Reconnect FamilySearch").
+# The same pattern as turn.py's REAUTH_ENTRY, which this image does not ship (a test pins
+# the two). Only tools whose code reaches the token (a test derives the set from the
+# engine's imports), so a research_query or Read result quoting the text is no reauth.
+REAUTH_ENTRY = re.compile(r"call the login tool|Reconnect FamilySearch", re.I)
+FS_TOOLS = frozenset({
+    "build_external_search_url", "catalog_search", "collections_search", "extraction_append", "fulltext_search",
+    "image_read", "image_search", "image_transcribe", "person_ancestors", "person_quality", "person_read",
+    "person_person_matches", "person_record_matches", "person_search", "rank_search_matches", "record_read",
+    "record_person_matches", "record_record_matches", "record_search", "same_person", "source_attachments",
+    "tree_gaps", "volume_bisect", "volume_search",
+})
+
+
+def reauth_text(data: dict[str, Any]) -> bool:
+    """Whether a PostToolUse(Failure) payload is a FamilySearch tool asking for a sign-in."""
+    if str(data.get("tool_name") or "").rsplit("__", 1)[-1] not in FS_TOOLS:
+        return False
+    text = json.dumps(data.get("tool_response"), default=str) + " " + str(data.get("error") or "")
+    return REAUTH_ENTRY.search(text) is not None
+
+
 def make_posttool_hook(
     *,
     turn_id: str,
@@ -545,7 +589,8 @@ def make_posttool_hook(
     """The worker's ``PostToolUse`` / ``PostToolUseFailure`` callback: ``finish(tool_use_id)``
     stamps the row the PreToolUse hook wrote with the call's duration (acceptance
     criterion 4). Never raises and never changes what the model sees; a failed stamp is
-    one log line. A call in flight when its worker is killed keeps a NULL duration."""
+    one log line. A call in flight when its worker is killed keeps a NULL duration.
+    U19: a FamilySearch tool answering with the sign-in instruction logs ``ev=reauth_hit``."""
 
     async def _posttool(input_data: Any, tool_use_id: str | None, _context: Any) -> dict[str, Any]:
         data = input_data if isinstance(input_data, dict) else {}
@@ -557,6 +602,12 @@ def make_posttool_hook(
             if log is not None:
                 log(ev="tool_call_finish_failed", turn_id=turn_id, tool_name=str(data.get("tool_name") or ""),
                     error=f"{type(exc).__name__}: {exc}")
+        try:
+            if log is not None and reauth_text(data):
+                log(ev="reauth_hit", turn_id=turn_id, tool_name=str(data.get("tool_name") or ""),
+                    agent_id=data.get("agent_id"))
+        except Exception:  # noqa: BLE001, S110 - an alarm signal must not fail the call
+            pass
         return {}
 
     return _posttool
@@ -710,6 +761,8 @@ def build_worker_options(
     resume: str | None = None,
     session_id: str | None = None,
     bearer: str,
+    turn_id: str,
+    claim_epoch: int,
     worker_env: Mapping[str, str] | None = None,
     stderr: Callable[[str], None] | None = None,
     stop_hook: Callable[..., Any] | None = None,
@@ -723,7 +776,10 @@ def build_worker_options(
 
     ``turn_user`` (U3) is the slot user the CLI runs as; ``turn_home``, a directory that user
     owns, is the CLI's ``HOME``, ``TMPDIR`` and ``CLAUDE_CODE_TMPDIR`` (the CLI's own temp dir,
-    else a ``/tmp/claude-<uid>`` every later patron on the slot would share)."""
+    else a ``/tmp/claude-<uid>`` every later patron on the slot would share).
+
+    ``turn_id`` and ``claim_epoch`` (U6) are the attempt's claim fence, sent to the tool
+    server on every request."""
     from claude_agent_sdk import ClaudeAgentOptions, HookMatcher
 
     if resume and session_id:
@@ -775,7 +831,8 @@ def build_worker_options(
         mcp_servers=write_mcp_config(
             config_dir,
             {
-                "genealogy": tool_server_entry(env_in, project_id=project_id, bearer=bearer)
+                "genealogy": tool_server_entry(env_in, project_id=project_id, bearer=bearer,
+                                               turn_id=turn_id, claim_epoch=claim_epoch)
             },
         ),
         disallowed_tools=list(DISALLOWED_TOOLS),

@@ -18,6 +18,7 @@ Two independent sets of proof-of-failure tests live here:
 
 from __future__ import annotations
 
+import json
 import sys
 from pathlib import Path
 
@@ -32,6 +33,7 @@ from test_research_plan import (  # noqa: E402
     test_research_plan_fallback_for_in_same_plan as check_v3,
     test_research_plan_no_out_of_lane_tools as check_v2,
     test_research_plan_rationale_identifiers_traceable as check_v1,
+    test_research_plan_reads_question_person_profile as check_profile,
     report_survey_surfaces_already_attached_fan_facts as check,
 )
 
@@ -334,6 +336,78 @@ _UT016_PLI007 = (
 )
 
 
+# ut_research_plan_007, v3_2026-10-07_16-40-45, pli_014, verbatim: an article
+# before the adjective ("not a name-indexed search") used up the one optional
+# word, so the negation was missed and a correct browse claim failed the run.
+_UT007_PLI014 = (
+    "Pennsylvania Probate Records, 1683-1994 (collection 1999196) returned "
+    "personCount 0 at collections_search, confirming this is an image browse of "
+    "Schuylkill County Register of Wills volumes — not a name-indexed search."
+)
+
+
+def test_v5_reads_not_a_name_indexed_as_a_browse_claim():
+    before, after = _states([_item("pli_014", rationale=_UT007_PLI014)])
+    check_v5(before, after, _SERVED)
+
+
+@pytest.mark.parametrize("phrase", [
+    "not an indexed search", "not the indexed index", "not a record-indexed search",
+])
+def test_v5_accepts_negation_with_an_article(phrase):
+    before, after = _states([_item("pli_014", rationale=f"Collection 1999196 is {phrase}.")])
+    check_v5(before, after, _SERVED)
+
+
+@pytest.mark.parametrize("phrase", [
+    "a name-indexed search",              # no negation at all
+    "not a fully indexed collection",     # partial indexing claim, needs personCount > 0
+    "indexed, not a browse",              # negation attached to "browse", not to "indexed"
+])
+def test_v5_still_fires_on_an_indexed_claim_against_zero(phrase):
+    before, after = _states([_item("pli_014", rationale=f"Collection 1999196 is {phrase}.")])
+    with pytest.raises(AssertionError, match="1999196"):
+        check_v5(before, after, _SERVED)
+
+
+# SKILL.md's prescribed phrases (issue #2251): each must be read as the claim it
+# makes, so the guard still binds once the skill stops writing "indexed".
+def test_v5_accepts_the_prescribed_phrases_when_they_match():
+    before, after = _states([
+        _item("pli_010", rationale="Collection 1999196 is browse-only (personCount 0)."),
+        _item("pli_011", rationale="Collection 1921317 is name-searchable (personCount 50000)."),
+    ])
+    check_v5(before, after, _SERVED)
+
+
+def test_v5_fires_on_name_searchable_against_zero():
+    before, after = _states([
+        _item("pli_010", rationale="Collection 1999196 is name-searchable (personCount 0).")
+    ])
+    with pytest.raises(AssertionError, match="1999196"):
+        check_v5(before, after, _SERVED)
+
+
+def test_v5_reads_not_name_searchable_as_a_browse_claim():
+    before, after = _states([
+        _item("pli_010", rationale="Collection 1999196 is not name-searchable; browse the images.")
+    ])
+    check_v5(before, after, _SERVED)
+
+
+# ut_research_plan_002, v5_2026-10-08_00-17-25, pli_011, verbatim: a real slip,
+# "indexed" used as part of the collection's description. Must keep firing.
+def test_v5_fires_on_the_ut002_indexed_collection_slip():
+    rationale = (
+        "The Pennsylvania Probate Records indexed collection (1999196) returned "
+        "personCount 0 — this is a browse of image group 007936749 (Schuylkill "
+        "County Probate Records, 1851–1930, 412 images, 0% indexed)."
+    )
+    before, after = _states([_item("pli_011", rationale=rationale)])
+    with pytest.raises(AssertionError, match="1999196"):
+        check_v5(before, after, _SERVED)
+
+
 def test_v5_ignores_browse_only_on_a_volume():
     before, after = _states([_item("pli_007", rationale=_UT016_PLI007)])
     check_v5(before, after, _SERVED_KY)
@@ -435,6 +509,62 @@ _UT007_RUN0_PLI006 = (
     "variants: Flynn, Flinn."
 )
 
+
+_DK_SERVED = [_call("collections_search", _collections([
+    {"id": "2513529", "title": "Denmark, Military Levying Rolls", "personCount": 200408},
+]))]
+
+
+def test_v5_ignores_browse_only_in_brackets_after_an_image_group():
+    """ut_research_plan_015, 2026-10-13, pli_009: the bracket describes the
+    image group, not collection 2513529."""
+    before, after = _states([_item("pli_009", rationale=(
+        "Image group 004748896 (Thisted Amt military levy rolls, 1789-1814, "
+        "browse-only (personCount 0)) provides the raw roll images if the name "
+        "search in collection 2513529 (item 3) fails to surface Mikkel."
+    ))])
+    check_v5(before, after, _DK_SERVED)
+
+
+def test_v5_still_fires_on_browse_only_in_the_collections_own_bracket():
+    before, after = _states([_item("pli_009", rationale=(
+        "Collection 2513529 (browse-only) and image group 004748896 "
+        "(1789-1814) hold the levy rolls."
+    ))])
+    with pytest.raises(AssertionError, match="2513529"):
+        check_v5(before, after, _DK_SERVED)
+
+
+_DK_PROBATE_SERVED = [_call("collections_search", _collections([
+    {"id": "2015318", "title": "Denmark, Probate Indexes, 1674-1851", "personCount": 1310442},
+]))]
+
+
+def test_v5_ignores_browse_only_bound_to_a_later_volume():
+    """ut_research_plan_015, 2026-10-14, pli_008, verbatim: "browse-only"
+    describes volume 004392710, not the collection cited before it."""
+    before, after = _states([_item("pli_008", rationale=(
+        "If the probate index (pli_007, collection 2015318) does not return an "
+        "entry for Niels of Blyeberg, or if the index entry is not linked to "
+        "images, browse volume 004392710, which covers Hassing Herred probate "
+        "records 1690-1850 and is browse-only (personCount 0)."
+    ))])
+    check_v5(before, after, _DK_PROBATE_SERVED)
+
+
+def test_v5_ignores_not_indexed_bound_to_a_volume():
+    before, after = _states([_item("pli_008", rationale=(
+        "Volume 004392710 is not indexed, but collection 2015318 is indexed."
+    ))])
+    check_v5(before, after, _DK_PROBATE_SERVED)
+
+
+def test_v5_still_fires_on_browse_only_bound_to_the_collection_before_a_volume():
+    before, after = _states([_item("pli_008", rationale=(
+        "Collection 2015318 is browse-only, unlike volume 004392710."
+    ))])
+    with pytest.raises(AssertionError, match="2015318"):
+        check_v5(before, after, _DK_PROBATE_SERVED)
 
 def test_v5_ignores_a_coverage_percentage():
     before, after = _states([_item("pli_006", rationale=_UT007_RUN0_PLI006)])
@@ -566,6 +696,67 @@ TREE = {
 }
 
 BEFORE_STATE = {"research_json": RESEARCH, "tree_gedcomx_json": TREE}
+
+# TREE with the fact->source ref deleted and nothing else changed: the shape a
+# real FamilySearch import produces. Simplified GedcomX has no person-level
+# source field, so the only source<->person link is a fact-level `sources` ref,
+# and real imports do not write them -- 3 of 136 e2e starting trees carry any
+# (55 of 4,182 facts) against 62 of 99 hand-authored scenarios (issue #2208,
+# measured 2026-09-22). Every fixture above carries the ref, so before this one
+# no test told the source-ref-gated version of the check apart from the current
+# one: reverting the widening left the whole suite green.
+TREE_NO_SOURCE_REF = {
+    "persons": [
+        {"id": "I1", "names": [{"given": "Michael", "surname": "Sheahan"}]},
+        {
+            "id": "I2",
+            "names": [{"given": "Patrick", "surname": "Sheahan"}],
+            "facts": [
+                {
+                    "type": "Residence",
+                    "date": "1875",
+                    "place": "Schuylkill County, Pennsylvania",
+                    "value": "Purchased land, Deed Book 42 p. 118",
+                }
+            ],
+        },
+        {
+            "id": "I3",
+            "names": [{"given": "", "surname": "Sheahan"}],
+        },
+    ]
+}
+
+BEFORE_STATE_NO_SOURCE_REF = {
+    "research_json": RESEARCH,
+    "tree_gedcomx_json": TREE_NO_SOURCE_REF,
+}
+
+
+def test_fires_on_production_shape_when_fact_never_surfaced():
+    """The mutation guard for issue #2208's widening. With the fact->source
+    ref gone, the pre-change check skipped this person entirely and passed
+    silently -- the blind spot, on the shape 133 of 136 real trees have.
+    Reverting `sourced_facts` to the source-ref-filtered comprehension must
+    turn this test red."""
+    response = (
+        "Here is the plan for Michael Sheahan's move to Schuylkill County: "
+        "1880 census, 1900 census, church records, naturalization."
+    )
+    with pytest.raises(AssertionError, match="I2"):
+        check(BEFORE_STATE_NO_SOURCE_REF, response, TAGGED)
+
+
+def test_passes_on_production_shape_when_content_present():
+    """The other direction: the widening must not fail a response that does
+    state the fact's content, or it would red every honest plan on a
+    production-shaped tree."""
+    response = (
+        "Patrick Sheahan (I2) purchased land in Schuylkill County in 1875 "
+        "(Deed Book 42, p. 118) -- seven years before Michael's own "
+        "documented arrival. Plan: 1880 census, 1900 census, church records."
+    )
+    check(BEFORE_STATE_NO_SOURCE_REF, response, TAGGED)  # does not raise
 
 
 def test_fires_when_fact_never_surfaced():
@@ -711,20 +902,27 @@ def test_skipped_when_not_tagged():
         check(BEFORE_STATE, response, UNTAGGED)
 
 
-def test_passes_vacuously_when_no_sourced_fan_facts():
-    """A tree with no already-sourced non-subject fact has nothing to
-    check -- must pass vacuously (nothing in scope), not fail. Named for
+def test_passes_vacuously_when_non_subject_persons_have_no_facts():
+    """A tree whose non-subject persons carry no facts at all has nothing
+    to check -- must pass vacuously (nothing in scope), not fail. Named for
     what actually happens: the validator has no `pytest.skip()` branch for
     this case, it just finds nothing to add to `missed` (PR #2004 review,
-    clack391 -- the previous name/docstring here claimed a skip that the
-    code never performed)."""
-    tree_no_sources = {
+    clack391 -- an earlier name/docstring here claimed a skip that the code
+    never performed).
+
+    Renamed for issue #2208: the old name said "no sourced fan facts",
+    which stopped describing this fixture once the check widened from
+    source-ref'd facts to all recorded facts. These persons have no facts,
+    which is why it still passes; a person with an UNSOURCED fact is now in
+    scope and is covered by
+    `test_fires_on_production_shape_when_fact_never_surfaced`."""
+    tree_no_facts = {
         "persons": [
             {"id": "I1", "names": [{"given": "Michael", "surname": "Sheahan"}]},
             {"id": "I2", "names": [{"given": "Patrick", "surname": "Sheahan"}]},
         ]
     }
-    before_state = {"research_json": RESEARCH, "tree_gedcomx_json": tree_no_sources}
+    before_state = {"research_json": RESEARCH, "tree_gedcomx_json": tree_no_facts}
     response = "No mention of anyone."
     check(before_state, response, TAGGED)  # does not raise (nothing in scope)
 
@@ -786,6 +984,43 @@ BEFORE_STATE_NO_DATE_HAS_VALUE = {
 }
 
 
+_PSHAPE_DIR = (
+    Path(__file__).resolve().parents[4] / "eval/fixtures/scenarios/first-plan-fan-production-shape"
+)
+
+
+def _pshape_state():
+    return {
+        "research_json": json.loads((_PSHAPE_DIR / "research.json").read_text(encoding="utf-8")),
+        "tree_gedcomx_json": json.loads((_PSHAPE_DIR / "tree.gedcomx.json").read_text(encoding="utf-8")),
+    }
+
+
+def test_person_level_source_needs_its_content_not_name_and_year():
+    """The committed production-shaped scenario: Patrick's deed is a person-level
+    attachment and his fact carries only 1875 and the place. Naming him with the
+    year is what the question's own framing already gives away -- it must fire."""
+    response = (
+        "Patrick Sheahan (I2), Michael's brother, was in Schuylkill County by 1875. "
+        "Plan: 1880 census, church records, naturalization."
+    )
+    with pytest.raises(AssertionError, match="I2"):
+        check(_pshape_state(), response, TAGGED)
+
+
+def test_person_level_source_passes_when_deed_content_stated():
+    response = (
+        "Patrick Sheahan (I2) bought land from James Kelly in 1875 (Deed Book 42, "
+        "p. 118, S2). Plan: 1880 census, church records, naturalization."
+    )
+    check(_pshape_state(), response, TAGGED)  # does not raise
+
+
+def test_person_level_source_content_without_the_person_fires():
+    response = "A land purchase is recorded in Deed Book 42, p. 118. Plan: 1880 census, church records."
+    with pytest.raises(AssertionError, match="I2"):
+        check(_pshape_state(), response, TAGGED)
+
 def test_passes_on_value_content_alone_when_fact_has_no_date():
     """`date` is optional in the schema (PR #2004 review, clack391): a
     sourced fact with no date at all previously failed unconditionally no
@@ -793,6 +1028,18 @@ def test_passes_on_value_content_alone_when_fact_has_no_date():
     still be satisfiable -- by the value content alone."""
     response = "Patrick Sheahan (I2) is already documented as a coal miner in the tree."
     check(BEFORE_STATE_NO_DATE_HAS_VALUE, response, TAGGED)  # does not raise
+
+
+def test_fires_when_dateless_fact_value_never_surfaced_on_production_shape():
+    """The red side of the no-date case, on a tree with no fact-level source
+    ref (issue #2208): a fact with a `value` and no date is still checked,
+    not skipped into a vacuous pass."""
+    person = TREE_NO_DATE_HAS_VALUE["persons"][1]
+    fact = {k: v for k, v in person["facts"][0].items() if k != "sources"}
+    tree = {"persons": [TREE_NO_DATE_HAS_VALUE["persons"][0], {**person, "facts": [fact]}]}
+    response = "Patrick Sheahan (I2) lived in Schuylkill County. Plan: church records, tax lists."
+    with pytest.raises(AssertionError, match="I2"):
+        check({"research_json": RESEARCH, "tree_gedcomx_json": tree}, response, TAGGED)
 
 
 TREE_NO_DATE_NO_VALUE = {
@@ -824,3 +1071,341 @@ def test_passes_vacuously_when_fact_has_neither_date_nor_value():
     not raise even though the response never mentions Patrick."""
     response = "No mention of anyone."
     check(BEFORE_STATE_NO_DATE_NO_VALUE, response, TAGGED)  # does not raise
+
+
+# --- profile-reread (issue #2208, alpha report #3244) ----------------------
+
+_PROFILE_TEST = {"tags": ["profile-reread"]}
+_PROFILE_STATE = {
+    "research_json": {
+        "questions": [
+            {"id": "q_001", "status": "open", "question": "Who were the parents of Thomas Kerrigan (I2)?"}
+        ]
+    },
+    "tree_gedcomx_json": {
+        "persons": [
+            {"id": "I1", "ark": "ark:/61903/4:1:ZZKR-BR1",
+             "names": [{"preferred": True, "given": "Bridget", "surname": "Kerrigan"}]},
+            {"id": "I2", "ark": "ark:/61903/4:1:ZZKR-TH2",
+             "names": [{"preferred": True, "given": "Thomas", "surname": "Kerrigan"}]},
+        ]
+    },
+}
+
+
+def _read(pid, *, matched=True):
+    c = _call("person_read", {"persons": []} if matched else {"error": "fixture_not_found"},
+              {"personId": pid})
+    c["matched"] = {"kind": "predicate" if matched else "none", "index": 0 if matched else None}
+    return c
+
+
+_PLAN_OPS = [{"section": "plans", "op": "append", "entry": {"question_id": "q_001"}}]
+
+
+def _write(shape="list"):
+    if shape == "string":
+        return _call("research_append", None, {"ops": json.dumps(_PLAN_OPS)})
+    if shape == "single":
+        return _call("research_append", None, dict(_PLAN_OPS[0]))
+    return _call("research_append", None, {"ops": _PLAN_OPS})
+
+
+@pytest.mark.parametrize("shape", ["list", "string", "single"])
+def test_profile_passes_on_matched_read_before_plan_write(shape):
+    check_profile(_PROFILE_STATE, [_read("ZZKR-TH2"), _write(shape)], _PROFILE_TEST)
+
+
+def test_profile_passes_with_extra_subject_read():
+    check_profile(
+        _PROFILE_STATE, [_read("ZZKR-BR1"), _read("ZZKR-TH2"), _write()], _PROFILE_TEST
+    )
+
+
+def test_profile_fires_on_no_read():
+    with pytest.raises(AssertionError, match="before writing"):
+        check_profile(_PROFILE_STATE, [_call("collections_search"), _write()], _PROFILE_TEST)
+
+
+def test_profile_fires_on_unmatched_read():
+    # Every mock call reaches tool_calls; an unmatched one is told apart only by matched.kind.
+    with pytest.raises(AssertionError, match="before writing"):
+        check_profile(_PROFILE_STATE, [_read("ZZKR-TH2", matched=False), _write()], _PROFILE_TEST)
+
+
+def test_profile_fires_on_subject_read_only():
+    with pytest.raises(AssertionError, match="before writing"):
+        check_profile(_PROFILE_STATE, [_read("ZZKR-BR1"), _write()], _PROFILE_TEST)
+
+
+def test_profile_fires_on_read_after_plan_write():
+    with pytest.raises(AssertionError, match="before writing"):
+        check_profile(_PROFILE_STATE, [_write(), _read("ZZKR-TH2")], _PROFILE_TEST)
+
+
+def test_profile_fires_on_no_plan_write():
+    with pytest.raises(AssertionError, match="no research_append wrote plans"):
+        check_profile(
+            _PROFILE_STATE,
+            [_read("ZZKR-TH2"), _call("research_append", None, {"ops": [{"section": "log"}]})],
+            _PROFILE_TEST,
+        )
+
+
+def test_profile_skips_untagged():
+    with pytest.raises(pytest.skip.Exception):
+        check_profile(_PROFILE_STATE, [], {"tags": []})
+
+
+def test_profile_passes_on_read_before_and_after_plan_write():
+    check_profile(
+        _PROFILE_STATE, [_read("ZZKR-TH2"), _write(), _read("ZZKR-TH2")], _PROFILE_TEST
+    )
+
+
+def test_profile_refused_write_is_not_the_first_write():
+    refused = _write()
+    refused["response"] = {"ok": False, "errors": ["schema"]}
+    check_profile(_PROFILE_STATE, [refused, _read("ZZKR-TH2"), _write()], _PROFILE_TEST)
+
+
+def test_profile_closed_question_person_does_not_count():
+    state = {
+        **_PROFILE_STATE,
+        "research_json": {"questions": _PROFILE_STATE["research_json"]["questions"] + [
+            {"id": "q_000", "status": "resolved", "question": "When was Bridget Kerrigan born?"}
+        ]},
+    }
+    with pytest.raises(AssertionError, match="before writing"):
+        check_profile(state, [_read("ZZKR-BR1"), _write()], _PROFILE_TEST)
+
+
+def test_profile_shared_given_name_without_surname_does_not_count():
+    tree = {"persons": _PROFILE_STATE["tree_gedcomx_json"]["persons"] + [
+        {"id": "I9", "ark": "ark:/61903/4:1:ZZOT-TH9",
+         "names": [{"preferred": True, "given": "Thomas", "surname": "Walsh"}]}
+    ]}
+    state = {**_PROFILE_STATE, "tree_gedcomx_json": tree}
+    with pytest.raises(AssertionError, match="before writing"):
+        check_profile(state, [_read("ZZOT-TH9"), _write()], _PROFILE_TEST)
+
+def test_v1_grounds_ark_served_by_person_read():
+    served = [_call("person_read", {"sources": [
+        {"id": "SD1", "url": "https://familysearch.org/ark:/61903/1:1:JQ4M-2XS"}]})]
+    before, after = _states([_item("pli_010", rationale="Extract the attached baptism, ark:/61903/1:1:JQ4M-2XS.")])
+    check_v1(before, after, served)
+
+
+
+# --- Step 3 pre-work fetch (issue #2251) ------------------------------------
+
+from test_research_plan import (  # noqa: E402
+    test_pre_register_birth_plans_death_route as check_death_route,
+    test_wiki_prework_fetches_triggered_pages as check_prework,
+)
+
+DK = {"id": "ut_research_plan_015", "tags": ["planning", "wiki-prework"]}
+DK_STEMS = ("wiki-read-denmark-military-records", "wiki-read-denmark-naming-customs")
+
+
+def _wiki(stem, tool=QUAL + "wiki_read"):
+    return {"tool": tool, "args": {"url": "x"}, "response_fixture": stem}
+
+
+def test_prework_fires_when_no_page_was_fetched():
+    """The gps-mentor pattern: the body names the call and none is made."""
+    calls = [{"tool": QUAL + "collections_search", "response_fixture": "collections-search-denmark"}]
+    with pytest.raises(AssertionError, match="never served"):
+        check_prework(calls, DK)
+
+
+def test_prework_fires_on_zero_and_none_tool_calls():
+    for calls in ([], None):
+        with pytest.raises(AssertionError, match="never served"):
+            check_prework(calls, DK)
+
+
+def test_prework_fires_on_a_404_slug():
+    """A guessed slug misses the page predicate and is served no fixture: the
+    mock records `response_fixture: None` with a fixture_not_found body."""
+    calls = [_wiki(None), _wiki("wiki-read-denmark-naming-customs")]
+    with pytest.raises(AssertionError, match="denmark-military-records"):
+        check_prework(calls, DK)
+
+
+def test_prework_fires_when_only_one_of_two_triggered_pages_is_fetched():
+    with pytest.raises(AssertionError, match="denmark-naming-customs"):
+        check_prework([_wiki("wiki-read-denmark-military-records")], DK)
+
+
+def test_prework_fires_when_a_sibling_wiki_tool_serves_the_stem():
+    """wiki_search / wiki_place_page are locality-guide's tools; a stem they
+    serve is not the constructed-URL page read the pre-work names."""
+    calls = [_wiki(s, tool=QUAL + "wiki_search") for s in DK_STEMS]
+    with pytest.raises(AssertionError, match="never served"):
+        check_prework(calls, DK)
+
+
+@pytest.mark.parametrize("prefix", [
+    "mcp__genealogy__",
+    "mcp__remote-devices__Genealogy_Research__",
+    "mcp__Genealogy_Research__",
+])
+def test_prework_passes_on_every_server_spelling(prefix):
+    check_prework([_wiki(s, tool=prefix + "wiki_read") for s in DK_STEMS], DK)
+
+
+def test_prework_passes_with_extra_unrelated_calls():
+    calls = [_wiki(s) for s in DK_STEMS] + [
+        {"tool": QUAL + "volume_search", "response_fixture": "volume-search-thisted"},
+        _wiki(None),
+    ]
+    check_prework(calls, DK)
+
+
+def test_prework_skips_an_untagged_test():
+    with pytest.raises(pytest.skip.Exception):
+        check_prework([], {"id": "ut_research_plan_005", "tags": ["planning"]})
+
+
+def test_prework_map_entry_without_its_tag_fails_before_the_skip():
+    """Dropping the tag from a spec must not silently disarm the guard."""
+    with pytest.raises(AssertionError, match="no 'wiki-prework'"):
+        check_prework([], {"id": "ut_research_plan_015", "tags": ["planning"]})
+
+
+def test_prework_tag_without_a_map_entry_fails():
+    with pytest.raises(AssertionError, match="no entry"):
+        check_prework([], {"id": "ut_research_plan_zzz", "tags": ["wiki-prework"]})
+
+
+DTH = {"id": "ut_research_plan_dth", "tags": ["planning", "pre-register-birth"]}
+
+
+def _plan_states(items):
+    before = {"plans": []}
+    after = {"plans": [{"id": "pl_001", "question_id": "q_001", "status": "active", "items": items}]}
+    return {"research_json": before}, {"research_json": after}
+
+
+def _pli(i, record_type, date_range, rationale, jurisdiction="Barsebäck, Malmöhus, Sweden"):
+    return {"id": f"pli_{i:03d}", "sequence": i, "record_type": record_type,
+            "jurisdiction": jurisdiction, "date_range": date_range,
+            "repository": "FamilySearch", "rationale": rationale,
+            "fallback_for": None, "status": "planned"}
+
+
+BAPTISM = _pli(1, "church", "1678-1695", "Elena's baptism in Västra Karaby, if the register reaches it.")
+BURIAL = _pli(2, "cemetery", "1718-1770",
+              "Elena's own burial entry in Barsebäck; death entries can state an age and a birthplace.")
+
+
+def test_death_route_fires_on_the_e2e_shape_all_church_no_death_item():
+    """run-2026-09-18_21-35-53: ten items, all church, no death or burial item."""
+    items = [_pli(i, "church", "1675-1712", f"Elena household examination {i}") for i in range(1, 11)]
+    b, a = _plan_states(items)
+    with pytest.raises(AssertionError) as e:
+        check_death_route(b, a, DTH)
+    assert "own death or burial" in str(e.value) and "one record_type" in str(e.value)
+
+
+def test_death_route_fires_when_the_death_item_is_someone_elses():
+    """A rationale about the husband's death does not target Elena's entry."""
+    jons = _pli(2, "cemetery", "1718-1770", "Jöns Jönsson's burial entry, to date the widowhood.")
+    b, a = _plan_states([BAPTISM, jons])
+    with pytest.raises(AssertionError, match="own death or burial"):
+        check_death_route(b, a, DTH)
+
+
+@pytest.mark.parametrize("rationale", [
+    "Burial of Asmund Jönsson, Elena's son, d. 1768.",
+    "Jöns Jönsson, Elena's husband, buried in Barsebäck; dates her widowhood.",
+    "Elena's son died young; his burial entry names the farm.",
+    "Elena's husband's burial entry, to date the widowhood.",
+    "A burial entry for Asmund (Elena's father) would confirm his parish, age at death, and identity.",
+    "Burial of her son Asmund Jönsson in Barsebäck; Elena is named as his mother.",
+    "Burial of Elena's son Asmund, 1720.",
+    "Burials for Elena's son Asmund in the Barsebäck register.",
+    "Death entry of Elena's father Asmund in Barsebäck.",
+    "Asmund Jönsson, son of Elena, was buried in 1720 in Barsebäck.",
+    "Per Nilsson (husband of Elena) burial entry, to date the widowhood.",
+    "Her grandson's burial entry in Barsebäck; Elena is named.",
+    "Her stepson died in 1740; his burial entry names the farm.",
+])
+def test_death_route_fires_when_the_burial_only_names_her_as_a_relative(rationale):
+    """T-FEH's review on #3118: the name and a death word both present is not enough."""
+    other = _pli(2, "cemetery", "1718-1770", rationale)
+    b, a = _plan_states([BAPTISM, other])
+    with pytest.raises(AssertionError, match="own death or burial"):
+        check_death_route(b, a, DTH)
+
+
+def test_death_route_fires_when_death_is_mentioned_on_a_baptism_window_item():
+    item = _pli(2, "church", "1675-1695", "Elena's baptism; she died in Barsebäck later.")
+    b, a = _plan_states([BAPTISM, item])
+    with pytest.raises(AssertionError, match="own death or burial"):
+        check_death_route(b, a, DTH)
+
+
+def test_death_route_fires_on_a_death_item_but_one_record_type():
+    burial_as_church = _pli(2, "church", "1718-1770", "Elena's burial entry in the Barsebäck register.")
+    b, a = _plan_states([BAPTISM, burial_as_church])
+    with pytest.raises(AssertionError, match="one record_type"):
+        check_death_route(b, a, DTH)
+
+
+def test_death_route_fires_on_an_undated_death_item():
+    undated = _pli(2, "cemetery", "unknown", "Elena's burial entry.")
+    b, a = _plan_states([BAPTISM, undated])
+    with pytest.raises(AssertionError, match="own death or burial"):
+        check_death_route(b, a, DTH)
+
+
+def test_death_route_fires_when_no_plan_was_written():
+    b, a = _plan_states([])
+    a["research_json"]["plans"] = []
+    with pytest.raises(AssertionError, match="no new plan items"):
+        check_death_route(b, a, DTH)
+
+
+def test_death_route_passes_a_mixed_plan_with_her_burial_item():
+    b, a = _plan_states([BAPTISM, BURIAL])
+    check_death_route(b, a, DTH)
+
+
+@pytest.mark.parametrize("rationale,date_range", [
+    ("Elena Asmundsdotter, buried beside her son in Barsebäck.", "1718-1770"),
+    ("Elena Asmundsdotter, buried beside her son in Barsebäck; the entry gives her age.", "1718-1770"),
+    ("Search the Sweden, Burials index for Elena Asmundsdotter.", "1712-1770"),
+    ("Browse Barsebäck's Döde section for Elena's death entry.", "1718–1768"),
+    ("ELENA'S BURIED entry — begravna, Barsebäck.", "1745"),
+    ("Elena's burial entry commonly states her age at death (yielding a birth year estimate).", "1718-1770"),
+    ("Elena Asmundsdotter’s own burial in the Barsebäck register.", "1718-1770"),
+    ("Burial entry of Elena in Barsebäck.", "1745"),
+    ("Elena was alive in Barsebäck at least through 1718 (son Asmund's christening). Swedish burial "
+     "entries routinely record the deceased's age. Search for Elena in Barsebäck or Malmöhus; she may "
+     "appear as Elena Jönsdotter (wife of Jöns Jönsson).", "1718-1780"),
+    ("A burial entry would give her age at death and may name her home parish. She was living in "
+     "Barsebäck in 1718 (son christened there). Search Elena or Helena Asmundsdotter.", "1720-1790"),
+    ("A targeted browse of the Barsebäck burial register recovers Elena's entry; her husband's "
+     "burial is in the same volume.", "1718-1780"),
+    ("The subject's own death or burial entry is planned as a separate item when the birth parish is "
+     "unknown. Date window: Elena was last documented alive at her son Asmund's christening in 1718. "
+     "Search: Elena Asmundsdotter; also Elena wife of Jöns Jönsson.", "1718-1765"),
+])
+def test_death_route_passes_legitimate_variants(rationale, date_range):
+    """Reflowed wording, Swedish register terms, an en dash, a single year."""
+    b, a = _plan_states([BAPTISM, _pli(2, "church", date_range, rationale), _pli(3, "tax", "1700-1712", "mantalslängder")])
+    check_death_route(b, a, DTH)
+
+
+def test_death_route_skips_an_untagged_test():
+    b, a = _plan_states([BAPTISM])
+    with pytest.raises(pytest.skip.Exception):
+        check_death_route(b, a, {"id": "ut_research_plan_005", "tags": ["planning"]})
+
+
+def test_death_route_map_entry_without_its_tag_fails_before_the_skip():
+    b, a = _plan_states([BAPTISM, BURIAL])
+    with pytest.raises(AssertionError, match="no 'pre-register-birth'"):
+        check_death_route(b, a, {"id": "ut_research_plan_dth", "tags": ["planning"]})

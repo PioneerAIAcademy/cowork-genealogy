@@ -27,10 +27,10 @@ The format and harness in this spec target **single-turn skill evaluation**. The
 
 **Multi-turn skills — covered via decomposition.** Two skills have multi-turn workflows in production. Both are testable in v1, but with reduced coverage:
 
-- **`init-project`** — production workflow asks the user for the research objective. For testing, put the full objective into `user_message`: *"Create a project to identify parents of Patrick Flynn, born ~1845 PA, died 1908 Schuylkill Co."* The skill should write a valid `research.json` and `tree.gedcomx.json` without needing follow-ups. v1 tests cover *structural output* but not whether the skill asks for the objective when the message is vague; that coverage is deferred.
+- **`init-project`** (an agent) — production workflow asks the user for the research objective. For testing, put the full objective into `input.delegation`: *"Create a project to identify parents of Patrick Flynn, born ~1845 PA, died 1908 Schuylkill Co."* The agent should write a valid `research.json` and `tree.gedcomx.json` without needing follow-ups. v1 tests cover *structural output* but not whether the agent asks for the objective when the message is vague; that coverage is deferred.
 - **`search-external-sites`** — production workflow is "generate URL → user pastes capture → analyze capture." Decompose into two single-turn tests:
   - *URL generation test* — positive test under `search-external-sites`. The skill generates a search URL; grade on URL correctness, log entry shape.
-  - *Capture analysis test* — positive test under `record-extraction` (the receiving skill) with the pasted capture content embedded in `user_message`. Grade as a normal extraction.
+  - *Capture analysis test* — positive test under `record-structurer` (the receiving agent) with the pasted capture content embedded in the input. Grade as a normal extraction.
   - v1 covers both phases; what's lost is the *handoff* (does the skill correctly wait, or recover if the user pastes the wrong file?).
 
 True multi-turn dialogue support (canned user replies, scripted turn arrays) is a future spec revision.
@@ -39,7 +39,7 @@ True multi-turn dialogue support (canned user replies, scripted turn arrays) is 
 
 - **MCP-endpoint-only tests.** The master testing plan calls for unit tests on MCP endpoints with three axes (tool selection, argument quality, response interpretation). All three surface through a skill that calls the tool, and the MCP server has its own Vitest suite (`packages/engine/mcp-server/tests/`) for protocol/argument correctness. Tool usage is graded as a rubric dimension on the calling skill (Section 7), not as a standalone test.
 - **Multi-turn dialogue support.** See above.
-- **Skill chains.** A single test exercises one skill in isolation. Tests that span multiple skills (e.g., `research-plan` → `search-records` → `record-extraction`) belong in the e2e framework (`docs/specs/e2e-test-spec.md`).
+- **Skill chains.** A single test exercises one skill in isolation. Tests that span multiple skills (e.g., `research-plan` → `search-records` → `extraction_append`) belong in the e2e framework (`docs/specs/e2e-test-spec.md`).
 - **Schema versioning.** Schema breakage is acceptable during build-out (per `research-schema-spec.md` §7). No migration story in v1.
 - **Skill-body length, in either direction.** A test grades a **single invocation in fresh context**, so this harness cannot see multi-hour retention — and that is where a large SKILL.md earns or wastes its tokens. A skill body enters context once, via the `Skill` tool, and nothing reloads it; successive auto-compactions evict it. Measured over one real 309-turn session, `search-records` (then 41.6 KB) was resident for **228 of 309 turns** and invoked exactly once, after which its *unanchored* rules decayed: `count: 50` held at 100% while the body was resident and fell to 45%, and "always call `rank_search_matches`" fell from 77% to 3%, leaving 114 searches hand-triaged. Every rule with a **structural anchor** — the tool rejects the violation, its output feeds a step that cannot proceed without it, or it leaves a durable trace the agent re-reads — held at 100%. Consequence for this harness: it will bless a cut that removes something only a long session needs, and equally bless an addition that earns nothing. **The variable is anchoring, not length** — so the remedy is to anchor the rule, not to shorten the body, and both rules above are now `record_search` contracts (`defaultCount` and the always-rank step). See `docs/adrs/ADR-0003-anchor-cross-turn-rules-structurally.md`. **Skill-body length is not gated in either direction**, and a length *correctness* gate was declined in 2026-08 for two reasons. First, any cap is satisfiable by moving prose into `references/`, which the size lint does not track — it matches `skills/*/SKILL.md` and `agents/*.md` only, and `search-records` already carries more bytes in `references/` than in the body being measured, so `git mv` clears any threshold while removing nothing from an invocation. Second, the thresholds that bind are the wrong ones: two of the four largest bodies are agents, which this bullet exempts, so a cap low enough to bind `person-evidence` (40,070 B) condemns both of them, while the only band that binds `search-records` (54,917 B) alone and spares `record-extractor` (53,845 B) is a ~1 KB window around a single file. Ask "what anchors this?" at review instead. Size *visibility* — warn-only, no ceiling — is the standing prompt-budget check. Shrinking for **cost** was declined in the same pass and for a separate reason: the benefit is unmeasured (the one trim that was measured never had its e2e effect confirmed) while the one controlled split made things worse. ADR-0003 carries that decision and its reopen trigger. Plugin **agents** are exempt from the decay argument entirely: they run in fresh context per invocation and cannot decay this way.
 
@@ -86,12 +86,16 @@ Developer validators live separately:
 ```
 eval/harness/validators/
   test_conflict_resolution.py
-  test_record_extraction.py
+  test_extraction_append.py
   test_search_records.py
   ...
+  extraction_validators.py
 ```
 
-One file per skill, following pytest naming conventions.
+One file per skill, following pytest naming conventions. A module without the
+`test_` prefix is shared code the runner never loads on its own:
+`extraction_validators.py` holds the checks the extraction-append and
+record-structurer suites both import.
 
 ---
 
@@ -106,9 +110,34 @@ eval/fixtures/scenarios/<scenario-name>/
   research.json        # Starting research.json state
   tree.gedcomx.json    # Starting tree.gedcomx.json state
   README.md            # Human-readable description for the UI dropdown
+  judge-brief.md       # What the judge reads about this scenario (optional)
 ```
 
 Both JSON files must conform to their respective schemas (`docs/specs/research-schema-spec.md` and `docs/specs/simplified-gedcomx-spec.md`).
+
+**`judge-brief.md` is the judge's copy; `README.md` is the author's.** The judge's
+`{scenario_readme}` slot reads `judge-brief.md` whole when it exists, and the README
+only when it does not (`harness/scenario_brief.py::load_scenario_brief`, shared by
+the live run and `make judge-regrade`). A brief carries only what the fixture JSON
+cannot say, because `{before_state}` already renders the project state from the
+JSON: that the data is synthetic and every tool response mocked, and which parts
+of the state are intentional rather than defects. It never states what a correct
+run does, and every concrete claim in it is checked against the fixture files: a
+false statement of content leaks as badly as a verdict. Provenance, authoring
+notes and "what it exercises" stay in the README, which reaches no grader once a
+brief exists. An empty brief is a deliberate "tell the judge nothing" and renders
+`(scenario brief intentionally empty)`, distinct from `(stateless test)`. A
+scenario with neither file still stages its state, so it renders
+`(scenario has no judge brief or README)`, never `(stateless test)`.
+
+The README fallback exists until every referenced scenario has a brief. It is
+reported, never silent: each fallback run carries a `scenario_readme_fallback`
+entry in `output.warnings` (a harness advisory, not a judge rule), or
+`scenario_brief_missing` when the scenario has neither file, the end of every
+suite prints `N test(s) graded without a judge brief, on a README or nothing`,
+and a regrade prints the same count. Removing the fallback is the last step of
+the brief sweep. A scenario name must match its directory exactly; a mis-cased
+name raises `InvalidScenarioError` rather than rendering `(stateless test)`.
 
 **How scenarios reach Claude:** The harness creates a temp directory per test, copies scenario files into it, and sets it as the `cwd` for the Claude Agent SDK session. Skills read `research.json` and `tree.gedcomx.json` with the `Read` tool exactly as they do in Cowork — no mocking of file I/O. See Section 15 for full details.
 
@@ -136,7 +165,7 @@ Any count bullet you write in a real scenario README is checked against its
 
 Scenario creation tooling (the form-based UI that generates valid JSON) is specified in [`eval-crud-ui-spec.md`](eval-crud-ui-spec.md). Until that UI ships, scenarios are dev-authored; until a needed scenario exists, tests that reference it via `scenario_notes` fail the runnability gate (§9).
 
-Scenarios are reusable. When a junior creates a new scenario (or a dev creates one on their behalf), other juniors can select it from the dropdown for their tests. The README.md is **hand-authored** — no generator exists, and the file is pasted verbatim into the judge prompt as `{scenario_readme}` (§ "Judge prompt"), so it is a second source of truth the judge is told to believe. Any count it states is therefore pinned against `research.json` by `test_scenario_readme_counts_match_research_json` (`eval/harness/tests/unit/test_scenario_fixtures.py`), which fails CI on a mismatch. The lint reaches counts only: prose such as a delta against a parent scenario, or an "everything else is identical" claim, is unchecked.
+Scenarios are reusable. When a junior creates a new scenario (or a dev creates one on their behalf), other juniors can select it from the dropdown for their tests. The README.md and judge-brief.md are **hand-authored** — no generator exists, and the brief (or, until one exists, the README) is pasted verbatim into the judge prompt as `{scenario_readme}` (§ "Judge prompt"), so it is a second source of truth the judge is told to believe. Any count either file states is therefore pinned against `research.json` by `test_scenario_readme_counts_match_research_json` (`eval/harness/tests/unit/test_scenario_fixtures.py`), which fails CI on a mismatch. The lint reaches counts only: prose such as a delta against a parent scenario, or an "everything else is identical" claim, is unchecked.
 
 **When to create a new scenario vs reuse:** If an existing scenario is close to what you need, select it and describe the differences in `scenario_notes`. If 3+ tests need the same modification, promote to a new named scenario.
 
@@ -167,6 +196,7 @@ Format:
 | `description` | string | yes | Human-readable description for the UI dropdown |
 | `args` | object | yes | Argument-match predicate AND grading target. Keys are dotted paths into the tool call's `args` object; values are exact-match scalars or, if prefixed with `~`, case-insensitive substring matches. All keys must match for the fixture to fire during dispatch. The LLM judge also reads this block as the canonical expected args for the **Tool Arguments** base dimension (Section 7) |
 | `response` | object | yes | The exact JSON response the harness returns when this tool is called |
+| `is_error` | boolean | no | `true` marks a thrown-error fixture: the harness returns `response` with `is_error` set, as production's catch arms set `isError: true` beside `{error}`. Requires `response` to be exactly `{"error": "<message>"}`; the harness rejects any other shape. Default `false` |
 
 **Match semantics.** When the skill calls a tool, the harness selects a response in this order:
 
@@ -179,7 +209,7 @@ A fixture's `args` block is **always required and non-empty.** It serves two pur
 
 **Error fixtures.** To test how a skill handles error responses (auth failure, upstream 5xx, malformed response), set `response` to the error envelope the real MCP tool would return. The harness returns whatever object is in `response` verbatim — there is no separate "error" mode.
 
-**The failure envelope is one key, `error`, holding the message string.** Every dispatch arm in `src/server.ts` catches identically and returns `{"error": <the thrown message>}`, and no arm produces any other shape for a THROWN error. A companion `message`, `status` or `code` key is therefore not a shape any tool can produce, and the fixture-shape check below rejects it. (The twelve tools in `OK_FALSE_IS_FAILURE` are a separate case: they report an *expected* failure by returning `{ok: false, reason, errors}`, which `src/tool-result.ts` turns into `isError`. They are not all writers, and most of them still re-throw an unexpected error into the envelope above. None is fixture-served, so no fixture should carry that shape either.) Note also that production sets `isError: true` alongside `{error}` and a fixture-served response never does, so an error fixture exercises the body and not the flag:
+**The failure envelope is one key, `error`, holding the message string.** Every dispatch arm in `src/server.ts` catches identically and returns `{"error": <the thrown message>}`, and no arm produces any other shape for a THROWN error. A companion `message`, `status` or `code` key is therefore not a shape any tool can produce, and the fixture-shape check below rejects it. (The tools in `OK_FALSE_IS_FAILURE` are a separate case: they report an *expected* failure by returning `{ok: false, reason, errors}`, which `src/tool-result.ts` turns into `isError`. They are not all writers, and most of them still re-throw an unexpected error into the envelope above. The one fixture-served member, `external_links_search`, never returns that shape — it fails by throwing — so no fixture should carry it either.) Note also that production sets `isError: true` alongside `{error}`, and a fixture-served response carries the flag only when the fixture sets `is_error: true`. Without it an error fixture exercises the body and not the flag. The flag is opt-in so the existing error fixtures keep the envelope their runs were graded on:
 
 ```json
 // auth failure
@@ -310,7 +340,6 @@ Fixtures are reusable. When a junior creates a new fixture (or a dev creates one
 | `mcp_fixtures` | optional (omit if skill uses no MCP tools) | optional (omit if not needed) |
 | `judge_context` | required, may be empty array | required, may be empty array |
 | `expected_classifications` | optional (see Section 5.10) | omit (a declined skill creates no assertions) |
-| `refinement_targets` | optional (see Section 5.11) | omit (a declined skill updates no assertions) |
 | `index_error_source` | optional (see Section 5.12) | omit (a declined skill produces no audit) |
 | `negative` | omit | required |
 
@@ -451,11 +480,6 @@ The machine-readable schema lives at [`docs/specs/schemas/unit-test.schema.json`
         "additionalProperties": false
       }
     },
-    "refinement_targets": {
-      "type": "array",
-      "items": { "type": "string" },
-      "description": "Optional list of a_ assertion ids a classification-refinement test expects the run to update in place. Checked mechanically by test_refinement_preserves_extraction_fields_and_avoids_duplication. See Section 5.11."
-    },
     "index_error_source": {
       "type": "string",
       "description": "Optional. Names the ONE attached source an index-discrepancy test declares to be an indexing error — the source that must never be recommended for detaching. Checked mechanically by test_index_discrepancy_does_not_recommend_detaching. See Section 5.12."
@@ -562,7 +586,7 @@ The machine-readable schema lives at [`docs/specs/schemas/unit-test.schema.json`
 | `name` | string | yes | Short human-readable name shown in the test list view |
 | `type` | string | yes | `"positive"` or `"negative"`. Determines which other fields are present |
 | `description` | string | yes | 1-2 sentences explaining what this test verifies and why it matters |
-| `tags` | string[] | yes | Freeform tags for filtering and grouping. May be empty. The UI uses these for filtering the test list. Useful tag dimensions: record type (`census`, `vital-record`, `probate`), time period (`1850`, `1860`), GPS concept (`informant-weighting`, `independence`, `negative-evidence`), test pattern (`near-miss`, `multi-person`, `stateless`) |
+| `tags` | string[] | yes | Freeform tags for filtering and grouping. May be empty. The UI uses these for filtering the test list. Useful tag dimensions: record type (`census`, `vital-record`, `probate`), time period (`1850`, `1860`), GPS concept (`informant-weighting`, `independence`, `negative-evidence`), test pattern (`near-miss`, `multi-person`, `stateless`). **Some tags are not freeform — they GATE a validator** and change what is asserted. `routes-to:<skill>` (the first hand-off), `delivers:<skill>` (one per deliverable on a compound bounded ask) and `ends-with-delivery` (the turn must end by calling `research_delivered`) are examples, not the list: `attached-first` gates one too, and several of the record-type tags above do double duty. Grep the skill's validator file for `tags` before assuming a tag is inert. A gating tag is an explicit opt-in, never inferred from a neighbour: `ends-with-delivery` is deliberately separate from `bounded-request` because `ut_research_023` is bounded in shape yet enters with `--autonomous`, where running the job is correct and delivering is the failure. Adding a gating tag to a test is a behavioural change, and `tags` is **not** cosmetic to the snapshot: it selects validators and changes outcome computation, so editing one stales the run log |
 | `holdout` | boolean | no | `false` (default) or `true`. Holds this test out of the set `/improve-skill` forms edits from, so a fix can be judged against cases it was not written from. The harness runs holdout tests like any other; the flag governs only the improver — `gate-skill` **no longer reads it** (see the note below this table). Mark ~2-3 of a skill's tests holdout (diverse, representative ones — not the easy ones), and keep them stable across iterations. See `docs/skill-lifecycle.md` |
 | `expected_outcome` | string | no | **Retired (lead, 2026-10-06): add no new `"xfail"`.** `check_runlogs.py` rule 10 blocks any PR that touches a skill still carrying one, so the committed markers go when their skill is next edited, and rule 6 no longer suppresses a marked failure. That PR makes the test pass. If its fix belongs to another open issue, delete the test file instead (keep its scenario and MCP fixtures) and add "restore `<test id>` from git (deleted in PR #N) and make it pass 3 of 3" to that issue's done-when, naming any validator the deletion leaves with no test (lead, 2026-10-06). `"pass"` (default) or `"xfail"`; `run_tests.py` alone still reads a marked failure as suppressed in its exit code. |
 | `xfail_reason` | string | conditional | Required when `expected_outcome` is `"xfail"`. Brief explanation, ideally with an issue link and a removal condition (e.g., "blocked on <issue link>; remove when fixed") |
@@ -651,6 +675,21 @@ across the conversion; minting new ids would orphan every prior grade on the
 `(test_id, dimension_source, dimension_name)` key this section already names.
 The "separate file, own id" rule above still governs a **pair** — a routing
 skill that still ships — because there both arms exist and both are graded.
+
+**The paired-skill pattern is retired (lead ruling 2026-09-22, restated
+2026-09-29).** A conversion now ends with the agent authored and
+`skills/<name>/` deleted in the same PR. What it beat was keeping
+the thin routing skill on disk as the direct-user and unit-eval entry point —
+the shape §0 of `docs/skill-to-agent-pair-conversion.md` was written for, which
+left a rule stated only in the routing skill's body switched off during
+production research while still billing its tokens.
+
+Four of the five pairs are gone: `search-images` (2026-09-29),
+`person-evidence`, `proof-conclusion` and `research-exhaustiveness`
+(2026-10-08). Only `record-extraction` →
+`record-extractor` remains, under the 2026-09-21 exemption. The conversion
+rules and the direct-agent arm still apply to that suite and to any future
+pair, but the population they govern has shrunk from five pairs to one.
 
 **A negative converts too, when its outcome does not depend on routing.** The
 conversion doc says negatives get no twin, and for a pair that is right: routing
@@ -747,11 +786,13 @@ The judge reads it on every direct test. **Validators do not yet, uniformly.**
 `skill_runner.agent_return_text`, the same call the judge makes) and falls back
 to `text_response`, so a **routed** test -- whose reply genuinely is the
 subject's -- is unaffected. `research-exhaustiveness`'s
-`test_refusal_names_the_blocking_plan_item` still reads `text_response`
-directly, so on that suite's direct tests it grades the dispatcher's relay. It
-is named here rather than fixed because it belongs to that suite's eval slot;
-any validator grading reply shape on a direct test should move to
-`agent_return_text`.
+`test_refusal_names_the_blocking_plan_item` and
+`report_refusal_marks_the_blocker_open` read `subject_reply_text`, which is
+stricter on a direct test: an empty agent return grades as nothing, with no
+fallback to `text_response`. A validator edit does not touch a suite's eval slot
+(`check_runlogs.py` does not count `eval/harness/validators/` as a touched
+path), so any validator grading reply shape on a direct test should move to
+`agent_return_text` or `subject_reply_text` when next edited.
 
 **The dispatcher prompt cannot be constrained from a test.** `DIRECT_DISPATCH_PROMPT`
 is harness-owned precisely so "no test can weaken the relay instruction", so
@@ -819,7 +860,7 @@ that is the measured production failure mode the arm exists to catch — and it 
 not a synthetic shape: of the 11 real orchestrator delegations to a paired agent
 in the committed e2e corpus, most carry a caller-written research-state summary
 and one instructs the agent outright to *'verify all seven criteria now pass and
-issue the exhaustive_declaration'*. Write the delegation as that caller writes
+issue the search_stop'*. Write the delegation as that caller writes
 one: the arguments the routing skill specifies (`questionId`, `projectPath`, and
 the like), plus whatever framing the twin is testing the agent's resistance to.
 A `<workspace>` placeholder in a path argument is fine — the live writer tools
@@ -875,12 +916,12 @@ Guidelines for writing `judge_context` notes:
   | "Should classify the source as derivative." | "Classification should distinguish the original record from any indexed or transcribed copy in the source chain." |
   | "Should identify Thomas Flynn as Patrick's father." | "Should evaluate whether the household composition and ages support a parent-child relationship, and state the basis." |
 
-  **When a conclusion IS safe.** State one only where something other than the note pins it — a deterministic validator, `expected_classifications`, or the fixture text itself. `record-extraction` states conclusions freely and is safe doing so, because `expected_classifications` checks them and the judge defers to that check, so the note never becomes the only thing holding the grade up. A conclusion no other check can reach is an answer key no matter how it is worded.
+  **When a conclusion IS safe.** State one only where something other than the note pins it — a deterministic validator, `expected_classifications`, or the fixture text itself. The `extraction-append` suite states conclusions freely and is safe doing so, because `expected_classifications` checks them and the judge defers to that check, so the note never becomes the only thing holding the grade up. A conclusion no other check can reach is an answer key no matter how it is worded.
 
   **The leak is not confined to `judge_context`** — three other channels reach the same dimension, and no rule about notes touches any of them. If the note says "score 3 if it reasons about X", nothing else may state X. Apply the neutrality test to:
   - **`input.user_message`** — handing the skill the reasoning under test lets it pass by echoing the prompt. **`input.delegation` is deliberately exempt** (§5.2.1): a direct-agent test's adversarial delegation names the artifact and pre-states the answer on purpose, because resisting exactly that is what it grades.
   - **the scenario's `research.json`** — plan-item rationales are read by the skill and are the natural place to restate the answer.
-  - **the scenario's `README.md`** — this one reaches the **judge**, not the skill: `_load_scenario_readme` reads the whole file and it is rendered verbatim in the judge prompt under "Scenario summary". A "What it exercises" bullet phrased as "the skill must do X" is therefore an answer key delivered straight to the grader, and it applies to every test sharing that scenario at once. Write those bullets as the *capability* under test, never the correct outcome.
+  - **the scenario's `judge-brief.md`, or its `README.md` while it has no brief** — this one reaches the **judge**, not the skill: `load_scenario_brief` reads the whole file and it is rendered verbatim in the judge prompt under "Scenario summary". A bullet phrased as "the skill must do X" is therefore an answer key delivered straight to the grader, and it applies to every test sharing that scenario at once. Write a brief per §3.1; a README that still reaches the judge is held to the same rule.
 
   **Negative tests are the deliberate exception.** The harness generates their framing itself (`_negative_judge_context`), including "a clear, accurate decline is a full pass" and "score Correctness and Completeness as fail (1)". Those are verdicts by design: a negative test grades the routing decision, runs on an empty rubric, and without the framing the judge reads a correct decline as a failed attempt. Don't rewrite them, and don't read this rule as forbidding them. The route the framing names is `correct_skill` **minus the skill under test**: a test listing itself there would otherwise be told its correct route is the skill it must not run, and a list that empties renders the "decline without invoking any skill" arm.
 
@@ -914,7 +955,7 @@ Optional object overriding the harness's default execution limits. All fields ar
 | `max_wall_clock_seconds` | integer | 300 | Maximum wall-clock seconds for the skill execution phase (excludes judge) |
 | `max_tool_calls` | integer | 50 | Maximum MCP tool calls. Bounds fixture consumption and accidental fan-out |
 | `max_input_tokens_per_turn` | integer | 200000 | Maximum input tokens to the model in any single turn |
-| `sdk_message_silence_seconds` | integer | 180 | Maximum seconds the harness will wait between SDK messages before aborting with `sdk_stream_silence` (retryable). Bump per-test only for skills whose model spends >180s on a single thinking/generation step before emitting its first message — open-ended conflict-resolution prompts and multi-persona record-extraction are the typical cases. Don't bump the default (60s→180s already covers the long tail) — a tighter watchdog catches real upstream stalls faster |
+| `sdk_message_silence_seconds` | integer | 180 | Maximum seconds the harness will wait between SDK messages before aborting with `sdk_stream_silence` (retryable). Bump per-test only for skills whose model spends >180s on a single thinking/generation step before emitting its first message — open-ended conflict-resolution prompts and multi-persona extraction are the typical cases. Don't bump the default (60s→180s already covers the long tail) — a tighter watchdog catches real upstream stalls faster |
 | `run_skills` | array | `[]` | **Positive tests only.** Sub-skills this test expects to EXECUTE for real — see below |
 | `stub_skills` | array | `[]` | **Positive tests only.** Sub-skills this test does not want executed — see below |
 | `stop_at_stub` | boolean | `false` | **Positive tests only.** The first hand-off to a stubbed name ends the run instead of continuing — see below. Requires a non-empty `stub_skills` |
@@ -936,7 +977,7 @@ Two forms, and the choice turns on the **caller's** contract, not the callee's:
 
 | Form | Use when | Example |
 |---|---|---|
-| `"skill-name"` | The caller hands off and never reads the result | `["record-extraction"]` |
+| `"skill-name"` | The caller hands off and never reads the result | `["record-structurer"]` |
 | `{ "skill": …, "response": … }` | The caller's own remaining work **consumes** the callee's output, so a bare deny would strip a deliverable it is specced to produce | `[{"skill": "search-external-sites", "response": "Ancestry: https://…"}]` |
 
 `search-records` is the worked case for the second form: its Step 7 tells it to
@@ -1063,7 +1104,7 @@ Default `false` reproduces the legacy counts-only judge input **byte-for-byte fo
 
 ### 5.10 `expected_classifications`
 
-Optional array of matchers — deterministic per-fixture classification ground truth, checked mechanically by the record-extraction validator (`test_expected_classifications` in `eval/harness/validators/test_record_extraction.py`). Each matcher names a `record_role` + `fact_type` pair (exactly as the skill persists them) plus expected values for any of `record_basis`, `informant_proximity`, `information_quality`. Per matcher: at least one NEW assertion (created by the run) with that pair must exist, and every new assertion with that pair must carry each declared value. The LLM judge still grades the classification dimensions; the validator results are the mechanical reference during annotation, so classification doctrine no longer rides on judge phrasing. Only declare pairs and values the doctrine fixes deterministically — an assertion the skill may legitimately omit (e.g. an optional inferred birth year) must not get a matcher, because the existence half would fail doctrine-correct runs.
+Optional array of matchers — deterministic per-fixture classification ground truth, checked mechanically by the extraction validator (`test_expected_classifications` in `eval/harness/validators/extraction_validators.py`). Each matcher names a `record_role` + `fact_type` pair (exactly as the skill persists them) plus expected values for any of `record_basis`, `informant_proximity`, `information_quality`. Per matcher: at least one NEW assertion (created by the run) with that pair must exist, and every new assertion with that pair must carry each declared value. The LLM judge still grades the classification dimensions; the validator results are the mechanical reference during annotation, so classification doctrine no longer rides on judge phrasing. Only declare pairs and values the doctrine fixes deterministically — an assertion the skill may legitimately omit (e.g. an optional inferred birth year) must not get a matcher, because the existence half would fail doctrine-correct runs.
 
 A matcher may also pin the fact **value**, not just its classification layers:
 
@@ -1088,33 +1129,11 @@ Read a `coerced_routing_negative_to_na` warning before confirming the N/A. Eithe
 
 **Invariant negatives are coerced the same way (ruled 2026-09-07).** A `grade_on_invariant` negative that routed to an accepted skill without activating gets the same coercion and the same warning, whose advisory and rewritten rationale say its outcome is decided by its invariant validator rather than by routing. Its dimensions never gate (§7), so this changes no outcome. With one run per test the cell was already in the mandatory review sample through its `1` (the first trigger) and now stays there through the warning (the third). What changes is that the `1` becomes `null` in the run log, with the original kept in the warning. The framing was **not** softened for invariant tests instead, because the corpus does not show these `1`s to be spurious: of the three `grade_on_invariant` cells scored `1` at ruling time, annotators confirmed two (`ut_citation_012`, run `v1_2026-07-21_15-04-23`; `ut_conflict_resolution_010`, run `v1_2026-08-18_19-42-11`) and overrode one (`ut_convert_dates_003`, run `v1_2026-09-01_11-26-50`). That is the same split, with no mechanical discriminator, that retired the floor. The `activated` guard still applies: an invariant negative may activate and pass on its validator, and there its `1` stays a `1`, which the sample's first trigger already catches.
 
-### 5.11 `refinement_targets`
+### 5.11 `refinement_targets` (retired)
 
-Optional array of `a_` assertion ids — deterministic ground truth for a
-**classification-refinement** test, where the scenario seeds an assertion
-that already exists and the run is expected to correct its classification
-in place rather than create a new one. Checked mechanically by
-`test_refinement_preserves_extraction_fields_and_avoids_duplication`
-(`eval/harness/validators/test_record_extraction.py`) — added because no
-test in the corpus exercised the classification-refinement path at all.
-For each id: the assertion must still exist under the same id in the
-after-state; its extraction fields (`source_id`, `record_id`,
-`record_role`, `fact_type`, `value`, `structured_value`, `date`,
-`date_certainty`, `place`) must be byte-identical to before (a refinement
-corrects classification, not the extracted fact); at least one field must
-actually differ from before (a no-op "update" that changes nothing is not
-a refinement); every other pre-existing assertion must be untouched
-(scope enforcement); and no new assertion may share a target's
-`(source_id, record_role, fact_type)` shape (catches "fixed" via a
-duplicate append rather than an `update` op on the original).
-
-`expected_classifications` (5.10) alone cannot check any of this — its
-matcher looks for *new* assertions (as of the widening below, new-or-
-updated) matching a role/fact pair; it has no notion of "this specific
-existing assertion, and nothing else, changed." `refinement_targets` is
-the complementary check when the scenario's starting state already
-contains the assertion under test, which `expected_classifications`
-alone was never able to express.
+Retired with the classification-refinement test (lead, 2026-09-30). Classifications are now set
+in code at extraction and are not refined per assertion, so no run updates one in place, and
+the field and its validator were removed.
 
 **Widened matching in `expected_classifications`.** To let a matcher find
 the refinement target at all, `test_expected_classifications`'s notion of
@@ -1123,7 +1142,7 @@ run* (an id absent from the before-state, or present with a changed
 value). This is additive only: the candidate pool for every existing
 test's matchers can only grow, never shrink, so a matcher that passed
 under the old "new-only" definition still passes — it cannot introduce a
-new failure on a test that declares no `refinement_targets`.
+new failure.
 
 ### 5.12 `index_error_source`
 
@@ -1154,13 +1173,12 @@ the situation, the validator asserts the rule, and neither has to decide for
 itself which finding is which.
 
 **The value must reach the validator to do anything.** Like
-`refinement_targets` (5.11) and `expected_classifications` (5.10), this is a
+`expected_classifications` (5.10), this is a
 *top-level* field, and `orchestrator.py` assembles the validator-facing
 `test` dict as an explicit whitelist rather than passing the whole test JSON.
 A field declared in the schema and read by a validator but absent from that
 literal arrives as `None` on every run.
-`test_orchestrator_threads_index_error_source_into_validators` pins it, as the
-sibling test does for `refinement_targets`.
+`test_orchestrator_threads_index_error_source_into_validators` pins it.
 
 ---
 
@@ -1174,10 +1192,9 @@ Every skill's SKILL.md has "Do NOT use when" clauses that name confusable skills
 
 | Skill tested | Confusable skill | Boundary signal |
 |-------------|-----------------|-----------------|
-| record-extraction | search-records | "search for" vs "analyze this record" |
-| search-records | record-extraction | record data in context vs not |
+| search-records | `extraction_append` / `record-structurer` (an agent) | record data in context vs not |
 | question-selection | research-plan | "what question next" vs "how to answer this question" |
-| conflict-resolution | record-extraction | conflicting facts vs classifying evidence type (classification is owned by record-extraction since the assertion-classification merge, 2026-07-11) |
+| conflict-resolution | `extraction_append` (a tool) | conflicting facts vs classifying evidence type (classification is set in code at extraction and is not refined per assertion afterward) |
 | proof-conclusion | project-status (an agent, not a skill — its side of the pair is reached by auto-delegation from its own `description`, not by a routing row) | "write the proof" vs "where are we" |
 
 For each confusable pair, create tests from both directions: a test in skill A's directory with `correct_skill: ["B"]`, and a corresponding test in skill B's directory with `correct_skill: ["A"]`.
@@ -1203,7 +1220,7 @@ For each run, the harness computes a derived boolean `output.activated` per the 
 
 **The skill under test is `activated: true` if it appears in `output.skills_invoked` AND any of the following is true:**
 
-1. **Owned-section writes.** The skill wrote to any section it owns per the ownership table in `research-schema-spec.md` Section 4. Examples: conflict-resolution wrote to `conflicts`; record-extraction wrote to `assertions` or `sources`.
+1. **Owned-section writes.** The skill wrote to any section it owns per the ownership table in `research-schema-spec.md` Section 4. Examples: conflict-resolution wrote to `conflicts`; the test-only `extraction-append` skill wrote to `assertions` or `sources` through `extraction_append`.
 2. **Files created or modified.** The skill created or modified files in `cwd` other than those it normally reads (for stateless skills, e.g., search-wikipedia writing a markdown file in the user's working folder).
 3. **Substantive response.** The skill produced a response that is either (a) at least `_SUBSTANTIVE_MIN_WORDS_LONG` (30) words long, OR (b) does not pattern-match as a routing acknowledgement — short responses must not mention any other skill name. This catches legitimate concise outputs like `convert-dates` → `"1850-03-15"` while excluding "I see you're asking about X, but Y skill handles this" pure-routing.
 4. **A hand-off the run was stopped at.** On a test that sets `execution.stop_at_stub` (§5.7) the harness ends the run at the skill's first stubbed hand-off, before it can write or summarize, so the narration it leaves can be one short line naming the next row, which rule 3 reads as routing away. There the recorded hand-off is the skill's work (`derive_activated`'s `handed_off`). Only that stop sets it, so a skill that merely names another one is still not activated.
@@ -1254,7 +1271,7 @@ Three independent layers. Each feeds results into the run log. The layers do not
 | Layer | What | Model | Sees | Output |
 |-------|------|-------|------|--------|
 | Layer 1: Deterministic | Structural correctness | Python (no LLM) | Full before/after state + tool calls | Binary pass/fail per check |
-| Layer 2: LLM judge | Quality evaluation | Haiku | Scenario README + diffs + text + tool calls + rubric + judge_context | Score + rationale per dimension |
+| Layer 2: LLM judge | Quality evaluation | Haiku | Scenario judge brief (README fallback) + before-state + diffs + text + tool calls + rubric + judge_context | Score + rationale per dimension |
 | Layer 3: Human | Verification | Junior + senior genealogists | Both Layer 1 and Layer 2 results | Agree/disagree per dimension |
 
 **Layer 2 runs on every non-aborted run, including one whose Layer 1 validators failed.** The failing validator names are handed to the judge, which grades the substantive dimensions and discounts the defect itself. The run's outcome is already `fail` (Section 7); grading it buys the per-dimension diagnosis. Only an abort skips Layer 2.
@@ -1313,7 +1330,7 @@ Base dimensions do **not** consume the 3–5 rubric budget. Skills are graded on
 **Skill rubrics** — each skill gets a `rubric.md` defining 3-5 domain-specific dimensions. Cap at 5 per skill (plus 3 base = 8 total). The cap is a noise-control heuristic on the *stable* dimensions; per-test `judge_context` notes are not dimensions and are not counted against it, but keep them concise (~0-3 notes) for the same noise-control reason. Each rubric is self-contained. Examples:
 
 - conflict-resolution: source independence analysis, evidence weighing, resolution completeness
-- record-extraction: assertion atomicity, informant identification, evidence type accuracy
+- record-structurer: faithful reading, stated relations, verbatim relay
 - citation: Evidence Explained compliance, replication test, source vs information distinction
 
 **`rubric.md` file format.** A parseable structure so the judge prompt can ingest it consistently:
@@ -1357,7 +1374,8 @@ For skills where tool work *is* the work (e.g., `search-records`, `search-full-t
 
 | Input | What | Why |
 |-------|------|-----|
-| Scenario README | 3-5 line summary of research state | Context without sending 700+ lines of JSON |
+| Scenario judge brief | What the fixture JSON cannot say (synthetic data, intentional state); the README while no brief exists (§3.1) | Context the before-state cannot carry, without a verdict |
+| Before-state | Project state rendered from the fixture JSON | Ground truth for "not on file" claims, without sending 700+ lines of JSON |
 | User message | What the user asked | The task the skill was supposed to accomplish |
 | Claude's full text response | Everything Claude said | Evaluate reasoning quality, not just file changes |
 | research.json diff | Entries added/modified | The structural output to evaluate |
@@ -1375,25 +1393,33 @@ The judge prompt template lives at `eval/harness/judge/prompt.md`. The system pr
 ```
 {rubric}                            — contents of eval/tests/unit/<skill>/rubric.md
 {judge_context}                     — bullet list from the test JSON
-{scenario_readme}                   — scenario README.md, or "(stateless test)"
+{scenario_readme}                   — scenario judge-brief.md; README.md while no brief exists; "(scenario brief intentionally empty)" for an empty brief; "(scenario has no judge brief or README)" for a scenario with neither; "(stateless test)" with no scenario
 {user_message}                      — verbatim from the test; on a direct-agent test, the `delegation` under a one-line harness label (§5.2.1)
 {skills_invoked}                    — list of skills Claude actually invoked, with each agent the main thread spawned inserted in call order as `<name> (agent)`; on a direct-agent test, the agent that was spawned (no skill runs)
 {text_response}                     — Claude's full output text (or sidecar ref)
 {file_changes_summary}              — pre-rendered diff summary, ~500 tokens max
 {tool_calls}                        — list of MCP calls with args + matched fixture
-{before_state}                      — sources and conflicts on file BEFORE the run
+{before_state}                      — project state on file BEFORE the run: conflicts, sources, then questions, plans, hypotheses, log ids, tree persons and relationships
 ```
 
-`{before_state}` renders the project's `sources` and `conflicts` as they existed
-*before* the skill ran, so the judge can mechanically check "not on file" /
-"fabricated" claims against the record. Each block renders its complete
-`count` + `all_ids` first (never clipped — that is the existence-check ground
-truth), then a heavy `detail` sample trimmed under `_BEFORE_STATE_MAX_CHARS`;
-conflicts render first so their preferred/competing assertion **values**
-(resolved from `assertions[]`) win the budget over source-citation detail. A
-dropped entry is named in an omission note, and `(none)` means the project had
-no prior sources or conflicts. Added-this-run material appears under
-`{file_changes_summary}`, not here.
+`{before_state}` renders the project's state as it existed *before* the skill
+ran, so the judge can mechanically check "not on file" / "fabricated" claims
+against the record. Each block renders its complete `count` + `all_ids` first
+(never clipped — that is the existence-check ground truth), then a heavy
+`detail` sample trimmed under `_BEFORE_STATE_MAX_CHARS`; conflicts render first
+so their preferred/competing assertion **values** (resolved from `assertions[]`)
+win the budget, then sources. After them come the rest of the project state,
+each projected to a few fields: questions (id, question, status),
+plans (id, question_id, status, item count), hypotheses (id, status), the
+research log (ids only), and the tree's persons (id, name, gender) and
+relationships (id, type, endpoints). The template's heading still names only
+sources and conflicts, because editing it moves `judge_prompt_hash`; so each of
+these blocks carries its own label inside the rendered value, ending "Project
+state for context; not a statement of what the skill should do." This is the
+state a scenario README used to paraphrase, which is why a judge brief carries
+only what the JSON cannot say. A dropped entry is named in an omission note,
+and `(none)` means the project had none of this state. Added-this-run material
+appears under `{file_changes_summary}`, not here.
 
 Each call's `response_summary` renders **every** result, not a 3-item sample:
 a grounding rubric marks a correct citation of result 4+ as fabricated when the
@@ -1405,6 +1431,14 @@ cap was rejected — it only moves the cliff.
 `{skills_invoked}` is provided to the judge as diagnostic context, not as a grading input. The wrong-skill detection for positive and negative tests is already deterministic (Section 7 per-run outcome) — the judge doesn't decide whether the right skill was chosen, only how well it executed. Including `skills_invoked` in the prompt lets the judge write more grounded rationales ("the right skill was invoked but it skipped the citation step") rather than guessing what ran. The slot names each agent the skill spawned as well, because `skills_invoked` holds `Skill` calls only: a test's `judge_context` can ask whether the skill delegated to an agent (`ut_init_project_q7b` does), and without the spawns the judge answered that blind. The slot is filled as a value, not edited in the template, so adding the spawns did not move `judge_prompt_hash`.
 
 The template is versioned with the harness; its SHA-256 hash is recorded in the run log as `judge_prompt_hash`. The skill rubric's content hash is recorded as `rubric_hash`. A change to either invalidates apples-to-apples comparison with prior runs and forces a re-baseline.
+
+**`make judge-regrade` is the cheap satisfaction path for a judge-prompt edit.** A judge-prompt change does not alter what the skill under test produced — only how that output is graded. A full `make eval-skill` run across every stale suite would cost roughly $95 to answer a question that needs no skill run; a regrade costs roughly $5 of judge-only spend. `make judge-regrade` re-renders the judge prompt from disk for every test (bypasses `judge.judge_prompt_template()`'s `@lru_cache` — nothing stores or replays a rendered prompt, which is how a prose-only judge edit otherwise certifies as a no-op), calls `judge.grade(...)` fresh, re-runs the post-judge pipeline (including `flag_routing_negative_judge_fail` + `_compute_outcome`), and writes the log back with the refreshed `judge_prompt_hash` + `judge_model`. It leaves `review_sample` and every `.ann.json` byte-identical — a human corrected score grades the skill's output, which the regrade did not change. Rule 2b in `check_runlogs.py` BLOCKS on a judge-prompt-only PR until the committed scores and hash are refreshed, with a warn-only fallback when the baseline log is already skill-side stale (rule 2 blocks for its own reason there; a regrade cannot satisfy an inactive log). The regrade **refuses** on a skill-side-stale log rather than silently rewriting scores against inputs the skill never saw. `DRY=1` renders every eligible prompt and hashes it without a model call — used by `make harness-test` to prove the renderer reads from disk on every call.
+
+**The regrade builds the before-state the way a live run does**: `build_workspace` stages the scenario and `snapshot_files` reads it back, the two calls the orchestrator makes. It once hand-built that snapshot under the file names as keys, which `_summarize_before_state` does not read, so every regraded prompt carried a `(none)` before-state the live run never sent. The two committed logs regraded that way (`validate-schema/v1`, `gps-mentor/v3`) moved no score. The parity test now builds its live side from those calls rather than from any regrade helper, and gives the scenario a source so the slot is not empty on both sides.
+
+**Scratch mode measures a judge input without certifying anything.** `make judge-regrade SCRATCH=<dir>` (`--runlogs-root`) copies each skill's latest committed log into `<dir>/<skill>/` and regrades the copy; the committed log is never written. It waives both refusals above, because the input it exists to measure, a scenario `judge-brief.md`, stales the skill-side snapshot without moving `judge_prompt_hash`. `SCENARIO="a b"` keeps only tests on those scenarios, `SLOT=readme` forces each scenario's README into the judge slot so an A/B runs both arms on one tree, and `DRY=1` renders and counts without a model call or a write. Each pass needs a fresh dir, given as an absolute path. Scratch mode refuses a relative path, a `SCENARIO` that names no scenario directory, and any `<skill>/` dir that already holds a log, all before the first judge call, so no pass regrades another's output; it exits non-zero when no test matched; and it deletes a skill's copy whose regrade failed, since that copy still holds the committed scores. Copies are not schema-validated on write: they are never committed, and a stale log can predate a later schema field. `eval/harness/scripts/compare_regrades.py <dir> <dir> …` lines the passes up per test, run and dimension. Compare arm against arm, never against the committed score, which was graded on whatever inputs that run saw.
+
+**Why a brief stays in the skill-side snapshot.** A judge brief changes only grades, like `rubric.md` and `judge_context`, and all three sit in the snapshot, so editing any of them stales the committed log and owes a paid `make eval-skill` run for it; a scratch regrade measures the effect but does not refresh the committed log. Moving judge-only files out of the snapshot (a judge-side snapshot partition) was ruled not planned on 2026-09-10 (1 of 1009 PR-level commits since 2026-06-01 changed a judge-side file with no skill-side file), so that is a separate decision, not this mode's.
 
 **Structured output.** The judge invokes Claude with tool_use forcing a single tool call against a `submit_grading` tool with this input schema:
 
@@ -1509,6 +1543,10 @@ This composition cleanly handles all edge cases:
 
 - `runs_per_test: 3` — description-optimizer passes (so pass-rate deltas aren't dominated by sampling noise) and golden-set calibration during rubric tuning.
 - `runs_per_test: 5+` — only when calibrating a high-variance rubric dimension and you specifically need a tighter estimate of per-dimension stability.
+
+`run_tests.py --no-tool-search` (Makefile `eval-skill ... TOOL_SEARCH=0`) is the other CLI-only override: it sends `ENABLE_TOOL_SEARCH=false`, so every tool schema is loaded up front instead of deferred behind ToolSearch. It is experiment-only — the invocation is non-releasable and writes a `scratch_` log, by the same mechanism as `--runs-per-test N` — and the run log records it as `tool_search: false` (see "Field details").
+
+`run_tests.py --store pg` (Makefile `eval-skill ... STORE=pg`, U15) is the third: every live tool call runs on `PgS3ProjectStore` against the compose Postgres + MinIO instead of the workspace directory. `mock_mcp._run_node_eval` preloads `eval/harness/harness/pg_store_prelude.mjs` into each `node --eval`. The workspace is seeded into its own Postgres project once, right after `build_workspace` (`seed_pg_workspace`), and every tool write is mirrored back, so snapshots, validators and the judge run unchanged; a file the agent writes with its own Write tool after the seed is not imported, as on the hosted path. The run is non-releasable, records `store: "pg"`, and writes to `eval/runlogs/unit-pg/<skill>/` — committed, outside every skill's release lineage and `check_runlogs`. It is judged by parity, not graded: `make unit-pg-parity` compares each skill's Postgres results with its newest file-store log and fails on a live response that reads as a store fault. These logs are scratch-named, so the keep-newest-5 prune never touches them (~20 MB a full pass): a full re-run of a skill supersedes its earlier `unit-pg/` logs — delete them in the same PR. A partial re-run keeps them, because the parity report merges a skill's logs newest-first per test.
 
 So `flaky` never fires in a *committed* run log and no cross-PR dashboard surfaces a flapping test. **That is the committed instrument being blind, not the suite being stable** — do not cite a silent `flaky` column as evidence that a test is consistent. To check a test you suspect, surface its flakiness deliberately: `run_tests.py --test <id> --runs-per-test 3 --runlogs-root <tmp>`, then read `flaky` and the per-dimension scores off the scratch log. Treat any disagreement between those runs as a bug to fix before the test is trusted again.
 
@@ -1650,6 +1688,7 @@ def report_example_pattern(text_response):
 - `no_result_message` (bool) — true when the run ended before a `ResultMessage` ever arrived even though it is not an abort: the negative-test routing short-circuit, and a `stop_at_stub` stop, which shares its exit. `num_turns` above has a real answer on this path (it is not read off the `ResultMessage` — see its own entry); `output_tokens` does not, since no partial token count exists before a `ResultMessage`. This field is what distinguishes that 0 from a skill that genuinely used no output tokens. Shape choice: the alternative considered was making `num_turns`/`output_tokens` nullable instead of adding this flag, and rejected — neither field has a null branch today, so nullable would be a schema change in both mirrors, would break every `int(...)` summation site, and would silently disable `test_universal.py`'s V8 guard (`num_turns != 0 or output_tokens != 0`, which becomes vacuously true against `None`). The sibling-flag shape keeps both fields real integers everywhere, so no consumer arithmetic and no existing validator needed to change.
 - `aborted_reason` (str | None) — abort reason if the run was aborted (e.g. `"max_wall_clock_seconds"`, `"sdk_stream_silence"`, `"quota_exhausted"`, `"error"`). `None` when the run completed normally.
 - `suppressed_post_deny_calls` (array of objects, optional) — MCP calls made in the turn AFTER the routing short-circuit's hook denied the hand-off (a negative test's, or a `stop_at_stub` stop). That turn is the model reacting to the deny, not the skill working, so its text, its turn count and these calls are all withheld from the run's own record. They are still written here rather than dropped, because dropping them made two things uncheckable from any run log: whether a reaction call ever executes at all, and whether one ever names a tool the mock server does not register. Read asymmetrically on purpose — the orchestrator's `unmatched_tool_call` gate counts them on the attempted side (so an executed, fixture-matching reaction call cannot raise `covered` while the left side stays flat and mask an uncovered call from an earlier turn) and scans them for unregistered names; `_build_warnings`' `uncovered_tool_call` advisory does **not**, so a deliberately stopped run collects no advisory for a turn it never owned. Absent when the run suppressed nothing.
+- `subagents` / `subagent_capture_status` / `main_thread` (optional) — each thread's **busiest moment** (`peak_window_tokens`: the tallest single window it read, a max over its messages, never a sum), its compactions (one `{trigger, pre_tokens, post_tokens}` per compaction; the **count** is the signal, since a peak saturates once a thread compacts) and the models it ran on. Read from the SDK's own transcripts by `_capture_context_meters` in `_execute_skill_with_retry`, which must run **before** `cleanup_session_store` deletes them — `test_capture_runs_before_session_cleanup` pins the order. `subagents` covers helpers, including the agent under test on a direct-arm test (behind the relay); `main_thread` is the parent session, where a routed test's skill runs. Absent — never zero — on a log written before the capture existed and on a run that aborted before execution. `make unit-report` prints them.
 - `error` (str | None) — the SDK's own error string for an aborted run, plus whichever rate-limit signals fired. `None` when the run completed normally, or when it aborted before the SDK produced one (the pre-execution runnability gate). On a routing short-circuit that also detects a genuine subscription-quota rejection, `aborted_reason`/`error` survive rather than being cleared with the rest of the short-circuit's abort state — see `skill_runner.run_skill`'s routing-short-circuit branch.
 
 Validators compute the diff between `before_state` and `after_state` internally. The harness does not pre-compute the diff for validators — they have full state for cases like the append-only check that need to compare collections, not just diffs.
@@ -1799,6 +1838,9 @@ A run log represents N runs of one test (N from `runs_per_test`, default 1). The
       "cache_creation_input_tokens": "number",
       "output_tokens": "number",
       "model_usage": "object (per-model ledger, keyed by model id; the token fields above are its column sums)",
+      "subagents": "array (optional; one summary per subagent — agent_type, usage, peak_window_tokens, compactions, models, duration_seconds; written with subagent_capture_status, absent when no capture ran)",
+      "subagent_capture_status": "string (optional; captured | matched_no_transcripts | no_cache_dir | error)",
+      "main_thread": "object (optional; the parent session's peak_window_tokens, compactions, models; absent when its transcript could not be read)",
       "skill_cost_usd": "number",
 
       "output": {
@@ -1886,6 +1928,9 @@ A run log represents N runs of one test (N from `runs_per_test`, default 1). The
 - **`flaky`** — true when the per-run outcomes are not unanimous. Composes orthogonally with `outcome` (Section 7). A test can be `outcome: pass, flaky: true` (modal-passing but unstable).
 - **`harness_version`** — the semver of the harness package. Bumping the harness (new validator, new judge prompt scaffolding, fixture-matching changes) invalidates apples-to-apples comparison with prior runs. Pinning the version makes that explicit.
 - **`rubric_hash` / `judge_prompt_hash`** — SHA-256 of the rubric and judge prompt template files at run time. A change to either silently invalidates historical scores; recording the hash forces a re-baseline rather than letting old runs look comparable.
+- **`judge_model`** — identifier of the judge model used for this run log (optional, envelope-level; absent on logs committed before the field was added). Lets a judge-model change be dated and compared rather than silently invalidating historical scores. Reversed the earlier "project-global, not per-run-versioned" rule (`eval/CLAUDE.md` § "Model Pinning"); `make judge-regrade` stamps this field alongside the refreshed `judge_prompt_hash` on each regraded log.
+- **`store`** (envelope) — `"pg"` under `--store pg`; absent on the file store, as on every earlier log. Also picks the directory: `unit-pg/` instead of `unit/`.
+- **`tool_search`** (envelope) — `true`, or `false` under `--no-tool-search`. Written on every log the harness writes, the default included; optional in the schema and absent on logs written before it existed, which all ran with tool search on and are read that way. Recorded so `make unit-compare` names a differing setting ("run settings that differ") instead of reporting a cost move with no changed file as wobble.
 - **Every token field covers every model the run touched** — the main thread plus
   any plugin agent it delegated to. They are read from the SDK's per-model ledger
   (`model_usage`), which the CLI documents as covering the same calls as
@@ -1960,7 +2005,7 @@ A run log represents N runs of one test (N from `runs_per_test`, default 1). The
 - **`runs[].output.activated`** — derived boolean from Section 6's `activated` definition. Positive tests pass when `activated: true`; negative tests pass when `activated: false`. Having it as a derived field keeps Section 7's outcome formulas simple and prevents drift between activation logic and grading logic.
 - **`runs[].output.skills_invoked`** — the skill(s) Claude actually invoked, whether through a `Skill` call or a slash-command entry. Combined with `activated`, drives the wrong-skill check for positive tests and the `correct_skill` array match for negative tests (Section 6).
 - **`runs[].output.tool_calls[].matched`** — distinguishes calls that hit a fixture (`kind: "predicate"`) from unmatched calls (`kind: "none"`, which returned a `fixture_not_found` error to the skill). Any unmatched call aborts the run with `aborted_reason: unmatched_tool_call` (Section 15) — the skill ran against an error response, so the run isn't scored.
-- **`runs[].output.builtin_tool_calls`** — every non-MCP tool call the run made (`Read`, `Write`, `Grep`, `Skill`, `Task`, …), in call order. Optional and **omitted entirely when the run made none**, so historical run logs stay valid and an unchanged run writes unchanged output. MCP calls are excluded — they are already in `tool_calls` and `attempted_mcp_calls`. `agent_id` is present only when the call came from inside a Task-spawned subagent and absent on the main thread, which is what distinguishes "the record-extractor agent read the reference file" from "the router read it". Argument values are stringified and truncated to 200 characters, so a `Write` cannot carry a whole file body into the committed corpus; the truncation is silent, with no marker. Telemetry only — nothing grades, gates, or aborts on it, and it does not count toward `max_tool_calls`.
+- **`runs[].output.builtin_tool_calls`** — every non-MCP tool call the run made (`Read`, `Write`, `Grep`, `Skill`, `Task`, …), in call order. Optional and **omitted entirely when the run made none**, so historical run logs stay valid and an unchanged run writes unchanged output. MCP calls are excluded — they are already in `tool_calls` and `attempted_mcp_calls`. `agent_id` is present only when the call came from inside a Task-spawned subagent and absent on the main thread, which is what distinguishes "a subagent read the reference file" from "the router read it". Argument values are stringified and truncated to 200 characters, so a `Write` cannot carry a whole file body into the committed corpus; the truncation is silent, with no marker. Telemetry only — nothing grades, gates, or aborts on it, and it does not count toward `max_tool_calls`.
 - **`runs[].output.tool_calls[].expected_args`** — the matched fixture's `args` block (the canonical expected args), copied so the trace view and judge prompt can render expected/actual side-by-side without re-reading the fixture file. Null when no fixture matched.
 - **`runs[].output.text_response`** — Claude's full response, not truncated. If a single run's text exceeds 100 KB, the harness writes it to a sidecar file (`runs/<run_id>.text.md`) and stores a reference (`{ "ref": "runs/<run_id>.text.md" }`) in the log instead, to keep the JSON tractable.
 - **`runs[].output.file_changes.diff`** — structured diff with full before/after values for modified fields. For a modified entry, fields that didn't exist on the `before` object are emitted as `{"before": null, "after": <value>}` (added field); fields removed from the `after` object are emitted as `{"before": <value>, "after": null}` (removed field). Use literal `null`, not absent keys, so the judge always sees a uniform shape. `deleted` should always be empty (no-delete enforcement); if it's not, the validator already caught it.
@@ -2029,6 +2074,8 @@ Junior genealogists create tests via the CRUD UI. Senior genealogists review a s
 ## 13. Worked Examples
 
 ### 13.1 Positive test: record-extraction
+
+> Written against the `record-extraction` skill, since retired (13.1 and 13.2). The live suites are `eval/tests/unit/extraction-append/` (indexed records) and `eval/tests/unit/record-structurer/` (text sources); the test format shown is unchanged.
 
 ```json
 {
@@ -2222,7 +2269,7 @@ Unit tests and e2e tests are complementary (see `e2e-test-spec.md`):
 | MCP data | Mocked via fixtures | Live API calls |
 | Grading layers | Deterministic + LLM judge + human | Deterministic + LLM judge + human |
 
-Skill rubric dimensions should align with the e2e base rubric dimensions where they overlap. For example, the conflict-resolution skill rubric's "evidence weighing" dimension corresponds to the e2e base rubric's "conflict handling" dimension. This ensures unit test improvements translate to e2e improvements.
+Skill rubric dimensions should align with the e2e base rubric dimensions where they overlap. For example, the conflict-resolution suite rubric's "evidence weighing" dimension corresponds to the e2e base rubric's "conflict handling" dimension. This ensures unit test improvements translate to e2e improvements.
 
 ---
 
@@ -2314,7 +2361,7 @@ should be updated.
 
 **The allowlist cannot express a per-*context* rule.** Because the union above makes the session set a superset of every delegated agent's set, the main session is granted every tool its subagents need — including ones only a subagent may safely call (`image_read` returns inline base64 that overflows the transport buffer if it lands in the caller's context). That policy lives in the **PreToolUse hook** instead, which can discriminate by context via `agent_id` — absent on the main thread, present inside a Task-spawned subagent.
 
-The guard fires only when all three hold: the tool is in `SUBAGENT_ONLY_TOOLS`, the call is on the main thread, and the skill did **not** declare the tool in its own `allowed-tools`. That last clause is what separates a violation from a legitimate direct call — a skill that declares a guarded tool for itself may call it directly, while `record-extraction` holds `image_read` only through `@plugin:image-reader` and must delegate. **No skill declares either guarded tool today**, so that clause is currently unreachable: `search-images` used to declare `image_read` directly and moved to delegating via `@plugin:image-reader` (2026-07-17), and `extraction_append` — the set's second member — has only ever lived on `agents/record-extractor.md`. The exemption mechanism stays available for a skill that legitimately needs it; both facts are pinned by tests in `harness/tests/unit/test_context_policy.py`. `declared_skill_tools()` (above) returns the pre-union set the check needs; `compute_allowed_tools` is the wrong input because it already contains the union. See `harness/context_policy.py` and `docs/plan/image-read-context-policy.md` §4.1. The universal validator `test_no_main_thread_subagent_only_calls` fails any run that breaks it, so routing is graded deterministically rather than by the judge (§5.10's pattern, applied to routing).
+The guard fires only when all three hold: the tool is in `SUBAGENT_ONLY_TOOLS`, the call is on the main thread, and the skill did **not** declare the tool in its own `allowed-tools`. That last clause is what separates a violation from a legitimate direct call — a skill that declares a guarded tool for itself may call it directly, while a skill that reaches `image_read` only through `@plugin:image-reader` must delegate. **The clause is now REACHED**, by a different tool than the one it guards: `extraction_append` was the set's second member until indexed-record extraction moved into code, and `research` now declares it and calls it on the main thread, so the tool left the set entirely. The one remaining member, `image_read`, is declared by no skill — `search-images` used to declare it directly and moved to delegating via `@plugin:image-reader` (2026-07-17). The exemption mechanism stays available for a skill that legitimately needs it; both facts are pinned by tests in `harness/tests/unit/test_context_policy.py`. `declared_skill_tools()` (above) returns the pre-union set the check needs; `compute_allowed_tools` is the wrong input because it already contains the union. See `harness/context_policy.py` and `docs/plan/image-read-context-policy.md` §4.1. The universal validator `test_no_main_thread_subagent_only_calls` fails any run that breaks it, so routing is graded deterministically rather than by the judge (§5.10's pattern, applied to routing).
 
 ### Capturing `skills_invoked`: the PreToolUse hook, and slash entry
 
@@ -2507,7 +2554,7 @@ After the skill executes and output is captured:
      → No: continue
      ↓
 2. Run LLM judge (Haiku)
-   Inputs: scenario README, user message, text output, diffs, tool calls, rubric, judge_context
+   Inputs: scenario judge brief (README fallback), before-state, user message, text output, diffs, tool calls, rubric, judge_context
    Output: score + rationale per dimension
      ↓
 3. Write run log to eval/runlogs/unit/<skill>/v1_<timestamp>.json
@@ -2575,7 +2622,7 @@ The following seed files exist in the repo as working references for harness dev
 
 Two scenarios are shipped today: `mid-research-flynn` and `flynn-with-birthplace-conflict` (both under `eval/fixtures/scenarios/`). The full list of bootstrap scenarios devs must seed for Phase 1 — including which are still needed — lives in [`docs/skill-mcp-testing-plan.md`](../skill-mcp-testing-plan.md) under "Sequencing > Phase 1." That's the single source of truth for scenario inventory and priority; this section links rather than restates to prevent drift.
 
-Each scenario directory contains `research.json`, `tree.gedcomx.json`, and `README.md`. The two JSON files must validate against [`research.schema.json`](schemas/research.schema.json) and [`tree-gedcomx.schema.json`](schemas/tree-gedcomx.schema.json).
+Each scenario directory contains `research.json`, `tree.gedcomx.json`, and `README.md`, and optionally the `judge-brief.md` the judge reads in the README's place (§3.1). The two JSON files must validate against [`research.schema.json`](schemas/research.schema.json) and [`tree-gedcomx.schema.json`](schemas/tree-gedcomx.schema.json).
 
 ### MCP Fixtures
 

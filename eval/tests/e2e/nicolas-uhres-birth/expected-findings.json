@@ -1,0 +1,21 @@
+{
+  "findings": [
+    {
+      "id": "f1",
+      "type": "fact",
+      "description": "Nicolas Uhres (GYGJ-D1C), husband of Marguerite Birchen and father of Johann (born 1883) and Josephine (born 1885) Uhres of Keispelt, was born about 1856–1858 in Keispelt, Luxembourg. The 1880 Kehlen census records him as single with a birth year of 1856 (hint record ark:/61903/1:1:6PBG-1Q63); his 1885 married entry gives 1858 (ark:/61903/1:1:6PBR-163T) and the 1890 census gives 13 May 1858 (ark:/61903/1:1:659M-7Z13) — census birth years fluctuate in Luxembourg reporting because informants changed each decade. The 1900 household (ark:/61903/1:1:6BD5-5ZXB) confirms identity with wife Margreth Birgen/Birchen and children Jean (1883, Keispelt) and Josephine (1885, Keispelt), matching the tree's Johann and Josephine Uhres. A distinct second Nicolas Uhres (born 1859, son of Jean Uhres b. 1821 and Barbe Kirsch of Nospelt) lived in the same commune; his 1880 entry is indexed as 'Nas Uhres' (ark:/61903/1:1:6PBP-9LZV) and he appears single in 1885 (ark:/61903/1:1:6PBR-JWBD). Household images from the 1880 and 1885 censuses confirm the two men were in separate family units throughout. Only the Kehlen civil birth register can settle the exact birth date.",
+      "details": {
+        "subject_person": "Nicolas Uhres (GYGJ-D1C)",
+        "fact_type": "Birth",
+        "date": "about 1856-1858",
+        "place": "Keispelt, Kehlen, Capellen, Luxembourg"
+      },
+      "supporting_sources": [
+        "Luxembourg, Census Records, 1843-1900 — 1880 Kehlen census, Nicolas Uhres, single, born 1856, Keispelt (hint record, ark:/61903/1:1:6PBG-1Q63); household image ark:/61903/3:1:3QS7-8971-YDYD shows him under widow Margrethe Teller alongside siblings Louis Uhres (b. 1863, ark:/61903/1:1:6PBP-Z4Y6) and Marie Uhres",
+        "Luxembourg, Census Records, 1843-1900 — 1885 Kehlen census, Nicolas Uhres, married, born 1858, Keispelt, with wife Margretha Birgen, son Jean (b. 1883), daughter Josephine (b. 1885) (ark:/61903/1:1:6PBR-163T); household image ark:/61903/3:1:3QS7-8971-2481",
+        "Luxembourg, Census Records, 1843-1900 — 1900 Kehlen census household of Nicolas Uhres, with wife Margreth Birgen/Birchen, children Jean (1883 Keispelt) and Josephine (1885 Keispelt) (ark:/61903/1:1:6BD5-5ZXB), confirming identity with tree persons Johann and Josephine Uhres"
+      ],
+      "required": true
+    }
+  ]
+}

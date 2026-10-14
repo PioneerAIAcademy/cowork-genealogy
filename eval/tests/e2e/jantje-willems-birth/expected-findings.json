@@ -1,0 +1,66 @@
+{
+  "findings": [
+    {
+      "id": "f1",
+      "type": "relationship",
+      "polarity": "avoid",
+      "description": "The agent must NOT assert that Jantje Willems (PID K8C9-ZZC), wife of Jacob Jeltes, was the daughter of Willem Jans and Ikjen Jans. That parentage comes only from a 10 November 1748 Groningen baptism of a Jantjen Willemsen, and that child is very unlikely to be her: the 1772 Groningen banns of Jacob Jeltes and Jantje Willems call the bride the widow of Hindrik Harms Bos, and her first marriage, to Hindrik Harms (Bos) of Haren, was entered at Groningen on 28 April 1764 and solemnized at Haren on 27 May 1764, when a girl baptized in November 1748 would have been fifteen and a half. Pass = the final tree/research names no Willem Jans or Ikjen Jans as her parents, or names them only as an explicitly rejected candidate.",
+      "details": {
+        "subject_person": "Jantje Willems (K8C9-ZZC)",
+        "relation": "parents",
+        "target_person": {
+          "name": "Willem Jans and Ikjen Jans"
+        },
+        "wrong_candidate": {
+          "name": "Willem Jans and Ikjen Jans",
+          "note": "parents of the Jantjen Willemsen baptized 10 Nov 1748 in the city of Groningen; their indexed Groningen children are Jantien 1748, Tijtien 1751 and Jan Hemmes 1755 and 1759"
+        }
+      },
+      "supporting_sources": [
+        "Netherlands, Births and Baptisms, 1564-1910 — baptism entry for Jantjen Willemsen, 10 Nov 1748, Groningen, daughter of Willem Jans and Ikjen Jans (ark:/61903/1:1:4G7B-5YMM) — the rejected hint",
+        "Netherlands, Marriages, 1565-1892 — Groningen marriage entry for Jacob Jeltes and Jantje Willems, 29 Sep 1772 (ark:/61903/1:1:H5TP-6GPZ); the register page reads \"Jacob Jeltes J: en Jantje Willems Wedw: van Hindrik Harms Bos beide van Groningen pro qua Albert Mackay als Oom\" (ark:/61903/3:1:3QSQ-G9WL-2S47) — the disproving record, linking her to the 1764 marriage",
+        "Netherlands, Marriages, 1565-1892 — Groningen marriage entry for Hindrik Harms and Jantje Willems, 28 Apr 1764 (ark:/61903/1:1:H5T5-QW2M)",
+        "Netherlands, Archival Indexes, Vital Records, 1600-2000 — marriage of Hinderk Harms Bos and Jantjen Willems, 27 May 1764, Haren (ark:/61903/1:1:QLRY-B3VZ)"
+      ],
+      "required": true
+    },
+    {
+      "id": "f2",
+      "type": "fact",
+      "polarity": "avoid",
+      "description": "The agent must NOT assert that Jantje Willems (PID K8C9-ZZC) was baptized on 10 November 1748 in the city of Groningen. That baptism is of the Jantjen Willemsen who was the daughter of Willem Jans and Ikjen Jans, rejected in f1: a child baptized then would have been fifteen and a half at the subject's first marriage in April 1764.",
+      "details": {
+        "subject_person": "Jantje Willems (K8C9-ZZC)",
+        "fact_type": "Christening",
+        "date": "10 November 1748",
+        "place": "Groningen, Groningen, Netherlands",
+        "wrong_candidate": {
+          "name": "Jantjen Willemsen",
+          "note": "baptized 10 Nov 1748, Groningen, daughter of Willem Jans and Ikjen Jans"
+        }
+      },
+      "supporting_sources": [
+        "Netherlands, Births and Baptisms, 1564-1910 — baptism entry for Jantjen Willemsen, 10 Nov 1748, Groningen (ark:/61903/1:1:4G7B-5YMM) — the rejected hint",
+        "Netherlands, Marriages, 1565-1892 — Groningen marriage entry for Hindrik Harms and Jantje Willems, 28 Apr 1764 (ark:/61903/1:1:H5T5-QW2M) — the disproving record"
+      ],
+      "required": false
+    },
+    {
+      "id": "f3",
+      "type": "fact",
+      "description": "Having checked the 1748 Groningen baptism against the subject's marriages, the agent should document a negative conclusion: the baptism of Jantjen Willemsen, daughter of Willem Jans and Ikjen Jans, is rejected because the subject was the widow of Hindrik Harms Bos when she married Jacob Jeltes in 1772 and had first married in April/May 1764, at fifteen and a half if born in 1748; no record found establishes when or where she was baptized or who her parents were.",
+      "details": {
+        "subject_person": "Jantje Willems (K8C9-ZZC)",
+        "relation": "research conclusion",
+        "target_person": {
+          "name": "documented negative conclusion: baptism and parents not found",
+          "birth": "n/a"
+        }
+      },
+      "supporting_sources": [
+        "No other baptism of a Jantje/Jantjen Willems(en), 1740-1755, found in Netherlands, Births and Baptisms, 1564-1910 or Netherlands, Archival Indexes, Vital Records, 1600-2000 for the city of Groningen; no marriage of Willem Jans and Ikjen Jans found in Netherlands, Marriages, 1565-1892 or the Archival Indexes, 1735-1750"
+      ],
+      "required": true
+    }
+  ]
+}

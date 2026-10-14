@@ -6,6 +6,7 @@
 // No network, no auth.
 
 import { getProjectStore } from "../store/project-store.js";
+import { treePidOfArk } from "../utils/ark.js";
 import { classifyProjectPath, missingProjectDirMessage, noProjectResult } from "../utils/project-io.js";
 import type {
   SimplifiedFact,
@@ -38,7 +39,6 @@ import {
   earliestYearOfSelfFacts,
   factDaysCount,
   warningFactsOfPerson,
-  factDaysDiffEarliestLatest,
   factDaysDiffLatestEarliest,
   factDaysDiffLatestLatest,
   factYearsDiffEarliestEarliest,
@@ -117,12 +117,31 @@ async function loadAnchor(
     throw new Error(`No persons found in ${TREE_FILE}.`);
   }
 
-  const anchor = tree.persons.find((p) => p.id === personId);
-  if (!anchor) {
-    throw new Error(`Person '${personId}' not found in ${TREE_FILE}.`);
-  }
+  return { tree, anchor: findAnchor(tree.persons, personId) };
+}
 
-  return { tree, anchor };
+/**
+ * The tree person `personId` names: by tree id first, else (issue #2942) the
+ * one person whose FamilySearch link (`ark`) names that id, read by
+ * `treePidOfArk` (a `4:1:` ark in any spelling or a tree person URL),
+ * compared case-insensitively. init-project keys imported persons `I1`, `I2`…
+ * and keeps their FamilySearch id in `ark`, so a caller holding only the
+ * FamilySearch id still reaches them. Two persons linked to the same id is a
+ * pending merge, not a choice to make silently.
+ */
+export function findAnchor(persons: SimplifiedPerson[], personId: string): SimplifiedPerson {
+  const byId = persons.find((p) => p.id === personId);
+  if (byId) return byId;
+  const wanted = personId.trim().toUpperCase();
+  const linked = persons.filter((p) => treePidOfArk(p.ark)?.toUpperCase() === wanted);
+  if (linked.length === 1) return linked[0];
+  if (linked.length > 1) {
+    throw new Error(
+      `FamilySearch id '${personId}' is linked to more than one person in ${TREE_FILE} ` +
+        `(${linked.map((p) => p.id).join(", ")}); pass one of those ids.`,
+    );
+  }
+  throw new Error(`Person '${personId}' not found in ${TREE_FILE}.`);
 }
 
 export const personWarningsToolSchema = {
@@ -145,7 +164,7 @@ export const personWarningsToolSchema = {
       personId: {
         type: "string",
         description:
-          "The anchor person to check. Warnings are evaluated over this person and their one-hop relatives.",
+          "The anchor person to check: a tree person id (e.g. I1), or a FamilySearch id (e.g. KWCJ-RN4) that a tree person's ark links to. Warnings are evaluated over this person and their one-hop relatives.",
       },
     },
     required: ["personId", "projectPath"],
@@ -304,19 +323,35 @@ const EVENT_IN_OTHER_COUNTRY_SKIP: ReadonlySet<string> = new Set([
 /**
  * Java MobWarnings.hasEventBeforeBirth (warnings.java:918).
  *
- * Fires when the gap between the earliest fact of any type and the latest
- * birth-like fact is more than `days` days. Java calls this with `days = 730`
+ * Fires when the earliest fact of any type is dated more than `days` days
+ * before the latest birth-like fact. Java calls this with `days = 730`
  * (2 years) under the tag `hasEventBeforeBirth365_2`.
+ *
+ * KNOWING DIVERGENCE FROM THE JAVA PORT — do not "restore" the Java math.
+ * Java computes `latestBirthLikeDay − earliestAnyFactDay > days`, the two
+ * bounds that MAXIMISE the gap, so an imprecise date fires against itself: a
+ * lone Birth `Abt 1868` spans 1867..1869, both bounds come from the one
+ * fact, and the tool reported a contradiction on a person with nothing else
+ * recorded (issue #1962). Two approximate facts in the same year, and a
+ * year-only date read as 1 January, fire the same way.
+ *
+ * This reads each date as generously as it allows instead: the latest
+ * birth-like fact at its EARLIEST possible day, against the earliest fact at
+ * its LATEST possible day. Pairing a fact with itself then gives at most 0,
+ * which never exceeds `days`, so no identity check is needed. Exact dates
+ * give the same answer as Java. `factDaysDiffLatestEarliest` (the
+ * `hasBurialAfterDeath` fix) cannot be used: its first set is "any fact", so
+ * its latest bound is the last fact recorded and the check would never fire.
+ *
+ * The same predicate serves the merge-mode
+ * `relativesHasEventBeforeBirth365_2` mirror and the merged-mob check that
+ * `calculateWarnings` runs in merge mode (a Block in `merge_warnings`).
  */
 export function hasEventBeforeBirth(mob: Mob, days: number): boolean {
-  const diff = factDaysDiffEarliestLatest(
-    mob,
-    null,
-    null,
-    BIRTHLIKE_FACT_TYPES,
-    null,
-  );
-  return diff !== null && diff > days;
+  const latestBirthRead = latestDayOfSelfFacts(mob, BIRTHLIKE_FACT_TYPES, null, 0, "min");
+  const earliestEventRead = earliestDayOfSelfFacts(mob, null, null, 0, "max");
+  if (latestBirthRead === null || earliestEventRead === null) return false;
+  return latestBirthRead - earliestEventRead > days;
 }
 
 /**
@@ -522,7 +557,7 @@ const NON_BIOLOGICAL_PARENT_SUBTYPES: ReadonlySet<string> = new Set([
  *  and the upstream `…Parent` suffix. An unrecognized value counts as
  *  biological: it may mean anything, and assuming otherwise would silently
  *  drop a real second-father from the count. */
-function isNonBiologicalSubtype(sub: unknown): boolean {
+export function isNonBiologicalSubtype(sub: unknown): boolean {
   if (typeof sub !== "string") return false;
   const normalized = sub.trim().replace(/parent$/i, "").toLowerCase();
   return NON_BIOLOGICAL_PARENT_SUBTYPES.has(normalized);
@@ -734,18 +769,22 @@ export function hasChristeningBeforeBirth(mob: Mob): boolean {
  * 365-day imperfect-date fudge. Java calls this at days = 365 * 3 (3
  * years) under the tag `hasEventBeforeChristening365_3` — an event >3
  * years before a christening is implausible.
+ *
+ * KNOWING DIVERGENCE FROM THE JAVA PORT, the same one as
+ * `hasEventBeforeBirth`. The event set includes the christening itself, so
+ * Java's pairing (latest christening at its latest day, earliest event at its
+ * earliest day) fires a lone `Abt 1868` or `Bet 1860 and 1868` christening
+ * against itself, the 365-day fudge pushing `Abt` over the line. This reads
+ * the latest christening at its EARLIEST possible day and the earliest event
+ * at its LATEST, fudge included, so a fact paired with itself gives at most 0.
+ * Exact dates take no fudge and give Java's answer.
  */
 export function hasEventBeforeChristening(mob: Mob, days: number): boolean {
   const fudge = 365;
-  const diff = factDaysDiffEarliestLatest(
-    mob,
-    null,
-    BIRTH_AND_EVENT_REGISTRATION,
-    CHRISTENING_AND_BAPTISM,
-    null,
-    fudge,
-  );
-  return diff !== null && diff > days;
+  const latestChristeningRead = latestDayOfSelfFacts(mob, CHRISTENING_AND_BAPTISM, null, fudge, "min");
+  const earliestEventRead = earliestDayOfSelfFacts(mob, null, BIRTH_AND_EVENT_REGISTRATION, fudge, "max");
+  if (latestChristeningRead === null || earliestEventRead === null) return false;
+  return latestChristeningRead - earliestEventRead > days;
 }
 
 /**

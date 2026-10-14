@@ -1,0 +1,18 @@
+{
+  "tool": "place_search",
+  "description": "FamilySearch place data for England as a country, the level person-evidence's residence-cluster lookup searches when the nearest attested residence is compared at country level (issue #2537). Used by sussex-tennessee-unexplained-move and bedfordshire-utah-corridor-move.",
+  "args": {
+    "placeName": "~England"
+  },
+  "response": {
+    "results": [
+      {
+        "standardPlace": "England, United Kingdom",
+        "type": "Country",
+        "latitude": 52.5,
+        "longitude": -1.5,
+        "familysearchUrl": "https://www.familysearch.org/en/research/places/?text=England"
+      }
+    ]
+  }
+}

@@ -46,6 +46,7 @@ from harness.auth import env_for_sdk, resolve_auth
 from harness.context_policy import (
     OWNED_DECLARATIONS as OWNED_DECLARATION_OWNERS,  # the SHIPPED hook's map, not a copy
     OWNED_FIELDS as OWNED_FIELD_OWNERS,  # the SHIPPED hook's map, not a copy
+    OWNED_CLAIMS as OWNED_CLAIM_ROUTES,  # the SHIPPED hook's map, not a copy
     OWNED_SECTIONS as OWNED_SECTION_OWNERS,  # the SHIPPED hook's map, not a copy
     bare_tool_name as _bare_tool_name,  # re-exported: callers + tests import it from here
     is_subagent_call,
@@ -77,6 +78,7 @@ from e2e import provenance
 from e2e.mcp_health import (
     CONSECUTIVE_TOOL_SEARCH_MISSES,
     GENEALOGY_SERVER_NAME,
+    TOOL_SEARCH_NAME,
     backstop_fired,
     classify_server_status,
     find_server_entry,
@@ -105,6 +107,7 @@ from e2e.stop_checker import (
 )
 from e2e.subagent_capture import (
     collect_subagents,
+    find_session_transcript,
     find_subagent_transcripts,
     pair_tool_calls,
     parse_jsonl,
@@ -246,14 +249,21 @@ def is_blocked_tree_tool(
 def is_main_thread_subagent_only_tool(input_data: dict[str, Any]) -> bool:
     """Whether this is a main-thread call to a `SUBAGENT_ONLY_TOOLS` member.
 
-    Both members are declared by NO skill's `allowed-tools`: `extraction_append`
-    lives only on `agents/record-extractor.md` (the #942 case), and `image_read`
-    is declared by no agent at all since `image-reader-opus` was retired (issue
-    #2013) — the deny is kept regardless, because it is what keeps inline base64
-    off the main thread. A call on the main thread (no `agent_id`) is the router
-    substituting for a failed spawn and doing the work itself.
+    The set has ONE member today: `image_read`, declared by no skill and by no
+    agent since `image-reader-opus` was retired (issue #2013) — the deny is kept
+    regardless, because it is what keeps inline base64 off the main thread. A
+    call on the main thread (no `agent_id`) is the router substituting for a
+    failed spawn and doing the work itself.
 
-    The policy binds in e2e for both because `agent_id` presence alone is a
+    `extraction_append` was the other member (the #942 case) and LEFT the set in
+    issue #2937, which routes indexed-record extraction through code called from
+    the main thread. See `harness.context_policy`'s set comment for what that
+    retires — in particular that this predicate is exactly the arm that cannot
+    express the declared-tools exemption, so the unindexed-path substitution #942
+    guarded is now unchecked in e2e, which is filed on the `nothing-checks`
+    register.
+
+    The policy binds in e2e because `agent_id` presence alone is a
     sufficient discriminator — which is all e2e can see, since its sub-skills run
     in the same session via the `Skill` tool with no `agent_id` to attribute them
     (see `harness.context_policy` docstring). We deny the bare tool directly
@@ -328,7 +338,7 @@ def is_fixture_blocked_tool(tool_name: str, blocked_tools: frozenset) -> bool:
 # docs/specs/guardrail-enforcement-spec.md §6. starting-tree.gedcomx.json is the
 # write-once baseline the tree-encoding gate diffs against (issue #1490);
 # overwriting it would defeat that gate.
-PROTECTED_PROJECT_FILES = ("research.json", "tree.gedcomx.json", "starting-tree.gedcomx.json")
+PROTECTED_PROJECT_FILES = ("research.json", "tree.gedcomx.json", "starting-tree.gedcomx.json", "external-collections.json")
 # The device-bridge writer, matched on the BARE TAIL because Cowork namespaces it
 # (`mcp__remote-devices__device_commit_files`) and the plugin cannot control the
 # prefix. This is the route that actually mattered: measured live 2026-08-15,
@@ -1108,9 +1118,11 @@ def build_workspace(
     # NOT (it's output-only — verified). This is *a* working effort lever, not
     # the only one: `ClaudeAgentOptions.effort` also works and always has —
     # the SDK's subprocess transport emits `--effort` unconditionally when the
-    # option is set, at every version this repo has pinned. The settings-file
-    # route is kept because it is the one that provably reaches subagents; the
-    # SDK option's subagent propagation is unverified. Do not restate this as
+    # option is set, at every version this repo has pinned. Both reach
+    # subagents: `apps/server/dev/probe_effort_capture.py` read a person-evidence
+    # subagent's request body carrying `medium` under either lever (CLI 2.1.215 and
+    # 2.1.220, 2026-10-12, issue #3263). This harness runs CLI 2.1.139, where subagent
+    # reach is unprobed for either lever. Do not restate this as
     # "the only lever" — that claim shaped a spend decision before it was
     # checked. Session-wide (parent + every subagent that does not pin its own
     # `effort:` — agent frontmatter overrides this, verified live in Cowork and
@@ -1937,6 +1949,7 @@ async def _run_agent(
     deny_shell: bool = False,
     deny_project_reads: bool = False,
     context_1m: bool = False,
+    tool_search: bool = True,
 ) -> tuple[
     list[dict[str, Any]],  # tool_calls
     list[dict[str, Any]],  # narration
@@ -2022,8 +2035,8 @@ async def _run_agent(
     # in the result so a reviewer can audit the run. See spec §6.1.
     blocked_tree_reads: list[dict[str, Any]] = []
     # Every call the per-context policy denied — BOTH arms, not just the one this
-    # comment used to name: a main-thread `extraction_append`/`image_read` (the
-    # router doing a subagent's job after a failed spawn, #942), and an
+    # comment used to name: a main-thread `image_read` (the
+    # router doing a subagent's job after a failed spawn, #942/#1273), and an
     # owned-section `research_append` (#1273), which fires for a named subagent
     # too. The attempt itself is in `tool_calls` (streamed from the ToolUseBlock
     # before the PreToolUse deny); this list is the record that it did not run.
@@ -2078,6 +2091,11 @@ async def _run_agent(
     # discrepancy can be checked against a version delta (the local CLI the SDK
     # spawns may differ from Cowork's bundled one).
     cli_version: dict[str, str | None] = {"v": None}
+    # Whether the FIRST init's `tools` list offered ToolSearch; None when that
+    # init carried no list. Listed at init; blind to the per-model gate (see
+    # env_for_sdk) — `False` proves tool search was off, `True` does not prove
+    # it was on.
+    tool_search_offered: dict[str, Any] = {"v": None, "seen": False}
     resumes = {"n": 0}  # how many times we resumed after a stall (capped)
     MAX_RESUME = 2
 
@@ -2148,7 +2166,8 @@ async def _run_agent(
                         "To CREATE a new project use project_create, which writes both "
                         "files together; to add to an existing one use research_append, "
                         "research_log_append, tree_edit or tree_correct. These validate "
-                        "before persisting. Direct file writes never validate."
+                        "before persisting. Direct file writes never validate. "
+                        "external-collections.json is written only by external_links_search given a projectPath."
                     ),
                 },
             }
@@ -2202,8 +2221,9 @@ async def _run_agent(
 
         # The per-context tool policy (harness/context_policy.py): a main-thread
         # call to any SUBAGENT_ONLY_TOOLS member is the router substituting for a
-        # failed subagent spawn. Both members are enforced here — `extraction_append`
-        # (#942) and `image_read` — since neither is declared by any skill and
+        # failed subagent spawn. Every member is enforced here — today just
+        # `image_read`, since `extraction_append` (#942) left the set in issue
+        # #2937 — because no remaining member is declared by any skill and
         # `agent_id` presence alone discriminates, which is all e2e can see (its
         # sub-skills run in this same session via the Skill tool with no `agent_id`).
         # We deny the bare tool directly rather than through `subagent_only_violation`,
@@ -2223,9 +2243,8 @@ async def _run_agent(
             # this line alone. For image_read the recovery is the transcription
             # plugin @plugin:image-reader, which is now also the only image reader
             # (image-reader-opus retired, issue #2013).
-            # The fallback covers a future third guarded tool.
+            # The fallback covers a future second guarded tool.
             recovery = {
-                "extraction_append": "@plugin:record-extractor",
                 "image_read": "@plugin:image-reader",
             }.get(bare, "the owning subagent")
             narration.append(
@@ -2243,7 +2262,7 @@ async def _run_agent(
 
         # An owned SECTION, not an owned tool — a separate arm on purpose. The
         # block above says the whole tool is reserved for a subagent, which is
-        # true of extraction_append and false of research_append: that one is
+        # true of image_read and false of research_append: that one is
         # the general writer, called from the main thread constantly for plans,
         # questions, conflicts and the log. Sharing the branch handed the agent
         # a deny telling it the tool was off-limits, and a narration naming the
@@ -2274,10 +2293,12 @@ async def _run_agent(
                 owned_section, _, field = owned.partition(".")
                 agent = OWNED_DECLARATION_OWNERS[(owned_section, field)]
                 text = (
-                    f"`{bare}` denied on `{owned_section}` — declaring a question "
-                    f"exhaustive is routed to the {agent} agent. Creating a question "
-                    "and recording an honest `declared: false` termination are both "
-                    "unaffected; delegate the claim rather than making it here."
+                    f"`{bare}` denied on `{owned_section}` — writing a stop-gate "
+                    f"`stopped_because` value is routed to the {agent} agent. "
+                    "Writing `stopped_because: null` (new question) and non-gate "
+                    "values (`resources_spent`, `blocked_by_conflict`) are both "
+                    "unaffected; delegate the stop-gate claim rather than making "
+                    "it here."
                 )
             elif rule == "owned_field":
                 owned_section, _, field = owned.partition(".")
@@ -2287,6 +2308,15 @@ async def _run_agent(
                     f"routed to the {agent} agent. Every other write to "
                     f"`{owned_section}` is unaffected; delegate this field rather "
                     "than setting it here."
+                )
+            elif rule == "claim":
+                agent = OWNED_CLAIM_ROUTES[owned][0]
+                text = (
+                    f"`{bare}` denied on `{owned}` — recording a conflict's analysis "
+                    f"or resolution is routed to the {agent} agent. Opening a "
+                    "conflict with its required fields, and re-opening one as "
+                    "`unresolved`, are both unaffected; delegate the analysis "
+                    "rather than writing it here."
                 )
             else:
                 text = (
@@ -2556,9 +2586,10 @@ async def _run_agent(
             mcp_unavailable=mcp_state["unavailable"],
         ):
             # Terminal. Count the class only where the stop is a defect — `completed`
-            # is the successful path (134 of 181 committed runs) and `mcp_unavailable`
-            # is infrastructure (#941); attributing either to the agent's hand-back
-            # would make the rate dominated by runs that did the right thing.
+            # is the successful path (134 of 181 committed runs), `mcp_unavailable`
+            # is infrastructure (#941) and `ok` has no project (#3274); attributing any
+            # of them to the agent's hand-back would make the rate dominated by runs
+            # that did the right thing.
             reason = terminal_reason(
                 research=research,
                 nudges_used=continue_nudges["n"],
@@ -2639,25 +2670,16 @@ async def _run_agent(
         # hook, not the allowlist, so it can deny per-call with arguments.
         allowed_tools=BASELINE_ALLOWED_TOOLS + ["mcp__genealogy"],
         permission_mode="dontAsk",
-        # ENABLE_TOOL_SEARCH turns tool search ON, not off. This comment used to
-        # say "forcing tool search off" while setting "true"; the polarity is
-        # inverted (issue #1110). Read off the installed CLI (v2.1.220): a truthy
-        # value (`true|1|yes|on`) selects deferred/tool-search mode, `auto`/
-        # `auto:N` is the adaptive variant, and only a FALSY value
-        # (`false|0|no|off`) selects "standard" mode, where every schema is
-        # loaded up front. Unset also lands on tool-search mode, so deleting the
-        # variable eager-loads nothing. (Additionally forced off on a
-        # non-first-party ANTHROPIC_BASE_URL, on Vertex, and under
-        # CLAUDE_CODE_DISABLE_EXPERIMENTAL_BETAS.)
-        #
-        # So "true" below means e2e runs WITH tool search: the ~38-tool
-        # genealogy server's schemas are deferred (except ALWAYS_LOAD in
-        # tool-schemas.ts) and re-discovered via ToolSearch mid-session (the
-        # 17x in the spriggs run, ~11% of all tool calls across recent runs).
-        # Idea 3a of the speedup plan wanted the opposite; flipping to "false"
-        # is a separate, tracked decision that requires re-measuring the tool
-        # mix, so the value is left as it has been running. `env` MERGES onto
-        # the inherited environment (claude_agent_sdk
+        # ENABLE_TOOL_SEARCH has ONE source, env_for_sdk (its docstring holds
+        # the polarity: truthy or unset = on, falsy = off). `tool_search`
+        # (default True; `--no-tool-search` turns it off, experiment-only)
+        # picks the value. On, the ~38-tool genealogy server's schemas are
+        # deferred (except ALWAYS_LOAD in tool-schemas.ts) and re-discovered via
+        # ToolSearch mid-session. Off, every schema is loaded up front and the
+        # #941 mid-run backstop below is inert: it counts no-match ToolSearch
+        # replies, and there are none. A literal "true" used to sit in this dict
+        # ahead of env_for_sdk's own key, which always won, so it set nothing.
+        # `env` MERGES onto the inherited environment (claude_agent_sdk
         # subprocess_cli merges os.environ, then options.env), so this adds the
         # var without dropping PATH.
         #
@@ -2674,9 +2696,8 @@ async def _run_agent(
         # fills the output budget with thinking (see subagent_capture); recorded
         # in the runlog. Applies session-wide (parent + every subagent).
         env={
-            "ENABLE_TOOL_SEARCH": "true",
             **({"CLAUDE_CODE_MAX_OUTPUT_TOKENS": str(max_output_tokens)} if max_output_tokens else {}),
-            **env_for_sdk(resolve_auth()),
+            **env_for_sdk(resolve_auth(), tool_search=tool_search),
         },
         # Parent model: the --agent-model override (also applied to staged
         # subagents in build_workspace) or the fixture's default.
@@ -2988,9 +3009,25 @@ async def _run_agent(
                     sid = data.get("session_id")
                     if sid:
                         session_id["id"] = sid
-                    ver = data.get("version") or data.get("cli_version")
+                    # 2.1.139's init carries `claude_code_version`; the other
+                    # two keys are kept for a CLI that spells it either way.
+                    ver = (
+                        data.get("claude_code_version")
+                        or data.get("version")
+                        or data.get("cli_version")
+                    )
                     if ver:
                         cli_version["v"] = ver
+                    # First init only: a resume re-spawns the CLI with the same
+                    # env, so a later list says nothing new.
+                    if message.subtype == "init" and not tool_search_offered["seen"]:
+                        tool_search_offered["seen"] = True
+                        tools_listed = data.get("tools")
+                        tool_search_offered["v"] = (
+                            TOOL_SEARCH_NAME in tools_listed
+                            if isinstance(tools_listed, list)
+                            else None
+                        )
                     timeline.append(
                         [
                             round(now - run_started, 1),
@@ -3051,6 +3088,10 @@ async def _run_agent(
                             "inconclusive": (
                                 "still connecting (normal at init); the "
                                 "ToolSearch backstop covers it from here"
+                                if tool_search
+                                else "still connecting (normal at init); tool "
+                                "search is OFF, so the ToolSearch backstop is "
+                                "inactive — watch for zero genealogy calls"
                             ),
                             "unavailable": (
                                 "UNAVAILABLE — aborting"
@@ -3099,6 +3140,11 @@ async def _run_agent(
                         "total_cost_usd": message.total_cost_usd,
                         "usage": message.usage,
                     }
+                    # The SDK's own per-model ledger, helpers included (T1.11):
+                    # the reconciliation source for per-model pricing. Only
+                    # written when the SDK supplied it — absent, never null or {}.
+                    if isinstance(getattr(message, "model_usage", None), dict):
+                        usage["model_usage"] = message.model_usage
                     if message.is_error and aborted_reason is None:
                         detail = message.result or message.stop_reason or ""
                         # The SDK surfaces a turn-cap hit as an *error result*
@@ -3121,6 +3167,21 @@ async def _run_agent(
                         aborted_reason = "cost_cap"
                     if aborted_reason is None and message.stop_reason == "max_turns":
                         aborted_reason = "max_turns"
+
+                # The PreToolUse deny's `continue_: False` does not end the session:
+                # past the cap every call is denied, a denied call still counts as
+                # activity, and the Stop hook nudged the agent on until cost or the
+                # wall clock ended it (hannah 2026-10-05: 56 denied calls, 38 nudges).
+                # The cap is crossed mid-run, so it outranks a cost_cap set from the
+                # final ResultMessage.
+                if tool_call_count["n"] > fixture.caps.tool_calls and aborted_reason in (
+                    None,
+                    "cost_cap",
+                ):
+                    aborted_reason = "max_tool_calls"
+                    error = f"tool_calls cap ({fixture.caps.tool_calls}) exceeded"
+                    await _shutdown(iterator)
+                    return
 
                 # Progress watchdog: a stall is "stream alive, no progress". The
                 # plain inactivity timer above misses it (messages keep arriving),
@@ -3268,6 +3329,10 @@ async def _run_agent(
         # means the CLI default (sonnet-5 -> 32000).
         "max_output_tokens": max_output_tokens,
         "cli_version": cli_version["v"],
+        # What the CLI offered at init, not what took effect: blind to the
+        # per-model gate — `false` proves off, `true` does not prove on.
+        # `tool_search` (what was asked for) is added in run_e2e_test.
+        "tool_search_offered": tool_search_offered["v"],
         "caps": {
             "wall_clock_seconds": fixture.caps.wall_clock_seconds,
             "inactivity_seconds": fixture.caps.inactivity_seconds,
@@ -3290,7 +3355,7 @@ async def _run_agent(
     if guardrail_shadow_violations:
         _emit(
             f"[guardrail-shadow] {len(guardrail_shadow_violations)} protected write(s) "
-            "with no recent matching Skill invocation (shadow mode — not denied)"
+            "with no recent matching Skill call or typed agent spawn (shadow mode — not denied)"
         )
     # issue #963 — fold in the hook-sourced provenance gaps collected live in
     # pretool_hook. Same list because both answer "a guardrail's effect landed
@@ -3412,6 +3477,26 @@ def collect_post_hoc_shadow(
     return out
 
 
+def _write_readable_report(result_path: Path) -> None:
+    """Write the run's readable `.txt` into `<runlog dir>/reports/`. Never raises.
+
+    Beside the run log it describes, so a run redirected with `--runlog-root`
+    stays self-contained. The grade stays hidden in it until the run is graded
+    (spec §7.4) — see `e2e.run_report`. A report that fails to render must never
+    cost a run whose log is already written, so this only prints.
+    """
+    try:
+        from e2e.run_report import write_reports
+
+        written, _skipped, unreadable = write_reports([result_path], force=True)
+        for report in written:
+            print(f"  readable report: {report}")
+        if unreadable:
+            print(f"  (no readable report: {result_path} could not be read)")
+    except Exception as exc:  # noqa: BLE001 — a report must never fail the run
+        print(f"  (no readable report: {type(exc).__name__}: {exc})")
+
+
 def _find_session_transcript(workspace: Path) -> Path | None:
     """Locate the Agent SDK's raw session JSONL for this run.
 
@@ -3431,17 +3516,11 @@ def _find_session_transcript(workspace: Path) -> Path | None:
 
     Returns the newest matching JSONL, or None if none is found. Never raises:
     a failure here must not cost the run its log.
+
+    The lookup itself is `subagent_capture.find_session_transcript`, shared with
+    the unit harness's main-thread capture.
     """
-    try:
-        cache = sdk_cache_dir(workspace)
-        if cache is None:
-            return None
-        candidates = list(cache.glob("*.jsonl"))
-        if not candidates:
-            return None
-        return max(candidates, key=lambda p: p.stat().st_mtime)
-    except Exception:  # noqa: BLE001 — a capture miss must never fail the run
-        return None
+    return find_session_transcript(workspace)
 
 
 async def run_e2e_test(
@@ -3459,6 +3538,7 @@ async def run_e2e_test(
     deny_shell: bool = False,
     deny_project_reads: bool = False,
     context_1m: bool = False,
+    tool_search: bool = True,
 ) -> tuple[E2eResult, dict[str, Path]]:
     """Run one e2e fixture end-to-end. Returns (result, written-paths).
 
@@ -3531,6 +3611,7 @@ async def run_e2e_test(
             deny_shell=deny_shell,
             deny_project_reads=deny_project_reads,
             context_1m=context_1m,
+            tool_search=tool_search,
         )
 
         final_research = read_research_json(workspace)
@@ -3716,6 +3797,11 @@ async def run_e2e_test(
             # compacts differently from the corpus, so a reader comparing runs
             # has to be able to see it without inferring it from the numbers.
             "betas": list(_BETAS_1M) if context_1m else [],
+            # What `--no-tool-search` asked for; `tool_search_offered` (from
+            # _run_agent) is what the CLI offered. Off is not comparable to the
+            # corpus — every schema is loaded up front — and CI rejects a run
+            # with either one False committed under eval/runlogs/e2e/.
+            "tool_search": tool_search,
         }
 
         # Summarize any subagent transcripts (record-extractor, image-reader, …)
@@ -3772,6 +3858,7 @@ async def run_e2e_test(
             final_research=final_research,
             timestamp=result.captured_at,
         )
+        _write_readable_report(paths["result"])
 
         # Copy the raw SDK session transcript next to the runlog. The runlog
         # carries a summarized trace; this JSONL carries per-message

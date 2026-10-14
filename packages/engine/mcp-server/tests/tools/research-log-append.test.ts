@@ -7,8 +7,8 @@ import { fileURLToPath } from "url";
 import { tmpdir } from "os";
 import { researchLogAppend } from "../../src/tools/research-log-append.js";
 import { stageSearchResults, STAGING_SUBDIR } from "../../src/utils/results-staging.js";
-import { FsProjectStore } from "../../src/store/fs-project-store.js";
 import { setProjectStore, type ProjectStore } from "../../src/store/project-store.js";
+import { backingStore } from "../helpers/store-backend.js";
 import { validateProject } from "../../src/validation/validator.js";
 
 function baseResearch(log: any[] = []) {
@@ -936,7 +936,7 @@ describe("research_log_append", () => {
   /** The file store, recording every writeJson ref; optionally failing the
    *  research.json write, which stands in for a commit that throws. */
   function recordingStore(opts: { failResearchWrite?: boolean } = {}) {
-    const inner = new FsProjectStore();
+    const inner = backingStore();
     const writes: string[] = [];
     const store = new Proxy(inner, {
       get(target, prop, receiver) {
@@ -1053,7 +1053,7 @@ describe("research_log_append", () => {
   it("a staged file that exists but cannot be read is not told it was already logged", async () => {
     await writeProject(baseResearch());
     const handle = await stageSearchResults({ projectPath: dir, tool: "record_search", response: { results: [{ recordId: "A" }] } });
-    const inner = new FsProjectStore();
+    const inner = backingStore();
     const store = new Proxy(inner, {
       get(target, prop, receiver) {
         if (prop === "readText") {
@@ -1606,7 +1606,7 @@ describe("research_log_append — nil-escalation note (#2735)", () => {
           created: "2026-05-04",
           resolved: null,
           resolution_assertion_ids: [],
-          exhaustive_declaration: { declared: false, justification: null, log_entry_ids: [], stop_criteria: null },
+          search_stop: { stopped_because: null, justification: null, log_entry_ids: [], stop_criteria: null, not_reached: [] },
         },
       ],
       plans: [
@@ -1887,5 +1887,69 @@ describe("research_log_append — a query may not claim a filter its search neve
     const ref = await stage({ standardPlace: "Schuylkill" }, "external_links_search");
     const r = await append({ standardPlace: "Schuylkill", host: "ancestry.com" }, ref, "external_links_search");
     expect(errorsOf(r)).toBe("");
+  });
+});
+
+describe("research_log_append — a mis-copied stagedResultsRef (resolveStagedRef)", () => {
+  let dir: string;
+  beforeEach(async () => {
+    dir = await mkdtemp(join(tmpdir(), "log-append-ref-"));
+    await writeFile(join(dir, "research.json"), JSON.stringify(baseResearch(), null, 2));
+    await writeFile(join(dir, "tree.gedcomx.json"), JSON.stringify(minimalTree, null, 2));
+  });
+  afterEach(async () => {
+    await rm(dir, { recursive: true, force: true });
+  });
+  const exists = async (rel: string) => access(join(dir, rel)).then(() => true, () => false);
+  const stage = async (surname: string) =>
+    (await stageSearchResults({
+      projectPath: dir,
+      tool: "record_search",
+      response: { query: { surname }, results: [{ recordId: surname }] },
+    }))!.resultsRef;
+  // One character dropped from the UUID, the shape the corpus scan found most.
+  const slip = (ref: string) => ref.replace(/(-[0-9a-f]{4})([0-9a-f])/, "$1");
+
+  it("logs the one staged file a near-copy names, says so, and consumes it", async () => {
+    const good = await stage("Flynn");
+    const bad = slip(good);
+    expect(bad).not.toBe(good);
+    const result: any = await researchLogAppend({
+      projectPath: dir, tool: "record_search", outcome: "positive", resultsExamined: 1, stagedResultsRef: bad,
+    } as any);
+    expect(result.ok).toBe(true);
+    expect(result.validation.warnings.join(" ")).toContain(`stagedResultsRef '${bad}' matched no staged file; used '${good}'`);
+    expect(await exists(good)).toBe(false);
+    expect(await exists(result.resultsRef)).toBe(true);
+  });
+
+  it("corrects inside a batch, where 10 of the 11 corpus slips happened", async () => {
+    const a = await stage("Flynn");
+    const b = await stage("Kelly");
+    const bare = b.split("/").pop()!;
+    const result: any = await researchLogAppend({
+      projectPath: dir,
+      ops: [
+        { tool: "record_search", outcome: "positive", resultsExamined: 1, stagedResultsRef: a },
+        { tool: "record_search", outcome: "positive", resultsExamined: 1, stagedResultsRef: bare },
+      ],
+    } as any);
+    expect(result.ok).toBe(true);
+    expect(result.validation.warnings.join(" ")).toContain(`ops[1].stagedResultsRef '${bare}' matched no staged file; used '${b}'`);
+    expect(await exists(a)).toBe(false);
+    expect(await exists(b)).toBe(false);
+  });
+
+  it("still refuses two ops that resolve to the same staged file", async () => {
+    const good = await stage("Flynn");
+    const result: any = await researchLogAppend({
+      projectPath: dir,
+      ops: [
+        { tool: "record_search", outcome: "positive", resultsExamined: 1, stagedResultsRef: good },
+        { tool: "record_search", outcome: "positive", resultsExamined: 1, stagedResultsRef: slip(good) },
+      ],
+    } as any);
+    expect(result.ok).toBe(false);
+    expect(await exists(good)).toBe(true);
   });
 });

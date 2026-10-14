@@ -141,6 +141,24 @@ from typing import Any
 #       agree with: `axes_from_runlog` re-derives every vintage under the new
 #       rule and never reads the stored key. 55 of the 56 committed v1+ logs
 #       store `fail`, and 40 of those have a non-`fail` verdict.
+#   7 — `compliance` gets strictly LOOSER, the mirror of entry 3. A typed
+#       `Agent`/`Task` spawn whose `subagent_type` (plugin namespace stripped)
+#       names a guardrail arm now credits that arm exactly as a `Skill` call
+#       does, in both `find_effects_without_invocation` and the shadow
+#       `recently_succeeded` window; a `Skill` name spelled with a plugin
+#       namespace (`genealogy-research:<skill>`) now credits too; and a
+#       protected write whose own `agent_type` is its owner is never a shadow
+#       violation. The direct
+#       spawn of a paired agent is the sanctioned in-loop route, and through v6
+#       every run taking it failed compliance for doing the right thing. Same
+#       shape as entries 2, 4, 5 and 6: `compliance` keeps its name and type
+#       while what a `pass` requires changes, with no tell in the payload. A
+#       v1-v6 log's stored `compliance` and `guardrail_bypass_violations` can
+#       carry a "was never successfully invoked" entry this code no longer
+#       raises; `corpus_report.py --recompute` re-derives them and lists such a
+#       run as "stored N -> recomputed M" under "TODAY's detector clears a
+#       violation the run recorded" — the detector getting looser, not the run
+#       getting better. `outcome` does not move: since entry 6 it is the verdict.
 #
 # A change readers can detect from the payload itself does NOT need a bump.
 # `narration` replacing `.transcript.md` is one: the field is a dataclass
@@ -148,10 +166,10 @@ from typing import Any
 # log written since carries the key and every earlier one lacks it. Branch on
 # `"narration" in data`, not on a version. Bump only when a key keeps its name
 # and type while its MEANING changes — that is the case with no structural tell,
-# and entries 2, 4, 5 and 6 above are exactly it: `response_summary` stays a
+# and entries 2, 4, 5, 6 and 7 above are exactly it: `response_summary` stays a
 # string, `is_error` stays a bool and `outcome` stays a string, and only what
 # each one means changes.
-HARNESS_SCHEMA_VERSION = 6
+HARNESS_SCHEMA_VERSION = 7
 
 
 @dataclass
@@ -234,9 +252,10 @@ class E2eResult:
 
     # Calls the per-context policy denied. TWO arms, and only `tool` tells them
     # apart — `blocked_by` is "context" for both:
-    #   - a `SUBAGENT_ONLY_TOOLS` tool on the main thread: an `extraction_append`
-    #     (the record-extractor's write, #942) or, since #1273 Item 1, an
-    #     `image_read` (whose base64 would overflow the transport). Neither has
+    #   - a `SUBAGENT_ONLY_TOOLS` tool on the main thread: today only
+    #     `image_read` (whose base64 would overflow the transport), since #1273
+    #     Item 1. `extraction_append` (the record-extractor's write, #942) was
+    #     the other member until issue #2937 removed it from the set. Neither has
     #     been observed in the committed corpus.
     #   - an owned-section `research_append` (#1273): a caller wrote a section it
     #     does not own. NOT main-thread-only — `owner_denied`'s `out_of_lane` rule
@@ -264,7 +283,8 @@ class E2eResult:
     narration: list[dict[str, Any]] = field(default_factory=list)
 
     # Compact per-subagent transcript summaries (agent_type, per-turn
-    # stop_reason / output_tokens / block shape, and a `runaway_thinking` flag).
+    # stop_reason / output_tokens / block shape, a `runaway_thinking` flag, the
+    # four-field `usage`, `peak_window_tokens`, `compactions` and `models`).
     # Captured from the SDK's ephemeral subagent cache — which the runlog
     # otherwise does not store — so a subagent that burned its whole output
     # budget on thinking (stop_reason=max_tokens, no tool call), invisible from
@@ -321,9 +341,11 @@ class E2eResult:
 
     # docs/specs/guardrail-enforcement-spec.md §7 — SHADOW MODE ONLY:
     # protected writes (a proof_summaries/person_evidence/conflicts/
-    # exhaustive_declaration write, or a tree_edit/tree_correct/
+    # search_stop write, or a tree_edit/tree_correct/
     # materialize_facts write one of the four GPS guardrail skills owns) with
-    # no matching successful `Skill` invocation in a trailing window. Logged,
+    # no matching successful invocation (a `Skill` call or a typed agent spawn
+    # of the owner's name) in a trailing window, and not made by the owning
+    # agent itself. Logged,
     # never denied, at this stage — the point is to measure the false-positive
     # rate against real runs before any call is ever rejected. Each entry is
     # {index, tool, required_skill, question_id} — see

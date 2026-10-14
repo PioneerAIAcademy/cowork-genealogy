@@ -56,7 +56,7 @@ function research(opts: { sources: any[]; assertions: any[]; subjectIds?: string
     log: [],
     sources: opts.sources,
     assertions: opts.assertions,
-    person_evidence: [],
+    person_evidence: [] as any[],
     conflicts: [],
     hypotheses: [],
     timelines: [],
@@ -106,7 +106,18 @@ describe("materialize_facts", () => {
     await rm(dir, { recursive: true, force: true });
   });
 
-  async function writeProject(treeDoc: any, researchDoc: any) {
+  /** These tests are about copying, not identity, so every assertion is linked
+   *  `probable` to every person already in the tree unless the test says not.
+   *  The link requirement itself is tested under "link to an existing person". */
+  async function writeProject(treeDoc: any, researchDoc: any, opts: { link?: boolean } = {}) {
+    if ((opts.link ?? true) && (researchDoc.person_evidence ?? []).length === 0) {
+      researchDoc.person_evidence = (treeDoc.persons ?? []).flatMap((p: any) =>
+        (researchDoc.assertions ?? []).map((a: any) => ({
+          id: `pe_${p.id}_${a.id}`, assertion_id: a.id, person_id: p.id, confidence: "probable",
+          rationale: "test link", match_score: null, created: "2026-01-01", superseded_by: null,
+        })),
+      );
+    }
     await writeFile(join(dir, "research.json"), JSON.stringify(researchDoc, null, 2), "utf-8");
     await writeFile(join(dir, "tree.gedcomx.json"), JSON.stringify(treeDoc, null, 2), "utf-8");
   }
@@ -197,6 +208,87 @@ describe("materialize_facts", () => {
     expect(p.facts[0].sources).toHaveLength(1); // no duplicate ref
     expect(p.names).toHaveLength(1);
     expect(p.names[0].sources).toHaveLength(1);
+  });
+
+  describe("link to an existing person", () => {
+    const I2 = { id: "I2", gender: "Male", names: [{ id: "N2", given: "Robert", surname: "Smith" }] };
+    const pe = (confidence: string, over: Record<string, unknown> = {}) => ({
+      id: "pe_001", assertion_id: "a_003", person_id: "I2", confidence,
+      rationale: "test", match_score: null, created: "2026-01-01", superseded_by: null, ...over,
+    });
+    async function setup(links: any[]) {
+      const r = research({ sources: [S1], assertions: enrichPersona() });
+      r.person_evidence = links;
+      await writeProject(tree({ persons: [I2] }), r, { link: false });
+    }
+    const copy = async () =>
+      single(await materializeFacts({ projectPath: dir, personId: "I2", recordId: "REC-SON", recordRole: "child" }));
+
+    it("refuses an existing person the record is not linked to", async () => {
+      await setup([]);
+      const r = await copy();
+      expect(r.ok).toBe(false);
+      if (!r.ok) expect(r.errors[0]).toContain("research_append");
+      expect(findPerson(await readTree(), "I2").facts ?? []).toHaveLength(0);
+    });
+
+    it("refuses a 'speculative' link", async () => {
+      await setup([pe("speculative")]);
+      expect((await copy()).ok).toBe(false);
+    });
+
+    it("refuses when the only qualifying link is superseded", async () => {
+      await setup([pe("probable", { superseded_by: "pe_002" })]);
+      expect((await copy()).ok).toBe(false);
+    });
+
+    it("refuses a link from a different persona of the record", async () => {
+      const r = research({
+        sources: [S1],
+        assertions: [...enrichPersona(), assertion("a_009", { record_id: "REC-SON", record_role: "father", fact_type: "name", value: "John Smith" })],
+      });
+      r.person_evidence = [pe("probable", { assertion_id: "a_009" })];
+      await writeProject(tree({ persons: [I2] }), r, { link: false });
+      expect((await copy()).ok).toBe(false);
+    });
+
+    it("copies on a 'probable' link", async () => {
+      await setup([pe("probable")]);
+      expect((await copy()).ok).toBe(true);
+    });
+
+    it("copies on a 'confident' link", async () => {
+      await setup([pe("confident")]);
+      expect((await copy()).ok).toBe(true);
+    });
+
+    it("needs no link to mint a new person, nor to re-copy the record onto the stub it minted", async () => {
+      await setup([]);
+      const r = await materializeFacts({
+        projectPath: dir,
+        ops: [
+          { personId: "I9", recordId: "REC-SON", recordRole: "child" },
+          { personId: "I9", recordId: "REC-SON", recordRole: "child" },
+        ],
+      });
+      expect(r.ok).toBe(true);
+    });
+
+    it("refuses a second record onto a person the same batch minted from another", async () => {
+      const r0 = research({
+        sources: [S1],
+        assertions: [...enrichPersona(), assertion("a_010", { record_id: "REC-CENSUS", record_role: "son", fact_type: "residence", date: "1860", place: "Provo, Utah, United States" })],
+      });
+      await writeProject(tree(), r0, { link: false });
+      const r = await materializeFacts({
+        projectPath: dir,
+        ops: [
+          { personId: "I9", recordId: "REC-SON", recordRole: "child" },
+          { personId: "I9", recordId: "REC-CENSUS", recordRole: "son" },
+        ],
+      });
+      expect(r.ok).toBe(false);
+    });
   });
 
   it("(4) two agreeing values union onto ONE fact carrying BOTH refs", async () => {
@@ -677,6 +769,45 @@ describe("materialize_facts", () => {
 
     const p = findPerson(await readTree(), "I2");
     expect((p.facts ?? []).length).toBe(0); // the Couple relationship + fact is tree_edit's job
+  });
+
+  // Only the exact string `marriage` was skipped, and matching was on the raw
+  // lowercased fact_type, so every other spelling of a couple event wrote a
+  // person-level fact. These three are not invented: each was emitted by a live
+  // e2e run, and each has a different separator shape. No fixture carries any of
+  // them, which is why nothing caught this.
+  it.each([
+    ["marriage_intention", "esther-leroux-marriage"],
+    ["marriage_bann", "sebastiano-mingazzini-son"],
+    ["marriage_date", "ferber-marriage"],
+    ["Marriage Banns", "a spelling no run has emitted yet"],
+    ["marriage_licence", "the British spelling of the dropped alias"],
+    ["divorce", "a divorce assertion is not written onto either spouse"],
+  ])("(21b) a `%s` assertion is skipped too (%s)", async (factType) => {
+    const stub = { id: "I2", gender: "Male", names: [{ id: "N2", given: "Thomas", surname: "Flynn" }] };
+    await writeProject(
+      tree({ persons: [stub] }),
+      research({
+        sources: [S1],
+        assertions: [
+          assertion("a_005", {
+            record_id: "REC-MARR",
+            record_role: "principal",
+            fact_type: factType,
+            date: "12 May 1843",
+            place: "Schuylkill County, Pennsylvania, United States",
+          }),
+        ],
+      }),
+    );
+
+    const result = single(await materializeFacts({ projectPath: dir, personId: "I2", recordId: "REC-MARR", recordRole: "principal" }));
+
+    expect(result.ok).toBe(true);
+    if (!result.ok) return;
+    expect(result.factsAdded).toBe(0);
+    const p = findPerson(await readTree(), "I2");
+    expect((p.facts ?? []).length).toBe(0);
   });
 
   it("(22) a persona's OTHER assertions still materialize when a `marriage` assertion is mixed in", async () => {
@@ -1485,6 +1616,14 @@ describe("materialize_facts", () => {
       }),
     );
     expect(split.ok).toBe(true);
+    // Her own record is a different source, so copying it onto I4 claims an
+    // identity and needs the link.
+    const r = JSON.parse(await readFile(join(dir, "research.json"), "utf-8"));
+    r.person_evidence.push({
+      id: "pe_her", assertion_id: "a_006", person_id: "I4", confidence: "probable",
+      rationale: "test link", match_score: null, created: "2026-01-01", superseded_by: null,
+    });
+    await writeFile(join(dir, "research.json"), JSON.stringify(r, null, 2), "utf-8");
     const viaPersona = single(
       await materializeFacts({ projectPath: dir, personId: "I4", recordId: "REC-HER", recordRole: "bride" }),
     );

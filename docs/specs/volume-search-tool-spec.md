@@ -1001,7 +1001,7 @@ images are digitized, indexed, or full-text processed.
 | `manifest.json` | Add `{ "name": "volume_search" }` to the `tools` array |
 | `dev/try-volume-search.ts` | Create — one-shot smoke test |
 | `tests/tools/volume-search.test.ts` | Create — unit tests |
-| `README.md` | Add `volume_search` to the tool catalog |
+| `docs/catalog.md` | Add `volume_search` to the tool catalog |
 | `CLAUDE.md` | Point the code-reuse note at `src/utils/place-resolver.ts` as the home of `standardPlaceToPlaceId`/`placeIdToRepIds` (not the old `image-search.ts`). Nothing to add for the tool being authenticated — the auth section carries the rule and tells you to grep for `getValidToken`, not a tool list |
 
 ### Edits for record-type groups and structured dates
@@ -1019,7 +1019,7 @@ images are digitized, indexed, or full-text processed.
 | `tests/utils/record-type-groups.test.ts` | **New.** The invariants this spec's tables cannot express: an expansion sends an anchor's strays and nothing extra, broadening to a parent loses no id, every parent chain terminates, and a non-string entry is named rather than joined into nothing |
 | `tests/utils/search-helpers.test.ts` | **New.** One case per `formatYearRange` branch |
 | `dev/try-volume-search.ts` | Add a comma-separated `--recordTypeGroups` flag so a filtered search is expressible from the shell |
-| `README.md` | Extend the `volume_search` catalog row to name `recordTypeGroups` and that selecting a group also returns the groups nested beneath it |
+| `docs/catalog.md` | Extend the `volume_search` catalog row to name `recordTypeGroups` and that selecting a group also returns the groups nested beneath it |
 | `CLAUDE.md` | Extend the `search-helpers.ts` note to name `collections_search`/`volume_search` among its consumers and `formatYearRange` as the single shared date-range format |
 
 ---

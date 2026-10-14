@@ -1,0 +1,11 @@
+{
+  "tool": "wiki_read",
+  "description": "Tennessee_Emigration_and_Immigration, the destination page person-evidence's place lookup fetches for the Maury County, Tennessee candidates in sussex-tennessee-unexplained-move (issue #2537). It names overland corridors from Virginia and the Carolinas and settlers of English descent, and no corridor from England in the 1860s. Content is the page's title line plus its 'Background' section, excerpted verbatim from the live page on 2026-10-05.",
+  "args": {
+    "url": "~Tennessee_Emigration_and_Immigration"
+  },
+  "response": {
+    "url": "https://www.familysearch.org/en/wiki/Tennessee_Emigration_and_Immigration",
+    "content": "# Tennessee Emigration and Immigration\n\n## Background\n\n**European.** Pre-statehood settlers of Tennessee generally came from **Virginia and the Carolinas** by way of the Cumberland Gap and other land routes. Some settlers from **Pennsylvania and New England** poled keel boats from the Ohio River up the Cumberland and Tennessee Rivers. Most of these early settlers were of **English and Ulster Scottish origin, although some were of German, Irish, and French ancestry.**\n\nTennessee continued to attract settlers from the Atlantic Coast into the 1830's and received Irish and German settlers during the European immigrations beginning at that time. However, most of the overseas immigrants preferred the industrialized North rather than the agricultural South.\n\n**African.** The African-American population comprised about 10 percent of the total population in the first federal census and is only a little above that percentage today. For information on African-Americans in Tennessee, see [African American Resources for Tennessee](https://www.familysearch.org/en/wiki/African-American_Resources_for_Tennessee \"African-American Resources for Tennessee\").\n\n**Native American.** The **Chickasaw and Cherokee Indians** had nearly all been exiled from the state by 1839. For further information on the tribes and their records in Tennessee, see [Indians of Tennessee](https://www.familysearch.org/en/wiki/Indians_of_Tennessee \"Indians of Tennessee\")."
+  }
+}

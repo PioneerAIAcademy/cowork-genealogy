@@ -19,7 +19,9 @@ Exit codes:
   3  any test was aborted for an execution reason
      (max_turns / wall clock / tool calls / tokens / error).
      Also returned when the abort-storm breaker trips (--no-abort-breaker
-     to override).
+     to override), and when a suite cap (--max-cost-usd,
+     --max-wall-clock-seconds) left a skill's tests unrun: that skill's log
+     is a `scratch_<ts>.json`, never a releasable candidate.
   130  the run was interrupted with Ctrl-C (SIGINT). Completed tests are
      saved as a partial `scratch_<ts>.json` run log per skill; in-flight tests
      are NOT cancelled — the pool joins them (#1016 measured ~2 min) — and
@@ -42,7 +44,9 @@ import argparse
 import json
 import os
 import sys
+import tempfile
 import time
+import uuid
 from collections import Counter
 from concurrent.futures import FIRST_COMPLETED, ThreadPoolExecutor, wait
 from pathlib import Path
@@ -63,6 +67,7 @@ from harness.runlog import (
     unexpected_pass,
     write_partial_runlog,
     write_run_log,
+    unit_dir_name,
 )
 from harness.skill_runner import DEFAULT_MODEL, QUOTA_ABORT_REASON
 from harness.snapshot import build_snapshot, hash_file
@@ -176,7 +181,11 @@ def _build_parser() -> argparse.ArgumentParser:
     )
     selection = parser.add_mutually_exclusive_group()
     selection.add_argument(
-        "--test", help="Run the single test with this ut_ id."
+        "--test",
+        nargs="+",
+        metavar="TEST",
+        help="Run the test(s) with these ut_ ids, in one pool (one run log per "
+        "skill). Every id must exist: one unknown id selects nothing.",
     )
     selection.add_argument(
         "--skill",
@@ -202,6 +211,27 @@ def _build_parser() -> argparse.ArgumentParser:
         "the per-test `flaky` flag can fire. N > 1 makes the invocation "
         "non-releasable (writes scratch_<ts>.json), and a 3x run is 3x the "
         "API spend.",
+    )
+    parser.add_argument(
+        "--tool-search",
+        action=argparse.BooleanOptionalAction,
+        default=True,
+        help="Deferred tool loading (ENABLE_TOOL_SEARCH). ON by default, as "
+        "the committed corpus runs. --no-tool-search loads every tool schema "
+        "up front — experiment-only: the invocation is non-releasable (writes "
+        "scratch_<ts>.json) and the run log records `tool_search: false`.",
+    )
+    parser.add_argument(
+        "--store",
+        choices=("fs", "pg"),
+        default="fs",
+        help="The project store the live tools run on. fs (default) is the "
+        "workspace directory. pg (U15) puts every live tool call on "
+        "PgS3ProjectStore against the compose Postgres + MinIO (`make "
+        "proto-up-store`; needs PROTO_PG_DSN, PROTO_S3_ENDPOINT, "
+        "PROTO_S3_ACCESS_KEY, PROTO_S3_SECRET_KEY): the invocation is "
+        "non-releasable and its log goes to eval/runlogs/unit-pg/<skill>/ "
+        "with `store: \"pg\"`.",
     )
     parser.add_argument(
         "--allow-missing-judge",
@@ -235,9 +265,9 @@ def _build_parser() -> argparse.ArgumentParser:
     parser.add_argument(
         "--max-cost-usd",
         type=float,
-        default=50.0,
+        default=None,
         help="Suite-level budget cap in USD. Remaining tests are skipped when "
-        "cumulative cost exceeds this. Default: 50.",
+        "cumulative cost exceeds this. Default: 50 per selected skill.",
     )
     parser.add_argument(
         "--max-wall-clock-seconds",
@@ -338,6 +368,10 @@ _BREAKER_RATIO = 0.20
 # bug. Promote it to module scope and import it if a third consumer appears.
 _TRANSIENT_ABORT_REASONS = frozenset({"error", "sdk_stream_silence"})
 
+# The default --max-cost-usd, per selected skill. A flat $50 for one invocation
+# of nine skills (154 tests, ~$59) skipped 22 tests on 2026-10-14.
+_DEFAULT_COST_CAP_PER_SKILL_USD = 50.0
+
 
 def _est_test_seconds(spec, actuals: dict[str, float] | None = None) -> float:
     """Estimated weight of a test for longest-first scheduling.
@@ -406,7 +440,7 @@ def _resolve_concurrency(requested: int | None) -> tuple[int, str, str | None]:
 def _select_tests(args, tests_dir: Path) -> list[TestSpec]:
     """Translate CLI flags into a list of TestSpecs."""
     if args.test:
-        return _find_by_id(args.test, tests_dir)
+        return _find_by_ids(args.test, tests_dir)
 
     if args.skill:
         # args.skill is a list (nargs="+"). Concatenate each skill's specs;
@@ -457,15 +491,23 @@ def _collect_specs(root: Path, *, tags: list[str]) -> list[TestSpec]:
     return out
 
 
-def _find_by_id(test_id: str, root: Path) -> list[TestSpec]:
+def _find_by_ids(test_ids: list[str], root: Path) -> list[TestSpec]:
+    """The specs for `test_ids`, in the order given — or [] when any id is
+    unknown, naming it, so a typo never quietly runs fewer tests."""
+    wanted = set(test_ids)
+    found: dict[str, TestSpec] = {}
     for path in _iter_test_files(root):
         try:
             spec = load_test(path)
         except InvalidTestError:
             continue
-        if spec.id == test_id:
-            return [spec]
-    return []
+        if spec.id in wanted:
+            found[spec.id] = spec
+    unknown = [t for t in test_ids if t not in found]
+    if unknown:
+        print(f"Unknown test id(s): {', '.join(unknown)}", file=sys.stderr)
+        return []
+    return [found[t] for t in dict.fromkeys(test_ids)]
 
 
 def _format_path(path: Path) -> str:
@@ -550,6 +592,7 @@ def _print_summary(rows: list[dict]) -> None:
     print()
     _print_outcome_counts(rows)
     _print_judge_warnings(rows)
+    _print_readme_fallbacks(rows)
 
 
 # Every outcome the harness can record, per unit-test-spec.md §7 and
@@ -610,6 +653,25 @@ def _print_judge_warnings(rows: list[dict]) -> None:
         more = len(tests) - 6
         print(f"  {kind}: {len(tests)} — {shown}{f' (+{more} more)' if more > 0 else ''}")
     print("  Full advisories are in each run log's output.warnings.")
+    print()
+
+
+def _print_readme_fallbacks(rows: list[dict]) -> None:
+    """Say how many tests the judge graded without a scenario judge brief.
+
+    The README fallback exists until every referenced scenario has a
+    judge-brief.md (#2478); a scenario with neither file is counted with it. A
+    fallback nobody can see becomes permanent, so every run names the tests and
+    scenarios still on it.
+    """
+    tests = [r for r in rows if r.get("readme_fallback_scenarios")]
+    if not tests:
+        return
+    scenarios = sorted({s for r in tests for s in r["readme_fallback_scenarios"]})
+    print(
+        f"{len(tests)} test(s) graded without a judge brief, on a README or "
+        f"nothing ({len(scenarios)} scenario(s)): {', '.join(scenarios)}"
+    )
     print()
 
 
@@ -675,6 +737,30 @@ def main(argv: list[str] | None = None) -> int:
     args = parser.parse_args(argv)
 
     tests_dir = args.tests_dir or (REPO_ROOT / "eval/tests/unit")
+
+    store = "pg" if args.store == "pg" else None
+    if store == "pg":
+        missing = [
+            v
+            for v in ("PROTO_PG_DSN", "PROTO_S3_ENDPOINT", "PROTO_S3_ACCESS_KEY", "PROTO_S3_SECRET_KEY")
+            if not os.environ.get(v)
+        ]
+        if missing:
+            print(
+                f"--store pg needs {', '.join(missing)} (start the stack with "
+                "`make proto-up-store`; `make eval-skill STORE=pg` sets them).",
+                file=sys.stderr,
+            )
+            return 2
+        # Read by mock_mcp._run_node_eval (adds the --import) and by every node
+        # subprocess's prelude (the per-run project-id nonce).
+        os.environ["PROTO_STORE"] = "pg"
+        os.environ["HARNESS_PG_RUN"] = uuid.uuid4().hex
+        # Where the prelude records a store fault from any node process
+        # (mock_mcp.pg_store_faults reads it back per workspace).
+        os.environ["HARNESS_PG_FAULT_LOG"] = str(
+            Path(tempfile.gettempdir()) / f"harness-pg-faults-{os.environ['HARNESS_PG_RUN']}.jsonl"
+        )
 
     if args.list_skills:
         skills = _list_skills(tests_dir)
@@ -829,6 +915,8 @@ def main(argv: list[str] | None = None) -> int:
         mode=mode,
         has_tag_filter=has_tag_filter,
         runs_per_test=resolved_runs_per_test,
+        tool_search=args.tool_search,
+        store=store,
     )
     invocation_timestamp = now_utc_filename_timestamp()
     print(
@@ -836,6 +924,10 @@ def main(argv: list[str] | None = None) -> int:
         f"runs_per_test={resolved_runs_per_test}, "
         f"timestamp={invocation_timestamp}"
     )
+    if not args.tool_search:
+        print("tool search: OFF (scratch log)")
+    if store == "pg":
+        print(f"store: pg (run {os.environ['HARNESS_PG_RUN']}; logs to eval/runlogs/unit-pg/)")
     print(f"Running {len(specs)} test(s)...")
     print()
 
@@ -850,6 +942,12 @@ def main(argv: list[str] | None = None) -> int:
     _SEED_AVG_COST_USD = 0.10
     _COST_WINDOW = 5
     recent_costs: list[float] = []
+
+    max_cost_usd = (
+        args.max_cost_usd
+        if args.max_cost_usd is not None
+        else _DEFAULT_COST_CAP_PER_SKILL_USD * len({s.skill for s in specs})
+    )
 
     concurrency, conc_source, conc_detail = _resolve_concurrency(args.concurrency)
     concurrency = min(concurrency, len(specs))
@@ -921,6 +1019,13 @@ def main(argv: list[str] | None = None) -> int:
     # actually executed against.
     judge_prompt_path = REPO_ROOT / "eval" / "harness" / "judge" / "prompt.md"
     judge_hash = hash_file("eval/harness/judge/prompt.md", judge_prompt_path)
+    # Judge model stamped at the envelope so judge-model bumps are dated and
+    # comparable rather than silently invalidating historical scores (issue
+    # #2479 PR 1). One value per run log — `judge.grade()` has no per-call
+    # override today, and `DEFAULT_JUDGE_MODEL` is already a dated id, not
+    # an alias.
+    from harness.judge import DEFAULT_JUDGE_MODEL as _DEFAULT_JUDGE_MODEL
+    judge_model = _DEFAULT_JUDGE_MODEL
     snapshot_cache: dict[str, dict] = {}
     partial_paths: dict[str, Path] = {}
 
@@ -961,8 +1066,11 @@ def main(argv: list[str] | None = None) -> int:
                     harness_version=HARNESS_VERSION,
                     model=DEFAULT_MODEL,
                     judge_prompt_hash=judge_hash,
+                    judge_model=judge_model,
                     snapshot=_snapshot_for(skill),
                     tests=entries,
+                    tool_search=args.tool_search,
+                    store=store,
                 )
                 partial_paths[skill] = write_partial_runlog(
                     log,
@@ -1014,9 +1122,9 @@ def main(argv: list[str] | None = None) -> int:
             saw_budget_skip = True
             return True
         projected = cumulative_cost + (spec.runs_per_test * _avg_cost())
-        if projected > args.max_cost_usd:
+        if projected > max_cost_usd:
             print(
-                f"  ! suite cost cap ${args.max_cost_usd:.2f} would be "
+                f"  ! suite cost cap ${max_cost_usd:.2f} would be "
                 f"exceeded by {spec.id} (projected ${projected:.4f}); "
                 f"not starting more tests",
                 file=sys.stderr,
@@ -1041,6 +1149,7 @@ def main(argv: list[str] | None = None) -> int:
                     auth=auth,
                     paths=paths,
                     timestamp=invocation_timestamp,
+                    tool_search=args.tool_search,
                 )
                 inflight[fut] = (idx, spec)
 
@@ -1254,6 +1363,14 @@ def main(argv: list[str] | None = None) -> int:
                     for w in iter_run_warnings(entry)
                     if w.get("kind") in _JUDGE_WARNING_KINDS
                 ],
+                # Scenarios with no judge-brief.md yet, graded on a whole
+                # README or on nothing (#2478). Its own line, not the judge
+                # tally: a fixture advisory, not a grading rule.
+                "readme_fallback_scenarios": sorted({
+                    w.get("scenario") or ""
+                    for w in iter_run_warnings(entry)
+                    if w.get("kind") in ("scenario_readme_fallback", "scenario_brief_missing")
+                }),
             }
         )
 
@@ -1302,6 +1419,7 @@ def main(argv: list[str] | None = None) -> int:
             if pp.exists():
                 sp = promote_partial_to_scratch(pp, timestamp=invocation_timestamp)
                 print(f"  → wrote {_format_path(sp)} (partial)")
+                _write_readable_report(sp)
                 promoted = True
         if not promoted:
             print("  (no tests finished — nothing to save)")
@@ -1312,12 +1430,26 @@ def main(argv: list[str] | None = None) -> int:
         return 130  # interrupted
 
     # --- Write one run log per skill --------------------------------------
+    # A suite cap leaves specs unsubmitted, and a releasable log must cover its
+    # whole suite, so a skill missing any test writes scratch.
+    cut_short = Counter(
+        spec.skill for idx, spec in enumerate(specs) if idx not in results_by_index
+    )
+    if cut_short:
+        saw_exec_abort = True
     written_paths: list[Path] = []
     for skill, entries in per_skill_entries.items():
-        skill_runlog_dir = paths.runlogs_root / "unit" / skill
+        skill_releasable = releasable and skill not in cut_short
+        if releasable and not skill_releasable:
+            print(
+                f"  ! {skill}: {cut_short[skill]} test(s) not run under the suite "
+                f"cap, so its log is scratch; re-run it with a higher "
+                f"--max-cost-usd"
+            )
+        skill_runlog_dir = paths.runlogs_root / unit_dir_name(store) / skill
         filename, version = next_filename_for(
             skill_runlog_dir=skill_runlog_dir,
-            releasable=releasable,
+            releasable=skill_releasable,
             timestamp=invocation_timestamp,
         )
         # Only a releasable run carries a review sample. A scratch run is
@@ -1327,22 +1459,25 @@ def main(argv: list[str] | None = None) -> int:
             _review_sample_for(
                 skill, entries, skill_runlog_dir, invocation_timestamp
             )
-            if releasable
+            if skill_releasable
             else None
         )
         log = build_run_log(
             skill=skill,
             version=version,
             released=False,
-            releasable=releasable,
+            releasable=skill_releasable,
             invocation=mode,
             timestamp=invocation_timestamp,
             harness_version=HARNESS_VERSION,
             model=DEFAULT_MODEL,
             judge_prompt_hash=judge_hash,
+            judge_model=judge_model,
             snapshot=_snapshot_for(skill),
             tests=entries,
             review_sample=sample,
+            tool_search=args.tool_search,
+            store=store,
         )
         path = write_run_log(
             log,
@@ -1355,6 +1490,7 @@ def main(argv: list[str] | None = None) -> int:
         )
         written_paths.append(path)
         print(f"  → wrote {_format_path(path)} ({len(entries)} test(s))")
+        _write_readable_report(path)
 
     # The final run logs supersede the in-progress partials; remove them.
     for pp in partial_paths.values():
@@ -1372,6 +1508,26 @@ def main(argv: list[str] | None = None) -> int:
     if saw_exec_abort:
         return 3
     return 0
+
+
+def _write_readable_report(log_path: Path) -> None:
+    """Write `log_path`'s readable `.txt` beside it and drop orphaned reports.
+
+    `make unit-report` does the same on demand; doing it here means every run
+    leaves one. A report that fails to render must never fail a run whose log
+    is already safely written, so this only prints.
+    """
+    try:
+        from unit_run_report import prune_orphan_reports, write_reports
+
+        written, _skipped, unreadable = write_reports([log_path], force=True)
+        for report in written:
+            print(f"  → wrote {_format_path(report)} (readable report)")
+        if unreadable:
+            print(f"  (no readable report: {_format_path(log_path)} could not be read)")
+        prune_orphan_reports(log_path.parent)
+    except Exception as exc:  # noqa: BLE001 — a report must never fail the run
+        print(f"  (no readable report: {type(exc).__name__}: {exc})")
 
 
 if __name__ == "__main__":

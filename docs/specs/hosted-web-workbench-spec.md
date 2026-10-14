@@ -181,7 +181,7 @@ correspondingly-numbered general sections below. The general spec remains the
   sandbox with an empty `/project`, starts `agent_runner`, and the client
   **prefixes the canned opener** ("Let's start a new genealogy research
   project.") onto the user's first message on the wire, so the existing
-  **`init-project`** skill runs and reads the person and objective from that one
+  **`init-project`** agent runs and reads the person and objective from that one
   turn — FamilySearch-person seeding in chat, reusing the skill as-is (no new
   onboarding UI; the researcher profile is fixed and nothing about the
   researcher is asked). The bubble shows only what the user typed. The session is
@@ -281,7 +281,10 @@ and web (WebSocket transport).
 > 3. **The chat WS is not proxied.** The browser opens **one authenticated WSS
 >    straight to the sandbox** — `POST /api/sessions/{id}/connect` resumes it,
 >    exposes port 8080, mints a per-sandbox HMAC token, and returns
->    `{wssUrl, token, familysearch}`; the control plane is then out of the
+>    `{wssUrl, token, familysearch}` — except for a session more than 24 h past
+>    `projects.created`, which it refuses with 410 before resuming
+>    (`SESSION_MAX_AGE` in `app/sessions.py`; `/resume` and the read endpoints
+>    stay open, so an ended session's research can still be read); the control plane is then out of the
 >    streaming path entirely (affinity-free, the AWS-no-sticky requirement). The
 >    in-sandbox server is `apps/server/app/sandbox_server.py`. Full rationale:
 >    `docs/realtime-architecture.md`.
@@ -625,9 +628,27 @@ server → client:  {type:"agent_event", event}        # streamed Agent SDK mess
 >   as a dead nullable, because `create_all` never drops a column.
 > - **`sessions`** — **not built**; the signed cookie is self-contained, which is
 >   the "or stateless JWT" branch this bullet allowed for.
-> - **`usage`** — **not built.** Per-turn cost/tokens are streamed to an
->   alpha-gated meter in the web client and are never persisted, so there is no
->   basis for the budgets §13 calls for.
+> - **`usage`** — built as **`turn_costs`** (project_id, user_id, model, cost_usd,
+>   input_tokens, output_tokens, build, continuations, created), one row per completed
+>   turn. The sandbox POSTs each turn's cost to `/api/turn-cost`, authenticated by its
+>   Anthropic proxy token; no foreign keys, so a deleted session's spend stays. Only
+>   production (proxy active) reports. `build` is the sandbox image's own commit, so a
+>   sandbox that outlives a deploy is billed to the code it runs; `continuations` counts
+>   the stops the Stop hook overrode that turn. `create_all` never alters a live table, so
+>   `init_db` adds any nullable column the model has and the table lacks
+>   (`db.add_missing_columns`). Only sandboxes built from 2026-10-12 on report, so it
+>   misses every older session still in use.
+>   **`api_calls`** (project_id, user_id, model, the four token counts, cost_usd,
+>   session_age_s, created) covers them: one row per `POST /v1/messages` the credential
+>   proxy relays with a 200, its usage read off the response on the way back
+>   (`anthropic_proxy._UsageMeter`: `message_start` and the last `message_delta` when
+>   streamed, the body's `usage` when not) and priced at the calling model's own rates
+>   (`app/agent/spend.py` `rates_for`). Its daily total is the alpha's whole bill.
+>   `session_age_s` is the session's age at the call, which separates a reopened old
+>   session's spend from a new one's. `make alpha-costs` prints both tables, in whole UTC
+>   days: every call by day, by model, by token type and the most expensive sessions,
+>   then turns by day, by build and by session. Nothing enforces against either: the
+>   alpha has no spend limit (lead ruling 2026-09-25).
 
 ### 6.4 Durable project storage (object store)
 - One prefix per project (`projects/<project_id>/`) holding `research.json`,
@@ -998,9 +1019,9 @@ Action: host `wiki-query-api` and the Pop-Stats API on production infra and poin
 > - **Cost controls — idle suspension shipped, budgets did not.** `SandboxSpec`
 >   defaults to `auto_suspend_seconds: 900` and `E2BProvider` creates with
 >   `lifecycle={"on_timeout":"pause","auto_resume":True}`. There are **no** token
->   or sandbox-second budgets, no rate limits, and no auto-archive — there is no
->   `usage` table to enforce them against (§6.3). Per-turn cost is displayed to
->   the user and discarded. The allowlist remains the only real cap.
+>   or sandbox-second budgets, no rate limits, and no auto-archive. Each API call's cost
+>   is recorded in `api_calls` and each turn's in `turn_costs` (§6.3), but nothing
+>   enforces against either. The allowlist remains the only real cap.
 
 ---
 
@@ -1072,7 +1093,7 @@ Action: host `wiki-query-api` and the Pop-Stats API on production infra and poin
   residency/retention/compliance out of scope for now.
 - FamilySearch token injection = **(a) file on the sandbox FS** (no MCP change).
 - Control plane hosted on **Dallan's local server, exposed via Tailscale Funnel**.
-- Onboarding = **conversational** (`init-project` skill), not a custom form.
+- Onboarding = **conversational** (`init-project` agent), not a custom form.
 - **Still to confirm (not blocking):** FamilySearch dev-key supports the web
   redirect flow + a handful of external alpha users; Funnel is enabled for the two
   sidecar endpoints.

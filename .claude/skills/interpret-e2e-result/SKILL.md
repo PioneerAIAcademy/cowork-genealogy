@@ -191,8 +191,9 @@ shows up in `narration[]` with `kind: "blocked"`.
 Check `compliance` and `guardrail_bypass_violations[]` in `run-<ts>.json`.
 This is a harness check, not a judge grade: it asks whether the agent actually
 invoked the GPS guardrail skills whose effects appear in the final project
-state — `person-evidence`, `conflict-resolution`, `proof-conclusion`,
-`research-exhaustiveness`, and the mandatory `gps-mentor` proof critique.
+state — `person-evidence`, `conflict-resolution`, `proof-conclusion` and
+`research-exhaustiveness`. `gps-mentor` is not among them: it runs only when the
+user asks for a second opinion, so a run with no critique is not a violation.
 
 - **`compliance: "pass"`** — nothing to say.
 - **`compliance: "fail"`** — report each violation string as a fact. This is
@@ -202,6 +203,12 @@ state — `person-evidence`, `conflict-resolution`, `proof-conclusion`,
   and this skill is the only place the user will see the second one.
 - **`compliance` absent** (a run log written before this axis existed) — say
   nothing; it was never checked.
+- **`harness_schema_version` 6 or below** — a "was never successfully invoked"
+  violation for an agent the run spawned typed and without error (an
+  `Agent`/`Task` call whose `subagent_type` is that name and whose `is_error` is
+  not `true`) is the retired Skill-only rule, not a bypass: today's detector
+  credits that spawn. Check `tool_calls` for the spawn and say so instead of
+  reporting it as a skipped step. An untyped or errored spawn is still a bypass.
 
 Do not translate a compliance failure into a pass/fail judgement of the run
 overall — that is the `outcome` gate, which is judge-derived and off-limits.
@@ -325,9 +332,13 @@ These are the regression causes:
   `tool_calls[]` against the last passing run for the same fixture.
 - **`/research` skill regression** — the agent skipped a GPS step or
   picked the wrong sub-skill. Read the ordered sub-skills the agent ran
-  from `run-<ts>.json`'s `tool_calls` — the `Skill` entries' `args.skill`,
-  in order (`[tc['args'].get('skill') for tc in tool_calls if tc['tool']=='Skill']`).
-  If `proof-conclusion` never appears, that's the smoking gun; if
+  from `run-<ts>.json`'s `tool_calls` — the `Skill` entries' `args.skill`
+  **and** the typed `Agent`/`Task` entries' `args.subagent_type` (strip a
+  `genealogy-research:` prefix), in order:
+  `[tc['args'].get('skill') if tc['tool']=='Skill' else (tc['args'].get('subagent_type') or 'UNTYPED').split(':')[-1] for tc in tool_calls if tc['tool'] in ('Skill','Agent','Task')]`.
+  The orchestrator spawns every destination its routing table spells
+  `@plugin:<name>` directly as an agent, so a `Skill`-only list misses them. If `proof-conclusion` never appears on either route, that's the
+  smoking gun; an `UNTYPED` spawn standing where it should be is a bypass; if
   `question-selection` is missing where a gap needed one, that's another.
 - **Sub-skill regression** — the right sub-skill ran but produced
   worse output than before. Pointer: the relevant `tool_calls` block

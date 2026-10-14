@@ -104,8 +104,9 @@ relationship but keeps the documentary fact that carries the same conclusion (a
 `tree_forget` removes both the structure and the fact, and is the only mechanism
 that does.
 
-If the researcher hasn't seeded a project yet, run `init-project` first (which
-builds the full tree). This skill edits an existing tree; it does not create one.
+If the researcher hasn't seeded a project yet, run `@plugin:init-project` first
+(which builds the full tree), passing the researcher's own words verbatim, plus
+`projectPath`, and nothing else. This skill edits an existing tree; it does not create one.
 
 ### 2. Always dry-run first
 
@@ -176,7 +177,8 @@ question in its own right.
 researcher asked about.** A record found while deriving the answer routinely
 names other people too — a spouse in a marriage record, children in a household
 census entry, a sibling in a death record's informant line. Assert all of it
-through the normal record-extraction / person-evidence path, exactly as you
+through the normal extraction (`extraction_append`, or `@plugin:record-structurer`
+for a non-FamilySearch source) and person-evidence path, exactly as you
 would on any other research session. Do not treat this as narrowly answering
 the one question; treat every record you read as ordinary new evidence and
 write down everything it documents, including facts and relationships that

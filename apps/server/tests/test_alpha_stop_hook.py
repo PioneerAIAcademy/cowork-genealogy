@@ -24,6 +24,13 @@ class FakeMatcher:
         self.kw = kw
 
 
+#: The compiled-in default, read from the module rather than retyped. The cases below
+#: that expect it are about "a bad value falls back", not about what the default IS --
+#: the VALUE is pinned once, in test_both_providers_... , so changing it is a one-line
+#: edit there rather than a sweep through the six parametrize entries that expect it.
+_DEFAULT = real_agent._DEFAULT_MAX_NUDGES
+
+
 def _hooks(project_dir: Path, monkeypatch, *, max_nudges: int = 60) -> dict:
     monkeypatch.setattr(real_agent, "AUTONOMOUS_MAX_NUDGES", max_nudges)
     return real_agent._build_hooks(FakeMatcher, project_dir)
@@ -101,22 +108,40 @@ def test_it_allows_the_yield_once_the_project_is_complete(tmp_path, monkeypatch)
     assert _call(stop) == {}
 
 
-def test_a_missing_or_unreadable_research_json_is_not_completion(tmp_path, monkeypatch):
-    """`read_research_json` returns None for all three, and None is NOT 'completed' -- so
-    the run keeps going rather than stopping on a file it could not read."""
+def test_a_missing_or_unreadable_research_json_allows_the_stop(tmp_path, monkeypatch):
+    """`read_research_json` returns None for all four, and a session with no research.json
+    is not nudged: the nudge says to re-read a file there is none to read.
+
+    The hook answers an EXCEPTION with `{}` too, so the verdict alone cannot tell "allowed
+    because there is no project" from "allowed because reading it raised". Dropping
+    `JSONDecodeError` or `UnicodeDecodeError` from `read_research_json`'s catch would pass
+    on `{}` -- so the log is checked for the line the hook writes when it fails."""
+    logged: list[str] = []
+    monkeypatch.setattr(real_agent, "_log", logged.append)
+
     # A FRESH hook per case: a second stop on the same hook with no tool call between
     # them is allowed by the no-progress arm, which would make every case below pass for
     # the wrong reason.
     def first_verdict() -> dict:
         return _call(_hooks(tmp_path, monkeypatch)["Stop"][0].kw["hooks"][0])
 
-    assert first_verdict()["decision"] == "block", "no file at all"
+    assert first_verdict() == {}, "no file at all"
     (tmp_path / "research.json").write_text("{not json", encoding="utf-8")
-    assert first_verdict()["decision"] == "block", "unparsable"
+    assert first_verdict() == {}, "unparsable"
     (tmp_path / "research.json").write_text("[]", encoding="utf-8")
-    assert first_verdict()["decision"] == "block", "a JSON array, which .get() would die on"
+    assert first_verdict() == {}, "a JSON array, which .get() would die on"
     (tmp_path / "research.json").write_bytes(b'{"project": {"status": "\xff\xfe"}}')
-    assert first_verdict()["decision"] == "block", "invalid UTF-8 (a ValueError, not an OSError)"
+    assert first_verdict() == {}, "invalid UTF-8 (a ValueError, not an OSError)"
+    assert not [ln for ln in logged if "stop hook failed" in ln], logged
+
+    # The control: that check is worth something only if a real failure says this. A hook
+    # whose counter raises must reach the same except arm and write the line.
+    broken = real_agent.make_stop_hook(
+        tmp_path, max_nudges=60,
+        tool_count=lambda: (_ for _ in ()).throw(RuntimeError("counter is gone")),
+    )
+    assert _call(broken) == {}
+    assert [ln for ln in logged if "stop hook failed" in ln], "the failure line has moved"
 
 
 def test_the_cap_bounds_the_vetoes(tmp_path, monkeypatch):
@@ -170,6 +195,67 @@ def test_the_counter_is_per_session_not_per_process(tmp_path, monkeypatch):
     assert asyncio.run(drive()) == {}, "session B did no work; A's tool calls must not count for it"
 
 
+def test_the_nudge_cap_is_per_session_not_per_turn(tmp_path, monkeypatch):
+    """The cap is a SESSION budget, and the code and the comments disagreed about that
+    until 2026-10-13 (found in review of the 60 -> 30 change).
+
+    `nudges_used` is created once inside `make_stop_hook` and the hooks dict is built
+    once per session, because the SDK client is cached. `_begin_turn_hook_state` clears
+    the per-TURN half -- `delivered` and `continuations` -- and cannot reach the nudge
+    count at all: it is in a different object. So a normal Stop, a reconnect and a
+    pause/resume all keep it, and a second job in one sitting starts with whatever the
+    first left.
+
+    This is pinned rather than merely commented because the scope is what the cap is
+    SIZED against: at 30 a drifting scope changes behaviour much sooner than it did at
+    60. Whether it ought to reset per turn is a separate decision -- resetting would
+    multiply the session bound by the number of turns, and on this plane there is no
+    spend limit behind it."""
+    _write(tmp_path, "active")
+
+    class StandInAgent:
+        """What `_build_hooks` actually reads off an agent: somewhere to publish
+        `_hook_counter`, and the pending-message probe the stop hook consults."""
+
+        @staticmethod
+        def pending_user_message():
+            return None
+
+    agent = StandInAgent()
+    monkeypatch.setattr(real_agent, "AUTONOMOUS_MAX_NUDGES", 2)
+    hooks = real_agent._build_hooks(FakeMatcher, tmp_path, agent)
+    pretool = hooks["PreToolUse"][0].kw["hooks"][0]
+    stop = hooks["Stop"][0].kw["hooks"][0]
+
+    async def consume_the_budget_then_cross_a_turn_boundary():
+        out = []
+        for _ in range(2):
+            await pretool({"tool_name": "Read", "tool_input": {}}, "t", None)
+            out.append(await stop({}, None, None))
+        # The turn boundary itself, exactly as `handle_turn` calls it.
+        real_agent.RealAgent._begin_turn_hook_state(agent)
+        await pretool({"tool_name": "Read", "tool_input": {}}, "t", None)
+        out.append(await stop({}, None, None))
+        return out
+
+    first, second, after_boundary = asyncio.run(consume_the_budget_then_cross_a_turn_boundary())
+    assert first["decision"] == "block" and second["decision"] == "block", \
+        "the first two nudges are inside a cap of 2"
+    assert after_boundary == {}, (
+        "the turn boundary handed the session a fresh nudge budget. The cap is sized and "
+        "documented as per-session; if this is now intended, `Settings.autonomous_max_nudges` "
+        "has to be re-sized, because the real bound becomes cap x turns-per-session."
+    )
+    # The per-TURN half really did reset -- otherwise the assertion above would pass for
+    # the wrong reason (nothing resetting at all).
+    assert agent._hook_counter["delivered"] is False
+    assert agent._hook_counter["continuations"] == 0
+    import inspect
+
+    assert "nudges_used" not in inspect.getsource(real_agent.RealAgent._begin_turn_hook_state), \
+        "if the turn boundary learns about nudges_used, this test's premise is stale"
+
+
 def test_the_hook_never_raises(tmp_path, monkeypatch):
     """A Stop hook that raises ends the turn in ERROR, which is strictly worse than
     letting it end. Same house rule as the PreToolUse hooks on both planes."""
@@ -207,7 +293,7 @@ def test_the_decision_is_imported_not_reimplemented():
     # `AUTONOMOUS_MAX_NUDGES = int(os.environ.get(...))` completely uncaught -- and that
     # import happens inside the sandbox AND in the prototype worker, where it crash-loops
     # the container rather than degrading.
-    ("forty", 60), ("  ", 60), ("-5", 0),
+    ("forty", _DEFAULT), ("  ", _DEFAULT), ("-5", 0),
 ])
 def test_the_cap_is_configurable_and_a_bad_value_never_breaks_the_import(raw, cap, monkeypatch):
     monkeypatch.setenv("AUTONOMOUS_MAX_NUDGES", raw)
@@ -221,15 +307,29 @@ def test_the_cap_is_configurable_and_a_bad_value_never_breaks_the_import(raw, ca
         assert reloaded.AUTONOMOUS_MAX_NUDGES == cap
     finally:
         importlib.reload(real_agent)
-    # p99 of Skill/Task/Agent steps per run over the 189 committed e2e runs is 51.
-    assert real_agent.AUTONOMOUS_MAX_NUDGES >= 51
+    # A floor, so the cap cannot be quietly set to a value that truncates most runs.
+    #
+    # It was p99 while the default was 60. Re-based to p90 on 2026-10-13 when the default
+    # went 60 -> 30 as the cost half of turning continuous work back on: covering p99 was
+    # never the requirement, it was just where 60 happened to land.
+    #
+    # Re-derived that day by `test_proto_config._steps_per_run`'s own method rather than
+    # by hand -- the hand count this branch opened with reported p99 51 and 202 runs, and
+    # both were wrong. The corpus read 203 runs, median 15, p90 26, p99 48, max 76. So 30
+    # clears p90 and 25 -- the bottom of the range discussed -- would not. Note p90 itself
+    # MOVED (25 -> 26) since the September sizing; an earlier draft of this comment called
+    # the figures unchanged.
+    #
+    # Lowering it further is a real decision, not a test fix: read config.py first.
+    assert real_agent.AUTONOMOUS_MAX_NUDGES >= 26
 
 
 # ── 1d: the cap has to REACH the sandbox, and must not crash it ──────────────────
 
 
 @pytest.mark.parametrize("raw, expected", [
-    (None, 60), ("", 60), ("   ", 60), ("forty", 60), ("60", 60), ("0", 0), ("30", 30),
+    (None, _DEFAULT), ("", _DEFAULT), ("   ", _DEFAULT), ("forty", _DEFAULT),
+    ("60", 60), ("0", 0), ("30", 30),
     ("-5", 0), (" 12 ", 12),
 ])
 def test_the_cap_parse_never_raises(raw, expected):
@@ -242,7 +342,7 @@ def test_the_cap_parse_never_raises(raw, expected):
     assert real_agent._max_nudges(env) == expected
 
 
-def test_both_providers_pass_the_cap_into_the_sandbox_and_honour_auto_continue():
+def test_both_providers_pass_the_cap_into_the_sandbox_and_honour_auto_continue(monkeypatch):
     """`real_agent` reads AUTONOMOUS_MAX_NUDGES from the environment INSIDE the sandbox,
     and `commands.run` does not inherit the image ENV -- so a variable not named in the
     provider's env dict never arrives, and an operator setting it on the control plane
@@ -255,7 +355,19 @@ def test_both_providers_pass_the_cap_into_the_sandbox_and_honour_auto_continue()
     from app.config import Settings
     from app.sandbox import e2b, local
 
-    assert Settings().autonomous_max_nudges == 60
+    # THE pin on the shipped value. Deliberately a literal, not `_DEFAULT`: this is the
+    # one place that asserts what the number is, so a change has to be made here on
+    # purpose. 30 as of 2026-10-13; the reasoning is in config.py.
+    #
+    # The env var is cleared first because `Settings` reads it: without this the pin
+    # asserts "the value this shell happens to export" rather than the COMPILED-IN
+    # default, and a developer who exports AUTONOMOUS_MAX_NUDGES for a local run gets a
+    # spurious red here. Found by checking that the guard still accepts a legitimate
+    # operator override (review of the 60 -> 30 change, 2026-10-13).
+    monkeypatch.delenv("AUTONOMOUS_MAX_NUDGES", raising=False)
+    assert Settings().autonomous_max_nudges == 30
+    assert real_agent._DEFAULT_MAX_NUDGES == 30, \
+        "the in-sandbox fallback must match the setting, or they disagree where nobody looks"
 
     for source in (inspect.getsource(e2b.E2BProvider._agent_env),
                    inspect.getsource(local.LocalProvider)):
@@ -409,7 +521,7 @@ def test_both_halt_carriers_read_the_pending_message_signal():
     assert "pending_user_message=bool(" in stop, "the Stop hook must pass the signal on"
 
 
-def test_the_alpha_carries_no_spend_meter():
+def test_the_alpha_carries_no_spend_limit():
     """Lead ruling 2026-09-25: no spend limit on the alpha. E2B is replaced by the
     search-agent prototype in about two months, so the alpha is not worth hardening -- and
     the meter this branch briefly added carried three defects of its own:
@@ -425,20 +537,29 @@ def test_the_alpha_carries_no_spend_meter():
     None of the three was caught by the tests that shipped with it: those drove a fake
     agent returning a fixed number, so they exercised the HALT'S DECISION and never the
     METER. That is why this guard is spelled against the module rather than a verdict --
-    what must not come back is the meter.
+    what must not come back is that meter.
+
+    The control plane's credential proxy records what every call cost (`api_calls`) and
+    must never refuse one on it. It takes its prices from `app.agent.spend`, beside the
+    prototype's cap, so the cap is the name it must not read.
 
     The prototype's $35 cap is untouched and stays as built."""
     import inspect
 
+    from app import anthropic_proxy
     from app.agent import real_agent as ra
 
     src = inspect.getsource(ra)
     for gone in ("session_spend_usd", "_record_usage", "_usage_by_message",
                  "SPEND_CAP_USD", "usage_tokens"):
         assert gone not in src, (
-            f"`{gone}` is back in real_agent.py. The alpha carries no spend meter "
+            f"`{gone}` is back in real_agent.py. The alpha's sandbox carries no spend meter "
             f"(lead ruling 2026-09-25); the prototype's cap is the one that ships."
         )
+    assert "SPEND_CAP_USD" not in inspect.getsource(anthropic_proxy), (
+        "the credential proxy reads the spend cap. It records what calls cost and refuses "
+        "none on it: the alpha has no spend limit (lead ruling 2026-09-25)."
+    )
     proto = (Path(__file__).resolve().parents[1]
              / "proto" / "worker" / "worker.py").read_text(encoding="utf-8")
     assert "SPEND_CAP_USD" in proto, "the prototype's $35 session cap must stay"

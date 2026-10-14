@@ -10,11 +10,12 @@
       "identity-conflict",
       "conflicts-surfaced",
       "writer-refusal",
-      "competing-fathers"
+      "competing-fathers",
+      "direct-arm"
     ]
   },
   "input": {
-    "user_message": "While linking the 1845 baptism, adding Thomas Flynn (I3) as Patrick's father was refused by the tree. This is what tree_edit returned:\n\nreason: unjustified_warnings\nmessage: A competing parent is not a warning to justify: send each conflicts_surfaced entry to conflict-resolution as an identity question, and do not write this edge until it is resolved.\nconflicts_surfaced: [{ \"personId\": \"I1\", \"factType\": \"ParentChild\", \"values\": [\"I2 Thomas Flynn (a_004, source S2, S3)\", \"I3 Thomas Flynn (a_018)\"] }]\n\nPlease deal with this conflict.",
+    "delegation": "While linking the 1845 baptism, adding Thomas Flynn (I3) as Patrick's father was refused by the tree. This is what tree_edit returned:\n\nreason: unjustified_warnings\nmessage: A competing parent is not a warning to justify: send each conflicts_surfaced entry to conflict-resolution as an identity question, and do not write this edge until it is resolved.\nconflicts_surfaced: [{ \"personId\": \"I1\", \"factType\": \"ParentChild\", \"values\": [\"I2 Thomas Flynn (a_004, source S2, S3)\", \"I3 Thomas Flynn (a_018)\"] }]\n\nRecord and resolve this conflict.\n\nprojectPath: <workspace>",
     "scenario": "flynn-competing-fathers-parentage"
   },
   "judge_context": [

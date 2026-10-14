@@ -1,0 +1,3900 @@
+{
+  "persons": [
+    {
+      "id": "GLRZ-VRK",
+      "ark": "ark:/61903/4:1:GLRZ-VRK",
+      "gender": "Male",
+      "living": false,
+      "names": [
+        {
+          "id": "7e45dad5-7057-4669-b8f6-929c6243d391",
+          "preferred": true,
+          "given": "João",
+          "surname": "Gomes de Sousa",
+          "type": "BirthName"
+        }
+      ],
+      "facts": [
+        {
+          "id": "73d4d124-be74-4dd1-8999-18dee4c2d84b",
+          "type": "Birth",
+          "date": "13 de outubro de 1851",
+          "standard_date": "13 Oct 1851",
+          "place": "Câmara de Lobos, Madeira, Portugal",
+          "standard_place": "Câmara de Lobos, Madeira, Portugal"
+        },
+        {
+          "id": "6da2e3b4-56ef-4bf5-9227-bc67b69c25c6",
+          "type": "Death"
+        },
+        {
+          "id": "cb2c793e-a4a3-4173-bf82-0df7746a569d",
+          "type": "Christening",
+          "date": "13 de janeiro de 1852",
+          "standard_date": "13 Jan 1852",
+          "place": "Câmara de Lobos, Madeira, Portugal",
+          "standard_place": "Câmara de Lobos, Madeira, Portugal"
+        },
+        {
+          "id": "c627907d-ae36-44d3-9cab-0b9fef89e415",
+          "type": "Occupation",
+          "value": "lavrador"
+        },
+        {
+          "id": "f3b34baf-2caf-419e-ab66-b5df1aef2fe4",
+          "type": "Residence",
+          "place": "Câmara de Lobos, Madeira, Portugal",
+          "standard_place": "Câmara de Lobos, Madeira, Portugal"
+        }
+      ],
+      "sources": [
+        {
+          "ref": "W7KB-NML"
+        },
+        {
+          "ref": "W7KY-XN1"
+        },
+        {
+          "ref": "W7KY-66N"
+        },
+        {
+          "ref": "W7KY-85G"
+        },
+        {
+          "ref": "W7KY-891"
+        },
+        {
+          "ref": "W7XP-6Y6"
+        },
+        {
+          "ref": "W7XG-GKP"
+        },
+        {
+          "ref": "W7XG-9YV"
+        },
+        {
+          "ref": "W7XL-5J3"
+        },
+        {
+          "ref": "W7XL-28H"
+        },
+        {
+          "ref": "W7XL-KQG"
+        },
+        {
+          "ref": "W7XL-N9H"
+        },
+        {
+          "ref": "Q2QV-BHJ"
+        },
+        {
+          "ref": "Q2QV-Y57"
+        },
+        {
+          "ref": "QNCM-T1D"
+        },
+        {
+          "ref": "QNCM-5VV"
+        },
+        {
+          "ref": "QNH6-JP2"
+        },
+        {
+          "ref": "QNH6-ZQR"
+        }
+      ]
+    },
+    {
+      "id": "GLT8-4J9",
+      "ark": "ark:/61903/4:1:GLT8-4J9",
+      "gender": "Male",
+      "living": false,
+      "names": [
+        {
+          "id": "4eb4dcb5-f7fa-4bb9-b241-b8cd48060078",
+          "preferred": true,
+          "given": "João",
+          "surname": "Gomes de Sousa",
+          "type": "BirthName"
+        }
+      ],
+      "facts": [
+        {
+          "id": "ddc87d7f-49eb-428a-828d-c41fc306c380",
+          "type": "Birth",
+          "date": "1868",
+          "standard_date": "1868"
+        },
+        {
+          "id": "1a47867b-4ff5-4945-bf56-73cba65e8013",
+          "type": "Death",
+          "date": "2 March 1956",
+          "standard_date": "2 Mar 1956",
+          "place": "Câmara de Lobos, Madeira, Portugal",
+          "standard_place": "Câmara de Lobos, Madeira, Portugal"
+        },
+        {
+          "id": "823e7a5d-63aa-4e77-b8bc-757b187ad478",
+          "type": "Burial",
+          "place": "Câmara de Lobos, Madeira, Portugal",
+          "standard_place": "Câmara de Lobos, Madeira, Portugal"
+        },
+        {
+          "id": "027e6d65-5b5b-4a15-b761-7d23d41f2d8c",
+          "type": "Occupation",
+          "value": "Caresado"
+        },
+        {
+          "id": "767e1042-a356-4c44-bfc3-ebd48e6b37a7",
+          "type": "Residence",
+          "place": "Câmara de Lobos, Madeira, Portugal",
+          "standard_place": "Câmara de Lobos, Madeira, Portugal"
+        },
+        {
+          "id": "9dccb48c-8b9a-472b-a14d-522c1bea733e",
+          "type": "Occupation",
+          "value": "lavrador"
+        }
+      ],
+      "sources": [
+        {
+          "ref": "W7XG-TJR"
+        },
+        {
+          "ref": "W7XG-RG6"
+        },
+        {
+          "ref": "W7XG-RSM"
+        },
+        {
+          "ref": "W7XG-5VK"
+        },
+        {
+          "ref": "W7XG-5QJ"
+        },
+        {
+          "ref": "W7XG-GT8"
+        },
+        {
+          "ref": "W7XG-867"
+        },
+        {
+          "ref": "W7XG-ZQM"
+        },
+        {
+          "ref": "W7XG-C9D"
+        },
+        {
+          "ref": "W7XG-HHK"
+        },
+        {
+          "ref": "W7XG-4CK"
+        },
+        {
+          "ref": "W7XG-75R"
+        },
+        {
+          "ref": "W7XG-Q51"
+        },
+        {
+          "ref": "W7XG-39D"
+        },
+        {
+          "ref": "W7XG-S9J"
+        },
+        {
+          "ref": "W7XL-12L"
+        },
+        {
+          "ref": "W7XL-BFP"
+        },
+        {
+          "ref": "W7XL-YB9"
+        },
+        {
+          "ref": "W7XL-TBJ"
+        },
+        {
+          "ref": "W7XL-5PB"
+        },
+        {
+          "ref": "Q2QV-YR4"
+        }
+      ]
+    },
+    {
+      "id": "GQCD-33W",
+      "ark": "ark:/61903/4:1:GQCD-33W",
+      "gender": "Female",
+      "living": false,
+      "names": [
+        {
+          "id": "c8645ecc-3fe0-42d7-a655-4b2c865a55ab",
+          "preferred": true,
+          "given": "Eulalia Adelaide",
+          "surname": "Pestana",
+          "type": "BirthName"
+        }
+      ],
+      "facts": [
+        {
+          "id": "0b448543-38f5-4e17-9891-81d8780328ac",
+          "type": "Birth",
+          "date": "1883",
+          "standard_date": "1883",
+          "place": "Câmara de Lobos, Madeira, Portugal",
+          "standard_place": "Câmara de Lobos, Madeira, Portugal"
+        },
+        {
+          "id": "55f50e34-4ec5-401a-8895-bd0f1a2cd55f",
+          "type": "Death",
+          "place": "Rio de Janeiro, Brasil",
+          "standard_place": "Rio de Janeiro, Brazil"
+        },
+        {
+          "id": "39254663-e2ba-470c-ae35-b82e350e44d3",
+          "type": "Residence",
+          "place": "Pautinga"
+        }
+      ],
+      "sources": [
+        {
+          "ref": "W7TH-S4J"
+        },
+        {
+          "ref": "W7KY-J7P"
+        },
+        {
+          "ref": "7Z12-WC5"
+        },
+        {
+          "ref": "SJMX-M1J"
+        },
+        {
+          "ref": "SJM6-VVX"
+        },
+        {
+          "ref": "SJMD-T12"
+        },
+        {
+          "ref": "SJMD-4S3"
+        },
+        {
+          "ref": "SJMD-WSP"
+        },
+        {
+          "ref": "SN17-14D"
+        },
+        {
+          "ref": "SN17-GR8"
+        }
+      ]
+    },
+    {
+      "id": "GLR8-HVG",
+      "ark": "ark:/61903/4:1:GLR8-HVG",
+      "gender": "Female",
+      "living": false,
+      "names": [
+        {
+          "id": "bb5532b8-7e71-49a5-b127-2bcde4bb9abf",
+          "preferred": true,
+          "given": "Ana Augusta",
+          "surname": "de Jesus",
+          "type": "BirthName"
+        }
+      ],
+      "facts": [
+        {
+          "id": "f07b4634-8b6a-4849-b0e1-cde6bb98cca7",
+          "type": "Birth",
+          "date": "1845",
+          "standard_date": "1845",
+          "place": "Câmara de Lobos, Madeira, Portugal",
+          "standard_place": "Câmara de Lobos, Madeira, Portugal"
+        },
+        {
+          "id": "85e92c73-c74a-47c4-8bc1-eff5ec31631a",
+          "type": "Death"
+        },
+        {
+          "id": "7f7ed91f-2e66-4aca-862d-50161b5dfd0b",
+          "type": "Residence",
+          "place": "Câmara de Lobos, Madeira, Portugal",
+          "standard_place": "Câmara de Lobos, Madeira, Portugal"
+        },
+        {
+          "id": "db2e3192-c0d2-4453-baf4-e8f520fe311f",
+          "type": "Occupation",
+          "value": "domestica"
+        }
+      ],
+      "sources": [
+        {
+          "ref": "W7KB-NSD"
+        },
+        {
+          "ref": "W7KY-XK5"
+        },
+        {
+          "ref": "W7KY-6ND"
+        },
+        {
+          "ref": "W7KY-8YT"
+        },
+        {
+          "ref": "W7KY-8W3"
+        },
+        {
+          "ref": "W7XP-X99"
+        },
+        {
+          "ref": "W7XG-GGT"
+        },
+        {
+          "ref": "W7XG-91K"
+        },
+        {
+          "ref": "W7XL-5KW"
+        },
+        {
+          "ref": "W7XL-2XG"
+        },
+        {
+          "ref": "W7XL-VPK"
+        },
+        {
+          "ref": "QNHF-76W"
+        },
+        {
+          "ref": "QNHX-MKY"
+        }
+      ]
+    },
+    {
+      "id": "GLT8-QHG",
+      "ark": "ark:/61903/4:1:GLT8-QHG",
+      "gender": "Female",
+      "living": false,
+      "names": [
+        {
+          "id": "29212ea3-8013-41e1-9061-96b37d95c6cd",
+          "preferred": true,
+          "given": "Ana",
+          "surname": "Gomes de Sousa",
+          "type": "BirthName"
+        }
+      ],
+      "facts": [
+        {
+          "id": "8c478229-271b-4d18-a4f2-0dda7d22c5fb",
+          "type": "Birth",
+          "date": "20 de junho de 1870",
+          "standard_date": "20 Jun 1870"
+        },
+        {
+          "id": "85e18572-7a2b-45a4-adad-478786cd601f",
+          "type": "Christening",
+          "date": "14 de agosto de 1870",
+          "standard_date": "14 Aug 1870",
+          "place": "São Sebastião, Madeira, Portugal",
+          "standard_place": "São Sebastião, Câmara de Lobos, Madeira, Portugal"
+        },
+        {
+          "id": "8bbd81d7-a951-4231-b31f-4b7e97039035",
+          "type": "Death",
+          "date": "18 de marzo de 1940",
+          "standard_date": "18 Mar 1940"
+        },
+        {
+          "id": "213f94cf-3d13-43a3-a696-4dd66a33176a",
+          "type": "Marital Status",
+          "value": "solteira"
+        },
+        {
+          "id": "8f8d1981-be81-4d2a-b57c-4c7a633112be",
+          "type": "Occupation",
+          "value": "lavradora"
+        },
+        {
+          "id": "3c249a69-37a4-4e14-a5e9-5be454955059",
+          "type": "Residence",
+          "place": "Câmara de Lobos, Madeira, Portugal",
+          "standard_place": "Câmara de Lobos, Madeira, Portugal"
+        }
+      ],
+      "sources": [
+        {
+          "ref": "W7XP-XWS"
+        },
+        {
+          "ref": "QNH1-H1Y"
+        }
+      ]
+    },
+    {
+      "id": "GLRH-4W9",
+      "ark": "ark:/61903/4:1:GLRH-4W9",
+      "gender": "Male",
+      "living": false,
+      "names": [
+        {
+          "id": "80488b3b-51a9-4eb4-b96e-3bcdcf47eebf",
+          "preferred": true,
+          "given": "Francisco",
+          "surname": "Gomes de Sousa",
+          "type": "BirthName"
+        }
+      ],
+      "facts": [
+        {
+          "id": "9d2207d3-b1e8-43ef-be85-46cfa5d22f92",
+          "type": "Christening",
+          "date": "2 de junho de 1883",
+          "standard_date": "2 Jun 1883",
+          "place": "Câmara de Lobos, Madeira, Portugal",
+          "standard_place": "Câmara de Lobos, Madeira, Portugal"
+        },
+        {
+          "id": "aac9cdaf-8ef6-4f26-afea-671165968c7b",
+          "type": "Birth",
+          "date": "1883",
+          "standard_date": "1883",
+          "place": "Câmara de Lobos, Madeira, Portugal",
+          "standard_place": "Câmara de Lobos, Madeira, Portugal"
+        },
+        {
+          "id": "5d3029b2-5d29-4a0c-9fa3-d91bc4befa17",
+          "type": "Death"
+        },
+        {
+          "id": "ed58d70a-7079-4ab6-8f6c-5dc19f29c122",
+          "type": "Occupation",
+          "value": "lavrador"
+        },
+        {
+          "id": "0c9ffb53-e5fc-4b2a-9c0f-eb1d994007e5",
+          "type": "Occupation",
+          "value": "agricultor"
+        },
+        {
+          "id": "c823d596-5490-45ee-90f0-bf28a9607139",
+          "type": "Marital Status",
+          "value": "solteiro"
+        },
+        {
+          "id": "071c38ae-0943-4777-ad85-84f293e1802d",
+          "type": "Residence",
+          "place": "Câmara de Lobos, Madeira, Portugal",
+          "standard_place": "Câmara de Lobos, Madeira, Portugal"
+        }
+      ],
+      "sources": [
+        {
+          "ref": "W7KY-D3V"
+        },
+        {
+          "ref": "W7KY-88C"
+        },
+        {
+          "ref": "W7KY-ZMS"
+        },
+        {
+          "ref": "W7KY-C8Q"
+        },
+        {
+          "ref": "W7KY-HTF"
+        },
+        {
+          "ref": "W7KY-45D"
+        },
+        {
+          "ref": "W7KY-48S"
+        },
+        {
+          "ref": "W9B7-JG8"
+        },
+        {
+          "ref": "W9B7-F5G"
+        },
+        {
+          "ref": "W9B7-X3M"
+        },
+        {
+          "ref": "WMXV-SMG"
+        },
+        {
+          "ref": "WMQN-X6S"
+        },
+        {
+          "ref": "WMQN-CKJ"
+        },
+        {
+          "ref": "QNH1-N3T"
+        },
+        {
+          "ref": "QNHX-NFY"
+        }
+      ]
+    },
+    {
+      "id": "PZFJ-J9Z",
+      "ark": "ark:/61903/4:1:PZFJ-J9Z",
+      "gender": "Male",
+      "living": false,
+      "names": [
+        {
+          "id": "35caab93-f2d2-4a67-b6b3-db86ca609775",
+          "preferred": true,
+          "given": "Francisco",
+          "surname": "Gomes de Sousa",
+          "type": "BirthName"
+        }
+      ],
+      "facts": [
+        {
+          "id": "66d10d20-e676-4a72-ba04-819571cf9837",
+          "type": "Birth",
+          "date": "1873",
+          "standard_date": "1873"
+        },
+        {
+          "id": "516f53d9-a28a-4e3e-abf2-a9495fe9dbf7",
+          "type": "Death",
+          "date": "23 September 1875",
+          "standard_date": "23 Sep 1875",
+          "place": "Nossa Senhora da Assunção, Madeira, Portugal",
+          "standard_place": "Nossa Senhora da Assunção, Madeira, Portugal"
+        }
+      ],
+      "sources": [
+        {
+          "ref": "W7KY-X72"
+        }
+      ]
+    },
+    {
+      "id": "GLT8-Y25",
+      "ark": "ark:/61903/4:1:GLT8-Y25",
+      "gender": "Female",
+      "living": false,
+      "names": [
+        {
+          "id": "25a8966c-9b35-4d05-8744-bfe9798b2184",
+          "preferred": true,
+          "given": "Eulália Gomes de Sousa",
+          "surname": "",
+          "type": "BirthName"
+        }
+      ],
+      "facts": [
+        {
+          "id": "367f88a8-e8fc-4e62-b615-c14a51eed386",
+          "type": "Christening",
+          "date": "março de 1880",
+          "standard_date": "Mar 1880",
+          "place": "São Sebastião, Madeira, Portugal",
+          "standard_place": "São Sebastião, Câmara de Lobos, Madeira, Portugal"
+        },
+        {
+          "id": "98205e07-44a8-41d2-a2cf-7c5b04e4d602",
+          "type": "Birth",
+          "date": "1880",
+          "standard_date": "1880"
+        },
+        {
+          "id": "dc5c30d5-3f3b-420a-ae67-206937695f57",
+          "type": "Death"
+        }
+      ],
+      "sources": [
+        {
+          "ref": "Q2QV-YB9"
+        },
+        {
+          "ref": "QNH1-XX9"
+        }
+      ]
+    },
+    {
+      "id": "GLTD-J41",
+      "ark": "ark:/61903/4:1:GLTD-J41",
+      "gender": "Female",
+      "living": false,
+      "names": [
+        {
+          "id": "bdc619cd-f319-4a74-85be-bd2faebc69b3",
+          "preferred": true,
+          "given": "Maria",
+          "surname": "Gomes de Sousa",
+          "type": "BirthName"
+        }
+      ],
+      "facts": [
+        {
+          "id": "a9ae5d44-1ff0-4e19-b736-6f965129acbf",
+          "type": "Christening",
+          "date": "1865",
+          "standard_date": "1865",
+          "place": "Câmara de Lobos, Madeira, Portugal",
+          "standard_place": "Câmara de Lobos, Madeira, Portugal"
+        },
+        {
+          "id": "f526cb51-241f-4030-b13d-edd05a769840",
+          "type": "Birth",
+          "date": "9 de outubro de 1865",
+          "standard_date": "9 Oct 1865"
+        },
+        {
+          "id": "bfbc57be-50f7-43c6-922a-e1b5636c4b39",
+          "type": "Death"
+        }
+      ],
+      "sources": [
+        {
+          "ref": "Q2QV-YTQ"
+        },
+        {
+          "ref": "QNH1-JSY"
+        }
+      ]
+    },
+    {
+      "id": "GLTD-FST",
+      "ark": "ark:/61903/4:1:GLTD-FST",
+      "gender": "Male",
+      "living": false,
+      "names": [
+        {
+          "id": "b52c7c74-cdb6-414f-9be0-a625efee8864",
+          "preferred": true,
+          "given": "Luís Gomes de Sousa",
+          "surname": "",
+          "type": "BirthName"
+        }
+      ],
+      "facts": [
+        {
+          "id": "02b9d586-7e45-4a5a-b321-b16f293fecc5",
+          "type": "Birth",
+          "date": "12 Aug 1879",
+          "standard_date": "12 Aug 1879",
+          "place": "Câmara De Lobos",
+          "standard_place": "Câmara de Lobos, Madeira, Portugal"
+        },
+        {
+          "id": "bc725311-3e7d-47e8-b37d-2727c226d18e",
+          "type": "Christening",
+          "date": "29 de setembro de 1879",
+          "standard_date": "29 Sep 1879",
+          "place": "São Sebastião, Madeira, Portugal",
+          "standard_place": "São Sebastião, Câmara de Lobos, Madeira, Portugal"
+        },
+        {
+          "id": "fe62cf08-dd32-449a-8af9-e088ce432d9b",
+          "type": "Immigration",
+          "date": "1957",
+          "standard_date": "1957",
+          "place": "Rio de Janeiro, Rio de Janeiro, Brasil",
+          "standard_place": "Rio de Janeiro, Rio de Janeiro, Brazil"
+        },
+        {
+          "id": "e9ddf2c3-caa5-460b-be93-75799d9bba8d",
+          "type": "Death",
+          "date": "17 December 1960",
+          "standard_date": "17 Dec 1960"
+        }
+      ],
+      "sources": [
+        {
+          "ref": "W7KB-N7Z"
+        },
+        {
+          "ref": "W7KB-FDX"
+        },
+        {
+          "ref": "W7KB-XV9"
+        },
+        {
+          "ref": "Q2QV-Y1V"
+        },
+        {
+          "ref": "Q2QV-YYS"
+        },
+        {
+          "ref": "QNHF-795"
+        },
+        {
+          "ref": "QNHD-G8Y"
+        }
+      ]
+    },
+    {
+      "id": "GPZT-LZN",
+      "ark": "ark:/61903/4:1:GPZT-LZN",
+      "gender": "Male",
+      "living": false,
+      "names": [
+        {
+          "id": "fa3af99a-7b3a-4c7f-a52d-4d687518c671",
+          "preferred": true,
+          "given": "João",
+          "surname": "Gomes de Sousa",
+          "type": "BirthName"
+        }
+      ],
+      "facts": [
+        {
+          "id": "bf28881b-c07b-4433-a9a1-b0cc6417d156",
+          "type": "Birth",
+          "date": "1811",
+          "standard_date": "1811",
+          "place": "Câmara de Lobos, Madeira, Portugal",
+          "standard_place": "Câmara de Lobos, Madeira, Portugal"
+        },
+        {
+          "id": "233f1580-f2d4-46f4-a78c-60691a9d4f78",
+          "type": "Death",
+          "date": "16 de março de 1890",
+          "standard_date": "16 Mar 1890",
+          "place": "Câmara de Lobos, Madeira, Portugal",
+          "standard_place": "Câmara de Lobos, Madeira, Portugal"
+        },
+        {
+          "id": "10b962bf-49b9-446e-a562-8403d2f22460",
+          "type": "Burial",
+          "place": "Câmara de Lobos, Madeira, Portugal",
+          "standard_place": "Câmara de Lobos, Madeira, Portugal"
+        },
+        {
+          "id": "1b9c0728-e394-4611-aaa6-544df08b2564",
+          "type": "Christening",
+          "place": "Câmara de Lobos, Madeira, Portugal",
+          "standard_place": "Câmara de Lobos, Madeira, Portugal"
+        },
+        {
+          "id": "c4071646-372d-498b-95d4-41fcdec29a4e",
+          "type": "Residence",
+          "place": "Câmara de Lobos, Madeira, Portugal",
+          "standard_place": "Câmara de Lobos, Madeira, Portugal"
+        },
+        {
+          "id": "8a4c7878-e3cb-44cd-80ae-7bbeb5764a06",
+          "type": "Occupation",
+          "value": "lavradores"
+        }
+      ],
+      "sources": [
+        {
+          "ref": "W8G1-TQX"
+        },
+        {
+          "ref": "W7XL-FSR"
+        },
+        {
+          "ref": "W7XL-6GQ"
+        },
+        {
+          "ref": "W7XL-DK3"
+        },
+        {
+          "ref": "W7XL-87C"
+        },
+        {
+          "ref": "W7XL-ZX1"
+        },
+        {
+          "ref": "W7XL-QTR"
+        },
+        {
+          "ref": "W7XL-SZ9"
+        },
+        {
+          "ref": "W7X2-XTF"
+        },
+        {
+          "ref": "W7X2-6T2"
+        },
+        {
+          "ref": "W7X2-DNP"
+        },
+        {
+          "ref": "7FX8-TCL"
+        },
+        {
+          "ref": "7FX8-5ZQ"
+        },
+        {
+          "ref": "9BT1-7YK"
+        },
+        {
+          "ref": "9BT1-3PK"
+        },
+        {
+          "ref": "9XYV-NFD"
+        },
+        {
+          "ref": "9XYV-FJM"
+        },
+        {
+          "ref": "9XYV-F9L"
+        },
+        {
+          "ref": "9XYV-XCR"
+        },
+        {
+          "ref": "WSVZ-GVF"
+        },
+        {
+          "ref": "Q2QV-BML"
+        },
+        {
+          "ref": "7TPY-255"
+        }
+      ]
+    },
+    {
+      "id": "LRJX-PH6",
+      "ark": "ark:/61903/4:1:LRJX-PH6",
+      "gender": "Female",
+      "living": false,
+      "names": [
+        {
+          "id": "b3470729-33bb-41d9-9f7b-030332cab166",
+          "preferred": true,
+          "given": "Maria José Beatriz",
+          "surname": "de Sousa",
+          "type": "BirthName"
+        }
+      ],
+      "facts": [
+        {
+          "id": "01f1dd11-ec9f-4375-92c8-e19c273f7054",
+          "type": "Birth",
+          "date": "about 1865",
+          "standard_date": "Abt 1865",
+          "place": "Câmara de Lobos, Madeira, Portugal",
+          "standard_place": "Câmara de Lobos, Madeira, Portugal"
+        },
+        {
+          "id": "9541416d-f786-4af9-9f2e-56e9f627b5f3",
+          "type": "Death"
+        },
+        {
+          "id": "a01f9f16-50db-4f56-96e3-008450eb2c6e",
+          "type": "Burial",
+          "place": "Madeira, Portugal",
+          "standard_place": "Madeira, Portugal"
+        },
+        {
+          "id": "f4ee376c-3122-4dc5-b615-11bf78c58492",
+          "type": "Christening",
+          "place": "Câmara de Lobos, Madeira, Portugal",
+          "standard_place": "Câmara de Lobos, Madeira, Portugal"
+        },
+        {
+          "id": "5a4c0874-988d-48e9-8338-0de9ec1b704a",
+          "type": "Marital Status",
+          "value": "solteira"
+        },
+        {
+          "id": "0f379a77-e97c-45e2-b6de-1376f39a748b",
+          "type": "Occupation",
+          "value": "domestica"
+        },
+        {
+          "id": "c708b52f-6ec1-492c-ad95-2cafa38e2b3a",
+          "type": "Residence",
+          "place": "Câmara de Lobos, Madeira, Portugal",
+          "standard_place": "Câmara de Lobos, Madeira, Portugal"
+        },
+        {
+          "id": "704ba78c-98e8-4677-802d-61f756a8ad1d",
+          "type": "Occupation",
+          "value": "lavrador"
+        }
+      ],
+      "sources": [
+        {
+          "ref": "W7XL-PH8"
+        },
+        {
+          "ref": "W7XL-G4L"
+        },
+        {
+          "ref": "W7XL-22P"
+        },
+        {
+          "ref": "7PBQ-ZF8"
+        },
+        {
+          "ref": "7PBQ-C46"
+        },
+        {
+          "ref": "74KV-P2G"
+        },
+        {
+          "ref": "S5J5-5YR"
+        }
+      ]
+    },
+    {
+      "id": "GPZT-19V",
+      "ark": "ark:/61903/4:1:GPZT-19V",
+      "gender": "Female",
+      "living": false,
+      "names": [
+        {
+          "id": "d60f71d7-8e5d-465a-8644-7125215afd4f",
+          "preferred": true,
+          "given": "Maria",
+          "surname": "Corrêa Henriques",
+          "type": "BirthName"
+        }
+      ],
+      "facts": [
+        {
+          "id": "ad1fbe41-f1b7-4ee8-b4f3-f764792cf25a",
+          "type": "Birth",
+          "date": "1820",
+          "standard_date": "1820"
+        },
+        {
+          "id": "875b6aa4-ec94-425a-9d9e-c651a79225ce",
+          "type": "Registo de Casamento",
+          "date": "1837",
+          "standard_date": "1837"
+        },
+        {
+          "id": "d5c2a59b-1849-47d6-a25f-caf1b00063bf",
+          "type": "Death",
+          "date": "14 de janeiro de 1892",
+          "standard_date": "14 Jan 1892",
+          "place": "Câmara de Lobos, Madeira, Portugal",
+          "standard_place": "Câmara de Lobos, Madeira, Portugal"
+        },
+        {
+          "id": "af4a2bae-0b6c-473b-b7fb-ff6abc89ea5d",
+          "type": "Residência"
+        },
+        {
+          "id": "e8cb6d67-b11d-4f9f-8c98-b04917c13736",
+          "type": "Residence",
+          "place": "Câmara de Lobos, Madeira, Portugal",
+          "standard_place": "Câmara de Lobos, Madeira, Portugal"
+        },
+        {
+          "id": "15e694e9-0b33-466d-b483-24f7739052a6",
+          "type": "Burial",
+          "place": "Câmara de Lobos, Madeira, Portugal",
+          "standard_place": "Câmara de Lobos, Madeira, Portugal"
+        },
+        {
+          "id": "08d498af-947c-44a3-8cce-82a2146b75e7",
+          "type": "Occupation",
+          "value": "lavradora"
+        }
+      ],
+      "sources": [
+        {
+          "ref": "W8G1-T7N"
+        },
+        {
+          "ref": "W7XL-FJR"
+        },
+        {
+          "ref": "W7XL-627"
+        },
+        {
+          "ref": "W7XL-DJM"
+        },
+        {
+          "ref": "W7XL-84Y"
+        },
+        {
+          "ref": "W7XL-ZVS"
+        },
+        {
+          "ref": "W7XL-Q14"
+        },
+        {
+          "ref": "W7X2-X1X"
+        },
+        {
+          "ref": "W7X2-619"
+        },
+        {
+          "ref": "W37L-4VZ"
+        },
+        {
+          "ref": "WSVZ-GXC"
+        },
+        {
+          "ref": "W9F1-RH8"
+        },
+        {
+          "ref": "7B7M-G1Z"
+        },
+        {
+          "ref": "7YGK-WPR"
+        },
+        {
+          "ref": "7YFP-6J4"
+        },
+        {
+          "ref": "7YFP-DB7"
+        },
+        {
+          "ref": "7YFP-HCR"
+        },
+        {
+          "ref": "7YFP-92X"
+        },
+        {
+          "ref": "7J8D-N3P"
+        },
+        {
+          "ref": "9BT1-71W"
+        },
+        {
+          "ref": "9BT1-35Y"
+        },
+        {
+          "ref": "9XYV-NFB"
+        },
+        {
+          "ref": "9XYV-FV7"
+        },
+        {
+          "ref": "9XYV-FS6"
+        },
+        {
+          "ref": "9XYV-XZY"
+        },
+        {
+          "ref": "QLLJ-89W"
+        },
+        {
+          "ref": "QNC9-LGK"
+        },
+        {
+          "ref": "QNC9-23Y"
+        },
+        {
+          "ref": "QLLH-1G3"
+        }
+      ]
+    },
+    {
+      "id": "L2B6-R2B",
+      "ark": "ark:/61903/4:1:L2B6-R2B",
+      "gender": "Male",
+      "living": false,
+      "names": [
+        {
+          "id": "c60e6900-39c4-4acf-babb-36da82093b30",
+          "preferred": true,
+          "given": "Manuel",
+          "surname": "de Sousa",
+          "type": "BirthName"
+        }
+      ],
+      "facts": [
+        {
+          "id": "40f0a628-7c4f-4a56-89af-dcdc1099d457",
+          "type": "Christening",
+          "date": "25 Feb 1838",
+          "standard_date": "25 Feb 1838",
+          "place": "Sao Sabastião, Câmara de Lobos, Funchal, Madeira, Portugal",
+          "standard_place": "Portugal"
+        },
+        {
+          "id": "ebe0d4fe-20f8-4dad-b4b8-c69c03d0f100",
+          "type": "Birth",
+          "date": "1838",
+          "standard_date": "1838",
+          "place": "Câmara de Lobos, Madeira, Portugal",
+          "standard_place": "Câmara de Lobos, Madeira, Portugal"
+        },
+        {
+          "id": "f1e514fe-d22c-45c0-ae4b-c14cb21b15a0",
+          "type": "Death"
+        },
+        {
+          "id": "272688ba-9db5-4a83-94df-1744d94ed9fd",
+          "type": "Residence",
+          "place": "Câmara de Lobos, Funchal, Portugal",
+          "standard_place": "Câmara de Lobos, Madeira, Portugal"
+        }
+      ],
+      "sources": [
+        {
+          "ref": "W7X2-X4F"
+        },
+        {
+          "ref": "9XYV-FTT"
+        }
+      ]
+    },
+    {
+      "id": "L2B6-R63",
+      "ark": "ark:/61903/4:1:L2B6-R63",
+      "gender": "Male",
+      "living": false,
+      "names": [
+        {
+          "id": "c60e6900-39c4-4acf-babb-36da82093b30",
+          "preferred": true,
+          "given": "João Antonio",
+          "surname": "de Sousa",
+          "type": "BirthName"
+        }
+      ],
+      "facts": [
+        {
+          "id": "ebe0d4fe-20f8-4dad-b4b8-c69c03d0f100",
+          "type": "Birth",
+          "date": "1839",
+          "standard_date": "1839",
+          "place": "Câmara de Lobos, Madeira, Portugal",
+          "standard_place": "Câmara de Lobos, Madeira, Portugal"
+        },
+        {
+          "id": "40f0a628-7c4f-4a56-89af-dcdc1099d457",
+          "type": "Christening",
+          "date": "10 Nov 1839",
+          "standard_date": "10 Nov 1839",
+          "place": "Sao Sabastião, Câmara de Lobos, Funchal, Madeira, Portugal",
+          "standard_place": "Portugal"
+        },
+        {
+          "id": "f1e514fe-d22c-45c0-ae4b-c14cb21b15a0",
+          "type": "Death"
+        },
+        {
+          "id": "272688ba-9db5-4a83-94df-1744d94ed9fd",
+          "type": "Residence",
+          "place": "Câmara de Lobos, Funchal, Portugal",
+          "standard_place": "Câmara de Lobos, Madeira, Portugal"
+        },
+        {
+          "id": "988ef6b4-55df-4683-8751-ab5b0397ba0d",
+          "type": "Occupation",
+          "value": "lavrador"
+        },
+        {
+          "id": "c5e2f18c-dbcc-4c82-8db5-1eb002cb2854",
+          "type": "Occupation",
+          "value": "ca- ? ? ? ? vrador"
+        },
+        {
+          "id": "1e62aa92-f513-4127-a799-a822cedf5f50",
+          "type": "Occupation",
+          "value": "jor naleiro"
+        },
+        {
+          "id": "d4c1508f-592e-409d-bdca-5252362b4c06",
+          "type": "Occupation",
+          "value": "jor- ? naleiro"
+        }
+      ],
+      "sources": [
+        {
+          "ref": "W7XL-49N"
+        },
+        {
+          "ref": "W7XL-SL2"
+        },
+        {
+          "ref": "W7X2-16M"
+        },
+        {
+          "ref": "W7X2-YXJ"
+        },
+        {
+          "ref": "W7X2-GK8"
+        },
+        {
+          "ref": "W7X2-2X9"
+        },
+        {
+          "ref": "W7X2-K2Y"
+        },
+        {
+          "ref": "W7X2-V55"
+        },
+        {
+          "ref": "W7X2-V7G"
+        },
+        {
+          "ref": "W7X2-J6V"
+        },
+        {
+          "ref": "W7X2-FQD"
+        },
+        {
+          "ref": "9XYV-FZH"
+        }
+      ]
+    },
+    {
+      "id": "GLTV-CYM",
+      "ark": "ark:/61903/4:1:GLTV-CYM",
+      "gender": "Female",
+      "living": false,
+      "names": [
+        {
+          "id": "e8523014-63d6-425f-8f73-bb5f4d01194c",
+          "preferred": true,
+          "given": "Maria",
+          "surname": "Gomes de Sousa",
+          "type": "BirthName"
+        }
+      ],
+      "facts": [
+        {
+          "id": "b057d2ec-a861-4780-b4fd-ad97eec2bb2f",
+          "type": "Birth",
+          "date": "21 de dezembro de 1841",
+          "standard_date": "21 Dec 1841"
+        },
+        {
+          "id": "c1860187-0df6-4d9c-8095-6ecf2ec7a03b",
+          "type": "Christening",
+          "date": "2 de enero de 1842",
+          "standard_date": "2 Jan 1842",
+          "place": "Câmara de Lobos, Madeira, Portugal",
+          "standard_place": "Câmara de Lobos, Madeira, Portugal"
+        },
+        {
+          "id": "0366fa77-1adc-4aee-b225-b956794d9530",
+          "type": "Death"
+        }
+      ],
+      "sources": [
+        {
+          "ref": "Q2QV-BC8"
+        },
+        {
+          "ref": "Q2QV-B9J"
+        },
+        {
+          "ref": "QNC9-466"
+        }
+      ]
+    },
+    {
+      "id": "KGLZ-Y77",
+      "ark": "ark:/61903/4:1:KGLZ-Y77",
+      "gender": "Female",
+      "living": false,
+      "names": [
+        {
+          "id": "991a0a6e-291e-4f21-a0db-159dd32b100f",
+          "preferred": true,
+          "given": "Maria",
+          "surname": "de Sousa",
+          "type": "BirthName"
+        }
+      ],
+      "facts": [
+        {
+          "id": "4474d31c-e0d3-40af-a37a-d84e4555c04f",
+          "type": "Christening",
+          "date": "2 Jan 1842",
+          "standard_date": "2 Jan 1842",
+          "place": "Sao Sabastião, Câmara de Lobos, Funchal, Madeira, Portugal",
+          "standard_place": "Câmara de Lobos, Madeira, Portugal"
+        },
+        {
+          "id": "689dd5f0-4e0e-47e7-9415-6db71c0d6dba",
+          "type": "Death"
+        },
+        {
+          "id": "272688ba-9db5-4a83-94df-1744d94ed9fd",
+          "type": "Residence",
+          "place": "Funchal, Madeira, Portugal",
+          "standard_place": "Funchal, Madeira, Portugal"
+        }
+      ],
+      "sources": [
+        {
+          "ref": "9XYV-XX8"
+        }
+      ]
+    },
+    {
+      "id": "GLTV-FPZ",
+      "ark": "ark:/61903/4:1:GLTV-FPZ",
+      "gender": "Male",
+      "living": false,
+      "names": [
+        {
+          "id": "0053f025-a055-42fe-9338-a6da2867c7e6",
+          "preferred": true,
+          "given": "Agostinho",
+          "surname": "Gomes de Sousa",
+          "type": "BirthName"
+        }
+      ],
+      "facts": [
+        {
+          "id": "49d04d56-f3cb-481f-92ce-ee937e12516e",
+          "type": "Christening",
+          "date": "10 de marzo de 1844",
+          "standard_date": "10 Mar 1844",
+          "place": "Câmara de Lobos, Madeira, Portugal",
+          "standard_place": "Câmara de Lobos, Madeira, Portugal"
+        },
+        {
+          "id": "05667ca5-be2c-4a37-8e1d-a2d8bd382713",
+          "type": "Birth",
+          "date": "1844",
+          "standard_date": "1844",
+          "place": "Câmara de Lobos, Madeira, Portugal",
+          "standard_place": "Câmara de Lobos, Madeira, Portugal"
+        },
+        {
+          "id": "2b06dda6-6b22-4a10-9e13-d449d0839253",
+          "type": "Death"
+        },
+        {
+          "id": "3809ef18-8260-403d-8c32-3942732a310a",
+          "type": "Residence",
+          "place": "Câmara de Lobos, Funchal, Portugal",
+          "standard_place": "Câmara de Lobos, Madeira, Portugal"
+        }
+      ],
+      "sources": [
+        {
+          "ref": "9XYV-LS5"
+        },
+        {
+          "ref": "QNC9-CKK"
+        }
+      ]
+    },
+    {
+      "id": "GLTV-NWV",
+      "ark": "ark:/61903/4:1:GLTV-NWV",
+      "gender": "Female",
+      "living": false,
+      "names": [
+        {
+          "id": "9679e40c-8b37-428c-8b34-9ba7a610dfd6",
+          "preferred": true,
+          "given": "Francisca",
+          "surname": "Gomes de Sousa",
+          "type": "BirthName"
+        }
+      ],
+      "facts": [
+        {
+          "id": "f7de499d-9794-4bb9-a7d0-d8a7c029e2bd",
+          "type": "Christening",
+          "date": "26 de octubre de 1845",
+          "standard_date": "26 Oct 1845",
+          "place": "Câmara de Lobos, Madeira, Portugal",
+          "standard_place": "Câmara de Lobos, Madeira, Portugal"
+        },
+        {
+          "id": "48a4269c-25cb-44ee-88d1-03c1665196d6",
+          "type": "Death"
+        }
+      ],
+      "sources": [
+        {
+          "ref": "Q2QV-B34"
+        }
+      ]
+    },
+    {
+      "id": "GLTV-DQ7",
+      "ark": "ark:/61903/4:1:GLTV-DQ7",
+      "gender": "Female",
+      "living": false,
+      "names": [
+        {
+          "id": "bac401d8-0d78-490d-ac06-db6c0f59dd39",
+          "preferred": true,
+          "given": "Augusta",
+          "surname": "Gomes de Sousa",
+          "type": "BirthName"
+        }
+      ],
+      "facts": [
+        {
+          "id": "e5a7e86c-f724-4cd9-9deb-1ecf3a15d07a",
+          "type": "Birth",
+          "date": "13 de outubro de 1851",
+          "standard_date": "13 Oct 1851"
+        },
+        {
+          "id": "aaf6e0a1-b519-40c5-bf73-fb88fe1160a2",
+          "type": "Christening",
+          "date": "13 de enero de 1852",
+          "standard_date": "13 Jan 1852",
+          "place": "Câmara de Lobos, Madeira, Portugal",
+          "standard_place": "Câmara de Lobos, Madeira, Portugal"
+        },
+        {
+          "id": "55602e1e-de36-42a4-a67e-d41b488bcfbe",
+          "type": "Death",
+          "date": "23 January 1877",
+          "standard_date": "23 Jan 1877",
+          "place": "Real, Viana do Castelo, Portugal",
+          "standard_place": "Real, Viana do Castelo, Portugal"
+        },
+        {
+          "id": "8a24d7c6-ef2c-4ac7-aad1-cc3fd8d11a95",
+          "type": "Burial",
+          "place": "Câmara de Lobos, Madeira, Portugal",
+          "standard_place": "Câmara de Lobos, Madeira, Portugal"
+        }
+      ],
+      "sources": [
+        {
+          "ref": "W7XL-6B7"
+        },
+        {
+          "ref": "Q2QV-B7C"
+        },
+        {
+          "ref": "QNC9-DYR"
+        }
+      ]
+    },
+    {
+      "id": "G6BZ-LV6",
+      "ark": "ark:/61903/4:1:G6BZ-LV6",
+      "gender": "Female",
+      "living": false,
+      "names": [
+        {
+          "id": "a8201a62-f42f-497c-86c8-766522aaadc3",
+          "preferred": true,
+          "given": "Augusta Corrêa",
+          "surname": "Henriques",
+          "type": "BirthName"
+        }
+      ],
+      "facts": [
+        {
+          "id": "372d4608-8f6c-4bb4-86b3-f3c585d155c5",
+          "type": "Birth",
+          "date": "Aproximadamente 1852 ",
+          "place": "Câmara de Lobos, Madeira, Portugal",
+          "standard_place": "Câmara de Lobos, Madeira, Portugal"
+        },
+        {
+          "id": "b9a2f391-5cf9-4164-83a0-3c4465993988",
+          "type": "Death",
+          "place": "Câmara de Lobos, Madeira, Portugal",
+          "standard_place": "Câmara de Lobos, Madeira, Portugal"
+        }
+      ],
+      "sources": [
+        {
+          "ref": "7B38-WWT"
+        },
+        {
+          "ref": "7NBN-CPL"
+        }
+      ]
+    },
+    {
+      "id": "GLTV-FWM",
+      "ark": "ark:/61903/4:1:GLTV-FWM",
+      "gender": "Male",
+      "living": false,
+      "names": [
+        {
+          "id": "9de309e7-a41f-4a18-874c-cc1ee784c22f",
+          "preferred": true,
+          "given": "Agostinho",
+          "surname": "Gomes de Sousa",
+          "type": "BirthName"
+        }
+      ],
+      "facts": [
+        {
+          "id": "afacabfb-c2b3-4f19-a4f9-ed9c5eea8bb4",
+          "type": "Christening",
+          "date": "2 de noviembre de 1846",
+          "standard_date": "2 Nov 1846",
+          "place": "Câmara de Lobos, Madeira, Portugal",
+          "standard_place": "Câmara de Lobos, Madeira, Portugal"
+        },
+        {
+          "id": "263459dc-68e4-4d13-b0dd-f8f2e15a51c0",
+          "type": "Birth",
+          "date": "1853",
+          "standard_date": "1853"
+        },
+        {
+          "id": "eb95c10a-66df-45d9-9390-3d1bfae46907",
+          "type": "Death",
+          "date": "20 de dezembro de 1877",
+          "standard_date": "20 Dec 1877",
+          "place": "Câmara de Lobos, Madeira, Portugal",
+          "standard_place": "Câmara de Lobos, Madeira, Portugal"
+        }
+      ],
+      "sources": [
+        {
+          "ref": "WSVZ-GRJ"
+        },
+        {
+          "ref": "Q2QV-B3T"
+        }
+      ]
+    },
+    {
+      "id": "GLTV-CD3",
+      "ark": "ark:/61903/4:1:GLTV-CD3",
+      "gender": "Male",
+      "living": false,
+      "names": [
+        {
+          "id": "1eafc199-f0ec-4afd-bb6f-4b4ee4c13c5c",
+          "preferred": true,
+          "given": "António",
+          "surname": "Gomes de Sousa",
+          "type": "BirthName"
+        }
+      ],
+      "facts": [
+        {
+          "id": "233e86bd-af88-4ceb-820a-97e4c4bda053",
+          "type": "Christening",
+          "date": "31 de enero de 1854",
+          "standard_date": "31 Jan 1854",
+          "place": "Câmara de Lobos, Madeira, Portugal",
+          "standard_place": "Câmara de Lobos, Madeira, Portugal"
+        },
+        {
+          "id": "2a1e5804-be89-4c40-9a8e-12c9ac8cb79f",
+          "type": "Death",
+          "date": "27 de marzo de 1935",
+          "standard_date": "27 Mar 1935",
+          "place": "Câmara de Lobos, Madeira, Portugal",
+          "standard_place": "Câmara de Lobos, Madeira, Portugal"
+        },
+        {
+          "id": "b4e8c5cf-1a3f-4157-aa90-4e6b97764717",
+          "type": "Birth",
+          "place": "Câmara de Lobos, Madeira, Portugal",
+          "standard_place": "Câmara de Lobos, Madeira, Portugal"
+        }
+      ],
+      "sources": [
+        {
+          "ref": "9BT1-3G4"
+        },
+        {
+          "ref": "9XYJ-PGK"
+        },
+        {
+          "ref": "9XYJ-P94"
+        },
+        {
+          "ref": "W7X2-7QR"
+        },
+        {
+          "ref": "Q2QV-B4R"
+        },
+        {
+          "ref": "Q2QV-BSZ"
+        }
+      ]
+    },
+    {
+      "id": "GLTV-8KH",
+      "ark": "ark:/61903/4:1:GLTV-8KH",
+      "gender": "Male",
+      "living": false,
+      "names": [
+        {
+          "id": "a74e4919-4444-4c5d-9aaa-0345ee95b922",
+          "preferred": true,
+          "given": "Joaquim",
+          "surname": "Gomes de Sousa",
+          "type": "BirthName"
+        }
+      ],
+      "facts": [
+        {
+          "id": "2d996a04-5d50-4dce-81a9-f525b39c1e65",
+          "type": "Birth",
+          "date": "1856",
+          "standard_date": "1856"
+        },
+        {
+          "id": "c3129b1b-45f9-4772-86ed-76d0301ca140",
+          "type": "Christening",
+          "date": "16 April 1857",
+          "standard_date": "16 Apr 1857",
+          "place": "Câmara de Lobos, Madeira, Portugal",
+          "standard_place": "Câmara de Lobos, Madeira, Portugal"
+        },
+        {
+          "id": "0f2cf163-2a16-4b40-86ef-0ef0698d5076",
+          "type": "Death",
+          "date": "1857",
+          "standard_date": "1857"
+        },
+        {
+          "id": "f3d1c2bc-c5ce-4dad-a7d2-c968494bba52",
+          "type": "Residence",
+          "place": "Câmara de Lobos, Madeira, Portugal",
+          "standard_place": "Câmara de Lobos, Madeira, Portugal"
+        },
+        {
+          "id": "698d2d44-b750-40c1-a807-ae7af4bb785a",
+          "type": "Inventário",
+          "value": "Nao Fez o inventário dos sogros pq faleceu logo apos o batismo "
+        },
+        {
+          "id": "ac80341a-00fa-41c8-98db-aee7b50ddc4e",
+          "type": "Clan",
+          "value": "em 1858  nasceu o  irmao Joaquim"
+        }
+      ],
+      "sources": [
+        {
+          "ref": "W7XL-DYL"
+        },
+        {
+          "ref": "W7X2-H4B"
+        },
+        {
+          "ref": "W7X2-4XV"
+        },
+        {
+          "ref": "W7X2-S2F"
+        },
+        {
+          "ref": "W7X2-9J1"
+        },
+        {
+          "ref": "7ZSM-BD2"
+        },
+        {
+          "ref": "QNC9-ND8"
+        }
+      ]
+    },
+    {
+      "id": "GNWV-L77",
+      "ark": "ark:/61903/4:1:GNWV-L77",
+      "gender": "Male",
+      "living": false,
+      "names": [
+        {
+          "id": "d0fd98bb-a9c6-4f58-aba4-7f9368b1b27d",
+          "preferred": true,
+          "given": "Joaquim",
+          "surname": "Gomes de Souza",
+          "type": "BirthName"
+        }
+      ],
+      "facts": [
+        {
+          "id": "7e79b34c-3091-444b-81df-bdac3fa82a5f",
+          "type": "Birth",
+          "date": "1858",
+          "standard_date": "1858",
+          "place": "Câmara de Lobos, Madeira, Portugal",
+          "standard_place": "Câmara de Lobos, Madeira, Portugal"
+        },
+        {
+          "id": "2b5961ba-478c-442e-9773-8bc2c14879fc",
+          "type": "Christening",
+          "date": "1 de septiembre de 1858",
+          "standard_date": "1 Sep 1858",
+          "place": "Câmara de Lobos, Madeira, Portugal",
+          "standard_place": "Câmara de Lobos, Madeira, Portugal"
+        },
+        {
+          "id": "e599305e-1bae-4491-a1d4-e2f7546cbfcf",
+          "type": "Death"
+        },
+        {
+          "id": "29cbefac-51c1-43d4-8721-6c5794bafe5d",
+          "type": "Marital Status",
+          "value": "solteiro"
+        },
+        {
+          "id": "ae667aef-5d1c-44bf-b369-e2a4e63036b2",
+          "type": "Occupation",
+          "value": "lavrador"
+        },
+        {
+          "id": "5eca1f8c-547b-4fdb-adf8-b35439881242",
+          "type": "Residence",
+          "place": "São Sebastião, Bragança, Portugal",
+          "standard_place": "São Sebastião, Bragança, Portugal"
+        },
+        {
+          "id": "cc812051-c4d1-4b9f-8363-95f996adba90",
+          "type": "Marital Status",
+          "value": "viuvo"
+        },
+        {
+          "id": "32545485-823b-4b6b-a64c-72868edc550d",
+          "type": "Residence",
+          "place": "bairro do Ribeiro d' Alforme d' es",
+          "standard_place": "Germany"
+        }
+      ],
+      "sources": [
+        {
+          "ref": "W8G1-YCK"
+        },
+        {
+          "ref": "W8G1-T4K"
+        },
+        {
+          "ref": "W8G1-RFX"
+        },
+        {
+          "ref": "WZGK-94L"
+        },
+        {
+          "ref": "WZVX-BZG"
+        },
+        {
+          "ref": "QLPS-XYM"
+        },
+        {
+          "ref": "Q2QV-BQL"
+        },
+        {
+          "ref": "7K6S-F8Y"
+        },
+        {
+          "ref": "QH8K-WR4"
+        },
+        {
+          "ref": "3YF6-WY4"
+        }
+      ]
+    },
+    {
+      "id": "LT62-GQG",
+      "ark": "ark:/61903/4:1:LT62-GQG",
+      "gender": "Male",
+      "living": false,
+      "names": [
+        {
+          "id": "e0ca6d5f-c643-46d0-9589-46c32ea9ad75",
+          "preferred": true,
+          "given": "Manuel Gomes",
+          "surname": "de Sousa",
+          "type": "BirthName"
+        }
+      ],
+      "facts": [
+        {
+          "id": "f707da99-6450-40b7-8a63-c1947c5868ad",
+          "type": "Christening",
+          "date": "12 September 1861",
+          "standard_date": "12 Sep 1861",
+          "place": "Câmara de Lobos, Madeira, Portugal",
+          "standard_place": "Câmara de Lobos, Madeira, Portugal"
+        },
+        {
+          "id": "5da46a06-17a6-4455-8970-40868f31e600",
+          "type": "Birth",
+          "place": "Madeira, Portugal",
+          "standard_place": "Madeira, Portugal"
+        },
+        {
+          "id": "18fe638f-b5fb-4bff-92e1-34842617340d",
+          "type": "Death"
+        },
+        {
+          "id": "015cd7d9-38de-4d7b-bc26-8bfb35b05d55",
+          "type": "Occupation",
+          "value": "pedreiro"
+        }
+      ],
+      "sources": [
+        {
+          "ref": "W7XK-RVJ"
+        },
+        {
+          "ref": "W7XK-55R"
+        },
+        {
+          "ref": "Q2QV-B4Q"
+        },
+        {
+          "ref": "7Y4Y-MQV"
+        },
+        {
+          "ref": "7SWY-78S"
+        },
+        {
+          "ref": "7SWY-QTX"
+        },
+        {
+          "ref": "9BT1-WJ5"
+        }
+      ]
+    },
+    {
+      "id": "GLTV-D2B",
+      "ark": "ark:/61903/4:1:GLTV-D2B",
+      "gender": "Male",
+      "living": false,
+      "names": [
+        {
+          "id": "173bca0c-a3d8-4f9b-a149-b6dad5973993",
+          "preferred": true,
+          "given": "José",
+          "surname": "Gomes de Sousa",
+          "type": "BirthName"
+        }
+      ],
+      "facts": [
+        {
+          "id": "750e4685-1aed-421f-afca-0aacaeaed12f",
+          "type": "Birth",
+          "date": "7 de setembro de 1873",
+          "standard_date": "7 Sep 1873"
+        },
+        {
+          "id": "bc7ffc4f-69b5-430b-80f0-0d589ecc7448",
+          "type": "Christening",
+          "date": "20 de julio de 1874",
+          "standard_date": "20 Jul 1874",
+          "place": "Câmara de Lobos, Madeira, Portugal",
+          "standard_place": "Câmara de Lobos, Madeira, Portugal"
+        },
+        {
+          "id": "2fd055f5-370a-4311-ab20-5d348fc2669a",
+          "type": "Death"
+        }
+      ],
+      "sources": [
+        {
+          "ref": "Q2QV-BW7"
+        },
+        {
+          "ref": "QNC9-QP3"
+        }
+      ]
+    },
+    {
+      "id": "PQ26-CNV",
+      "ark": "ark:/61903/4:1:PQ26-CNV",
+      "gender": "Male",
+      "living": false,
+      "names": [
+        {
+          "id": "fbc74fa9-53f6-4ad5-a938-63c42bf20623",
+          "preferred": true,
+          "given": "Francisco Augusto",
+          "surname": "de Sousa",
+          "type": "BirthName"
+        }
+      ],
+      "facts": [
+        {
+          "id": "4f86307e-8a85-43e2-a068-7f38a84e16fc",
+          "type": "Birth",
+          "date": "16 de março de 1876",
+          "standard_date": "16 Mar 1876",
+          "place": "Câmara de Lobos, Madeira, Portugal",
+          "standard_place": "Câmara de Lobos, Madeira, Portugal"
+        },
+        {
+          "id": "1fe969d5-848c-49a5-8cca-e817f12b8f93",
+          "type": "Christening",
+          "date": "10 de abril de 1876",
+          "standard_date": "10 Apr 1876",
+          "place": "Câmara de Lobos, Madeira, Portugal",
+          "standard_place": "Câmara de Lobos, Madeira, Portugal"
+        },
+        {
+          "id": "3af92392-426d-43d3-9e3c-481aed47b7dc",
+          "type": "Death",
+          "date": "28 de fevereiro de 1967",
+          "standard_date": "28 Feb 1967",
+          "place": "Santa Cruz, Santa Cruz, Madeira, Portugal",
+          "standard_place": "Santa Cruz, Santa Cruz, Madeira, Portugal"
+        },
+        {
+          "id": "144e6d62-e3ec-42c2-b80a-d90bb902ef83",
+          "type": "Occupation",
+          "value": "trabalhador"
+        },
+        {
+          "id": "0194294e-c7ec-41c6-9d0e-b1053ac1754a",
+          "type": "Marital Status",
+          "value": "solteiro"
+        },
+        {
+          "id": "1b190d74-3b95-4586-8c00-a3a6ab4ba98c",
+          "type": "Occupation",
+          "value": "lavrador"
+        },
+        {
+          "id": "aee51df6-56a4-41ce-ba2e-70a14ba9706e",
+          "type": "Residence",
+          "place": "Câmara de Lobos, Madeira, Portugal",
+          "standard_place": "Câmara de Lobos, Madeira, Portugal"
+        },
+        {
+          "id": "36dad794-6304-4aa2-9315-29b7edb4fb5d",
+          "type": "Burial",
+          "place": "Santa Cruz, Madeira, Portugal",
+          "standard_place": "Santa Cruz, Madeira, Portugal"
+        },
+        {
+          "id": "ae87c016-604b-47dd-ba14-346e7989f62d",
+          "type": "Occupation",
+          "value": "ejewaldo"
+        },
+        {
+          "id": "e8ef90f2-ca1d-40d0-a280-09b49891057e",
+          "type": "Ethnicity",
+          "value": "morena"
+        }
+      ],
+      "sources": [
+        {
+          "ref": "7B7M-P3L"
+        },
+        {
+          "ref": "7YVL-52N"
+        },
+        {
+          "ref": "7YJH-GK1"
+        },
+        {
+          "ref": "7YFP-CSK"
+        },
+        {
+          "ref": "7YFP-HJY"
+        },
+        {
+          "ref": "7YFP-S5X"
+        },
+        {
+          "ref": "7YFP-S7Z"
+        },
+        {
+          "ref": "7YFP-9R9"
+        },
+        {
+          "ref": "7YFP-9Z3"
+        },
+        {
+          "ref": "7YFG-YJH"
+        },
+        {
+          "ref": "7YFG-T6B"
+        },
+        {
+          "ref": "7YFG-RPP"
+        },
+        {
+          "ref": "7YFG-5BN"
+        },
+        {
+          "ref": "753W-R22"
+        },
+        {
+          "ref": "753W-PYK"
+        }
+      ]
+    },
+    {
+      "id": "PH1T-3NS",
+      "ark": "ark:/61903/4:1:PH1T-3NS",
+      "gender": "Female",
+      "living": false,
+      "names": [
+        {
+          "id": "d4e5e2d1-dba9-40a5-9055-2958ec1b4e42",
+          "preferred": true,
+          "given": "Adelaide",
+          "surname": "de Sousa",
+          "type": "BirthName"
+        }
+      ],
+      "facts": [
+        {
+          "id": "862b5431-e334-44e9-aa2e-a868def03cd9",
+          "type": "Birth",
+          "date": "9 de maio de 1886",
+          "standard_date": "9 May 1886",
+          "place": "Câmara de Lobos, Madeira, Portugal",
+          "standard_place": "Câmara de Lobos, Madeira, Portugal"
+        },
+        {
+          "id": "56335e32-2b88-4f40-9cda-aa008183beed",
+          "type": "Christening",
+          "date": "14 de maio de 1887",
+          "standard_date": "14 May 1887",
+          "place": "Câmara de Lobos, Madeira, Portugal",
+          "standard_place": "Câmara de Lobos, Madeira, Portugal"
+        },
+        {
+          "id": "ce810f01-4ca2-405a-8bfd-a7063788d2a7",
+          "type": "Death"
+        }
+      ],
+      "sources": [
+        {
+          "ref": "W37L-HCC"
+        }
+      ]
+    },
+    {
+      "id": "GP87-B77",
+      "ark": "ark:/61903/4:1:GP87-B77",
+      "gender": "Male",
+      "living": false,
+      "names": [
+        {
+          "id": "65e21d0a-771b-4911-8dc0-9527d9245b93",
+          "preferred": true,
+          "given": "Manuel António",
+          "surname": "de Sousa",
+          "type": "BirthName"
+        }
+      ],
+      "facts": [
+        {
+          "id": "abc7fb99-9b5b-4e36-b026-840e147d3f3c",
+          "type": "Death"
+        },
+        {
+          "id": "8e1a9e81-9334-4a61-ac5f-8b526244a9cc",
+          "type": "Residence",
+          "place": "Câmara de Lobos, Madeira, Portugal",
+          "standard_place": "Câmara de Lobos, Madeira, Portugal",
+          "value": "Pedregal"
+        },
+        {
+          "id": "b92c9062-484a-4a84-a4c2-c72e07d4ee75",
+          "type": "Casamento",
+          "value": "1903"
+        }
+      ]
+    }
+  ],
+  "relationships": [
+    {
+      "id": "R1",
+      "type": "Couple",
+      "person1": "GLRZ-VRK",
+      "person2": "GLR8-HVG",
+      "facts": [
+        {
+          "id": "755ca843-fe57-4893-8163-d034396e79ca",
+          "type": "Marriage",
+          "date": "30 de abril de 1865",
+          "standard_date": "30 Apr 1865"
+        },
+        {
+          "id": "6d98103d-0c51-4fd3-8d6b-284c7e05870d",
+          "type": "Marriage",
+          "date": "30 April 1865",
+          "standard_date": "30 Apr 1865",
+          "place": "Câmara de Lobos, Madeira, Portugal",
+          "standard_place": "Câmara de Lobos, Madeira, Portugal"
+        }
+      ],
+      "sources": [
+        {
+          "ref": "W7XL-KQG"
+        }
+      ]
+    },
+    {
+      "id": "R2",
+      "type": "Couple",
+      "person1": "GPZT-LZN",
+      "person2": "GPZT-19V",
+      "facts": [
+        {
+          "id": "F1",
+          "type": "Marriage",
+          "date": "1837",
+          "standard_date": "1837",
+          "place": "Câmara de Lobos, Madeira, Portugal",
+          "standard_place": "Câmara de Lobos, Madeira, Portugal"
+        }
+      ]
+    },
+    {
+      "id": "R3",
+      "type": "ParentChild",
+      "parent": "GPZT-LZN",
+      "child": "GLRZ-VRK"
+    },
+    {
+      "id": "R4",
+      "type": "ParentChild",
+      "parent": "GPZT-19V",
+      "child": "GLRZ-VRK"
+    },
+    {
+      "id": "R5",
+      "type": "ParentChild",
+      "parent": "GLRZ-VRK",
+      "child": "LRJX-PH6"
+    },
+    {
+      "id": "R6",
+      "type": "ParentChild",
+      "parent": "GLR8-HVG",
+      "child": "LRJX-PH6"
+    },
+    {
+      "id": "R7",
+      "type": "ParentChild",
+      "parent": "GLRZ-VRK",
+      "child": "GLTD-J41"
+    },
+    {
+      "id": "R8",
+      "type": "ParentChild",
+      "parent": "GLR8-HVG",
+      "child": "GLTD-J41"
+    },
+    {
+      "id": "R9",
+      "type": "ParentChild",
+      "parent": "GLRZ-VRK",
+      "child": "GLT8-4J9"
+    },
+    {
+      "id": "R10",
+      "type": "ParentChild",
+      "parent": "GLR8-HVG",
+      "child": "GLT8-4J9"
+    },
+    {
+      "id": "R11",
+      "type": "ParentChild",
+      "parent": "GLRZ-VRK",
+      "child": "GLT8-QHG"
+    },
+    {
+      "id": "R12",
+      "type": "ParentChild",
+      "parent": "GLR8-HVG",
+      "child": "GLT8-QHG"
+    },
+    {
+      "id": "R13",
+      "type": "ParentChild",
+      "parent": "GLRZ-VRK",
+      "child": "PZFJ-J9Z",
+      "sources": [
+        {
+          "ref": "W7KY-X3W"
+        }
+      ]
+    },
+    {
+      "id": "R14",
+      "type": "ParentChild",
+      "parent": "GLR8-HVG",
+      "child": "PZFJ-J9Z",
+      "sources": [
+        {
+          "ref": "W7KY-X3W"
+        }
+      ]
+    },
+    {
+      "id": "R15",
+      "type": "ParentChild",
+      "parent": "GLRZ-VRK",
+      "child": "GLTD-FST"
+    },
+    {
+      "id": "R16",
+      "type": "ParentChild",
+      "parent": "GLR8-HVG",
+      "child": "GLTD-FST"
+    },
+    {
+      "id": "R17",
+      "type": "ParentChild",
+      "parent": "GLRZ-VRK",
+      "child": "GLT8-Y25"
+    },
+    {
+      "id": "R18",
+      "type": "ParentChild",
+      "parent": "GLR8-HVG",
+      "child": "GLT8-Y25"
+    },
+    {
+      "id": "R19",
+      "type": "ParentChild",
+      "parent": "GLRZ-VRK",
+      "child": "GQCD-33W"
+    },
+    {
+      "id": "R20",
+      "type": "ParentChild",
+      "parent": "GLR8-HVG",
+      "child": "GQCD-33W"
+    },
+    {
+      "id": "R21",
+      "type": "ParentChild",
+      "parent": "GLRZ-VRK",
+      "child": "GLRH-4W9"
+    },
+    {
+      "id": "R22",
+      "type": "ParentChild",
+      "parent": "GLR8-HVG",
+      "child": "GLRH-4W9"
+    },
+    {
+      "id": "R23",
+      "type": "ParentChild",
+      "parent": "GPZT-LZN",
+      "child": "GLTV-8KH"
+    },
+    {
+      "id": "R24",
+      "type": "ParentChild",
+      "parent": "GPZT-19V",
+      "child": "GLTV-8KH"
+    },
+    {
+      "id": "R25",
+      "type": "ParentChild",
+      "parent": "GPZT-LZN",
+      "child": "GLTV-FPZ"
+    },
+    {
+      "id": "R26",
+      "type": "ParentChild",
+      "parent": "GPZT-19V",
+      "child": "GLTV-FPZ"
+    },
+    {
+      "id": "R27",
+      "type": "ParentChild",
+      "parent": "GPZT-LZN",
+      "child": "GLTV-DQ7"
+    },
+    {
+      "id": "R28",
+      "type": "ParentChild",
+      "parent": "GPZT-19V",
+      "child": "GLTV-DQ7"
+    },
+    {
+      "id": "R29",
+      "type": "ParentChild",
+      "parent": "GPZT-LZN",
+      "child": "GLTV-CD3"
+    },
+    {
+      "id": "R30",
+      "type": "ParentChild",
+      "parent": "GPZT-19V",
+      "child": "GLTV-CD3"
+    },
+    {
+      "id": "R31",
+      "type": "ParentChild",
+      "parent": "GPZT-LZN",
+      "child": "GLTV-CYM"
+    },
+    {
+      "id": "R32",
+      "type": "ParentChild",
+      "parent": "GPZT-19V",
+      "child": "GLTV-CYM"
+    },
+    {
+      "id": "R33",
+      "type": "ParentChild",
+      "parent": "GPZT-LZN",
+      "child": "GLTV-NWV"
+    },
+    {
+      "id": "R34",
+      "type": "ParentChild",
+      "parent": "GPZT-19V",
+      "child": "GLTV-NWV"
+    },
+    {
+      "id": "R35",
+      "type": "ParentChild",
+      "parent": "GPZT-LZN",
+      "child": "GLTV-D2B"
+    },
+    {
+      "id": "R36",
+      "type": "ParentChild",
+      "parent": "GPZT-19V",
+      "child": "GLTV-D2B"
+    },
+    {
+      "id": "R37",
+      "type": "ParentChild",
+      "parent": "GPZT-LZN",
+      "child": "GLTV-FWM"
+    },
+    {
+      "id": "R38",
+      "type": "ParentChild",
+      "parent": "GPZT-19V",
+      "child": "GLTV-FWM"
+    },
+    {
+      "id": "R39",
+      "type": "ParentChild",
+      "parent": "GPZT-LZN",
+      "child": "G6BZ-LV6"
+    },
+    {
+      "id": "R40",
+      "type": "ParentChild",
+      "parent": "GPZT-19V",
+      "child": "G6BZ-LV6"
+    },
+    {
+      "id": "R41",
+      "type": "ParentChild",
+      "parent": "GPZT-LZN",
+      "child": "L2B6-R63"
+    },
+    {
+      "id": "R42",
+      "type": "ParentChild",
+      "parent": "GPZT-19V",
+      "child": "L2B6-R63"
+    },
+    {
+      "id": "R43",
+      "type": "ParentChild",
+      "parent": "GPZT-LZN",
+      "child": "LT62-GQG"
+    },
+    {
+      "id": "R44",
+      "type": "ParentChild",
+      "parent": "GPZT-19V",
+      "child": "LT62-GQG"
+    },
+    {
+      "id": "R45",
+      "type": "ParentChild",
+      "parent": "GPZT-LZN",
+      "child": "L2B6-R2B"
+    },
+    {
+      "id": "R46",
+      "type": "ParentChild",
+      "parent": "GPZT-19V",
+      "child": "L2B6-R2B"
+    },
+    {
+      "id": "R47",
+      "type": "ParentChild",
+      "parent": "GPZT-LZN",
+      "child": "KGLZ-Y77"
+    },
+    {
+      "id": "R48",
+      "type": "ParentChild",
+      "parent": "GPZT-19V",
+      "child": "KGLZ-Y77"
+    },
+    {
+      "id": "R49",
+      "type": "ParentChild",
+      "parent": "GPZT-LZN",
+      "child": "GNWV-L77"
+    },
+    {
+      "id": "R50",
+      "type": "ParentChild",
+      "parent": "GPZT-19V",
+      "child": "GNWV-L77"
+    },
+    {
+      "id": "R51",
+      "type": "ParentChild",
+      "parent": "GPZT-19V",
+      "child": "PQ26-CNV"
+    },
+    {
+      "id": "R52",
+      "type": "ParentChild",
+      "parent": "GPZT-19V",
+      "child": "GP87-B77"
+    },
+    {
+      "id": "R53",
+      "type": "ParentChild",
+      "parent": "GPZT-19V",
+      "child": "PH1T-3NS",
+      "sources": [
+        {
+          "ref": "W37L-H3W"
+        }
+      ]
+    }
+  ],
+  "sources": [
+    {
+      "id": "sd_person_GLRZ-VRK",
+      "title": "João Gomes de Sousa",
+      "citation": "\"FamilySearch Tree,\" database, <i>FamilySearch</i> (https://www.familysearch.org), entry for João Gomes de Sousa (PID GLRZ-VRK); contributed by various users.",
+      "url": "https://familysearch.org/ark:/61903/4:1:GLRZ-VRK"
+    },
+    {
+      "id": "sd_tree_MMMM-MMM",
+      "title": "",
+      "url": "https://api.familysearch.org/platform/trees/MMMM-MMM"
+    },
+    {
+      "id": "sd_collection_0",
+      "title": "",
+      "url": "https://api.familysearch.org/platform/collections/tree"
+    },
+    {
+      "id": "sd_person_GLT8-4J9",
+      "title": "João Gomes de Sousa",
+      "citation": "\"FamilySearch Tree,\" database, <i>FamilySearch</i> (https://www.familysearch.org), entry for João Gomes de Sousa (PID GLT8-4J9); contributed by various users.",
+      "url": "https://familysearch.org/ark:/61903/4:1:GLT8-4J9"
+    },
+    {
+      "id": "sd_person_GQCD-33W",
+      "title": "Eulalia Adelaide Pestana",
+      "citation": "\"FamilySearch Tree,\" database, <i>FamilySearch</i> (https://www.familysearch.org), entry for Eulalia Adelaide Pestana (PID GQCD-33W); contributed by various users.",
+      "url": "https://familysearch.org/ark:/61903/4:1:GQCD-33W"
+    },
+    {
+      "id": "sd_person_GLR8-HVG",
+      "title": "Ana Augusta de Jesus",
+      "citation": "\"FamilySearch Tree,\" database, <i>FamilySearch</i> (https://www.familysearch.org), entry for Ana Augusta de Jesus (PID GLR8-HVG); contributed by various users.",
+      "url": "https://familysearch.org/ark:/61903/4:1:GLR8-HVG"
+    },
+    {
+      "id": "sd_person_GLT8-QHG",
+      "title": "Ana Gomes de Sousa",
+      "citation": "\"FamilySearch Tree,\" database, <i>FamilySearch</i> (https://www.familysearch.org), entry for Ana Gomes de Sousa (PID GLT8-QHG); contributed by various users.",
+      "url": "https://familysearch.org/ark:/61903/4:1:GLT8-QHG"
+    },
+    {
+      "id": "sd_person_GLRH-4W9",
+      "title": "Francisco Gomes de Sousa",
+      "citation": "\"FamilySearch Tree,\" database, <i>FamilySearch</i> (https://www.familysearch.org), entry for Francisco Gomes de Sousa (PID GLRH-4W9); contributed by various users.",
+      "url": "https://familysearch.org/ark:/61903/4:1:GLRH-4W9"
+    },
+    {
+      "id": "sd_person_PZFJ-J9Z",
+      "title": "Francisco Gomes de Sousa",
+      "citation": "\"FamilySearch Tree,\" database, <i>FamilySearch</i> (https://www.familysearch.org), entry for Francisco Gomes de Sousa (PID PZFJ-J9Z); contributed by various users.",
+      "url": "https://familysearch.org/ark:/61903/4:1:PZFJ-J9Z"
+    },
+    {
+      "id": "sd_person_GLT8-Y25",
+      "title": "Eulália Gomes de Sousa",
+      "citation": "\"FamilySearch Tree,\" database, <i>FamilySearch</i> (https://www.familysearch.org), entry for Eulália Gomes de Sousa (PID GLT8-Y25); contributed by various users.",
+      "url": "https://familysearch.org/ark:/61903/4:1:GLT8-Y25"
+    },
+    {
+      "id": "sd_person_GLTD-J41",
+      "title": "Maria Gomes de Sousa",
+      "citation": "\"FamilySearch Tree,\" database, <i>FamilySearch</i> (https://www.familysearch.org), entry for Maria Gomes de Sousa (PID GLTD-J41); contributed by various users.",
+      "url": "https://familysearch.org/ark:/61903/4:1:GLTD-J41"
+    },
+    {
+      "id": "sd_person_GLTD-FST",
+      "title": "Luís Gomes de Sousa",
+      "citation": "\"FamilySearch Tree,\" database, <i>FamilySearch</i> (https://www.familysearch.org), entry for Luís Gomes de Sousa (PID GLTD-FST); contributed by various users.",
+      "url": "https://familysearch.org/ark:/61903/4:1:GLTD-FST"
+    },
+    {
+      "id": "sd_person_GPZT-LZN",
+      "title": "João Gomes de Sousa",
+      "citation": "\"FamilySearch Tree,\" database, <i>FamilySearch</i> (https://www.familysearch.org), entry for João Gomes de Sousa (PID GPZT-LZN); contributed by various users.",
+      "url": "https://familysearch.org/ark:/61903/4:1:GPZT-LZN"
+    },
+    {
+      "id": "sd_person_LRJX-PH6",
+      "title": "Maria José Beatriz de Sousa",
+      "citation": "\"FamilySearch Tree,\" database, <i>FamilySearch</i> (https://www.familysearch.org), entry for Maria José Beatriz de Sousa (PID LRJX-PH6); contributed by various users.",
+      "url": "https://familysearch.org/ark:/61903/4:1:LRJX-PH6"
+    },
+    {
+      "id": "sd_person_GPZT-19V",
+      "title": "Maria Corrêa Henriques",
+      "citation": "\"FamilySearch Tree,\" database, <i>FamilySearch</i> (https://www.familysearch.org), entry for Maria Corrêa Henriques (PID GPZT-19V); contributed by various users.",
+      "url": "https://familysearch.org/ark:/61903/4:1:GPZT-19V"
+    },
+    {
+      "id": "QNH6-ZQR",
+      "title": "João Gomes de Souza, Junior, “Portugal, Madeira, Registros da Igreja Católica, 1044-1990”",
+      "citation": "\"Portugal, Madeira, Registros da Igreja Católica, 1044-1990\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:6NRL-3CW8 : Mon Aug 10 04:54:38 UTC 2026), Entry for Eulalia Gomes de Souza and João Gomes de Souza, Junior, março de 1880.",
+      "url": "https://familysearch.org/ark:/61903/1:1:6NRL-3CWD"
+    },
+    {
+      "id": "QNCM-5VV",
+      "title": "João Gomes de Souza, “Portugal, Madeira, Registros da Igreja Católica, 1044-1990”",
+      "citation": "\"Portugal, Madeira, Registros da Igreja Católica, 1044-1990\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:6NGD-BL9Q : Mon Aug 10 03:09:57 UTC 2026), Entry for João Gomes de Souza and Augus= 1, 13 de janeiro de 1852.",
+      "url": "https://familysearch.org/ark:/61903/1:1:6NGD-BL9Q"
+    },
+    {
+      "id": "W7XL-N9H",
+      "title": "João Gomes de Souza, “Portugal, Registro Civil, 1437-2023”",
+      "citation": "\"Portugal, Registro Civil, 1437-2023\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:X911-WXWP : Tue Jan 13 08:55:36 UTC 2026), Entry for João Gomes de Souza and João Gomes de Sousa, 30 de abril de 1865.",
+      "url": "https://familysearch.org/ark:/61903/1:1:X911-WXWP"
+    },
+    {
+      "id": "W7XG-9YV",
+      "title": "Francisco Gomes de Nobrega, “Portugal, Madeira, Registros da Igreja Católica, 1044-1990”",
+      "citation": "\"Portugal, Madeira, Registros da Igreja Católica, 1044-1990\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:6JMC-9FWC : Mon Aug 10 05:02:10 UTC 2026), Entry for Maria Gomes de Sousa and João Gomes de Sousa, 29 de outubro de 1903.",
+      "url": "https://familysearch.org/ark:/61903/1:1:6JMC-9FWX"
+    },
+    {
+      "id": "W7XG-GKP",
+      "title": "Francisco Gomes de Nobrega, “Portugal, Madeira, Registros da Igreja Católica, 1044-1990”",
+      "citation": "\"Portugal, Madeira, Registros da Igreja Católica, 1044-1990\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:6NRV-TMJY : Mon Aug 10 03:41:12 UTC 2026), Entry for Luiz de Souza and Gouver, 16 de abril de 1907.",
+      "url": "https://familysearch.org/ark:/61903/1:1:6NRV-TMV3"
+    },
+    {
+      "id": "W7KY-XN1",
+      "title": "João Gomes de Souza, “Portugal, Madeira, Registros da Igreja Católica, 1044-1990”",
+      "citation": "\"Portugal, Madeira, Registros da Igreja Católica, 1044-1990\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:6NRG-4F2N : Mon Aug 10 04:46:10 UTC 2026), Entry for João and Antonio Silvino Gonçalves de Andrade, 17 de outubro de 1867.",
+      "url": "https://familysearch.org/ark:/61903/1:1:6NRG-4F2K"
+    },
+    {
+      "id": "QNH6-JP2",
+      "title": "João Gomes de Souza, “Portugal, Madeira, Registros da Igreja Católica, 1044-1990”",
+      "citation": "\"Portugal, Madeira, Registros da Igreja Católica, 1044-1990\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:6NRL-Y5LF : Mon Aug 10 04:49:38 UTC 2026), Entry for João Antonio de Ancua and Manoel de Santa Maria, 1865.",
+      "url": "https://familysearch.org/ark:/61903/1:1:6NRL-Y5LN"
+    },
+    {
+      "id": "QNCM-T1D",
+      "title": "João Gomes de Souza, “Portugal, Madeira, Registros da Igreja Católica, 1044-1990”",
+      "citation": "\"Portugal, Madeira, Registros da Igreja Católica, 1044-1990\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:6JMZ-2DVT : Mon Aug 10 05:11:10 UTC 2026), Entry for Anna Gomes de Souza and João Gomes de Souza, 14 de agosto de 1870.",
+      "url": "https://familysearch.org/ark:/61903/1:1:6JMZ-2DVY"
+    },
+    {
+      "id": "Q2QV-BHJ",
+      "title": "Registo de batismo",
+      "url": "https://www.familysearch.org/photos/artifacts/188401263"
+    },
+    {
+      "id": "W7XL-KQG",
+      "title": "João Gomes de Sousa, “Portugal, Madeira, Registros da Igreja Católica, 1044-1990”",
+      "citation": "\"Portugal, Madeira, Registros da Igreja Católica, 1044-1990\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:6BG4-NSFN : Fri May 02 00:59:15 UTC 2025), Entry for João Gomes de Sousa and Anna Augusta de Jesus, 30 de abril de 1865.",
+      "url": "https://familysearch.org/ark:/61903/1:1:6BG4-NSFN"
+    },
+    {
+      "id": "W7XP-6Y6",
+      "title": "João Gomes de Souza, “Portugal, Registro Civil, 1437-2023”",
+      "citation": "\"Portugal, Registro Civil, 1437-2023\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:XSMM-VZ2Z : Tue Jan 13 09:15:00 UTC 2026), Entry for João Pestana Henriques and Antonio Pestana, 14 de novembro de 1892.",
+      "url": "https://familysearch.org/ark:/61903/1:1:XSMM-VZ2X"
+    },
+    {
+      "id": "W7XL-28H",
+      "title": "João Gomes de Sousa, “Portugal, Registro Civil, 1437-2023”",
+      "citation": "\"Portugal, Registro Civil, 1437-2023\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:XSMM-W95W : Tue Jan 13 19:58:34 UTC 2026), Entry for Francisco de Jesus Henriques and Manoel de Jesus Henriques, 26 de novembro de 1888.",
+      "url": "https://familysearch.org/ark:/61903/1:1:XSMM-W95Z"
+    },
+    {
+      "id": "W7KY-85G",
+      "title": "João Gomes de Souza, “Portugal, Registro Civil, 1437-2023”",
+      "citation": "\"Portugal, Registro Civil, 1437-2023\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:X91B-LBSF : Thu Apr 24 07:11:09 UTC 2025), Entry for Francisco Gomes de Souza and João Gomes de Souza.",
+      "url": "https://familysearch.org/ark:/61903/1:1:X91B-LBSN"
+    },
+    {
+      "id": "W7KY-66N",
+      "title": "João Gomes de Sousa, “Portugal, Madeira, Registros da Igreja Católica, 1044-1990”",
+      "citation": "\"Portugal, Madeira, Registros da Igreja Católica, 1044-1990\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:6BC1-RY46 : Sat Jan 04 02:09:31 UTC 2025), Entry for Francisco and João Gomes de Sousa, 23 de setembro de 1875.",
+      "url": "https://familysearch.org/ark:/61903/1:1:6BC1-RY4X"
+    },
+    {
+      "id": "Q2QV-Y57",
+      "title": "Registo de casamento n9",
+      "url": "https://www.familysearch.org/photos/artifacts/188401202"
+    },
+    {
+      "id": "W7XL-5J3",
+      "title": "Môa Gomes de Sousa, “Portugal, Registro Civil, 1437-2023”",
+      "citation": "\"Portugal, Registro Civil, 1437-2023\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:6YLB-3TJZ : Fri Jan 09 18:46:33 UTC 2026), Entry for João Gomes de Sousa and Môa Gomes de Sousa, 2 de março de 1961.",
+      "url": "https://familysearch.org/ark:/61903/1:1:6YLB-3TJ8"
+    },
+    {
+      "id": "W7KY-891",
+      "title": "João Gomes de Souza, “Portugal, Registro Civil, 1437-2023”",
+      "citation": "\"Portugal, Registro Civil, 1437-2023\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:X91B-B795 : Tue Jan 13 08:48:32 UTC 2026), Entry for Francisco Gomes de Souza and João Gomes de Souza, 30 de novembro de 1905.",
+      "url": "https://familysearch.org/ark:/61903/1:1:X91B-B79R"
+    },
+    {
+      "id": "W7KB-NML",
+      "title": "João Gomes de Souza, “Brasil, São Paulo, Registro Civil, 1925-2023”",
+      "citation": "\"Brasil, São Paulo, Registro Civil, 1925-2023\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:QPRT-PD74 : Thu Jun 04 03:29:26 UTC 2026), Entry for Luiz Gomes de Souza and João Gomes de Souza.",
+      "url": "https://familysearch.org/ark:/61903/1:1:QPRT-PD7H"
+    },
+    {
+      "id": "188401202",
+      "title": "fs_temp_image_crop793032.jpg",
+      "url": "https://api.familysearch.org/platform/memories/memories/188401202?flag=fsh"
+    },
+    {
+      "id": "188401263",
+      "title": "fs_temp_image_crop643879.jpg",
+      "url": "https://api.familysearch.org/platform/memories/memories/188401263?flag=fsh"
+    },
+    {
+      "id": "W7XG-TJR",
+      "title": "João Gomes de Souza, “Portugal, Registro Civil, 1437-2023”",
+      "citation": "\"Portugal, Registro Civil, 1437-2023\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:XSMM-XTM6 : Tue Jan 13 17:12:13 UTC 2026), Entry for Izidoro Figueira de Senen and João Gomes de Souza, 29 de julho de 1935.",
+      "url": "https://familysearch.org/ark:/61903/1:1:XSMM-XTMX"
+    },
+    {
+      "id": "W7XG-RG6",
+      "title": "João Gomes de Sousa, “Portugal, Registro Civil, 1437-2023”",
+      "citation": "\"Portugal, Registro Civil, 1437-2023\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:X911-3NFN : Tue Jan 13 12:29:56 UTC 2026), Entry for João de Castro and Manuel de Castro, 12 de junho de 1941.",
+      "url": "https://familysearch.org/ark:/61903/1:1:X911-3NF2"
+    },
+    {
+      "id": "W7XG-RSM",
+      "title": "João Gomes de Souza, “Portugal, Registro Civil, 1437-2023”",
+      "citation": "\"Portugal, Registro Civil, 1437-2023\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:XSM9-3ZRH : Tue Jan 13 09:08:20 UTC 2026), Entry for José Gomes de Souza and João Gomes de Souza, 29 de março de 1939.",
+      "url": "https://familysearch.org/ark:/61903/1:1:XSM9-3ZRC"
+    },
+    {
+      "id": "W7XG-5VK",
+      "title": "João Gomes de Sousa, “Portugal, Registro Civil, 1437-2023”",
+      "citation": "\"Portugal, Registro Civil, 1437-2023\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:XSMM-5HTW : Tue Jan 13 09:06:27 UTC 2026), Entry for João Gomes de Sousa and João Gomes de Sousa, 30 de junho de 1892.",
+      "url": "https://familysearch.org/ark:/61903/1:1:XSMM-5HTW"
+    },
+    {
+      "id": "W7XG-5QJ",
+      "title": "João Gomes de Souza, “Portugal, Registro Civil, 1437-2023”",
+      "citation": "\"Portugal, Registro Civil, 1437-2023\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:6YPS-1KK5 : Fri Jan 09 20:55:06 UTC 2026), Entry for Luiz Gomes de Souza and João Gomes de Souza, maio de 1200.",
+      "url": "https://familysearch.org/ark:/61903/1:1:6YPS-1KKR"
+    },
+    {
+      "id": "W7XG-GT8",
+      "title": "João Jonas de Souza, “Portugal, Madeira, Registros da Igreja Católica, 1044-1990”",
+      "citation": "\"Portugal, Madeira, Registros da Igreja Católica, 1044-1990\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:6NRV-TMJY : Mon Aug 10 03:41:12 UTC 2026), Entry for Luiz de Souza and Gouver, 16 de abril de 1907.",
+      "url": "https://familysearch.org/ark:/61903/1:1:6NRV-TMJB"
+    },
+    {
+      "id": "W7XG-867",
+      "title": "João Gomes de Sousa, “Portugal, Registro Civil, 1437-2023”",
+      "citation": "\"Portugal, Registro Civil, 1437-2023\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:65YG-KB6L : Fri Jan 09 18:49:36 UTC 2026), Entry for João and João Gomes de Sousa, agosto de 1200.",
+      "url": "https://familysearch.org/ark:/61903/1:1:65YG-KB6G"
+    },
+    {
+      "id": "W7XG-ZQM",
+      "title": "João Gomes de Souza, “Portugal, Registro Civil, 1437-2023”",
+      "citation": "\"Portugal, Registro Civil, 1437-2023\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:6YG9-6MZ9 : Fri Jan 09 19:39:10 UTC 2026), Entry for <Unknown> and João Gomes de Souza, 22 de maio de 1920.",
+      "url": "https://familysearch.org/ark:/61903/1:1:6YG9-6MZS"
+    },
+    {
+      "id": "W7XG-C9D",
+      "title": "João Gomes de Souza, “Portugal, Registro Civil, 1437-2023”",
+      "citation": "\"Portugal, Registro Civil, 1437-2023\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:X91B-LZF8 : Tue Jan 13 11:56:45 UTC 2026), Entry for José Gomes Da Silva and João Gomes de Souza, 17 de março de 1920.",
+      "url": "https://familysearch.org/ark:/61903/1:1:X91B-LZFD"
+    },
+    {
+      "id": "W7XG-HHK",
+      "title": "João Gomes de Souza, “Portugal, Registro Civil, 1437-2023”",
+      "citation": "\"Portugal, Registro Civil, 1437-2023\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:65BS-HQWN : Fri Jan 09 18:43:02 UTC 2026), Entry for Bernardino Gomes de Souza and João Gomes de Souza, 1929.",
+      "url": "https://familysearch.org/ark:/61903/1:1:65BS-HQWJ"
+    },
+    {
+      "id": "W7XG-4CK",
+      "title": "João Gomes de Sousa, “Portugal, Registro Civil, 1437-2023”",
+      "citation": "\"Portugal, Registro Civil, 1437-2023\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:65LV-Q1J7 : Fri Jan 09 19:34:46 UTC 2026), Entry for Maria de Souza Henriques and João Gomes de Sousa, 25 de julho de 1929.",
+      "url": "https://familysearch.org/ark:/61903/1:1:65LV-Q1JW"
+    },
+    {
+      "id": "W7XG-75R",
+      "title": "João Rotres de Sousa, “Portugal, Registro Civil, 1437-2023”",
+      "citation": "\"Portugal, Registro Civil, 1437-2023\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:65LK-QT1M : Fri Jan 09 20:09:21 UTC 2026), Entry for Maria de Sousa Herriques and João Rotres de Sousa, aproximadamente 25 de julho de 1929.",
+      "url": "https://familysearch.org/ark:/61903/1:1:65LK-QT19"
+    },
+    {
+      "id": "W7XG-Q51",
+      "title": "João Gomes de Souza, “Portugal, Registro Civil, 1437-2023”",
+      "citation": "\"Portugal, Registro Civil, 1437-2023\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:6B9P-YYRF : Fri Jan 09 20:03:06 UTC 2026), Entry for <Unknown> and João Gomes de Souza, 22 de maio de 1920.",
+      "url": "https://familysearch.org/ark:/61903/1:1:6YL1-YGXW"
+    },
+    {
+      "id": "W7XG-39D",
+      "title": "João Gomes de Souza, “Portugal, Registro Civil, 1437-2023”",
+      "citation": "\"Portugal, Registro Civil, 1437-2023\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:65BW-N6RZ : Fri Jan 09 19:07:09 UTC 2026), Entry for Maria and João Gomes de Souza, 22 de março de 1894.",
+      "url": "https://familysearch.org/ark:/61903/1:1:65BW-N6R8"
+    },
+    {
+      "id": "W7XG-S9J",
+      "title": "João Gomes de Sousa, “Portugal, Madeira, Registros da Igreja Católica, 1044-1990”",
+      "citation": "\"Portugal, Madeira, Registros da Igreja Católica, 1044-1990\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:6JMC-9FWC : Mon Aug 10 05:02:10 UTC 2026), Entry for Maria Gomes de Sousa and João Gomes de Sousa, 29 de outubro de 1903.",
+      "url": "https://familysearch.org/ark:/61903/1:1:6JMC-9FWZ"
+    },
+    {
+      "id": "W7XL-12L",
+      "title": "João Gomes de Sousa, “Portugal, Madeira, Registros da Igreja Católica, 1044-1990”",
+      "citation": "\"Portugal, Madeira, Registros da Igreja Católica, 1044-1990\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:6NRV-JRJD : Mon Aug 10 04:55:43 UTC 2026), Entry for João Gomes de Sousa and Augusta Adelai- ? de de Nobrega, 6 de fevereiro de 1900.",
+      "url": "https://familysearch.org/ark:/61903/1:1:6NRV-JRJ6"
+    },
+    {
+      "id": "W7XL-BFP",
+      "title": "João Gomes de Sousa, “Portugal, Registro Civil, 1437-2023”",
+      "citation": "\"Portugal, Registro Civil, 1437-2023\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:X91B-PGC6 : Tue Jan 13 11:55:42 UTC 2026), Entry for José Gomes de Sousa and João Gomes de Sousa, 29 de março de 1939.",
+      "url": "https://familysearch.org/ark:/61903/1:1:X91B-PGCX"
+    },
+    {
+      "id": "W7XL-YB9",
+      "title": "João Gomes de Souza, “Portugal, Registro Civil, 1437-2023”",
+      "citation": "\"Portugal, Registro Civil, 1437-2023\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:X91B-VKR5 : Tue Jan 13 08:49:08 UTC 2026), Entry for José Gomes Da Silva and João Gomes de Souza, 17 de março de 1920.",
+      "url": "https://familysearch.org/ark:/61903/1:1:X91B-VKRR"
+    },
+    {
+      "id": "W7XL-TBJ",
+      "title": "João Gomes de Souza, “Portugal, Madeira, Registros da Igreja Católica, 1044-1990”",
+      "citation": "\"Portugal, Madeira, Registros da Igreja Católica, 1044-1990\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:6NRG-S9RV : Mon Aug 10 03:40:17 UTC 2026), Entry for Maria Gomes de Souza and João Gomes de Souza, 19 de setembro de 1904.",
+      "url": "https://familysearch.org/ark:/61903/1:1:6NRG-S9RK"
+    },
+    {
+      "id": "W7XL-5PB",
+      "title": "João Gomes de Sousa, “Portugal, Registro Civil, 1437-2023”",
+      "citation": "\"Portugal, Registro Civil, 1437-2023\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:6YLB-3TJZ : Fri Jan 09 18:46:33 UTC 2026), Entry for João Gomes de Sousa and Môa Gomes de Sousa, 2 de março de 1961.",
+      "url": "https://familysearch.org/ark:/61903/1:1:6YLB-3TJZ"
+    },
+    {
+      "id": "Q2QV-YR4",
+      "title": "Registo de batismo n153",
+      "url": "https://www.familysearch.org/photos/artifacts/188401206"
+    },
+    {
+      "id": "W7TH-S4J",
+      "title": "Eugalia Adelaide Adelaide, “Brasil, Rio de Janeiro, Registro Civil, 1804-2013”",
+      "citation": "\"Brasil, Rio de Janeiro, Registro Civil, 1804-2013\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:X91Z-5NBB : Fri May 29 19:20:01 UTC 2026), Entry for Adalberto dos Santos and Zulmira dos Santos Lisbãa, 3 de maio de 1941.",
+      "url": "https://familysearch.org/ark:/61903/1:1:X91Z-5N1S"
+    },
+    {
+      "id": "W7KY-J7P",
+      "title": "Eulalia Adelaide Adelaide, “Brasil, Rio de Janeiro, Registro Civil, 1804-2013”",
+      "citation": "\"Brasil, Rio de Janeiro, Registro Civil, 1804-2013\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:X91W-CXTJ : Fri May 29 16:37:31 UTC 2026), Entry for Ayres Fellana Henriques and José Pestana Henriques, March 1949.",
+      "url": "https://familysearch.org/ark:/61903/1:1:X91W-CXTK"
+    },
+    {
+      "id": "7Z12-WC5",
+      "title": "Eulalia Adelaide, “Brasil, Rio de Janeiro, Registro Civil, 1804-2013”",
+      "citation": "\"Brasil, Rio de Janeiro, Registro Civil, 1804-2013\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:WYKM-91N2 : Wed Mar 12 06:01:32 UTC 2025), Entry for José Pestana Henriques and José Pestana Henriques.",
+      "url": "https://familysearch.org/ark:/61903/1:1:WYKM-91PZ"
+    },
+    {
+      "id": "SJMX-M1J",
+      "title": "Eulalia Adelaide, “Brasil, Rio de Janeiro, Registro Civil, 1804-2013”",
+      "citation": "\"Brasil, Rio de Janeiro, Registro Civil, 1804-2013\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:77LZ-KVT2 : Tue Mar 11 07:05:06 UTC 2025), Entry for Ayres Pestana Henriques and José Pestana Henriques, 10 Mar 1997.",
+      "url": "https://familysearch.org/ark:/61903/1:1:77LZ-KK3Z"
+    },
+    {
+      "id": "SJM6-VVX",
+      "title": "Eulalia Adelaide Henriques, “Brasil, Rio de Janeiro, Registro Civil, 1804-2013”",
+      "citation": "\"Brasil, Rio de Janeiro, Registro Civil, 1804-2013\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:QGJ1-WBSN : Sun Mar 08 21:19:57 UTC 2026), Entry for Ayres Pestana Henriques and Hercilia Gomes Henriques.",
+      "url": "https://familysearch.org/ark:/61903/1:1:QGJ1-WBS1"
+    },
+    {
+      "id": "SJMD-T12",
+      "title": "Eulalia Adelaide Gomes, “Brasil, Rio de Janeiro, Registro Civil, 1804-2013”",
+      "citation": "\"Brasil, Rio de Janeiro, Registro Civil, 1804-2013\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:QGV9-YSGR : Thu Dec 11 15:59:54 UTC 2025), Entry for Joāo Pestana Henriques and Gloria Da Luz Martins.",
+      "url": "https://familysearch.org/ark:/61903/1:1:QGV9-YSP7"
+    },
+    {
+      "id": "SJMD-4S3",
+      "title": "Eulalia Adelaide Gomes, “Brasil, Rio de Janeiro, Registro Civil, 1804-2013”",
+      "citation": "\"Brasil, Rio de Janeiro, Registro Civil, 1804-2013\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:7QG8-KJ6Z : Mon Mar 10 22:08:49 UTC 2025), Entry for João Pestana Henriques and José Pestana Henriques, 12 Nov 1947.",
+      "url": "https://familysearch.org/ark:/61903/1:1:7QG8-KJ2M"
+    },
+    {
+      "id": "SJMD-WSP",
+      "title": "Adelaide, “Brasil, Rio de Janeiro, Registro Civil, 1804-2013”",
+      "citation": "\"Brasil, Rio de Janeiro, Registro Civil, 1804-2013\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:79SL-J33Z : Sun Dec 07 00:37:44 UTC 2025), Entry for Elvira Pestana Henrique and José Pestana Henrique, 29 Ago 1925.",
+      "url": "https://familysearch.org/ark:/61903/1:1:79SL-J3ZM"
+    },
+    {
+      "id": "SN17-14D",
+      "title": "Eulalia Adelaide, “Brasil, Rio de Janeiro, Registro Civil, 1804-2013”",
+      "citation": "\"Brasil, Rio de Janeiro, Registro Civil, 1804-2013\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:7QLP-TVZM : Wed Oct 08 22:35:33 UTC 2025), Entry for Elvira Pestana Henrique and José Pestana Henrique, 8 Abr 1926.",
+      "url": "https://familysearch.org/ark:/61903/1:1:7QLP-TVN2"
+    },
+    {
+      "id": "SN17-GR8",
+      "title": "Eulatia Adelaide Pestana, “Brasil, Rio de Janeiro, Registro Civil, 1804-2013”",
+      "citation": "\"Brasil, Rio de Janeiro, Registro Civil, 1804-2013\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:QGV9-YV1P : Sat Jan 17 15:02:02 UTC 2026), Entry for Adalberto dos Santos Lisbôa and Adelaide Pestana Henrique.",
+      "url": "https://familysearch.org/ark:/61903/1:1:QGV9-H3ZV"
+    },
+    {
+      "id": "W7KB-NSD",
+      "title": "Ana Augosta de Jesus, “Brasil, São Paulo, Registro Civil, 1925-2023”",
+      "citation": "\"Brasil, São Paulo, Registro Civil, 1925-2023\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:QPRT-PD74 : Thu Jun 04 03:29:26 UTC 2026), Entry for Luiz Gomes de Souza and João Gomes de Souza.",
+      "url": "https://familysearch.org/ark:/61903/1:1:QPRT-PD7C"
+    },
+    {
+      "id": "W7KY-XK5",
+      "title": "Anna Augusta de Je, “Portugal, Madeira, Registros da Igreja Católica, 1044-1990”",
+      "citation": "\"Portugal, Madeira, Registros da Igreja Católica, 1044-1990\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:6NRG-4F2N : Mon Aug 10 04:46:10 UTC 2026), Entry for João and Antonio Silvino Gonçalves de Andrade, 17 de outubro de 1867.",
+      "url": "https://familysearch.org/ark:/61903/1:1:6NRG-4F2V"
+    },
+    {
+      "id": "W7KY-6ND",
+      "title": "Anna Augusta de Jesus, “Portugal, Madeira, Registros da Igreja Católica, 1044-1990”",
+      "citation": "\"Portugal, Madeira, Registros da Igreja Católica, 1044-1990\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:6BC1-RY46 : Sat Jan 04 02:09:31 UTC 2025), Entry for Francisco and João Gomes de Sousa, 23 de setembro de 1875.",
+      "url": "https://familysearch.org/ark:/61903/1:1:6BC1-RY4F"
+    },
+    {
+      "id": "W7KY-8YT",
+      "title": "Anna Augusta de Jesus, “Portugal, Registro Civil, 1437-2023”",
+      "citation": "\"Portugal, Registro Civil, 1437-2023\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:X91B-LBSF : Thu Apr 24 07:11:09 UTC 2025), Entry for Francisco Gomes de Souza and João Gomes de Souza.",
+      "url": "https://familysearch.org/ark:/61903/1:1:X91B-LBSJ"
+    },
+    {
+      "id": "W7KY-8W3",
+      "title": "Anna Augusta de Jesus, “Portugal, Registro Civil, 1437-2023”",
+      "citation": "\"Portugal, Registro Civil, 1437-2023\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:X91B-B795 : Tue Jan 13 08:48:32 UTC 2026), Entry for Francisco Gomes de Souza and João Gomes de Souza, 30 de novembro de 1905.",
+      "url": "https://familysearch.org/ark:/61903/1:1:X91B-B79T"
+    },
+    {
+      "id": "W7XP-X99",
+      "title": "Anna Augusta de Jesus de Jesus, “Portugal, Registro Civil, 1437-2023”",
+      "citation": "\"Portugal, Registro Civil, 1437-2023\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:XSMM-VZ2Z : Tue Jan 13 09:15:00 UTC 2026), Entry for João Pestana Henriques and Antonio Pestana, 14 de novembro de 1892.",
+      "url": "https://familysearch.org/ark:/61903/1:1:XSMM-VZ2F"
+    },
+    {
+      "id": "W7XG-GGT",
+      "title": "Maria Augusta de Jesus, “Portugal, Madeira, Registros da Igreja Católica, 1044-1990”",
+      "citation": "\"Portugal, Madeira, Registros da Igreja Católica, 1044-1990\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:6NRV-TMJY : Mon Aug 10 03:41:12 UTC 2026), Entry for Luiz de Souza and Gouver, 16 de abril de 1907.",
+      "url": "https://familysearch.org/ark:/61903/1:1:6NRV-TMVQ"
+    },
+    {
+      "id": "W7XG-91K",
+      "title": "Maria Augusta de Jesus, “Portugal, Madeira, Registros da Igreja Católica, 1044-1990”",
+      "citation": "\"Portugal, Madeira, Registros da Igreja Católica, 1044-1990\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:6JMC-9FWC : Mon Aug 10 05:02:10 UTC 2026), Entry for Maria Gomes de Sousa and João Gomes de Sousa, 29 de outubro de 1903.",
+      "url": "https://familysearch.org/ark:/61903/1:1:6JMC-9FWF"
+    },
+    {
+      "id": "W7XL-5KW",
+      "title": "Augusta de Jesus de Jesus, “Portugal, Registro Civil, 1437-2023”",
+      "citation": "\"Portugal, Registro Civil, 1437-2023\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:6YLB-3TJZ : Fri Jan 09 18:46:33 UTC 2026), Entry for João Gomes de Sousa and Môa Gomes de Sousa, 2 de março de 1961.",
+      "url": "https://familysearch.org/ark:/61903/1:1:6YLB-3TJD"
+    },
+    {
+      "id": "W7XL-2XG",
+      "title": "Anna Augusta de Jesus, “Portugal, Registro Civil, 1437-2023”",
+      "citation": "\"Portugal, Registro Civil, 1437-2023\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:XSMM-W95W : Tue Jan 13 19:58:34 UTC 2026), Entry for Francisco de Jesus Henriques and Manoel de Jesus Henriques, 26 de novembro de 1888.",
+      "url": "https://familysearch.org/ark:/61903/1:1:XSMM-W958"
+    },
+    {
+      "id": "W7XL-VPK",
+      "title": "Anna Augusta de Jesus, “Portugal, Madeira, Registros da Igreja Católica, 1044-1990”",
+      "citation": "\"Portugal, Madeira, Registros da Igreja Católica, 1044-1990\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:6BG4-NSFN : Fri May 02 00:59:15 UTC 2025), Entry for João Gomes de Sousa and Anna Augusta de Jesus, 30 de abril de 1865.",
+      "url": "https://familysearch.org/ark:/61903/1:1:6BG4-NSFJ"
+    },
+    {
+      "id": "QNHF-76W",
+      "title": "Anna Augusta de Jesus, “Portugal, Madeira, Registros da Igreja Católica, 1044-1990”",
+      "citation": "\"Portugal, Madeira, Registros da Igreja Católica, 1044-1990\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:6NRP-LWH5 : Mon Aug 10 03:45:54 UTC 2026), Entry for João Gomes de Souza and Anna Augusta de Jesus, 29 de setembro de 1879.",
+      "url": "https://familysearch.org/ark:/61903/1:1:6NRP-LWHT"
+    },
+    {
+      "id": "QNHX-MKY",
+      "title": "Ana Augusta de Jesus, “Brasil, Cartões de Imigração, 1900-1980”",
+      "citation": "\"Brasil, Cartões de Imigração, 1900-1980\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:FFTK-95S : Tue Jun 30 12:35:20 UTC 2026), Entry for Luís Gomes de Sousa and João Gomes de Sousa, 1957.",
+      "url": "https://familysearch.org/ark:/61903/1:1:FFTK-95Q"
+    },
+    {
+      "id": "W7XP-XWS",
+      "title": "Anna Pestano Henriques, “Portugal, Registro Civil, 1437-2023”",
+      "citation": "\"Portugal, Registro Civil, 1437-2023\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:XSMM-VZ2Z : Tue Jan 13 09:15:00 UTC 2026), Entry for João Pestana Henriques and Antonio Pestana, 14 de novembro de 1892.",
+      "url": "https://familysearch.org/ark:/61903/1:1:XSMM-VZ26"
+    },
+    {
+      "id": "QNH1-H1Y",
+      "title": "Anna Gomes de Souza, “Portugal, Madeira, Registros da Igreja Católica, 1044-1990”",
+      "citation": "\"Portugal, Madeira, Registros da Igreja Católica, 1044-1990\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:6JMZ-2DVT : Mon Aug 10 05:11:10 UTC 2026), Entry for Anna Gomes de Souza and João Gomes de Souza, 14 de agosto de 1870.",
+      "url": "https://familysearch.org/ark:/61903/1:1:6JMZ-2DVT"
+    },
+    {
+      "id": "W7KY-D3V",
+      "title": "Francisco Gomes de Souza, “Portugal, Registro Civil, 1437-2023”",
+      "citation": "\"Portugal, Registro Civil, 1437-2023\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:X91B-LBSF : Thu Apr 24 07:11:09 UTC 2025), Entry for Francisco Gomes de Souza and João Gomes de Souza.",
+      "url": "https://familysearch.org/ark:/61903/1:1:X91B-LBSF"
+    },
+    {
+      "id": "W7KY-88C",
+      "title": "Francisco Gomes de Souza, “Portugal, Registro Civil, 1437-2023”",
+      "citation": "\"Portugal, Registro Civil, 1437-2023\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:X91B-B795 : Tue Jan 13 08:48:32 UTC 2026), Entry for Francisco Gomes de Souza and João Gomes de Souza, 30 de novembro de 1905.",
+      "url": "https://familysearch.org/ark:/61903/1:1:X91B-B795"
+    },
+    {
+      "id": "W7KY-ZMS",
+      "title": "Francisco Gomes de Souza, “Portugal, Madeira, Registros da Igreja Católica, 1044-1990”",
+      "citation": "\"Portugal, Madeira, Registros da Igreja Católica, 1044-1990\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:6NRL-7SML : Sun Aug 09 04:50:44 UTC 2026), Entry for Maria Gomes de Souza and Francisco Gomes de Souza, 17 de abril de 1923.",
+      "url": "https://familysearch.org/ark:/61903/1:1:6NRL-7SMG"
+    },
+    {
+      "id": "W7KY-C8Q",
+      "title": "Francisco Gomes de Souza, “Brasil, Rio de Janeiro, Registro Civil, 1804-2013”",
+      "citation": "\"Brasil, Rio de Janeiro, Registro Civil, 1804-2013\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:62QC-TTPB : Fri Jan 31 23:59:14 UTC 2025), Entry for João Gomes de Souza and Francisco Gomes de Souza, 17 Aug 1994.",
+      "url": "https://familysearch.org/ark:/61903/1:1:62QC-TTP1"
+    },
+    {
+      "id": "W7KY-HTF",
+      "title": "Francisco de Sousa, “Portugal, Registro Civil, 1437-2023”",
+      "citation": "\"Portugal, Registro Civil, 1437-2023\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:XSMM-Z3XM : Tue Jan 13 08:53:11 UTC 2026), Entry for Eduardo de Sousa and Francisco de Sousa, 13 de junho de 1934.",
+      "url": "https://familysearch.org/ark:/61903/1:1:XSMM-Z3X9"
+    },
+    {
+      "id": "W7KY-45D",
+      "title": "Francisco Gomes de Souza, “Portugal, Registro Civil, 1437-2023”",
+      "citation": "\"Portugal, Registro Civil, 1437-2023\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:X911-1T1N : Tue Jan 13 09:11:06 UTC 2026), Entry for Francisco Gomes de Souza and Francisco Gomes de Souza, 6 de maio de 1931.",
+      "url": "https://familysearch.org/ark:/61903/1:1:X911-1T1J"
+    },
+    {
+      "id": "W7KY-48S",
+      "title": "Francisco Gonha de Souza, “Portugal, Registro Civil, 1437-2023”",
+      "citation": "\"Portugal, Registro Civil, 1437-2023\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:X91B-5SQP : Tue Jan 13 19:58:42 UTC 2026), Entry for Sebastião Eduardo de Souza and Francisco Gonha de Souza, 13 de junho de 1934.",
+      "url": "https://familysearch.org/ark:/61903/1:1:X91B-5SQ5"
+    },
+    {
+      "id": "W9B7-JG8",
+      "title": "de Souza, “Portugal, Registro Civil, 1437-2023”",
+      "citation": "\"Portugal, Registro Civil, 1437-2023\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:65VF-MPHG : Fri Jan 09 20:15:07 UTC 2026), Entry for Francisco Amaro de Souza and de Souza, 2 de julho de 1900.",
+      "url": "https://familysearch.org/ark:/61903/1:1:65VF-MPHP"
+    },
+    {
+      "id": "W9B7-F5G",
+      "title": "Francisco Gomes de Souza, “Portugal, Registro Civil, 1437-2023”",
+      "citation": "\"Portugal, Registro Civil, 1437-2023\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:X91B-GGQ6 : Tue Jan 13 17:16:27 UTC 2026), Entry for Francisco Gomes de Souza and José Gomes de Souza, 28 de novembro de 1923.",
+      "url": "https://familysearch.org/ark:/61903/1:1:X91B-GGQ6"
+    },
+    {
+      "id": "W9B7-X3M",
+      "title": "Francisco No Gomes de Souza, “Portugal, Madeira, Registros da Igreja Católica, 1044-1990”",
+      "citation": "\"Portugal, Madeira, Registros da Igreja Católica, 1044-1990\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:6NRJ-6V1F : Sun Aug 09 03:41:19 UTC 2026), Entry for C. Miranela Gomes de Souza and Francisco No Gomes de Souza, 11 de setembro de 1910.",
+      "url": "https://familysearch.org/ark:/61903/1:1:6NRJ-6V1N"
+    },
+    {
+      "id": "WMXV-SMG",
+      "title": "Gomes de Sousa, “Portugal, Registro Civil, 1437-2023”",
+      "citation": "\"Portugal, Registro Civil, 1437-2023\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:6JR9-Z4KB : Tue Jan 06 02:42:07 UTC 2026), Entry for Anton and Figueira, 20 de janeiro de 1900.",
+      "url": "https://familysearch.org/ark:/61903/1:1:6JR9-Z4K1"
+    },
+    {
+      "id": "WMQN-X6S",
+      "title": "Francisco Gomes de Sousa, “Portugal, Registro Civil, 1437-2023”",
+      "citation": "\"Portugal, Registro Civil, 1437-2023\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:6519-QTQW : Fri Jan 09 19:44:22 UTC 2026), Entry for Maria Gomes de Sousa and Francisco Gomes de Sousa, abril de 1982.",
+      "url": "https://familysearch.org/ark:/61903/1:1:6519-QTQ4"
+    },
+    {
+      "id": "WMQN-CKJ",
+      "title": "Francisco Gomes de Souza, “Portugal, Registro Civil, 1437-2023”",
+      "citation": "\"Portugal, Registro Civil, 1437-2023\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:XSMM-P7Z7 : Tue Jan 13 08:47:21 UTC 2026), Entry for Gome de Souza and Francisco Gomes de Souza, 6 de maio de 1931.",
+      "url": "https://familysearch.org/ark:/61903/1:1:XSMM-P7ZW"
+    },
+    {
+      "id": "QNH1-N3T",
+      "title": "Francisco Gomes de Souza, “Portugal, Madeira, Registros da Igreja Católica, 1044-1990”",
+      "citation": "\"Portugal, Madeira, Registros da Igreja Católica, 1044-1990\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:6JMZ-RBDW : Mon Aug 10 03:30:05 UTC 2026), Entry for Sousa and Maria Corrêa, 2 de junho de 1883.",
+      "url": "https://familysearch.org/ark:/61903/1:1:6JMZ-RBDW"
+    },
+    {
+      "id": "QNHX-NFY",
+      "title": "Francisco Gomes de Souza, “Portugal, Madeira, Registros da Igreja Católica, 1044-1990”",
+      "citation": "\"Portugal, Madeira, Registros da Igreja Católica, 1044-1990\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:6NR2-B6RQ : Sun Aug 09 03:14:00 UTC 2026), Entry for Francisco Gomes de Souza and Francisco Gomes de Souza, 22 de fevereiro de 1909.",
+      "url": "https://familysearch.org/ark:/61903/1:1:6NR2-B6R7"
+    },
+    {
+      "id": "W7KY-X72",
+      "title": "Francisco, “Portugal, Madeira, Registros da Igreja Católica, 1044-1990”",
+      "citation": "\"Portugal, Madeira, Registros da Igreja Católica, 1044-1990\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:6BC1-RY46 : Sat Jan 04 02:09:31 UTC 2025), Entry for Francisco and João Gomes de Sousa, 23 de setembro de 1875.",
+      "url": "https://familysearch.org/ark:/61903/1:1:6BC1-RY46"
+    },
+    {
+      "id": "Q2QV-YB9",
+      "title": "Registo batismo n50",
+      "url": "https://www.familysearch.org/photos/artifacts/188401214"
+    },
+    {
+      "id": "QNH1-XX9",
+      "title": "Eulalia Gomes de Souza, “Portugal, Madeira, Registros da Igreja Católica, 1044-1990”",
+      "citation": "\"Portugal, Madeira, Registros da Igreja Católica, 1044-1990\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:6NRL-3CW8 : Mon Aug 10 04:54:38 UTC 2026), Entry for Eulalia Gomes de Souza and João Gomes de Souza, Junior, março de 1880.",
+      "url": "https://familysearch.org/ark:/61903/1:1:6NRL-3CW8"
+    },
+    {
+      "id": "Q2QV-YTQ",
+      "title": "Registo de batismo n180",
+      "url": "https://www.familysearch.org/photos/artifacts/188401209"
+    },
+    {
+      "id": "QNH1-JSY",
+      "title": "Maria Gomes de Souza, “Portugal, Madeira, Registros da Igreja Católica, 1044-1990”",
+      "citation": "\"Portugal, Madeira, Registros da Igreja Católica, 1044-1990\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:6NRL-Y5LF : Mon Aug 10 04:49:38 UTC 2026), Entry for João Antonio de Ancua and Manoel de Santa Maria, 1865.",
+      "url": "https://familysearch.org/ark:/61903/1:1:6NRL-Y5LF"
+    },
+    {
+      "id": "W7KB-N7Z",
+      "title": "Luiz Gomes de Souza, “Brasil, São Paulo, Registro Civil, 1925-2023”",
+      "citation": "\"Brasil, São Paulo, Registro Civil, 1925-2023\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:QPRT-PD74 : Thu Jun 04 03:29:26 UTC 2026), Entry for Luiz Gomes de Souza and João Gomes de Souza.",
+      "url": "https://familysearch.org/ark:/61903/1:1:QPRT-PD74"
+    },
+    {
+      "id": "W7KB-FDX",
+      "title": "Luiz Gomes de Souza, “Portugal, Registro Civil, 1437-2023”",
+      "citation": "\"Portugal, Registro Civil, 1437-2023\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:X91B-PPD4 : Tue Jan 13 16:58:10 UTC 2026), Entry for Luiz Gomes de Souza and João Gomes de Souza, 24 de maio de 1916.",
+      "url": "https://familysearch.org/ark:/61903/1:1:X91B-PPD4"
+    },
+    {
+      "id": "W7KB-XV9",
+      "title": "Luiz Gomes de Sousa, “Portugal, Registro Civil, 1437-2023”",
+      "citation": "\"Portugal, Registro Civil, 1437-2023\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:X91B-683G : Tue Jan 13 11:44:18 UTC 2026), Entry for Luiz Gomes de Sousa and Luiz Gomes de Sousa, 24 de maio de 1916.",
+      "url": "https://familysearch.org/ark:/61903/1:1:X91B-683G"
+    },
+    {
+      "id": "Q2QV-Y1V",
+      "title": "Passaporte",
+      "url": "https://www.familysearch.org/photos/artifacts/188401219"
+    },
+    {
+      "id": "Q2QV-YYS",
+      "title": "Registo de batismo n155",
+      "url": "https://www.familysearch.org/photos/artifacts/188401211"
+    },
+    {
+      "id": "QNHF-795",
+      "title": "Luiz Gomes de Souza, “Portugal, Madeira, Registros da Igreja Católica, 1044-1990”",
+      "citation": "\"Portugal, Madeira, Registros da Igreja Católica, 1044-1990\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:6NRP-LWH5 : Mon Aug 10 03:45:54 UTC 2026), Entry for João Gomes de Souza and Anna Augusta de Jesus, 29 de setembro de 1879.",
+      "url": "https://familysearch.org/ark:/61903/1:1:6NRP-LWH5"
+    },
+    {
+      "id": "QNHD-G8Y",
+      "title": "Luís Gomes de Sousa, “Brasil, Cartões de Imigração, 1900-1980”",
+      "citation": "\"Brasil, Cartões de Imigração, 1900-1980\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:FFTK-95S : Tue Jun 30 12:35:20 UTC 2026), Entry for Luís Gomes de Sousa and João Gomes de Sousa, 1957.",
+      "url": "https://familysearch.org/ark:/61903/1:1:FFTK-95S"
+    },
+    {
+      "id": "W8G1-TQX",
+      "title": "João Gomes de Souza, “Portugal, Madeira, Registros da Igreja Católica, 1044-1990”",
+      "citation": "\"Portugal, Madeira, Registros da Igreja Católica, 1044-1990\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:6NGX-7959 : Mon Aug 10 04:08:11 UTC 2026), Entry for Joaquim Gomes de Souza and Padro José, 1 de setembro de 1858.",
+      "url": "https://familysearch.org/ark:/61903/1:1:6NGX-795S"
+    },
+    {
+      "id": "W7XL-FSR",
+      "title": "João Gomes de Sousa, “Portugal, Registro Civil, 1437-2023”",
+      "citation": "\"Portugal, Registro Civil, 1437-2023\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:X911-WXWP : Tue Jan 13 08:55:36 UTC 2026), Entry for João Gomes de Souza and João Gomes de Sousa, 30 de abril de 1865.",
+      "url": "https://familysearch.org/ark:/61903/1:1:X911-WXW5"
+    },
+    {
+      "id": "W7XL-6GQ",
+      "title": "João Gomes de Souza, “Portugal, Registro Civil, 1437-2023”",
+      "citation": "\"Portugal, Registro Civil, 1437-2023\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:65TR-D8DG : Fri Jan 09 19:55:32 UTC 2026), Entry for Augusta Corrêa Henriques and João Gomes de Souza, 23 de janeiro de 1877.",
+      "url": "https://familysearch.org/ark:/61903/1:1:65TR-D8DP"
+    },
+    {
+      "id": "W7XL-DK3",
+      "title": "João Gomes de Souza, “Portugal, Madeira, Registros da Igreja Católica, 1044-1990”",
+      "citation": "\"Portugal, Madeira, Registros da Igreja Católica, 1044-1990\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:6NG6-PF1F : Sun Aug 09 03:27:19 UTC 2026), Entry for Joaquim Gomes de Souza and Pad.Ro José + Ferreira de Quintal, 1 de setembro de 1858.",
+      "url": "https://familysearch.org/ark:/61903/1:1:6NG6-PF1N"
+    },
+    {
+      "id": "W7XL-87C",
+      "title": "João Gomes de Sousa, “Portugal, Madeira, Registros da Igreja Católica, 1044-1990”",
+      "citation": "\"Portugal, Madeira, Registros da Igreja Católica, 1044-1990\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:6NRK-H77M : Sun Aug 09 04:00:14 UTC 2026), Entry for Pinto and Maria Augusta de Jesus, 1896.",
+      "url": "https://familysearch.org/ark:/61903/1:1:6NRK-H77S"
+    },
+    {
+      "id": "W7XL-ZX1",
+      "title": "João Gomes de Souza, “Portugal, Madeira, Registros da Igreja Católica, 1044-1990”",
+      "citation": "\"Portugal, Madeira, Registros da Igreja Católica, 1044-1990\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:6NRJ-8CBN : Sun Aug 09 04:14:42 UTC 2026), Entry for Joaquim Gomes de Souza and Joaquim José Silio Carez do Padro, 1 de setembro de 1858.",
+      "url": "https://familysearch.org/ark:/61903/1:1:6NRJ-8CBJ"
+    },
+    {
+      "id": "W7XL-QTR",
+      "title": "João Gomes de Souza, “Portugal, Madeira, Registros da Igreja Católica, 1044-1990”",
+      "citation": "\"Portugal, Madeira, Registros da Igreja Católica, 1044-1990\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:6NLB-DJX3 : Sun Aug 09 03:39:29 UTC 2026), Entry for Adelaide de Sousa and João Antonio de Sousa, 14 de maio de 1887.",
+      "url": "https://familysearch.org/ark:/61903/1:1:6NLB-DJXH"
+    },
+    {
+      "id": "W7XL-SZ9",
+      "title": "João Gomes de Sousa, “Portugal, Madeira, Registros da Igreja Católica, 1044-1990”",
+      "citation": "\"Portugal, Madeira, Registros da Igreja Católica, 1044-1990\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:6NRP-QDK3 : Mon Aug 10 03:54:16 UTC 2026), Entry for Antonio de Souza and João Antonio de Souza, 15 de setembro de 1881.",
+      "url": "https://familysearch.org/ark:/61903/1:1:6NRP-QDKH"
+    },
+    {
+      "id": "W7X2-XTF",
+      "title": "João Gomes de Souza, “Portugal, Madeira, Registros da Igreja Católica, 1044-1990”",
+      "citation": "\"Portugal, Madeira, Registros da Igreja Católica, 1044-1990\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:6NR5-QLPP : Mon Aug 10 07:12:23 UTC 2026), Entry for Agostinho de Souza and João Antonio de Souza, 8 de agosto de 1872.",
+      "url": "https://familysearch.org/ark:/61903/1:1:6NR5-QLPB"
+    },
+    {
+      "id": "W7X2-6T2",
+      "title": "João Gomes de Souza, “Portugal, Madeira, Registros da Igreja Católica, 1044-1990”",
+      "citation": "\"Portugal, Madeira, Registros da Igreja Católica, 1044-1990\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:6NRV-9N4P : Sun Aug 09 04:43:10 UTC 2026), Entry for Manoel Gomes de Souza and Valerio Antonio Camacho, 25 de fevereiro de 1838.",
+      "url": "https://familysearch.org/ark:/61903/1:1:6NRV-9N45"
+    },
+    {
+      "id": "W7X2-DNP",
+      "title": "João Gomes de Souza, “Portugal, Madeira, Registros da Igreja Católica, 1044-1990”",
+      "citation": "\"Portugal, Madeira, Registros da Igreja Católica, 1044-1990\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:6NG8-9QLH : Sun Aug 09 04:37:54 UTC 2026), Entry for Maria Gomes de Souza and Manoel de Santa Maria, 2 de janeiro de 1842.",
+      "url": "https://familysearch.org/ark:/61903/1:1:6NG8-9QLQ"
+    },
+    {
+      "id": "7FX8-TCL",
+      "title": "João Gomes O ? ? de Souza, “Portugal, Madeira, Registros da Igreja Católica, 1044-1990”",
+      "citation": "\"Portugal, Madeira, Registros da Igreja Católica, 1044-1990\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:6NRG-QKQL : Mon Aug 10 04:06:42 UTC 2026), Entry for Ma- ? Gomes o ? ? de Souza and Isilio Joaquim Cares.",
+      "url": "https://familysearch.org/ark:/61903/1:1:6NRG-QKQP"
+    },
+    {
+      "id": "7FX8-5ZQ",
+      "title": "João Gomes de Souza, “Portugal, Madeira, Registros da Igreja Católica, 1044-1990”",
+      "citation": "\"Portugal, Madeira, Registros da Igreja Católica, 1044-1990\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:6JM8-4V7R : Mon Aug 10 03:36:37 UTC 2026), Entry for Goreia Joa and Maria, 10 de março de 1844.",
+      "url": "https://familysearch.org/ark:/61903/1:1:6JM8-4V7T"
+    },
+    {
+      "id": "9BT1-7YK",
+      "title": "Joaõ Gomes de Sousa in entry for Manoel Gomes de Sousa, \"Portugal Marriages, 1670-1910\"",
+      "citation": "\"Portugal Matrimônios, 1670-1910\", , <i>FamilySearch</i> (https://familysearch.org/ark:/61903/1:1:F2Z6-39P : 28 April 2021), Joaõ Gomes de Sousa in entry for Manoel Gomes de Sousa, 1889.",
+      "url": "https://familysearch.org/ark:/61903/1:1:F2Z6-39P"
+    },
+    {
+      "id": "9BT1-3PK",
+      "title": "Joaõ Gomes de Souza in entry for Antonio Gomes de Souza, \"Portugal Marriages, 1670-1910\"",
+      "citation": "\"Portugal Matrimônios, 1670-1910\", , <i>FamilySearch</i> (https://familysearch.org/ark:/61903/1:1:F2Z6-ZV9 : 28 April 2021), Joaõ Gomes de Souza in entry for Antonio Gomes de Souza, 1885.",
+      "url": "https://familysearch.org/ark:/61903/1:1:F2Z6-ZV9"
+    },
+    {
+      "id": "9XYV-NFD",
+      "title": "João Gomes de Sousa in entry for Agostinho de Sousa, \"Portugal Baptisms, 1570-1910\"",
+      "citation": "\"Portugal Batismos, 1570-1910\", , <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:F2W4-VYK : 8 October 2026), João Gomes de Sousa in entry for Agostinho de Sousa, 1844.",
+      "url": "https://familysearch.org/ark:/61903/1:1:F2W4-VYK"
+    },
+    {
+      "id": "9XYV-FJM",
+      "title": "João Gomes de Sousa in entry for Manoel de Sousa, \"Portugal Baptisms, 1570-1910\"",
+      "citation": "\"Portugal Batismos, 1570-1910\", , <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:F2W4-PQ3 : 8 October 2026), João Gomes de Sousa in entry for Manoel de Sousa, 1838.",
+      "url": "https://familysearch.org/ark:/61903/1:1:F2W4-PQ3"
+    },
+    {
+      "id": "9XYV-F9L",
+      "title": "João Gomes de Sousa in entry for João de Sousa, \"Portugal Baptisms, 1570-1910\"",
+      "citation": "\"Portugal Batismos, 1570-1910\", , <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:F2W4-HX5 : 8 October 2026), João Gomes de Sousa in entry for João de Sousa, 1839.",
+      "url": "https://familysearch.org/ark:/61903/1:1:F2W4-HX5"
+    },
+    {
+      "id": "9XYV-XCR",
+      "title": "João Gomes de Sousa in entry for Maria de Sousa, \"Portugal Baptisms, 1570-1910\"",
+      "citation": "\"Portugal Batismos, 1570-1910\", , <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:F2W4-XTR : 8 October 2026), João Gomes de Sousa in entry for Maria de Sousa, 1842.",
+      "url": "https://familysearch.org/ark:/61903/1:1:F2W4-XTR"
+    },
+    {
+      "id": "WSVZ-GVF",
+      "title": "João Gomes de Sousa, “Portugal, Madeira, Registros da Igreja Católica, 1044-1990”",
+      "citation": "\"Portugal, Madeira, Registros da Igreja Católica, 1044-1990\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:6BCB-6LFK : Sat Jan 04 02:36:04 UTC 2025), Entry for Agostinho Gomes de Sousa and João Gomes de Sousa, 20 de dezembro de 1877.",
+      "url": "https://familysearch.org/ark:/61903/1:1:6BCB-6LF2"
+    },
+    {
+      "id": "Q2QV-BML",
+      "title": "Registo de casamento",
+      "url": "https://www.familysearch.org/photos/artifacts/188401222"
+    },
+    {
+      "id": "7TPY-255",
+      "title": "João Gomes de Sousa, “Portugal, Registro Civil, 1437-2023”",
+      "citation": "\"Portugal, Registro Civil, 1437-2023\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:65NF-F3Y9 : Fri Jan 09 19:07:48 UTC 2026), Entry for João Gomes de Sousa and Gomes de Sousa, 16 de março de 1890.",
+      "url": "https://familysearch.org/ark:/61903/1:1:65NF-F3Y9"
+    },
+    {
+      "id": "W7XL-PH8",
+      "title": "Maria José Beatriz, “Portugal, Registro Civil, 1437-2023”",
+      "citation": "\"Portugal, Registro Civil, 1437-2023\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:65YC-V539 : Fri Jan 09 21:17:52 UTC 2026), Entry for Francisco and Francisco de Jesus Henriques, 30 de janeiro de 1893.",
+      "url": "https://familysearch.org/ark:/61903/1:1:65YC-V533"
+    },
+    {
+      "id": "W7XL-G4L",
+      "title": "Maria José Beatriz, “Portugal, Madeira, Registros da Igreja Católica, 1044-1990”",
+      "citation": "\"Portugal, Madeira, Registros da Igreja Católica, 1044-1990\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:6NRG-9L9X : Mon Aug 10 02:55:04 UTC 2026), Entry for Dezo Perdomo and João Luiz Moreira, 6 de junho de 1892.",
+      "url": "https://familysearch.org/ark:/61903/1:1:6NRG-9L9N"
+    },
+    {
+      "id": "W7XL-22P",
+      "title": "Maria José Beatriz, “Portugal, Registro Civil, 1437-2023”",
+      "citation": "\"Portugal, Registro Civil, 1437-2023\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:XSMM-W95W : Tue Jan 13 19:58:34 UTC 2026), Entry for Francisco de Jesus Henriques and Manoel de Jesus Henriques, 26 de novembro de 1888.",
+      "url": "https://familysearch.org/ark:/61903/1:1:XSMM-W95C"
+    },
+    {
+      "id": "7PBQ-ZF8",
+      "title": "Maria Batriz, “Portugal, Registro Civil, 1437-2023”",
+      "citation": "\"Portugal, Registro Civil, 1437-2023\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:XSMM-XMWP : Tue Jan 13 19:54:07 UTC 2026), Entry for Jesus Henriques and Francisco de Jesus Henriques, maio de 1200.",
+      "url": "https://familysearch.org/ark:/61903/1:1:XSMM-XMWR"
+    },
+    {
+      "id": "7PBQ-C46",
+      "title": "Maria José Beatriz Batriz, “Portugal, Registro Civil, 1437-2023”",
+      "citation": "\"Portugal, Registro Civil, 1437-2023\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:XSMM-CDLX : Tue Jan 13 08:57:59 UTC 2026), Entry for Francisco de Jesus Henriques and Francisco de Jesus Henriques, 23 de maio de 1925.",
+      "url": "https://familysearch.org/ark:/61903/1:1:XSMM-CDLN"
+    },
+    {
+      "id": "74KV-P2G",
+      "title": "Maria José Beatriz Beatriz, “Portugal, Registro Civil, 1437-2023”",
+      "citation": "\"Portugal, Registro Civil, 1437-2023\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:65YG-XM32 : Fri Jan 09 12:57:23 UTC 2026), Entry for Francisco de Jesus Henriques and Francisco de Jesus Henriques, 12 de setembro de 1975.",
+      "url": "https://familysearch.org/ark:/61903/1:1:65YG-XM3G"
+    },
+    {
+      "id": "S5J5-5YR",
+      "title": "Maria Jose Beatriz Gomes de Sousa in entry for Francisco de Jesus Henriques, \"Portugal Marriages, 1670-1910\"",
+      "citation": "\"Portugal Matrimônios, 1670-1910\", , <i>FamilySearch</i> (https://familysearch.org/ark:/61903/1:1:F2Z6-Z4G : 28 April 2021), Maria Jose Beatriz Gomes de Sousa in entry for Francisco de Jesus Henriques, 1888.",
+      "url": "https://familysearch.org/ark:/61903/1:1:F2Z6-Z4G"
+    },
+    {
+      "id": "W8G1-T7N",
+      "title": "Maria Porrea Henriques, “Portugal, Madeira, Registros da Igreja Católica, 1044-1990”",
+      "citation": "\"Portugal, Madeira, Registros da Igreja Católica, 1044-1990\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:6NGX-7959 : Mon Aug 10 04:08:11 UTC 2026), Entry for Joaquim Gomes de Souza and Padro José, 1 de setembro de 1858.",
+      "url": "https://familysearch.org/ark:/61903/1:1:6NGX-7953"
+    },
+    {
+      "id": "W7XL-FJR",
+      "title": "Maria Carrea . Henriques, “Portugal, Registro Civil, 1437-2023”",
+      "citation": "\"Portugal, Registro Civil, 1437-2023\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:X911-WXWP : Tue Jan 13 08:55:36 UTC 2026), Entry for João Gomes de Souza and João Gomes de Sousa, 30 de abril de 1865.",
+      "url": "https://familysearch.org/ark:/61903/1:1:X911-WXWR"
+    },
+    {
+      "id": "W7XL-627",
+      "title": "Maria Corrêa Henriques, “Portugal, Registro Civil, 1437-2023”",
+      "citation": "\"Portugal, Registro Civil, 1437-2023\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:65TR-D8DG : Fri Jan 09 19:55:32 UTC 2026), Entry for Augusta Corrêa Henriques and João Gomes de Souza, 23 de janeiro de 1877.",
+      "url": "https://familysearch.org/ark:/61903/1:1:65TR-D8D5"
+    },
+    {
+      "id": "W7XL-DJM",
+      "title": "Maria Porrea Henriques, “Portugal, Madeira, Registros da Igreja Católica, 1044-1990”",
+      "citation": "\"Portugal, Madeira, Registros da Igreja Católica, 1044-1990\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:6NG6-PF1F : Sun Aug 09 03:27:19 UTC 2026), Entry for Joaquim Gomes de Souza and Pad.Ro José + Ferreira de Quintal, 1 de setembro de 1858.",
+      "url": "https://familysearch.org/ark:/61903/1:1:6NG6-PF1J"
+    },
+    {
+      "id": "W7XL-84Y",
+      "title": "Maria Correia Henriques, “Portugal, Madeira, Registros da Igreja Católica, 1044-1990”",
+      "citation": "\"Portugal, Madeira, Registros da Igreja Católica, 1044-1990\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:6NRK-H77M : Sun Aug 09 04:00:14 UTC 2026), Entry for Pinto and Maria Augusta de Jesus, 1896.",
+      "url": "https://familysearch.org/ark:/61903/1:1:6NRK-H773"
+    },
+    {
+      "id": "W7XL-ZVS",
+      "title": "Maria Porrea Henriques, “Portugal, Madeira, Registros da Igreja Católica, 1044-1990”",
+      "citation": "\"Portugal, Madeira, Registros da Igreja Católica, 1044-1990\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:6NRJ-8CBN : Sun Aug 09 04:14:42 UTC 2026), Entry for Joaquim Gomes de Souza and Joaquim José Silio Carez do Padro, 1 de setembro de 1858.",
+      "url": "https://familysearch.org/ark:/61903/1:1:6NRJ-8CBV"
+    },
+    {
+      "id": "W7XL-Q14",
+      "title": "Maria Corrêa Henriques, “Portugal, Madeira, Registros da Igreja Católica, 1044-1990”",
+      "citation": "\"Portugal, Madeira, Registros da Igreja Católica, 1044-1990\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:6NLB-DJX3 : Sun Aug 09 03:39:29 UTC 2026), Entry for Adelaide de Sousa and João Antonio de Sousa, 14 de maio de 1887.",
+      "url": "https://familysearch.org/ark:/61903/1:1:6NLB-DJXC"
+    },
+    {
+      "id": "W7X2-X1X",
+      "title": "Maria Correa Henriques, “Portugal, Madeira, Registros da Igreja Católica, 1044-1990”",
+      "citation": "\"Portugal, Madeira, Registros da Igreja Católica, 1044-1990\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:6NR5-QLPP : Mon Aug 10 07:12:23 UTC 2026), Entry for Agostinho de Souza and João Antonio de Souza, 8 de agosto de 1872.",
+      "url": "https://familysearch.org/ark:/61903/1:1:6NR5-QLP1"
+    },
+    {
+      "id": "W7X2-619",
+      "title": "batismo do filho Manoel - Maria Comea Henriques, “Portugal, Madeira, Registros da Igreja Católica, 1044-1990”",
+      "citation": "\"Portugal, Madeira, Registros da Igreja Católica, 1044-1990\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:6NRV-9N4P : Sun Aug 09 04:43:10 UTC 2026), Entry for Manoel Gomes de Souza and Valerio Antonio Camacho, 25 de fevereiro de 1838.",
+      "url": "https://familysearch.org/ark:/61903/1:1:6NRV-9N4R"
+    },
+    {
+      "id": "W37L-4VZ",
+      "title": "Maria Carrêa Henriques, “Portugal, Madeira, Registros da Igreja Católica, 1044-1990”",
+      "citation": "\"Portugal, Madeira, Registros da Igreja Católica, 1044-1990\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:6NLB-DJX3 : Sun Aug 09 03:39:29 UTC 2026), Entry for Adelaide de Sousa and João Antonio de Sousa, 14 de maio de 1887.",
+      "url": "https://familysearch.org/ark:/61903/1:1:6NLB-DJX7"
+    },
+    {
+      "id": "WSVZ-GXC",
+      "title": "Maria Correia Henriques, “Portugal, Madeira, Registros da Igreja Católica, 1044-1990”",
+      "citation": "\"Portugal, Madeira, Registros da Igreja Católica, 1044-1990\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:6BCB-6LFK : Sat Jan 04 02:36:04 UTC 2025), Entry for Agostinho Gomes de Sousa and João Gomes de Sousa, 20 de dezembro de 1877.",
+      "url": "https://familysearch.org/ark:/61903/1:1:6BCB-6LFL"
+    },
+    {
+      "id": "W9F1-RH8",
+      "title": "Maria Carrea Henriques, “Portugal, Registro Civil, 1437-2023”",
+      "citation": "\"Portugal, Registro Civil, 1437-2023\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:X91B-F7G1 : Tue Jan 13 08:41:19 UTC 2026), Entry for Lourenço Dispensa and João Antonio Corrêa Henriques, 1 de dezembro de 1900.",
+      "url": "https://familysearch.org/ark:/61903/1:1:X91B-F7P9"
+    },
+    {
+      "id": "7B7M-G1Z",
+      "title": "Maria Corrêa Henriques, “Portugal, Madeira, Registros da Igreja Católica, 1044-1990”",
+      "citation": "\"Portugal, Madeira, Registros da Igreja Católica, 1044-1990\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:6NRJ-755V : Sun Aug 09 05:34:04 UTC 2026), Entry for Francisco de Souya and José, 10 de abril de 1876.",
+      "url": "https://familysearch.org/ark:/61903/1:1:6NRJ-7552"
+    },
+    {
+      "id": "7YGK-WPR",
+      "title": "Maria Correa Henriques, “Portugal, Madeira, Registros da Igreja Católica, 1044-1990”",
+      "citation": "\"Portugal, Madeira, Registros da Igreja Católica, 1044-1990\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:6JM8-4V7R : Mon Aug 10 03:36:37 UTC 2026), Entry for Goreia Joa and Maria, 10 de março de 1844.",
+      "url": "https://familysearch.org/ark:/61903/1:1:6JM8-4V7Y"
+    },
+    {
+      "id": "7YFP-6J4",
+      "title": "Maria Correa Henriques, “Portugal, Registro Civil, 1437-2023”",
+      "citation": "\"Portugal, Registro Civil, 1437-2023\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:X91B-1TT1 : Tue Jan 13 19:51:14 UTC 2026), Entry for Gomes de Souza and Antonio Gomes de Souza, 24 de agosto de 1837.",
+      "url": "https://familysearch.org/ark:/61903/1:1:X91B-1TYS"
+    },
+    {
+      "id": "7YFP-DB7",
+      "title": "CASAMENTO  - Maria Correa Henriques, “Portugal, Madeira, Registros da Igreja Católica, 1044-1990”",
+      "citation": "\"Portugal, Madeira, Registros da Igreja Católica, 1044-1990\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:6BGH-YN8T : Thu Apr 24 05:09:30 UTC 2025), Entry for João Gomes de Souza and Antonio Gomes de Souza, 24 de agosto de 1837.",
+      "url": "https://familysearch.org/ark:/61903/1:1:6BGH-YN81"
+    },
+    {
+      "id": "7YFP-HCR",
+      "title": "Maria Correia Henriques, “Portugal, Registro Civil, 1437-2023”",
+      "citation": "\"Portugal, Registro Civil, 1437-2023\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:65BQ-KRML : Fri Jan 09 19:06:24 UTC 2026), Entry for Francisco Augusto de Sousa and João Antonio de Sousa, 28 de fevereiro de 1967.",
+      "url": "https://familysearch.org/ark:/61903/1:1:65BQ-KRMP"
+    },
+    {
+      "id": "7YFP-92X",
+      "title": "Maria Carrea Henriques, “Portugal, Registro Civil, 1437-2023”",
+      "citation": "\"Portugal, Registro Civil, 1437-2023\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:X91B-DM88 : Tue Jan 13 08:49:16 UTC 2026), Entry for Francisco Augusto de Souza and João Antonio de Souza, 29 de novembro de 1900.",
+      "url": "https://familysearch.org/ark:/61903/1:1:X91B-DM86"
+    },
+    {
+      "id": "7J8D-N3P",
+      "title": "Maria Corrêa Henriques, “Portugal, Registro Civil, 1437-2023”",
+      "citation": "\"Portugal, Registro Civil, 1437-2023\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:65GV-VCJH : Fri Jan 09 19:58:33 UTC 2026), Entry for Maria Corrêa Henriques and Manoel de Jesus, 14 de janeiro de 1892.",
+      "url": "https://familysearch.org/ark:/61903/1:1:65GV-VCJH"
+    },
+    {
+      "id": "9BT1-71W",
+      "title": "Maria Corria Henriques in entry for Manoel Gomes de Sousa, \"Portugal Marriages, 1670-1910\"",
+      "citation": "\"Portugal Matrimônios, 1670-1910\", , <i>FamilySearch</i> (https://familysearch.org/ark:/61903/1:1:F2Z6-395 : 28 April 2021), Maria Corria Henriques in entry for Manoel Gomes de Sousa, 1889.",
+      "url": "https://familysearch.org/ark:/61903/1:1:F2Z6-395"
+    },
+    {
+      "id": "9BT1-35Y",
+      "title": "Maria Correa Henriques in entry for Antonio Gomes de Souza, \"Portugal Marriages, 1670-1910\"",
+      "citation": "\"Portugal Matrimônios, 1670-1910\", , <i>FamilySearch</i> (https://familysearch.org/ark:/61903/1:1:F2Z6-ZVS : 28 April 2021), Maria Correa Henriques in entry for Antonio Gomes de Souza, 1885.",
+      "url": "https://familysearch.org/ark:/61903/1:1:F2Z6-ZVS"
+    },
+    {
+      "id": "9XYV-NFB",
+      "title": "Maria Correa Henriques in entry for Agostinho de Sousa, \"Portugal Baptisms, 1570-1910\"",
+      "citation": "\"Portugal Batismos, 1570-1910\", , <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:F2W4-VY2 : 8 October 2026), Maria Correa Henriques in entry for Agostinho de Sousa, 1844.",
+      "url": "https://familysearch.org/ark:/61903/1:1:F2W4-VY2"
+    },
+    {
+      "id": "9XYV-FV7",
+      "title": "Maria Correa Henriques in entry for Manoel de Sousa, \"Portugal Baptisms, 1570-1910\"",
+      "citation": "\"Portugal Batismos, 1570-1910\", , <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:F2W4-PQQ : 8 October 2026), Maria Correa Henriques in entry for Manoel de Sousa, 1838.",
+      "url": "https://familysearch.org/ark:/61903/1:1:F2W4-PQQ"
+    },
+    {
+      "id": "9XYV-FS6",
+      "title": "Maria Correa Henriques in entry for João de Sousa, \"Portugal Baptisms, 1570-1910\"",
+      "citation": "\"Portugal Batismos, 1570-1910\", , <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:F2W4-HXR : 8 October 2026), Maria Correa Henriques in entry for João de Sousa, 1839.",
+      "url": "https://familysearch.org/ark:/61903/1:1:F2W4-HXR"
+    },
+    {
+      "id": "9XYV-XZY",
+      "title": "Maria Correa Henriques in entry for Maria de Sousa, \"Portugal Baptisms, 1570-1910\"",
+      "citation": "\"Portugal Batismos, 1570-1910\", database, <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:F2W4-XTT : 8 October 2026), Maria Correa Henriques in entry for Maria de Sousa, 1842.",
+      "url": "https://familysearch.org/ark:/61903/1:1:F2W4-XTT"
+    },
+    {
+      "id": "QLLJ-89W",
+      "title": "Maria Corrêa Henrriques, “Portugal, Madeira, Registros da Igreja Católica, 1044-1990”",
+      "citation": "\"Portugal, Madeira, Registros da Igreja Católica, 1044-1990\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:6NG8-9QLH : Sun Aug 09 04:37:54 UTC 2026), Entry for Maria Gomes de Souza and Manoel de Santa Maria, 2 de janeiro de 1842.",
+      "url": "https://familysearch.org/ark:/61903/1:1:6NG8-9QL7"
+    },
+    {
+      "id": "QNC9-LGK",
+      "title": "Maria Correa Henriques, “Portugal, Madeira, Registros da Igreja Católica, 1044-1990”",
+      "citation": "\"Portugal, Madeira, Registros da Igreja Católica, 1044-1990\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:6NRP-P1YG : Mon Aug 10 03:02:35 UTC 2026), Entry for José Gomes de Sousa and João Gomes de Sousa.",
+      "url": "https://familysearch.org/ark:/61903/1:1:6NRP-P1Y5"
+    },
+    {
+      "id": "QNC9-23Y",
+      "title": "Maria Correa Henriques, “Portugal, Madeira, Registros da Igreja Católica, 1044-1990”",
+      "citation": "\"Portugal, Madeira, Registros da Igreja Católica, 1044-1990\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:6NRG-QKQL : Mon Aug 10 04:06:42 UTC 2026), Entry for Ma- ? Gomes o ? ? de Souza and Isilio Joaquim Cares.",
+      "url": "https://familysearch.org/ark:/61903/1:1:6NRG-QKQ5"
+    },
+    {
+      "id": "QLLH-1G3",
+      "title": "Maria Corrêa Henriques, “Portugal, Madeira, Registros da Igreja Católica, 1044-1990”",
+      "citation": "\"Portugal, Madeira, Registros da Igreja Católica, 1044-1990\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:6NRG-MW4Y : Sun Aug 09 03:39:55 UTC 2026), Entry for João Gomes de Sousa and João Luiz Monteiro, 6 de junho de 1892.",
+      "url": "https://familysearch.org/ark:/61903/1:1:6NRG-MWHS"
+    },
+    {
+      "id": "W7X2-X4F",
+      "title": "Manoel Gomes de Souza, “Portugal, Madeira, Registros da Igreja Católica, 1044-1990”",
+      "citation": "\"Portugal, Madeira, Registros da Igreja Católica, 1044-1990\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:6NRV-9N4P : Sun Aug 09 04:43:10 UTC 2026), Entry for Manoel Gomes de Souza and Valerio Antonio Camacho, 25 de fevereiro de 1838.",
+      "url": "https://familysearch.org/ark:/61903/1:1:6NRV-9N4P"
+    },
+    {
+      "id": "9XYV-FTT",
+      "title": "Manoel de Sousa, \"Portugal Baptisms, 1570-1910\"",
+      "citation": "\"Portugal Batismos, 1570-1910\", , <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:F2W4-PQS : 8 October 2026), Manoel de Sousa, 1838.",
+      "url": "https://familysearch.org/ark:/61903/1:1:F2W4-PQS"
+    },
+    {
+      "id": "W7XL-49N",
+      "title": "João Antonio de Souza, “Portugal, Registro Civil, 1437-2023”",
+      "citation": "\"Portugal, Registro Civil, 1437-2023\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:X91B-VWGD : Tue Jan 13 08:51:38 UTC 2026), Entry for Henrique Augusto de Souza and João Antonio de Souza, 28 de novembro de 1900.",
+      "url": "https://familysearch.org/ark:/61903/1:1:X91B-VWG6"
+    },
+    {
+      "id": "W7XL-SL2",
+      "title": "João Antonio de Souza, “Portugal, Madeira, Registros da Igreja Católica, 1044-1990”",
+      "citation": "\"Portugal, Madeira, Registros da Igreja Católica, 1044-1990\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:6NRP-QDK3 : Mon Aug 10 03:54:16 UTC 2026), Entry for Antonio de Souza and João Antonio de Souza, 15 de setembro de 1881.",
+      "url": "https://familysearch.org/ark:/61903/1:1:6NRP-QDKQ"
+    },
+    {
+      "id": "W7X2-16M",
+      "title": "João Antonio de Sousa, “Portugal, Madeira, Registros da Igreja Católica, 1044-1990”",
+      "citation": "\"Portugal, Madeira, Registros da Igreja Católica, 1044-1990\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:6JMC-M6QW : Mon Aug 10 04:58:18 UTC 2026), Entry for Antonio de Sousa and João Antonio de Sousa, 15 de setembro de 1881.",
+      "url": "https://familysearch.org/ark:/61903/1:1:6JMC-M6Q4"
+    },
+    {
+      "id": "W7X2-YXJ",
+      "title": "João Antonio de Sousa, “Portugal, Madeira, Registros da Igreja Católica, 1044-1990”",
+      "citation": "\"Portugal, Madeira, Registros da Igreja Católica, 1044-1990\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:6NRP-JYCX : Mon Aug 10 03:34:35 UTC 2026), Entry for Augusta Emilia de Sousa and Antonio Silvino Gonsalves d'Andrade, 24 de maio de 1874.",
+      "url": "https://familysearch.org/ark:/61903/1:1:6NRP-JYCF"
+    },
+    {
+      "id": "W7X2-GK8",
+      "title": "João Antonio de Souza, “Portugal, Madeira, Registros da Igreja Católica, 1044-1990”",
+      "citation": "\"Portugal, Madeira, Registros da Igreja Católica, 1044-1990\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:6NLB-6KH8 : Mon Aug 10 03:17:51 UTC 2026), Entry for Agostinho de Souza and João Antonio de Souza.",
+      "url": "https://familysearch.org/ark:/61903/1:1:6NLB-6KHD"
+    },
+    {
+      "id": "W7X2-2X9",
+      "title": "João Antonio de Souza, “Portugal, Madeira, Registros da Igreja Católica, 1044-1990”",
+      "citation": "\"Portugal, Madeira, Registros da Igreja Católica, 1044-1990\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:6BC1-CN3X : Fri Jan 03 21:47:02 UTC 2025), Entry for Adelaide de Souza and João Antonio de Souza, 23 de junho de 1887.",
+      "url": "https://familysearch.org/ark:/61903/1:1:6BC1-CN3F"
+    },
+    {
+      "id": "W7X2-K2Y",
+      "title": "João Antonio de Souza, “Portugal, Registro Civil, 1437-2023”",
+      "citation": "\"Portugal, Registro Civil, 1437-2023\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:65YF-3Z3C : Fri Jan 09 20:20:18 UTC 2026), Entry for Adelaide and João Antonio de Souza, 23 de junho de 1887.",
+      "url": "https://familysearch.org/ark:/61903/1:1:65YF-3Z3Z"
+    },
+    {
+      "id": "W7X2-V55",
+      "title": "João Antonio de Souza, “Portugal, Madeira, Registros da Igreja Católica, 1044-1990”",
+      "citation": "\"Portugal, Madeira, Registros da Igreja Católica, 1044-1990\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:6BZM-HBJG : Sat Jan 04 01:04:35 UTC 2025), Entry for Francisco de Souza and João Antonio de Souza, 21 de abril de 1877.",
+      "url": "https://familysearch.org/ark:/61903/1:1:6BZM-HBJP"
+    },
+    {
+      "id": "W7X2-V7G",
+      "title": "João Antonio de Sousa, “Portugal, Registro Civil, 1437-2023”",
+      "citation": "\"Portugal, Registro Civil, 1437-2023\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:X91B-C29W : Tue Jan 13 17:01:33 UTC 2026), Entry for Manuel Antonio de Sousa and João Antonio de Sousa, 21 de fevereiro de 1903.",
+      "url": "https://familysearch.org/ark:/61903/1:1:X91B-C294"
+    },
+    {
+      "id": "W7X2-J6V",
+      "title": "João Antonio de Sousa, “Portugal, Madeira, Registros da Igreja Católica, 1044-1990”",
+      "citation": "\"Portugal, Madeira, Registros da Igreja Católica, 1044-1990\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:6NR2-FH77 : Mon Aug 10 04:46:03 UTC 2026), Entry for Manoel de Sousa and João Antonio de Sousa, 22 de maio de 1884.",
+      "url": "https://familysearch.org/ark:/61903/1:1:6NR2-FH7W"
+    },
+    {
+      "id": "W7X2-FQD",
+      "title": "João Antonio de Souza, “Portugal, Madeira, Registros da Igreja Católica, 1044-1990”",
+      "citation": "\"Portugal, Madeira, Registros da Igreja Católica, 1044-1990\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:6NR5-QLPP : Mon Aug 10 07:12:23 UTC 2026), Entry for Agostinho de Souza and João Antonio de Souza, 8 de agosto de 1872.",
+      "url": "https://familysearch.org/ark:/61903/1:1:6NR5-QLP5"
+    },
+    {
+      "id": "9XYV-FZH",
+      "title": "João de Sousa, \"Portugal Baptisms, 1570-1910\"",
+      "citation": "\"Portugal Batismos, 1570-1910\", , <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:F2W4-HXP : 8 October 2026), João de Sousa, 1839.",
+      "url": "https://familysearch.org/ark:/61903/1:1:F2W4-HXP"
+    },
+    {
+      "id": "Q2QV-BC8",
+      "title": "Registo de batismo",
+      "url": "https://www.familysearch.org/photos/artifacts/188401267"
+    },
+    {
+      "id": "Q2QV-B9J",
+      "title": "Registo de batismo",
+      "url": "https://www.familysearch.org/photos/artifacts/188401225"
+    },
+    {
+      "id": "QNC9-466",
+      "title": "Maria Gomes de Souza, “Portugal, Madeira, Registros da Igreja Católica, 1044-1990”",
+      "citation": "\"Portugal, Madeira, Registros da Igreja Católica, 1044-1990\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:6NG8-9QLH : Sun Aug 09 04:37:54 UTC 2026), Entry for Maria Gomes de Souza and Manoel de Santa Maria, 2 de janeiro de 1842.",
+      "url": "https://familysearch.org/ark:/61903/1:1:6NG8-9QLH"
+    },
+    {
+      "id": "9XYV-XX8",
+      "title": "Maria de Sousa, \"Portugal Baptisms, 1570-1910\"",
+      "citation": "\"Portugal Batismos, 1570-1910\", , <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:F2W4-XT5 : 8 October 2026), Maria de Sousa, 1842.",
+      "url": "https://familysearch.org/ark:/61903/1:1:F2W4-XT5"
+    },
+    {
+      "id": "9XYV-LS5",
+      "title": "Agostinho de Sousa, \"Portugal Baptisms, 1570-1910\"",
+      "citation": "\"Portugal Batismos, 1570-1910\", , <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:F2W4-VYV : 8 October 2026), Agostinho de Sousa, 1844.",
+      "url": "https://familysearch.org/ark:/61903/1:1:F2W4-VYV"
+    },
+    {
+      "id": "QNC9-CKK",
+      "title": "Agostinho Gomes de Souza, “Portugal, Madeira, Registros da Igreja Católica, 1044-1990”",
+      "citation": "\"Portugal, Madeira, Registros da Igreja Católica, 1044-1990\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:6JM8-4V7R : Mon Aug 10 03:36:37 UTC 2026), Entry for Goreia Joa and Maria, 10 de março de 1844.",
+      "url": "https://familysearch.org/ark:/61903/1:1:6JM8-4V7R"
+    },
+    {
+      "id": "Q2QV-B34",
+      "title": "Registo de batismo",
+      "url": "https://www.familysearch.org/photos/artifacts/188401234"
+    },
+    {
+      "id": "W7XL-6B7",
+      "title": "Augusta Corrêa Henriques, “Portugal, Registro Civil, 1437-2023”",
+      "citation": "\"Portugal, Registro Civil, 1437-2023\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:65TR-D8DG : Fri Jan 09 19:55:32 UTC 2026), Entry for Augusta Corrêa Henriques and João Gomes de Souza, 23 de janeiro de 1877.",
+      "url": "https://familysearch.org/ark:/61903/1:1:65TR-D8DG"
+    },
+    {
+      "id": "Q2QV-B7C",
+      "title": "Registo batismo",
+      "url": "https://www.familysearch.org/photos/artifacts/188401242"
+    },
+    {
+      "id": "QNC9-DYR",
+      "title": "Augus= 1 Gomes de Souza, “Portugal, Madeira, Registros da Igreja Católica, 1044-1990”",
+      "citation": "\"Portugal, Madeira, Registros da Igreja Católica, 1044-1990\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:6NRJ-FW4B : Mon Aug 10 04:24:32 UTC 2026), Entry for Augus= 1 Gomes de Souza and João Gomes de Souza, 13 de janeiro de 1852.",
+      "url": "https://familysearch.org/ark:/61903/1:1:6NRJ-FW4B"
+    },
+    {
+      "id": "7B38-WWT",
+      "title": "Augusta Correa Henriques, “Portugal, Registro Civil, 1437-2023”",
+      "citation": "\"Portugal, Registro Civil, 1437-2023\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:X91B-RX56 : Tue Jan 13 08:48:52 UTC 2026), Entry for Antonio Gomes de Bento and Luiz Gomes de Bento, 3 de agosto de 1899.",
+      "url": "https://familysearch.org/ark:/61903/1:1:X91B-RX5V"
+    },
+    {
+      "id": "7NBN-CPL",
+      "title": "Augusta Correa Henriques, “Portugal, Registro Civil, 1437-2023”",
+      "citation": "\"Portugal, Registro Civil, 1437-2023\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:X91B-KDDG : Tue Jan 13 11:45:30 UTC 2026), Entry for Tonio Gomes de Bento and Luiz , Gomes de Bento, 3 de agosto de 1900.",
+      "url": "https://familysearch.org/ark:/61903/1:1:X91B-KDDY"
+    },
+    {
+      "id": "WSVZ-GRJ",
+      "title": "Agostinho Gomes de Sousa, “Portugal, Madeira, Registros da Igreja Católica, 1044-1990”",
+      "citation": "\"Portugal, Madeira, Registros da Igreja Católica, 1044-1990\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:6BCB-6LFK : Sat Jan 04 02:36:04 UTC 2025), Entry for Agostinho Gomes de Sousa and João Gomes de Sousa, 20 de dezembro de 1877.",
+      "url": "https://familysearch.org/ark:/61903/1:1:6BCB-6LFK"
+    },
+    {
+      "id": "Q2QV-B3T",
+      "title": "Registo de batismo",
+      "url": "https://www.familysearch.org/photos/artifacts/188401236"
+    },
+    {
+      "id": "9BT1-3G4",
+      "title": "Antonio Gomes de Souza, \"Portugal Marriages, 1670-1910\"",
+      "citation": "\"Portugal Matrimônios, 1670-1910\", , <i>FamilySearch</i> (https://familysearch.org/ark:/61903/1:1:F2Z6-ZVM : 28 April 2021), Antonio Gomes de Souza, 1885.",
+      "url": "https://familysearch.org/ark:/61903/1:1:F2Z6-ZVM"
+    },
+    {
+      "id": "9XYJ-PGK",
+      "title": "Antonio Gomes de Sousa, “Brasil, Cartões de Imigração, 1900-1980”",
+      "citation": "\"Brasil, Cartões de Imigração, 1900-1980\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:KX2W-KV1 : Tue Jun 30 02:11:05 UTC 2026), Entry for Antonio Gomes de Sousa Junior and Antonio Gomes de Sousa, 1961.",
+      "url": "https://familysearch.org/ark:/61903/1:1:KX2W-KKM"
+    },
+    {
+      "id": "9XYJ-P94",
+      "title": "Antonio Gomes de Sousa, “Brasil, São Paulo, Cartões de Imigração, 1902-1980”",
+      "citation": "\"Brasil, São Paulo, Cartões de Imigração, 1902-1980\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:QKM3-KNL4 : Tue Jun 30 19:43:56 UTC 2026), Entry for Antonio Gomes de Sousa Junior and Antonio Gomes de Sousa, 1962.",
+      "url": "https://familysearch.org/ark:/61903/1:1:QKM3-KNLH"
+    },
+    {
+      "id": "W7X2-7QR",
+      "title": "Antonio Gomes de Sousa, “Portugal, Registro Civil, 1437-2023”",
+      "citation": "\"Portugal, Registro Civil, 1437-2023\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:65Y8-5P8Q : Fri Jan 09 21:11:44 UTC 2026), Entry for Olina Amélia de Sousa and Antonio Gomes de Sousa, 20 de outubro de 1937.",
+      "url": "https://familysearch.org/ark:/61903/1:1:65Y8-5P87"
+    },
+    {
+      "id": "Q2QV-B4R",
+      "title": "Passaporte destino Brasil",
+      "url": "https://www.familysearch.org/photos/artifacts/188401260"
+    },
+    {
+      "id": "Q2QV-BSZ",
+      "title": "Registo de batismo",
+      "url": "https://www.familysearch.org/photos/artifacts/188401228"
+    },
+    {
+      "id": "W7XL-DYL",
+      "title": "1858 Batismo de um irmao Joaquim Gomes de Souza, “Portugal, Madeira, Registros da Igreja Católica, 1044-1990”",
+      "citation": "\"Portugal, Madeira, Registros da Igreja Católica, 1044-1990\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:6NG6-PF1F : Sun Aug 09 03:27:19 UTC 2026), Entry for Joaquim Gomes de Souza and Pad.Ro José + Ferreira de Quintal, 1 de setembro de 1858.",
+      "url": "https://familysearch.org/ark:/61903/1:1:6NG6-PF1F"
+    },
+    {
+      "id": "W7X2-H4B",
+      "title": "Joaquim Gomes de Souza, “Portugal, Registro Civil, 1437-2023”",
+      "citation": "\"Portugal, Registro Civil, 1437-2023\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:X911-WDFP : Tue Jan 13 08:47:13 UTC 2026), Entry for José Rozal de Caires and Joaquim Gomes de Souza, 10 de outubro de 1934.",
+      "url": "https://familysearch.org/ark:/61903/1:1:X911-WDF5"
+    },
+    {
+      "id": "W7X2-4XV",
+      "title": "Joaquim Gomes de Souza Juno, “Portugal, Registro Civil, 1437-2023”",
+      "citation": "\"Portugal, Registro Civil, 1437-2023\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:XSMM-S7SD : Tue Jan 13 11:52:25 UTC 2026), Entry for José Gomes de Souza Juno and Joaquim Gomes de Souza Juno, 19 de maio de 1943.",
+      "url": "https://familysearch.org/ark:/61903/1:1:XSMM-S7S6"
+    },
+    {
+      "id": "W7X2-S2F",
+      "title": "Joaquim Gomes de Souza, “Portugal, Madeira, Registros da Igreja Católica, 1044-1990”",
+      "citation": "\"Portugal, Madeira, Registros da Igreja Católica, 1044-1990\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:6NRV-B9MK : Mon Aug 10 05:20:32 UTC 2026), Entry for José Gomes de Souza and Joaquim Gomes de Souza, 8 de junho de 1907.",
+      "url": "https://familysearch.org/ark:/61903/1:1:6NRV-B9M2"
+    },
+    {
+      "id": "W7X2-9J1",
+      "title": "Joaquim Gomes de Souza, “Portugal, Registro Civil, 1437-2023”",
+      "citation": "\"Portugal, Registro Civil, 1437-2023\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:X911-6DPV : Tue Jan 13 11:54:01 UTC 2026), Entry for José ) de Jesus Gomes de Souza and Joaquim Gomes de Souza, 10 de outubro de 1942.",
+      "url": "https://familysearch.org/ark:/61903/1:1:X911-6DPK"
+    },
+    {
+      "id": "7ZSM-BD2",
+      "title": "Joaquim Gomes de Souza, “Portugal, Registro Civil, 1437-2023”",
+      "citation": "\"Portugal, Registro Civil, 1437-2023\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:65PJ-WFNL : Fri Jan 09 21:23:12 UTC 2026), Entry for Maria do Carmo Gonçaseis Albano and Manoel Gonçaseis Albano, 8 de julho de 1947.",
+      "url": "https://familysearch.org/ark:/61903/1:1:65PJ-WFN5"
+    },
+    {
+      "id": "QNC9-ND8",
+      "title": "Joaquim Gomes de ? Souza, “Portugal, Madeira, Registros da Igreja Católica, 1044-1990”",
+      "citation": "\"Portugal, Madeira, Registros da Igreja Católica, 1044-1990\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:6NG6-1F8Q : Mon Aug 10 04:23:11 UTC 2026), Entry for Joaquim Gomes de ? Souza and Olivra, 2 de abril de 1857.",
+      "url": "https://familysearch.org/ark:/61903/1:1:6NG6-1F8Q"
+    },
+    {
+      "id": "W8G1-YCK",
+      "title": "Joaquim Gomes de Souza, “Brasil, São Paulo, Registro Civil, 1925-2023”",
+      "citation": "\"Brasil, São Paulo, Registro Civil, 1925-2023\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:6VWC-PNF6 : Thu Jun 04 05:27:17 UTC 2026), Entry for Virgilio and Miguel Monto Rodrigues, 1 de abril de 1911.",
+      "url": "https://familysearch.org/ark:/61903/1:1:6VWC-PNFV"
+    },
+    {
+      "id": "W8G1-T4K",
+      "title": "Joaquim Gomes de Souza, “Portugal, Madeira, Registros da Igreja Católica, 1044-1990”",
+      "citation": "\"Portugal, Madeira, Registros da Igreja Católica, 1044-1990\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:6NGX-7959 : Mon Aug 10 04:08:11 UTC 2026), Entry for Joaquim Gomes de Souza and Padro José, 1 de setembro de 1858.",
+      "url": "https://familysearch.org/ark:/61903/1:1:6NGX-7959"
+    },
+    {
+      "id": "W8G1-RFX",
+      "title": "Joaquim Gomes de Souza, “Portugal, Registro Civil, 1437-2023”",
+      "citation": "\"Portugal, Registro Civil, 1437-2023\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:X911-PQPN : Tue Jan 13 08:59:07 UTC 2026), Entry for Joaquim Gomes de Souza and Antonio Gomes de Souza, 17 de agosto de 1885.",
+      "url": "https://familysearch.org/ark:/61903/1:1:X911-PQPN"
+    },
+    {
+      "id": "WZGK-94L",
+      "title": "Joaquim Gomes de Souza, “Portugal, Registro Civil, 1437-2023”",
+      "citation": "\"Portugal, Registro Civil, 1437-2023\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:XSMM-FD78 : Tue Jan 13 08:59:30 UTC 2026), Entry for Francisco Gomes de Souza and Joaquim Gomes de Souza, 21 de maio de 1930.",
+      "url": "https://familysearch.org/ark:/61903/1:1:XSMM-FD7D"
+    },
+    {
+      "id": "WZVX-BZG",
+      "title": "Joaquim Gonçalves, “Portugal, Registro Civil, 1437-2023”",
+      "citation": "\"Portugal, Registro Civil, 1437-2023\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:XSMM-B6L8 : Tue Jan 13 09:11:33 UTC 2026), Entry for Joaquim Gonçalves and João Gomes de Souza, 13 de outubro de 1892.",
+      "url": "https://familysearch.org/ark:/61903/1:1:XSMM-B6L8"
+    },
+    {
+      "id": "QLPS-XYM",
+      "title": "Joaquim Gomes de Souza, “Portugal, Madeira, Registros da Igreja Católica, 1044-1990”",
+      "citation": "\"Portugal, Madeira, Registros da Igreja Católica, 1044-1990\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:6NRJ-8CBN : Sun Aug 09 04:14:42 UTC 2026), Entry for Joaquim Gomes de Souza and Joaquim José Silio Carez do Padro, 1 de setembro de 1858.",
+      "url": "https://familysearch.org/ark:/61903/1:1:6NRJ-8CBN"
+    },
+    {
+      "id": "Q2QV-BQL",
+      "title": "Registo de batismo",
+      "url": "https://www.familysearch.org/photos/artifacts/188401238"
+    },
+    {
+      "id": "7K6S-F8Y",
+      "title": "obito da filha Guiomar - Joaquim Gomes de Souza, “Brasil, São Paulo, Registro Civil, 1925-2023”",
+      "citation": "\"Brasil, São Paulo, Registro Civil, 1925-2023\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:65VP-SY2H : Fri Jan 09 12:38:18 UTC 2026), Entry for Guiomar de Souza Alonso and Joaquim Gomes de Souza, 1718.",
+      "url": "https://familysearch.org/ark:/61903/1:1:65VP-SY2C"
+    },
+    {
+      "id": "QH8K-WR4",
+      "title": "batismo do neto NILO - Joaquim Gomes de Souza, “Brasil, São Paulo, Registro Civil, 1925-2023”",
+      "citation": "\"Brasil, São Paulo, Registro Civil, 1925-2023\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:6VWF-81RJ : Sat Aug 23 14:12:45 UTC 2025), Entry for João Barrito Alonso and Francisca Ferras Cama, 28 de agosto de 1916.",
+      "url": "https://familysearch.org/ark:/61903/1:1:6VWF-81RG"
+    },
+    {
+      "id": "3YF6-WY4",
+      "title": "obito da filha Guiomar  “Brasil, São Paulo, Registro Civil, 1925-1995”",
+      "citation": "\"Brasil, São Paulo, Registro Civil, 1925-2023\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:68V9-BC5K : Wed Jun 03 03:38:42 UTC 2026), Entry for <Unknown> and <Unknown>, 18 January 1980.",
+      "url": "https://familysearch.org/ark:/61903/1:1:68V9-BC52"
+    },
+    {
+      "id": "W7XK-RVJ",
+      "title": "Manoel de Souza, “Portugal, Lisbon, Registros da Igreja Católica, 1334-1998”",
+      "citation": "\"Portugal, Lisbon, Registros da Igreja Católica, 1334-1998\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:6NGZ-H4FN : Wed Jan 22 11:59:16 UTC 2025), Entry for Antonio and Manoel de Souza, 9 de julho de 1893.",
+      "url": "https://familysearch.org/ark:/61903/1:1:6NGZ-H4FJ"
+    },
+    {
+      "id": "W7XK-55R",
+      "title": "Manuel Lopes de Sousa, “Portugal, Registro Civil, 1437-2023”",
+      "citation": "\"Portugal, Registro Civil, 1437-2023\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:6YLB-HCV6 : Fri Jan 09 20:08:51 UTC 2026), Entry for Antonio Gomes de Sousa and Manuel Lopes de Sousa, agosto de 1933.",
+      "url": "https://familysearch.org/ark:/61903/1:1:6YLB-HCVX"
+    },
+    {
+      "id": "Q2QV-B4Q",
+      "title": "Registo de batismo",
+      "url": "https://www.familysearch.org/photos/artifacts/188401257"
+    },
+    {
+      "id": "7Y4Y-MQV",
+      "title": "Manoel Gomes de Souza, “Portugal, Registro Civil, 1437-2023”",
+      "citation": "\"Portugal, Registro Civil, 1437-2023\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:X91B-VCQJ : Tue Jan 13 08:59:52 UTC 2026), Entry for João Gomes de Sauz and Manoel Gomes de Souza, 28 de setembro de 1923.",
+      "url": "https://familysearch.org/ark:/61903/1:1:X91B-VCQV"
+    },
+    {
+      "id": "7SWY-78S",
+      "title": "Manuel Gomes de Souza, “Portugal, Madeira, Registros da Igreja Católica, 1044-1990”",
+      "citation": "\"Portugal, Madeira, Registros da Igreja Católica, 1044-1990\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:6NGW-MZHQ : Sun Aug 09 04:47:07 UTC 2026), Entry for Antonio Gomes de Souza and Manuel Gomes de Souza, 11 de dezembro de 1892.",
+      "url": "https://familysearch.org/ark:/61903/1:1:6NGW-MZH7"
+    },
+    {
+      "id": "7SWY-QTX",
+      "title": "Manuel Gomes de Sousa, “Portugal, Madeira, Registros da Igreja Católica, 1044-1990”",
+      "citation": "\"Portugal, Madeira, Registros da Igreja Católica, 1044-1990\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:6NRF-8RWR : Mon Aug 10 02:43:17 UTC 2026), Entry for Obia and Alfred, 11 de dezembro de 1892.",
+      "url": "https://familysearch.org/ark:/61903/1:1:6NRF-8RWT"
+    },
+    {
+      "id": "9BT1-WJ5",
+      "title": "Manoel Gomes de Sousa, \"Portugal Marriages, 1670-1910\"",
+      "citation": "\"Portugal Matrimônios, 1670-1910\", , <i>FamilySearch</i> (https://familysearch.org/ark:/61903/1:1:F2Z6-39G : 28 April 2021), Manoel Gomes de Sousa, 1889.",
+      "url": "https://familysearch.org/ark:/61903/1:1:F2Z6-39G"
+    },
+    {
+      "id": "Q2QV-BW7",
+      "title": "Registo de batismo",
+      "url": "https://www.familysearch.org/photos/artifacts/188401254"
+    },
+    {
+      "id": "QNC9-QP3",
+      "title": "José Gomes de Sousa, “Portugal, Madeira, Registros da Igreja Católica, 1044-1990”",
+      "citation": "\"Portugal, Madeira, Registros da Igreja Católica, 1044-1990\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:6NRP-P1YG : Mon Aug 10 03:02:35 UTC 2026), Entry for José Gomes de Sousa and João Gomes de Sousa.",
+      "url": "https://familysearch.org/ark:/61903/1:1:6NRP-P1YG"
+    },
+    {
+      "id": "7B7M-P3L",
+      "title": "Francisco de Souya, “Portugal, Madeira, Registros da Igreja Católica, 1044-1990”",
+      "citation": "\"Portugal, Madeira, Registros da Igreja Católica, 1044-1990\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:6NRJ-755V : Sun Aug 09 05:34:04 UTC 2026), Entry for Francisco de Souya and José, 10 de abril de 1876.",
+      "url": "https://familysearch.org/ark:/61903/1:1:6NRJ-755V"
+    },
+    {
+      "id": "7YVL-52N",
+      "title": "Francisco Augusto de Souza, “Portugal, Registro Civil, 1437-2023”",
+      "citation": "\"Portugal, Registro Civil, 1437-2023\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:X911-HHHG : Tue Jan 13 08:53:03 UTC 2026), Entry for Francisco Martinho and Francisco Augusto de Souza, 5 de dezembro de 1936.",
+      "url": "https://familysearch.org/ark:/61903/1:1:X911-HHHP"
+    },
+    {
+      "id": "7YJH-GK1",
+      "title": "Francisco de Sousa, “Portugal, Registro Civil, 1437-2023”",
+      "citation": "\"Portugal, Registro Civil, 1437-2023\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:65TK-YKV9 : Fri Jan 09 19:35:17 UTC 2026), Entry for Maria Augusta de Sousa and Francisco de Sousa, 2 de julho de 1900.",
+      "url": "https://familysearch.org/ark:/61903/1:1:65TK-YKVS"
+    },
+    {
+      "id": "7YFP-CSK",
+      "title": "Francisco de Sousa, “Portugal, Registro Civil, 1437-2023”",
+      "citation": "\"Portugal, Registro Civil, 1437-2023\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:65RZ-HWM5 : Fri Jan 09 20:30:46 UTC 2026), Entry for Maria Augusta de Sousa and Francisco de Sousa, 2 de julho de 1933.",
+      "url": "https://familysearch.org/ark:/61903/1:1:65RZ-HWMR"
+    },
+    {
+      "id": "7YFP-HJY",
+      "title": "Francisco Augusto de Sousa, “Portugal, Registro Civil, 1437-2023”",
+      "citation": "\"Portugal, Registro Civil, 1437-2023\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:65BQ-KRML : Fri Jan 09 19:06:24 UTC 2026), Entry for Francisco Augusto de Sousa and João Antonio de Sousa, 28 de fevereiro de 1967.",
+      "url": "https://familysearch.org/ark:/61903/1:1:65BQ-KRML"
+    },
+    {
+      "id": "7YFP-S5X",
+      "title": "Francisco Augusto de Souza, “Portugal, Madeira, Registros da Igreja Católica, 1044-1990”",
+      "citation": "\"Portugal, Madeira, Registros da Igreja Católica, 1044-1990\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:6NRL-F3M2 : Sun Aug 09 03:30:51 UTC 2026), Entry for Francisco de Souza and Pinto, 3 de novembro de 1906.",
+      "url": "https://familysearch.org/ark:/61903/1:1:6NRL-F3ML"
+    },
+    {
+      "id": "7YFP-S7Z",
+      "title": "Francisco Augusto de Souza, “Brasil, Pernambuco, Registro Civil, 1804-2023”",
+      "citation": "\"Brasil, Pernambuco, Registro Civil, 1804-2023\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:Q2Q9-Q57R : Tue Mar 11 19:48:42 UTC 2025), Entry for Leoncio Augusto de Sousa and Francisco Augusto de Souza.",
+      "url": "https://familysearch.org/ark:/61903/1:1:Q2Q9-Q5W3"
+    },
+    {
+      "id": "7YFP-9R9",
+      "title": "Francisco Augusto de Souza, “Portugal, Registro Civil, 1437-2023”",
+      "citation": "\"Portugal, Registro Civil, 1437-2023\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:X91B-DM88 : Tue Jan 13 08:49:16 UTC 2026), Entry for Francisco Augusto de Souza and João Antonio de Souza, 29 de novembro de 1900.",
+      "url": "https://familysearch.org/ark:/61903/1:1:X91B-DM88"
+    },
+    {
+      "id": "7YFP-9Z3",
+      "title": "Francisco Augusto de Souza, “Brasil, Pernambuco, Registro Civil, 1804-2023”",
+      "citation": "\"Brasil, Pernambuco, Registro Civil, 1804-2023\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:Q29H-DQM3 : Wed Jun 10 19:37:25 UTC 2026), Entry for Leoncio Augusto de Sousa and Francisco Augusto de Souza.",
+      "url": "https://familysearch.org/ark:/61903/1:1:Q29H-DQ93"
+    },
+    {
+      "id": "7YFG-YJH",
+      "title": "Francisco de Souza, “Portugal, Registro Civil, 1437-2023”",
+      "citation": "\"Portugal, Registro Civil, 1437-2023\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:XSM9-QVTK : Tue Jan 13 09:01:05 UTC 2026), Entry for João de Souza and Francisco de Souza, 25 de novembro de 1920.",
+      "url": "https://familysearch.org/ark:/61903/1:1:XSM9-QVT2"
+    },
+    {
+      "id": "7YFG-T6B",
+      "title": "de Souza, “Portugal, Registro Civil, 1437-2023”",
+      "citation": "\"Portugal, Registro Civil, 1437-2023\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:6VQ5-HSQ9 : Tue Jan 06 02:49:33 UTC 2026), Entry for de Souza and O Vigna, 28 de novembro de 1900.",
+      "url": "https://familysearch.org/ark:/61903/1:1:6VQ5-HSQ3"
+    },
+    {
+      "id": "7YFG-RPP",
+      "title": "Francisco Augusto de Souza, “Portugal, Registro Civil, 1437-2023”",
+      "citation": "\"Portugal, Registro Civil, 1437-2023\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:65L8-QQ1X : Fri Jan 09 18:47:49 UTC 2026), Entry for Francisco and Francisco Augusto de Souza, 7 de janeiro de 1907.",
+      "url": "https://familysearch.org/ark:/61903/1:1:65L8-QQ1F"
+    },
+    {
+      "id": "7YFG-5BN",
+      "title": "Francisco Augusto de Souza, “Portugal, Registro Civil, 1437-2023”",
+      "citation": "\"Portugal, Registro Civil, 1437-2023\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:X911-QX6B : Tue Jan 13 08:48:22 UTC 2026), Entry for João Augusto de Souza and Francisco Augusto de Souza.",
+      "url": "https://familysearch.org/ark:/61903/1:1:X911-QX61"
+    },
+    {
+      "id": "753W-R22",
+      "title": "Francisco Augusto de Souza, “Portugal, Registro Civil, 1437-2023”",
+      "citation": "\"Portugal, Registro Civil, 1437-2023\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:6YGM-2G4M : Fri Jan 09 18:49:15 UTC 2026), Entry for <Unknown> and Francisco Augusto de Souza, 5 de janeiro de 1920.",
+      "url": "https://familysearch.org/ark:/61903/1:1:6YGM-2G49"
+    },
+    {
+      "id": "753W-PYK",
+      "title": "Francisco Augusto de Souza, “Portugal, Registro Civil, 1437-2023”",
+      "citation": "\"Portugal, Registro Civil, 1437-2023\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:X911-3WLC : Tue Jan 13 08:44:08 UTC 2026), Entry for João Augusto de Souza and Francisco Augusto de Souza, 5 de dezembro de 1956.",
+      "url": "https://familysearch.org/ark:/61903/1:1:X911-3WLZ"
+    },
+    {
+      "id": "W37L-HCC",
+      "title": "Adelaide de Sousa, “Portugal, Madeira, Registros da Igreja Católica, 1044-1990”",
+      "citation": "\"Portugal, Madeira, Registros da Igreja Católica, 1044-1990\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:6NLB-DJX3 : Sun Aug 09 03:39:29 UTC 2026), Entry for Adelaide de Sousa and João Antonio de Sousa, 14 de maio de 1887.",
+      "url": "https://familysearch.org/ark:/61903/1:1:6NLB-DJX3"
+    },
+    {
+      "id": "W7KY-X3W",
+      "title": "Francisco, “Portugal, Madeira, Registros da Igreja Católica, 1044-1990”",
+      "citation": "\"Portugal, Madeira, Registros da Igreja Católica, 1044-1990\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:6BC1-RY46 : Sat Jan 04 02:09:31 UTC 2025), Entry for Francisco and João Gomes de Sousa, 23 de setembro de 1875.",
+      "url": "https://familysearch.org/ark:/61903/1:1:6BC1-RY46"
+    },
+    {
+      "id": "W37L-H3W",
+      "title": "Adelaide de Sousa, “Portugal, Madeira, Registros da Igreja Católica, 1044-1990”",
+      "citation": "\"Portugal, Madeira, Registros da Igreja Católica, 1044-1990\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:6NLB-DJX3 : Sun Aug 09 03:39:29 UTC 2026), Entry for Adelaide de Sousa and João Antonio de Sousa, 14 de maio de 1887.",
+      "url": "https://familysearch.org/ark:/61903/1:1:6NLB-DJX3"
+    }
+  ]
+}

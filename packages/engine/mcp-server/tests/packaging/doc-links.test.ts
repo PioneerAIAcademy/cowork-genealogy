@@ -135,6 +135,31 @@ const KNOWN_ABSENT: { file: string; path: string; why: string }[] = [
     why: "named because nothing may be put there; the directory does not exist",
   },
   {
+    file: "docs/historical-context-invocation-audit.md",
+    path: "packages/engine/plugin/skills/research-exhaustiveness/SKILL.md",
+    why: "a measurement write-up citing the file AT `3cccc28d`, where its §\"3. Relay\" is the counterexample the audit turns on; the skill was deleted when its agent became the direct entry point, and repointing the citation at the agent would attribute the measured 116 invocations to a body that did not produce them",
+  },
+  {
+    file: "docs/skill-dataflow.md",
+    path: "packages/engine/plugin/agents/record-extractor.md",
+    why: "named in the dated history of the retirement: the agent was deleted when extraction moved into `extraction_append` and the record-structurer agent (issues #2937, #2939)",
+  },
+  {
+    file: "docs/specs/tree-materialization-spec.md",
+    path: "packages/engine/plugin/agents/record-extractor.md",
+    why: "a change list written when the agent existed; the agent was deleted when extraction moved into code (issues #2937, #2939), and rewriting the list would falsify the record of what that change touched",
+  },
+  {
+    file: "docs/specs/image-reader-agent-spec.md",
+    path: "packages/engine/plugin/skills/record-extraction/SKILL.md",
+    why: "a change list naming the skill as it stood when image-reader was specced; the skill was deleted with the extraction rewrite (issues #2937, #2939)",
+  },
+  {
+    file: "docs/specs/image-transcribe-tool-spec.md",
+    path: "packages/engine/plugin/skills/record-extraction/SKILL.md",
+    why: "change lists naming the skill as it stood when `image_transcribe` shipped; the skill was deleted with the extraction rewrite (issues #2937, #2939)",
+  },
+  {
     file: "CLAUDE.md",
     path: "docs/TODOs.md",
     why: "named because it was retired on 2026-08-02 and must not come back",
@@ -343,6 +368,11 @@ const KNOWN_ABSENT: { file: string; path: string; why: string }[] = [
     file: "docs/record-extraction-consolidation-closing-report.md",
     path: "docs/plan/orchestrator-state-diet-plan.md",
     why: "dated closing report naming a plan since retired",
+  },
+  {
+    file: "docs/search-agent-prototype-report.md",
+    path: "apps/server/proto/exports/",
+    why: "prototype project exports, kept per developer; gitignored, so it is absent at rest",
   },
 ];
 
@@ -711,6 +741,7 @@ describe("specs state the fact, not the ticket", () => {
       ...docsMarkdown(projectRoot).filter((f) => f.startsWith("docs/specs/")),
       "docs/architecture.md",
       "README.md",
+      "docs/catalog.md",
       "CLAUDE.md",
     ];
     const drift: string[] = [];
@@ -735,53 +766,6 @@ describe("specs state the fact, not the ticket", () => {
       (rel) => !existsSync(join(projectRoot, rel)),
     );
     expect(stale, "delete the entry when its file goes").toEqual([]);
-  });
-});
-
-/**
- * `README.md` is the user-facing catalog, and its tool list is a hand-copied
- * inventory of something the code already owns (`manifest.json`'s `tools`,
- * itself drift-tested against `allToolSchemas` in `manifest.test.ts`). Nothing
- * checked the copy, and it rotted exactly as an unchecked copy does: it claimed
- * **31 tools against 47 advertised**, with the entire structured-persistence
- * writer surface — `research_append`, `tree_edit`, `extraction_append`,
- * `materialize_facts`, and nine more — appearing nowhere in it.
- *
- * This closes the `docs/architecture.md` §9.4 row that named the gap.
- *
- * Name-presence only, deliberately. Asserting *where* a tool is described, or
- * that its prose matches its schema, is a false-positive generator over a
- * document whose job is readable grouping rather than exhaustive reference.
- * Presence is the part that fails silently and the part a user actually loses.
- */
-describe("README catalogs what ships", () => {
-  it("names every advertised MCP tool", () => {
-    const manifest = JSON.parse(
-      readFileSync(join(projectRoot, "packages/engine/mcp-server/manifest.json"), "utf8"),
-    ) as { tools: { name: string }[] };
-    const readme = readFileSync(join(projectRoot, "README.md"), "utf8");
-    const missing = manifest.tools.map((t) => t.name).filter((n) => !readme.includes(n));
-    expect(
-      missing,
-      "README.md is the user-facing catalog; a tool absent from it is a tool users " +
-        "cannot discover. Add it to the matching section, or drop it from manifest.json.",
-    ).toEqual([]);
-  });
-
-  it("states the shipped tool and skill counts correctly", () => {
-    const manifest = JSON.parse(
-      readFileSync(join(projectRoot, "packages/engine/mcp-server/manifest.json"), "utf8"),
-    ) as { tools: { name: string }[] };
-    const skills = readdirSync(join(projectRoot, "packages/engine/plugin/skills")).filter((d) =>
-      statSync(join(projectRoot, "packages/engine/plugin/skills", d)).isDirectory(),
-    );
-    const readme = readFileSync(join(projectRoot, "README.md"), "utf8");
-    const stated = (label: string): number | null => {
-      const m = readme.match(new RegExp(`\\*\\*(\\d+) ${label}`));
-      return m ? Number(m[1]) : null;
-    };
-    expect(stated("MCP tools"), "README's tool count").toBe(manifest.tools.length);
-    expect(stated("shipped skills"), "README's skill count").toBe(skills.length);
   });
 });
 

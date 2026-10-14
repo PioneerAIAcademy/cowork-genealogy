@@ -227,41 +227,21 @@ export const CALL_PLAN: readonly SmokeStep[] = [
     offline: true,
     args: (ctx) => ({
       projectPath: ctx.projectPath,
-      sourceDescription: { title: "Smoke source" },
-      resolveStandardPlace: false,
-      ops: [
+      documents: [
         {
-          section: "sources",
-          op: "append",
-          entry: {
-            citation: "Smoke source",
-            citation_detail: {
-              who: "Smoke",
-              what: "transport smoke",
-              when_created: "1850",
-              when_accessed: "2026-01-01",
-              where: "Nowhere",
-              where_within: "line 1",
-            },
-            source_classification: "original",
-            repository: "smoke",
-            access_date: "2026-01-01",
-          },
-        },
-        {
-          section: "assertions",
-          op: "append",
-          entry: {
-            record_id: "SMOKE-1",
-            record_role: "principal",
-            fact_type: "birth",
-            value: "1850",
-            date: "1850",
-            information_quality: "primary",
-            informant: "self",
-            informant_proximity: "self",
-            record_basis: "stated",
-            extracted_for_question_ids: [],
+          recordId: "capture:smoke-obituary",
+          document: {
+            recordType: "obituary",
+            documentForm: "verbatim_transcript",
+            source: { title: "Smoke obituary", repository: "smoke" },
+            persons: [
+              {
+                id: "p1",
+                principal: true,
+                names: [{ given: "Smoke", surname: "Test" }],
+                facts: [{ type: "death", date: "1 May 1990" }],
+              },
+            ],
           },
         },
       ],
@@ -274,8 +254,8 @@ export const CALL_PLAN: readonly SmokeStep[] = [
     args: (ctx) => ({
       projectPath: ctx.projectPath,
       personId: "P1",
-      recordId: "SMOKE-1",
-      recordRole: "principal",
+      recordId: "capture:smoke-obituary",
+      recordRole: "deceased",
     }),
     expect: okTrue,
   },
@@ -288,7 +268,7 @@ export const CALL_PLAN: readonly SmokeStep[] = [
       section: "hypotheses",
       op: "append",
       entry: {
-        claim: "P1 is the SMOKE-1 principal",
+        claim: "P1 is the smoke obituary's deceased",
         status: "active",
         supporting_assertion_ids: [],
         contradicting_assertion_ids: [],
@@ -438,6 +418,15 @@ export const CALL_PLAN: readonly SmokeStep[] = [
     expect: okTrue,
   },
   {
+    tool: "census_children_gap",
+    offline: true,
+    args: () => ({
+      censuses: [{ year: 1900, childrenBorn: 2, childrenLiving: 1 }],
+      knownChildren: [{ birthDate: "1895" }],
+    }),
+    expect: okTrue,
+  },
+  {
     tool: "build_external_search_url",
     offline: true,
     args: () => ({ site: "findagrave", attributes: { surname: "Smoke" } }),
@@ -464,6 +453,7 @@ export const CALL_PLAN: readonly SmokeStep[] = [
   // reaches both with no flag (the tool ignores `relatives`).
   tokenStep("person_read", { personId: FS_PID }),
   tokenStep("person_ancestors", { personId: FS_PID }),
+  tokenStep("tree_gaps", { personId: FS_PID }),
   tokenStep("record_read", { recordId: "QVS9-DHDB" }),
   tokenStep("fulltext_search", { keywords: "smoke" }),
   tokenStep("collections_search", { standardPlace: "England" }),
@@ -554,7 +544,22 @@ export const CALL_PLAN: readonly SmokeStep[] = [
     args: () => ({ standardPlace: "Pennsylvania, United States" }),
     expect: (res) => ({ ok: !res.isError && res.body?.error === undefined && !!res.body?.population, detail: brief(res) }),
   },
-  { tool: "external_links_search", args: () => ({ standardPlace: "England" }), expect: noError },
+  // With projectPath, so the hosted run writes external-collections.json through
+  // the bound store and reads it back. England (753 links) is under the 1,000-row cap.
+  {
+    tool: "external_links_search",
+    args: (ctx) => ({ standardPlace: "England, United Kingdom", projectPath: ctx.projectPath }),
+    expect: (res) => ({
+      ok: !res.isError && (res.body?.stored?.places?.length ?? 0) > 0 && !res.body?.collectionsError,
+      detail: brief(res),
+    }),
+  },
+  {
+    tool: "research_query",
+    label: "research_query (external_collections)",
+    args: (ctx) => ({ projectPath: ctx.projectPath, section: "external_collections", place: "England, United Kingdom" }),
+    expect: (res) => ({ ok: !res.isError && res.body?.ok === true && res.body?.count > 0, detail: brief(res) }),
+  },
 ];
 
 // ─── Completeness guard ──────────────────────────────────────────────────────

@@ -30,7 +30,9 @@
     "record-search-variant-any-givenname-flynn-no-results",
     "record-search-variant-father-name-no-results",
     "record-search-flynn-any-variant-no-results",
-    "record-search-patrick-anysurname-no-results"
+    "record-search-patrick-anysurname-no-results",
+    "catalog-search-empty",
+    "catalog-search-empty-keywords"
   ],
   "execution": {
     "max_turns": 35,

@@ -16,11 +16,14 @@ A fake ``aws`` runner stands in for the CLI: no network, no AWS. Plan: the U13 P
   in ``finally``;
 - the migrate policy's two ARNs and its removal on failure;
 - kinds created by ``up`` = kinds deleted by ``down`` = kinds checked by ``prove-empty``;
+- U19's alarms: every alarm with its actions off, named, tagged; metric filters proven gone by
+  metric, not by a name prefix AWS ignores; ``alarms --test-filters`` and ``alarm-trip``;
 - the account-id leak check and the 12-digit scan.
 """
 
 from __future__ import annotations
 
+import datetime as dt
 import importlib.util
 import json
 import re
@@ -28,6 +31,7 @@ import shlex
 import shutil
 import stat
 import subprocess
+import sys
 from pathlib import Path
 
 import pytest
@@ -89,10 +93,35 @@ class FakeAws:
         # describe-environments answers Launching/Updating this many times after a create
         # or update; Beanstalk refuses an update or terminate until the env is Ready.
         self.busy_polls = 0
+        self.openssl_calls: list[list[str]] = []
+        # delete-certificate answers ResourceInUseException this many times first.
+        self.cert_in_use = 0
+        # get-metric-statistics: {(namespace, metric, dimension value): [datapoint, ...]}
+        self.metrics: dict[tuple[str, str, str], list[dict]] = {}
+        self.credit_modes = {"i-genealogy-u13-worker": "unlimited", "i-genealogy-u13-tools": "standard"}
+        # U19. Whether the worker env lists its DLQ in describe-environment-resources (unmeasured);
+        # otherwise only the worker queue's RedrivePolicy names it.
+        self.dlq_in_resources = True
+        # StateValue by alarm name; absent is OK.
+        self.alarm_states: dict[str, str] = {}
+        self.trips: set[str] = set()  # alarms whose trip works: they breach again after a reset
+        # test-metric-filter: None evaluates the pattern; "miss" matches nothing, "hit" everything.
+        self.filter_mode: str | None = None
+        self.sent: list[dict] = []
+        # Metric filters other teams own in the account: one on our very metric. Never ours to
+        # delete, never a leftover; a check trusting --filter-name-prefix without a group sees them.
+        self.foreign_filters = [
+            {"logGroupName": "/other/app", "filterName": "other-team-errors", "filterPattern": "ERROR",
+             "metricTransformations": [{"metricName": "Errors", "metricNamespace": "Other", "metricValue": "1"}]},
+            {"logGroupName": "/fs/port", "filterName": "fs-port-reauth", "filterPattern": "reauth_hit",
+             "metricTransformations": [{"metricName": "Reauth", "metricNamespace": "Genealogy/SearchAgent",
+                                        "metricValue": "1"}]}]
 
     # plumbing
 
     def __call__(self, argv: list[str]):
+        if argv[0] == "openssl":
+            return self.openssl(argv)
         self.calls.append(list(argv))
         snap = {a: Path(a[len("file://"):]).read_text(encoding="utf-8") for a in argv if a.startswith("file://")}
         self.call_files.append(snap)
@@ -108,6 +137,15 @@ class FakeAws:
         except AwsError as exc:
             return subprocess.CompletedProcess(argv, 254, "", str(exc))
         return subprocess.CompletedProcess(argv, 0, body if isinstance(body, str) else json.dumps(body), "")
+
+    def openssl(self, argv: list[str]):
+        """`openssl req -x509`: writes a stand-in key and certificate where it was told."""
+        self.openssl_calls.append(list(argv))
+        if "openssl" in self.fail:
+            return subprocess.CompletedProcess(argv, 1, "", self.fail["openssl"])
+        Path(_flag(argv, "-keyout")).write_text("-----BEGIN PRIVATE KEY-----\nfake\n", encoding="utf-8")
+        Path(_flag(argv, "-out")).write_text("-----BEGIN CERTIFICATE-----\nfake\n", encoding="utf-8")
+        return subprocess.CompletedProcess(argv, 0, "", "")
 
     def reset(self) -> None:
         self.calls.clear()
@@ -210,16 +248,48 @@ class FakeAws:
 
     SUBNET_AZS = {"subnet-a": "us-east-1a", "subnet-b": "us-east-1b"}
     NO_T3_AZ = "us-east-1e"
+    # Not a default subnet (never listed), but describable by id: its zone offers t3.large, not t3.xlarge.
+    OTHER_SUBNET_AZS = {"subnet-c": "us-east-1c"}
+    NO_T3_XLARGE_AZ = "us-east-1c"
 
     def ec2_describe_subnets(self, rest):
         ids = rest[rest.index("--subnet-ids") + 1:] if "--subnet-ids" in rest else sorted(self.SUBNET_AZS)[::-1]
-        return {"Subnets": [{"SubnetId": i, "AvailabilityZone": self.SUBNET_AZS[i]} for i in ids]}
+        azs = {**self.OTHER_SUBNET_AZS, **self.SUBNET_AZS}
+        return {"Subnets": [{"SubnetId": i, "AvailabilityZone": azs[i]} for i in ids]}
 
     def ec2_describe_instance_type_offerings(self, rest):
-        azs = set(self.SUBNET_AZS.values()) | {"us-east-1e"}
+        azs = set(self.SUBNET_AZS.values()) | {"us-east-1e", self.NO_T3_XLARGE_AZ}
         if "Name=instance-type,Values=t3." in " ".join(rest):
             azs.discard(self.NO_T3_AZ)
+        if "Name=instance-type,Values=t3.xlarge" in rest:
+            azs.discard(self.NO_T3_XLARGE_AZ)
         return {"InstanceTypeOfferings": [{"Location": az} for az in sorted(azs)]}
+
+    def cloudwatch_get_metric_statistics(self, rest):
+        # As CloudWatch answered on 2026-10-10: buckets run from --start-time's minute, each
+        # aggregates the raw points stamped inside it (basic monitoring stamps :00, :05, …), and
+        # a bucket crossing --end-time is not returned.
+        dim = _flag(rest, "--dimensions").split("Value=", 1)[1]
+        at = lambda s: dt.datetime.fromisoformat(s.replace("Z", "+00:00"))  # noqa: E731
+        bucket = at(_flag(rest, "--start-time")).replace(second=0)
+        end, period = at(_flag(rest, "--end-time")), dt.timedelta(seconds=int(_flag(rest, "--period")))
+        raw = self.metrics.get((_flag(rest, "--namespace"), _flag(rest, "--metric-name"), dim), [])
+        out = []
+        while bucket + period <= end:
+            inside = [p for p in raw if bucket <= at(p["Timestamp"]) < bucket + period]
+            if inside:
+                out.append({"Timestamp": bucket.isoformat(), "Unit": "Percent",
+                            "Average": sum(p["Average"] for p in inside) / len(inside),
+                            "Maximum": max(p["Maximum"] for p in inside)})
+            bucket += period
+        return {"Label": _flag(rest, "--metric-name"), "Datapoints": out}
+
+    def ec2_describe_instance_credit_specifications(self, rest):
+        ids = _flag_values(rest, "--instance-ids")
+        if not all(i in self.credit_modes for i in ids):
+            raise AwsError("An error occurred (InvalidInstanceID.NotFound) when calling the "
+                           "DescribeInstanceCreditSpecifications operation")
+        return {"InstanceCreditSpecifications": [{"InstanceId": i, "CpuCredits": self.credit_modes[i]} for i in ids]}
 
     def ec2_describe_security_groups(self, rest):
         if "--group-ids" in rest:
@@ -244,7 +314,21 @@ class FakeAws:
                 self.drop("sg", g["name"])
 
     def ec2_describe_instances(self, rest):
+        ids = _flag_values(rest, "--instance-ids")
+        if ids:  # prove-empty's per-id look behind the tag index
+            states = {**{i["name"]: "running" for i in self.all("instance")}, **self.leftover.get("instance_states", {})}
+            if not any(i in states for i in ids):
+                raise AwsError("An error occurred (InvalidInstanceID.NotFound) when calling the DescribeInstances operation")
+            return {"Reservations": [{"Instances": [{"InstanceId": i, "State": {"Name": states[i]}}
+                                                    for i in ids if i in states]}]}
         return {"Reservations": [{"Instances": [{"InstanceId": i["name"]} for i in self.all("instance")]}]}
+
+    def ec2_describe_volumes(self, rest):
+        ids = _flag_values(rest, "--volume-ids")
+        live = [v for v in ids if v in self.leftover.get("volumes", [])]
+        if not live:
+            raise AwsError("An error occurred (InvalidVolume.NotFound) when calling the DescribeVolumes operation")
+        return {"Volumes": [{"VolumeId": v} for v in live]}
 
     def ec2_run_instances(self, rest):
         self.add("instance", "i-bastion")
@@ -436,6 +520,8 @@ class FakeAws:
         name = _flag(rest, "--environment-name")
         self.add("env", name, id=f"e-{name.rsplit('-', 1)[1]}", busy=self.busy_polls, new=True)
         self._apply(name, rest)
+        # StreamLogs: true (DeleteOnTerminate: false), so the group outlives the environment.
+        self.add("log", f"/aws/elasticbeanstalk/{name}/var/log/web.stdout.log")
 
     def elasticbeanstalk_update_environment(self, rest):
         name = _flag(rest, "--environment-name")
@@ -449,8 +535,12 @@ class FakeAws:
 
     def elasticbeanstalk_describe_environment_resources(self, rest):
         name = _flag(rest, "--environment-name")
+        queues = [{"Name": "WorkerQueue", "URL": f"https://sqs.us-east-1.amazonaws.com/{ACCOUNT}/q-{name}"}]
+        if self.dlq_in_resources and "worker" in name:
+            queues.append({"Name": "WorkerDeadLetterQueue",
+                           "URL": f"https://sqs.us-east-1.amazonaws.com/{ACCOUNT}/q-{name}-dlq"})
         return {"EnvironmentResources": {
-            "Queues": [{"Name": "WorkerQueue", "URL": f"https://sqs.us-east-1.amazonaws.com/{ACCOUNT}/q-{name}"}],
+            "Queues": queues,
             "Instances": [{"Id": f"i-{name}"}],
             "LoadBalancers": [{"Name": f"arn:aws:elasticloadbalancing:us-east-1:{ACCOUNT}:loadbalancer/app/{name}"}]}}
 
@@ -482,7 +572,128 @@ class FakeAws:
         return {"logGroups": [{"logGroupName": g["name"]} for g in self.all("log") if g["name"].startswith(prefix)]}
 
     def logs_delete_log_group(self, rest):
-        self.drop("log", _flag(rest, "--log-group-name"))
+        group = _flag(rest, "--log-group-name")
+        self.drop("log", group)
+        for f in self.all("mfilter"):  # a group's metric filters go with it
+            if f["group"] == group:
+                self.drop("mfilter", f["name"])
+
+    def logs_put_metric_filter(self, rest):
+        group, name = _flag(rest, "--log-group-name"), _flag(rest, "--filter-name")
+        if not self.get("log", group):
+            raise AwsError("An error occurred (ResourceNotFoundException) when calling the PutMetricFilter "
+                           "operation: The specified log group does not exist.")
+        t = dict(kv.split("=", 1) for kv in _flag(rest, "--metric-transformations").split(","))
+        self.add("mfilter", f"{group}|{name}", group=group, filter=name, pattern=_flag(rest, "--filter-pattern"),
+                 transformations=t)
+
+    def _metric_filters(self) -> list[dict]:
+        ours = [{"logGroupName": f["group"], "filterName": f["filter"], "filterPattern": f["pattern"],
+                 "metricTransformations": [f["transformations"]]} for f in self.all("mfilter")]
+        return ours + self.foreign_filters
+
+    def logs_describe_metric_filters(self, rest):
+        group, prefix = _flag(rest, "--log-group-name"), _flag(rest, "--filter-name-prefix")
+        metric, namespace = _flag(rest, "--metric-name"), _flag(rest, "--metric-namespace")
+        if (metric is None) != (namespace is None):
+            raise AwsError("An error occurred (InvalidParameterException): metricName and metricNamespace go together")
+        out = self._metric_filters()
+        if group is not None:
+            if not self.get("log", group):
+                raise AwsError("An error occurred (ResourceNotFoundException): The specified log group does not exist.")
+            out = [f for f in out if f["logGroupName"] == group]
+            # AWS honours filterNamePrefix only together with logGroupName.
+            if prefix is not None:
+                out = [f for f in out if f["filterName"].startswith(prefix)]
+        if metric is not None:
+            out = [f for f in out if any(t["metricName"] == metric and t["metricNamespace"] == namespace
+                                         for t in f["metricTransformations"])]
+        return {"metricFilters": out}
+
+    def logs_delete_metric_filter(self, rest):
+        key = f"{_flag(rest, '--log-group-name')}|{_flag(rest, '--filter-name')}"
+        if not self.get("mfilter", key):
+            raise AwsError("An error occurred (ResourceNotFoundException) when calling the DeleteMetricFilter "
+                           "operation: The specified resource does not exist.")
+        self.drop("mfilter", key)
+
+    def logs_test_metric_filter(self, rest):
+        body = json.loads(self.files[_flag(rest, "--cli-input-json")])
+        messages = body["logEventMessages"]
+        if self.filter_mode == "miss":
+            hit = []
+        elif self.filter_mode == "hit":
+            hit = messages
+        else:
+            hit = [m for m in messages if term_pattern_matches(body["filterPattern"], m)]
+        return {"matches": [{"eventNumber": messages.index(m) + 1, "eventMessage": m, "extractedValues": {}}
+                            for m in hit]}
+
+    # cloudwatch alarms, sqs
+
+    def cloudwatch_put_metric_alarm(self, rest):
+        name = _flag(rest, "--alarm-name")
+        self.add("alarm", name, argv=list(rest), threshold=_flag(rest, "--threshold"))
+
+    def _alarm(self, a: dict) -> dict:
+        return {"AlarmName": a["name"], "StateValue": self.alarm_states.get(a["name"], "OK"),
+                "ActionsEnabled": "--no-actions-enabled" not in a["argv"],
+                "Threshold": float(a["threshold"])}
+
+    def cloudwatch_set_alarm_state(self, rest):
+        # A trip that works: the alarm breaches again once it is reset (``trips``).
+        name = _flag(rest, "--alarm-name")
+        self.alarm_states[name] = "ALARM" if name in self.trips else _flag(rest, "--state-value")
+
+    def cloudwatch_describe_alarms(self, rest):
+        names, prefix = _flag_values(rest, "--alarm-names"), _flag(rest, "--alarm-name-prefix")
+        alarms = [a for a in self.all("alarm") if (not names or a["name"] in names)
+                  and (prefix is None or a["name"].startswith(prefix))]
+        return {"MetricAlarms": [self._alarm(a) for a in alarms], "CompositeAlarms": []}
+
+    def cloudwatch_delete_alarms(self, rest):
+        names = _flag_values(rest, "--alarm-names")
+        if any(not self.get("alarm", n) for n in names):
+            raise AwsError("An error occurred (ResourceNotFound) when calling the DeleteAlarms operation")
+        for n in names:
+            self.drop("alarm", n)
+
+    def cloudwatch_describe_alarm_history(self, rest):
+        name = _flag(rest, "--alarm-name")
+        if self.alarm_states.get(name) != "ALARM":
+            return {"AlarmHistoryItems": []}
+        return {"AlarmHistoryItems": [{"AlarmName": name, "Timestamp": "2026-10-12T15:00:00Z",
+                                       "HistoryItemType": "StateUpdate",
+                                       "HistorySummary": "Alarm updated from OK to ALARM"}]}
+
+    def sqs_send_message(self, rest):
+        self.sent.append({"url": _flag(rest, "--queue-url"), "body": _flag(rest, "--message-body")})
+        return {"MessageId": f"m-{len(self.sent)}"}
+
+    def sqs_get_queue_attributes(self, rest):
+        url = _flag(rest, "--queue-url")
+        arn = f"arn:aws:sqs:us-east-1:{ACCOUNT}:{url.rsplit('/', 1)[-1]}-redrive-dlq"
+        return {"Attributes": {"RedrivePolicy": json.dumps({"deadLetterTargetArn": arn, "maxReceiveCount": "10"})}}
+
+    def acm_import_certificate(self, rest):
+        arn = f"arn:aws:acm:us-east-1:{ACCOUNT}:certificate/c{len(self.all('cert')) + 1}"
+        self.add("cert", arn)
+        return {"CertificateArn": arn}
+
+    def acm_describe_certificate(self, rest):
+        arn = _flag(rest, "--certificate-arn")
+        if not self.get("cert", arn):
+            raise AwsError(f"An error occurred (ResourceNotFoundException): Could not find certificate {arn}.")
+        return {"Certificate": {"CertificateArn": arn, "Type": "IMPORTED"}}
+
+    def acm_delete_certificate(self, rest):
+        arn = _flag(rest, "--certificate-arn")
+        if self.cert_in_use:
+            self.cert_in_use -= 1
+            raise AwsError(f"An error occurred (ResourceInUseException): Certificate {arn} is in use.")
+        if not self.get("cert", arn):
+            raise AwsError(f"An error occurred (ResourceNotFoundException): Could not find certificate {arn}.")
+        self.drop("cert", arn)
 
     def resourcegroupstaggingapi_get_resources(self, rest):
         return {"ResourceTagMappingList": [{"ResourceARN": a} for a in self.leftover.get("tagged", [])]}
@@ -497,6 +708,18 @@ class FakeAws:
 
     def sqs_get_queue_url(self, rest):
         raise AwsError("An error occurred (AWS.SimpleQueueService.NonExistentQueue)")
+
+
+def term_pattern_matches(pattern: str, message: str) -> bool:
+    """A stand-in for CloudWatch's term patterns: every term (quoted or not) is in the
+    message, and no ``-term`` is. Case-sensitive."""
+    for term in shlex.split(pattern):
+        if term.startswith("-"):
+            if term[1:] in message:
+                return False
+        elif term not in message:
+            return False
+    return True
 
 
 # ── helpers ───────────────────────────────────────────────────────────────────────────
@@ -783,6 +1006,137 @@ def test_signin_phase_sets_loopback_with_space_separated_emails(stack):
     assert rh.EB_VALUE.match(web[(rh.ENV_NS, "ALLOWED_EMAILS")])
 
 
+def _https(env, fake, *extra):
+    return run(env, fake, "up", "--billed", "--phase", "signin", "--mode", "https", *extra)
+
+
+def test_signin_https_imports_a_self_signed_certificate_and_moves_the_listener_to_443(stack):
+    env, fake, _ = stack
+    fake.reset()
+    rc, lines = _https(env, fake)
+    assert rc == 0, lines[-5:]
+    host = "genealogy-u13-web.invalid"
+    [req] = fake.openssl_calls
+    assert req[:3] == ["openssl", "req", "-x509"] and f"subjectAltName=DNS:{host}" in req and f"/CN={host}" in req
+    key = env["work"] / "tls" / "web-key.pem"
+    assert key.is_file() and stat.S_IMODE(key.stat().st_mode) == 0o600
+    [imp] = fake.calls_to("acm", "import-certificate")
+    assert f"fileb://{key}" in imp and "Key=genealogy:rehearsal,Value=u13" in imp
+    web = options_file(env, rh.ENV_NAMES["web"])
+    [arn] = [c["name"] for c in fake.all("cert")]
+    assert web[(rh.ENV_NS, "PUBLIC_URL")] == f"https://{host}"
+    assert web[(rh.HTTPS_NS, "ListenerEnabled")] == "true" and web[(rh.HTTPS_NS, "Protocol")] == "HTTPS"
+    assert web[(rh.HTTPS_NS, "SSLCertificateArns")] == arn
+    assert web[(rh.HTTP_NS, "ListenerEnabled")] == "false", "D2: never plain http on the CNAME"
+    assert web[(rh.ENV_NS, "FAMILYSEARCH_WEB_ENABLED")] == "true"
+    assert web[(rh.ENV_NS, "ALLOWED_EMAILS")] == "a@example.invalid b@example.invalid"
+    assert fake.env_settings[rh.ENV_NAMES["web"]][(rh.HTTPS_NS, "SSLCertificateArns")] == arn
+
+
+def test_signin_https_rerun_reuses_the_certificate_and_a_web_redeploy_keeps_it(stack):
+    env, fake, _ = stack
+    assert _https(env, fake)[0] == 0
+    assert _https(env, fake)[0] == 0
+    assert len(fake.calls_to("acm", "import-certificate")) == 1 and len(fake.openssl_calls) == 1
+    fake.reset()
+    assert run(env, fake, "up", "--billed", "--phase", "web")[0] == 0
+    web = options_file(env, rh.ENV_NAMES["web"])
+    assert web[(rh.ENV_NS, "PUBLIC_URL")].startswith("https://") and (rh.HTTPS_NS, "SSLCertificateArns") in web
+
+
+def test_signin_https_reimports_when_acm_no_longer_has_the_certificate(stack):
+    env, fake, _ = stack
+    assert _https(env, fake)[0] == 0
+    fake.drop("cert", fake.all("cert")[0]["name"])
+    assert _https(env, fake)[0] == 0
+    assert len(fake.calls_to("acm", "import-certificate")) == 2
+
+
+def test_leaving_https_turns_443_off_and_restores_port_80(stack):
+    env, fake, _ = stack
+    assert _https(env, fake)[0] == 0
+    fake.reset()
+    rc, lines = run(env, fake, "up", "--billed", "--phase", "signin", "--mode", "loopback")
+    assert rc == 0, lines[-3:]
+    [update] = fake.calls_to("elasticbeanstalk", "update-environment")
+    sent = {(o["Namespace"], o["OptionName"]) for o in fake.file_of(update, "--option-settings")}
+    removed = {(o["Namespace"], o["OptionName"]) for o in fake.file_of(update, "--options-to-remove")}
+    assert not sent & removed, "an option both set and removed in one call"
+    assert removed >= {(rh.HTTPS_NS, "Protocol"), (rh.HTTPS_NS, "SSLCertificateArns"), (rh.HTTP_NS, "ListenerEnabled")}
+    live = fake.env_settings[rh.ENV_NAMES["web"]]
+    assert live[(rh.ENV_NS, "PUBLIC_URL")] == "http://127.0.0.1:1837"
+    assert live[(rh.HTTPS_NS, "ListenerEnabled")] == "false"
+    assert (rh.HTTPS_NS, "SSLCertificateArns") not in live and (rh.HTTPS_NS, "Protocol") not in live
+    assert (rh.HTTP_NS, "ListenerEnabled") not in live
+
+
+def test_loopback_after_loopback_touches_no_listener(stack):
+    env, fake, _ = stack
+    fake.reset()
+    assert run(env, fake, "up", "--billed", "--phase", "signin", "--mode", "loopback")[0] == 0
+    [update] = fake.calls_to("elasticbeanstalk", "update-environment")
+    assert "--options-to-remove" not in update
+    assert not {o["Namespace"] for o in fake.file_of(update, "--option-settings")} & {rh.HTTPS_NS, rh.HTTP_NS}
+
+
+def test_signin_https_refuses_before_the_web_environment_exists(env, capsys):
+    fake = FakeAws()
+    rc, _ = run(env, fake, "up", "--billed", "--phase", "signin", "--mode", "https")
+    assert rc == 2 and "run its `up` phase first" in capsys.readouterr().err
+    assert not fake.openssl_calls and not fake.calls_to("acm", "import-certificate")
+
+
+def test_signin_https_refuses_a_web_environment_with_no_recorded_address(stack, capsys):
+    """A failed `up --phase web` leaves the options snapshot but no CNAME in the inventory;
+    without this refusal the certificate would name CN=None and PUBLIC_URL https://None."""
+    env, fake, _ = stack
+    inv_path = env["work"] / "inventory.json"
+    inv = json.loads(inv_path.read_text(encoding="utf-8"))
+    del inv["state"]["envs"]["web"]
+    inv_path.write_text(json.dumps(inv), encoding="utf-8")
+    rc, _ = _https(env, fake)
+    assert rc == 2 and "run `up --phase web` first" in capsys.readouterr().err
+    assert not fake.openssl_calls and not fake.calls_to("acm", "import-certificate")
+
+
+def test_signin_https_stops_when_openssl_fails(stack, capsys):
+    env, fake, _ = stack
+    fake.fail["openssl"] = "req: unknown option -addext"
+    rc, _ = _https(env, fake)
+    assert rc == 1 and "openssl failed" in capsys.readouterr().err
+    assert not fake.calls_to("acm", "import-certificate")
+
+
+def test_down_deletes_the_certificate_after_the_environments_and_waits_out_in_use(stack):
+    env, fake, _ = stack
+    assert _https(env, fake)[0] == 0
+    fake.cert_in_use = 2
+    fake.reset()
+    rc, lines = run(env, fake, "down", "--billed")
+    assert rc == 0, lines[-3:]
+    ops = fake.ops()
+    assert ops.index(("elasticbeanstalk", "terminate-environment")) < ops.index(("acm", "delete-certificate"))
+    assert len(fake.calls_to("acm", "delete-certificate")) == 3 and not fake.all("cert")
+
+
+def test_prove_empty_fails_on_a_certificate_left_and_passes_one_acm_reports_gone(stack):
+    env, fake, _ = stack
+    assert _https(env, fake)[0] == 0
+    arn = fake.all("cert")[0]["name"]
+    fake.fail["acm delete-certificate"] = "An error occurred (AccessDeniedException)"
+    assert run(env, fake, "down", "--billed")[0] == 1
+    del fake.fail["acm delete-certificate"]
+    rc, lines = run(env, fake, "prove-empty", "--repoll-s", "0")
+    assert rc == 1 and any("NOT EMPTY acm" in line for line in lines), lines
+    assert run(env, fake, "down", "--billed")[0] == 0
+    fake.leftover["tagged"] = [arn]
+    rc, lines = run(env, fake, "prove-empty", "--repoll-s", "0")
+    assert rc == 0, lines
+    fake.add("cert", arn)
+    rc, lines = run(env, fake, "prove-empty", "--repoll-s", "0")
+    assert rc == 1, "a tagged certificate ACM still has stays NOT EMPTY"
+
+
 def test_secrets_shared_and_hex(stack):
     env, fake, _ = stack
     web, worker = options_file(env, rh.ENV_NAMES["web"]), options_file(env, rh.ENV_NAMES["worker"])
@@ -886,6 +1240,29 @@ def test_up_accepts_a_plain_operator_override(env):
     assert options_file(env, rh.ENV_NAMES["tools"])[(rh.ENV_NS, "WIKI_API_URL")] == "https://wiki.example.invalid"
 
 
+def test_a_rerun_of_up_removes_an_override_it_no_longer_passes(env):
+    """U19 (2026-10-13, live): update-environment only sets, so `up --phase worker` without
+    the `--env` an earlier run passed left LONG_AGENT_CALL_S=60 on the worker."""
+    fake = FakeAws()
+    assert up_all(env, fake, "--env", "worker:LONG_AGENT_CALL_S=60")[0] == 0
+    worker = rh.ENV_NAMES["worker"]
+    assert fake.env_settings[worker][(rh.ENV_NS, "LONG_AGENT_CALL_S")] == "60"
+    phase = ("up", "--billed", "--phase", "worker", "--bundles-dir", str(env["bundles"]), "--env-file", str(env["env_file"]))
+
+    before = len(fake.calls_to("elasticbeanstalk", "update-environment"))
+    assert run(env, fake, *phase)[0] == 0
+    [call] = [a for a in fake.calls_to("elasticbeanstalk", "update-environment")[before:] if worker in a]
+    removed = json.loads(fake.files[_flag(call, "--options-to-remove")])
+    assert removed == [{"Namespace": rh.ENV_NS, "OptionName": "LONG_AGENT_CALL_S"}]
+    assert (rh.ENV_NS, "LONG_AGENT_CALL_S") not in fake.env_settings[worker]
+    assert (rh.ENV_NS, "QUEUE_URL") in fake.env_settings[worker], "only the dropped override goes"
+
+    before = len(fake.calls_to("elasticbeanstalk", "update-environment"))
+    assert run(env, fake, *phase)[0] == 0
+    [again] = [a for a in fake.calls_to("elasticbeanstalk", "update-environment")[before:] if worker in a]
+    assert "--options-to-remove" not in again, "an unchanged re-run removes nothing"
+
+
 def _worker_opts(**drop):
     sqsd = rh.sqsd_template()
     out = [rh.opt(rh.SQSD_NS, k, v) for k, v in sqsd[rh.SQSD_NS].items()]
@@ -943,7 +1320,52 @@ def test_cases_cover_the_plan_list():
         "web_half_sqs", "sqs_region_contradicts", "fast_errors", "maxretries_2", "maxretries_1", "tmpdir_bad",
         "worker_no_provider", "worker_no_tool_url", "worker_blocked_tools", "worker_no_queue_url",
         "worker_default_enc_key", "web_no_queue_url", "default_session_secret", "kill_window", "debug_hold",
-        "refresh_age_0", "cap_1usd", "idle_session_60s"}
+        "refresh_age_0", "cap_1usd", "nudges_3", "nudges_0", "no_telemetry", "idle_session_60s",
+        "slots_4", "slots_8", "worker_xlarge"}
+
+
+def test_every_case_has_a_row_in_the_readme_probe_table():
+    text = (REHEARSAL_DIR / "README.md").read_text(encoding="utf-8")
+    table = text.split("## Probe cases", 1)[1].split("\n## ", 1)[0]
+    rows = [line.split("|")[1] for line in table.splitlines() if line.startswith("| `")]
+    named = {n for cell in rows for n in re.findall(r"`([a-z0-9_]+)`", cell)}
+    assert named == set(rh.CASES)
+
+
+@pytest.mark.parametrize("case, tier, name, value", [
+    ("nudges_3", "web", "AUTONOMOUS_MAX_NUDGES", "3"),
+    ("nudges_0", "web", "AUTONOMOUS_MAX_NUDGES", "0"),
+    ("no_telemetry", "worker", "CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC", "1"),
+])
+def test_nudge_and_telemetry_cases_set_one_name_and_remove_it_on_restore(stack, case, tier, name, value):
+    """Neither name is in up's API layer, so the restore removes it: on web the template's
+    AUTONOMOUS_MAX_NUDGES=60 (01-web.config) applies again; the worker template sets neither."""
+    assert rh.CASES[case]["ops"] == {tier: [(rh.ENV_NS, name, value)]} and "allow" not in rh.CASES[case]
+    assert rh.template_env("web")["AUTONOMOUS_MAX_NUDGES"] == "60"
+    assert "CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC" not in rh.template_env("worker")
+    env, fake, _ = stack
+    env_name = rh.ENV_NAMES[tier]
+    assert (rh.ENV_NS, name) not in rh.options_map(json.loads(
+        (env["work"] / "options" / f"{env_name}.json").read_text(encoding="utf-8")))
+    fake.reset()
+    rc, _ = run(env, fake, "probe", "--billed", "--case", case, "--hold-s", "0")
+    assert rc == 0
+    apply, restore = _updates(fake, env_name)
+    assert fake.file_of(apply, "--option-settings") == [rh.opt(rh.ENV_NS, name, value)]
+    assert "--option-settings" not in restore
+    assert fake.file_of(restore, "--options-to-remove") == [{"Namespace": rh.ENV_NS, "OptionName": name}]
+    assert (rh.ENV_NS, name) not in fake.env_settings[env_name]
+
+
+def test_the_worker_hands_no_telemetry_to_the_cli():
+    """The SDK starts the CLI with the worker's environment overlaid with options.env, and
+    cli_env_blanks blanks every inherited name outside CLI_ENV_KEEP; a blanked name would
+    leave no_telemetry applied on Beanstalk and void."""
+    sys.path.insert(0, str(REPO / "apps" / "server"))
+    from proto.worker import options
+
+    for _, name, value in rh.CASES["no_telemetry"]["ops"]["worker"]:
+        assert options.cli_env_blanks({name: value, "PG_DSN": "x"}) == {"PG_DSN": ""}, name
 
 
 # ── probe cases ───────────────────────────────────────────────────────────────────────
@@ -1093,6 +1515,138 @@ def test_probe_restores_when_a_later_case_fails(stack):
     assert fake.calls_to("rds", "reset-db-parameter-group"), "the failed case's own restore still runs"
 
 
+# ── U18: the slot and instance-type cases ─────────────────────────────────────────────
+
+
+SLOT_USERS = {n: " ".join(f"genealogy-turn-{i}" for i in range(n)) for n in (2, 4, 8)}
+
+
+def _slot_opts(users: str | None, conns: str) -> list[dict]:
+    """up's worker options with HttpConnections replaced and WORKER_TURN_USERS set (None: the template's)."""
+    out = [o for o in _worker_opts() if o["OptionName"] != "HttpConnections"]
+    out.append(rh.opt(rh.SQSD_NS, "HttpConnections", conns))
+    return out + ([rh.opt(rh.ENV_NS, "WORKER_TURN_USERS", users)] if users is not None else [])
+
+
+@pytest.mark.parametrize("case, n", [("slots_4", 4), ("slots_8", 8)])
+def test_slot_case_applies_both_options_and_restores_them(stack, case, n):
+    """HttpConnections is in up's snapshot, so it is set back to 2; WORKER_TURN_USERS is not,
+    so it is removed and 02-worker.config's two names apply again."""
+    env, fake, _ = stack
+    worker = rh.ENV_NAMES["worker"]
+    snapshot = options_file(env, worker)
+    assert snapshot[(rh.SQSD_NS, "HttpConnections")] == "2" and (rh.ENV_NS, "WORKER_TURN_USERS") not in snapshot
+    fake.reset()
+    rc, lines = run(env, fake, "probe", "--billed", "--case", case, "--hold-s", "0")
+    assert rc == 0, lines[-5:]
+    apply, restore = _updates(fake, worker)
+    assert {(o["Namespace"], o["OptionName"]): o["Value"] for o in fake.file_of(apply, "--option-settings")} == {
+        (rh.SQSD_NS, "HttpConnections"): str(n), (rh.ENV_NS, "WORKER_TURN_USERS"): SLOT_USERS[n]}
+    assert "--options-to-remove" not in apply
+    assert fake.file_of(restore, "--option-settings") == [rh.opt(rh.SQSD_NS, "HttpConnections", "2")]
+    assert fake.file_of(restore, "--options-to-remove") == [{"Namespace": rh.ENV_NS, "OptionName": "WORKER_TURN_USERS"}]
+    live = fake.env_settings[worker]
+    assert live[(rh.SQSD_NS, "HttpConnections")] == "2" and (rh.ENV_NS, "WORKER_TURN_USERS") not in live
+    assert run(env, fake, "status")[0] == 0, "a restored slot case leaves no drift"
+
+
+@pytest.mark.parametrize("users, conns, message", [
+    (SLOT_USERS[4], "2", r"names 4 user\(s\) for HttpConnections=2"),
+    (None, "4", r"names 2 user\(s\) for HttpConnections=4"),
+    (SLOT_USERS[2], "4", r"names 2 user\(s\) for HttpConnections=4"),
+    ("genealogy-turn-0 genealogy-turn-0", "2", "names a user twice"),
+    ("genealogy-turn-0 genealogy-turn-8", "2", r"\['genealogy-turn-8'\], which 01-worker-layout.sh"),
+    ("genealogy-turn-0 webapp", "2", r"\['webapp'\], which 01-worker-layout.sh's TURN_USERS does not create"),
+    (SLOT_USERS[2], "0", "not a positive integer"),
+])
+def test_check_options_refuses_users_that_do_not_match_connections(users, conns, message):
+    with pytest.raises(rh.Die, match=message):
+        rh.check_options("worker", _slot_opts(users, conns))
+
+
+@pytest.mark.parametrize("opts, dry", [
+    (_worker_opts(), False),  # up's 2/2: 01-sqsd.config's connections, 02-worker.config's users
+    (_slot_opts(SLOT_USERS[2], "2"), False),
+    (_slot_opts("genealogy-turn-0   genealogy-turn-1", "2"), False),  # split as the worker splits it
+    (_slot_opts(None, "2"), False),
+] + [(_worker_opts() + rh.case_options(rh.CASES[c], "worker")[0], False) for c in ("slots_4", "slots_8")] + [
+    # dry mode merges an empty snapshot: only the case's own settings, the rest from the templates
+    (rh.case_options(rh.CASES[c], "worker")[0], True) for c in ("slots_4", "slots_8", "worker_xlarge", "fast_errors")])
+def test_check_options_accepts_users_that_match_connections(opts, dry):
+    rh.check_options("worker", opts, dry=dry)
+
+
+def test_the_slot_rule_binds_only_the_worker():
+    rh.check_options("web", [rh.opt(rh.SQSD_NS, "HttpConnections", "4")])
+
+
+def test_a_mismatched_slot_case_is_refused_before_its_update_is_sent(stack, monkeypatch, capsys):
+    env, fake, _ = stack
+    monkeypatch.setitem(rh.CASES, "slots_bad", {"measures": "x", "ops": {"worker": [
+        (rh.SQSD_NS, "HttpConnections", "2"), (rh.ENV_NS, "WORKER_TURN_USERS", SLOT_USERS[4])]}})
+    fake.reset()
+    rc, _ = run(env, fake, "probe", "--billed", "--case", "slots_bad", "--hold-s", "0")
+    assert rc == 2 and "names 4 user(s) for HttpConnections=2" in capsys.readouterr().err
+    assert _updates(fake, rh.ENV_NAMES["worker"]) == [], "neither the apply nor a restore was sent"
+    assert (rh.ENV_NS, "WORKER_TURN_USERS") not in fake.env_settings[rh.ENV_NAMES["worker"]]
+
+
+def test_worker_xlarge_resizes_and_restores_the_instance_type(stack):
+    env, fake, _ = stack
+    worker = rh.ENV_NAMES["worker"]
+    fake.reset()
+    rc, lines = run(env, fake, "probe", "--billed", "--case", "worker_xlarge", "--hold-s", "0")
+    assert rc == 0, lines[-5:]
+    ops = fake.ops()
+    [offers] = fake.calls_to("ec2", "describe-instance-type-offerings")
+    assert "Name=instance-type,Values=t3.xlarge" in offers
+    assert ops.index(("ec2", "describe-subnets")) < ops.index(("elasticbeanstalk", "update-environment"))
+    apply, restore = _updates(fake, worker)
+    assert fake.file_of(apply, "--option-settings") == [rh.opt(rh.INSTANCES_NS, "InstanceTypes", "t3.xlarge")]
+    assert fake.file_of(restore, "--option-settings") == [rh.opt(rh.INSTANCES_NS, "InstanceTypes", "t3.large")]
+    assert "--options-to-remove" not in apply and "--options-to-remove" not in restore
+    assert fake.env_settings[worker][(rh.INSTANCES_NS, "InstanceTypes")] == "t3.large"
+    inv = json.loads((env["work"] / "inventory.json").read_text(encoding="utf-8"))
+    assert inv["state"]["az_offerings"]["t3.xlarge"] == ["us-east-1a", "us-east-1b"]
+
+
+def _plant_subnet(env, subnet: str) -> None:
+    path = env["work"] / "options" / f"{rh.ENV_NAMES['worker']}.json"
+    snapshot = json.loads(path.read_text(encoding="utf-8"))
+    for o in snapshot:
+        if (o["Namespace"], o["OptionName"]) == (rh.VPC_NS, "Subnets"):
+            o["Value"] += f",{subnet}"
+    path.write_text(json.dumps(snapshot), encoding="utf-8")
+
+
+def test_worker_xlarge_refuses_a_subnet_without_the_type(stack, capsys):
+    """subnet-c's zone offers t3.large (up placed the worker there) but not t3.xlarge: the
+    replacement instance would fail, so the case is refused before any update or restore."""
+    env, fake, _ = stack
+    _plant_subnet(env, "subnet-c")
+    fake.reset()
+    rc, _ = run(env, fake, "probe", "--billed", "--case", "worker_xlarge", "--hold-s", "0")
+    assert rc == 2
+    err = capsys.readouterr().err
+    assert "t3.xlarge is not offered in the zone of subnet(s) subnet-c (us-east-1c)" in err, err
+    assert not fake.calls_to("elasticbeanstalk", "update-environment")
+    fake.OTHER_SUBNET_AZS = {"subnet-c": "us-east-1b"}
+    rc, lines = run(env, fake, "probe", "--billed", "--case", "worker_xlarge", "--hold-s", "0")
+    assert rc == 0, "a planted subnet in a zone that offers t3.xlarge passes"
+
+
+def test_a_case_waits_for_ready_before_it_sends(stack):
+    """worker_xlarge's replacement still Updating when Terminal 2 applies a slot case."""
+    env, fake, _ = stack
+    fake.get("env", rh.ENV_NAMES["worker"])["busy"] = 2
+    fake.reset()
+    rc, lines = run(env, fake, "probe", "--billed", "--case", "slots_4", "--hold-s", "0")
+    assert rc == 0, lines[-5:]
+    ops = fake.ops()
+    assert ops[:ops.index(("elasticbeanstalk", "update-environment"))].count(
+        ("elasticbeanstalk", "describe-environments")) == 3
+
+
 # ── migrate ───────────────────────────────────────────────────────────────────────────
 
 
@@ -1140,7 +1694,8 @@ DOWN = {
     "secret": ("secretsmanager", "delete-secret"), "ec2": ("ec2", "terminate-instances"),
     "app": ("elasticbeanstalk", "delete-application"), "eb-storage": ("s3api", "delete-bucket-policy"),
     "env": ("elasticbeanstalk", "terminate-environment"), "log-group": ("logs", "delete-log-group"),
-    "resolver": ("route53resolver", "delete-resolver-query-log-config"),
+    "resolver": ("route53resolver", "delete-resolver-query-log-config"), "acm": ("acm", "delete-certificate"),
+    "alarm": ("cloudwatch", "delete-alarms"), "metric-filter": ("logs", "delete-metric-filter"),
 }
 PROOF = {
     "budget": ("budgets", "describe-budget"), "iam-role": ("iam", "list-roles"),
@@ -1150,12 +1705,15 @@ PROOF = {
     "secret": ("secretsmanager", "list-secrets"), "ec2": ("ec2", "describe-instances"),
     "app": ("elasticbeanstalk", "describe-applications"), "eb-storage": ("s3api", "head-bucket"),
     "env": ("elasticbeanstalk", "describe-environments"), "log-group": ("logs", "describe-log-groups"),
-    "resolver": ("route53resolver", "list-resolver-query-log-configs"),
+    "resolver": ("route53resolver", "list-resolver-query-log-configs"), "acm": ("acm", "describe-certificate"),
+    "alarm": ("cloudwatch", "describe-alarms"), "metric-filter": ("logs", "describe-metric-filters"),
 }
 
 
 def test_up_down_and_proof_cover_the_same_kinds(stack):
     env, fake, _ = stack
+    assert run(env, fake, "up", "--billed", "--phase", "signin", "--mode", "https")[0] == 0
+    assert run(env, fake, "up", "--billed", "--phase", "alarms")[0] == 0
     assert set(DOWN) == set(PROOF) == set(rh.KINDS)
     inv = json.loads((env["work"] / "inventory.json").read_text(encoding="utf-8"))
     assert {r["kind"] for r in inv["resources"]} == set(rh.KINDS)
@@ -1172,6 +1730,7 @@ def test_up_down_and_proof_cover_the_same_kinds(stack):
     missing = {k: v for k, v in PROOF.items() if v not in ops}
     assert not missing, f"prove-empty never checks {missing}"
     assert not [k for k in fake.have if not k.startswith(("version:",))], fake.have.keys()
+    assert len(fake.foreign_filters) == 2, "another team's metric filters are never ours to delete"
 
 
 def test_down_after_a_throwaway_probe_and_down_again(stack):
@@ -1256,10 +1815,14 @@ def test_down_leaves_a_storage_bucket_it_did_not_create(env):
     assert [a for a in fake.calls_to("s3api", "list-objects-v2") if "genealogy-u13/" in a]
 
 
-@pytest.mark.parametrize("leftover", ["tagged", "stack", "storage_403", "secret", "eip"])
+@pytest.mark.parametrize("leftover", ["tagged", "stack", "storage_403", "secret", "eip", "alarm", "metric_filter",
+                                      "recorded_metric_filter"])
 def test_prove_empty_fails_on_anything_left(stack, leftover):
     env, fake, _ = stack
+    if leftover == "recorded_metric_filter":
+        assert run(env, fake, "up", "--billed", "--phase", "alarms")[0] == 0
     assert run(env, fake, "down", "--billed")[0] == 0
+    group = "/aws/elasticbeanstalk/genealogy-u13-worker/var/log/web.stdout.log"
     if leftover == "tagged":
         fake.leftover["tagged"] = [f"arn:aws:sqs:us-east-1:{ACCOUNT}:stray"]
     elif leftover == "stack":
@@ -1268,11 +1831,327 @@ def test_prove_empty_fails_on_anything_left(stack, leftover):
         fake.leftover["forbidden_buckets"] = [f"elasticbeanstalk-us-east-1-{ACCOUNT}"]
     elif leftover == "secret":
         fake.add("secret", "genealogy-u13/web/pg-dsn", arn="x")
-    else:
+    elif leftover == "eip":
         fake.leftover["eip"] = [{"PublicIp": "192.0.2.1"}]
+    elif leftover == "alarm":
+        fake.add("alarm", "genealogy-u13-dlq_depth", argv=["--no-actions-enabled"], threshold="1")
+    elif leftover == "metric_filter":
+        # Never recorded: only the by-metric look finds it.
+        fake.add("log", group)
+        fake.add("mfilter", f"{group}|genealogy-u13-spend_cap-1", group=group, filter="genealogy-u13-spend_cap-1",
+                 pattern="x", transformations={"metricName": "SpendCapHit", "metricNamespace": "Genealogy/SearchAgent"})
+    else:
+        # Recorded, and feeding a metric alarms.json no longer names: only the recorded look finds it.
+        fake.add("log", group)
+        fake.add("mfilter", f"{group}|genealogy-u13-reauth-1", group=group, filter="genealogy-u13-reauth-1",
+                 pattern="x", transformations={"metricName": "Renamed", "metricNamespace": "Genealogy/SearchAgent"})
     rc, lines = run(env, fake, "prove-empty", "--repoll-s", "0")
     assert rc == 1, lines
     assert any("NOT EMPTY" in line for line in lines)
+    if leftover in ("alarm", "metric_filter", "recorded_metric_filter"):
+        name = {"alarm": "genealogy-u13-dlq_depth", "metric_filter": "genealogy-u13-spend_cap-1",
+                "recorded_metric_filter": "genealogy-u13-reauth-1"}[leftover]
+        assert any("NOT EMPTY" in line and name in line for line in lines), lines
+
+
+def test_prove_empty_passes_tag_index_entries_ec2_reports_gone(stack):
+    """A terminated instance stays in the tag index for up to an hour, past the re-poll; on the
+    rehearsal prove-empty said NOT EMPTY for four terminated instances and a deleted volume
+    (U13, 2026-10-08). Those are verified gone through EC2 and pass."""
+    env, fake, _ = stack
+    assert run(env, fake, "down", "--billed")[0] == 0
+    fake.leftover["tagged"] = [f"arn:aws:ec2:us-east-1:{ACCOUNT}:instance/i-0aaa",
+                               f"arn:aws:ec2:us-east-1:{ACCOUNT}:volume/vol-0bbb"]
+    fake.leftover["instance_states"] = {"i-0aaa": "terminated"}
+    rc, lines = run(env, fake, "prove-empty", "--repoll-s", "0")
+    assert rc == 0, lines
+    assert any("EC2 or ACM reports gone" in line for line in lines)
+
+
+@pytest.mark.parametrize("arn_tail, states, volumes", [
+    ("instance/i-0aaa", {"i-0aaa": "stopped"}, []),
+    ("instance/i-0aaa", {"i-0aaa": "shutting-down"}, []),
+    ("volume/vol-0bbb", {}, ["vol-0bbb"]),
+])
+def test_prove_empty_still_fails_on_an_ec2_resource_that_is_not_gone(stack, arn_tail, states, volumes):
+    env, fake, _ = stack
+    assert run(env, fake, "down", "--billed")[0] == 0
+    fake.leftover["tagged"] = [f"arn:aws:ec2:us-east-1:{ACCOUNT}:{arn_tail}"]
+    fake.leftover["instance_states"] = states
+    fake.leftover["volumes"] = volumes
+    rc, lines = run(env, fake, "prove-empty", "--repoll-s", "0")
+    assert rc == 1, lines
+    assert any("NOT EMPTY" in line for line in lines)
+
+
+# ── alarms (U19) ──────────────────────────────────────────────────────────────────────
+
+
+ALARMS = rh.load_alarms()
+
+
+@pytest.fixture
+def alarmed(stack):
+    env, fake, lines = stack
+    fake.reset()
+    rc, out = run(env, fake, "up", "--billed", "--phase", "alarms")
+    assert rc == 0, out[-5:]
+    return env, fake, out
+
+
+def _alarm_puts(fake) -> dict[str, list[str]]:
+    return {a[a.index("--alarm-name") + 1]: a for a in fake.calls_to("cloudwatch", "put-metric-alarm")}
+
+
+def test_alarms_phase_puts_every_alarm_actions_off_named_tagged_and_in_us_east_1(alarmed):
+    env, fake, _ = alarmed
+    run_id = json.loads((env["work"] / "inventory.json").read_text(encoding="utf-8"))["run_id"]
+    puts = _alarm_puts(fake)
+    assert set(puts) == {f"genealogy-u13-{a['name']}" for a in ALARMS}
+    for name, argv in puts.items():
+        assert "--no-actions-enabled" in argv and "--actions-enabled" not in argv, name
+        assert not any(f in argv for f in ("--alarm-actions", "--ok-actions", "--insufficient-data-actions")), name
+        tags = _flag_values(argv, "--tags")
+        assert "Key=genealogy:rehearsal,Value=u13" in tags and f"Key=genealogy:run,Value={run_id}" in tags, name
+    for argv in fake.calls:
+        assert argv[argv.index("--region") + 1] == "us-east-1"
+    assert all(not a["ActionsEnabled"] for a in fake.cloudwatch_describe_alarms([])["MetricAlarms"])
+
+
+def test_alarms_phase_takes_every_setting_from_the_file(alarmed):
+    _, fake, _ = alarmed
+    puts = _alarm_puts(fake)
+    for a in ALARMS:
+        argv = puts[f"genealogy-u13-{a['name']}"]
+        assert _flag(argv, "--namespace") == a["namespace"] and _flag(argv, "--metric-name") == a["metric"]
+        assert _flag(argv, "--statistic") == a["statistic"] and _flag(argv, "--period") == str(a["period_s"])
+        assert _flag(argv, "--evaluation-periods") == str(a["evaluation_periods"])
+        assert _flag(argv, "--threshold") == str(a["threshold"])
+        assert _flag(argv, "--comparison-operator") == a["comparison"]
+        assert _flag(argv, "--treat-missing-data") == a["treat_missing"]
+        if a["kind"] == "sqs":
+            assert a["namespace"] == "AWS/SQS"
+            want = {"dlq": "q-genealogy-u13-worker-dlq", "worker": "q-genealogy-u13-worker"}[a["queue"]]
+            assert _flag(argv, "--dimensions") == f"Name=QueueName,Value={want}", a["name"]
+        else:
+            assert "--dimensions" not in argv, a["name"]
+
+
+def test_alarms_phase_puts_one_metric_filter_per_source_on_the_tier_log(alarmed):
+    env, fake, _ = alarmed
+    calls = fake.calls_to("logs", "put-metric-filter")
+    want = {(f"/aws/elasticbeanstalk/genealogy-u13-{f['tier']}/var/log/web.stdout.log",
+             f"genealogy-u13-{a['name']}-{n}", f["pattern"],
+             f"metricName={a['metric']},metricNamespace={a['namespace']},metricValue=1")
+            for a in ALARMS if a["kind"] == "log" for n, f in enumerate(a["filters"], 1)}
+    got = {(_flag(c, "--log-group-name"), _flag(c, "--filter-name"), _flag(c, "--filter-pattern"),
+            _flag(c, "--metric-transformations")) for c in calls}
+    assert got == want and len(calls) == len(want)
+    assert "defaultValue" not in " ".join(" ".join(c) for c in calls)
+    inv = json.loads((env["work"] / "inventory.json").read_text(encoding="utf-8"))
+    recorded = {(r["log_group"], r["id"]) for r in inv["resources"] if r["kind"] == "metric-filter"}
+    assert recorded == {(g, n) for g, n, _, _ in want}
+
+
+def test_alarms_phase_reads_the_dlq_from_the_redrive_policy_when_beanstalk_does_not_list_it(env):
+    fake = FakeAws()
+    fake.dlq_in_resources = False
+    assert up_all(env, fake)[0] == 0
+    rc, lines = run(env, fake, "up", "--billed", "--phase", "alarms")
+    assert rc == 0, lines[-3:]
+    assert fake.calls_to("sqs", "get-queue-attributes")
+    dims = _flag(_alarm_puts(fake)["genealogy-u13-dlq_depth"], "--dimensions")
+    assert dims == "Name=QueueName,Value=q-genealogy-u13-worker-redrive-dlq"
+    assert any("RedrivePolicy" in line for line in lines)
+
+
+def test_alarms_phase_with_the_dlq_listed_asks_no_redrive_policy(alarmed):
+    _, fake, lines = alarmed
+    assert not fake.calls_to("sqs", "get-queue-attributes")
+    assert any("WorkerDeadLetterQueue" in line for line in lines)
+
+
+@pytest.mark.parametrize("phases", [(), ("tools", "worker", "queue")])
+def test_alarms_phase_refuses_before_the_environments_exist(env, phases, capsys):
+    fake = FakeAws()
+    if phases:
+        assert run(env, fake, "up", "--billed", "--phase", "all", "--bundles-dir", str(env["bundles"]),
+                   "--env-file", str(env["env_file"]))[0] == 0
+        inv_path = env["work"] / "inventory.json"
+        inv = json.loads(inv_path.read_text(encoding="utf-8"))
+        del inv["state"]["envs"]["web"]
+        inv_path.write_text(json.dumps(inv), encoding="utf-8")
+    fake.reset()
+    rc, _ = run(env, fake, "up", "--billed", "--phase", "alarms")
+    assert rc == 2
+    assert fake.ops() == [("sts", "get-caller-identity")]
+    assert "up --phase" in capsys.readouterr().err
+
+
+def test_down_deletes_alarms_and_filters_before_the_log_groups_and_is_rerunnable(alarmed):
+    env, fake, _ = alarmed
+    fake.reset()
+    assert run(env, fake, "down", "--billed")[0] == 0
+    ops = fake.ops()
+    assert ops.index(("cloudwatch", "delete-alarms")) < ops.index(("logs", "delete-log-group"))
+    last_filter = max(i for i, op in enumerate(ops) if op == ("logs", "delete-metric-filter"))
+    assert last_filter < ops.index(("logs", "delete-log-group"))
+    deleted = {_flag(a, "--alarm-names") for a in fake.calls_to("cloudwatch", "delete-alarms")}
+    assert deleted == {f"genealogy-u13-{a['name']}" for a in ALARMS}
+    assert not fake.all("alarm") and not fake.all("mfilter")
+    assert not [c for c in fake.calls_to("logs", "delete-metric-filter")
+                if _flag(c, "--filter-name").startswith(("other-", "fs-port"))]
+    rc, lines = run(env, fake, "down", "--billed")
+    assert rc == 0, lines[-3:]
+
+
+def test_prove_empty_asks_metric_filters_by_metric_not_by_a_bare_name_prefix(alarmed):
+    env, fake, _ = alarmed
+    assert run(env, fake, "down", "--billed")[0] == 0
+    fake.reset()
+    rc, lines = run(env, fake, "prove-empty")
+    assert rc == 0, [line for line in lines if "NOT EMPTY" in line]
+    calls = fake.calls_to("logs", "describe-metric-filters")
+    by_metric = {(_flag(c, "--metric-namespace"), _flag(c, "--metric-name")) for c in calls
+                 if "--metric-name" in c}
+    assert by_metric == {(a["namespace"], a["metric"]) for a in ALARMS if a["kind"] == "log"}
+    assert all("--log-group-name" in c for c in calls if "--filter-name-prefix" in c)
+    alarms = fake.calls_to("cloudwatch", "describe-alarms")
+    assert any(_flag(c, "--alarm-name-prefix") == "genealogy-u13-" for c in alarms)
+
+
+@pytest.mark.parametrize("mode, rc", [(None, 0), ("miss", 1), ("hit", 1)])
+def test_alarms_test_filters_exits_1_on_any_disagreement(env, mode, rc):
+    fake = FakeAws()
+    fake.filter_mode = mode
+    got, lines = run(env, fake, "alarms", "--test-filters")
+    assert got == rc, lines
+    disagreements = [line for line in lines if line.startswith("DISAGREE ")]
+    assert bool(disagreements) == bool(rc)
+    samples = sum(len(a["samples"]["match"]) for a in ALARMS if a["kind"] == "log")
+    no_match = sum(len(a["samples"]["no_match"]) for a in ALARMS if a["kind"] == "log")
+    if mode == "miss":
+        assert len(disagreements) == samples
+    elif mode == "hit":
+        assert len(disagreements) == no_match
+    calls = fake.calls_to("logs", "test-metric-filter")
+    assert len(calls) == sum(len(a["filters"]) for a in ALARMS if a["kind"] == "log")
+    for c in calls:
+        assert "--log-event-messages" not in c, "samples go through a file: the CLI splits a list value on commas"
+    assert set(fake.ops()) == {("sts", "get-caller-identity"), ("logs", "test-metric-filter")}
+    assert not (env["work"] / "inventory.json").exists(), "no stack, nothing recorded"
+
+
+def test_alarms_test_filters_reports_one_bad_sample_by_name(env, tmp_path, monkeypatch):
+    data = json.loads(rh.ALARMS_FILE.read_text(encoding="utf-8"))
+    spend = next(a for a in data["alarms"] if a["name"] == "spend_cap")
+    planted = spend["samples"]["match"][0]
+    spend["samples"]["no_match"].append(planted)
+    path = tmp_path / "alarms.json"
+    path.write_text(json.dumps(data), encoding="utf-8")
+    monkeypatch.setattr(rh, "ALARMS_FILE", path)
+    rc, lines = run(env, FakeAws(), "alarms", "--test-filters")
+    assert rc == 1
+    bad = [line for line in lines if line.startswith("DISAGREE ")]
+    assert len(bad) == 1 and bad[0].startswith("DISAGREE spend_cap: no_match sample 4") and planted in bad[0]
+
+
+def test_alarms_states_prints_state_and_last_change(alarmed):
+    env, fake, _ = alarmed
+    fake.alarm_states["genealogy-u13-dlq_depth"] = "ALARM"
+    fake.reset()
+    rc, lines = run(env, fake, "alarms", "--states")
+    assert rc == 0
+    kv = _kv(lines)
+    assert kv["genealogy-u13-dlq_depth.state"] == "ALARM"
+    assert kv["genealogy-u13-dlq_depth.history.summary"] == "Alarm updated from OK to ALARM"
+    assert kv["genealogy-u13-reauth.state"] == "OK" and kv["genealogy-u13-reauth.history"] == "none"
+    assert all(kv[f"genealogy-u13-{a['name']}.actions_enabled"] == "false" for a in ALARMS)
+    assert not [op for op in fake.ops() if op[1].startswith(("put-", "delete-", "send-"))]
+
+
+def test_alarms_needs_a_flag(env):
+    fake = FakeAws()
+    rc, _ = run(env, fake, "alarms")
+    assert rc == 2 and fake.calls == []
+
+
+def test_alarm_trip_dlq_sends_a_message_naming_no_turn_and_exits_0_on_alarm(alarmed):
+    env, fake, _ = alarmed
+    fake.trips.add("genealogy-u13-dlq_depth")
+    rc, lines = run(env, fake, "alarm-trip", "--billed", "--alarm", "dlq_depth", "--timeout", "0")
+    assert rc == 0, lines[-3:]
+    assert len(fake.sent) == 1 and fake.sent[0]["url"].endswith("/q-genealogy-u13-worker")
+    body = json.loads(fake.sent[0]["body"])
+    assert {"turn_id", "session_id", "project_id"} <= set(body) and body["turn_id"].startswith("u19-trip-")
+
+
+@pytest.mark.parametrize("name", ["spend_cap", "long_agent", "no_progress", "reauth"])
+def test_alarm_trip_recipe_only_alarms_change_nothing_and_exit_1_on_timeout(alarmed, name):
+    env, fake, _ = alarmed
+    fake.reset()
+    rc, lines = run(env, fake, "alarm-trip", "--billed", "--alarm", name, "--timeout", "0")
+    assert rc == 1
+    want = next(a["trip"] for a in ALARMS if a["name"] == name)
+    assert any(want in line for line in lines)
+    assert any("up to 0s: genealogy-u13-" in line for line in lines), "--timeout bounds the poll"
+    assert set(fake.ops()) == {("sts", "get-caller-identity"), ("cloudwatch", "describe-alarms"),
+                               ("cloudwatch", "set-alarm-state")}
+
+
+@pytest.mark.parametrize("trips, rc", [(False, 1), (True, 0)])
+def test_alarm_trip_message_age_restores_the_threshold_even_on_timeout(alarmed, trips, rc):
+    env, fake, _ = alarmed
+    if trips:
+        fake.trips.add("genealogy-u13-message_age")
+    fake.reset()
+    got, lines = run(env, fake, "alarm-trip", "--billed", "--alarm", "message_age", "--timeout", "0")
+    assert got == rc, lines[-3:]
+    thresholds = [_flag(a, "--threshold") for a in fake.calls_to("cloudwatch", "put-metric-alarm")]
+    assert thresholds == ["60", "37000"]
+    assert fake.get("alarm", "genealogy-u13-message_age")["threshold"] == "37000"
+    for a in fake.calls_to("cloudwatch", "put-metric-alarm"):
+        assert "--no-actions-enabled" in a
+
+
+def test_an_alarm_already_in_alarm_is_not_counted_as_tripped(alarmed):
+    """Reset first: a stale ALARM (an earlier trip, a real breach) must not pass for this one."""
+    env, fake, _ = alarmed
+    fake.alarm_states["genealogy-u13-spend_cap"] = "ALARM"
+    fake.reset()
+    rc, _ = run(env, fake, "alarm-trip", "--billed", "--alarm", "spend_cap", "--timeout", "0")
+    assert rc == 1
+    [reset] = fake.calls_to("cloudwatch", "set-alarm-state")
+    assert _flag(reset, "--state-value") == "OK"
+
+
+def test_alarm_trip_message_age_restores_when_interrupted(alarmed):
+    env, fake, _ = alarmed
+
+    def sleep(seconds):
+        raise KeyboardInterrupt
+
+    fake.reset()
+    rc, _ = run(env, fake, "alarm-trip", "--billed", "--alarm", "message_age", sleep=sleep)
+    assert rc == 130
+    assert [_flag(a, "--threshold") for a in fake.calls_to("cloudwatch", "put-metric-alarm")] == ["60", "37000"]
+
+
+@pytest.mark.parametrize("argv", [["--alarm", "nope"], ["--alarm", "dlq_depth", "--timeout", "-1"]])
+def test_alarm_trip_refuses_an_unknown_alarm_or_timeout_with_no_call(env, argv):
+    fake = FakeAws()
+    rc, _ = run(env, fake, "alarm-trip", "--billed", *argv)
+    assert rc == 2 and fake.calls == []
+
+
+def test_alarm_trip_refuses_before_the_alarms_phase(stack):
+    env, fake, _ = stack
+    fake.reset()
+    rc, _ = run(env, fake, "alarm-trip", "--billed", "--alarm", "dlq_depth")
+    assert rc == 2 and not fake.sent
+    unbilled = FakeAws()
+    assert run(env, unbilled, "alarm-trip", "--alarm", "dlq_depth")[0] == 2
+    assert unbilled.calls == [], "--billed is checked before any call"
 
 
 # ── status ────────────────────────────────────────────────────────────────────────────
@@ -1316,6 +2195,25 @@ def test_status_reads_options_as_beanstalk_reports_them(stack):
     rc, lines = run(env, fake, "status")
     assert rc == 1
     assert sum("drift" in line for line in lines) == 2
+
+
+@pytest.mark.parametrize("value, drift", [
+    (SLOT_USERS[4], True),
+    ("genealogy-turn-0", True),
+    (SLOT_USERS[2], False),  # 02-worker.config's own value
+    ("genealogy-turn-0,genealogy-turn-1", False),  # split as the worker splits it
+    (None, False),  # absent: the template's applies
+])
+def test_drift_reports_a_left_over_worker_turn_users(stack, value, drift):
+    assert rh.template_env("worker")["WORKER_TURN_USERS"] == SLOT_USERS[2]
+    env, fake, _ = stack
+    live = fake.env_settings[rh.ENV_NAMES["worker"]]
+    live.pop((rh.ENV_NS, "WORKER_TURN_USERS"), None)
+    if value is not None:
+        live[(rh.ENV_NS, "WORKER_TURN_USERS")] = value
+    rc, lines = run(env, fake, "status")
+    found = [line for line in lines if line.startswith("  drift:") and "WORKER_TURN_USERS" in line]
+    assert (rc, len(found)) == ((1, 1) if drift else (0, 0)), lines
 
 
 def test_probe_reports_an_update_beanstalk_rejected_and_still_restores(stack):
@@ -1373,6 +2271,131 @@ def test_resume_starts_rds_before_the_bastion_and_the_tiers(stack):
         assert opts == {(rh.ASG_NS, "MinSize"): "1", (rh.ASG_NS, "MaxSize"): "1"}
 
 
+# ── cpu ───────────────────────────────────────────────────────────────────────────────
+
+
+WORKER_I, TOOLS_I = "i-genealogy-u13-worker", "i-genealogy-u13-tools"
+WINDOW = ("--start", "2026-10-10T12:00:00Z", "--end", "2026-10-10T12:30:00Z")
+
+
+def _points(*rows):
+    """(minute past 12:00, Average, Maximum) per 5-minute point, as the CLI prints them."""
+    return [{"Timestamp": f"2026-10-10T12:{m:02d}:00+00:00", "Average": a, "Maximum": x, "Unit": "Percent"}
+            for m, a, x in rows]
+
+
+def _kv(lines):
+    return dict(line.split("=", 1) for line in lines if "=" in line and not line.startswith(("+ ", "# ")))
+
+
+def test_cpu_reads_cloudwatch_and_credit_mode(stack):
+    env, fake, _ = stack
+    fake.metrics = {("AWS/EC2", "CPUUtilization", WORKER_I): _points((0, 40.0, 70.0), (25, 60.0, 90.0)),
+                    ("AWS/EC2", "CPUCreditBalance", WORKER_I): _points((25, 80.0, 80.0), (0, 100.0, 100.0)),
+                    ("AWS/EC2", "CPUUtilization", TOOLS_I): _points((25, 2.0, 5.0)),
+                    ("AWS/RDS", "CPUUtilization", rh.RDS_ID): _points((25, 10.0, 30.0))}
+    fake.reset()
+    rc, lines = run(env, fake, "cpu", *WINDOW)
+    assert rc == 0, lines
+    assert fake.ops()[0] == ("sts", "get-caller-identity")
+    assert all(op.startswith(("describe-", "get-")) for _, op in fake.ops()), "read-only"
+    stats = fake.calls_to("cloudwatch", "get-metric-statistics")
+    assert len(stats) == 3 * len(rh.CPU_METRICS)
+    seen = set()
+    for a in stats:
+        assert (_flag(a, "--start-time"), _flag(a, "--end-time")) == ("2026-10-10T12:00:00Z", "2026-10-10T12:30:00Z")
+        assert _flag(a, "--period") == "300" and _flag_values(a, "--statistics") == ["Average", "Maximum"]
+        seen.add((_flag(a, "--namespace"), _flag(a, "--metric-name"), _flag(a, "--dimensions")))
+    assert seen == {(ns, m, f"Name={dim},Value={v}") for m in rh.CPU_METRICS for ns, dim, v in (
+        ("AWS/EC2", "InstanceId", WORKER_I), ("AWS/EC2", "InstanceId", TOOLS_I),
+        ("AWS/RDS", "DBInstanceIdentifier", rh.RDS_ID))}
+    assert [_flag_values(a, "--instance-ids") for a in fake.calls_to("ec2", "describe-instance-credit-specifications")] \
+        == [[WORKER_I], [TOOLS_I]]
+    out = _kv(lines)
+    assert (out["window_start"], out["window_end"]) == ("2026-10-10T12:00:00Z", "2026-10-10T12:30:00Z")
+    assert (out["worker_id"], out["tools_id"], out["rds_id"]) == (WORKER_I, TOOLS_I, rh.RDS_ID)
+    assert (out["worker.credits"], out["tools.credits"]) == ("unlimited", "standard")
+    assert {k: out[f"worker.CPUUtilization.{k}"] for k in ("points", "first", "last", "avg", "max", "last_at")} == {
+        "points": "2", "first": "40", "last": "60", "avg": "50", "max": "90", "last_at": "2026-10-10T12:25:00Z"}
+    assert (out["worker.CPUCreditBalance.first"], out["worker.CPUCreditBalance.last"]) == ("100", "80"), "time order"
+    assert out["rds.CPUUtilization.max"] == "30" and out["tools.CPUUtilization.avg"] == "2"
+    assert out["worker.CPUSurplusCreditsCharged"] == "no_data" and out["rds.CPUCreditBalance"] == "no_data"
+
+
+# The window bounds.py prints: seconds from Postgres now(), so off CloudWatch's bucket grid.
+OFF_GRID = ("--start", "2026-10-10T12:00:19Z", "--end", "2026-10-10T12:15:19Z")
+
+
+@pytest.mark.parametrize("window, points, rc", [
+    (WINDOW, ((0, 40.0, 70.0), (25, 60.0, 90.0)), 0),  # 12:25's bucket is the last full one
+    (WINDOW, ((0, 40.0, 70.0), (20, 60.0, 90.0)), 1),  # 12:25's is not published yet
+    (OFF_GRID, ((0, 40.0, 70.0), (5, 50.0, 80.0), (10, 60.0, 90.0)), 0),  # 12:10-12:15 is the last full one
+    (OFF_GRID, ((0, 40.0, 70.0), (5, 50.0, 80.0)), 1),  # 12:10's is not published yet
+    (WINDOW, (), 1),
+    ((), (), 0),  # no --end: a credit-mode and balance read, never "not yet"
+])
+def test_cpu_exits_nonzero_until_the_last_full_bucket_is_published(stack, window, points, rc):
+    env, fake, _ = stack
+    fake.metrics = {("AWS/EC2", "CPUUtilization", WORKER_I): _points(*points)}
+    got, lines = run(env, fake, "cpu", *window)
+    assert got == rc, lines
+    assert any("no point yet for the bucket ending" in line for line in lines) == (rc == 1)
+
+
+def test_cpu_reads_only_the_grid_buckets_inside_an_off_minute_window(stack):
+    """12:03:19-12:18:19 queried from 12:03 put 12:15's point, which covers 12:15-12:20, in the
+    last bucket: CPU after --end in the figures."""
+    env, fake, _ = stack
+    fake.metrics = {("AWS/EC2", "CPUUtilization", WORKER_I): _points(
+        (0, 1.0, 1.0), (5, 40.0, 50.0), (10, 60.0, 70.0), (15, 99.0, 99.0), (20, 99.0, 99.0))}
+    fake.reset()
+    rc, lines = run(env, fake, "cpu", "--start", "2026-10-10T12:03:19Z", "--end", "2026-10-10T12:18:19Z")
+    assert rc == 0, lines
+    for a in fake.calls_to("cloudwatch", "get-metric-statistics"):
+        assert (_flag(a, "--start-time"), _flag(a, "--end-time")) == ("2026-10-10T12:05:00Z", "2026-10-10T12:15:00Z")
+    out = _kv(lines)
+    assert (out["grid_start"], out["grid_end"]) == ("2026-10-10T12:05:00Z", "2026-10-10T12:15:00Z")
+    assert {k: out[f"worker.CPUUtilization.{k}"] for k in ("points", "avg", "max", "last_at")} == {
+        "points": "2", "avg": "50", "max": "70", "last_at": "2026-10-10T12:10:00Z"}
+
+
+@pytest.mark.parametrize("window", [("--start", "2026-10-10T12:01:00Z", "--end", "2026-10-10T12:04:00Z"),
+                                    ("--start", "2026-10-10T12:06:00Z", "--end", "2026-10-10T12:14:59Z")])
+def test_cpu_refuses_a_window_with_no_whole_grid_bucket(stack, window, capsys):
+    env, fake, _ = stack
+    fake.reset()
+    assert run(env, fake, "cpu", *window)[0] == 2
+    assert "no whole 5-minute CloudWatch bucket" in capsys.readouterr().err
+    assert not fake.calls, "refused before any call"
+
+
+def test_cpu_accepts_a_window_of_exactly_one_grid_bucket(stack):
+    env, fake, _ = stack
+    fake.metrics = {("AWS/EC2", "CPUUtilization", WORKER_I): _points((5, 30.0, 40.0))}
+    rc, lines = run(env, fake, "cpu", "--start", "2026-10-10T12:04:59Z", "--end", "2026-10-10T12:10:00Z")
+    assert rc == 0, lines
+    assert _kv(lines)["worker.CPUUtilization.points"] == "1"
+
+
+def test_cpu_reads_a_released_worker_by_id(stack, capsys):
+    env, fake, _ = stack
+    gone = "i-0123456789abcdef0"
+    fake.metrics = {("AWS/EC2", "CPUUtilization", gone): _points((25, 1.0, 2.0))}
+    fake.reset()
+    rc, lines = run(env, fake, "cpu", *WINDOW, "--worker-instance", gone)
+    assert rc == 0, lines
+    out = _kv(lines)
+    assert out["worker_id"] == gone and out["worker.credits"] == "unknown" and out["worker.CPUUtilization.max"] == "2"
+    assert [_flag(a, "--environment-name") for a in fake.calls_to("elasticbeanstalk", "describe-environment-resources")] \
+        == [rh.ENV_NAMES["tools"]]
+    for bad in (("--worker-instance", "genealogy-u13-worker"), ("--start", "2026-10-10T12:00:00"),
+                ("--start", "2026-10-10T12:30:00Z", "--end", "2026-10-10T12:00:00Z")):
+        fake.reset()
+        assert run(env, fake, "cpu", *bad)[0] == 2, bad
+        assert not fake.calls, "refused before any call"
+    capsys.readouterr()
+
+
 # ── dry-run ───────────────────────────────────────────────────────────────────────────
 
 
@@ -1383,7 +2406,13 @@ def _no_aws(argv):
 @pytest.mark.parametrize("cmd", [["plan"], ["up", "--phase", "all", "--phase", "signin", "--phase", "resolver",
                                             "--dry-run"],
                                  ["down", "--dry-run"], ["probe", "--case", "kill_window", "--case",
-                                                         "idle_session_60s", "--case", "graviton_boot", "--dry-run"]])
+                                                         "idle_session_60s", "--case", "graviton_boot", "--dry-run"],
+                                 ["probe", "--case", "slots_4", "--case", "worker_xlarge", "--dry-run"],
+                                 ["cpu", "--start", "2026-10-10T12:00:00Z", "--end", "2026-10-10T12:30:00Z", "--dry-run"],
+                                 ["cpu", "--dry-run"], ["up", "--phase", "alarms", "--dry-run"],
+                                 ["alarms", "--states", "--test-filters", "--dry-run"],
+                                 ["alarm-trip", "--alarm", "message_age", "--dry-run"],
+                                 ["alarm-trip", "--alarm", "dlq_depth", "--dry-run"]])
 def test_dry_run_calls_nothing_and_prints_pasteable_commands(env, cmd):
     rc, lines = run(env, _no_aws, *cmd)
     assert rc == 0, lines[-3:]

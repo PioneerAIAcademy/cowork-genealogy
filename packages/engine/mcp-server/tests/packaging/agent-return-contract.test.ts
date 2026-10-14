@@ -36,6 +36,8 @@ const HEADING = /^#{2,4}\s+`summary_for_user`\s*$/m;
 
 const EXCLUDED: Record<string, string> = {
   "image-reader.md": "returns a full transcription and nothing else, by spec",
+  "record-structurer.md":
+    "returns extraction_append's code-written summary verbatim (lead, 2026-09-29)",
   "project-status.md":
     "returns the user-friendly and detailed summaries, warnings first, as its whole output, by its own contract",
   // Issue #2796, applying issue #2793's "PS return: A" ruling (2026-09-24): the
@@ -47,11 +49,10 @@ const EXCLUDED: Record<string, string> = {
 };
 
 const PENDING: Record<string, string> = {
-  "person-evidence.md": "lands with its next body edit (issues #2272 / #2537)",
   "research-exhaustiveness.md": "lands with its next body edit",
   "gps-mentor.md":
     "lands with the narrative_for_user split (spec §8, §11.1) on its next body edit",
-  // NOT "lands with its next body edit" like the three above. This one is a
+  // NOT "lands with its next body edit" like the two above. This one is a
   // measured conflict, and the premise of the 2026-09-18 ruling does not hold
   // for it: that ruling exists because "an agent body without the field is an
   // agent whose work reaches the researcher as nothing", and this agent's

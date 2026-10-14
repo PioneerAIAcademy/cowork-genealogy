@@ -1,0 +1,19 @@
+{
+  "findings": [
+    {
+      "id": "f1",
+      "type": "fact",
+      "description": "Elsa Brita Heikkinen was born in May 1832, according to the 1851-1860 church census (communion book) of Iisalmi rural parish, which lists her in the village of Kilpisaari; the index gives no birthplace, so the place is the parish of the entry.",
+      "details": {
+        "subject_person": "Elsa Brita Heikkinen (M76V-5PF)",
+        "fact_type": "Birth",
+        "date": "May 1832",
+        "place": "Iisalmi, Kuopio, Finland"
+      },
+      "supporting_sources": [
+        "Finland, Church Census and Pre-Confirmation Books, 1600-1916 — entry for Elsa Brita Heickinen, Kilpisaari, Iisalmen maalaiskunta, 1851-1860 (ark:/61903/1:1:QLVK-ZPHR)"
+      ],
+      "required": true
+    }
+  ]
+}

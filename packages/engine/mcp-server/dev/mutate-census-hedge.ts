@@ -58,7 +58,7 @@ const SPEC = "tests/tools/pre1880-census-hedge.test.ts";
 
 /** [label, literal substring of the source, what to replace it with]. */
 const MUTATIONS: readonly (readonly [string, string, string])[] = [
-  ["coresidence arm", "if (CORESIDENCE_CLAIM.test(notes)) return true;", ""],
+  ["coresidence arm", "CORESIDENCE_CLAIM.test(notes) || CORESIDENTS_NAMED", "CORESIDENTS_NAMED"],
   ["compound arm", "|| hasHouseholdCompound(sentence)", ""],
   ["place guard", 'run.every((t) => !PLACE_MARKER_ONLY.test(t.replace(/\\.$/, "")))', "true"],
   ["complement guard", "(?![ ]${HOUSEHOLD_COMPLEMENT}\\b)", ""],
@@ -74,8 +74,31 @@ const MUTATIONS: readonly (readonly [string, string, string])[] = [
   ["head participle", "head(?:s|ing|ed)?\\s+(?:a|the", "heads?\\s+(?:a|the"],
   ["kinship: children", "|parents?|children)", "|parents?)"],
   ["kinship: report verb", "(?:(?:is|was|are|were)\\s+(?:listed|recorded|shown|given|named)\\s+as\\s+)?", ""],
-  ["kinship: possessive carve-out", "(?<!\\b(?:his|her|their)\\s)", ""],
+  ["kinship: possessive carve-out", "/(?<!\\b(?:his|her|their)\\s)\\b(?:mother|", "/\\b(?:mother|"],
   ["hyphen in the hedge", "relationship[\\s-]+(?:to[\\s-]+head[\\s-]+)?column", "relationship\\s+(?:to\\s+head\\s+)?column"],
+  ["roster arm", " || hasHouseholdRoster(sentence)", ""],
+  ["roster place guard", 'run.split(" ").some((t) => PLACE_MARKER_ONLY.test(t.replace(/\\.$/, "")));', "false;"],
+  ["roster: linking words", "((?:[ ][a-z][\\w.'’-]*){0,3})", "()"],
+  ["roster: several linking words", "((?:[ ][a-z][\\w.'’-]*){0,3})", "((?:[ ][a-z][\\w.'’-]*){0,1})"],
+  ["roster of spellings", "if (ROSTER_OF_SPELLINGS.test(m[1])) continue;", ""],
+  ["roster of places", "if (ROSTER_OF_PLACES.test(sentence.slice((m.index ?? 0) + m[0].length))) continue;", ""],
+  ["kinship: plural punctuation", "(payloadYears.length > 0 && PLURAL_KINSHIP_PUNCTUATED.test(notes)) ||", ""],
+  ["plural punctuation: payload only", "(payloadYears.length > 0 && PLURAL_KINSHIP_PUNCTUATED", "(PLURAL_KINSHIP_PUNCTUATED"],
+  ["as role", "assertsAsRole(notes) ||", ""],
+  ["as role: other-source sentence", " && !SOURCE_NAMED.test(sentence.toLowerCase())", ""],
+  ["as role: tree sentence", " && !/\\btree\\b/i.test(sentence)", ""],
+  ["as role: initial not a stop", ".split(/(?<!\\b[A-Z])[.;]\\s/)", ".split(/[.;]\\s/)"],
+  ["household head named", "HOUSEHOLD_HEAD_NAMED.test(notes) ||", ""],
+  ["roster place names", 'ROSTER_PLACE_NAMES.has(run.replace(/\\.$/, "")) ||', ""],
+  ["possessive kinship", "(payloadYears.length > 0 && POSSESSIVE_KINSHIP.test(notes)) ||", ""],
+  ["possessive: payload only", "(payloadYears.length > 0 && POSSESSIVE_KINSHIP", "(POSSESSIVE_KINSHIP"],
+  ["coresidents named", " || CORESIDENTS_NAMED.test(notes)) return true;", ") return true;"],
+  ["coresidents: names required", "(?:(?:are|were|include[sd]?|including)\\s+|:\\s*)?(?!(?:None|No|Not|Nil|N\\/A)\\b)[A-Z]/", "/"],
+  ["coresidents: none is no name", "(?!(?:None|No|Not|Nil|N\\/A)\\b)", ""],
+  ["hedge: no relationships stated", "/\\bno\\s+relationships?\\s+(?:is\\s+|are\\s+|was\\s+|were\\s+)?(?:stated|given|recorded|listed)\\b/.test(text) ||", ""],
+  ["hedge: does not record a relationship", "/\\b(?:does|did)(?:\\s+not|n['’]t)\\s+record\\b[^.]{0,60}\\brelationship/.test(text) ||", ""],
+  ["pre- binding", "Number(y) - (before && i === 0 ? 1 : 0)", "Number(y)"],
+  ["pre- first year only", "(before && i === 0 ? 1 : 0)", "(before ? 1 : 0)"],
 ];
 
 /** `{ passed, failed }` from one vitest run, or null if none was parsed. */

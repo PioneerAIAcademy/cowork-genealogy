@@ -264,6 +264,7 @@ describe("project_create", () => {
   // ── A project cannot nest inside another (issue #1869) ──────────────────
 
   it("refuses when an ancestor directory already holds a project, naming it, and writes NEITHER file", async () => {
+    fileStoreOnly("projects do not nest in Postgres: findNestingAncestor is always null there");
     // The viewer watches one folder; a project created one level down inside
     // an existing project reads to a tester as lost files between sessions
     // (issue #1317 bug 2). This is the durable fix: refuse at create time.
@@ -284,6 +285,7 @@ describe("project_create", () => {
   });
 
   it("refuses several levels down too, naming the nearest ancestor", async () => {
+    fileStoreOnly("projects do not nest in Postgres: findNestingAncestor is always null there");
     await writeFile(join(dir, "research.json"), '{"project":{"objective":"existing"}}');
     await writeFile(join(dir, "tree.gedcomx.json"), '{"persons":[],"relationships":[],"sources":[]}');
     const deep = join(dir, "a", "b", "c");
@@ -411,6 +413,7 @@ describe("project_create", () => {
 
 import { readFileSync } from "node:fs";
 import { stagePersonRead } from "../../src/tools/person-read.js";
+import { fileStoreOnly } from "../helpers/store-backend.js";
 
 const FAMILY = JSON.parse(
   readFileSync(
@@ -631,6 +634,36 @@ describe("project_create — personReadRef (#2944 Stage B)", () => {
     expect(result.errors.join(" ")).toMatch(message);
     expect(await exists("tree.gedcomx.json")).toBe(false);
     expect(await exists("research.json")).toBe(false);
+  });
+
+  it("accepts a Step parent beside a staged Biological one on the same pair", async () => {
+    // The repeat refusal above asks "is this relationship already here", which
+    // `relationshipMatches` answers: an untyped edge restating a staged
+    // Biological one IS a repeat, a Step edge beside it is a second
+    // relationship. Before the shared predicate replaced this file's private
+    // type-and-endpoints key, the two collided and this threw "repeats a
+    // relationship already in the tree".
+    const ref = await stageFamily();
+    const result: any = await projectCreate({
+      projectPath: dir,
+      objective: "x",
+      personReadRef: ref,
+      tree: {
+        relationships: [
+          { type: "ParentChild", parent: "LZNY-BRF", child: "LZNY-P7Q", subtype: "Step" },
+        ],
+      } as any,
+    });
+    expect(result.ok).toBe(true);
+    const tree: any = await readJson("tree.gedcomx.json");
+    // Endpoints are remapped to tree-local ids during the build, so find the
+    // Step edge and check its own pair, rather than naming FamilySearch PIDs.
+    const step = tree.relationships.find((r: any) => r.subtype === "Step");
+    expect(step).toBeDefined();
+    const onThePair = tree.relationships.filter(
+      (r: any) => r.type === "ParentChild" && r.parent === step.parent && r.child === step.child,
+    );
+    expect(onThePair.map((r: any) => r.subtype).sort()).toEqual(["Biological", "Step"]);
   });
 
   it.each([
@@ -866,6 +899,7 @@ describe("project_create — personReadRef (#2944 Stage B)", () => {
   });
 
   it("names a read fault on a ref that exists, rather than calling it pruned", async () => {
+    fileStoreOnly("a directory where a staged file belongs has no Postgres meaning");
     await mkdir(join(dir, "results", ".staging", "adir.json"), { recursive: true });
     const result: any = await projectCreate({ projectPath: dir, objective: "x", personReadRef: "results/.staging/adir.json" });
     expect(result.ok).toBe(false);
@@ -984,7 +1018,7 @@ describe("project_create — hand-built tree (no personReadRef)", () => {
 
 describe("project_create — the old-extension message init-project keys on (#2944)", () => {
   it("is produced only by a build that ignores personReadRef, never by this one", async () => {
-    // init-project/SKILL.md tells the model that this exact refusal means the
+    // agents/init-project.md tells the model that this exact refusal means the
     // extension predates personReadRef. A build that ignores the ref sees an
     // empty tree and a PID subject, so it produces it:
     const dir = await mkdtemp(join(tmpdir(), "project-create-skew-"));
@@ -995,5 +1029,140 @@ describe("project_create — the old-extension message init-project keys on (#29
     } finally {
       await rm(dir, { recursive: true, force: true });
     }
+  });
+});
+
+describe("project_create — a mis-copied personReadRef (resolveStagedRef)", () => {
+  let dir: string;
+  beforeEach(async () => {
+    dir = await mkdtemp(join(tmpdir(), "project-create-slip-"));
+  });
+  afterEach(async () => {
+    await rm(dir, { recursive: true, force: true });
+  });
+
+  it("builds from the one staged read a near-copy names and reports the correction (init-project k8d)", async () => {
+    const { staged } = await stagePersonRead({ projectPath: dir, input: { personId: "LZNY-BRF" }, result: structuredClone(FAMILY) });
+    const good = staged!.resultsRef;
+    const bad = good.replace(/(-[0-9a-f]{4})([0-9a-f])/, "$1");
+    expect(bad).not.toBe(good);
+    const result: any = await projectCreate({ projectPath: dir, objective: "x", personReadRef: bad });
+    expect(result.ok).toBe(true);
+    expect(result.counts.persons).toBeGreaterThan(0);
+    expect(result.validation.warnings.join(" ")).toContain(`personReadRef '${bad}' matched no staged file; used '${good}'`);
+  });
+
+  it("still refuses a ref that names no staged read", async () => {
+    await stagePersonRead({ projectPath: dir, input: { personId: "LZNY-BRF" }, result: structuredClone(FAMILY) });
+    const result: any = await projectCreate({
+      projectPath: dir, objective: "x", personReadRef: "results/.staging/00000000-0000-4000-8000-000000000000.json",
+    });
+    expect(result.ok).toBe(false);
+    expect(result.errors.join(" ")).toMatch(/is not a staged read/);
+  });
+});
+
+describe("project_create — hand-entered places are standardized by the tool", () => {
+  let dir: string;
+  const resolver = vi.mocked(resolveStandardPlace);
+  beforeEach(async () => {
+    dir = await mkdtemp(join(tmpdir(), "project-create-places-"));
+    resolver.mockImplementation(async (place: string) =>
+      /^boston/i.test(place) ? "Boston, Suffolk, Massachusetts, United States" : null,
+    );
+  });
+  afterEach(async () => {
+    resolver.mockImplementation(async () => null);
+    await rm(dir, { recursive: true, force: true });
+  });
+  const readTree = async () => JSON.parse(await readFile(join(dir, "tree.gedcomx.json"), "utf-8"));
+  const person = (facts: unknown[]) => ({
+    id: "I1", gender: "Male", names: [{ id: "N1", given: "Michael", surname: "Brennan" }], facts,
+  });
+
+  it("replaces a standard_place the caller typed with the resolver's, and says so", async () => {
+    const tree = {
+      persons: [person([{ id: "F1", type: "Birth", date: "~1850", place: "Boston, Massachusetts", standard_place: "Boston, Massachusetts, United States" }])],
+      relationships: [], sources: [],
+    };
+    const result: any = await projectCreate({ projectPath: dir, objective: "x", subjectPersonIds: ["I1"], tree: tree as any });
+    expect(result.ok).toBe(true);
+    expect((await readTree()).persons[0].facts[0].standard_place).toBe("Boston, Suffolk, Massachusetts, United States");
+    expect(result.validation.warnings.join(" ")).toContain(
+      "standard_place \"Boston, Massachusetts, United States\" for 'Boston, Massachusetts' was replaced by 'Boston, Suffolk, Massachusetts, United States'",
+    );
+  });
+
+  it("fills a hand-entered place the caller left unstandardized, and reports it", async () => {
+    const tree = { persons: [person([{ id: "F1", type: "Birth", place: "Boston" }])], relationships: [], sources: [] };
+    const result: any = await projectCreate({ projectPath: dir, objective: "x", subjectPersonIds: ["I1"], tree: tree as any });
+    expect(result.ok).toBe(true);
+    expect((await readTree()).persons[0].facts[0].standard_place).toBe("Boston, Suffolk, Massachusetts, United States");
+    expect(result.placesFilled).toEqual([{ place: "Boston", standardPlace: "Boston, Suffolk, Massachusetts, United States" }]);
+  });
+
+  it("drops a typed standard_place the resolver cannot confirm, and says so", async () => {
+    const tree = { persons: [person([{ id: "F1", type: "Birth", place: "Ballyowen", standard_place: "Ballyowen, Ireland" }])], relationships: [], sources: [] };
+    const result: any = await projectCreate({ projectPath: dir, objective: "x", subjectPersonIds: ["I1"], tree: tree as any });
+    expect(result.ok).toBe(true);
+    expect((await readTree()).persons[0].facts[0].standard_place).toBeUndefined();
+    expect(result.validation.warnings.join(" ")).toContain("standard_place \"Ballyowen, Ireland\" for 'Ballyowen' was not kept");
+  });
+
+  it("standardizes a relationship's own fact too", async () => {
+    const tree = {
+      persons: [person([]), { id: "I2", gender: "Female", names: [{ id: "N2", given: "Mary", surname: "Kelly" }] }],
+      relationships: [{ id: "R1", type: "Couple", person1: "I1", person2: "I2", facts: [{ id: "F2", type: "Marriage", place: "Boston, Massachusetts" }] }],
+      sources: [],
+    };
+    const result: any = await projectCreate({ projectPath: dir, objective: "x", subjectPersonIds: ["I1"], tree: tree as any });
+    expect(result.ok).toBe(true);
+    expect((await readTree()).relationships[0].facts[0].standard_place).toBe("Boston, Suffolk, Massachusetts, United States");
+  });
+
+  it("leaves a malformed person or facts entry for the validator to refuse, not a crash", async () => {
+    for (const persons of [[null], [{ ...person([]), facts: { type: "Birth", place: "Boston" } }], [person([null, "x"])]]) {
+      const result: any = await projectCreate({ projectPath: dir, objective: "x", tree: { persons, relationships: [null], sources: [] } as any });
+      expect(result.ok).toBe(false);
+      expect(result.errors.join(" ")).not.toMatch(/Cannot read properties|is not iterable|TypeError/);
+    }
+  });
+
+  it("drops a typed standard_place on a fact with no place, and says so", async () => {
+    const result: any = await projectCreate({
+      projectPath: dir,
+      objective: "x",
+      subjectPersonIds: ["I1"],
+      tree: { persons: [{ ...person([]), facts: [{ type: "Birth", date: "1850", standard_place: "Atlantis" }] }], relationships: [], sources: [] } as any,
+    });
+    expect(result.ok).toBe(true);
+    expect((await readTree()).persons[0].facts[0].standard_place).toBeUndefined();
+    expect(result.validation.warnings.join(" ")).toContain("standard_place \"Atlantis\" on a Birth fact with no place was not kept");
+  });
+
+  it("treats an explicit null standard_place as none supplied, with no warning", async () => {
+    const tree = { persons: [person([{ type: "Birth", place: "Ballyowen", standard_place: null }])], relationships: [], sources: [] };
+    const result: any = await projectCreate({ projectPath: dir, objective: "x", subjectPersonIds: ["I1"], tree: tree as any });
+    expect(result.ok).toBe(true);
+    expect((await readTree()).persons[0].facts[0].standard_place).toBeUndefined();
+    expect(result.validation.warnings.join(" ")).not.toContain("standard_place null");
+  });
+
+  it("standardizes an addition's place in ref mode, as hand-entered", async () => {
+    const { staged } = await stagePersonRead({ projectPath: dir, input: { personId: "LZNY-BRF" }, result: structuredClone(FAMILY) });
+    const result: any = await projectCreate({
+      projectPath: dir,
+      objective: "x",
+      personReadRef: staged!.resultsRef,
+      tree: {
+        persons: [{ id: "A1", gender: "Female", names: [{ given: "Mary", surname: "Kelly" }],
+          facts: [{ type: "Birth", place: "boston ", standard_place: "Boston, Massachusetts" }] }],
+      } as any,
+    });
+    expect(result.ok).toBe(true);
+    const added = (await readTree()).persons.find((p: any) => p.id === result.idMap.additions.A1);
+    expect(added.facts[0].standard_place).toBe("Boston, Suffolk, Massachusetts, United States");
+    expect(result.placesFilled).toContainEqual({ place: "boston ", standardPlace: "Boston, Suffolk, Massachusetts, United States" });
+    expect(result.validation.warnings.join(" ")).toContain("standard_place \"Boston, Massachusetts\" for 'boston ' was replaced");
   });
 });

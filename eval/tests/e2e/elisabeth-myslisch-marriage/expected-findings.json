@@ -1,0 +1,22 @@
+{
+  "findings": [
+    {
+      "id": "f1",
+      "type": "fact",
+      "description": "Elisabeth Myslisch probably married Anton Netzel on 2 February 1845 at Oxhöft, Putzig, West Prussia.",
+      "details": {
+        "subject_person": "Elisabeth Myslisch (KV1W-XVF)",
+        "fact_type": "Marriage",
+        "date": "2 February 1845",
+        "place": "Oxhöft, Putzig, Westpreußen, Preußen"
+      },
+      "supporting_sources": [
+        "Deutschland, Preußen, Westpreußen, Katholische und Lutherisch Kirchenbücher, 1537-1981 — marriage entry for Anton Netzel and Elisabeth Desmer, 2 Feb 1845, Oxhöft (ark:/61903/1:1:6ZMF-97V3) — the hint record; its register image is access-restricted and was not read",
+        "Same collection — baptism of Elisabeth Netzel, 26 Oct 1845, Oxhöft, daughter of Anton Netzel and Elisabeth Myslisch (ark:/61903/1:1:6ZM2-63Q4); also indexed as 26 Nov 1845 in Germany, Births and Baptisms, 1558-1898 (ark:/61903/1:1:NZ3C-T8Z)",
+        "Same collection — baptism of Valentin Netzel, 14 Feb 1847, Oxhöft, son of Anton Netzel and Elisabeth Myslisz (ark:/61903/1:1:6ZM2-J635)",
+        "Same collection — baptism of Anton Netzel, 24 Mar 1850, Oxhöft, son of Anton Netzel and Eva Myslisck (ark:/61903/1:1:6ZM2-5QNZ)"
+      ],
+      "required": true
+    }
+  ]
+}

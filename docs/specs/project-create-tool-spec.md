@@ -111,8 +111,8 @@ and in this build's place retry.
   `text`, `image_ref` and `artifact_url` are response-only and dropped. The
   read's top-level `notes` is dropped too.
 - **References:** every person fact, relationship, and relationship fact gets
-  `{ref: "S1", quality: 1}` (compiled, unverified tree data); person-level
-  `sources` refs are re-pointed at their `S` ids.
+  `{ref: "S1", quality: 1}` (compiled, unverified tree data); person-level and
+  relationship-level `sources` refs are re-pointed at their `S` ids.
 - **Relationships** get `R` ids, with every endpoint rewritten to `I` ids.
 - **Places** a fact from the read carries with no `standard_place` go through
   the same resolver `person_read` uses, once more (`standardizePlaces`): the
@@ -121,8 +121,8 @@ and in this build's place retry.
   when every fact has one. Bounded at 20s (the Cowork bridge aborts any call at
   60s), and run on copies, so an answer that arrives after the budget never
   reaches a tree that is already being written. A place nothing resolves keeps
-  `place` alone. An addition's place is the caller's to resolve (`place_search`).
-  The build does not run it: `project_create` runs it after every refusal below
+  `place` alone. An addition's place is hand-entered and is resolved as below, in
+  the same budget. The build does not run it: `project_create` runs it after every refusal below
   and after validation, just before the write, so a refused call never waits on
   the network. It only adds a `standard_place` string, which validation admits.
 
@@ -156,16 +156,31 @@ source refs, `subjectPersonIds`), so a minted id never turns a dangling
 reference into a valid one. Anything with no source is cited to the
 researcher's statement as above. A `tree` that is not an object is refused.
 
+**Hand-entered places** — every fact on the objective-only build, and every fact
+an addition brings in ref mode — are the tool's to standardize, never the
+caller's. Every such fact, on a person or a relationship, has any
+caller-supplied `standard_place` cleared, including a fact with no `place`. Each
+one with a `place` is then resolved with the same resolver `person_read` and
+`tree_edit` use, after every refusal and validation, in the same call and budget
+as the ref path's retry. A person or fact entry that is not an object is skipped
+here and left for validation to refuse at its own index. A resolved value is
+reported in `placesFilled`. A caller-supplied value that the resolver replaced or
+could not confirm, or that sat on a fact with no `place`, is named in
+`validation.warnings`; one that did not resolve — no match, a failed lookup, or
+the budget running out — is left unset, never kept.
+
 **The result** carries `idMap`: `persons` (FamilySearch PID → `I` id),
 `sources` (FamilySearch source id → `S` id), `additions` (label → `I` id),
 `familySearchTreeSource`, and `statementSource` when one was created. It also
-carries `placesFilled`, `[{place, standardPlace}]`, for each place the retry
-resolved that the read had not (absent when none), so the caller can tell the
+carries `placesFilled`, `[{place, standardPlace}]`, for each place this create
+standardized — one the read had left unresolved, or one entered by hand (absent
+when none). One resolution is listed once, in the spelling first met, however
+else the same place was written (trimmed, case-folded, spaces collapsed), so the caller can tell the
 researcher which places it standardized without being asked.
-`personReadRef` is trimmed before it is resolved. In ref mode a refusal raised
+`personReadRef` is trimmed before it is resolved, and a near-copy of a staged ref is mapped onto the one staged file it names, reported in `validation.warnings` (`search-result-staging-spec.md` §6.0). In ref mode a refusal raised
 after the build (a forged `assertion_id`, a validation error) names which minted
 id and `persons[i]` index each addition label became, since no `idMap` comes
-back with a refusal. A relationship is described by its type and endpoints. A later
+back with a refusal. A relationship is described by its type, endpoints and subtype. A later
 step that writes `research.json` names tree ids from it.
 
 The staged file is not consumed; the 24h TTL prune removes it.
@@ -200,7 +215,7 @@ from a real one, while an absent one has a working fallback in every skill.
 | A `tree` collection, or an addition's `names`, `facts` or `sources`, that is present but not an array of objects | Read as empty it would be dropped, and a dropped citation would silently re-cite the fact to the researcher's statement. Applies without `personReadRef` too, for the three top-level collections. Without a ref, a non-object entry and a citation in the wrong shape are left in place for validation to refuse at their own index; only an absent or empty `sources` is cited to the researcher's statement |
 | `research.json` or `tree.gedcomx.json` appears while the place fill runs | Checked again after the fill, which can take seconds: another create finished first, and create never overwrites |
 | Two additions whose `ark` names the same person | The same person twice |
-| An addition relationship repeating one the build already holds (same type and endpoints, a Couple in either order) | The read's relationships are imported already; no validator rejects the duplicate |
+| An addition relationship repeating one the build already holds — `relationshipMatches`: same type and endpoints (a Couple in either order) with subtypes that agree or either absent, so an untyped edge restating a staged Biological one IS a repeat while a Step edge beside it is a second relationship | The read's relationships are imported already; no validator rejects the duplicate |
 | An `assertion_id` on any fact, staged or added | Stamped only by `materialize_facts`; a seeding tree has no assertions to point at |
 
 **Ordering.** The pair is validated **before** either file is written, so a
@@ -279,7 +294,7 @@ the write ahead of the validation and watching two cases go red.
 > `projectPath`'s *parent*, never `projectPath` itself).
 
 > `packages/engine/mcp-server/tests/packaging/manifest.test.ts` and
-> `readme-catalog.test.ts` — the tool is registered, dispatched, listed in the
+> `catalog.test.ts` — the tool is registered, dispatched, listed in the
 > install contract, and discoverable.
 
 *Linted: every path in this section must resolve.*

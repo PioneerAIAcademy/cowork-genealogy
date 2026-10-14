@@ -803,20 +803,20 @@ def test_check_guardrail_compliance_is_empty_for_a_clean_run():
     assert check_guardrail_compliance([], {}, {}, starting_tree={"persons": []}) == []
 
 
-def test_check_guardrail_compliance_aggregates_all_three_checks():
-    """One call, three non-windowed §4.4 arms. The `mentor` arm below reads
-    only research.json, which is why compliance is a real result even on a
-    run that produced no tree."""
+def test_check_guardrail_compliance_is_a_real_result_on_a_treeless_run():
+    """The proof-conclusion arm reads only research.json, which is why
+    compliance is a real result even on a run that produced no tree. A
+    resolved question's uncritiqued proof summary is not a violation: the
+    gps-mentor critique runs only on request."""
     research = {
         "questions": [{"id": "q1", "status": "resolved"}],
         "proof_summaries": [{"id": "ps1", "question_id": "q1"}],
-        "exhaustive_declaration": {"declared": True},
+        "search_stop": {"stopped_because": "question_answered", "log_entry_ids": ["log_001"], "stop_criteria": None, "not_reached": []},
+        "evaluations": [],
     }
     violations = check_guardrail_compliance([], research, None)
-    # The gps-mentor arm reads only research.json...
-    assert any("proof-critique" in v for v in violations)
-    # ...and the proof-conclusion arm fires from the same call.
     assert any("proof-conclusion" in v for v in violations)
+    assert not any("proof-critique" in v for v in violations)
 
 
 # --- load_seed_person_ids (issue #963 seed read; fail-open) ------------------
@@ -995,8 +995,8 @@ def test_provenance_gap_reason_names_the_satisfiable_call_shape():
 def test_provenance_gap_reason_offers_no_escape_for_a_locally_minted_id():
     """The reason must NOT tell the agent a locally-minted id is unscorable.
 
-    person-evidence/SKILL.md says such an id returns a degenerate score to treat
-    as "no score available" (2026-07-02). That is stale: the match-engine
+    person-evidence/SKILL.md (deleted) said such an id returned a degenerate score
+    to treat as "no score available" (2026-07-02). That was stale: the match-engine
     mint-hardening (2026-07-07) made an ARK-less focus person score on document
     content. Probed live — dev/probe-same-person-local-id.ts — the tree focus
     with its ARK removed scores 0.9999484 against a 0.999967 control, identical

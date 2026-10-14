@@ -1,0 +1,19 @@
+{
+  "id": "umbelina-azevedo-death",
+  "name": "Umbelina Maria Azevedo — death in November 1910, Rio de Janeiro, Brazil",
+  "genre": "record-hint",
+  "source_pid": "GXSQ-V3L",
+  "captured": "2026-10-12",
+  "researcher_question": "When and where did Umbelina Maria Azevedo die? She was the wife of Francisco Antônio Pariz and the mother of Alice Umbelina, Antônio Francisco, Maria Glória, Florita Umbelina and Maura Umbelina, born between about 1902 and 1918, several of them in Espírito Santo.",
+  "tags": {
+    "question_type": "death_date",
+    "era": "1910s",
+    "geography": "BR-RJ"
+  },
+  "model": {
+    "agent": "claude-sonnet-4-6",
+    "judge": "claude-haiku-4-5-20251001"
+  },
+  "difficulty": "medium",
+  "notes": "Record-hint fixture (filtered-list-samples-3.csv row 4, hint-samples.csv row 104, flags adds_birth/adds_death, confidence 3). Resolved as a false match: the 14 Nov 1910 Rio de Janeiro death (ark:/61903/1:1:7975-85ZM) is a different woman — three children's death entries name her as mother with birth years 1912-1918. Avoid guard plus a documented-negative finding; decided on the indexes, image_basis off."
+}

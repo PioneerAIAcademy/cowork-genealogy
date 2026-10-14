@@ -416,12 +416,13 @@ held. Place every finding first:
    own `references/` directory (e.g.
    `citation/references/gps-citation-standards.md`), which the skill loads on
    demand — keeping the main body short. A *plugin agent* finding goes **inline,
-   into the table for that record type inside the agent body** (e.g. the census
-   informant table in `packages/engine/plugin/agents/record-extractor.md`):
+   into the table for that record type inside the agent body**:
    agents carry no sibling reference files, by decision, because on-demand
    `Read` was measured to skip silently (`docs/architecture.md` §3.4). Sending an
    agent finding to a `references/` file creates a file the agent will never
-   read.
+   read. An extraction gap is neither: roles and classifications are decided in
+   code (`src/utils/record-extract.ts`, `src/utils/structured-document.ts`), so it
+   is a tooling defect (lane 1).
 4. **Core doctrine** (a genuine cross-record-type behavior change) → **first
    ask whether it can be a tool rule; only then a SKILL.md edit**, gated by the
    unit suite.
@@ -638,11 +639,13 @@ pushing a *new commit per round* (don't amend). Most PRs land in 1–2 rounds;
 things your step-4 run can no longer satisfy, because the skill changed
 underneath it:
 
-- The latest run log per touched skill must be **active** — its snapshot still
-  matching the branch's current skill files, tests and rubric. Edit any of
-  those and the UI shows "no active version" until you re-run; that's your
-  signal the results are stale.
-- Its `.ann.json` must carry a correction for **every** (test, dimension) pair.
+- The run log your PR adds for each touched skill (or, if it adds none, the
+  latest one) must be **active** — its snapshot still matching the branch's
+  current skill files, tests and rubric. Edit any of those and the UI shows
+  "no active version" until you re-run; that's your signal the results are
+  stale.
+- Its `.ann.json` must carry a correction for **every** dimension of each
+  sampled test, and a comment on each one that is not a confirmed pass.
 
 **One *problem* per PR — which is usually, but not always, one skill.** A
 locator rule that belongs in `citation` alone is a one-skill PR. But a doctrine

@@ -34,6 +34,7 @@ import {
   parentChildKey,
   type WarningJustificationInput,
 } from "../validation/introduced-warnings.js";
+import { dedupSourceRefs, relationshipMatches } from "../utils/merge-gedcomx.js";
 import type { ConflictSurfaced } from "../types/materialize-facts.js";
 import { getPersonName } from "./person-warnings.js";
 import { sanitizeTree } from "../validation/tree-sanitize.js";
@@ -61,6 +62,7 @@ export type TreeEditOperation =
   | "add_relationship"
   | "add_source"
   | "update_source"
+  | "update_relationship"
   | "remove";
 
 /** The additive ops — the only operations `tree_edit` accepts. */
@@ -78,6 +80,7 @@ export const CORRECT_OPERATIONS = [
   "update_name",
   "update_person",
   "update_source",
+  "update_relationship",
   "remove",
 ] as const;
 
@@ -111,6 +114,10 @@ export interface TreeEditOp {
   source?: SimplifiedSourceDescription;
   gender?: string;
   ark?: string;
+  /** update_relationship only: the edge's new subtype (e.g. "Biological",
+   *  "Step"). The type is its own claim and an edge can be retyped — a census
+   *  or an import lists a stepchild as "son" (plan Decision 11). */
+  subtype?: string;
   /** Auto-resolve standard_place when a place is set (default true). */
   resolveStandardPlace?: boolean;
   /** add_relationship only: resolve the edge's (and any inline Couple fact's)
@@ -393,6 +400,35 @@ function clearPrimaryOfType(holder: FactHolder, type: string | undefined, except
   for (const f of holder.facts ?? []) {
     if (f.id !== exceptId && f.type === type && "primary" in f) delete f.primary;
   }
+}
+
+/**
+ * Is this the same fact already recorded, rather than a second one?
+ *
+ * Strict equality on type, date, place and value — deliberately NOT
+ * `factsEquivalent` from merge-gedcomx, which is a *compatibility* test: it
+ * treats an absent date as matching any date, and one day-range containing
+ * another as one fact. That is right for merging two documents and wrong here,
+ * where folding a dated Marriage into an undated one would silently discard
+ * the date the new record supplied (plan Decision 31 on the same helpers:
+ * `compatibleDate`/`compatiblePlace` "treated 5 of 10 labelled
+ * affirmed-and-ruled-out pairs as one object").
+ *
+ * Compares the four fields the plan names — type, date, place and value — and
+ * deliberately NOT `standard_place`. The twin lookup runs before
+ * `maybeResolvePlace`, so the stored fact carries a resolved `standard_place`
+ * while the incoming one carries none: comparing it made a retried call whose
+ * fact had a resolvable place write a SECOND fact, which is the opposite of the
+ * idempotence corroboration exists for. `standard_date` is dropped with it —
+ * caller-supplied, and the raw `date` already carries the claim.
+ */
+function sameFactValue(a: SimplifiedFact, b: SimplifiedFact): boolean {
+  return (
+    a.type === b.type &&
+    a.date === b.date &&
+    a.place === b.place &&
+    a.value === b.value
+  );
 }
 
 /** Remove the `preferred` flag from the person's other names. */
@@ -692,7 +728,48 @@ async function applyOperation(
       // etc. establishing a parent-child/spousal edge is evidence from that
       // record.
       assertNodeHasRef(rel, "the added relationship edge", "add_relationship");
-      tree.relationships = [...(tree.relationships ?? []), rel];
+
+      // A self-Couple is an impossibility, not a duplicate: a person cannot be
+      // their own spouse, and the pair would survive every downstream rule that
+      // reads the two endpoints as different people.
+      if (rel.type === "Couple" && rel.person1 !== undefined && rel.person1 === rel.person2) {
+        throw new TreeEditError(
+          `add_relationship: a Couple cannot join '${rel.person1}' to themselves`,
+        );
+      }
+
+      // An edge that already says this corroborates rather than duplicates
+      // (plan Decision 37). The new sources — and any inline Couple facts —
+      // land on the existing edge and its id comes back, so a retried call and
+      // a second record about the same marriage both leave one edge. A refusal
+      // would make the caller re-route the same evidence by hand through
+      // `add_fact`, dropping the edge's own sources on the way.
+      const matched = (tree.relationships ?? []).find((e) => relationshipMatches(e, rel));
+      if (matched) {
+        if (rel.sources?.length) {
+          matched.sources = dedupSourceRefs([...(matched.sources ?? []), ...rel.sources]);
+        }
+        // Notes are often where the researcher records why; unioned exactly as
+        // `dedupRelationships` unions them, so both paths keep the same trail.
+        if (rel.notes?.length) {
+          matched.notes = [...new Set([...(matched.notes ?? []), ...rel.notes])];
+        }
+        // The matched edge's subtype never changes here: retyping is
+        // `update_relationship`'s job, and silently adopting one would turn an
+        // untyped import into a biological claim with nothing behind it. Say so
+        // rather than let the caller believe the subtype landed.
+        if (rel.subtype !== undefined && matched.subtype !== rel.subtype) {
+          warnings.push(
+            `add_relationship corroborated the existing edge '${matched.id}', which keeps its ` +
+              `${matched.subtype === undefined ? "absent subtype" : `'${matched.subtype}' subtype`} — ` +
+              `use update_relationship to retype it to '${rel.subtype}'`,
+          );
+        }
+      } else {
+        tree.relationships = [...(tree.relationships ?? []), rel];
+      }
+      // Facts go onto whichever edge now carries this relationship.
+      const edge = matched ?? rel;
       // Facts supplied on a new relationship (e.g. a Marriage on a Couple) are
       // the relationship's own facts: assign each a tool-allocated F id and
       // resolve its standard_place, exactly as add_fact does. Callers never
@@ -720,13 +797,37 @@ async function applyOperation(
             f.sources = rel.sources.map((s) => ({ ...s }));
           }
           assertNodeHasRef(f, "each Couple fact", "add_relationship");
+          // Corroborating: a fact the edge already carries, equal in type, date,
+          // place and value, is not added again — its sources join the one
+          // already there. This is what makes a retried call idempotent rather
+          // than leaving two identical Marriage facts on one edge.
+          const twin = matched
+            ? (matched.facts ?? []).find((g) => sameFactValue(g, f))
+            : undefined;
+          if (twin) {
+            if (f.sources?.length) {
+              twin.sources = dedupSourceRefs([...(twin.sources ?? []), ...f.sources]);
+            }
+            // Report the fact the caller's sources landed on, exactly as the
+            // corroborated edge reports its existing id. A silent omission
+            // would leave a fully-corroborated retry returning no fact id at
+            // all, with nothing to say where the evidence went.
+            if (twin.id) factIds.push(twin.id);
+            continue;
+          }
           f.id = nextId(tree, "F");
-          await maybeResolvePlace(f, f.standard_place !== undefined, rel.facts);
+          await maybeResolvePlace(f, f.standard_place !== undefined, edge.facts ?? rel.facts);
+          // Same primary swap add_fact performs, but only when corroborating:
+          // the plan scopes it to the matched edge, and `main` never swapped on
+          // a newly created one. `primary` is about to become load-bearing
+          // (Decision 34), so who sets it does not change by accident here.
+          if (matched && f.primary === true) clearPrimaryOfType(edge, f.type, f.id);
+          if (matched) matched.facts = [...(matched.facts ?? []), f];
           factIds.push(f.id);
         }
-        assignedIds.facts = factIds;
+        if (factIds.length) assignedIds.facts = factIds;
       }
-      assignedIds.relationship = rel.id;
+      assignedIds.relationship = edge.id;
       break;
     }
     case "add_source": {
@@ -746,6 +847,59 @@ async function applyOperation(
         if (k === "id") continue;
         (existing as any)[k] = v;
       }
+      break;
+    }
+    case "update_relationship": {
+      // Retyping, not re-pointing: the endpoints identify the relationship and
+      // changing those would make it a different edge. `add_relationship`'s
+      // corroboration deliberately never changes a matched edge's subtype and
+      // names this op instead, so that a subtype only ever moves on an explicit
+      // correction.
+      if (!input.relationshipId) throw new TreeEditError("update_relationship requires a `relationshipId`");
+      if (input.subtype === undefined) {
+        throw new TreeEditError("update_relationship requires a `subtype` — it is the only field it sets");
+      }
+      // Types are trusted everywhere else in this switch because every other
+      // check is a truthiness test or `===`, both safe on any value. `.trim()`
+      // below is a method call, so a non-string `subtype` from a malformed op
+      // would raise a TypeError — and the batch loop re-throws anything that is
+      // not a TreeEditError, so it would escape as an unhandled exception
+      // instead of a refusal naming the op.
+      if (typeof input.subtype !== "string") {
+        throw new TreeEditError(
+          `update_relationship: \`subtype\` must be a string, got ${typeof input.subtype}`,
+        );
+      }
+      // An empty string is not "clear the subtype": `relationshipMatches` reads
+      // any defined subtype as an explicit one, so `""` would match an absent
+      // subtype but never match 'Biological' — a phantom type that pairs with
+      // nothing. Clearing a subtype is not specified; refuse rather than store
+      // a value that behaves like neither.
+      if (input.subtype.trim() === "") {
+        throw new TreeEditError(
+          "update_relationship: `subtype` must not be empty — an empty subtype matches no other edge. " +
+            "Pass a real subtype (e.g. 'Biological', 'Step')",
+        );
+      }
+      const rel = (tree.relationships ?? []).find((r) => r.id === input.relationshipId);
+      if (!rel) throw new TreeEditError(`relationship '${input.relationshipId}' not found in tree`);
+      if (rel.type !== "ParentChild") {
+        throw new TreeEditError(
+          `update_relationship: '${rel.id}' is a ${rel.type} — only a ParentChild edge carries a subtype`,
+        );
+      }
+      // A retype that would collide with an edge already on the pair is refused
+      // rather than silently creating a duplicate the dedup would later fold.
+      const clash = (tree.relationships ?? []).find(
+        (r) => r.id !== rel.id && relationshipMatches(r, { ...rel, subtype: input.subtype }),
+      );
+      if (clash) {
+        throw new TreeEditError(
+          `update_relationship: retyping '${rel.id}' to '${input.subtype}' would duplicate '${clash.id}', ` +
+            "which already joins this pair — remove one of them instead",
+        );
+      }
+      rel.subtype = input.subtype;
       break;
     }
     case "remove": {
@@ -1098,7 +1252,7 @@ export const treeEditSchema = {
     "Add to the project's tree.gedcomx.json — add a fact or name, add a person or " +
     "relationship, or add a source. " +
     "ADDITIVE ONLY: corrections and removals " +
-    "(update_fact/update_name/update_person/update_source/remove) live in the " +
+    "(update_fact/update_name/update_person/update_source/update_relationship/remove) live in the " +
     "tree_correct tool. add_fact targets a person (personId) or an existing Couple " +
     "relationship (relationshipId) — a Marriage/Divorce fact lives on the Couple, " +
     "never duplicated onto each spouse. Use materialize_facts to write a record " +

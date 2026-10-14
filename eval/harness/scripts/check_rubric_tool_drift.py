@@ -133,6 +133,19 @@ SUPPRESSIONS: list[dict[str, str]] = [
         ),
     },
     {
+        "file": "eval/tests/unit/person-evidence/baptism-parentage-links-only-defers-relationship.json",
+        "tool": "tree_correct",
+        "quotes": [
+            "nothing in this agent's toolset can raise the gender afterwards, since `tree_correct update_person` is not granted to it",
+        ],
+        "reason": (
+            "negative mention: names the tool to say the agent lacks it - "
+            "'nothing in this agent's toolset can raise the gender "
+            "afterwards, since `tree_correct update_person` is not granted "
+            "to it'"
+        ),
+    },
+    {
         "file": "eval/tests/unit/person-evidence/patronymic-mismatch-caps-confidence.json",
         "tool": "record_search",
         "quotes": [
@@ -195,160 +208,6 @@ SUPPRESSIONS: list[dict[str, str]] = [
             "validate_research_schema, gets a validation error, "
             "self-corrects, and re-validates successfully, score Tool "
             "Arguments=3'. question-selection holds only research_append"
-        ),
-    },
-    {
-        "file": "eval/tests/unit/record-extraction/census-1850-subject-as-child-creates-sibling-stubs.json",
-        "tool": "tree_edit",
-        "quotes": [
-            "record-extraction is ASSERTION-ONLY",
-            "`mcp__genealogy__tree_edit` is not in its frontmatter; it makes ZERO tree_edit / tree_correct calls",
-            "Do NOT expect, or reward, any tree person/edge write in this run",
-        ],
-        "reason": (
-            "negative mention - 'record-extraction is ASSERTION-ONLY ... "
-            "`mcp__genealogy__tree_edit` is not in its frontmatter; it "
-            "makes ZERO tree_edit / tree_correct calls ... Do NOT expect, "
-            "or reward, any tree person/edge write in this run'"
-        ),
-    },
-    {
-        "file": "eval/tests/unit/record-extraction/census-1850-subject-as-child-creates-sibling-stubs.json",
-        "tool": "tree_correct",
-        "quotes": [
-            "record-extraction is ASSERTION-ONLY",
-            "`mcp__genealogy__tree_edit` is not in its frontmatter; it makes ZERO tree_edit / tree_correct calls",
-            "Do NOT expect, or reward, any tree person/edge write in this run",
-        ],
-        "reason": (
-            "negative mention - 'record-extraction is ASSERTION-ONLY ... "
-            "`mcp__genealogy__tree_edit` is not in its frontmatter; it "
-            "makes ZERO tree_edit / tree_correct calls ... Do NOT expect, "
-            "or reward, any tree person/edge write in this run'"
-        ),
-    },
-    {
-        "file": "eval/tests/unit/record-extraction/census-1850-subject-as-child-creates-sibling-stubs.json",
-        "tool": "materialize_facts",
-        "quotes": [
-            "Minting the sibling person stubs (Bridget, John)",
-            "is person-evidence's household-skeleton step (materialize_facts create-or-enrich + tree_edit add_relationship), reached later - not extraction's job",
-        ],
-        "reason": (
-            "cross-owner: names person-evidence's tool - 'Minting the "
-            "sibling person stubs (Bridget, John) ... is person-evidence's "
-            "household-skeleton step (materialize_facts create-or-enrich + "
-            "tree_edit add_relationship), reached later - not extraction's "
-            "job'"
-        ),
-    },
-    {
-        "file": "eval/tests/unit/record-extraction/census-sex-assertion-for-gender.json",
-        "tool": "materialize_facts",
-        "quotes": [
-            "WHY it matters (context for the judge, not a second check): materialize_facts reads a persona's sex/gender assertions to set the gender of any tree person person-evidence later mints from this record",
-        ],
-        "reason": (
-            "cross-owner, and flagged as non-grading by its own first "
-            "clause - 'WHY it matters (context for the judge, not a second "
-            "check): materialize_facts reads a persona's sex/gender "
-            "assertions to set the gender of any tree person "
-            "person-evidence later mints from this record'"
-        ),
-    },
-    {
-        "file": "eval/tests/unit/record-extraction/positive-extract-and-route-image-ark.json",
-        "tool": "image_read",
-        "quotes": [
-            "Do NOT grade whether the router called image_read directly in the main context - that guard is enforced mechanically by the harness",
-        ],
-        "reason": (
-            "negative mention, and explicitly out of the judge's remit - "
-            "'Do NOT grade whether the router called image_read directly in "
-            "the main context - that guard is enforced mechanically by the "
-            "harness'"
-        ),
-    },
-    {
-        "file": "eval/tests/unit/record-extraction/suspect-required-name-confirm-via-image.json",
-        "tool": "image_read",
-        "quotes": [
-            "The router must NOT call image_read directly in the main context - image reading is the image-reader subagent's job",
-        ],
-        "reason": (
-            "negative mention - 'The router must NOT call image_read "
-            "directly in the main context - image reading is the "
-            "image-reader subagent's job'"
-        ),
-    },
-    {
-        "file": "eval/tests/unit/record-extraction/sets-record-persona-id.json",
-        "tool": "record_search",
-        "quotes": [
-            "search-records already logged this search as log_001 (a record_search entry whose sidecar holds the gedcomx)",
-        ],
-        "reason": (
-            "descriptive provenance, another skill's call - 'search-records "
-            "already logged this search as log_001 (a record_search entry "
-            "whose sidecar holds the gedcomx)'"
-        ),
-    },
-    {
-        "file": "eval/tests/unit/record-extraction/rubric.md",
-        "tool": "tree_edit",
-        "quotes": [
-            "does **not** hold `tree_edit`/`tree_correct`. It writes **no** tree persons, names, or relationships",
-            "do not reward, and do not penalize the absence of, a tree stub or edge",
-        ],
-        "reason": (
-            "negative mention, in record-extraction's own rubric - 'does "
-            "**not** hold `tree_edit`/`tree_correct`. It writes **no** tree "
-            "persons, names, or relationships ... do not reward, and do not "
-            "penalize the absence of, a tree stub or edge'"
-        ),
-    },
-    {
-        "file": "eval/tests/unit/record-extraction/rubric.md",
-        "tool": "tree_correct",
-        "quotes": [
-            "does **not** hold `tree_edit`/`tree_correct`. It writes **no** tree persons, names, or relationships",
-            "do not reward, and do not penalize the absence of, a tree stub or edge",
-        ],
-        "reason": (
-            "negative mention, in record-extraction's own rubric - 'does "
-            "**not** hold `tree_edit`/`tree_correct`. It writes **no** tree "
-            "persons, names, or relationships ... do not reward, and do not "
-            "penalize the absence of, a tree stub or edge'"
-        ),
-    },
-    {
-        "file": "eval/tests/unit/record-extraction/rubric.md",
-        "tool": "materialize_facts",
-        "quotes": [
-            "Minting a household's sibling stubs and writing their `ParentChild`/spouse edges is **person-evidence's** household-skeleton step (`materialize_facts` create-or-enrich + `tree_edit add_relationship`), not extraction's",
-        ],
-        "reason": (
-            "cross-owner: names person-evidence's tool - 'Minting a "
-            "household's sibling stubs and writing their "
-            "`ParentChild`/spouse edges is **person-evidence's** "
-            "household-skeleton step (`materialize_facts` create-or-enrich "
-            "+ `tree_edit add_relationship`), not extraction's'"
-        ),
-    },
-    {
-        "file": "eval/tests/unit/research-exhaustiveness/declare-exhaustive-complete.json",
-        "tool": "validate_research_schema",
-        "quotes": [
-            "Claude does not need to call validate_research_schema - it is not in this skill's allowed-tools, and per SKILL.md, research_append validates-before-persist",
-            "Do NOT penalize Tool Arguments or Completeness for the absence of a separate validate_research_schema call",
-        ],
-        "reason": (
-            "not-needed, naming the allowed-tools fact outright - 'Claude "
-            "does not need to call validate_research_schema - it is not in "
-            "this skill's allowed-tools, and per SKILL.md, research_append "
-            "validates-before-persist ... Do NOT penalize Tool Arguments or "
-            "Completeness for the absence of a separate "
-            "validate_research_schema call'"
         ),
     },
     {
@@ -433,18 +292,6 @@ SUPPRESSIONS: list[dict[str, str]] = [
     },
     {
         "file": "eval/tests/unit/research-exhaustiveness/direct-refuse-while-in-progress.json",
-        "tool": "validate_research_schema",
-        "quotes": [
-            "If Claude does call validate_research_schema that is acceptable but not required since no changes were made",
-        ],
-        "reason": (
-            "not-needed - 'If Claude does call validate_research_schema "
-            "that is acceptable but not required since no changes were "
-            "made'"
-        ),
-    },
-    {
-        "file": "eval/tests/unit/research-exhaustiveness/refuse-while-in-progress.json",
         "tool": "validate_research_schema",
         "quotes": [
             "If Claude does call validate_research_schema that is acceptable but not required since no changes were made",
@@ -600,19 +447,6 @@ SUPPRESSIONS: list[dict[str, str]] = [
         ),
     },
     {
-        "file": "eval/tests/unit/search-records/search-continue-authorized-in-message.json",
-        "tool": "extraction_append",
-        "quotes": [
-            "this harness's per-test tool allowlist does not extend ToolSearch/extraction_append to a sub-agent invoked this way -- a scoping artifact, not a production behavior",
-        ],
-        "reason": (
-            "descriptive harness artifact, named as such - 'this harness's "
-            "per-test tool allowlist does not extend "
-            "ToolSearch/extraction_append to a sub-agent invoked this way "
-            "-- a scoping artifact, not a production behavior'"
-        ),
-    },
-    {
         "file": "eval/tests/unit/tree-edit/add-occupation-fact-with-place.json",
         "tool": "validate_research_schema",
         "quotes": [
@@ -672,11 +506,11 @@ SUPPRESSIONS: list[dict[str, str]] = [
         "file": "eval/tests/unit/tree-edit/create-sibling-with-parentchild.json",
         "tool": "materialize_facts",
         "quotes": [
-            "materializing sourced facts onto a tree person is person-evidence's materialize_facts (record-extraction is assertion-only), not this ad-hoc tree-edit call",
+            "materializing sourced facts onto a tree person is person-evidence's materialize_facts (extraction is assertion-only), not this ad-hoc tree-edit call",
         ],
         "reason": (
             "cross-owner - 'materializing sourced facts onto a tree person "
-            "is person-evidence's materialize_facts (record-extraction is "
+            "is person-evidence's materialize_facts (extraction is "
             "assertion-only), not this ad-hoc tree-edit call'"
         ),
     },
@@ -816,32 +650,6 @@ SUPPRESSIONS: list[dict[str, str]] = [
             "image reference (e.g. an `imageId`/`artifacts` field on the "
             "record, or a nonzero image count from "
             "`collections_search`/`volume_search`)'"
-        ),
-    },
-    {
-        "file": "packages/engine/plugin/agents/record-extractor.md",
-        "tool": "tree_edit",
-        "quotes": [
-            "Never predict an id; never call `tree_edit` for the source; never write `research.json` or `tree.gedcomx.json` directly",
-        ],
-        "reason": (
-            "negative mention - 'Never predict an id; never call "
-            "`tree_edit` for the source; never write `research.json` or "
-            "`tree.gedcomx.json` directly'"
-        ),
-    },
-    {
-        "file": "packages/engine/plugin/agents/record-extractor.md",
-        "tool": "research_append",
-        "quotes": [
-            "Its `record_role` is the literal `\"absent\"`, which `research_append` enforces",
-        ],
-        "reason": (
-            "cross-owner: names the broad writer the agent is deliberately "
-            "kept off (CLAUDE.md: what keeps record-extractor off the broad "
-            "research_append is research_append not being in its `tools:`), "
-            "describing what it enforces downstream - 'Its `record_role` is "
-            "the literal `\"absent\"`, which `research_append` enforces'"
         ),
     },
     {

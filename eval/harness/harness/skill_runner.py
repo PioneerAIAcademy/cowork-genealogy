@@ -699,7 +699,7 @@ QUOTA_ABORT_REASON = "quota_exhausted"
 # Subscription prose only. `"rate limit"` is deliberately NOT here: it matches
 # Anthropic's own 429 body text, which in `api_key` mode is a per-minute org
 # limit that clears in under a minute — see the predicate note below.
-_QUOTA_TEXT_MARKERS = ("hit your limit", "usage limit")
+_QUOTA_TEXT_MARKERS = ("hit your limit", "usage limit", "out of extra usage")
 
 
 def _looks_like_quota(
@@ -792,6 +792,15 @@ class SkillRunResult:
     # denied call, and grading routing by transcript inference is what made
     # ut_015 detect the violation ~1-in-8.
     blocked_context_calls: list[dict[str, Any]] = field(default_factory=list)
+    # Busiest moment / compactions / model, read from the SDK's own transcripts
+    # by `_execute_skill_with_retry` before the session store is deleted.
+    # `subagents` is one compact `e2e.subagent_capture` summary per helper (the
+    # agent under test, on a direct-arm test); `main_thread` is the parent
+    # session (where a routed test's skill runs). None when no capture ran — an
+    # abort before execution — which the serializer leaves out entirely.
+    subagents: list[dict[str, Any]] | None = None
+    subagent_capture_status: str | None = None
+    main_thread: dict[str, Any] | None = None
     # Raw Write/Edit/NotebookEdit calls to a protected project file
     # (research.json / tree.gedcomx.json) the main thread tried and was denied,
     # as {"tool", "args"} (see harness.context_policy.protected_file_denial).
@@ -893,6 +902,7 @@ async def run_skill(
     stub_agents: dict[str, str | None] | None = None,
     stop_at_stub: bool = False,
     declared_tools: set[str] | None = None,
+    tool_search: bool = True,
 ) -> SkillRunResult:
     """Invoke the SDK against a per-test workspace and collect outputs.
 
@@ -912,6 +922,10 @@ async def run_skill(
     that way); one that holds it only via the agent-union must delegate.
     Omitting it means "declared nothing", so the guard applies to every
     guarded tool.
+
+    `tool_search` picks `ENABLE_TOOL_SEARCH` through `env_for_sdk`: True (the
+    default) defers tool schemas, False (`--no-tool-search`) loads them all
+    up front.
     """
     mock_server, call_log, tools_by_name = create_mock_server(
         fixture_names, fixtures_dir, workspace=workspace
@@ -1121,8 +1135,11 @@ async def run_skill(
         elif (denial := spawn_stub_denial(tool_name, input_data, _stub_agents)):
             return denial
         # Per-context tool policy: deny a subagent-only tool (see
-        # context_policy.SUBAGENT_ONLY_TOOLS — image_read, extraction_append) on
-        # the main thread UNLESS this skill declared it itself. Checked BEFORE
+        # context_policy.SUBAGENT_ONLY_TOOLS — image_read; `extraction_append`
+        # left the set in issue #2937) on
+        # the main thread UNLESS this skill declared it itself. That exemption is
+        # now REACHED rather than theoretical: record-extraction declares
+        # `extraction_append` and calls it from the main thread. Checked BEFORE
         # the max_tool_calls counter — a denied call never executes, so it
         # shouldn't consume the budget (same ordering rationale as the e2e
         # tree-read block).
@@ -1250,7 +1267,7 @@ async def run_skill(
         permission_mode="bypassPermissions",
         model=model,
         max_turns=max_turns,
-        env=env_for_sdk(auth),
+        env=env_for_sdk(auth, tool_search=tool_search),
         hooks={"PreToolUse": [HookMatcher(matcher=None, hooks=[pretool_hook])]},
         # Intercept the CLI subprocess stderr so we can drop teardown noise
         # (see _filter_cli_stderr) instead of letting it flood the console on

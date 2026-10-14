@@ -89,6 +89,18 @@ const placeIdRepsCache = new Map<string, string[]>();
  *  queries and must not share an entry. */
 const searchEntriesCache = new Map<string, SearchEntry[]>();
 
+/** Test-only: when set, `resolveStandardPlace` answers from this table (keyed
+ *  by the place text, normalized) and never reaches the network; a place not in
+ *  it resolves to null. The eval harness sets it from the test's own
+ *  `place_search` fixtures so a live `project_create` stays offline. */
+let placeTableForTests: Map<string, string | null> | null = null;
+
+/** Test-only: install (or, with null, remove) the table above. */
+export function __usePlaceTableForTests(table: Record<string, string | null> | null): void {
+  placeTableForTests =
+    table === null ? null : new Map(Object.entries(table).map(([k, v]) => [normalizeKey(k), v]));
+}
+
 /** Test-only: clear every cache so cases don't bleed into each other. */
 export function __clearPlaceResolverCachesForTests(): void {
   standardizeCache.clear();
@@ -102,6 +114,27 @@ export function __clearPlaceResolverCachesForTests(): void {
 
 function normalizeKey(s: string): string {
   return s.trim().toLowerCase().replace(/\s+/g, " ");
+}
+
+/**
+ * Census and register answers that stand where a place should but name none:
+ * "Same House" (1940 census, residence in 1935), "Do" (ditto). Resolved, they
+ * become a real place that happens to share the word ("Same House" -> "Same,
+ * Manufahi, Timor-Leste", "Do" -> "Dominican Republic"). Matched against the
+ * WHOLE place text only: "Same Place, Wayne, Ohio" still standardizes to Wayne.
+ */
+const NON_PLACE_PHRASES = new Set([
+  "same", "same house", "same place", "same city", "same town", "same township",
+  "same county", "same state", "same farm", "same as above", "same as head",
+  "do", "ditto", "home", "at home", "farm", "rural", "rural route", "rfd", "r f d",
+  "unknown", "not stated", "not given", "none", "n/a", "blank",
+  "different place", "other place",
+]);
+
+/** The place text is a non-place phrase (NON_PLACE_PHRASES), case, spacing and
+ *  periods ignored ("R.F.D.", "Do."). Such a place is never standardized. */
+export function isNonPlacePhrase(place: string): boolean {
+  return NON_PLACE_PHRASES.has(normalizeKey(place.replace(/\./g, " ")));
 }
 
 /** Strip a trailing `(Type)` suffix that `describeCandidates` appends.
@@ -400,7 +433,7 @@ const COUNTRY_ALIASES: Record<string, string> = {
 
 const UK_CONSTITUENTS = new Set(["england", "scotland", "wales", "northern ireland"]);
 
-function canonicalCountry(segment: string): string | null {
+export function canonicalCountry(segment: string): string | null {
   // Fold diacritics before the lookup: "México" and "Mexico" are the same
   // country, and without this the guard silently switched itself off on the
   // accented spelling while checking the unaccented one.
@@ -496,6 +529,8 @@ export async function resolveStandardPlace(
   originalText: string,
   opts: ResolveOpts = {},
 ): Promise<string | null> {
+  if (isNonPlacePhrase(originalText)) return null;
+  if (placeTableForTests) return placeTableForTests.get(normalizeKey(originalText)) ?? null;
   if (!normalizeKey(originalText)) return null;
   if (placeSegments(originalText).length === 1 && !opts.contextName) {
     return resolveBareName(originalText, opts);

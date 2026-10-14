@@ -84,9 +84,12 @@ sidecar, which `record_read` and `rank_search_matches` read host-side. Each
 producer strips its own heavy field: `record_search` drops `gedcomx`,
 `fulltext_search` drops `textDocument` (the AI-transcribed page), and
 `external_links_search` bounds the inline `results[]` (optional `host` filter +
-a backstop cap) while staging the full year-filtered set. The strip is
-unconditional once staged (so the protection can't be forgotten) and never runs
-on an un-staged search (nothing was retained to re-read).
+a 200-row cap) while staging the full year-filtered set. The `record_search` and
+`fulltext_search` strips are unconditional once staged (so the protection can't be
+forgotten) and never run on an un-staged search (nothing was retained to re-read).
+`external_links_search`'s cap is the exception: it applies on every call, staged or
+not, because the tool also keeps the full list in `external-collections.json` and
+says when it cut (`inlineCapped`; `external-links-search-tool-spec.md`).
 
 Out of scope: `research_log_append` itself (its spec), the other search tools
 (image/volume/collections/person — they don't write `results/` sidecars today), and
@@ -176,10 +179,22 @@ part of `staged`.
 - `image_transcribe` — `payload: { query: { imageId | ark | memoryArtifactUrl | file, lookingFor? },
   results: [ { id, source, content_type, size_bytes, model, transcription, truncated?, found? } ] }`,
   where `id` is the FamilySearch identifier or `capture:<basename>` for an uploaded file (the
-  record-extraction id convention). The tool also returns a `digest` beside the handle.
-- `record_read` — `payload: { query: { recordId }, results: [ { recordId, gedcomx } ] }`: the same
-  element shape `record_search` stages, so `record_read({ recordId, resultsRef })` reads it back
-  unchanged.
+  extraction id convention, as `record-structurer` uses it). The tool also returns a `digest` beside the handle.
+- `record_read` — `payload: { query: { recordId }, results: [ { recordId, gedcomx, indexFields? } ] }`:
+  `record_search`'s element shape plus one field, so `record_read({ recordId, resultsRef })` still
+  reads it back unchanged.
+
+  `indexFields` maps each persona's `gedcomx.persons[].id` to the per-person index values the raw
+  FamilySearch body carries in `fields[]` and `toSimplified` drops — `relationshipToHead`,
+  `sortKey`, `personNbr`, `lineNbr`, `householdId`, `age`, `fatherBirthPlace`, `motherBirthPlace`,
+  each optional. It is omitted entirely when no persona carries any, so a record type with no
+  index data stages what it always did.
+
+  **Only `record_read` stages it, and that asymmetry is the point.** A `record_search` response
+  populates `fields[]` for the searched persona alone; every co-resident arrives with names and
+  facts and nothing else. Code that assigns a role per household therefore cannot be fed from a
+  search sidecar, which is why the record extractor takes a `record_read` sidecar. Evidence:
+  `packages/engine/mcp-server/dev/probe-census-persona-fields.ts`.
 - `person_read` — `payload: { query: { personId, relatives, sourceDescriptions }, results: [ { personId, gedcomx } ] }`,
   where the element `personId` is the post-redirect id and `gedcomx` is the whole response minus
   `staged`/`stagingError` (`person-read-tool-spec.md`, "Staging the read").
@@ -187,6 +202,29 @@ part of `staged`.
 ---
 
 ## 6. Finalize handshake with `research_log_append`
+
+### 6.0 Near-copy resolution (`resolveStagedRef`)
+
+Every consumer of a staged ref — `research_log_append` (each op), `project_create`
+(`personReadRef`), and the read-only `readStagedResults` behind `record_read` and
+`rank_search_matches` — first maps a mis-copied ref onto the one staged file it
+names, then runs its own checks on that canonical ref.
+
+- An existing ref is used unchanged.
+- A ref whose directory is absent (a bare `<uuid>` or `<uuid>.json`) or `.staging/`
+  is read as `results/.staging/<name>`.
+- Otherwise the ref's name is compared with every `results/.staging/*.json` name: a
+  name within **3 edits**, or a name the ref is a prefix of when the ref has **at
+  least 8 characters**, is a candidate.
+- **Exactly one candidate** is used. Zero or several, a ref naming any other
+  directory, or a ref containing `..`, is left unchanged and refused by the
+  consumer's own check as before — the resolver never guesses.
+- A writing consumer reports each correction in `validation.warnings`
+  (`<field> '<given>' matched no staged file; used '<canonical>', ...`); the
+  read-only `readStagedResults` reads through without persisting anything.
+
+A staged name is a random v4 UUID, so two staged files within 3 edits of each other
+do not occur in practice; the single-candidate rule still refuses that case.
 
 When the log editor is called with `stagedResultsRef`, it (host-side):
 
@@ -301,8 +339,8 @@ same ground truth production does.
   gedcomx from the staged/finalized sidecar — no live FS fetch — returning the
   search stage's standardized places as-is (a live read uses pure `toSimplified`,
   keeping only the record's own normalized places, never resolver-derived ones);
-  used by record-extraction /
-  search-records to avoid re-fetching a record they already searched). Both share
+  used by search-records to avoid re-fetching a record it already searched;
+  `extraction_append` does not use it — it always reads the record live). Both share
   the dual-location read helper `readStagedResults` (staged handle OR finalized
   `results/<log_id>.json`) and never unlink, so a staged handle can still be
   finalized afterward.

@@ -511,6 +511,12 @@ describe("getPlaceRepIds", () => {
 // ---------------------------------------------------------------------------
 
 describe("placeSearch (internal)", () => {
+  it("throws when placeName is missing", async () => {
+    await expect(placeSearch("" as any)).rejects.toThrow("placeName is required");
+    await expect(placeSearch(undefined as any)).rejects.toThrow("placeName is required");
+    await expect(placeSearch("   " as any)).rejects.toThrow("placeName is required");
+  });
+
   it("narrows to matches whose fullName contains the context name", async () => {
     routeByUrl([
       { match: "search?q=name:%22Paris%22", json: parisSearchResponse },
@@ -613,6 +619,10 @@ describe("placeSearch (internal)", () => {
 // ---------------------------------------------------------------------------
 
 describe("placeSearchTool", () => {
+  it("throws when placeName is missing", async () => {
+    await expect(placeSearchTool({ placeName: "" } as any)).rejects.toThrow("placeName is required");
+  });
+
   it("returns simplified fields with the FamilySearch WIKIPEDIA_LINK and no identifiers", async () => {
     routeByUrl([
       { match: "search?q=name:%22Paris%22", json: parisSearchResponse },
@@ -688,6 +698,10 @@ describe("placeSearchTool", () => {
 // ---------------------------------------------------------------------------
 
 describe("placeSearchAllTool", () => {
+  it("throws when placeName is missing", async () => {
+    await expect(placeSearchAllTool({ placeName: "" } as any)).rejects.toThrow("placeName is required");
+  });
+
   it("expands each pid to all rep IDs and returns simplified, ID-free results", async () => {
     routeByUrl([
       { match: "search?q=name:%22Paris%22", json: parisSearchResponse },

@@ -39,9 +39,11 @@ import json
 import os
 import shutil
 import sys
+import urllib.request
 from collections.abc import AsyncIterator
 from pathlib import Path
 
+from .build_info import BUILD_INFO_PATH, build_label
 from .continue_policy import (
     CONTINUE_REASON,
     DELEGATION_TOOLS,
@@ -95,14 +97,14 @@ def stage_plugin_agents(project_dir: Path) -> list[str]:
     ``packages/engine/plugin/agents/*.md`` — but it registers each one under the
     plugin-NAMESPACED name ``genealogy-research:<agent>``, and nothing under the
     bare name. Every SKILL.md delegates by the bare name
-    (``@plugin:record-extractor``), so on the plugin path the Task call
-    hard-errors — "Agent type 'record-extractor' not found" — and the model then
+    (``@plugin:record-structurer``), so on the plugin path the Task call
+    hard-errors — "Agent type 'record-structurer' not found" — and the model then
     improvises: guess the namespaced spelling, fall back to ``general-purpose``,
     or do the work inline. The fallback is the dangerous one, because a
     general-purpose stand-in holds the session's whole tool set instead of the
-    agent's ``tools:`` allow-list and binds none of its ``disallowedTools:``
-    denies — the deny being the only thing keeping ``record-extractor`` off the
-    broad ``research_append`` under ``bypassPermissions`` (issue #695).
+    agent's ``tools:`` allow-list — the allow-list being the only thing keeping
+    an agent such as ``record-structurer`` off the broad ``research_append``
+    under ``bypassPermissions`` (issue #695).
 
     Staging into ``.claude/agents/`` is exactly what both eval harnesses do
     (``eval/harness/harness/workspace.py``, ``eval/harness/e2e/orchestrator.py``)
@@ -151,7 +153,7 @@ def stage_plugin_agents(project_dir: Path) -> list[str]:
 # from eval/ or from the control-plane package (see the module docstring).
 # starting-tree.gedcomx.json is the write-once baseline the tree-encoding gate
 # diffs against (issue #1490); overwriting it would defeat that gate.
-PROTECTED_PROJECT_FILES = ("research.json", "tree.gedcomx.json", "starting-tree.gedcomx.json")
+PROTECTED_PROJECT_FILES = ("research.json", "tree.gedcomx.json", "starting-tree.gedcomx.json", "external-collections.json")
 
 # Tools that write a file directly, by `file_path`. Bash is deliberately NOT
 # here: the skills run their stdlib-only scripts through it, and the only way to
@@ -443,7 +445,8 @@ async def _pretool_hook(input_data, _tool_use_id, _ctx):
                     "To CREATE a new project use project_create, which writes both files "
                     "together; to add to an existing one use research_append, "
                     "research_log_append, tree_edit or tree_correct. These validate "
-                    "before persisting. Direct file writes never validate."
+                    "before persisting. Direct file writes never validate. "
+                    "external-collections.json is written only by external_links_search given a projectPath."
                 ),
             },
         }
@@ -531,6 +534,45 @@ def _current_base_url() -> str | None:
     return os.environ.get("ANTHROPIC_BASE_URL")
 
 
+_PROXY_SUFFIX = "/api/anthropic-proxy"
+
+
+def _turn_cost_url() -> str | None:
+    """The control plane's per-turn cost endpoint, or None when there is no proxy
+    (local dev), since the proxy token is what authenticates the report."""
+    base = _current_base_url()
+    if not base or not base.endswith(_PROXY_SUFFIX):
+        return None
+    return base[: -len(_PROXY_SUFFIX)] + "/api/turn-cost"
+
+
+_BUILD_INFO = Path(BUILD_INFO_PATH)
+
+
+def _sandbox_build() -> str | None:
+    """The build this sandbox's code came from, for the cost report. None outside the
+    image (local dev) or when the stamp is unreadable."""
+    try:
+        return build_label(_BUILD_INFO.read_bytes())
+    except (OSError, ValueError):
+        return None
+
+
+def _post_turn_cost(url: str, api_key: str, payload: dict) -> None:
+    """Blocking; run off the event loop. A failed report is logged, never raised."""
+    req = urllib.request.Request(
+        url,
+        data=json.dumps(payload).encode(),
+        headers={"content-type": "application/json", "x-api-key": api_key},
+        method="POST",
+    )
+    try:
+        with urllib.request.urlopen(req, timeout=10):
+            pass
+    except Exception as exc:
+        _log(f"turn cost report failed: {exc!r}")
+
+
 def _sdk_env(api_key: str | None = None) -> dict[str, str]:
     """Build the env dict for the Claude Agent SDK subprocess.
 
@@ -552,10 +594,18 @@ def _sdk_env(api_key: str | None = None) -> dict[str, str]:
     return env
 
 
-# PR #2870 item 1d. The alpha's veto cap per turn. Sized like the prototype's on STEP
-# count rather than on the nudge histogram: over the 189 committed e2e runs, Skill/Task/
-# Agent steps per run are median 15, p90 25, p99 51, max 76. 0 turns the hook off.
-_DEFAULT_MAX_NUDGES = 60
+# PR #2870 item 1d. The alpha's veto cap, per SESSION -- `nudges_used` below is created
+# once and never reset at a turn boundary. This said "per turn" until 2026-10-13 and was
+# wrong; the full consequence is written up on `Settings.autonomous_max_nudges`.
+#
+# Sized like the prototype's on STEP count rather than on the nudge histogram. Re-derived
+# 2026-10-13 by `test_proto_config._steps_per_run`'s method over the committed e2e corpus
+# (203 runs that day): median 15, p90 26, p99 48, max 76. 0 turns the hook off.
+#
+#: Matches `Settings.autonomous_max_nudges`, and a test pins them equal. This is the
+#: in-sandbox fallback used when the control plane sets no env var, so leaving it at 60
+#: while the setting moved to 30 would make the two disagree exactly where nobody looks.
+_DEFAULT_MAX_NUDGES = 30
 
 
 def _max_nudges(env=None) -> int:
@@ -626,7 +676,7 @@ def _build_hooks(HookMatcher, project_dir: Path, agent=None) -> dict:
     sandboxes in one process cannot read each other's progress. It is what
     ``should_continue_run``'s no-progress arm compares between two stops: without it the
     second nudge always looks like no progress and the run stops after one."""
-    counter = {"tool_calls": 0, "delivered": False}
+    counter = {"tool_calls": 0, "delivered": False, "continuations": 0}
     # Published so `handle_turn` can clear the per-TURN half at the turn boundary.
     # `tool_calls` is deliberately session-scoped (the no-progress arm compares it
     # across two stops); `delivered` is not, and the dict outlives the turn because
@@ -691,17 +741,23 @@ def _build_hooks(HookMatcher, project_dir: Path, agent=None) -> dict:
         ]
     }
     if AUTONOMOUS_MAX_NUDGES > 0:
+        stop = make_stop_hook(
+            project_dir, max_nudges=AUTONOMOUS_MAX_NUDGES,
+            tool_count=lambda: counter["tool_calls"],
+            pending_user_message=(agent.pending_user_message if agent else None),
+            delivered=lambda: counter["delivered"],
+        )
+
+        async def counted_stop(input_data, tool_use_id, ctx):
+            """Counts the stops it overrides, so each turn's cost report says how much
+            of the turn ran past a stop the model chose."""
+            out = await stop(input_data, tool_use_id, ctx)
+            if out.get("decision") == "block":
+                counter["continuations"] += 1
+            return out
+
         hooks["Stop"] = [
-            HookMatcher(
-                matcher=None,
-                hooks=[make_stop_hook(
-                    project_dir, max_nudges=AUTONOMOUS_MAX_NUDGES,
-                    tool_count=lambda: counter["tool_calls"],
-                    pending_user_message=(agent.pending_user_message if agent else None),
-                    delivered=lambda: counter["delivered"],
-                )],
-                timeout=_PRETOOL_TIMEOUT_S,
-            )
+            HookMatcher(matcher=None, hooks=[counted_stop], timeout=_PRETOOL_TIMEOUT_S)
         ]
     return hooks
 
@@ -756,7 +812,7 @@ def build_options(project_dir: Path, resume: str | None = None, api_key: str | N
         # explicit timeout — see _PRETOOL_MATCHER and _PRETOOL_TIMEOUT_S.
         hooks=_build_hooks(HookMatcher, project_dir, agent),
         # Stream partial assistant content. Without it a block reaches the UI only
-        # when its whole message completes, so a long turn — a record-extraction
+        # when its whole message completes, so a long turn — an extraction
         # subagent reasoning before its next tool call — shows nothing at all for
         # minutes. The deltas are also what keeps the socket's data frames flowing
         # through the sandbox's edge proxy during that stretch.
@@ -797,7 +853,7 @@ def map_message(
 
     **Subagent turns arrive on this same stream**, tagged with
     ``parent_tool_use_id`` rather than nested. Without reading it, a
-    record-extractor's text/thinking/tool calls are indistinguishable from the
+    record-structurer's text/thinking/tool calls are indistinguishable from the
     main agent's — they land in the same chat bubble and read as if the
     orchestrator did the work itself. Every event carries an ``agent`` label when
     it came from a subagent, resolved through ``tasks`` (tool_use_id → the Task's
@@ -1268,12 +1324,14 @@ class RealAgent:
         first cut cleared on the next tool call instead, and was wrong twice: a turn
         that yields without calling any tool never cleared it, and the clearing was
         not main-thread gated, so a straggler subagent call could clear a
-        main-thread delivery. `tool_calls` is deliberately NOT reset -- the
+        main-thread delivery. `continuations` counts THIS turn's overridden stops for
+        the cost report. `tool_calls` is deliberately NOT reset -- the
         no-progress arm compares it across two stops.
         """
         counter = getattr(self, "_hook_counter", None)
         if counter is not None:
             counter["delivered"] = False
+            counter["continuations"] = 0
 
     def _usage_delta(self, cost, in_tok, out_tok):
         """Convert the SDK's cumulative session totals into per-turn increments.
@@ -1479,6 +1537,19 @@ class RealAgent:
                     d_cost, d_in, d_out = self._usage_delta(
                         getattr(message, "total_cost_usd", None), in_tok, out_tok
                     )
+                    url = _turn_cost_url()
+                    if url and d_cost is not None:
+                        counter = getattr(self, "_hook_counter", None)
+                        asyncio.get_running_loop().run_in_executor(
+                            None, _post_turn_cost, url, current_api_key(), {
+                                "cost_usd": d_cost,
+                                "model": os.environ.get("MODEL") or None,
+                                "input_tokens": d_in,
+                                "output_tokens": d_out,
+                                "build": _sandbox_build(),
+                                "continuations": counter.get("continuations") if counter else None,
+                            },
+                        )
                     yield _event(
                         "usage",
                         cost_usd=d_cost,

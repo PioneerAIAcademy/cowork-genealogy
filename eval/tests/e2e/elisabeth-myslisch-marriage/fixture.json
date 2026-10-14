@@ -1,0 +1,19 @@
+{
+  "id": "elisabeth-myslisch-marriage",
+  "name": "Elisabeth Myslisch — marriage in February 1845, Oxhöft, West Prussia",
+  "genre": "record-hint",
+  "source_pid": "KV1W-XVF",
+  "captured": "2026-10-12",
+  "researcher_question": "When and where did Elisabeth Myslisch marry Anton Netzel, the parents of Elisabeth Netzel (christened 1845) and Valentin Netzel (christened 1847) at Oxhöft, West Prussia?",
+  "tags": {
+    "question_type": "marriage",
+    "era": "1840s",
+    "geography": "PL"
+  },
+  "model": {
+    "agent": "claude-sonnet-4-6",
+    "judge": "claude-haiku-4-5-20251001"
+  },
+  "difficulty": "medium",
+  "notes": "Record-hint fixture (filtered-list-samples-3.csv row 11, hint-samples.csv row 407, flags adds_birth/adds_marriage, confidence 3). Resolved 2026-10-14 (#3334): true match, probable not proved. The 2 Feb 1845 Oxhöft marriage of Anton Netzel and Elisabeth Desmer (ark:/61903/1:1:6ZMF-97V3) is accepted as KV1W-XVF's on the index alone: the couple's 1845/1847/1850 Oxhöft baptisms name the mother Myslisch/Myslisz/Myslisck (Eva), and no other Netzel-Myslisch marriage is indexed. The register image is access-restricted (403) and was not read, so image_basis is off."
+}

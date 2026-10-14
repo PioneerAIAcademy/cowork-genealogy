@@ -222,23 +222,24 @@ describe("plugin agent tool names", () => {
     expect(LOCAL_PREFIX).toBe("mcp__Genealogy_Research__");
   });
 
-  it("record-extractor cannot reach the broad writer", () => {
-    // The lane ADR-0006 defines. It used to be asserted on record-extractor's
-    // `disallowedTools:` block; that block is gone, because the deny only ever
-    // restated the omission (see the header). So assert the thing that actually
-    // binds: `research_append` is absent from the agent's `tools:`.
+  it("record-structurer cannot reach the broad writer", () => {
+    // The lane ADR-0006 defines, carried from record-extractor (deleted
+    // 2026-09-30) to the agent that replaced it. It used to be asserted on
+    // record-extractor's `disallowedTools:` block; that block is gone, because
+    // the deny only ever restated the omission (see the header). So assert the
+    // thing that actually binds: `research_append` is absent from `tools:`.
     //
     // This is not redundant with AGENT_PERMISSIONS below. That snapshot fails on
     // ANY change to the list and says only "the surface moved"; this one names
     // the invariant, so a reviewer reading a red suite is told which rule broke.
     const granted = extractList(
-      readFileSync(join(agentsDir, "record-extractor.md"), "utf8"),
+      readFileSync(join(agentsDir, "record-structurer.md"), "utf8"),
       "tools",
     ).map(bareOrBuiltin);
     expect(
       granted,
-      `record-extractor must not hold the broad research_append — it writes only ` +
-        `sources + assertions, through extraction_append (ADR-0006). A tool omitted ` +
+      `record-structurer must not hold the broad research_append — it writes only ` +
+        `through extraction_append's documents input (ADR-0006). A tool omitted ` +
         `from tools: is absent from the agent even under bypassPermissions ` +
         `(measured 2026-08-30, \`make probe-agent-binding\`); adding it here is what ` +
         `would hand this agent every section.`,
@@ -477,20 +478,14 @@ const AGENT_PERMISSIONS: Record<string, { tools: string[]; denies: string[] }> =
     tools: ["image_transcribe"],
     denies: [],
   },
-  "record-extractor.md": {
-    tools: [
-      "extraction_append",
-      "place_search",
-      "place_search_all",
-      "project_context",
-      "record_person_matches",
-      "record_read",
-      "record_record_matches",
-      "research_log_append",
-    ],
+  // Reads text and writes it through extraction_append's `documents` input,
+  // which classifies in code and refuses any classification field (spec §11.7).
+  // No research_log_append: extraction_append writes the log entry itself.
+  "record-structurer.md": {
+    tools: ["extraction_append", "sidecar_read"],
     denies: [],
   },
-  // The only caller permitted to set `exhaustive_declaration.declared: true`;
+  // The only caller permitted to set `search_stop.stopped_because` to a stop-gate value;
   // the plugin PreToolUse hook denies that claim to everyone else. Like
   // proof-conclusion it holds the BROAD research_append, and the hook's caller
   // check — not this list — is what restricts it.
@@ -520,26 +515,36 @@ const AGENT_PERMISSIONS: Record<string, { tools: string[]; denies: string[] }> =
   // the check-warnings SKILL — a route an agent does not have. Widened
   // deliberately (lead review, 2026-09-02) because the warnings pass cannot sit
   // in the routing skill: `/research` may spawn this agent directly, so no
-  // plane guarantees the router runs at all. Still no `Read` and no
-  // `project_context` — the body reaches project state through research_query
-  // and never named either.
+  // plane guarantees the router runs at all. Still no `Read`: the body reaches
+  // research.json through research_query. `place_search`, `place_distance` and `wiki_read`
+  // were added for #2537: the identity decision measures a move outside the
+  // residence cluster and reads the destination's migration page and the
+  // country's naming page (ADR-0012), so those facts left the body.
+  // `place_distance` alone would be a dead grant — it takes the `standardPlace`
+  // only `place_search` returns. `project_context` was added for the same issue:
+  // it is the only tool that lists a person's tree spouses and children, which
+  // the Household check needs to name an absent spouse (ut_person_evidence_026).
   "person-evidence.md": {
     tools: [
       "materialize_facts",
       "merge_warnings",
       "person_quality",
       "person_warnings",
+      "place_distance",
+      "place_search",
+      "project_context",
       "record_read",
       "research_append",
       "research_query",
       "same_person",
       "tree_edit",
+      "wiki_read",
     ],
     denies: [],
   },
   // The grant is the folded skill's own former allowed-tools plus
   // `image_transcribe` and `Read`. It holds the BROAD `research_append` — unlike
-  // record-extractor above, which is pinned OFF it — and nothing narrows that
+  // record-structurer above, which is pinned OFF it — and nothing narrows that
   // here: this agent writes no hook-routed section, so `AGENT_WRITABLE_SECTIONS`
   // returns None for it and the hook's out-of-lane check never fires. What keeps
   // it to a plan item's `status` is its body's lane rule and this snapshot, which
@@ -571,6 +576,28 @@ const AGENT_PERMISSIONS: Record<string, { tools: string[]; denies: string[] }> =
       "Read",
       "research_append",
       "validate_research_schema",
+      "wiki_read",
+    ],
+    denies: [],
+  },
+
+  // conflict-resolution (issue #1852) holds the six tools the skill it replaced
+  // declared, plus `Read` for research.json and `research_query`, which Step 1
+  // reads assertions and person_evidence with. `research_append` is the conflict
+  // write, and the plugin hook routes a conflict's analytical product (a
+  // resolve, or any analysis field) to this agent alone. The research-side place
+  // tools its folded places guidance lists (collections, volumes, external
+  // links, population, wiki place pages) are deliberately absent: it resolves
+  // place names and does not search.
+  "conflict-resolution.md": {
+    tools: [
+      "Read",
+      "convert_calendar",
+      "place_distance",
+      "place_search",
+      "place_search_all",
+      "research_append",
+      "research_query",
       "wiki_read",
     ],
     denies: [],
@@ -638,12 +665,14 @@ const AGENT_PERMISSIONS: Record<string, { tools: string[]; denies: string[] }> =
     denies: [],
   },
 
-  // locality-guide (issue #2117) holds exactly the eleven tools the skill it
-  // replaced declared, plus `Read`: Step 6 persists only when research.json
-  // exists at the project path, and the narration line reads it.
+  // locality-guide (issue #2117) holds the eleven MCP tools the skill it
+  // replaced declared, plus `catalog_search` (issue #3107), plus `Read`:
+  // Step 6 persists only when research.json exists at the project path, and
+  // the narration line reads it.
   "locality-guide.md": {
     tools: [
       "Read",
+      "catalog_search",
       "collections_search",
       "external_links_search",
       "place_population",
@@ -674,6 +703,42 @@ const AGENT_PERMISSIONS: Record<string, { tools: string[]; denies: string[] }> =
       "wiki_read",
       "wiki_search",
       "wikipedia_search",
+    ],
+    denies: [],
+  },
+
+  // New agent (issue #3273), not a conversion, no hook route. It surveys before a
+  // project exists, so it holds no `Read`, no `project_context` and no writer:
+  // there is no research.json to read or write. `tree_gaps` finds the holes;
+  // the other five check what FamilySearch has for them.
+  "tree-survey.md": {
+    tools: [
+      "collections_search",
+      "person_quality",
+      "person_record_matches",
+      "place_search",
+      "record_search",
+      "tree_gaps",
+    ],
+    denies: [],
+  },
+
+  // search-hints (issue #2029) reviews FamilySearch hints. Triage reads:
+  // `person_record_matches` for the pending matches, `research_query` to find a
+  // hint the project already extracted, `record_read` per hint,
+  // `image_transcribe` to read the image before recommending against a hint (it
+  // calls the tool itself; an agent cannot spawn image-reader), `person_read`
+  // and `Read` for the tree person. Record mode writes one log entry per decided
+  // hint through `research_log_append`. No `research_append`, so no hook lane.
+  "search-hints.md": {
+    tools: [
+      "Read",
+      "image_transcribe",
+      "person_read",
+      "person_record_matches",
+      "record_read",
+      "research_log_append",
+      "research_query",
     ],
     denies: [],
   },
@@ -760,9 +825,13 @@ const AGENT_PERMISSIONS: Record<string, { tools: string[]; denies: string[] }> =
   // The folded check-warnings skill (issue #2118). `person_quality` is absent by
   // lead ruling 2026-09-27. No `Read`: with it the agent read research.json and
   // the tree and reported what it found there instead of the tool's answer (4
-  // of 39 confirmation runs, 2026-09-28); callers pass person ids. Writes nothing.
+  // of 39 confirmation runs, 2026-09-28); callers pass person ids. Still no
+  // `Read` after issue #3260: `census_children_gap` reads the mother's children
+  // from the tree itself (tree mode), and an empty folder is detected from
+  // `person_warnings`' own `no_project` answer, so neither needs a file read.
+  // Writes nothing.
   "check-warnings.md": {
-    tools: ["person_warnings"],
+    tools: ["person_warnings", "census_children_gap"],
     denies: [],
   },
 
@@ -804,9 +873,11 @@ const AGENT_PERMISSIONS: Record<string, { tools: string[]; denies: string[] }> =
 
   // The folded source-evaluation skill (issue #2796) holds the four tools that
   // skill declared, plus `Read` for the Narration line's read of research.json
-  // and the name match against tree.gedcomx.json. Writes nothing, so no hook
-  // route. A request belonging to conflict-resolution, check-warnings or
-  // record-extraction is handed back by name, so no spawn tool.
+  // and the name match against tree.gedcomx.json. `person_warnings` (issue
+  // #2942) runs the impossible-date check over the project tree when it holds
+  // the audited person; it reads the tree and writes nothing. Writes nothing,
+  // so no hook route. A request belonging to conflict-resolution,
+  // check-warnings or extraction is handed back by name, so no spawn tool.
   "source-evaluation.md": {
     tools: [
       "Read",
@@ -814,12 +885,31 @@ const AGENT_PERMISSIONS: Record<string, { tools: string[]; denies: string[] }> =
       "record_read",
       "source_attachments",
       "person_quality",
+      "person_warnings",
     ],
     denies: [],
   },
 
   "translation.md": {
     tools: ["Read"],
+    denies: [],
+  },
+
+  // The folded init-project skill (issue #2122) holds the tools that skill
+  // declared less `place_search` (project_create standardizes places), plus
+  // `Read`, which it had as the main thread: a large `person_read` result is
+  // persisted to a file the agent pages through. Its `research_append` is laned
+  // to `project` (which it owns), `researcher_profile`, `known_holdings` and
+  // `sources` (guard_project_files.py). It reviews nothing and spawns nothing,
+  // so no spawn tool.
+  "init-project.md": {
+    tools: [
+      "Read",
+      "person_read",
+      "person_search",
+      "project_create",
+      "research_append",
+    ],
     denies: [],
   },
 };

@@ -368,13 +368,27 @@ Every candidate relationship is carried over (Mode 1) / retained (Mode 2) with:
   ids → survivor ids; others → remapped),
 - relationship-level `facts` and `sources` ref-rewritten; couple/marriage facts
   merged per §7.2 when the same couple appears on both sides.
-Then **dedup**: collapse duplicate relationships — same `type` and same endpoints
-— into one, **folding the duplicate's facts and source refs into the kept
-relationship** (so e.g. a candidate couple's Marriage fact is not lost when the
-same couple already exists on the target). Compare endpoints **after** remap; for
-`Couple`, treat `{person1, person2}` as an **unordered set** (the two docs may
-list the partners in opposite order). A self-referential relationship produced by
-a collapse (parent == child / person1 == person2) is dropped.
+Then **dedup**: collapse duplicate relationships into one, **folding the
+duplicate's facts, source refs and notes into the kept relationship** (so e.g. a
+candidate couple's Marriage fact is not lost when the same couple already exists
+on the target). Compare endpoints **after** remap; for `Couple`, treat
+`{person1, person2}` as an **unordered set** (the two docs may list the partners
+in opposite order). A self-referential relationship produced by a collapse
+(parent == child / person1 == person2) is dropped.
+
+Two relationships are duplicates when `relationshipMatches` says so: same `type`
+and endpoints, and their **subtypes agree or either is absent**. An untyped edge
+is a less specific statement of the same relationship, so it folds into a typed
+one; two different explicit subtypes are two relationships and both survive — a
+Step and a Biological parent on one pair are not one edge recorded twice.
+
+The **first match in document order survives**, and it takes the more specific
+statement: a surviving untyped edge adopts the subtype of the typed edge folding
+into it. So merging the same two documents in either order gives the same shape.
+
+This is deliberately looser than `relationshipKey`, which carries the subtype
+and answers "which tree object is this" for `tree_diff`. Deduping by the exact
+key would leave an untyped edge sitting beside the typed edge it restates.
 
 ### 6.6 Sources
 Candidate `sources[]` merged into target `sources[]`:

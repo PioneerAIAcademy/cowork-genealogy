@@ -11,9 +11,10 @@
 // The build follows the rules init-project's Step 3 gave the model: local
 // `I`/`N`/`F`/`R`/`S` ids, the canonical `ark`, the response-only source fields
 // dropped, one FamilySearch-tree source as `S1` with a `quality: 1` ref on every
-// fact and relationship, and the person-level refs re-pointed. Step 3 never fixed
-// that source's wording; it names the Family Tree and the page the read came
-// from, not one person, since it is cited on every relative's facts too.
+// fact and relationship, and the person-level and relationship-level refs
+// re-pointed. Step 3 never fixed that source's wording; it names the Family Tree
+// and the page the read came from, not one person, since it is cited on every
+// relative's facts too.
 //
 // Stubs the researcher's own statements imply (a maiden name's parent) arrive as
 // ADDITIONS. The model cannot see the ids minted here, so in ref mode every id
@@ -21,8 +22,14 @@
 // named by FamilySearch PID. An `I<n>` the model wrote would otherwise land on
 // whichever staged person got that id, and no validator could tell.
 
-import type { SimplifiedFact } from "../types/gedcomx.js";
+import type { SimplifiedFact, SimplifiedRelationship } from "../types/gedcomx.js";
+import { treePidOfArk } from "./ark.js";
 import { collectFacts, standardizePlaces } from "./gedcomx-convert.js";
+// The one relationship identity. A private copy here keyed on type and
+// endpoints only, so an import carrying both a Biological and a Step parent on
+// one pair was refused as a repeat — the opposite of what the tree says
+// everywhere else (a Step edge beside a Biological one is a second edge).
+import { relationshipMatches } from "./merge-gedcomx.js";
 import { TREE_PERSON_FIELDS, TREE_SOURCE_FIELDS } from "../validation/tree-shape.js";
 
 export class TreeBuildError extends Error {}
@@ -56,10 +63,12 @@ export interface BuiltTree {
   tree: { persons: Obj[]; relationships: Obj[]; sources: Obj[] };
   idMap: IdMap;
   subjectPersonIds: string[];
-  /** The place retry for the read's facts. Not run by the build: the caller
-   *  runs it once every refusal of its own has passed, so a refused call never
-   *  waits on the network. */
-  fillPlaces: () => Promise<FilledPlace[]>;
+  /** The facts the caller's additions brought, in the tree as built. */
+  additionFacts: Obj[];
+  /** The place retry for the read's facts, plus any `extra` facts in the same
+   *  time budget. Not run by the build: the caller runs it once every refusal
+   *  of its own has passed, so a refused call never waits on the network. */
+  fillPlaces: (extra?: SimplifiedFact[]) => Promise<FilledPlace[]>;
 }
 
 /** How long the place retry may run. `project_create` is one MCP call, and the
@@ -93,6 +102,12 @@ class Minter {
 const isObj = (v: unknown): v is Obj => !!v && typeof v === "object" && !Array.isArray(v);
 const arr = (v: unknown): Obj[] => (Array.isArray(v) ? v.filter(isObj) : []);
 
+/** Every fact on a tree's persons and relationships. Safe on a tree the
+ *  validator has not seen yet: an entry that is not an object is skipped. */
+export function factsOf(tree: { persons?: unknown; relationships?: unknown }): Obj[] {
+  return [...arr(tree.persons), ...arr(tree.relationships)].flatMap((o) => arr(o.facts));
+}
+
 /** An addition collection: absent is empty, anything but an array of objects
  *  is refused. `arr` drops a bad entry, which for a citation would silently
  *  re-cite the fact to the researcher's statement. */
@@ -106,35 +121,6 @@ function list(v: unknown, where: string): Obj[] {
     );
   }
   return v;
-}
-
-/** The FamilySearch tree PID an addition's `ark` names: a tree-person ark
- *  (4:1:) in any spelling, or a tree person URL. A record or image ark names
- *  no tree person. */
-function treePidOfArk(value: unknown): string | undefined {
-  if (typeof value !== "string") return undefined;
-  // Each %XX on its own, so one stray `%` does not switch decoding off.
-  const text = value
-    .trim()
-    .replace(/%([0-9A-Fa-f]{2})/g, (_m, hex: string) => String.fromCharCode(parseInt(hex, 16)));
-  // A FamilySearch tree person URL names the PID in a path segment after
-  // /tree/person/ (details, sources, memories, a language prefix before it).
-  // Read first, so a query string cannot override the path.
-  const url = text.match(
-    /^https?:\/\/(?:www\.)?familysearch\.org(?::\d+)?\/(?:[a-z]{2}(?:-[a-z]{2,4})?\/)?tree\/(?:person|pedigree)\/([^?#]*)/i,
-  );
-  if (url) {
-    for (const seg of url[1].split("/")) {
-      const pid = seg.match(/^([A-Za-z0-9]{4}-[A-Za-z0-9]{3,4})(?![A-Za-z0-9-])/);
-      if (pid) return pid[1];
-    }
-    return undefined;
-  }
-  // Otherwise an ark: `ark:/61903/4:1:<PID>` in the path of a resolver URL, or
-  // a bare `4:1:<PID>`. Never from a query string: a record URL can carry a
-  // tree ark there without naming that person.
-  const path = text.replace(/[?#].*$/, "");
-  return path.match(/(?:ark:\/61903\/|^)4:1:([A-Za-z0-9]{4}-[A-Za-z0-9]{3,4})(?![A-Za-z0-9])/i)?.[1];
 }
 
 function displayName(person: Obj | undefined): string {
@@ -172,10 +158,17 @@ interface StagedIndex {
   sources: Map<string, string>;
 }
 
-/** A relationship's identity: its type and endpoints (a Couple unordered). */
-function relationshipKey(r: Obj): string {
-  if (r.type === "Couple") return `Couple|${[r.person1, r.person2].map(String).sort().join("|")}`;
-  return `${String(r.type)}|${String(r.parent)}|${String(r.child)}`;
+/**
+ * How a repeated relationship reads in the refusal below.
+ *
+ * Built from the relationship's own fields rather than by de-mangling
+ * `relationshipKey`, whose internal `pc` marker and trailing subtype slot are
+ * not for a reader.
+ */
+function describeRelationship(r: Obj): string {
+  const sub = typeof r.subtype === "string" ? ` ${r.subtype}` : "";
+  if (r.type === "Couple") return `Couple${sub} ${[r.person1, r.person2].map(String).sort().join(" ")}`;
+  return `${String(r.type)}${sub} ${String(r.parent)} ${String(r.child)}`;
 }
 
 /**
@@ -292,10 +285,13 @@ export async function buildFromStagedRead(args: {
 
   const tree = { persons, relationships, sources };
   const subjectId = idMap.persons[subjectPid];
-  // The read's facts, captured before additions join: the retry covers only
-  // these, and runs LAST so every refusal below is instant.
+  // The read's facts, captured before additions join so the caller can treat
+  // the additions' facts as hand-entered. The retry runs LAST so every refusal
+  // below is instant.
   const readFacts = collectFacts(tree as never) as SimplifiedFact[];
   const labels = mergeAdditions(tree, args.additions, minter, idMap, index, now);
+  const fromRead = new Set<object>(readFacts);
+  const additionFacts = factsOf(tree).filter((f) => !fromRead.has(f));
 
   // subjectPersonIds: a staged PID or an addition label; defaults to the subject.
   let subjectPersonIds: string[];
@@ -319,7 +315,13 @@ export async function buildFromStagedRead(args: {
     });
   }
 
-  return { tree, idMap, subjectPersonIds, fillPlaces: () => retryUnresolvedPlaces(readFacts) };
+  return {
+    tree,
+    idMap,
+    subjectPersonIds,
+    additionFacts,
+    fillPlaces: (extra = []) => retryUnresolvedPlaces([...readFacts, ...extra]),
+  };
 }
 
 /** A place the retry resolved: the fact's raw `place` and what it now carries. */
@@ -333,13 +335,14 @@ export interface FilledPlace {
  * converter's soft cap on a large pedigree): one more try, through the same
  * resolver. A no-op, with no network traffic, when every fact already has one.
  *
- * Only the READ's facts: a stub's place is the caller's, resolved with
- * place_search. And on copies: `standardizePlaces` mutates in place and keeps
+ * On the read path, only the READ's facts; on the hand-built path
+ * `project_create` passes every fact, having cleared each `standard_place`
+ * first. And on copies: `standardizePlaces` mutates in place and keeps
  * running past the budget, so a late answer must not land on a tree that has
  * already been validated and written (it would reach one of the two files and
  * not the other).
  */
-async function retryUnresolvedPlaces(facts: SimplifiedFact[]): Promise<FilledPlace[]> {
+export async function retryUnresolvedPlaces(facts: SimplifiedFact[]): Promise<FilledPlace[]> {
   const copies = facts.map((f) => ({ ...f }));
   await Promise.race([
     standardizePlaces(copies),
@@ -502,7 +505,12 @@ function mergeAdditions(
     if (personRefs.length) out.sources = personRefs;
     tree.persons.push(out);
   }
-  const existing = new Set(tree.relationships.map(relationshipKey));
+  // Matched, not keyed. "Is this relationship already here" is the looser
+  // question: an untyped edge restating a staged Biological one IS a repeat,
+  // while a Step edge beside it is a second relationship. The exact
+  // `relationshipKey` answers a different question — which tree object is
+  // this — and keying on it here would let an untyped repeat through.
+  const existing: SimplifiedRelationship[] = [...tree.relationships];
   for (const r of relationships) {
     const where = `tree relationship ${typeof r.id === "string" ? r.id : ""}`.trim();
     const { id: _id, facts, sources: rs, ...rest } = r;
@@ -510,14 +518,13 @@ function mergeAdditions(
     for (const key of ["parent", "child", "person1", "person2"] as const) {
       if (key in out) out[key] = endpoint(out[key], `${where} ${key}`);
     }
-    const key = relationshipKey(out);
-    if (existing.has(key)) {
+    if (existing.some((e) => relationshipMatches(e, out as SimplifiedRelationship))) {
       throw new TreeBuildError(
-        `${where} repeats a relationship already in the tree (${key.replace(/\|/g, " ")}); ` +
+        `${where} repeats a relationship already in the tree (${describeRelationship(out)}); ` +
           "the read's relationships are imported already.",
       );
     }
-    existing.add(key);
+    existing.push(out as SimplifiedRelationship);
     const builtFacts = list(facts, `${where} facts`).map((f) => fact(f, `${where} fact`));
     if (builtFacts.length) out.facts = builtFacts;
     const relRefs = refs(rs, where);

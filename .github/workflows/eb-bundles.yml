@@ -3,8 +3,11 @@ name: EB bundles
 # Builds the prototype's three Elastic Beanstalk source bundles (U12,
 # docs/plan/familysearch-handoff.md), verifies them, and boots each one offline
 # from its unzipped zip with its Procfile command. Before this, nothing built a
-# deployable artifact for the search-agent prototype at all, so a dependency or
-# layout break would first surface on U13's Beanstalk deploy.
+# deployable artifact for the search-agent prototype at all. A dependency or
+# layout break now fails here, in verify or the offline smoke. A Beanstalk
+# deploy would not flag it: it reports success while the app exits at once,
+# and only health shows the failure (U13 rehearsal, 2026-10-07, which
+# deployed these zips).
 #
 # Node 24, unlike every other JS job here: the U12 text says to build and test
 # the tools bundle on Node 24 (Beanstalk's "Node.js 24 AL2023" branch), so the

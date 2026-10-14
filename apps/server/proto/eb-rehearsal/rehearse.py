@@ -5,8 +5,8 @@ Provisioner, teardown, empty-proof, probe cases and the account-id leak check, i
 script that shells out to the ``aws`` CLI (no boto3). Usage and the rules it enforces:
 README.md beside this file; the plan is docs/plan/familysearch-handoff.md, section 3.
 
-Subcommands: plan, up --phase ..., status, probe --case ..., down, prove-empty, leak-check.
-Every mutating subcommand takes --dry-run, which calls nothing and prints pasteable
+Subcommands: plan, up --phase ..., status, probe --case ..., cpu, alarms, alarm-trip, pause, resume,
+down, prove-empty, leak-check. Every AWS subcommand takes --dry-run, which calls nothing and prints pasteable
 commands. Secret values and option settings reach the CLI only as 0600 ``file://`` paths
 under --work-dir, never as argv.
 """
@@ -55,6 +55,10 @@ RDS_PARAM_GROUP = f"{PREFIX}-pg16"
 RDS_CLASS = "db.t4g.micro"
 RDS_ENGINE_VERSION = "16.13"
 RDS_FAMILY = "postgres16"
+# `cpu`: CloudWatch's basic-monitoring points; the surplus pair publishes only in unlimited mode.
+CPU_METRICS = ("CPUUtilization", "CPUCreditBalance", "CPUCreditUsage", "CPUSurplusCreditBalance",
+               "CPUSurplusCreditsCharged")
+CPU_PERIOD_S = 300
 DB_NAME = "genealogy"
 DB_OWNER = "genealogy_owner"
 DB_DML = "genealogy_dml"
@@ -71,6 +75,11 @@ RESOLVER_LOG_GROUP = f"/{PREFIX}/resolver"
 EB_LOG_PREFIX = f"/aws/elasticbeanstalk/{PREFIX}"
 STORAGE_PREFIX = f"{PREFIX}/"
 MIGRATE_POLICY = f"{PREFIX}-migrate"
+# U19: the alarm definitions FamilySearch ports; `up --phase alarms` applies them with every
+# alarm's actions off, so "fired" is StateValue ALARM and nothing is notified.
+ALARMS_FILE = PROTO / "alarms.json"
+ALARM_PREFIX = f"{PREFIX}-"
+TRIP_THRESHOLD_S = 60
 
 # Loopback sign-in: the dev key's registered callback.
 LOOPBACK_PUBLIC_URL = "http://127.0.0.1:1837"
@@ -86,6 +95,12 @@ INSTANCES_NS = "aws:ec2:instances"
 VPC_NS = "aws:ec2:vpc"
 EBENV_NS = "aws:elasticbeanstalk:environment"
 ELBV2_NS = "aws:elbv2:loadbalancer"
+HTTPS_NS = "aws:elbv2:listener:443"
+HTTP_NS = "aws:elbv2:listener:default"
+# A self-signed certificate for the web environment's own CNAME, imported into ACM (free):
+# the account has no zone of ours, so no public certificate can be validated (U13 D2). The
+# listener is configured exactly as list 3's step 18 has it; only the chain is untrusted.
+CERT_DAYS = 30
 MANAGED_NS = "aws:elasticbeanstalk:managedactions"
 HEALTH_NS = "aws:elasticbeanstalk:healthreporting:system"
 
@@ -94,6 +109,8 @@ HEALTH_NS = "aws:elasticbeanstalk:healthreporting:system"
 MIRRORS = {"MaxRetries": "SQSD_MAX_RETRIES", "VisibilityTimeout": "SQSD_VISIBILITY_TIMEOUT_S",
            "RetentionPeriod": "SQSD_RETENTION_PERIOD_S"}
 SQSD_CONFIG = PROTO / "eb-worker" / ".ebextensions" / "01-sqsd.config"
+# The predeploy hook whose TURN_USERS literal creates every slot user a worker may be told to run as.
+WORKER_HOOK = PROTO / "eb-worker" / ".platform" / "hooks" / "predeploy" / "01-worker-layout.sh"
 
 # test_proto_bundles.py's EB_VALUE and SECRET_NAME; the test pins these copies equal.
 EB_VALUE = re.compile(r"""^[A-Za-z0-9 _.:/=+\\\-@'"]*$""")
@@ -127,10 +144,11 @@ SG_DELETE_ORDER = ("rds", "tools-alb", "web", "worker", "tools")
 
 PHASES = ("guard", "iam", "net", "stores", "secrets", "bastion", "versions", "tools", "worker",
           "queue", "web", "migrate")
-OPTIONAL_PHASES = ("signin", "resolver")
+OPTIONAL_PHASES = ("signin", "resolver", "alarms")
 # Every kind `up` records; `down` deletes each and `prove-empty` checks each.
 KINDS = ("budget", "iam-role", "instance-profile", "sg", "db-subnet-group", "db-param-group", "rds",
-         "s3", "secret", "ec2", "app", "eb-storage", "env", "log-group", "resolver")
+         "s3", "secret", "ec2", "app", "eb-storage", "env", "log-group", "resolver", "acm", "alarm",
+         "metric-filter")
 
 # Beanstalk answers a missing environment or application with InvalidParameterValue and
 # "No Environment found for EnvironmentName = '...'" / "No Application named '...' found."
@@ -143,6 +161,7 @@ ALREADY = re.compile(r"AlreadyExists|BucketAlreadyOwnedByYou|InvalidPermission\.
                      r"DuplicateRecord|EntityAlreadyExists|ResourceExistsException|DuplicateRecordException",
                      re.I)
 DEPENDENCY = re.compile(r"DependencyViolation", re.I)
+IN_USE = re.compile(r"ResourceInUseException|in use", re.I)
 REMOVE = object()
 
 
@@ -209,6 +228,17 @@ def template_env(tier: str) -> dict[str, str]:
     return env
 
 
+def hook_turn_users() -> list[str]:
+    """The users the worker hook creates (test_proto_bundles.py reads the same literal)."""
+    m = re.search(r'^TURN_USERS="([^"]+)"$', WORKER_HOOK.read_text(encoding="utf-8"), re.MULTILINE)
+    return m.group(1).split() if m else []
+
+
+def turn_user_names(value: str) -> list[str]:
+    """WORKER_TURN_USERS as the worker splits it (turn_users.py)."""
+    return [n for n in re.split(r"[,\s]+", value) if n]
+
+
 def opt(namespace: str, name: str, value) -> dict:
     return {"Namespace": namespace, "OptionName": name, "Value": str(value)}
 
@@ -250,7 +280,8 @@ def check_options(tier: str, options: list[dict], *, signin: bool = False, case:
     Outside a case: no dev-only name or value (layout.py), no secret-shaped name in the
     plain environment, every value inside Beanstalk's character set, and no sign-in
     setting except from the signin phase. Everywhere: each sqsd option with a mirror is set
-    with that mirror, at the same value."""
+    with that mirror, at the same value; on the worker, one distinct WORKER_TURN_USERS name
+    per sqsd HttpConnections (either falling back to its template), each a user the hook makes."""
     problems = []
     names = options_map(options)
     if dry:
@@ -272,6 +303,8 @@ def check_options(tier: str, options: list[dict], *, signin: bool = False, case:
         a, b = names.get((SQSD_NS, option)), names.get((ENV_NS, mirror))
         if (a is None) != (b is None) or (a is not None and int(a) != int(b)):
             problems.append(f"sqsd {option}={a} and its mirror {mirror}={b} must be set together, equal")
+    if tier == "worker":
+        problems += slot_problems(names)
     if not (case and case.get("charset_probe")):
         env = dict(template_env(tier))
         env.update({n: v for (ns, n), v in names.items() if ns == ENV_NS})
@@ -280,6 +313,26 @@ def check_options(tier: str, options: list[dict], *, signin: bool = False, case:
             problems.append(f"environment properties total {total} bytes, over {EB_ENV_TOTAL_BYTES}")
     if problems:
         raise Die(f"{tier}: refusing option settings:\n  " + "\n  ".join(problems))
+
+
+def slot_problems(names: dict[tuple[str, str], str]) -> list[str]:
+    """A worker given more users than connections leaves slots idle; fewer refuses start; a
+    name the hook never made refuses start (no such user)."""
+    users_raw = names.get((ENV_NS, "WORKER_TURN_USERS"), template_env("worker").get("WORKER_TURN_USERS", ""))
+    conns_raw = names.get((SQSD_NS, "HttpConnections"), sqsd_template()[SQSD_NS].get("HttpConnections", ""))
+    users, problems = turn_user_names(users_raw), []
+    if not re.fullmatch(r"[1-9]\d*", conns_raw):
+        return [f"sqsd HttpConnections={conns_raw!r} is not a positive integer"]
+    if len(users) != int(conns_raw):
+        problems.append(f"WORKER_TURN_USERS names {len(users)} user(s) for HttpConnections={conns_raw}; "
+                        "set both together, one user per connection")
+    if len(set(users)) != len(users):
+        problems.append(f"WORKER_TURN_USERS {users_raw!r} names a user twice")
+    made = set(hook_turn_users())
+    unknown = [u for u in users if u not in made]
+    if unknown:
+        problems.append(f"WORKER_TURN_USERS names {unknown}, which {WORKER_HOOK.name}'s TURN_USERS does not create")
+    return problems
 
 
 def read_local(name: str, local_dir: Path = LOCAL_DIR) -> str | None:
@@ -411,7 +464,22 @@ CASES: dict[str, dict] = {
         (ENV_NS, "GENEALOGY_DEBUG_HOLD_BEFORE_COMMIT_MS", "20000")]}},
     "refresh_age_0": {"measures": "grant refresh every turn", "ops": {"web": [(ENV_NS, "FS_GRANT_REFRESH_AGE_S", "0")]}},
     "cap_1usd": {"measures": "session spend cap", "ops": {"worker": [(ENV_NS, "SESSION_SPEND_CAP_USD", "1")]}},
+    "nudges_3": {"measures": "web nudge cap at compose's 3", "ops": {"web": [(ENV_NS, "AUTONOMOUS_MAX_NUDGES", "3")]}},
+    "nudges_0": {"measures": "web nudges off, as compose's kill recipes run", "ops": {"web": [
+        (ENV_NS, "AUTONOMOUS_MAX_NUDGES", "0")]}},
+    "no_telemetry": {"measures": "CLI nonessential egress off", "ops": {"worker": [
+        (ENV_NS, "CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC", "1")]}},
     "idle_session_60s": {"measures": "Postgres idle-session timeout", "rds_param": ("idle_session_timeout", "60000")},
+    # U18: the slot count is the sqsd connections and as many of the hook's users, in one update.
+    "slots_4": {"measures": "worker CPU and memory at 4 concurrent turns", "ops": {"worker": [
+        (SQSD_NS, "HttpConnections", "4"),
+        (ENV_NS, "WORKER_TURN_USERS", "genealogy-turn-0 genealogy-turn-1 genealogy-turn-2 genealogy-turn-3")]}},
+    "slots_8": {"measures": "worker CPU and memory at 8 concurrent turns", "ops": {"worker": [
+        (SQSD_NS, "HttpConnections", "8"),
+        (ENV_NS, "WORKER_TURN_USERS", "genealogy-turn-0 genealogy-turn-1 genealogy-turn-2 genealogy-turn-3 "
+                                      "genealogy-turn-4 genealogy-turn-5 genealogy-turn-6 genealogy-turn-7")]}},
+    "worker_xlarge": {"measures": "worker CPU headroom on a replacement t3.xlarge instance", "ops": {"worker": [
+        (INSTANCES_NS, "InstanceTypes", "t3.xlarge")]}},
 }
 
 
@@ -437,6 +505,32 @@ def restore_options(snapshot: list[dict], touched: list[tuple[str, str]]) -> tup
         else:
             removes.append({"Namespace": namespace, "OptionName": name})
     return sets, removes
+
+
+# ── alarms.json ───────────────────────────────────────────────────────────────────────
+
+
+def load_alarms(path: Path | None = None) -> list[dict]:
+    """The alarms of alarms.json (read at call time, so a test can point ALARMS_FILE elsewhere)."""
+    data = json.loads((path or ALARMS_FILE).read_text(encoding="utf-8"))
+    alarms = data.get("alarms") or []
+    for alarm in alarms:
+        if alarm.get("kind") not in ("sqs", "log"):
+            raise Die(f"alarms.json: {alarm.get('name')}: kind {alarm.get('kind')!r} is neither sqs nor log")
+        for f in alarm.get("filters", []) if alarm["kind"] == "log" else []:
+            if f.get("tier") not in TIERS:
+                raise Die(f"alarms.json: {alarm['name']}: filter tier {f.get('tier')!r} is not one of {TIERS}")
+    return alarms
+
+
+def stdout_log_group(tier: str) -> str:
+    """The group Beanstalk streams a tier's /var/log/web.stdout.log to (StreamLogs: true)."""
+    return f"/aws/elasticbeanstalk/{ENV_NAMES[tier]}/var/log/web.stdout.log"
+
+
+def log_metrics(alarms: list[dict]) -> list[tuple[str, str]]:
+    """(namespace, metric) of every log alarm, once each."""
+    return sorted({(a["namespace"], a["metric"]) for a in alarms if a["kind"] == "log"})
 
 
 # ── the AWS session ───────────────────────────────────────────────────────────────────
@@ -724,6 +818,16 @@ class Rehearsal:
             azs = {x["SubnetId"]: x["AvailabilityZone"] for x in got.get("Subnets", [])}
             self.state["subnet_azs"] = azs
             self.save()
+        offered = self.az_offerings(instance_type)
+        if self.dry:
+            return subnets
+        ids = [s for s in subnets if azs.get(s) in offered]
+        if len(ids) < 2:
+            raise Die(f"{instance_type} is offered in fewer than two of the default subnets' zones")
+        return ids
+
+    def az_offerings(self, instance_type: str) -> list[str]:
+        """The zones offering ``instance_type``, looked up once and kept in the inventory."""
         offered = self.state.setdefault("az_offerings", {})
         if instance_type not in offered:
             got = self.aws("ec2", "describe-instance-type-offerings", "--location-type", "availability-zone",
@@ -731,12 +835,24 @@ class Rehearsal:
                                "InstanceTypeOfferings": [{"Location": "<az>"}]})
             offered[instance_type] = sorted({o["Location"] for o in got.get("InstanceTypeOfferings", [])})
             self.save()
+        return offered[instance_type]
+
+    def check_instance_type(self, env_name: str, snapshot: list[dict], instance_type: str) -> None:
+        """Refuse a resize whose type a zone of the environment's Subnets lacks: Beanstalk would
+        fail the replacement instance there (us-east-1e has no t3; t3.xlarge is offered in fewer)."""
+        offered = self.az_offerings(instance_type)
+        subnets = [s for s in options_map(snapshot).get((VPC_NS, "Subnets"), "").split(",") if s]
         if self.dry:
-            return subnets
-        ids = [s for s in subnets if azs.get(s) in offered[instance_type]]
-        if len(ids) < 2:
-            raise Die(f"{instance_type} is offered in fewer than two of the default subnets' zones")
-        return ids
+            self.note(f"dry-run: {env_name}'s Subnets are not checked against {instance_type}'s zones")
+            return
+        if not subnets:
+            raise Die(f"{env_name}'s snapshot names no Subnets; cannot check {instance_type}'s zones")
+        got = self.aws("ec2", "describe-subnets", "--subnet-ids", *subnets)
+        azs = {x["SubnetId"]: x["AvailabilityZone"] for x in got.get("Subnets", [])}
+        missing = [f"{s} ({azs.get(s, 'zone unknown')})" for s in subnets if azs.get(s) not in offered]
+        if missing:
+            raise Die(f"{env_name}: {instance_type} is not offered in the zone of subnet(s) {', '.join(missing)}; "
+                      "refusing before any update")
 
     def network(self) -> tuple[str, list[str]]:
         if "vpc_id" not in self.state:
@@ -1043,13 +1159,20 @@ class Rehearsal:
         return out + self.signin_options() + self.extra_env("web")
 
     def signin_options(self) -> list[dict]:
-        """The loopback sign-in settings, present only once `up --phase
-        signin` has run; off on first boot."""
+        """The sign-in settings, present only once `up --phase signin` has run; off on
+        first boot. https adds the 443 listener and turns the port-80 one off (D2: never
+        plain http on the CNAME); sign-in itself still completes only through loopback."""
         signin = self.state.get("signin") or {}
-        if signin.get("mode") != "loopback":
-            return []
-        return [opt(ENV_NS, "PUBLIC_URL", LOOPBACK_PUBLIC_URL), opt(ENV_NS, "FAMILYSEARCH_WEB_ENABLED", "true"),
-                opt(ENV_NS, "ALLOWED_EMAILS", signin["emails"])]
+        if signin.get("mode") == "loopback":
+            return [opt(ENV_NS, "PUBLIC_URL", LOOPBACK_PUBLIC_URL), opt(ENV_NS, "FAMILYSEARCH_WEB_ENABLED", "true"),
+                    opt(ENV_NS, "ALLOWED_EMAILS", signin["emails"])]
+        if signin.get("mode") == "https":
+            return [opt(ENV_NS, "PUBLIC_URL", f"https://{signin['host']}"),
+                    opt(ENV_NS, "FAMILYSEARCH_WEB_ENABLED", "true"), opt(ENV_NS, "ALLOWED_EMAILS", signin["emails"]),
+                    opt(HTTPS_NS, "ListenerEnabled", "true"), opt(HTTPS_NS, "Protocol", "HTTPS"),
+                    opt(HTTPS_NS, "SSLCertificateArns", signin["cert_arn"]),
+                    opt(HTTP_NS, "ListenerEnabled", "false")]
+        return []
 
     def options_path(self, env_name: str) -> Path:
         return self.work / "options" / f"{env_name}.json"
@@ -1102,6 +1225,15 @@ class Rehearsal:
     def ensure_env(self, tier: str, name: str, label: str, options: list[dict], *, worker: bool = False,
                    throwaway: bool = False) -> dict:
         check_options(tier, options, signin=self.signin_active(tier, options), dry=self.dry)
+        # What the last `up` set and this one does not (an `--env` override left off the
+        # re-run, U19 2026-10-13): update-environment only sets, so it is removed by name.
+        previous = self.options_path(name)
+        dropped = []
+        if not throwaway and not self.dry and previous.exists():
+            keep = {(o["Namespace"], o["OptionName"]) for o in options}
+            dropped = [{"Namespace": o["Namespace"], "OptionName": o["OptionName"]}
+                       for o in json.loads(previous.read_text(encoding="utf-8"))
+                       if (o["Namespace"], o["OptionName"]) not in keep]
         settings = self.write_options(name, options) if not throwaway else self.file(f"options-{name}.json", options)
         existing = self.describe_env(name)
         if existing is None:
@@ -1110,8 +1242,9 @@ class Rehearsal:
                      name, "--solution-stack-name", self.stack(tier), "--version-label", label, *extra,
                      "--option-settings", settings, "--tags", *self.tags_kv())
         else:
+            removes = ["--options-to-remove", self.file(f"remove-{name}.json", dropped)] if dropped else []
             self.aws("elasticbeanstalk", "update-environment", "--environment-name", name, "--version-label",
-                     label, "--option-settings", settings)
+                     label, "--option-settings", settings, *removes)
         env = self.wait_env(name)
         env_id = env.get("EnvironmentId", f"<{name}-id>")
         res = self.aws("elasticbeanstalk", "describe-environment-resources", "--environment-name", name,
@@ -1255,28 +1388,72 @@ U13PY
         finally:
             self.aws("iam", "delete-role-policy", "--role-name", role, "--policy-name", MIGRATE_POLICY, ok=NOT_FOUND)
 
+    def allowed_emails(self, mode: str) -> str:
+        emails = getattr(self.args, "allowed_emails", None) or read_local("allowed-emails", self.local_dir) or (
+            "<email> <email>" if self.dry else None)
+        if not emails:
+            raise Die(f"{mode} sign-in needs --allowed-emails or .local/allowed-emails")
+        return " ".join(e for e in re.split(r"[,\s]+", emails) if e)
+
+    def local_cmd(self, argv: list[str]) -> None:
+        """A non-aws command (openssl), through the same runner so tests can fake it."""
+        self.out("+ " + shlex.join(argv))
+        if self.dry:
+            return
+        result = self.runner(argv)
+        if result.returncode != 0:
+            raise Die(f"{argv[0]} failed (rc {result.returncode}): {(result.stderr or '').strip()[:1500]}", rc=1)
+
+    def certificate(self, host: str) -> str:
+        """The ARN of an imported self-signed certificate for host: a recorded one ACM still
+        has, else a new key and certificate in the work dir (0600), imported and tagged."""
+        for cert in self.recorded("acm"):
+            if cert.get("host") == host and self.aws("acm", "describe-certificate", "--certificate-arn", cert["id"],
+                                                     ok=NOT_FOUND, placeholder=None) is not None:
+                return cert["id"]
+        tls = secure_dir(self.work / "tls")
+        key, crt = tls / "web-key.pem", tls / "web-cert.pem"
+        self.local_cmd(["openssl", "req", "-x509", "-newkey", "rsa:2048", "-nodes", "-sha256", "-days", str(CERT_DAYS),
+                        "-subj", f"/CN={host}", "-addext", f"subjectAltName=DNS:{host}",
+                        "-keyout", str(key), "-out", str(crt)])
+        if key.exists():
+            os.chmod(key, 0o600)
+        made = self.aws("acm", "import-certificate", "--certificate", f"fileb://{crt}", "--private-key",
+                        f"fileb://{key}", "--tags", *self.tags_kv(),
+                        placeholder={"CertificateArn": "<certificate-arn>"})
+        arn = made["CertificateArn"]
+        self.record("acm", arn, host=host)
+        self.note(f"the certificate is self-signed: pass --cacert {crt} to curl")
+        return arn
+
     def phase_signin(self) -> None:
         mode = getattr(self.args, "mode", None) or "loopback"
-        if mode == "https":
-            raise Die("--mode https needs a hostname and certificate; deferred until the hostname is decided")
+        if mode not in ("loopback", "https", "off"):
+            raise Die(f"--mode {mode}: loopback, https or off")
         name = ENV_NAMES["web"]
+        was_https = (self.state.get("signin") or {}).get("mode") == "https"
         base = [o for o in (self.snapshot(name) if not self.dry else self.web_options())
-                if not (o["Namespace"] == ENV_NS and o["OptionName"] in SIGNIN_NAMES)]
+                if not (o["Namespace"] == ENV_NS and o["OptionName"] in SIGNIN_NAMES)
+                and o["Namespace"] not in (HTTPS_NS, HTTP_NS)]
         removes = []
         if mode == "off":
             self.state["signin"] = None
             removes = [{"Namespace": ENV_NS, "OptionName": n} for n in SIGNIN_NAMES]
         elif mode == "loopback":
-            emails = getattr(self.args, "allowed_emails", None) or read_local("allowed-emails", self.local_dir) or (
-                "<email> <email>" if self.dry else None)
-            if not emails:
-                raise Die("loopback sign-in needs --allowed-emails or .local/allowed-emails")
-            joined = " ".join(e for e in re.split(r"[,\s]+", emails) if e)
-            self.state["signin"] = {"mode": "loopback", "emails": joined}
+            self.state["signin"] = {"mode": "loopback", "emails": self.allowed_emails(mode)}
         else:
-            raise Die(f"--mode {mode}: loopback, https or off")
+            host = (self.state.get("envs", {}).get("web") or {}).get("cname") or ("<web-cname>" if self.dry else None)
+            if not host:
+                raise Die("--mode https needs the web environment: run `up --phase web` first")
+            emails = self.allowed_emails(mode)
+            self.state["signin"] = {"mode": "https", "emails": emails, "host": host, "cert_arn": self.certificate(host)}
+        if was_https and mode != "https":
+            # Turn the 443 listener off rather than drop its options, and put port 80 back.
+            base.append(opt(HTTPS_NS, "ListenerEnabled", "false"))
+            removes += [{"Namespace": HTTPS_NS, "OptionName": n} for n in ("Protocol", "SSLCertificateArns")]
+            removes.append({"Namespace": HTTP_NS, "OptionName": "ListenerEnabled"})
         options = base + self.signin_options()
-        check_options("web", options, signin=mode == "loopback", dry=self.dry)
+        check_options("web", options, signin=mode != "off", dry=self.dry)
         call = ["elasticbeanstalk", "update-environment", "--environment-name", name, "--option-settings",
                 self.write_options(name, options)]
         if removes:
@@ -1286,6 +1463,9 @@ U13PY
         self.wait_env(name)
         if mode == "loopback":
             self.note("then forward laptop 1837 to the web instance's port 8000 (README, 'Loopback sign-in')")
+        elif mode == "https":
+            self.note(f"https://{self.state['signin']['host']} serves the tier; sign in through loopback first "
+                      "and reuse its session cookie (README, 'https')")
 
     def phase_resolver(self) -> None:
         vpc, _ = self.network()
@@ -1305,6 +1485,234 @@ U13PY
         self.record("resolver", config)
         self.aws("route53resolver", "associate-resolver-query-log-config", "--resolver-query-log-config-id",
                  config, "--resource-id", vpc, ok=ALREADY)
+
+    # alarms (U19)
+
+    def alarm_name(self, alarm: dict) -> str:
+        return f"{ALARM_PREFIX}{alarm['name']}"
+
+    def alarm_queues(self) -> dict:
+        """The worker queue's and its DLQ's names, the QueueName dimension of the sqs alarms.
+        The DLQ is looked for in describe-environment-resources first (whether Beanstalk lists
+        it there is unmeasured), then read from the worker queue's RedrivePolicy."""
+        res = self.aws("elasticbeanstalk", "describe-environment-resources", "--environment-name",
+                       ENV_NAMES["worker"], placeholder={"EnvironmentResources": {"Queues": [
+                           {"Name": "WorkerQueue", "URL": "<queue-url>"}]}})
+        queues = (res or {}).get("EnvironmentResources", {}).get("Queues", [])
+        worker = [q["URL"] for q in queues if q.get("Name") == "WorkerQueue"]
+        if not worker:
+            raise Die(f"{ENV_NAMES['worker']} has no WorkerQueue: the sqs alarms have no queue to watch", rc=1)
+        listed = [q for q in queues if q.get("Name") != "WorkerQueue" and re.search(r"dead", q.get("Name", ""), re.I)]
+        if listed:
+            dlq, source = listed[0]["URL"].rsplit("/", 1)[-1], f"describe-environment-resources ({listed[0]['Name']})"
+        else:
+            got = self.aws("sqs", "get-queue-attributes", "--queue-url", worker[0], "--attribute-names",
+                           "RedrivePolicy", placeholder={"Attributes": {"RedrivePolicy": json.dumps(
+                               {"deadLetterTargetArn": f"arn:aws:sqs:{REGION}:{self.account}:<dlq-name>",
+                                "maxReceiveCount": "10"})}})
+            policy = ((got or {}).get("Attributes") or {}).get("RedrivePolicy")
+            if not policy:
+                raise Die("the worker queue lists no DLQ and has no RedrivePolicy: dlq_depth has nothing to watch",
+                          rc=1)
+            dlq, source = json.loads(policy)["deadLetterTargetArn"].rsplit(":", 1)[-1], "the worker queue's RedrivePolicy"
+        self.note(f"worker queue {worker[0].rsplit('/', 1)[-1]}; DLQ {dlq}, from {source}")
+        found = {"worker": worker[0].rsplit("/", 1)[-1], "worker_url": worker[0], "dlq": dlq, "dlq_source": source}
+        self.state["alarms"] = found
+        self.save()
+        return found
+
+    def put_alarm(self, alarm: dict, queues: dict | None, *, threshold=None) -> None:
+        """put-metric-alarm from the file's definition, its actions always off."""
+        call = ["cloudwatch", "put-metric-alarm", "--alarm-name", self.alarm_name(alarm),
+                "--alarm-description", alarm["description"], "--namespace", alarm["namespace"],
+                "--metric-name", alarm["metric"], "--statistic", alarm["statistic"], "--period", alarm["period_s"],
+                "--evaluation-periods", alarm["evaluation_periods"],
+                "--threshold", alarm["threshold"] if threshold is None else threshold,
+                "--comparison-operator", alarm["comparison"], "--treat-missing-data", alarm["treat_missing"],
+                "--no-actions-enabled"]
+        if alarm["kind"] == "sqs":
+            if not queues or alarm.get("queue") not in ("worker", "dlq"):
+                raise Die(f"alarms.json: {alarm['name']}: queue {alarm.get('queue')!r} is neither worker nor dlq")
+            call += ["--dimensions", f"Name=QueueName,Value={queues[alarm['queue']]}"]
+        self.aws(*call, "--tags", *self.tags_kv())
+
+    def phase_alarms(self) -> None:
+        envs = self.state.get("envs", {})
+        missing = [t for t in ("worker", "web") if t not in envs]
+        if missing and not self.dry:
+            raise Die(f"run `up --phase {missing[0]}` first: the alarms watch the worker's queues and the "
+                      "web and worker logs")
+        alarms = load_alarms()
+        queues = self.alarm_queues()
+        for alarm in alarms:
+            if alarm["kind"] == "log":
+                for n, f in enumerate(alarm["filters"], 1):
+                    group, name = stdout_log_group(f["tier"]), f"{ALARM_PREFIX}{alarm['name']}-{n}"
+                    self.aws("logs", "put-metric-filter", "--log-group-name", group, "--filter-name", name,
+                             "--filter-pattern", f["pattern"], "--metric-transformations",
+                             f"metricName={alarm['metric']},metricNamespace={alarm['namespace']},metricValue=1")
+                    self.record("metric-filter", name, log_group=group)
+            self.put_alarm(alarm, queues)
+            self.record("alarm", self.alarm_name(alarm))
+        self.note("every alarm is created with its actions off (no SNS); `page` in alarms.json is for the port")
+
+    def prefixed_alarms(self, placeholder: list[str] | None = None) -> list[str]:
+        got = self.aws("cloudwatch", "describe-alarms", "--alarm-name-prefix", ALARM_PREFIX, "--alarm-types",
+                       "MetricAlarm", "CompositeAlarm", placeholder={
+                           "MetricAlarms": [{"AlarmName": n} for n in placeholder or []]}) or {}
+        return [a["AlarmName"] for a in got.get("MetricAlarms", []) + got.get("CompositeAlarms", [])]
+
+    def prefixed_filters(self, alarms: list[dict], *, dry_all: bool = False) -> list[tuple[str, str]]:
+        """(log group, filter name) of every metric filter named genealogy-u13-* that feeds a
+        metric of alarms.json. --filter-name-prefix binds only with --log-group-name, so this
+        asks by metric and filters the names here."""
+        out = []
+        for namespace, metric in log_metrics(alarms):
+            placeholder = {"metricFilters": [
+                {"logGroupName": stdout_log_group(f["tier"]), "filterName": f"{ALARM_PREFIX}{a['name']}-{n}"}
+                for a in alarms if a["kind"] == "log" and a["metric"] == metric
+                for n, f in enumerate(a["filters"], 1)] if dry_all else []}
+            got = self.aws("logs", "describe-metric-filters", "--metric-namespace", namespace, "--metric-name", metric,
+                           placeholder=placeholder) or {}
+            out += [(f["logGroupName"], f["filterName"]) for f in got.get("metricFilters", [])
+                    if f.get("filterName", "").startswith(ALARM_PREFIX)]
+        return out
+
+    def alarms_cmd(self) -> int:
+        """Read-only: --test-filters runs every filter of alarms.json against its samples with
+        test-metric-filter (no stack needed); --states prints each alarm's state and last change."""
+        if not (self.args.states or self.args.test_filters):
+            raise Die("alarms: pass --states, --test-filters, or both")
+        self.guard()
+        rc = self.test_filters() if self.args.test_filters else 0
+        if self.args.states:
+            self.alarm_states()
+        return rc
+
+    def alarm_states(self) -> None:
+        alarms = load_alarms()
+        names = sorted({r["id"] for r in self.recorded("alarm")}
+                       | set(self.prefixed_alarms([self.alarm_name(a) for a in alarms])))
+        if not names:
+            self.out("alarms=none")
+            return
+        got = self.aws("cloudwatch", "describe-alarms", "--alarm-names", *names, placeholder={
+            "MetricAlarms": [{"AlarmName": n, "StateValue": "<state>", "ActionsEnabled": False} for n in names]}) or {}
+        live = {a["AlarmName"]: a for a in got.get("MetricAlarms", []) + got.get("CompositeAlarms", [])}
+        for name in names:
+            alarm = live.get(name)
+            if alarm is None:
+                self.out(f"{name}.state=absent")
+                continue
+            self.out(f"{name}.state={alarm.get('StateValue')}")
+            self.out(f"{name}.actions_enabled={str(alarm.get('ActionsEnabled')).lower()}")
+            if alarm.get("StateUpdatedTimestamp"):
+                self.out(f"{name}.state_updated={alarm['StateUpdatedTimestamp']}")
+            hist = self.aws("cloudwatch", "describe-alarm-history", "--alarm-name", name, "--history-item-type",
+                            "StateUpdate", "--scan-by", "TimestampDescending", "--max-items", "1",
+                            placeholder={"AlarmHistoryItems": []}) or {}
+            items = hist.get("AlarmHistoryItems", [])
+            if not items:
+                self.out(f"{name}.history=none")
+                continue
+            self.out(f"{name}.history.timestamp={items[0].get('Timestamp')}")
+            self.out(f"{name}.history.type={items[0].get('HistoryItemType')}")
+            self.out(f"{name}.history.summary={items[0].get('HistorySummary')}")
+
+    def test_filters(self) -> int:
+        """Every log alarm's match sample must be matched by at least one of its filters, and
+        every no_match sample by none. The samples go through a file, never argv, since the
+        CLI's shorthand would split a list value on its commas."""
+        bad, total = 0, 0
+        for alarm in [a for a in load_alarms() if a["kind"] == "log"]:
+            samples = alarm.get("samples") or {}
+            match, no_match = list(samples.get("match") or []), list(samples.get("no_match") or [])
+            if not match or not no_match:
+                self.out(f"DISAGREE {alarm['name']}: alarms.json gives it no "
+                         f"{'match' if not match else 'no_match'} sample")
+                bad += 1
+            messages = match + no_match
+            total += len(messages)
+            hits: list[set[int]] = []
+            for n, f in enumerate(alarm["filters"], 1):
+                got = self.aws("logs", "test-metric-filter", "--cli-input-json", self.file(
+                    f"test-filter-{alarm['name']}-{n}.json", {"filterPattern": f["pattern"],
+                                                             "logEventMessages": messages}),
+                    placeholder={"matches": []}) or {}
+                matched = set()
+                for m in got.get("matches", []):
+                    if m.get("eventMessage") in messages:  # every copy: the same text matches the same
+                        matched |= {i for i, text in enumerate(messages) if text == m["eventMessage"]}
+                    elif m.get("eventNumber") is not None:
+                        matched.add(int(m["eventNumber"]) - 1)
+                hits.append(matched)
+            if self.dry:
+                continue
+            for i, sample in enumerate(messages):
+                by = [n for n, h in enumerate(hits, 1) if i in h]
+                if i < len(match) and not by:
+                    self.out(f"DISAGREE {alarm['name']}: match sample {i + 1} is matched by none of its filters: {sample}")
+                    bad += 1
+                elif i >= len(match) and by:
+                    patterns = "; ".join(alarm["filters"][n - 1]["pattern"] for n in by)
+                    self.out(f"DISAGREE {alarm['name']}: no_match sample {i - len(match) + 1} is matched by filter "
+                             f"{','.join(map(str, by))} ({patterns}): {sample}")
+                    bad += 1
+        self.out(f"test-filters: {bad} disagreement(s) over {total} sample(s)")
+        return 1 if bad else 0
+
+    def alarm_state(self, name: str) -> str | None:
+        got = self.aws("cloudwatch", "describe-alarms", "--alarm-names", name, placeholder={"MetricAlarms": []}) or {}
+        alarms = got.get("MetricAlarms", [])
+        return alarms[0].get("StateValue") if alarms else None
+
+    def alarm_trip(self) -> int:
+        """Do what the alarm's `trip` makes mechanical, then poll until it reads ALARM."""
+        alarms = {a["name"]: a for a in load_alarms()}
+        name = self.args.alarm
+        if name not in alarms:
+            raise Die(f"--alarm must name one of: {', '.join(alarms)}")
+        timeout = self.args.timeout
+        if timeout < 0:
+            raise Die(f"--timeout {timeout:g}: seconds, 0 or more")
+        self.require_billed()
+        self.guard()
+        alarm, full = alarms[name], self.alarm_name(alarms[name])
+        if not self.dry and self.alarm_state(full) is None:
+            raise Die(f"no alarm {full}: run `up --phase alarms` first")
+        self.out(f"== alarm-trip {name}")
+        # An alarm already in ALARM would read as tripped before anything ran: reset it, so
+        # only a breach evaluated after this trip moves it back.
+        self.aws("cloudwatch", "set-alarm-state", "--alarm-name", full, "--state-value", "OK",
+                 "--state-reason", "U19 alarm-trip: reset before the trip")
+        self.note(f"recipe (alarms.json): {alarm['trip']}")
+        restore = None
+        try:
+            if name == "dlq_depth":
+                url = (self.state.get("alarms") or {}).get("worker_url") or self.state.get("queue_url") \
+                    or self.queue_url_of(ENV_NAMES["worker"])
+                body = json.dumps({"turn_id": f"u19-trip-{pysecrets.token_hex(4)}", "session_id": "u19-trip",
+                                   "project_id": "u19-trip", "text": "U19 dlq_depth trip: this turn has no row"})
+                self.aws("sqs", "send-message", "--queue-url", url, "--message-body", body)
+                self.note("the worker answers it 400 (no turn row); sqsd dead-letters it after MaxRetries receives "
+                          "(hold `probe --case maxretries_1`, with fast_errors, to make that one)")
+            elif name == "message_age":
+                queues = self.state.get("alarms") or self.alarm_queues()
+                restore = (alarm, queues)
+                self.note(f"threshold {TRIP_THRESHOLD_S} s while a message waits; the file's "
+                          f"{alarm['threshold']} is put back whatever happens")
+                self.put_alarm(alarm, queues, threshold=TRIP_THRESHOLD_S)
+            else:
+                self.note(f"{name} trips only by the recipe above, which the operator runs; this command polls")
+            self.poll(f"{full} StateValue=ALARM", lambda: self.alarm_state(full) == "ALARM", every_s=30,
+                      timeout_s=timeout)
+        finally:
+            if restore:
+                self.out("== restore")
+                self.put_alarm(*restore)
+        if not self.dry:
+            self.out(f"{full}.state=ALARM")
+        return 0
 
     def up(self) -> int:
         self.require_billed()
@@ -1376,18 +1784,25 @@ U13PY
             env_name = ENV_NAMES[tier]
             snapshot = self.snapshot(env_name) if not self.dry else []
             sets, removes = case_options(case, tier)
+            for o in sets:
+                if (o["Namespace"], o["OptionName"]) == (INSTANCES_NS, "InstanceTypes"):
+                    self.check_instance_type(env_name, snapshot, o["Value"])
             touched = [(o["Namespace"], o["OptionName"]) for o in sets + removes]
-            undo.append(("env", env_name, snapshot, touched))
             merged = {**options_map(snapshot), **{(o["Namespace"], o["OptionName"]): o["Value"] for o in sets}}
             for r in removes:
                 merged.pop((r["Namespace"], r["OptionName"]), None)
             check_options(tier, [opt(ns, n, v) for (ns, n), v in merged.items()], case=case,
                           signin=bool(self.state.get("signin")), dry=self.dry)
+            # After the guard: a refused tier sends no restore either (a config deploy restarts
+            # the worker under any measurement held beside it).
+            undo.append(("env", env_name, snapshot, touched))
             call = ["elasticbeanstalk", "update-environment", "--environment-name", env_name]
             if sets:
                 call += ["--option-settings", self.file(f"case-{name}-{tier}.json", sets)]
             if removes:
                 call += ["--options-to-remove", self.file(f"case-{name}-{tier}-remove.json", removes)]
+            # Another probe's update (worker_xlarge's replacement) may be in flight: wait, not die.
+            self.wait_env(env_name)
             since = dt.datetime.now(dt.timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
             self.aws(*call)
             self.wait_env(env_name)
@@ -1526,7 +1941,104 @@ U13PY
         out += [f"{n} is set ({ns}); no case is running" for (ns, n) in live
                 if ns == ENV_NS and (n.startswith(("U13_PROBE_",) + tuple(layout.DEV_PREFIXES))
                                      or n in layout.DEV_VARIABLES)]
+        if env_name == ENV_NAMES["worker"]:
+            # Not in up's API layer: a slot case's restore removes it, and the template's applies
+            # again. Absent counts as the template's (whether the merged view lists .ebextensions
+            # values is unproven); a left-over API value is present and different either way.
+            want = template_env("worker").get("WORKER_TURN_USERS", "")
+            value = live.get((ENV_NS, "WORKER_TURN_USERS"))
+            if value is not None and turn_user_names(value) != turn_user_names(want):
+                out.append(f"{ENV_NS} WORKER_TURN_USERS: {value!r}, expected the template's {want!r} "
+                           "(a slot case not restored?)")
         return out
+
+    # ── cpu ──────────────────────────────────────────────────────────────────────────
+
+    def cpu_window(self) -> tuple[dt.datetime, dt.datetime, bool]:
+        """(start, end, end_given). No --end: the last hour up to now, for the credit mode and balance."""
+        def parse(flag: str, raw: str) -> dt.datetime:
+            try:
+                when = dt.datetime.fromisoformat(raw.replace("Z", "+00:00"))
+            except ValueError:
+                raise Die(f"--{flag} {raw!r}: expected an ISO time such as 2026-10-10T12:00:00Z") from None
+            if when.tzinfo is None:
+                raise Die(f"--{flag} {raw!r}: give a UTC offset or Z")
+            return when.astimezone(dt.timezone.utc)
+
+        end_raw, start_raw = getattr(self.args, "end", None), getattr(self.args, "start", None)
+        end = parse("end", end_raw) if end_raw else dt.datetime.now(dt.timezone.utc).replace(microsecond=0)
+        start = parse("start", start_raw) if start_raw else end - dt.timedelta(seconds=3600)
+        if start >= end:
+            raise Die(f"--start {start:%Y-%m-%dT%H:%M:%SZ} is not before --end {end:%Y-%m-%dT%H:%M:%SZ}")
+        return start, end, bool(end_raw)
+
+    def instance_of(self, tier: str) -> str | None:
+        res = self.aws("elasticbeanstalk", "describe-environment-resources", "--environment-name", ENV_NAMES[tier],
+                       ok=NOT_FOUND, placeholder={"EnvironmentResources": {"Instances": [{"Id": f"<{tier}-instance>"}]}})
+        ids = [i["Id"] for i in (res or {}).get("EnvironmentResources", {}).get("Instances", [])]
+        return ids[0] if ids else None
+
+    def cpu(self) -> int:
+        """Read-only, unbilled: CloudWatch's 5-minute CPU and credit points for the worker, tools
+        and RDS over the whole 5-minute grid buckets inside a window, and each instance's credit
+        mode. Exits 1 only when --end is given and the last of those buckets has no worker
+        CPUUtilization point yet (CloudWatch publishes minutes late)."""
+        start, end, end_given = self.cpu_window()
+        # Basic-monitoring points are stamped :00, :05, … and each covers the next 5 minutes, and
+        # CloudWatch buckets a query from --start-time's minute: query the grid buckets inside the
+        # window, so no point covers time outside it (2026-10-10, period 60 on the U18 worker).
+        grid = dt.timedelta(seconds=CPU_PERIOD_S)
+        grid_start = dt.datetime.fromtimestamp(-(-start.timestamp() // CPU_PERIOD_S) * CPU_PERIOD_S, dt.timezone.utc)
+        grid_end = dt.datetime.fromtimestamp(end.timestamp() // CPU_PERIOD_S * CPU_PERIOD_S, dt.timezone.utc)
+        if grid_end <= grid_start:
+            raise Die(f"no whole 5-minute CloudWatch bucket (:00, :05, …) lies between --start {iso(start)} and "
+                      f"--end {iso(end)}; widen the window")
+        worker_id = getattr(self.args, "worker_instance", None)
+        if worker_id and not re.fullmatch(r"i-[0-9a-f]{8,17}", worker_id):
+            raise Die(f"--worker-instance {worker_id!r}: expected an instance id i-…")
+        self.guard()
+        self.out(f"window_start={iso(start)}")
+        self.out(f"window_end={iso(end)}")
+        self.out(f"grid_start={iso(grid_start)}")
+        self.out(f"grid_end={iso(grid_end)}")
+        scopes = [("worker", "AWS/EC2", "InstanceId", worker_id or self.instance_of("worker")),
+                  ("tools", "AWS/EC2", "InstanceId", self.instance_of("tools")),
+                  ("rds", "AWS/RDS", "DBInstanceIdentifier", RDS_ID)]
+        covered = False
+        for scope, namespace, dim, value in scopes:
+            self.out(f"{scope}_id={value or 'none'}")
+            if scope != "rds" and value:
+                spec = self.aws("ec2", "describe-instance-credit-specifications", "--instance-ids", value,
+                                ok=NOT_FOUND, placeholder={"InstanceCreditSpecifications": [{"CpuCredits": "<mode>"}]})
+                modes = [s.get("CpuCredits") for s in (spec or {}).get("InstanceCreditSpecifications", [])]
+                self.out(f"{scope}.credits={modes[0] if modes else 'unknown'}")
+            for metric in CPU_METRICS:
+                points = []
+                if value:
+                    got = self.aws("cloudwatch", "get-metric-statistics", "--namespace", namespace, "--metric-name",
+                                   metric, "--dimensions", f"Name={dim},Value={value}", "--start-time", iso(grid_start),
+                                   "--end-time", iso(grid_end), "--period", CPU_PERIOD_S, "--statistics", "Average",
+                                   "Maximum", placeholder={"Datapoints": []})
+                    points = sorted((got or {}).get("Datapoints", []), key=lambda p: p["Timestamp"])
+                key = f"{scope}.{metric}"
+                if not points:
+                    self.out(f"{key}=no_data")
+                    continue
+                last_at = dt.datetime.fromisoformat(points[-1]["Timestamp"].replace("Z", "+00:00"))
+                self.out(f"{key}.points={len(points)}")
+                self.out(f"{key}.first={points[0]['Average']:g}")
+                self.out(f"{key}.last={points[-1]['Average']:g}")
+                self.out(f"{key}.avg={sum(p['Average'] for p in points) / len(points):g}")
+                self.out(f"{key}.max={max(p['Maximum'] for p in points):g}")
+                self.out(f"{key}.last_at={iso(last_at.astimezone(dt.timezone.utc))}")
+                if (scope, metric) == ("worker", "CPUUtilization"):
+                    covered = last_at + grid >= grid_end
+        if self.dry or not end_given or covered:
+            return 0
+        self.out(f"worker.CPUUtilization: no point yet for the bucket ending {iso(grid_end)}; CloudWatch publishes "
+                 "minutes late, so re-run in a few minutes. A worker released before then never publishes it: "
+                 "end the window at its release")
+        return 1
 
     # ── pause / resume ───────────────────────────────────────────────────────────────
 
@@ -1578,16 +2090,30 @@ U13PY
         self.require_billed()
         self.guard()
         steps = [
-            ("env", self.down_envs), ("ec2", self.down_bastion), ("rds", self.down_rds),
+            ("alarms", self.down_alarms), ("env", self.down_envs), ("ec2", self.down_bastion), ("rds", self.down_rds),
             ("app", self.down_app), ("secret", self.down_secrets), ("s3", self.down_data_bucket),
-            ("sg", self.down_security_groups), ("iam", self.down_iam), ("budget", self.down_budget),
-            ("resolver", self.down_resolver), ("log-group", self.down_log_groups),
+            ("acm", self.down_certificates), ("sg", self.down_security_groups), ("iam", self.down_iam),
+            ("budget", self.down_budget), ("resolver", self.down_resolver), ("log-group", self.down_log_groups),
         ]
         for label, step in steps:
             self.out(f"== down: {label}")
             step()
         self.note("local: remove the /etc/hosts line for the RDS endpoint, then delete the work-dir")
         return 0
+
+    def down_alarms(self) -> None:
+        """Before the log groups go: the alarms, then each metric filter, recorded or found by
+        metric (a filter whose group is already gone is NOT_FOUND)."""
+        alarms = load_alarms()
+        names = {r["id"] for r in self.recorded("alarm")} | set(
+            self.prefixed_alarms([self.alarm_name(a) for a in alarms]))
+        for name in sorted(names):
+            self.aws("cloudwatch", "delete-alarms", "--alarm-names", name, ok=NOT_FOUND)
+        filters = {(r["log_group"], r["id"]) for r in self.recorded("metric-filter")}
+        filters |= set(self.prefixed_filters(alarms, dry_all=True))
+        for group, name in sorted(filters):
+            self.aws("logs", "delete-metric-filter", "--log-group-name", group, "--filter-name", name, ok=NOT_FOUND)
+        self.note("the custom metrics' data cannot be deleted; it ages out, at no cost once nothing publishes")
 
     def live_envs(self) -> dict[str, str]:
         """Name -> Status of every environment the application still has."""
@@ -1609,6 +2135,23 @@ U13PY
                 self.aws("elasticbeanstalk", "terminate-environment", "--environment-name", name, ok=NOT_FOUND)
         for name in sorted(set(live) | {r["id"] for r in self.recorded("env")}):
             self.wait_env_gone(name)
+
+    def down_certificates(self) -> None:
+        """After the environments: ACM refuses to delete a certificate a listener still uses,
+        and the load balancer goes only with its environment."""
+        for cert in self.recorded("acm"):
+            def deleted(arn=cert["id"]) -> bool:
+                try:
+                    self.aws("acm", "delete-certificate", "--certificate-arn", arn, ok=NOT_FOUND)
+                except Die as exc:
+                    if IN_USE.search(str(exc)):
+                        return False
+                    raise
+                return True
+            if self.dry:
+                deleted()
+            else:
+                self.poll(f"certificate {cert['id']} released", deleted, every_s=30, timeout_s=900)
 
     def down_bastion(self) -> None:
         got = self.aws("ec2", "describe-instances", "--filters", f"Name=tag:{TAG_REHEARSAL[0]},Values={TAG_REHEARSAL[1]}",
@@ -1782,7 +2325,11 @@ U13PY
             self.note("tagged resources remain; the tag index lags deletes, so re-polling once")
             self.sleep(getattr(self.args, "repoll_s", 600))
             tagged = self.tagged()
-        found("tagged", "resourcegroupstaggingapi", tagged)
+        gone = [arn for arn in tagged if self.verified_gone(arn)] if not self.dry else []
+        if gone:
+            self.note(f"tag index still lists {len(gone)} resource(s) EC2 or ACM reports gone (terminated "
+                      f"instances stay listed for up to an hour): {gone}")
+        found("tagged", "resourcegroupstaggingapi", [arn for arn in tagged if arn not in gone])
         apps = self.aws("elasticbeanstalk", "describe-applications", "--application-names", APP,
                         placeholder={"Applications": []})
         found("app", APP, [a["ApplicationName"] for a in apps.get("Applications", [])])
@@ -1847,9 +2394,22 @@ U13PY
         if self.aws("budgets", "describe-budget", "--account-id", self.account, "--budget-name", BUDGET_NAME,
                     ok=NOT_FOUND, placeholder=None) is not None:
             found("budget", "budget", [BUDGET_NAME])
+        for cert in self.recorded("acm"):
+            if self.aws("acm", "describe-certificate", "--certificate-arn", cert["id"], ok=NOT_FOUND,
+                        placeholder=None) is not None:
+                found("acm", "certificate", [cert["id"]])
         configs = self.aws("route53resolver", "list-resolver-query-log-configs", "--filters",
                            f"Name=Name,Values={RESOLVER_NAME}", placeholder={"ResolverQueryLogConfigs": []})
         found("resolver", "query-log configs", [c["Id"] for c in configs.get("ResolverQueryLogConfigs", [])])
+        alarms = load_alarms()
+        found("alarm", f"alarms named {ALARM_PREFIX}*", self.prefixed_alarms())
+        filters = set(self.prefixed_filters(alarms))
+        for r in self.recorded("metric-filter"):
+            got = self.aws("logs", "describe-metric-filters", "--log-group-name", r["log_group"],
+                           "--filter-name-prefix", r["id"], ok=NOT_FOUND, placeholder=None) or {}
+            filters |= {(f["logGroupName"], f["filterName"]) for f in got.get("metricFilters", [])
+                        if f.get("filterName") == r["id"]}
+        found("metric-filter", f"metric filters named {ALARM_PREFIX}*", [f"{g}:{n}" for g, n in sorted(filters)])
         for prefix in (EB_LOG_PREFIX, f"/{PREFIX}/"):
             groups = self.aws("logs", "describe-log-groups", "--log-group-name-prefix", prefix,
                               placeholder={"logGroups": []})
@@ -1858,6 +2418,27 @@ U13PY
             self.out(f"NOT EMPTY {line}")
         self.out("prove-empty: " + ("not empty" if left else "empty"))
         return 1 if left else 0
+
+    def verified_gone(self, arn: str) -> bool:
+        """An EC2 instance or volume the tag index still lists but EC2 itself reports gone:
+        a terminated instance stays in the index for up to an hour, past prove-empty's
+        re-poll (U13, 2026-10-08). A certificate ACM itself no longer has passes the same way.
+        Any other ARN, or an instance in any other state, stays."""
+        if arn.startswith("arn:aws:acm:"):
+            return self.aws("acm", "describe-certificate", "--certificate-arn", arn, ok=NOT_FOUND,
+                            placeholder=None) is None
+        kind, _, rid = arn.rpartition(":")[2].partition("/")
+        if not arn.startswith("arn:aws:ec2:") or not rid:
+            return False
+        if kind == "instance":
+            got = self.aws("ec2", "describe-instances", "--instance-ids", rid, ok=NOT_FOUND, placeholder=None)
+            if got is None:
+                return True
+            states = [i.get("State", {}).get("Name") for r in got.get("Reservations", []) for i in r["Instances"]]
+            return bool(states) and all(st == "terminated" for st in states)
+        if kind == "volume":
+            return self.aws("ec2", "describe-volumes", "--volume-ids", rid, ok=NOT_FOUND, placeholder=None) is None
+        return False
 
     def tagged(self) -> list[str]:
         got = self.aws("resourcegroupstaggingapi", "get-resources", "--tag-filters",
@@ -1894,6 +2475,10 @@ U13PY
             self.out(f"== up --phase {phase}")
             getattr(self, f"phase_{phase}")()
         return 0
+
+
+def iso(when: dt.datetime) -> str:
+    return when.strftime("%Y-%m-%dT%H:%M:%SZ")
 
 
 # ── leak check ───────────────────────────────────────────────────────────────────────────
@@ -2001,6 +2586,19 @@ def build_parser() -> argparse.ArgumentParser:
     probe.add_argument("--case", action="append", help=f"one of {', '.join(CASES)}; repeatable")
     probe.add_argument("--hold-s", type=float, help="restore after this many seconds instead of on Enter")
     probe.add_argument("--bundles-dir", help="ebext_naming copies eb-tools.zip from here")
+    cpu = sub.add_parser("cpu", parents=[common], help="CloudWatch CPU and credit points and the credit mode; read-only")
+    cpu.add_argument("--start", help="window start, ISO with Z or an offset (default: an hour before --end)")
+    cpu.add_argument("--end", help="window end (default now); exits 1 until the last whole 5-minute grid bucket "
+                                   "inside the window has a worker CPU point")
+    cpu.add_argument("--worker-instance", help="the worker instance id (a released worker_xlarge's stays readable)")
+    alarms = sub.add_parser("alarms", parents=[common], help="read-only: alarm states, and alarms.json's filters "
+                                                             "against its samples")
+    alarms.add_argument("--states", action="store_true", help="each alarm's StateValue and last state change, k=v")
+    alarms.add_argument("--test-filters", action="store_true",
+                        help="test-metric-filter over every sample; exit 1 on any disagreement (no stack needed)")
+    trip = sub.add_parser("alarm-trip", parents=[common, billed], help="trip one alarm, poll until it reads ALARM")
+    trip.add_argument("--alarm", required=True, help="an alarm name in alarms.json")
+    trip.add_argument("--timeout", type=float, default=900, help="seconds to poll for ALARM (default 900); exit 1 after")
     sub.add_parser("down", parents=[common, billed], help="tear everything down, in order")
     sub.add_parser("pause", parents=[common, billed], help="between sessions: tiers to 0/0, RDS and the bastion stopped")
     sub.add_parser("resume", parents=[common, billed], help="undo pause: RDS, the bastion, then the tiers to 1/1")
@@ -2024,8 +2622,8 @@ def main(argv: list[str] | None = None, *, runner=None, sleep=time.sleep, out=No
         if args.cmd == "leak-check":
             return leak_check(args, local_dir=local_dir, repo=repo, out=printer)
         r = Rehearsal(args, runner=runner, sleep=sleep, out=printer, local_dir=local_dir, repo=repo)
-        return {"plan": r.plan, "up": r.up, "status": r.status, "probe": r.probe, "down": r.down,
-                "pause": r.pause, "resume": r.resume, "prove-empty": r.prove_empty}[args.cmd]()
+        return {"plan": r.plan, "up": r.up, "status": r.status, "probe": r.probe, "cpu": r.cpu, "down": r.down,
+                "alarms": r.alarms_cmd, "alarm-trip": r.alarm_trip, "pause": r.pause, "resume": r.resume, "prove-empty": r.prove_empty}[args.cmd]()
     except Die as exc:
         print(f"rehearse.py: {exc}", file=sys.stderr)
         return exc.rc

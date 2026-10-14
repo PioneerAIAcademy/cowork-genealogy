@@ -1,0 +1,20 @@
+{
+  "id": "nicolas-uhres-birth",
+  "name": "Nicolas Uhres — birth about 1856, Keispelt, Luxembourg",
+  "genre": "record-hint",
+  "source_pid": "GYGJ-D1C",
+  "captured": "2026-10-12",
+  "researcher_question": "When and where was Nicolas Uhres born, the husband of Marguerite Birchen and father of Johann (born 1883) and Josephine (born 1885) Uhres of Keispelt, Luxembourg?",
+  "tags": {
+    "question_type": "birth_date",
+    "era": "1850s",
+    "geography": "LU"
+  },
+  "model": {
+    "agent": "claude-sonnet-4-6",
+    "judge": "claude-haiku-4-5-20251001"
+  },
+  "difficulty": "medium",
+  "image_basis": true,
+  "notes": "Record-hint fixture (filtered-list-samples-3.csv row 16, hint-samples.csv row 552, flag adds_birth, confidence 3). Re-adjudicated 2026-10-14 (twice): final verdict TRUE MATCH — the 1880 hint record (6PBG-1Q63, Nicolas Uhres, single, born 1856, Keispelt) is the tree person GYGJ-D1C as a young single man. A real namesake (Nicolas born 1859, son of Jean Uhres b. 1821, Nospelt, and Barbe Kirsch) lived in the same commune; his 1880 entry is indexed as 'Nas Uhres' (6PBP-9LZV), so an index-only search missed him. Household images separate the two families. Birth year varies across census decades (1856 childhood, 1858 adult); the Kehlen civil birth register is needed for the exact date."
+}
