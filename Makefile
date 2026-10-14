@@ -869,6 +869,8 @@ e2e-relay-fidelity: ## How much of a subagent's return survives the relay on a R
 	# reader; SINCE=all opts out. Reports its denominators: a log below
 	# harness_schema_version 8 records an Agent return cut at 500 chars and a
 	# narration with no `thread` tag, so it is unscorable rather than clean.
+	# Exits 2 when nothing was scored: a prose warning beside a success exit
+	# just relocates the silent zero to the exit code.
 	cd eval/harness && uv run python scripts/relay_fidelity_report.py --production $(if $(SINCE),--since $(SINCE),)
 
 .PHONY: replay-sizes

@@ -36,16 +36,27 @@ def _load():
 rfr = _load()
 
 
+AGENTS = HERE.parent / "fixtures" / "relay_fidelity_e2e_agents"
+
+
 def counts():
-    return rfr.compute_production_counts(FIXTURES, cutoff=None)
+    return rfr.compute_production_counts(FIXTURES, cutoff=None, agents_root=AGENTS)
 
 
 def test_counts_are_exactly_the_hand_count():
-    assert counts() == {
-        "logs_seen": 5,
-        "logs_too_old_schema": 1,
+    c = counts()
+    assert {k: v for k, v in c.items() if k != "window"} == {
+        "logs_seen": 9,
+        "logs_excluded_by_window": 0,
+        "excluded_is_error": 1,
+        "excluded_no_agent_type": 0,
+        "excluded_non_conforming": 1,
+        "no_usable_return": 0,
+        "no_tail": 1,
+        "no_main_narration_for_call": 0,
+        "logs_too_old_schema": 2,
         "logs_no_narration": 0,
-        "agent_calls": 4,
+        "agent_calls": 7,
         "returns_truncated": 1,
         "eligible": 3,
         "exact": 1,
@@ -54,64 +65,121 @@ def test_counts_are_exactly_the_hand_count():
     }
 
 
+def test_every_agent_call_lands_in_exactly_one_line():
+    """The report's headline promise. An uncounted residual is the defect this
+    exists to prevent, and the first cut had one: 893 of the corpus's 1,738
+    Agent calls fell through `continue` with nothing incremented."""
+    c = counts()
+    accounted = (
+        c["excluded_is_error"] + c["excluded_non_conforming"]
+        + c["excluded_no_agent_type"] + c["no_usable_return"]
+        + c["returns_truncated"] + c["no_tail"]
+        + c["no_main_narration_for_call"] + c["eligible"]
+    )
+    assert accounted == c["agent_calls"]
+
+
 def test_a_subagents_own_words_are_not_credited_to_the_relay():
     """The over-fire direction, and the whole point of the `thread` tag.
 
     In 12-00-00 the agent's tail appears verbatim in narration -- but in a
-    `thread: "sub"` entry, i.e. the subagent's own message surfacing on the
-    main stream. Selecting on `kind == "assistant"` alone scores it `exact`.
+    `thread: "sub"` entry. Selecting on `kind == "assistant"` alone scores it
+    `exact`, crediting the relay with words only the subagent said.
     """
     c = counts()
     assert c["exact"] == 1, "only 10-00-00 is a real verbatim relay"
     assert c["dropped"] == 2, "12-00-00 must land here, not in exact"
 
 
+def test_an_errored_spawn_is_excluded_first():
+    """Its text is the harness's denial, not the agent's -- charging the relay
+    for a spawn that produced no return measures nothing."""
+    assert counts()["excluded_is_error"] == 1
+
+
+def test_an_agent_with_no_summary_section_is_not_scored():
+    """Conformance is read off the AGENT BODY, never off the return text.
+    807 of the corpus's Agent calls go to agents with no `summary_for_user`
+    (image-reader, gps-mentor, research-exhaustiveness); scoring a
+    transcription for verbatim presence measures contract coverage, not
+    relay fidelity."""
+    assert counts()["excluded_non_conforming"] == 1
+
+
+def test_a_return_with_no_final_rule_is_not_scored_against_its_whole_body():
+    """The unit arm counts a tailless return `conforming` but never scores it
+    (`ut_fx_notail`). Falling back to the whole body would make a multi-KB
+    return the string that must appear verbatim -- a guaranteed false
+    `dropped`."""
+    c = counts()
+    assert c["no_tail"] == 1
+    assert c["eligible"] == 3, "the tailless return is not in the denominator"
+
+
 def test_a_log_truncated_return_is_excluded_not_scored():
-    """Scoring it would measure the LOG's cut as the relay dropping content --
-    this report's own failure mode pointed backwards."""
     c = counts()
     assert c["returns_truncated"] == 1
-    assert c["eligible"] == 3, "the truncated one is not in the denominator"
+    assert c["eligible"] == 3
 
 
-def test_a_pre_v8_log_is_unscorable_rather_than_clean():
+def test_a_non_integer_schema_version_does_not_abort_the_run():
+    """One malformed log must not cost the other eight -- the same policy the
+    parse guard above it states."""
     c = counts()
-    assert c["logs_too_old_schema"] == 1
-    assert c["agent_calls"] == 4, "the v7 log's Agent call is not counted"
+    assert c["logs_too_old_schema"] == 2, "the v7 log and the 'v8' string one"
+    assert c["logs_seen"] == 9
 
 
 def test_sibling_files_are_not_mistaken_for_run_logs():
     """`run-*.json` also matches `run-<ts>.ann.json` and `run-<ts>.final-*.json`.
-    A substring filter on `.ann.` leaves the finals in; on the real corpus that
-    reported 611 logs against 203."""
-    assert counts()["logs_seen"] == 5
+    Now delegated to `runlog_selection.is_result_json` rather than re-derived;
+    the re-derived version reported 611 logs against the real 203."""
+    assert counts()["logs_seen"] == 9
+
+
+def test_the_window_line_is_reported():
+    """eval/CLAUDE.md: aggregating e2e readers "window to 14 days and print the
+    window plus how many runs they excluded"."""
+    c = rfr.compute_production_counts(
+        FIXTURES, cutoff=rfr.filter_since.__globals__["date"].today(), agents_root=AGENTS
+    )
+    assert "Window:" in c["window"]
+    assert c["logs_excluded_by_window"] >= 0
 
 
 def test_an_empty_result_reports_why_rather_than_a_clean_zero():
-    empty = {
-        "logs_seen": 9, "logs_too_old_schema": 9, "logs_no_narration": 0,
-        "agent_calls": 0, "returns_truncated": 0, "eligible": 0,
-        "exact": 0, "normalized": 0, "dropped": 0,
-    }
+    empty = {k: 0 for k in counts() if k != "window"}
+    empty["logs_seen"] = 9
+    empty["logs_too_old_schema"] = 9
+    empty["window"] = "Window: entire corpus (9 run(s))."
     out = rfr.format_production_report(empty)
     assert "Nothing scored" in out
     assert "NOT a clean result" in out
     assert "0%" not in out, "a 0% figure would read as a measured rate"
 
 
-def test_a_scored_result_reports_percentages():
-    """The other direction: with a non-zero denominator it does print rates."""
-    out = rfr.format_production_report({
-        "logs_seen": 2, "logs_too_old_schema": 0, "logs_no_narration": 0,
-        "agent_calls": 2, "returns_truncated": 0, "eligible": 2,
-        "exact": 1, "normalized": 1, "dropped": 1,
-    })
+def test_a_scored_result_says_the_percentages_are_not_a_partition():
+    """`normalized` includes `exact`, so the three figures can sum past 100%.
+    Without the note a reader totals the columns and concludes the counts are
+    inconsistent."""
+    c = {k: 0 for k in counts() if k != "window"}
+    c.update(agent_calls=2, eligible=2, exact=1, normalized=1, dropped=1)
+    out = rfr.format_production_report(c)
     assert "Nothing scored" not in out
     assert "50%" in out
+    assert "not" in out and "partition" in out
+
+
+def test_an_unaccounted_residual_is_surfaced_not_hidden():
+    """The other direction on the accounting: if a call ever stops landing in a
+    line, the report says so rather than letting it vanish."""
+    c = {k: 0 for k in counts() if k != "window"}
+    c.update(agent_calls=5, eligible=1, exact=1, normalized=1, dropped=0)
+    assert "UNACCOUNTED" in rfr.format_production_report(c)
 
 
 def test_a_missing_root_raises_rather_than_printing_zeros():
     import pytest
 
     with pytest.raises(FileNotFoundError):
-        rfr.compute_production_counts(FIXTURES / "nope")
+        rfr.compute_production_counts(FIXTURES / "nope", agents_root=AGENTS)
