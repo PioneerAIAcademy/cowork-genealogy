@@ -174,7 +174,7 @@ class _UsageMeter:
                 cache_creation_input_tokens=tokens[1],
                 cache_read_input_tokens=tokens[2],
                 output_tokens=tokens[3],
-                cost_usd=price_usd(tokens),
+                cost_usd=price_usd(tokens, self._model),
                 session_age_s=int((utcnow() - created).total_seconds()),
             ))
         except Exception:  # noqa: BLE001 — the relay's finally must reach aclose()

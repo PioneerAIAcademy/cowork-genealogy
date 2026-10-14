@@ -385,13 +385,17 @@ def test_a_streamed_call_is_recorded_once_with_its_final_counts(send, body, size
     assert abs(row.session_age_s - 30 * 3600) < 60
 
 
-def test_an_unstreamed_call_is_recorded_from_its_body(send):
-    body = {"type": "message", "model": "claude-haiku-4-5", "content": [],
-            "usage": {"input_tokens": 10, "cache_creation_input_tokens": 0,
-                      "cache_read_input_tokens": 0, "output_tokens": 5}}
+def test_an_unstreamed_call_is_recorded_from_its_body_at_its_models_rates(send):
+    """1M input and 100k output tokens are $1.50 on Haiku 4.5; at Sonnet 4.6's rates they
+    would be $4.50."""
+    body = {"type": "message", "model": "claude-haiku-4-5-20251001", "content": [],
+            "usage": {"input_tokens": 1_000_000, "cache_creation_input_tokens": 0,
+                      "cache_read_input_tokens": 0, "output_tokens": 100_000}}
     assert send(lambda req: httpx.Response(200, json=body)).json() == body
-    assert [(r.model, r.input_tokens, r.output_tokens) for r in _recorded()] == [
-        ("claude-haiku-4-5", 10, 5)]
+    [row] = _recorded()
+    assert (row.model, row.input_tokens, row.output_tokens) == (
+        "claude-haiku-4-5-20251001", 1_000_000, 100_000)
+    assert row.cost_usd == pytest.approx(1.50)
 
 
 @pytest.mark.parametrize("method, path, status", [

@@ -210,7 +210,7 @@ def test_the_nudge_cap_is_per_session_not_per_turn(tmp_path, monkeypatch):
     SIZED against: at 30 a drifting scope changes behaviour much sooner than it did at
     60. Whether it ought to reset per turn is a separate decision -- resetting would
     multiply the session bound by the number of turns, and on this plane there is no
-    spend meter behind it."""
+    spend limit behind it."""
     _write(tmp_path, "active")
 
     class StandInAgent:

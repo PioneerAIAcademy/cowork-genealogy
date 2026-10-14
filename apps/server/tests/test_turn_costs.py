@@ -298,7 +298,8 @@ def test_the_report_groups_by_day_build_and_session(seeded, capsys):
 @pytest.fixture
 def calls(db):
     """Two days of calls: a new session and a reopened 30-hour-old one on the first, a third
-    session on the second, and one call older than the window."""
+    session (one of its calls on Sonnet 5) on the second, and one call older than the
+    window."""
     from datetime import timedelta
 
     from app.models import User, utcnow
@@ -306,14 +307,16 @@ def calls(db):
     noon = utcnow().replace(hour=12, minute=0, second=0, microsecond=0)
     first, second = noon - timedelta(days=3), noon - timedelta(days=2)
     db.add(db.get(User, "u-call") or User(id="u-call", email="calls@example.com"))
-    for project, created, cost, age_h, tokens in [
-        ("prj_new", first, 1.00, 1, (10_000, 20_000, 100_000, 2_000)),
-        ("prj_new", first, 0.50, 1, (10_000, 20_000, 100_000, 4_000)),
-        ("prj_reopened", first, 3.00, 30, (10_000, 40_000, 200_000, 3_000)),
-        ("prj_third", second, 2.00, 2, (20_000, 0, 80_000, 5_000)),
-        ("prj_gone", noon - timedelta(days=40), 50.0, 1, (1, 1, 1, 1)),
+    sonnet = "claude-sonnet-4-6"
+    for project, created, cost, age_h, tokens, model in [
+        ("prj_new", first, 1.00, 1, (10_000, 20_000, 100_000, 2_000), sonnet),
+        ("prj_new", first, 0.50, 1, (10_000, 20_000, 100_000, 4_000), sonnet),
+        ("prj_reopened", first, 3.00, 30, (10_000, 40_000, 200_000, 3_000), sonnet),
+        ("prj_third", second, 2.00, 2, (20_000, 0, 80_000, 5_000), sonnet),
+        ("prj_third", second, 0.40, 2, (20_000, 0, 80_000, 5_000), "claude-sonnet-5"),
+        ("prj_gone", noon - timedelta(days=40), 50.0, 1, (1, 1, 1, 1), sonnet),
     ]:
-        db.add(ApiCall(project_id=project, user_id="u-call", model="claude-sonnet-4-6",
+        db.add(ApiCall(project_id=project, user_id="u-call", model=model,
                        input_tokens=tokens[0], cache_creation_input_tokens=tokens[1],
                        cache_read_input_tokens=tokens[2], output_tokens=tokens[3],
                        cost_usd=cost, session_age_s=age_h * 3600, created=created))
@@ -329,28 +332,31 @@ def test_the_report_totals_every_call_by_day_and_session_age(calls, capsys):
     first, second = calls
     cost_report.main(["--days", "30"])
     out = capsys.readouterr().out
-    assert "Every call the proxy relayed: 4 calls, 3 sessions, $6.50." in out, out
+    assert "Every call the proxy relayed: 5 calls, 3 sessions, $6.90." in out, out
     assert "prj_gone" not in out and "$50" not in out
     days = {line.split()[0]: line.split() for line in out.splitlines()
             if line.startswith((first, second))}
     assert days[first] == [first, "$4.50", "3", "$1.500", "170000", "3000", "2", "1", "$3.00"]
-    assert days[second] == [second, "$2.00", "1", "$2.000", "100000", "5000", "1", "1", "$0.00"]
+    assert days[second] == [second, "$2.40", "2", "$1.200", "100000", "5000", "1", "1", "$0.00"]
     worst = out.split("Every call, the 3 most expensive sessions")[1].splitlines()[2].split()
     assert worst[:3] == ["prj_reopened", "$3.00", "1"] and worst[3:5] == ["calls@example.com", "30h"]
     assert "0 turns, 0 sessions, $0.00." in out, "no turn rows must not hide the calls"
 
 
-def test_the_report_splits_every_call_by_token_type(calls, capsys):
+def test_the_report_prices_every_call_by_model_and_token_type(calls, capsys):
+    """The Sonnet 5 call's tokens are priced at Sonnet 5's rates: at Sonnet 4.6's, input,
+    cache read and output would read $0.21, $0.17 and $0.28."""
     from app import cost_report
-    from app.agent.spend import PRICE_PER_MTOK
 
     cost_report.main(["--days", "30"])
-    lines = capsys.readouterr().out.split("Every call, by token type")[1].splitlines()[2:6]
-    priced = {"input": 50_000, "cache write": 80_000, "cache read": 480_000, "output": 14_000}
-    expected = {name: n / 1_000_000 * PRICE_PER_MTOK[name.replace(" ", "_")]
-                for name, n in priced.items()}
+    out = capsys.readouterr().out
+    models = out.split("Every call, by model")[1].splitlines()[2:4]
+    assert [line.split() for line in models] == [
+        ["claude-sonnet-4-6", "$6.50", "4", "94"], ["claude-sonnet-5", "$0.40", "1", "6"]]
+    lines = out.split("Every call, by token type")[1].splitlines()[2:6]
     got = {line.rsplit(None, 2)[0].strip(): line.rsplit(None, 2)[1] for line in lines}
-    assert got == {name: f"${cost:,.2f}" for name, cost in expected.items()}
+    assert got == {"input": "$0.19", "cache write": "$0.30", "cache read": "$0.16",
+                   "output": "$0.26"}
 
 
 def test_an_empty_window_says_so(db, capsys):

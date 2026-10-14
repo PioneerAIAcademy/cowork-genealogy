@@ -23,6 +23,7 @@ cache-write rate differ by TTL (see ``PRICE_PER_MTOK``).
 from __future__ import annotations
 
 import json
+import re
 import sys
 
 from .continue_policy import env_float
@@ -79,11 +80,38 @@ SPEND_CAP_USD = _spend_env("SESSION_SPEND_CAP_USD", 35.0)
 
 TOKEN_CLASSES = ("input", "cache_write", "cache_read", "output")
 
+# Each model's own input and output rate, USD per 1M tokens, for pricing a call by the
+# model that made it (the alpha's credential proxy). On every model a 5-minute cache write
+# is 1.25x input and a cache read 0.1x. The harness's `MODEL_RATES` is the other copy,
+# pinned against this one by the same parity test as PRICE_PER_MTOK.
+MODEL_RATES = {
+    "claude-sonnet-4-6": (3.0, 15.0),
+    "claude-sonnet-5": (2.0, 10.0),
+    "claude-sonnet-5-5": (2.0, 10.0),
+    "claude-haiku-4-5": (1.0, 5.0),
+    "claude-opus-4-8": (5.0, 25.0),
+}
+_DATED = re.compile(r"-\d{8}$")
 
-def price_usd(tokens) -> float:
-    """Tokens (input, cache_write, cache_read, output) priced at PRICE_PER_MTOK."""
+
+def rates_for(model: str | None) -> dict[str, float]:
+    """``model``'s rates, keyed like PRICE_PER_MTOK; PRICE_PER_MTOK itself for no model or
+    one MODEL_RATES does not know. A dated id (``claude-haiku-4-5-20251001``) is its
+    undated model."""
+    base = MODEL_RATES.get(_DATED.sub("", model or ""))
+    if base is None:
+        return PRICE_PER_MTOK
+    input_rate, output_rate = base
+    return {"input": input_rate, "cache_write": 1.25 * input_rate,
+            "cache_read": 0.1 * input_rate, "output": output_rate}
+
+
+def price_usd(tokens, model: str | None = None) -> float:
+    """Tokens (input, cache_write, cache_read, output) priced at ``rates_for(model)``:
+    with no model, at PRICE_PER_MTOK."""
+    rates = rates_for(model)
     return sum(
-        (t or 0) / 1_000_000 * PRICE_PER_MTOK[name]
+        (t or 0) / 1_000_000 * rates[name]
         for name, t in zip(TOKEN_CLASSES, tokens)
     )
 

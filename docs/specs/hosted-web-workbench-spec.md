@@ -642,12 +642,13 @@ server → client:  {type:"agent_event", event}        # streamed Agent SDK mess
 >   session_age_s, created) covers them: one row per `POST /v1/messages` the credential
 >   proxy relays with a 200, its usage read off the response on the way back
 >   (`anthropic_proxy._UsageMeter`: `message_start` and the last `message_delta` when
->   streamed, the body's `usage` when not) and priced at `app/agent/spend.py`'s
->   `PRICE_PER_MTOK`. Its daily total is the alpha's whole bill. `session_age_s` is the
->   session's age at the call, which separates a reopened old session's spend from a new
->   one's. `make alpha-costs` prints both tables: every call by day, by token type and
->   the most expensive sessions, then turns by day, by build and by session. Nothing
->   enforces against either: the alpha has no spend limit (lead ruling 2026-09-25).
+>   streamed, the body's `usage` when not) and priced at the calling model's own rates
+>   (`app/agent/spend.py` `rates_for`). Its daily total is the alpha's whole bill.
+>   `session_age_s` is the session's age at the call, which separates a reopened old
+>   session's spend from a new one's. `make alpha-costs` prints both tables, in whole UTC
+>   days: every call by day, by model, by token type and the most expensive sessions,
+>   then turns by day, by build and by session. Nothing enforces against either: the
+>   alpha has no spend limit (lead ruling 2026-09-25).
 
 ### 6.4 Durable project storage (object store)
 - One prefix per project (`projects/<project_id>/`) holding `research.json`,

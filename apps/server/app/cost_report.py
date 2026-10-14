@@ -17,7 +17,7 @@ from datetime import datetime, timedelta
 from sqlalchemy import case, distinct, func
 from sqlmodel import Session, select
 
-from .agent.spend import PRICE_PER_MTOK, TOKEN_CLASSES
+from .agent.spend import TOKEN_CLASSES, rates_for
 from .db import get_engine
 from .models import ApiCall, TurnCost, User, utcnow
 from .sessions import SESSION_MAX_AGE
@@ -57,10 +57,9 @@ def _calls(session: Session, cutoff: datetime, emails: dict[str, str],
     """The summary line and tables for every call. Aggregated in the database, which holds
     a row per call."""
     since = ApiCall.created >= cutoff
-    *tokens, cost, n, sessions = session.exec(select(
-        func.sum(ApiCall.input_tokens), func.sum(ApiCall.cache_creation_input_tokens),
-        func.sum(ApiCall.cache_read_input_tokens), func.sum(ApiCall.output_tokens),
-        func.sum(ApiCall.cost_usd), func.count(), func.count(distinct(ApiCall.project_id)),
+    spent = func.sum(ApiCall.cost_usd)
+    cost, n, sessions = session.exec(select(
+        spent, func.count(), func.count(distinct(ApiCall.project_id)),
     ).where(since)).one()
     summary = f"Every call the proxy relayed: {n:,} calls, {sessions} sessions, ${cost or 0:,.2f}."
     if not n:
@@ -71,7 +70,7 @@ def _calls(session: Session, cutoff: datetime, emails: dict[str, str],
                + ApiCall.cache_read_input_tokens)
     old = case((ApiCall.session_age_s > _OLD_S, ApiCall.cost_usd), else_=0.0)
     days = session.exec(select(
-        day, func.sum(ApiCall.cost_usd), func.count(), func.sum(context),
+        day, spent, func.count(), func.sum(context),
         func.sum(ApiCall.output_tokens), func.count(distinct(ApiCall.project_id)),
         func.count(distinct(ApiCall.user_id)), func.sum(old),
     ).where(since).group_by(day).order_by(day)).all()
@@ -83,7 +82,21 @@ def _calls(session: Session, cutoff: datetime, emails: dict[str, str],
          for d, c, k, ctx, o, s, u, old_cost in days],
     )
 
-    priced = [t / 1_000_000 * PRICE_PER_MTOK[name] for name, t in zip(TOKEN_CLASSES, tokens)]
+    models = session.exec(select(
+        ApiCall.model, spent, func.count(),
+        func.sum(ApiCall.input_tokens), func.sum(ApiCall.cache_creation_input_tokens),
+        func.sum(ApiCall.cache_read_input_tokens), func.sum(ApiCall.output_tokens),
+    ).where(since).group_by(ApiCall.model).order_by(spent.desc())).all()
+    out += ["", "Every call, by model"] + _table(
+        ["model", "cost", "calls", "% of cost"],
+        [[m or "(none)", f"${c:,.2f}", k, round(100 * c / (cost or 1))] for m, c, k, *_ in models],
+    )
+
+    priced = [0.0] * len(TOKEN_CLASSES)
+    for m, _, _, *tokens in models:
+        rates = rates_for(m)
+        for i, (name, t) in enumerate(zip(TOKEN_CLASSES, tokens)):
+            priced[i] += t / 1_000_000 * rates[name]
     whole = sum(priced) or 1
     out += ["", "Every call, by token type"] + _table(
         ["tokens", "cost", "% of cost"],
@@ -91,7 +104,6 @@ def _calls(session: Session, cutoff: datetime, emails: dict[str, str],
          for name, p in zip(TOKEN_CLASSES, priced)],
     )
 
-    spent = func.sum(ApiCall.cost_usd)
     worst = session.exec(select(
         ApiCall.project_id, ApiCall.user_id, spent, func.count(),
         func.max(ApiCall.session_age_s), func.max(ApiCall.created),
@@ -109,7 +121,7 @@ def render(rows: list[TurnCost], emails: dict[str, str], calls: tuple[str, list[
            days: int, top: int) -> str:
     summary, call_lines = calls
     total = sum(r.cost_usd for r in rows)
-    out = [f"Claude API cost, hosted alpha: last {days} days (UTC).", summary,
+    out = [f"Claude API cost, hosted alpha: last {days} days (UTC), today included.", summary,
            f"Turns the sandboxes reported: {len(rows)} turns, "
            f"{len({r.project_id for r in rows})} sessions, ${total:,.2f}.", *call_lines]
     if not rows:
@@ -152,7 +164,9 @@ def render(rows: list[TurnCost], emails: dict[str, str], calls: tuple[str, list[
 
 def load(days: int, top: int = 10, now: datetime | None = None
          ) -> tuple[list[TurnCost], dict[str, str], tuple[str, list[str]]]:
-    cutoff = (now or utcnow()) - timedelta(days=days)
+    # Whole UTC days, today included, so every day's row compares with the Console's.
+    start = (now or utcnow()) - timedelta(days=days - 1)
+    cutoff = start.replace(hour=0, minute=0, second=0, microsecond=0)
     with Session(get_engine()) as session:
         rows = list(session.exec(select(TurnCost).where(TurnCost.created >= cutoff)).all())
         emails = {u.id: u.email for u in session.exec(select(User)).all()}
