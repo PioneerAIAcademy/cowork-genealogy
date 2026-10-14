@@ -511,8 +511,8 @@ async def connect_session(
     of the streaming path. Identical for both providers (E2B microVM / local
     subprocess); each returns its own wss:// or ws:// URL."""
     project = _owned(session, user, session_id)
-    # Refuse before resume: waking the sandbox only to turn it away costs a
-    # resume and hands nothing back.
+    # Refuse before resume, so this call does not wake the sandbox. Viewing an
+    # ended session still does: /resume and /state resume it to read files.
     if not _continuable(project):
         raise HTTPException(status_code=410, detail=_EXPIRED_DETAIL)
     sandbox = await provider.resume(project.sandbox_id)

@@ -72,6 +72,20 @@ const row = (continuable: boolean | undefined): SessionSummary =>
     ...(continuable === undefined ? {} : { continuable })
   }) as unknown as SessionSummary
 
+describe('ChatPane on session_expired mid-turn', () => {
+  it('stops the "working…" indicator', () => {
+    const conn = new FakeConn()
+    render(<ChatPane conn={conn} sessionId="sess_old" isNew={false} />)
+    conn.emit({ type: 'status', state: 'chat_ready' })
+    conn.emit({ type: 'status', state: 'turn_active' })
+    expect(screen.getByText(/working/)).toBeTruthy()
+
+    conn.emit({ type: 'status', state: 'session_expired', message: SESSION_EXPIRED_TEXT })
+
+    expect(screen.queryByText(/working/)).toBeNull()
+  })
+})
+
 describe('SessionList "ended" pill', () => {
   it('shows only on a row with continuable === false', async () => {
     vi.spyOn(api, 'listSessions').mockResolvedValue([row(false), row(true), row(undefined)])

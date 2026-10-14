@@ -257,8 +257,13 @@ export default function ChatPane({
       else if (msg.type === 'status' && msg.state === 'turn_unqueued') setQueuedOnServer(false)
       else if (msg.type === 'conn_state') setConnState(msg.state as 'open' | 'reconnecting')
       else if (msg.type === 'status' && msg.state === 'session_expired') {
+        // A turn may have been running when the old socket dropped; nothing will
+        // ever end it, so clear every indicator that would keep ticking.
         setReady(false)
         setConnState('open')
+        setBusy(false)
+        setQueuedOnServer(false)
+        setOutcome(null)
         setExpired(String(msg.message ?? SESSION_EXPIRED_TEXT))
       }
       else if (msg.type === 'status' && msg.state === 'chat_error') {
