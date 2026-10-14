@@ -93,8 +93,8 @@ def test_research_plan_no_new_plan(before_state, after_state, test):
 # --- Tag-gated: nothing is written once the search is declared exhaustive ---
 
 def test_no_plan_writes_when_resolved(before_state, after_state, test):
-    """Tag-gated: on a question whose `exhaustive_declaration.declared` is
-    already true, research-plan must add nothing and change nothing.
+    """Tag-gated: on a question whose `search_stop.stopped_because` is
+    already a stop-gate value, research-plan must add nothing and change nothing.
 
     Covers the gap the other two leave. `test_research_plan_no_new_plan`
     catches a whole new `pl_` and `test_plans_no_deletions` catches removals;
@@ -107,7 +107,7 @@ def test_no_plan_writes_when_resolved(before_state, after_state, test):
     (`grade_on_invariant`): whichever skill ends up handling the prompt, no run
     may leave a mark on `plans[]`. Its companion
     `test_resolved_question_not_reopened` guards the question's own state —
-    `status`, `exhaustive_declaration`, `project.status` — which this one does
+    `status`, `search_stop`, `project.status` — which this one does
     not look at and which is the likelier harm on that prompt. Both are gated
     on the same tag; neither is sufficient alone.
     """
@@ -203,7 +203,7 @@ def test_resolved_question_not_reopened(before_state, after_state, test):
     false-fail the legitimate routes — `question-selection` may append a
     follow-on question, which is one of this test's `correct_skill` answers.
     So this names the specific deltas that are never legitimate here: the
-    target question's `status` and `exhaustive_declaration`, and
+    target question's `status` and `search_stop`, and
     `project.status`. Same shape as
     `test_search_external_sites.py::test_no_external_search_or_log_on_routeaway_negative`.
     """
@@ -219,7 +219,7 @@ def test_resolved_question_not_reopened(before_state, after_state, test):
             q.get("id"): q
             for q in (research.get("questions") or [])
             if q.get("status") == "resolved"
-            or (q.get("exhaustive_declaration") or {}).get("declared")
+            or (q.get("search_stop") or {}).get("stopped_because") in {"question_answered", "record_exhausted", "nothing_further_reachable"}
         }
 
     before_q = _resolved(before)
@@ -233,7 +233,7 @@ def test_resolved_question_not_reopened(before_state, after_state, test):
         if now is None:
             errors.append(f"{qid}: resolved question DELETED")
             continue
-        for field in ("status", "exhaustive_declaration", "question",
+        for field in ("status", "search_stop", "question",
                       "resolution_assertion_ids", "resolved"):
             if was.get(field) != now.get(field):
                 errors.append(
@@ -555,7 +555,7 @@ def test_research_plan_no_out_of_lane_tools(
     `wiki_read` is granted since issue #2251 for the Step 3 record-type
     pre-work and is deliberately not in the prohibition.
 
-    Named prohibition, not the complement of the six: project_context is
+    Named prohibition, not the complement of the grant: project_context is
     attempted by sibling skills and forbidden by nothing, so a complement
     gate reds it. Deriving a deny from a grant is what PR #1774 retired. A
     denied call never reaches tool_calls, so union the attempts (#1748)."""
@@ -572,19 +572,126 @@ def test_research_plan_no_out_of_lane_tools(
     if delegated:
         problems.append(f"delegated to {_FORBIDDEN_SKILL!r}")
     assert not problems, (
-        "research-plan reached outside its six-tool lane:\n  - "
+        "research-plan reached outside its tool lane:\n  - "
         + "\n  - ".join(problems)
+    )
+
+
+# --- Tag-gated: the question person's FamilySearch profile is read first -----
+
+
+def _plan_write_ops(args: dict) -> list[dict]:
+    """The ops of one `research_append` call, in either shape the model sends:
+    `ops` as a list or a JSON string, or a single top-level op (same parse as
+    test_universal.py's assertion-update check)."""
+    ops = args.get("ops")
+    if isinstance(ops, str):
+        try:
+            ops = json.loads(ops)
+        except (ValueError, TypeError):
+            ops = None
+    candidates = ops if isinstance(ops, list) else ([args] if args.get("section") else [])
+    return [op for op in candidates if isinstance(op, dict)]
+
+
+def _question_person_pids(research: dict, tree: dict) -> set[str]:
+    """FamilySearch ids of tree persons named in an open question's text: the
+    `ark` tail (`ark:/61903/4:1:<PID>`) of every person whose preferred given
+    name and surname both appear in it."""
+    text = " ".join(
+        (q.get("question") or "")
+        for q in research.get("questions") or []
+        if q.get("status") in {"open", "in_progress"}
+    ).lower()
+    pids: set[str] = set()
+    for person in tree.get("persons") or []:
+        ark = person.get("ark") or ""
+        if not ark:
+            continue
+        name = next(
+            (n for n in person.get("names") or [] if n.get("preferred")),
+            (person.get("names") or [{}])[0],
+        )
+        given = (name.get("given") or "").strip().lower()
+        surname = (name.get("surname") or "").strip().lower()
+        if given and surname and re.search(rf"\b{re.escape(given)}\b", text) and re.search(
+            rf"\b{re.escape(surname)}\b", text
+        ):
+            pids.add(ark.split("?")[0].rstrip("/").rsplit(":", 1)[-1].strip())
+    return pids
+
+
+def test_research_plan_reads_question_person_profile(before_state, tool_calls, test):
+    """Tag-gated (``profile-reread``), tier 1. Issue #2208, alpha report #3244.
+
+    The project tree is a setup snapshot: a relative imported with the subject
+    arrives without his own parents or attached sources. Before writing a plan,
+    the skill must `person_read` the FamilySearch profile of the person the
+    question is about. Graded on the call log, so narrating a check cannot pass.
+
+    Every mock call lands in `tool_calls`, matched or not; `matched.kind` is
+    what tells a fixture hit from a `fixture_not_found`. A read counts only if
+    it matched and its `personId` is a question person's `ark` PID, and only if
+    it comes before the first `research_append` writing `plans`/`plan_items`.
+    A refused write (`ok: false`) wrote nothing, so it is not the first write.
+    A tagged run with no plan write fails: it planned nothing."""
+    if "profile-reread" not in test.get("tags", []):
+        pytest.skip("not a profile-reread test")
+    research = before_state.get("research_json")
+    tree = before_state.get("tree_gedcomx_json") or before_state.get("tree_gedcomx")
+    if research is None or tree is None:
+        pytest.skip("missing research.json or tree.gedcomx.json for before-state")
+    wanted = _question_person_pids(research, tree)
+    assert wanted, "profile-reread scenario names no tree person with an `ark` in an open question"
+
+    calls = [c for c in tool_calls or [] if isinstance(c, dict)]
+    first_write = next(
+        (
+            i
+            for i, c in enumerate(calls)
+            if _bare(c.get("tool", "")) == "research_append"
+            and isinstance(c.get("args"), dict)
+            and (c.get("response") or {}).get("ok") is not False
+            and any(
+                op.get("section") in {"plans", "plan_items"}
+                for op in _plan_write_ops(c["args"])
+            )
+        ),
+        None,
+    )
+    assert first_write is not None, "no research_append wrote plans or plan_items"
+
+    reads = [
+        (i, (c.get("args") or {}).get("personId"))
+        for i, c in enumerate(calls)
+        if _bare(c.get("tool", "")) == "person_read"
+    ]
+    good = [
+        i
+        for i, pid in reads
+        if isinstance(pid, str)
+        and pid.strip() in wanted
+        and (calls[i].get("matched") or {}).get("kind") == "predicate"
+    ]
+    assert good and good[0] < first_write, (
+        f"The plan must read the question person's FamilySearch profile "
+        f"(personId in {sorted(wanted)}) before writing. person_read calls "
+        f"(index, personId)={reads}; first plan write at index {first_write}."
     )
 
 
 # --- V1: identifiers in a rationale must trace to a served response ---------
 
-# wiki_read joined with issue #2251's Step 3 pre-work: a fetched record-type
-# page links collection ids (the Denmark_Military_Records fixture links
-# collection/2243379), and SKILL.md lets a rationale cite an id "a tool
-# returned this session", so a page-quoted id is served, not invented.
+# person_read (issue #2208): the plan cites the attached-source ARKs a profile read
+# returns. wiki_read (issue #2251): a fetched record-type page links collection ids
+# (the Denmark_Military_Records fixture links collection/2243379). Both are ids "a
+# tool returned this session", so they are served, not invented.
 _TRACEABLE_ID_TOOLS = {
-    "collections_search", "volume_search", "external_links_search", "wiki_read",
+    "collections_search",
+    "volume_search",
+    "external_links_search",
+    "person_read",
+    "wiki_read",
 }
 
 
@@ -732,6 +839,18 @@ _ADJ_ON_NON_COLLECTION_RE = re.compile(
     r"for\s+(?:this|the)\s+\w+)\b",
     re.I,
 )
+# A bracket right after a non-collection id describes that item, so the
+# adjective inside it is not a claim about the collection the sentence also
+# names. ut_research_plan_015, 2026-10-13, pli_009: "Image group 004748896
+# (Thisted Amt military levy rolls, 1789-1814, browse-only (personCount 0))
+# provides the raw roll images if the name search in collection 2513529 (item
+# 3) fails" charged "browse-only" to 2513529 (personCount 200408). One level
+# of nested brackets is allowed, for the "(personCount 0)" inside it.
+_PAREN_ON_NON_COLLECTION_RE = re.compile(
+    r"\b(?:image\s+groups?|volumes?|films?|microfilms?|dgs)\s+(?:no\.?\s*)?\d{5,}\s*"
+    r"\((?:[^()]|\([^()]*\))*\)",
+    re.I,
+)
 # A coverage percentage ("412 images, 0% indexed", "only 4% name-indexed") is
 # neither an indexed nor a browse-only claim. ut_research_plan_007 run 0 on
 # 2026-09-24 (issue #2685) wrote "…returned personCount 0, so this is a browse
@@ -800,6 +919,7 @@ def test_research_plan_availability_claim_matches_counts(
                 cid = ids_here[0]
                 pcs = counts[cid]
                 claim_text = _PERCENT_INDEXED_RE.sub(" ", sentence)
+                claim_text = _PAREN_ON_NON_COLLECTION_RE.sub(" ", claim_text)
                 claims_indexed = bool(_INDEXED_RE.search(claim_text)) and not (
                     _UNINDEXED_RE.search(claim_text)
                 )
@@ -833,6 +953,28 @@ def test_research_plan_availability_claim_matches_counts(
 def _word_grams(text: str, n: int) -> set[str]:
     words = re.findall(r"[a-z0-9]+", text.lower())
     return {" ".join(words[i : i + n]) for i in range(len(words) - n + 1)}
+
+
+def _survey_noise_grams(research: dict, tree: dict) -> set[str]:
+    """Two-word grams a response can produce without reading any source: the
+    questions' own wording, every place a fact names, and every person name."""
+    text = [q.get("question") or "" for q in research.get("questions") or []]
+    for person in tree.get("persons") or []:
+        text += [f.get("place") or "" for f in person.get("facts") or []]
+        text += [f"{n.get('given') or ''} {n.get('surname') or ''}" for n in person.get("names") or []]
+    return _word_grams(" ".join(text), 2)
+
+
+def _person_source_grams(person: dict, tree: dict, noise: set[str]) -> set[str]:
+    """Distinctive two-word grams from the title and citation of every source
+    the person's own `sources` refs resolve to (noise removed)."""
+    by_id = {s.get("id"): s for s in tree.get("sources") or [] if isinstance(s, dict)}
+    grams: set[str] = set()
+    for ref in person.get("sources") or []:
+        src = by_id.get(ref.get("ref")) if isinstance(ref, dict) else None
+        if src:
+            grams |= _word_grams(f"{src.get('title') or ''} {src.get('citation') or ''}", 2)
+    return grams - noise
 
 
 def report_survey_surfaces_already_attached_fan_facts(before_state, text_response, test):
@@ -874,7 +1016,24 @@ def report_survey_surfaces_already_attached_fan_facts(before_state, text_respons
     scenario could add one incidentally, and this check has no way to know
     whether surfacing it was that test's point.
 
-    Check: for each non-subject person with a sourced fact, require
+    The tag gate carries more weight since issue #2208 widened the checked
+    population from source-ref'd facts to all recorded facts, and to a
+    relative's person-level sources: on an imported tree that is nearly every
+    relative. Both tagged scenarios are hand-authored with a single
+    checkable non-subject person, so nothing over-fires today -- but do NOT
+    apply the `already-attached` tag to an imported tree without re-scoping
+    this check, or it will demand a date-and-value for every relative and fire
+    on every honest response. Note also that `surfaced` is satisfied by ANY of
+    the person's facts, so widening the fact set made the per-person bar
+    easier, not harder.
+
+    A person with person-level `sources` is checked on those instead: the
+    response must name them and carry a distinctive two-word gram from a
+    source's title or citation (question wording, fact places and person names
+    removed), because a name and a year can be written without reading it.
+
+    Check: for each non-subject person with a fact the tree records --
+    sourced or not (issue #2208; see the inline note at the loop) -- require
     somewhere in the response (case-insensitive) -- their given name
     (word-boundary match, not a bare substring test: "Ann" must not match
     inside "planning") AND the fact's *content*: a date token (`date`,
@@ -885,7 +1044,7 @@ def report_survey_surfaces_already_attached_fan_facts(before_state, text_respons
     with no date at all degrades to name+value -- either signal alone still
     gates on *some* fact-specific content, never on the name alone. A fact
     with neither a date nor a value has nothing fact-specific to check
-    against and is out of scope, the same as a person with no sourced facts
+    against and is out of scope, the same as a person with no facts
     at all (there is no content to confirm was read, so nothing is asked of
     the response) -- this closes a real false negative found during review
     (clack391): `date` is optional in the schema, so a sourced fact that
@@ -942,6 +1101,7 @@ def report_survey_surfaces_already_attached_fan_facts(before_state, text_respons
     subject_ids = set(research.get("project", {}).get("subject_person_ids") or [])
     response_lower = text_response.lower()
     paragraphs = [response_lower]
+    noise = _survey_noise_grams(research, tree)
 
     missed: list[str] = []
     for person in tree.get("persons", []) or []:
@@ -951,16 +1111,26 @@ def report_survey_surfaces_already_attached_fan_facts(before_state, text_respons
         given = (person.get("names") or [{}])[0].get("given", "")
         if not given:
             continue
-        sourced_facts = [f for f in (person.get("facts") or []) if f.get("sources")]
-        if not sourced_facts:
-            continue  # nothing already attached for this person -- not in scope for this check
+        # EVERY fact the tree records, not only the source-ref'd ones (issue #2208): a
+        # fact's ref is no evidence the person was surveyed, and trees authored before
+        # project_create built from person_read (#3140) carry no refs at all.
+        recorded_facts = list(person.get("facts") or [])
+        # A relative's own attachments live at the person level (#3066), referenced
+        # from `persons[].sources`, not from a fact. When there are any, their content
+        # -- not a name and a year -- is what shows the survey read them.
+        source_grams = _person_source_grams(person, tree, noise)
+        if not recorded_facts and not source_grams:
+            continue  # nothing recorded for this person -- not in scope for this check
 
         name_pattern = rf"\b{re.escape(given.lower())}\b"
         name_present = bool(re.search(name_pattern, response_lower))
 
         surfaced = False
-        any_checkable = False
-        for fact in sourced_facts:
+        any_checkable = bool(source_grams)
+        if source_grams:
+            recorded_facts = []
+            surfaced = name_present and bool(source_grams & _word_grams(response_lower, 2))
+        for fact in recorded_facts:
             date_tokens = {
                 t.lower() for t in (fact.get("date"), fact.get("standard_date")) if t
             }
@@ -988,7 +1158,7 @@ def report_survey_surfaces_already_attached_fan_facts(before_state, text_respons
                 break
 
         if not any_checkable:
-            continue  # no sourced fact on this person has a date or value -- nothing to check
+            continue  # no recorded fact on this person has a date or value -- nothing to check
 
         if surfaced:
             continue
@@ -997,12 +1167,12 @@ def report_survey_surfaces_already_attached_fan_facts(before_state, text_respons
             reason = "the person's given name never appears in the response"
         else:
             reason = (
-                "the person's given name appears, but no sourced fact's date and value "
+                "the person's given name appears, but no recorded fact's date and value "
                 "content (whichever the fact carries) both also appear in the response"
             )
-        missed.append(f"{pid} ({given}): has a sourced fact but {reason}")
+        missed.append(f"{pid} ({given}): the tree records a fact for them but {reason}")
     assert not missed, (
-        "already-attached FAN-cluster fact(s) never surfaced in the "
+        "already-recorded FAN-cluster fact(s) never surfaced in the "
         "response:\n  - " + "\n  - ".join(missed)
     )
 
