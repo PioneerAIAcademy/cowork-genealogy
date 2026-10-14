@@ -1,4 +1,4 @@
-# Ásgeir Brinjólfsson — born 1777, Hvammur, Dalasýsla, Iceland
+# Ásgeir Brinjólfsson — born 1777, Hvammur parish, Dalasýsla, Iceland
 
 **Source PID:** `KHJ9-95M`
 **Ásgeir Brinjólfsson is deceased.** (FamilySearch ToS requires
@@ -34,7 +34,16 @@ The hint record `ark:/61903/1:1:8LRG-VQMM` ("Iceland, Church Census,
 is tree person KHJ9-95M. It answers the question only as "about 1777, Iceland".
 His baptism answers it in full: **christened 9 June 1777 at Hvammur in
 Hvammssveit, Dalasýsla** (`ark:/61903/1:1:FGPJ-H29`). So f1 now gives the
-birth as 1777 at Hvammur, not "about 1777, Iceland". The hint came from
+birth as 1777 in Hvammur parish, Hvammssveit, Dalasýsla, not "about 1777,
+Iceland". f1 carries only the year and the parish. The christening date and
+the census chain below stay here and in its supporting sources, so a run that
+records the birth correctly is not marked down for leaving them out.
+
+**Parish, not farm.** The baptism names the parish church, Hvammur í
+Hvammssveit, and it is the only record that places the birth. The family lives
+at Ásgarður, a farm in that parish, in 1785–1792, and Ásgeir is there again in
+1813. So the records support "born in Hvammur parish". A run that records
+Ásgarður, or Hvammur parish, has the right answer. The hint came from
 `filtered-list-samples-3.csv` row 13, `hint-samples.csv` row 486, flag
 `adds_birth`, confidence 3.
 
@@ -73,10 +82,19 @@ names, ages and parish:
   tree's own 1835 source for Málfríður is "in entry for Sveinbjorn Jonsson"
   (`681T-ZV2K`).
 
-The church censuses of 1785–1835 give 1777, except 1828 and 1830 (1776). The later ones (1842–1858)
+The church censuses of 1785–1835 give 1777, except 1828 (`1:1:8HW5-K56Z`)
+and 1830, which give 1776. The later ones (1842–1858)
 and the 1860 national census (`1:1:62DW-VG76`, a widower) drift to 1776, the
 usual slippage in old age. The daughter christened in 1812 is named Sólveig,
 like Ásgeir's sister.
+
+**A misleading place standard.** Entries from the 1821–1865 church census
+register index the place as "Hvammur, Island". Checked: 1828 `8HW5-K56Z` and
+1835 `84Z9-HMPZ`. FamilySearch standardizes that to place rep 37573,
+"Hvammur, Borgarbyggð, Western, Iceland". That is a farm in another county, not
+Hvammur in Dalasýsla, although the register image is catalogued under Hvammur,
+Dalasýsla. A run that puts Ásgeir outside Dalasýsla on the strength of those
+entries has followed the standardization, not the record.
 
 **The wife's age.** The draft wondered whether the 1808 census misread
 Sigríður's 1766 birth year, which makes her 42 and 46 at the two baptisms.
