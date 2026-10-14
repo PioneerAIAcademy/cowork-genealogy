@@ -1,6 +1,6 @@
 {
   "id": "jantje-willems-birth",
-  "name": "Jantje Willems — baptism in November 1748, Groningen, Netherlands",
+  "name": "Jantje Willems — baptism and parents (1748 Groningen hint rejected)",
   "genre": "record-hint",
   "source_pid": "K8C9-ZZC",
   "captured": "2026-10-12",
@@ -15,5 +15,6 @@
     "judge": "claude-haiku-4-5-20251001"
   },
   "difficulty": "medium",
-  "notes": "Record-hint fixture (filtered-list-samples-3.csv row 17, hint-samples.csv row 591, flags adds_father/adds_mother/adds_christening, confidence 3). Draft transcribed from a 1748 Groningen baptism register entry; unverified."
+  "notes": "Record-hint fixture (filtered-list-samples-3.csv row 17, hint-samples.csv row 591, flags adds_father/adds_mother/adds_christening, confidence 3). Resolved 2026-10-14 (#3338): false match, no substitute found. The 10 Nov 1748 Groningen baptism (ark:/61903/1:1:4G7B-5YMM, parents Willem Jans and Ikjen Jans) cannot be the subject: the 1772 banns with Jacob Jeltes (ark:/61903/1:1:H5TP-6GPZ, image ark:/61903/3:1:3QSQ-G9WL-2S47) call her the widow of Hindrik Harms Bos, whom she married in April/May 1764 (ark:/61903/1:1:H5T5-QW2M, ark:/61903/1:1:QLRY-B3VZ) at fifteen if born 1748, assisted by a brother Doje Willems. Avoid guards on the parents and the baptism plus a documented-negative finding; image_basis on, because the widow link exists only on the register page.",
+  "image_basis": true
 }
