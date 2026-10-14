@@ -11,8 +11,8 @@ persisted state comes from [`specs/schemas/ownership.json`](specs/schemas/owners
 This file maps the two onto each other so you can see a whole run at once; where it
 disagrees with either, they win.
 
-There are 6 skills and 28 agents. Besides the `research` orchestrator itself, its routing
-table names 14 of them, and 5 more are reached by delegation from a skill the table does
+There are 5 skills and 28 agents. Besides the `research` orchestrator itself, its routing
+table names 14 of them, and 4 more are reached by delegation from a skill the table does
 name. The remaining 6 fire only when the user asks — see
 [Reachable only by asking](#reachable-only-by-asking), which is the part of this doc most
 likely to surprise you.
@@ -23,19 +23,21 @@ likely to surprise you.
 
 **Thin router + agent.** The skill resolves the request to one id, delegates, and relays
 the result. It reads almost nothing and writes nothing; the agent holds the judgment and
-the writer tool. **One pair today:** `record-extraction` → `record-extractor`,
-which is still routed as a skill. Two rationales reach a pair
+the writer tool. **No pair today.** Two rationales reach a pair
 (`docs/skill-to-agent-pair-conversion.md`): **attribution** — only an agent carries an
 `agent_id`, which is what lets the `PreToolUse` hook route a section's writes to exactly
 one caller, and what every one of those pairs bought when it split — and **cost and
 context**, a `model:`/`effort:` pin and a body out of the orchestrator's context, which
 buys no attribution.
 
-Former pairs, all four now agent-only: `person-evidence` (paired 2026-09-09, skill
+Former pairs, four now agent-only: `person-evidence` (paired 2026-09-09, skill
 deleted — issue #2821), `proof-conclusion` (skill deleted — issue #2822),
 `search-images` (paired 2026-09-21, skill deleted 2026-09-29 — issue #2268), and
 `research-exhaustiveness` (skill deleted 2026-10-08 — issue #2738). In each case the
 agent remains and is reached directly by delegation from the orchestrator.
+The fifth, `record-extraction` → `record-extractor`, was retired: extraction now
+runs in code through `extraction_append`, with the `record-structurer` agent for a
+source that is not a FamilySearch record.
 
 **Monolithic skill.** Reads state, does the work, writes its own section. Most skills.
 
@@ -53,10 +55,10 @@ SDK path and depth 3 remain unmeasured (issue #2817).
 runs it.
 
 The "agents cannot nest" wording came out of
-`packages/engine/plugin/agents/record-extractor.md` in PR #2714. It survives
-in `packages/engine/plugin/skills/record-extraction/SKILL.md` and in
-`docs/lead-themes-2026-09-05.md` (the `record-extraction` / #2410 row) — the
-latter deliberately, as a dated record of what was believed then.
+`packages/engine/plugin/agents/record-extractor.md` in PR #2714. It survived in the
+`record-extraction` skill until that was retired, and survives in
+`docs/lead-themes-2026-09-05.md` (the `record-extraction` / #2410 row) — deliberately,
+as a dated record of what was believed then.
 
 While those remain unmeasured, **design as if nesting is
 unavailable** — which is what the `search-images` agent does, calling
@@ -81,16 +83,17 @@ flowchart TD
     RP --> SIA["search-images · agent<br/>browse-only volumes · log[]<br/>reads pages via image_transcribe"]
     RP -.->|"no routing row"| SF["search-full-text · agent<br/>witnesses, neighbours · log[]"]
     SR -.->|"named, never routed"| SF
-    RE ==> IR["image-reader<br/>agent"]
+    SR ==> IR["image-reader<br/>agent"]
+    SF ==> IR
 
-    SR --> RE
-    SE --> RE
-    SIA --> RE
-    SF -.-> RE
-    RE["record-extraction<br/>log[] · acquires, triages, delegates"]
-    RE ==> RX["record-extractor · agent<br/>sources[] + assertions[]<br/>classification is final here"]
+    SR --> XA
+    SIA --> RS
+    SE --> RS
+    SF -.-> RS
+    XA["extraction_append · tool<br/>recordIds: FamilySearch records read + logged<br/>sources[] + assertions[] · classified in code"]
+    RS["record-structurer · agent<br/>any other source → structured documents"] ==> XA
 
-    RX --> PE["person-evidence · agent<br/>person_evidence[] · tree persons + edges"]
+    XA --> PE["person-evidence · agent<br/>person_evidence[] · tree persons + edges"]
     PE --> CR["conflict-resolution<br/>conflicts[]"]
     PE --> HT["hypothesis-tracking · agent<br/>hypotheses[]"]
     PE --> EXA
@@ -120,7 +123,7 @@ flowchart TD
 
 Solid arrow: the orchestrator routes here on `research.json` state; where the target is
 an agent, the orchestrator spawns it directly. Thick arrow: a skill delegates to its
-agent — only `record-extraction` does that in the loop now. Dotted: a prose handoff with no routing row behind it —
+agent — no skill does that in the loop now. Dotted: a prose handoff with no routing row behind it —
 The `search-full-text` agent is drawn dashed for that reason, and everything in the bottom box is
 unreachable from an autonomous run.
 
@@ -140,9 +143,9 @@ unreachable from an autonomous run.
 | 5c | **`search-images`** (agent) | Spawned as `@plugin:search-images` by the orchestrator, once per browse target. The routing skill was deleted (issue #2268); the agent is now reached directly by delegation | Browsing a volume page by page, and reading each page itself — the OCR happens host-side, so the scan never enters its context | `volume_search`, `image_search`, `image_transcribe`; `research.json` `plans[]` by whole-file `Read` | `log[]` — `research_log_append`, **no sidecar** (`image_search` stages nothing); `plans[].items[].status` — `research_append` |
 | — | **`search-hints`** (agent) | **No routing row.** Spawned as `@plugin:search-hints` on a user's request to review a person's FamilySearch hints (research/SKILL.md, "Hint review"), twice: triage, then the researcher's verdicts. The router stops between the two — the verdict is the researcher's | Triage of each pending hint — `accept`, `reject` or `not enough information to judge`, FamilySearch's confidence disclosed, the image read before any reject; and the log of each verdict the researcher stated | `person_record_matches` (`status: ["pending"]`), `research_query` (is the hint already extracted?), `record_read`, `image_transcribe`, `person_read`; `tree.gedcomx.json` by `Read` | `log[]` — `research_log_append`, one entry per decided hint, no sidecar; triage writes nothing |
 | 5d | **`search-full-text`** (agent) | **No routing row names it.** Reached by auto-delegation from its `description`, or a direct request. Its own step 1 picks the next `planned` full-text item | Lucene-style search over FamilySearch's AI-transcribed images — the only lane that reaches a person named anywhere in an unindexed document: as witness, bondsman, appraiser or neighbour, and as the principal of a paragraph-style record no name index covers | `fulltext_search`, `source_attachments`; `research.json` `plans[]`, `log[]`, `assertions` by whole-file `Read` | `log[]` + sidecar — `research_log_append`; `plans[].items[].status` |
-| — | **`image-reader`** (agent) | Delegated by `record-extraction`, once per image (`search-images` calls `image_transcribe` itself — an agent cannot reach another agent). Mandatory when the user supplies an image — the caller may not pre-judge that a scan is unreadable | One `image_transcribe` call, so the raw scan never enters the caller's context | The scan, fetched host-side and OCR'd by Gemini Flash through OpenRouter. No project file | Nothing. Host-side side effect only: `images/<key>.jpg` when `project_path` is passed |
-| 6 | **`record-extraction`** (skill) | **Any** `log[]` entry with a positive or partial outcome and no assertion referencing it — even one, even late in a run. The orchestrator forbids extracting inline | Acquiring and triaging record input (search stub, ARK, PDF, image), writing the log entry when no search skill did, and one delegation per record | `record_read`, `volume_search`, the user's PDF. Explicitly **never** the `results/` sidecar — it already holds each `recordId` | `log[]` + sidecar — `research_log_append`. Nothing else; it holds no persistence tool |
-| 6 | **`record-extractor`** (agent) | Delegated once per record, carrying `projectPath`, `recordId`, `logId`, and either the content or a `resultsRef` | Every assertion in one record and its three-layer GPS classification — **first and final**; no downstream refinement pass exists | `project_context` (one call), `record_read` against the sidecar, the delegated content, `record_person_matches` / `record_record_matches` on request. Never reads `research.json` or the tree | `sources` + `assertions` in one composite `extraction_append`, which also mints the mirroring tree `S` source description. **Cannot** write `person_evidence` — the tool's section enum is exactly those two |
+| — | **`image-reader`** (agent) | Delegated by `search-records` and `search-full-text`, once per image (`search-images` calls `image_transcribe` itself — an agent cannot reach another agent). Mandatory when the user supplies an image — the caller may not pre-judge that a scan is unreadable | One `image_transcribe` call, so the raw scan never enters the caller's context | The scan, fetched host-side and OCR'd by Gemini Flash through OpenRouter. No project file | Nothing. Host-side side effect only: `images/<key>.jpg` when `project_path` is passed |
+| 6 | **`extraction_append`** (tool) | **Any** `log[]` entry with a positive or partial outcome and no assertion referencing it — even one, even late in a run. The orchestrator forbids extracting inline; it, or a search skill, calls the tool with `recordIds` for FamilySearch records | Every assertion in each record, with its roles and three-layer GPS classification decided in code (`src/utils/record-extract.ts`) — **first and final**; no downstream refinement pass exists. Also takes `absences` for negative evidence | Each record, read live by `record_read` host-side | One `record_read` `log[]` entry per record — `research_log_append`; `sources` + `assertions`, and the mirroring tree `S` source description. **Cannot** write `person_evidence` — the tool's section set is exactly those two |
+| 6 | **`record-structurer`** (agent) | Spawned once per batch of sources that are not FamilySearch indexed records — an image transcription, PDF text, pasted or external-site text | Reading each source and sending one structured document per source in one `extraction_append({ documents })`; roles and classifications are decided in code (`src/utils/structured-document.ts`) | `sidecar_read`, the delegated text. Never reads `research.json` or the tree | `sources` + `assertions`, through `extraction_append` only |
 | 7 | **`person-evidence`** (agent) | Spawned as `@plugin:person-evidence`. Assertions not yet linked to persons. Always the agent — writing a `pe_` link inline is how a same-named stranger's record gets attached to the subject | The identity decision — which tree person each persona is — scored with `same_person` first; and the household skeleton the link requires | `research_query` projections on `assertions` and `person_evidence`; `results/<log_id>.json`, or `record_read` when the assertion came from one; `tree.gedcomx.json` walked directly | `person_evidence` — `research_append`; tree `persons` and their sourced facts — `materialize_facts`; tree `relationships` (a household record's ParentChild and Couple edges only) — `tree_edit` |
 | 8 | **`conflict-resolution`** (agent) | Spawned as `@plugin:conflict-resolution` with the conflict or competing assertion ids. Evidence conflicts present. Inline elimination of a namesake, or comparing two records for shared identity, is forbidden anywhere else | `conflicts` — independence analysis, the weighing, and the resolution rationale or the documented deferral | `research.json` `assertions`, `person_evidence`, `timelines`, `conflicts` by whole-file `Read`; `place_search`, `place_distance`, `convert_calendar` | `conflicts[]` only — `research_append`. A resolve must name its `resolution_kind` (`competitor`, `tree` or `synthesis`), and the tool refuses one that does not |
 | 9 | **`hypothesis-tracking`** (agent) | Spawned as `@plugin:hypothesis-tracking`. Identity uncertainty across assertions, or `project_context` reports `competingParentSets` for the question | `hypotheses` — the `active` → `supported` / `ruled_out` transitions and the reasoning behind each | `research.json` `hypotheses`, `assertions`, `person_evidence`, `questions` by whole-file `Read` | `hypotheses[]` only — `research_append` |
@@ -229,10 +232,10 @@ rule prevents, is in [`specs/schemas/ownership.json`](specs/schemas/ownership.js
 | | `researcher_profile` | `init-project` | any caller, to correct a field | `research_append` | **nothing** |
 | | `known_holdings` | `init-project` | — | `research_append` | **nothing** |
 | | `questions` | `question-selection` | `research-exhaustiveness`, `proof-conclusion` | `research_append` | unit + hook + tool — the only field-scoped rule: the hook routes any non-null `search_stop.stopped_because` to `research-exhaustiveness` (2026-09-30 ruling, #2539) |
-| | `plans` / `plan_items` | `research-plan` | the four search skills and `record-extraction`, for `items[].status` only | `research_append` | unit (whole-section only — it cannot tell a status flip from a rewritten plan) |
-| | `log` | none by design — append-only, multi-writer | the four search skills, `record-extraction`, `survey-surname` and the `search-hints` agent (one entry per hint verdict) | `research_log_append` | unit |
-| | `sources` | `record-extraction` | `agent:citation` (refine only, never create); `init-project` (one entry per transcribed memory, at creation) | `research_append`, `extraction_append` | unit; create-vs-refine held by tool identity |
-| | `assertions` | `record-extraction` | — | `research_append`, `extraction_append` | unit + tool preconditions |
+| | `plans` / `plan_items` | `research-plan` | the four search skills, for `items[].status` only | `research_append` | unit (whole-section only — it cannot tell a status flip from a rewritten plan) |
+| | `log` | none by design — append-only, multi-writer | the four search skills, `extraction_append` for its own `record_read` entries, `survey-surname` and the `search-hints` agent (one entry per hint verdict) | `research_log_append` | unit |
+| | `sources` | none — written in code by `extraction_append`, whoever calls it | `agent:citation` (refine only, never create); `init-project` (one entry per transcribed memory, at creation) | `research_append`, `extraction_append` | unit; create-vs-refine held by tool identity |
+| | `assertions` | none — written in code by `extraction_append`, whoever calls it | — | `extraction_append`; `research_append` only for an update setting `informant_bias_notes` alone | unit + tool preconditions |
 | | `person_evidence` | `person-evidence` | — | `research_append` | unit + tool — `extraction_append` does not accept the section, which is what holds the extraction lane off it |
 | | `conflicts` | `conflict-resolution` (agent) | — | `research_append` | unit + hook + tool. The hook is CLAIM-scoped: it denies a resolve, or any of the analysis fields (`independence_analysis`, `weighing_analysis`, `preferred_assertion_id`, `resolution_rationale`, `resolution_kind`, `resolved_value`), to every caller but the conflict-resolution **agent**, while a skeleton open or a re-open from any skill passes. The tool refuses a resolve that does not name its `resolution_kind`. The unit plane's two checks still run: `test_ownership_table` and `test_no_out_of_lane_section_writes` |
 | | `hypotheses` | `hypothesis-tracking` (agent) | — | `research_append` | unit |
@@ -242,7 +245,7 @@ rule prevents, is in [`specs/schemas/ownership.json`](specs/schemas/ownership.js
 | | `localities` | `locality-guide` (agent) | — | `research_append` | unit |
 | `tree.gedcomx.json` | `persons` | none by design — four co-equal writers | `init-project`, `person-evidence`, `tree-edit`, `proof-conclusion` | `project_create`, `tree_edit`, `tree_correct`, `materialize_facts`, `merge_tree_persons`, `tree_forget`, plus `research_append`/`extraction_append` for the assertion-backlink fact rewrite only (authorized by tool identity, not by adding a caller — `tree-materialization-spec.md` §4.4) | unit |
 | | `relationships` | none by design — same four | same four | same, less `materialize_facts` | unit + tool |
-| | `sources` | `record-extraction` | `init-project`, `tree-edit`, `proof-conclusion` | `project_create`, `research_append`, `extraction_append`, `tree_edit`, `tree_correct` | unit |
+| | `sources` | none — `extraction_append` mints each source description in code | `init-project`, `tree-edit`, `proof-conclusion` | `project_create`, `research_append`, `extraction_append`, `tree_edit`, `tree_correct` | unit |
 
 Two consequences worth holding onto:
 
@@ -302,7 +305,8 @@ touch either side.
    `research_append`. `search-external-sites` sets `completed` itself. The manifest lists
    `record-extraction` as a permitted writer of a section it has no tool to write.
    — issue #1821, ruled: the `record-extraction` router gains `research_append` and the
-   terminal write
+   terminal write. (`record-extraction` has since been retired; the manifest's `plans`
+   writers are now the four search lanes.)
 6. **Who invokes `locality-guide`** — **RESOLVED in PR #1893 (#1664, closing #1862):** the
    persist-step example and the frontmatter description are corrected to name the
    **orchestrator** as the caller, matching `research-plan` ("you read it, you do not
@@ -315,7 +319,8 @@ touch either side.
    orchestrator is right; the `check-warnings` hop is deleted from the router's handoff.
    The agent's next-step-hint example (`packages/engine/plugin/agents/record-extractor.md` §"Return contract — OUTPUT ECONOMY") still names it and
    is deliberately left alone: the caller only relays the summary, so a stale example
-   changes nothing, and two edits to it each cost a suite run without an explained effect
+   changes nothing, and two edits to it each cost a suite run without an explained effect.
+   (Both the router and the agent have since been retired; extraction runs in code.)
 8. **`tree-edit` writes `research.json` and no row permits it.** A merge through
    `merge_tree_persons` repoints `project.subject_person_ids`,
    `person_evidence[].person_id`, `timelines[].person_ids` and
@@ -380,8 +385,8 @@ an autonomous run is unmeasured.
 All three **thin skill halves** of the former paired rows have been deleted:
 `skills/person-evidence/` (issue #2821), `skills/proof-conclusion/` (issue #2822),
 and `skills/research-exhaustiveness/` (issue #2738, 2026-10-08). In each case the
-agent is now the direct entry point and the unit-eval entry point. Only
-`record-extraction` (row 6) remains as a thin router.
+agent is now the direct entry point and the unit-eval entry point. No thin
+router remains.
 
 For most of them that is the intent — they are utilities the researcher asks for. Four
 are not obviously intentional:

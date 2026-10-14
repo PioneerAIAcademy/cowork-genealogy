@@ -5,7 +5,7 @@ that take some subset of `before_state`, `after_state`, `tool_calls`,
 and `skill_frontmatter`, then raise `AssertionError` on failure.
 
 The first two seed validators (test_conflict_resolution.py,
-test_record_extraction.py) duplicated diff logic, append-only checks,
+extraction_validators.py) duplicated diff logic, append-only checks,
 and foreign-key reference checks across files. As the corpus grows to
 23 skills, that drift compounds — a fix in one file silently misses
 the others. These helpers centralise the patterns.
@@ -155,7 +155,7 @@ def new_section_entries(
     content changed in place (research_append op:"update").
 
     The general form of `new_log_entries` below, which is now a thin alias for
-    `section="log"`. Generalised rather than copied when `test_record_extraction`
+    `section="log"`. Generalised rather than copied when `extraction_validators`
     needed the same diff over `sources`; `include_modified` was added for
     `localities`, which locality-guide can rewrite in place, so an update is not
     silently skipped. `include_modified` defaults False, so `new_log_entries` and

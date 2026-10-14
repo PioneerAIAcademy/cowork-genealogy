@@ -20,7 +20,7 @@ from harness.runlog import (
 from harness.versioning import classify
 
 
-def _entry(test_id="ut_demo_001", outcome="pass"):
+def _entry(test_id="ut_demo_001", outcome="pass", cost=0.01):
     run = SingleRun(
         outcome=outcome,
         aborted_reason=None,
@@ -28,7 +28,7 @@ def _entry(test_id="ut_demo_001", outcome="pass"):
         input_tokens=100,
         cached_input_tokens=0,
         output_tokens=10,
-        skill_cost_usd=0.01,
+        skill_cost_usd=cost,
         output={
             "text_response": "did the thing",
             "activated": True,
@@ -288,3 +288,92 @@ def test_replace_with_retry_reraises_when_the_lock_never_clears(tmp_path, monkey
         _runlog._replace_with_retry(src, dst, attempts=3)
 
     assert not dst.exists(), "must not leave a destination behind on failure"
+
+
+def _two_skill_corpus(tmp_path, monkeypatch, run_one_test):
+    """skill-a has one heavy test, submitted first; skill-b has three."""
+    import json as _json
+    import anthropic as _anthropic
+    from harness.auth import AuthConfig
+
+    monkeypatch.setattr(_run_tests, "_check_mcp_build_fresh", lambda: [])
+
+    class _FakeMessages:
+        def create(self, **kwargs):
+            return None
+
+    class _FakeClient:
+        def __init__(self, **kwargs):
+            self.messages = _FakeMessages()
+
+    monkeypatch.setattr(_anthropic, "Anthropic", _FakeClient)
+    monkeypatch.setattr(
+        _run_tests, "resolve_auth",
+        lambda: AuthConfig(skill_runner_mode="api_key", api_key="x", detail="stub"),
+    )
+    monkeypatch.setattr(_run_tests, "run_one_test", run_one_test)
+    written = []
+
+    def fake_write(log, *, runlogs_root, filename, **kw):
+        written.append((log["skill"], filename, log["releasable"]))
+        return tmp_path / filename
+
+    monkeypatch.setattr(_run_tests, "write_run_log", fake_write)
+
+    root = tmp_path / "unit"
+    for skill, n, wall in (("skill-a", 1, 900), ("skill-b", 3, 300)):
+        d = root / skill
+        d.mkdir(parents=True)
+        (d / "rubric.md").write_text(
+            f"# {skill}\n\n## Dim1\n\n- **pass:** ok\n- **partial:** mid\n- **fail:** no\n",
+            encoding="utf-8",
+        )
+        for i in range(n):
+            (d / f"t{i}.json").write_text(_json.dumps({
+                "test": {"id": f"ut_{skill[-1]}_{i:03d}", "skill": skill, "name": "n",
+                         "type": "positive", "description": "x", "tags": []},
+                "input": {"user_message": "m", "scenario": None},
+                "judge_context": [],
+                "execution": {"max_wall_clock_seconds": wall},
+            }), encoding="utf-8")
+    runlogs = tmp_path / "runlogs"
+    runlogs.mkdir()
+    return root, runlogs, written
+
+
+def test_a_skill_the_cost_cap_cut_short_writes_scratch(tmp_path, monkeypatch):
+    """A releasable log must cover its whole suite. On 2026-10-14 a nine-skill
+    run hit the $50 cap and wrote releasable logs for five suites with 22 tests
+    unrun, which the runlogs gate would have passed. The skill that finished
+    keeps its releasable log; the one cut short writes scratch."""
+    root, runlogs, written = _two_skill_corpus(
+        tmp_path, monkeypatch, lambda spec, **kw: _entry(test_id=spec.id, cost=0.06)
+    )
+    rc = _run_tests.main([
+        "--skill", "skill-a", "skill-b",
+        "--tests-dir", str(root), "--runlogs-root", str(runlogs),
+        "--concurrency", "1", "--max-cost-usd", "0.2",
+    ])
+    assert rc == 3
+    by_skill = {skill: (name, rel) for skill, name, rel in written}
+    assert by_skill["skill-a"][1] is True and by_skill["skill-a"][0].startswith("v1_")
+    assert by_skill["skill-b"][1] is False and by_skill["skill-b"][0].startswith("scratch_")
+
+
+def test_the_default_cost_cap_is_per_selected_skill(tmp_path, monkeypatch):
+    """Four tests at $20: a flat $50 stops after the second; $100 runs all four."""
+    ran = []
+
+    def run_one(spec, **kw):
+        ran.append(spec.id)
+        return _entry(test_id=spec.id, cost=20.0)
+
+    root, runlogs, written = _two_skill_corpus(tmp_path, monkeypatch, run_one)
+    rc = _run_tests.main([
+        "--skill", "skill-a", "skill-b",
+        "--tests-dir", str(root), "--runlogs-root", str(runlogs),
+        "--concurrency", "1",
+    ])
+    assert rc == 0
+    assert len(ran) == 4
+    assert all(rel for _, _, rel in written) and len(written) == 2

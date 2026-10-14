@@ -538,7 +538,11 @@ def test_suite_cost_cap_stops_after_threshold(tmp_path, monkeypatch, capsys):
     assert counter["n"] == 2
     captured = capsys.readouterr()
     assert "cap" in captured.err.lower()
-    assert rc == 0  # all tests that ran were pass
+    # Every test that ran passed, but three never ran: an execution stop, and
+    # the log is scratch rather than a releasable candidate.
+    assert rc == 3
+    assert list((runlogs / "unit" / "skill-a").glob("scratch_*.json"))
+    assert not list((runlogs / "unit" / "skill-a").glob("v*.json"))
 
 
 def test_suite_cost_cap_resists_early_outlier(tmp_path, monkeypatch):

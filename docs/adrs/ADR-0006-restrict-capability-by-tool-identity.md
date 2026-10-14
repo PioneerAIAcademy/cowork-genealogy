@@ -11,7 +11,7 @@
 - **Deciders:** Dallan Quass
 - **Supersedes:** —
 - **Superseded by:** —
-- **Applies to:** `packages/engine/mcp-server/src/tools/extraction-append.ts`, `packages/engine/mcp-server/src/tools/research-append.ts`, `packages/engine/plugin/agents/record-extractor.md`
+- **Applies to:** `packages/engine/mcp-server/src/tools/extraction-append.ts`, `packages/engine/mcp-server/src/tools/research-append.ts`, `packages/engine/plugin/agents/record-structurer.md` (`record-extractor`, the agent this was decided for, was retired; its successor carries the rule: its document schema refuses every classification key)
 - **Related:** ADR-0003, ADR-0004, ADR-0005, `docs/specs/research-append-tool-spec.md` §11
 
 ## Context
