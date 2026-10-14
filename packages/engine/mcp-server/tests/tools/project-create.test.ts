@@ -264,6 +264,7 @@ describe("project_create", () => {
   // ── A project cannot nest inside another (issue #1869) ──────────────────
 
   it("refuses when an ancestor directory already holds a project, naming it, and writes NEITHER file", async () => {
+    fileStoreOnly("projects do not nest in Postgres: findNestingAncestor is always null there");
     // The viewer watches one folder; a project created one level down inside
     // an existing project reads to a tester as lost files between sessions
     // (issue #1317 bug 2). This is the durable fix: refuse at create time.
@@ -284,6 +285,7 @@ describe("project_create", () => {
   });
 
   it("refuses several levels down too, naming the nearest ancestor", async () => {
+    fileStoreOnly("projects do not nest in Postgres: findNestingAncestor is always null there");
     await writeFile(join(dir, "research.json"), '{"project":{"objective":"existing"}}');
     await writeFile(join(dir, "tree.gedcomx.json"), '{"persons":[],"relationships":[],"sources":[]}');
     const deep = join(dir, "a", "b", "c");
@@ -411,6 +413,7 @@ describe("project_create", () => {
 
 import { readFileSync } from "node:fs";
 import { stagePersonRead } from "../../src/tools/person-read.js";
+import { fileStoreOnly } from "../helpers/store-backend.js";
 
 const FAMILY = JSON.parse(
   readFileSync(
@@ -866,6 +869,7 @@ describe("project_create — personReadRef (#2944 Stage B)", () => {
   });
 
   it("names a read fault on a ref that exists, rather than calling it pruned", async () => {
+    fileStoreOnly("a directory where a staged file belongs has no Postgres meaning");
     await mkdir(join(dir, "results", ".staging", "adir.json"), { recursive: true });
     const result: any = await projectCreate({ projectPath: dir, objective: "x", personReadRef: "results/.staging/adir.json" });
     expect(result.ok).toBe(false);

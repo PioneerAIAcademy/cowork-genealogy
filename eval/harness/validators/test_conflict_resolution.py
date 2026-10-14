@@ -1,4 +1,4 @@
-"""Skill-specific validators for the conflict-resolution skill.
+"""Suite-specific validators for the conflict-resolution agent.
 
 conflict-resolution keeps its `rubric.md` — all three dimensions
 (Source independence analysis, Evidence weighing, Resolution
@@ -71,11 +71,20 @@ def test_fact_conflicts_have_competing_assertions(before_state, after_state):
     assert not errors, "Structural violations:\n" + "\n".join(errors)
 
 
-def test_resolved_conflicts_have_required_fields(before_state, after_state):
-    """Resolved conflicts must have preferred_assertion_id and resolution_rationale.
+_EVIDENCE_IDS = re.compile(r"\b(?:src|a)_\d+\b", re.I)
 
-    An unresolved conflict may have null fields — but once status is
-    'resolved', the analysis must be complete.
+
+def test_resolved_conflicts_have_required_fields(before_state, after_state):
+    """A resolved conflict carries what its `resolution_kind` requires, plus a
+    resolution_rationale.
+
+    The same requirements `research_append`'s resolution-kind precondition
+    enforces (`resolutionKindInvariants`): `competitor` names the winning
+    assertion, `tree` owes nothing more, `synthesis` gives a `resolved_value`
+    and a rationale citing at least two distinct `src_`/`a_` ids. A conflict
+    with no kind was resolved before the field existed and keeps the old
+    requirement, a winning assertion. An unresolved conflict may have null
+    fields.
     """
     after = after_state.get("research_json")
     if after is None:
@@ -87,11 +96,25 @@ def test_resolved_conflicts_have_required_fields(before_state, after_state):
             continue
 
         cid = conflict.get("id", "?")
+        kind = conflict.get("resolution_kind")
 
-        if not conflict.get("preferred_assertion_id"):
+        if kind in (None, "competitor") and not conflict.get("preferred_assertion_id"):
             errors.append(
-                f"conflicts[{cid}]: resolved but no preferred_assertion_id"
+                f"conflicts[{cid}]: resolved as {kind or 'a pre-kind resolve'} but no preferred_assertion_id"
             )
+        if kind == "synthesis":
+            value = conflict.get("resolved_value")
+            if not isinstance(value, str) or not value.strip():
+                errors.append(f"conflicts[{cid}]: resolved as synthesis but no resolved_value")
+            rationale = conflict.get("resolution_rationale")
+            cited = {m.lower() for m in _EVIDENCE_IDS.findall(rationale)} if isinstance(rationale, str) else set()
+            if len(cited) < 2:
+                errors.append(
+                    f"conflicts[{cid}]: resolved as synthesis but its rationale cites {len(cited)} "
+                    "src_/a_ id(s), not the two a synthesis is built from"
+                )
+        if kind not in (None, "competitor", "tree", "synthesis"):
+            errors.append(f"conflicts[{cid}]: resolution_kind {kind!r} is not competitor, tree or synthesis")
         if not conflict.get("resolution_rationale"):
             errors.append(
                 f"conflicts[{cid}]: resolved but no resolution_rationale"
@@ -308,7 +331,7 @@ def _conflicts_by_id(state: dict) -> dict:
 def _analysis_written(conflict: dict) -> bool:
     """True when a conflict entry carries resolution work, not just identity.
 
-    The skill's own creation template (conflict-resolution/SKILL.md:148-152)
+    The agent's own creation template (agents/conflict-resolution.md, step 2)
     sets all five to null / "unresolved", so a freshly identified conflict is
     False here and a created-already-resolved one is True.
     """

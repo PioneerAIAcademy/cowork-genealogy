@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { assertRelativeRef, ProjectEscapeError } from "../../src/store/paths.js";
+import { assertRelativeRef, ProjectEscapeError, projectRelativeRef } from "../../src/store/paths.js";
 
 // The pure ref guard the Postgres/S3 backend keys every row by. It runs here
 // without a stack so the escape rule is proven in CI even when the conformance
@@ -41,6 +41,21 @@ describe("assertRelativeRef", () => {
     for (const ref of escapes) {
       expect(() => assertRelativeRef(ref), String(ref)).toThrow(/escapes the project/);
       expect(() => assertRelativeRef(ref), String(ref)).toThrow(ProjectEscapeError);
+    }
+  });
+});
+
+describe("projectRelativeRef", () => {
+  it("returns the store's spelling for a relative, ./-prefixed or absolute ref inside the project", () => {
+    expect(projectRelativeRef("/project", "results/.staging/x.json")).toBe("results/.staging/x.json");
+    expect(projectRelativeRef("/project", "./results/.staging/x.json")).toBe("results/.staging/x.json");
+    expect(projectRelativeRef("/project", "/project/results/.staging/x.json")).toBe("results/.staging/x.json");
+    expect(projectRelativeRef("/project/", "/project/research.json")).toBe("research.json");
+  });
+
+  it("refuses a ref outside the project, however it is spelled", () => {
+    for (const bad of ["../x.json", "/elsewhere/x.json", "/project-other/x.json", "results/../../x.json"]) {
+      expect(() => projectRelativeRef("/project", bad), bad).toThrow(ProjectEscapeError);
     }
   });
 });

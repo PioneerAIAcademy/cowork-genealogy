@@ -347,8 +347,8 @@ def _fake_run(monkeypatch, outcomes: dict[str, str | None]):
 
 
 def test_run_checks_both_turns_outcomes(monkeypatch):
-    """A turn the worker closed itself (no_progress, a project-less lookup the Stop hook
-    vetoed) reaches turn_done with completed_at set, so only these two checks see it."""
+    """A turn the worker closed itself (no_progress, a redelivery's zero-progress close)
+    reaches turn_done with completed_at set, so only these two checks see it."""
     failed, names, figures = _fake_run(monkeypatch, {"turn_1": "ok", "turn_2": "ok"})
     assert failed == [], failed
     assert [n for n in names if "turns.outcome" in n] == [

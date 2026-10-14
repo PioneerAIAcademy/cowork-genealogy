@@ -155,8 +155,7 @@ def test_closed_and_payload_checks():
 
 @pytest.mark.parametrize("outcome, completed, ok", [
     ("completed", True, True), ("budget", True, True), ("stopped", True, False),
-    # A project-less reply with no tool call after the nudge: the bound worked.
-    ("no_progress", True, True),
+    ("no_progress", True, False),
     ("signin_required", True, False), ("retries_exhausted", True, False), ("transcript_lost", True, False),
     ("ok", False, False), (None, True, False),
 ])
@@ -810,25 +809,12 @@ def _closed(rep_ok: list) -> bool:
     return ok
 
 
-def test_resume_checks_pass_no_progress_only_for_a_nudged_project_less_turn():
-    """Deployed probe turns run project-less with nudges on and close no_progress after two
-    empty nudges, at caps 60 and 3 alike (U13, 2026-10-08). That is not a stranded resume."""
-    snap = bounds.TurnSnap(turn_id="t1", row=(2, "now", "no_progress", 0.2))
+def test_resume_checks_fail_every_resumed_failed_outcome():
+    """A redelivery that closes on any of these is a resume that did not work, `no_progress`
+    included. It used to pass for a nudged project-less turn (U13, 2026-10-08); a session
+    with no research.json is no longer nudged (issue #3274), so there is no such turn left.
+    Walks the set itself, which test_proto_kill pins, so a new outcome is held to this too."""
     kw = dict(sdk_before="s", sdk_after="s", entries_at_kill=1, entries_after=5)
-    assert _closed(bounds.resume_checks("x", snap, nudged_projectless=True, **kw))
-    assert not _closed(bounds.resume_checks("x", snap, **kw))
-    for outcome in ("retries_exhausted", "signin_required", "transcript_lost"):
-        bad = bounds.TurnSnap(turn_id="t1", row=(2, "now", outcome, 0.2))
-        assert not _closed(bounds.resume_checks("x", bad, nudged_projectless=True, **kw)), outcome
-
-
-def test_nudged_projectless_needs_both_a_nudge_and_no_research_json(monkeypatch):
-    ctx = bounds.Ctx(base="b", dsn="d", email="e", s3_endpoint="s", fixture="f", session=None, deadline_s=5.0,
-                     kill_after_s=10.0, pause_s=1.0, cap_usd=35.0, price_output=15.0)
-    nudged = [{"ev": "nudge", "turn_id": "t1", "n": 1}]
-    monkeypatch.setattr(bounds.turn, "one", lambda dsn, sql, params: 0 if sql == bounds.RESEARCH_DOC_SQL else None)
-    assert bounds.nudged_projectless(ctx, "s1", nudged, "t1")
-    assert not bounds.nudged_projectless(ctx, "s1", [], "t1"), "no nudge: a no_progress there is a real failure"
-    assert not bounds.nudged_projectless(ctx, "s1", [{"ev": "nudge", "turn_id": "t9"}], "t1")
-    monkeypatch.setattr(bounds.turn, "one", lambda dsn, sql, params: 1 if sql == bounds.RESEARCH_DOC_SQL else None)
-    assert not bounds.nudged_projectless(ctx, "s1", nudged, "t1"), "a seeded project's no_progress still fails"
+    for outcome in sorted(bounds.turn.RESUMED_FAILED_OUTCOMES):
+        snap = bounds.TurnSnap(turn_id="t1", row=(2, "now", outcome, 0.2))
+        assert not _closed(bounds.resume_checks("x", snap, **kw)), outcome

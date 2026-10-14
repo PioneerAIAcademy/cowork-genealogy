@@ -35,7 +35,7 @@ novel; where the system takes an opinionated position, it says so.
         Resolve conflicts    Track hypotheses     │         │
               └─────────┬─────────┘               │         │
                         ▼                         │         │
-               Reasonably exhaustive? ── not yet ─┴─────────┘
+               Write the search stop? ── not yet ─┴─────────┘
                         │ yes
                         ▼
               Write the conclusion
@@ -319,24 +319,34 @@ requires a stated reason.
 
 ### Testing whether the research is reasonably exhaustive
 
-Two things are checked before anything else: every assertion bearing on the
-question carries real, reasoned classifications, and every person the
-judgment depends on has had their identity resolved. Then the GPS threshold
-questions, then seven stop criteria, each answered in a sentence or two and
-recorded.
+Plausibility *triggers* this check — as soon as the evidence in hand
+plausibly answers the question, the stop criteria are applied. But
+plausibility does not define exhaustiveness. One of the seven stop criteria,
+`overturn_risk`, asks the defining question: could an unsearched source
+plausibly overturn the conclusion? If yes, the gap is unsearched, not
+unobtainable, and the plan returns.
 
-The default when in doubt is to go back and search more, on the principle
-that a gap is usually unsearched rather than unobtainable. The exception is
-a source actually pursued and verifiably unavailable — destroyed, sealed by
-privacy law, or negative across every path tried. That is not an unsearched
-gap.
+Two things are verified before the criteria: every assertion on the question
+carries real, reasoned classifications, and every person the judgment depends
+on has had their identity resolved.
 
-Question type matters here. A simple recall question can stop early. A
+The default when in doubt is to go back and search more — a gap is usually
+unsearched rather than unobtainable.
+
+The result is stored in `search_stop.stopped_because` on the question. Three
+values allow a proof conclusion to follow: `question_answered` (the evidence
+answers the question), `record_exhausted` (all reachable sources are spent),
+`nothing_further_reachable` (accessible evidence supports a conclusion, but
+some sources cannot be reached from here). Two values do not:
+`resources_spent` (budget or time ran out with reachable sources remaining)
+and `blocked_by_conflict` (an unresolved contradiction blocks any tier).
+Either way, `not_reached` lists what could not be reached — nil searches,
+browse-only collections, privacy-sealed records — so the researcher sees
+exactly what was left on the table.
+
+Question type matters. A simple recall question can stop early. A
 completeness question — "did they have *any other* children?" — cannot
 conclude without enumerating the sources that would show them.
-
-Stopping early is allowed, but it is recorded as a non-exhaustive stop.
-Research that stopped short is never labeled reasonably exhaustive.
 
 ### Writing the conclusion
 
