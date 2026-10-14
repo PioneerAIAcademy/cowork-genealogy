@@ -1,0 +1,30 @@
+{
+  "test": {
+    "id": "ut_conflict_resolution_016",
+    "skill": "conflict-resolution",
+    "name": "User disputes OCR reading, second record agrees with user",
+    "type": "positive",
+    "description": "The OCR read the mother's name as 'Jannetje [?] van Noord' from a birth act, but the user says it looks like Tannetje. A ten-year marriage index from a different record reads 'Fannetje van Noord', closer to the user's reading than the OCR's. The agent must record a conflict between the two readings, must not overrule the user on the strength of a single uncertain OCR pass, and must cite the second record as supporting evidence.",
+    "tags": [
+      "conflict-resolution",
+      "ocr-dispute",
+      "uncertain-reading",
+      "user-reading",
+      "second-record-corroboration",
+      "direct-arm"
+    ]
+  },
+  "input": {
+    "delegation": "The mother's name looks like Tannetje van Noord to me, not Jannetje. The handwriting on the birth act is hard to read. Can you check?\n\nprojectPath: <workspace>",
+    "scenario": "dutch-mother-name-disputed"
+  },
+  "judge_context": [
+    "The agent must acknowledge the user's reading and not dismiss it — the OCR reading carries [?] and the user is looking at the image",
+    "Should note that the ten-year marriage index (a_003, src_002) reads 'Fannetje van Noord', which is a third reading from a different record",
+    "Must create a conflict entry between the competing name readings rather than treating the OCR as authoritative",
+    "Must not resolve the conflict in favor of the OCR reading on the strength of a single uncertain pass"
+  ],
+  "execution": {
+    "max_wall_clock_seconds": 600
+  }
+}

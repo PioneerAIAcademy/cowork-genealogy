@@ -418,6 +418,15 @@ export const CALL_PLAN: readonly SmokeStep[] = [
     expect: okTrue,
   },
   {
+    tool: "census_children_gap",
+    offline: true,
+    args: () => ({
+      censuses: [{ year: 1900, childrenBorn: 2, childrenLiving: 1 }],
+      knownChildren: [{ birthDate: "1895" }],
+    }),
+    expect: okTrue,
+  },
+  {
     tool: "build_external_search_url",
     offline: true,
     args: () => ({ site: "findagrave", attributes: { surname: "Smoke" } }),

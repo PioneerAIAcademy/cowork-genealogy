@@ -629,8 +629,18 @@ async def test_pgstore_create_session_loses_a_race_as_a_refusal(answer):
         await _store(conn).create_session("t", "m", "proj_1", "usr_a", True)
 
 
+def _delete_answer(sdk_session_id: str | None = "sdk-uuid", active: bool = False):
+    def answer(sql: str):
+        if sql.startswith("SELECT project_id, sdk_session_id FROM sessions"):
+            return {"project_id": "proj_1", "sdk_session_id": sdk_session_id}
+        if sql.endswith("AS live"):
+            return {"live": active}
+        return None
+    return answer
+
+
 async def test_pgstore_delete_session_drops_project_data_only_with_its_last_session():
-    conn = ScriptedConn(lambda sql: {"project_id": "proj_1"})
+    conn = ScriptedConn(_delete_answer())
     assert await _store(conn).delete_session("sess_1") is True
     for table in ("documents", "blobs", "staging", "projects"):
         [q] = [(q, p) for q, p in zip(conn.sql, conn.params) if q.startswith(f"DELETE FROM {table} ")]
@@ -638,6 +648,28 @@ async def test_pgstore_delete_session_drops_project_data_only_with_its_last_sess
         assert q[1] == ("proj_1", "proj_1")
     assert conn.sql.index("DELETE FROM sessions WHERE session_id = %s") < conn.sql.index(
         next(q for q in conn.sql if q.startswith("DELETE FROM projects"))), "the NOT EXISTS must see the session gone"
+
+
+@pytest.mark.parametrize("sdk_session_id, ids", [("sdk-uuid", ["sess_1", "sdk-uuid"]), (None, ["sess_1"])])
+async def test_pgstore_delete_session_deletes_the_transcript_by_the_sdk_session_id(sdk_session_id, ids):
+    """U19: session_entries is keyed by sessions.sdk_session_id (004); the web id alone
+    matched no transcript row, and the spend meter's rows survived every delete."""
+    conn = ScriptedConn(_delete_answer(sdk_session_id))
+    await _store(conn).delete_session("sess_1")
+    [params] = [p for q, p in zip(conn.sql, conn.params) if q.startswith("DELETE FROM session_entries")]
+    assert params == (ids,)
+    select = conn.sql.index("SELECT project_id, sdk_session_id FROM sessions WHERE session_id = %s FOR UPDATE")
+    assert select < conn.sql.index("DELETE FROM sessions WHERE session_id = %s"), "the sdk id is read before the row goes"
+
+
+async def test_pgstore_delete_session_takes_the_queue_lock_and_refuses_a_running_turn():
+    conn = ScriptedConn(_delete_answer(active=True))
+    with pytest.raises(app.SessionBusy):
+        await _store(conn).delete_session("sess_1")
+    assert not [q for q in conn.sql if q.startswith("DELETE")], "a busy session lost rows"
+    assert conn.sql[1] == "SELECT pg_advisory_xact_lock(%s::int4, hashtext(%s))"
+    assert conn.params[1] == (app.grants.QUEUE_LOCK_NS, "sess_1"), "the session's queue lock"
+    assert conn.sql[2].endswith("FOR UPDATE")
 
 
 async def test_pgstore_store_grant_takes_the_write_lock_before_the_row():

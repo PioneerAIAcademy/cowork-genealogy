@@ -699,7 +699,7 @@ QUOTA_ABORT_REASON = "quota_exhausted"
 # Subscription prose only. `"rate limit"` is deliberately NOT here: it matches
 # Anthropic's own 429 body text, which in `api_key` mode is a per-minute org
 # limit that clears in under a minute — see the predicate note below.
-_QUOTA_TEXT_MARKERS = ("hit your limit", "usage limit")
+_QUOTA_TEXT_MARKERS = ("hit your limit", "usage limit", "out of extra usage")
 
 
 def _looks_like_quota(

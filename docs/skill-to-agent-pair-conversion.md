@@ -415,7 +415,6 @@ Every one below fails CI if skipped. Put the whole list in the card.
 | `docs/specs/schemas/ownership.json` | an `agentCallers` entry on every row the agent writes |
 | `tests/packaging/enum-drift.test.ts` | any closed-enum declaration the fold moved into the agent body |
 | `tests/packaging/agent-return-contract.test.ts` | a `summary_for_user` return-contract heading, or a `PENDING` entry naming when it lands |
-| `tests/packaging/prompt-sizes.json` | regenerated (`prompt-budget.test.ts`) |
 | `docs/architecture.md`, `docs/skill-dataflow.md` | the agent count and any per-tool agent tally — re-measure, do not increment |
 | `make agent-smoke` | the only check that reads what the runtime resolved; **no CI job runs it** |
 
@@ -433,7 +432,7 @@ the table above:
 | the agent's `description` | the deleted skill's user trigger phrases, now that it is the only thing a user's words match; within 1024 characters (`skill-description-length.test.ts`) | no |
 | `agent-delegation-framing.test.ts` | the router self-edge replaced by the real caller's edge; every bare-name mention in another `SKILL.md` registered in `PROSE_MENTIONS`; the name added to `PROSE_ARM_COVERS` | no |
 | `ownership.json` | `skill:<name>` → `agent:<name>` as owner and caller | no |
-| README, `architecture.md` skill counts; `EXPECTED_SKILLS` | decremented and the row moved to the Agents table | no |
+| `docs/catalog.md`, `architecture.md` skill counts; `EXPECTED_SKILLS` | decremented and the row moved to the Agents table | no |
 
 Every check in both tables is local and free to run. Run the whole packaging suite
 (`npx vitest run tests/packaging` in `packages/engine/mcp-server/`) and

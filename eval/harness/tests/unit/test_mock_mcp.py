@@ -160,6 +160,56 @@ def test_predicate_match_dispatches_to_matching_fixture():
         assert call_log[1]["expected_args"] == {"args.q": "Iowa"}
 
 
+def test_is_error_fixture_sets_is_error_only_on_its_own_match():
+    """A fixture marked `is_error` answers with the flag production's catch arms
+    set on a thrown error; a sibling fixture of the same tool, unmarked, does not."""
+    with tempfile.TemporaryDirectory() as tmp:
+        tmp = Path(tmp)
+        (tmp / "refused.json").write_text(json.dumps({
+            "tool": "image_transcribe",
+            "args": {"imageId": "004452257_00021"},
+            "is_error": True,
+            "response": {"error": "Image cap reached: ..."},
+        }), encoding="utf-8")
+        (tmp / "ok.json").write_text(json.dumps({
+            "tool": "image_transcribe",
+            "args": {"imageId": "~"},
+            "response": {"transcription": "page text"},
+        }), encoding="utf-8")
+        server, call_log, tools_by_name = create_mock_server(["refused", "ok"], tmp)
+        refused = _invoke(tools_by_name, "image_transcribe", {"imageId": "004452257_00021"})
+        assert refused.get("is_error") is True
+        assert _extract_response_dict(refused) == {"error": "Image cap reached: ..."}
+        ok = _invoke(tools_by_name, "image_transcribe", {"imageId": "004452257_00001"})
+        assert "is_error" not in ok
+
+
+def test_error_fixture_without_the_flag_keeps_its_old_envelope():
+    """Opt-in: an unmarked `{error}` fixture still answers with no flag."""
+    server, call_log, tools_by_name = create_mock_server(
+        ["wikipedia-search-hollow-creek-error"], FIXTURES_DIR
+    )
+    result = _invoke(tools_by_name, "wikipedia_search", {"query": "Hollow Creek"})
+    assert "error" in _extract_response_dict(result)
+    assert "is_error" not in result
+
+
+@pytest.mark.parametrize("fixture, why", [
+    ({"is_error": "true", "response": {"error": "x"}}, "must be a boolean"),
+    ({"is_error": True, "response": {"error": "x", "code": 1}}, "exactly"),
+    ({"is_error": True, "response": {"transcription": "x"}}, "exactly"),
+    ({"is_error": True, "response": {"error": 503}}, "exactly"),
+])
+def test_is_error_fixture_must_carry_the_thrown_error_envelope(fixture, why):
+    with tempfile.TemporaryDirectory() as tmp:
+        tmp = Path(tmp)
+        (tmp / "bad.json").write_text(json.dumps({
+            "tool": "image_transcribe", "args": {"imageId": "~"}, **fixture,
+        }), encoding="utf-8")
+        with pytest.raises(InvalidFixtureError, match=why):
+            create_mock_server(["bad"], tmp)
+
+
 def test_unmatched_call_returns_fixture_not_found_error():
     with tempfile.TemporaryDirectory() as tmp:
         tmp = Path(tmp)
@@ -773,6 +823,45 @@ def test_sidecar_read_runs_live_against_the_workspace(tmp_path):
     assert missing.get("is_error") is True
 
 
+def test_census_children_gap_runs_live(tmp_path):
+    """The compiled tool computes the answer, not a canned fixture: the
+    check-warnings and question-selection tests grade exactly this arithmetic.
+    Also pins the module path / export symbol `_COMPILED_TOOLS` names, which the
+    OK_FALSE drift lint cannot see (a tool absent from both sets passes it)."""
+    if not (BUILD_TOOLS / "census-children-gap.js").exists():
+        pytest.skip("compiled MCP build absent")
+    server, call_log, tools_by_name = create_mock_server(
+        [], FIXTURES_DIR, workspace=tmp_path
+    )
+    mercer = {
+        "censuses": [
+            {"year": 1900, "childrenBorn": 6, "childrenLiving": 5},
+            {"year": 1910, "childrenBorn": 8, "childrenLiving": 7},
+        ],
+        "knownChildren": [
+            {"birthDate": y} for y in ("1886", "1888", "1891", "1894", "1897", "1906")
+        ],
+    }
+    result = _invoke(tools_by_name, "census_children_gap", mercer)
+    body = _extract_response_dict(result)
+    assert body.get("ok") is True, body
+    assert body["totalMissing"] == 2
+    assert {g["kind"] for g in body["missing"]} == {
+        "died_before_1900",
+        "born_between_living_1910",
+    }
+    assert "is_error" not in result
+    assert call_log[-1]["matched"] == {"kind": "live", "index": None}
+
+    malformed = _invoke(
+        tools_by_name,
+        "census_children_gap",
+        {"censuses": [{"year": 1890, "childrenBorn": 1, "childrenLiving": 1}]},
+    )
+    assert _extract_response_dict(malformed).get("ok") is False
+    assert malformed.get("is_error") is True
+
+
 def test_ok_false_gate_set_has_not_drifted_from_the_typescript_source():
     """The Python gate set must equal OK_FALSE_IS_FAILURE ∩ LIVE_TOOLS.
 
@@ -1158,9 +1247,11 @@ def test_stage_and_compact_degrades_on_node_failure(tmp_path, monkeypatch):
 
     response = {"results": [{"id": "r1"}]}
     ranked = {"matches": [{"recordId": "r1"}]}
-    out = mock_mcp._stage_and_compact_search_results(
-        tmp_path, "record_search", response, ranked
-    )
+    # Absorbed, but not silently: a staging fault must not read as the model's.
+    with pytest.warns(UserWarning, match="staging/compaction failed"):
+        out = mock_mcp._stage_and_compact_search_results(
+            tmp_path, "record_search", response, ranked
+        )
 
     assert len(out) == 4, f"the degrade arm must return four values, got {len(out)}"
     staged, resp, unlogged, rank = out                # the caller's unpack
@@ -1555,3 +1646,173 @@ def test_build_external_search_url_with_projectpath_writes_one_entry(tmp_path):
     assert [e["id"] for e in log] == [out["logId"]]
     assert log[0]["outcome"] == "partial"
     assert log[0]["external_site"]["url_generated"] == out["url"]
+
+
+# ─── surnameVariantHints: production's own rule, computed per call (#3054) ───
+#
+# The mock runs the compiled `surnameVariantHints` on the arguments the model
+# actually sent, inside the node process the call already spawns, so the agent
+# sees what production would send and no fixture carries a hand-written copy.
+
+_SURNAME_HINTS_JS = (
+    REPO_ROOT / "packages/engine/mcp-server/build/utils/surname-variant-hints.js"
+)
+_HALSTEINS_NIL = "record-search-surname-not-abbreviated-zero-results"
+
+
+def _hint_body(tmp_path, fixture, args):
+    if not _SURNAME_HINTS_JS.exists():
+        pytest.skip("compiled MCP build absent")
+    server, call_log, tools_by_name = create_mock_server([fixture], FIXTURES_DIR, workspace=tmp_path)
+    return _extract_response_dict(_invoke(tools_by_name, "record_search", args)), call_log
+
+
+@pytest.mark.parametrize("with_project", [True, False])
+def test_nil_datter_search_carries_production_surname_hint(tmp_path, with_project):
+    """Both nil paths: with a projectPath (the hint rides the backlog process) and
+    without one (the one path that spawns a process only for this)."""
+    args = {"givenName": "Unna", "surname": "Halsteinsdatter", "collectionId": "1468080"}
+    if with_project:
+        args["projectPath"] = str(tmp_path)
+    body, call_log = _hint_body(tmp_path, _HALSTEINS_NIL, args)
+
+    hint = body.get("surnameVariantHints")
+    assert hint, "the compiled module is present but no hint came back — the node call failed"
+    assert hint["fields"] == [{
+        "field": "surname",
+        "searched": "Halsteinsdatter",
+        "variants": ["Halsteinsdr", "Halsteinsdtr", "Halsteinsd"],
+    }]
+    keys = list(body)
+    assert keys.index("surnameVariantHints") == keys.index("results") - 1
+    # What the run log keeps is what the model saw.
+    assert call_log[-1]["response"]["surnameVariantHints"] == hint
+
+
+def test_hint_follows_the_call_not_the_fixture(tmp_path):
+    """The same catch-all fixture answers an already-abbreviated surname, and
+    production would offer nothing for it — neither may the mock."""
+    body, _ = _hint_body(
+        tmp_path,
+        _HALSTEINS_NIL,
+        {"givenName": "Urna", "surname": "Halsteinsdtr", "collectionId": "1468080"},
+    )
+    assert "surnameVariantHints" not in body
+
+
+def test_spouse_surname_hint_names_its_field(tmp_path):
+    body, _ = _hint_body(
+        tmp_path,
+        _HALSTEINS_NIL,
+        {"surname": "Monsen", "spouseSurname": "Halsteinsdatter", "collectionId": "1468080"},
+    )
+    assert [e["field"] for e in body["surnameVariantHints"]["fields"]] == ["spouseSurname"]
+
+
+def test_non_patronymic_nil_carries_no_surname_hint(tmp_path):
+    body, _ = _hint_body(
+        tmp_path,
+        "record-search-patrick-flynn-no-results",
+        {"surname": "Flynn", "givenName": "Patrick", "projectPath": str(tmp_path)},
+    )
+    assert "surnameVariantHints" not in body
+    assert body["nilSearchNeedsLog"] == NIL_SEARCH_NEEDS_LOG_NOTE
+
+
+def test_hit_carries_no_surname_hint(tmp_path):
+    """A search that found something gets no hint — the trigger is 'did not find
+    the subject', and this hit has no ranking to say otherwise."""
+    body, _ = _hint_body(
+        tmp_path,
+        "record-search-urna-halsteinsdr-marriage-match",
+        {"surname": "Halsteinsdr", "collectionId": "1468080", "projectPath": str(tmp_path)},
+    )
+    assert body.get("staged")
+    assert "surnameVariantHints" not in body
+
+
+def test_surname_hint_degrades_with_a_warning_on_node_failure(tmp_path, monkeypatch):
+    """A harness fault must not look like the model ignoring the hint: no crash,
+    no hint, and a warning that says why."""
+    if not _SURNAME_HINTS_JS.exists():
+        pytest.skip("compiled MCP build absent")
+
+    def _boom(*a, **k):
+        raise TimeoutError("node did not return in time")
+
+    monkeypatch.setattr(mock_mcp.subprocess, "run", _boom, raising=False)
+    with pytest.warns(UserWarning, match="surnameVariantHints"):
+        hint = mock_mcp._surname_variant_hints(
+            {"surname": "Halsteinsdatter"}, {"totalMatches": 0, "results": []}
+        )
+    assert hint is None
+
+    with pytest.warns(UserWarning, match="nil-search node call failed"):
+        unlogged, hint = mock_mcp._unlogged_staged_handles(
+            tmp_path, args={"surname": "Halsteinsdatter"}, response={"totalMatches": 0}
+        )
+    assert (unlogged, hint) == ([], None)
+
+
+@pytest.mark.parametrize(
+    "platform, path, expected",
+    [
+        ("linux", "/home/x/build/tools/a.js", "/home/x/build/tools/a.js"),
+        ("win32", "C:\\Users\\x\\build\\a.js", "file:///C:/Users/x/build/a.js"),
+        ("linux", "/home/o'neil/a.js", "/home/o\\'neil/a.js"),
+    ],
+    ids=["posix-bare-path", "windows-file-url", "quote-escaped"],
+)
+def test_node_module_url_is_the_one_import_specifier(monkeypatch, platform, path, expected):
+    monkeypatch.setattr(mock_mcp.sys, "platform", platform)
+    assert mock_mcp._node_module_url(path) == expected
+
+
+@pytest.mark.requires_engine_build
+@pytest.mark.parametrize(
+    "notes, refused",
+    [
+        ("One result: Patrick Flynn in household of Thomas Flynn and Mary Flynn.", True),
+        (
+            "One result: Patrick Flynn in one dwelling with Thomas and Mary Flynn; "
+            "family structure inferred from surname, ages and order, not stated.",
+            False,
+        ),
+    ],
+    ids=["unhedged-refused", "hedged-logged"],
+)
+def test_live_log_append_applies_the_census_check_to_a_staged_1850_search(tmp_path, notes, refused):
+    """The production census check runs on the eval write path: a staged 1850
+    `record_search` logged with an unhedged household note is refused by the
+    compiled `research_log_append`, and the hedged note is logged."""
+    import shutil
+
+    scenario = REPO_ROOT / "eval/fixtures/scenarios/flynn-first-plan"
+    for name in ("research.json", "tree.gedcomx.json"):
+        shutil.copy(scenario / name, tmp_path / name)
+    server, call_log, tools_by_name = create_mock_server(
+        ["record-search-1850-census-flynn"], FIXTURES_DIR, workspace=tmp_path
+    )
+    body = _extract_response_dict(
+        _invoke(tools_by_name, "record_search", {**_ECHO_ARGS, "projectPath": str(tmp_path)})
+    )
+    ref = (body.get("staged") or {}).get("resultsRef")
+    assert ref, "test assumes staging succeeded — check the build"
+    result = _invoke(
+        tools_by_name,
+        "research_log_append",
+        {
+            "projectPath": str(tmp_path),
+            "tool": "record_search",
+            "outcome": "positive",
+            "resultsExamined": 1,
+            "stagedResultsRef": ref,
+            "notes": notes,
+        },
+    )
+    out = _extract_response_dict(result)
+    if refused:
+        assert out.get("ok") is False and result.get("is_error") is True, out
+        assert "relationship-to-head" in json.dumps(out), out
+    else:
+        assert out.get("ok") is True, out

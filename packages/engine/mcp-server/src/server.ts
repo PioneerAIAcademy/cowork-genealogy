@@ -91,6 +91,8 @@ import {
   convertCalendar,
   type ConvertCalendarInput,
 } from "./tools/convert-calendar.js";
+import { censusChildrenGap } from "./tools/census-children-gap.js";
+import type { CensusChildrenGapInput } from "./types/census-children-gap.js";
 import {
   buildExternalSearchUrlTool,
   type BuildExternalSearchUrlToolInput,
@@ -709,6 +711,16 @@ export function createServer(principal: Principal): Server {
       try {
         const args = request.params.arguments as unknown as ConvertCalendarInput;
         const result = convertCalendar(args);
+        return writerToolResult(result);
+      } catch (error) {
+        const message = error instanceof Error ? error.message : "Unknown error";
+        return { content: [{ type: "text", text: JSON.stringify({ error: message }) }], isError: true };
+      }
+    }
+    if (request.params.name === "census_children_gap") {
+      try {
+        const args = request.params.arguments as unknown as CensusChildrenGapInput;
+        const result = censusChildrenGap(args);
         return writerToolResult(result);
       } catch (error) {
         const message = error instanceof Error ? error.message : "Unknown error";

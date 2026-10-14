@@ -4,6 +4,7 @@ import { fileURLToPath } from "node:url";
 import { dirname, join } from "node:path";
 import ts from "typescript";
 import { allToolSchemas } from "../../src/tool-schemas.js";
+import { INSTALL_OPENROUTER_KEY_ENV } from "../../src/auth/config.js";
 
 // Contract: docs/specs/mcpb-package-spec.md § "Manifest contract".
 // These guard the .mcpb manifest against shipping scaffold placeholders,
@@ -61,8 +62,19 @@ describe("mcpb manifest", () => {
     expect(manifest.compatibility?.runtimes?.node).toBeTruthy();
   });
 
-  it("does not declare user_config (per the config-file convention)", () => {
-    expect(manifest.user_config).toBeUndefined();
+  it("asks for the OpenRouter key at install, optionally, under the variable the server reads", () => {
+    // The one user_config field. Its only channel to the server is an
+    // environment variable, so the name here must be the one
+    // installConfigFromEnv reads, or the dialog's key silently never arrives.
+    // Required would refuse to start the extension for a user with no key.
+    expect(Object.keys(manifest.user_config ?? {})).toEqual(["openrouter_api_key"]);
+    const field = manifest.user_config.openrouter_api_key;
+    expect(field.type).toBe("string");
+    expect(field.sensitive).toBe(true);
+    expect(field.required).toBe(false);
+    expect(manifest.server.mcp_config.env).toEqual({
+      [INSTALL_OPENROUTER_KEY_ENV]: "${user_config.openrouter_api_key}",
+    });
   });
 
   it("lists exactly the tools registered in tool-schemas.ts", () => {

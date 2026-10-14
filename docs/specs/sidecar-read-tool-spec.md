@@ -321,7 +321,7 @@ fixture, not a defect.
 | `eval/harness/harness/mock_mcp.py` | `LIVE_TOOLS`, `_make_live_handler` arm, `OK_FALSE_IS_FAILURE_LIVE` |
 | `eval/harness/e2e/orchestrator.py` | `_project_read_route`: `evaluations/**` and `uploads/**` → `sidecar_read` |
 | `dev/try-sidecar-read.ts` | smoke script |
-| `README.md` | catalog row; both tool counts |
+| `docs/catalog.md` | catalog row; the tool count |
 | `packages/engine/plugin/agents/gps-mentor.md`, `docs/specs/gps-mentor-agent-spec.md`, `tests/packaging/agent-tool-names.test.ts` | the consumer (§9) |
 
 ## 12. Tests
@@ -354,6 +354,6 @@ absent ref, surfaces a symlinked `research.json` through `readProjectJson` as
 the escape it is (not "not found"), and refuses a FIFO instead of blocking.
 
 `tests/tools/no-project.test.ts` carries it in `CALLS` and `READERS`;
-`writer-tool-results.test.ts`, `manifest.test.ts`, `readme-catalog.test.ts`
+`writer-tool-results.test.ts`, `manifest.test.ts`, `catalog.test.ts`
 and `test_mock_mcp.py`'s drift lint enrol it automatically;
 `test_project_read_deny.py` pins the new route.

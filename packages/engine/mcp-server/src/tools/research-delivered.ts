@@ -18,9 +18,10 @@
  * Which environments those are, checked rather than assumed: the e2e harness binds the
  * REAL engine server and grants `mcp__genealogy` as a server-prefix wildcard, so the
  * tool is advertised and callable there with nothing intercepting it -- the inert arm
- * below is what runs. Cowork is the same shape. The UNIT harness is the exception in
- * the other direction: it binds a mock server registering only fixture-backed tools
- * plus `LIVE_TOOLS`, and this tool is in neither, so it is not advertised there at all.
+ * below is what runs. Cowork is the same shape. The UNIT harness binds a mock server
+ * registering only fixture-backed tools plus `LIVE_TOOLS`; this tool is a `LIVE_TOOL`
+ * there, so the inert arm runs and the call is recorded -- which is what lets a unit
+ * test grade whether the model made it.
  */
 
 export interface ResearchDeliveredInput {

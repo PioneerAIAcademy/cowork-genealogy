@@ -172,8 +172,13 @@ def owning_skills(tool: str, args: dict[str, Any] | None) -> list[str]:
                 owners.append("conflict-resolution")
             elif section == "questions":
                 fields = op.get("fields") if isinstance(op.get("fields"), dict) else op.get("entry")
+                ss = (fields or {}).get("search_stop") if isinstance(fields, dict) else None
+                _GATE = {"question_answered", "record_exhausted", "nothing_further_reachable"}
+                new_gate = isinstance(ss, dict) and ss.get("stopped_because") in _GATE
+                # Legacy shape: exhaustive_declaration.declared = true (pre-#2539 runs)
                 ed = (fields or {}).get("exhaustive_declaration") if isinstance(fields, dict) else None
-                if isinstance(ed, dict) and ed.get("declared") is True:
+                legacy_gate = isinstance(ed, dict) and ed.get("declared") is True
+                if new_gate or legacy_gate:
                     owners.append("research-exhaustiveness")
     elif bare == "materialize_facts":
         for op in _iter_ops(args):
@@ -386,7 +391,7 @@ def find_unguarded_protected_writes(
     return violations
 
 
-# The four optional `conflict` fields that are conflict-resolution's analytical
+# The six optional `conflict` fields that are conflict-resolution's analytical
 # PRODUCT rather than the mere record that a conflict exists. Several skills
 # legitimately open a conflicts entry — person-evidence (#738's mandatory entry
 # when identity rests on one uncorroborated read), proof-conclusion,
@@ -394,14 +399,17 @@ def find_unguarded_protected_writes(
 # the schema's required fields (id / conflict_type / description /
 # competing_assertion_ids / status / blocks_question_ids). These four are
 # optional in `research.schema.json` and, across the whole plugin, are written
-# ONLY by `conflict-resolution/SKILL.md` and by `research/SKILL.md` — i.e. the
-# orchestrator that is supposed to *delegate* to it. So their presence is the
-# effect, and their absence is why "a conflict was recorded" alone must not fire.
+# ONLY by the `conflict-resolution` agent — the plugin hook denies them to every
+# other caller (`OWNED_CLAIMS` in guard_project_files.py). So their presence is
+# the effect, and their absence is why "a conflict was recorded" alone must not
+# fire. `resolution_kind` and `resolved_value` joined with the kind gate.
 CONFLICT_ANALYSIS_FIELDS = (
     "independence_analysis",
     "weighing_analysis",
     "preferred_assertion_id",
     "resolution_rationale",
+    "resolution_kind",
+    "resolved_value",
 )
 
 
@@ -554,12 +562,18 @@ def find_effects_without_invocation(
             invoked.add(name)
 
     questions = research.get("questions") if isinstance(research.get("questions"), list) else []
-    if any(
-        isinstance(q, dict) and (q.get("exhaustive_declaration") or {}).get("declared") is True
-        for q in questions
-    ) and "research-exhaustiveness" not in invoked:
+    _STOP_GATE = {"question_answered", "record_exhausted", "nothing_further_reachable"}
+    def _has_stop_gate(q: dict) -> bool:
+        # New shape (search_stop.stopped_because is a gate string).
+        if (q.get("search_stop") or {}).get("stopped_because") in _STOP_GATE:
+            return True
+        # Legacy shape (exhaustive_declaration.declared is True) for pre-#2539 run logs.
+        if (q.get("exhaustive_declaration") or {}).get("declared") is True:
+            return True
+        return False
+    if any(isinstance(q, dict) and _has_stop_gate(q) for q in questions) and "research-exhaustiveness" not in invoked:
         violations.append(
-            "research.json has a question with exhaustive_declaration.declared=true "
+            "research.json has a question with a stop-gate search_stop.stopped_because "
             "but 'research-exhaustiveness' was never successfully invoked in this run"
             " (no Skill call and no typed Agent/Task spawn of that name)"
         )
@@ -1142,7 +1156,7 @@ DEDICATED_AGENT_NAMES = frozenset(
         # exactly the runs that did the right thing.
         "proof-conclusion",
         # Same shape, for the exhaustiveness claim (issue #1335, Phase 4): the
-        # hook routes `exhaustive_declaration.declared: true` to this agent, so
+        # hook routes a stop-gate search_stop.stopped_because to this agent, so
         # every legitimate declaration now arrives from it.
         "research-exhaustiveness",
         # Same shape again, section-scoped, for identity links (issue #1853):
@@ -1170,9 +1184,9 @@ DEDICATED_AGENT_NAMES = frozenset(
         # folded body stops occupying the orchestrator's context on every run
         # that touches question selection, and a cheaper model can be pinned per
         # agent. No hook routes anything to this agent. It writes `questions`,
-        # which does carry a routed claim -- `exhaustive_declaration.declared:
-        # true` belongs to research-exhaustiveness -- but creating a question
-        # writes `declared: false`, which the guard explicitly permits, so no
+        # which does carry a routed claim -- a stop-gate `search_stop.stopped_because`
+        # belongs to research-exhaustiveness -- but creating a question
+        # writes `stopped_because: null`, which the guard explicitly permits, so no
         # route was added and none is needed. It is listed because the set is
         # asserted equal to the shipped agent files, and so a legitimate
         # `research_append` of a new question from this agent does not read as
@@ -1255,12 +1269,22 @@ DEDICATED_AGENT_NAMES = frozenset(
         # narrative to the user -- so `ownership.json` names it on no row. Listed
         # because the set is asserted equal to the shipped agent files.
         "historical-context",
+        # The proof-conclusion shape, claim-scoped (issue #1852): the hook
+        # routes a conflict's analytical product -- a resolve, or any of
+        # CONFLICT_ANALYSIS_FIELDS -- to this agent, so every legitimate
+        # resolution now arrives from it.
+        "conflict-resolution",
         # Same shape as search-images (issue #2065): a new agent, not a
         # converted skill. It writes `log` entries via `research_log_append`
         # and one standalone markdown file via `Write`. No hook routes anything
         # to it. Listed because the set is asserted equal to the shipped agent
         # files. `ownership.json` names `agent:survey-surname` on the `log` row.
         "survey-surname",
+        # A new agent (issue #3273): it surveys a tree before any project exists,
+        # so it writes nothing and no hook routes to it. Listed because the set is
+        # asserted equal to the shipped agent files. `ownership.json` names it on
+        # no row.
+        "tree-survey",
         # Same shape as search-images and citation (issue #2120): a
         # cost-motivated conversion, no hook route. It writes `log` entries via
         # `research_log_append` and updates `plan_items` status via
@@ -1790,7 +1814,7 @@ _NO_CONFLICT_SUBSTRINGS = (
 _NO_CONFLICT_EXACT = {"", "none", "n/a", "na", "not applicable"}
 
 # `stop_criteria.conflict_resolution` is a REQUIRED field on every declared
-# exhaustive_declaration (research.schema.json), so it is always populated —
+# search_stop (research.schema.json), so it is always populated when stop-gate —
 # "doesn't match the negative list" therefore defaults to FIRE, which over-fires
 # badly on the real corpus (senior review of PR #1438: 18 of 38 firing strings
 # explicitly negated a resolution — "UNRESOLVED.", "Not met —", …). So the check
@@ -1836,7 +1860,7 @@ def find_unpersisted_conflict_resolutions(
 
     THE EVIDENCED FAILURE (issue #1317, john-applegarth-family): a research.json
     with 25 assertions and 2 ``proof_summaries`` whose narrative carried a full
-    "Conflict Discussion" and whose ``exhaustive_declaration.stop_criteria.
+    "Conflict Discussion" and whose ``search_stop.stop_criteria.
     conflict_resolution`` read "Ella Chase marriage conflict resolved …" — yet
     ``conflicts`` was ``[]`` and every ``resolved_conflict_ids`` was ``[]``. The
     conflict was reasoned through by ``proof-conclusion`` / ``research-exhaustiveness``
@@ -1847,7 +1871,7 @@ def find_unpersisted_conflict_resolutions(
     exists — a run that legitimately stops before concluding has an empty
     ``conflicts[]`` by design and must not fire. For each concluded question, the
     reliance signal is a non-trivial ``conflict_resolution`` stop-criterion on that
-    question's ``exhaustive_declaration`` (a *structured* field with bounded
+    question's ``search_stop`` (a *structured* field with bounded
     vocabulary — deliberately NOT the free ``narrative_markdown``, which cannot be
     parsed reliably). A ``conflict_resolution`` that says there was no conflict
     (``_NO_CONFLICT_SUBSTRINGS`` / ``_NO_CONFLICT_EXACT``) is skipped.
@@ -1933,9 +1957,12 @@ def find_unpersisted_conflict_resolutions(
 
     def _resolution_claimed(question: dict[str, Any]) -> str | None:
         """The stop-criterion text if it asserts a resolution, else None."""
-        decl = question.get("exhaustive_declaration")
+        decl = question.get("search_stop")
         if not isinstance(decl, dict):
-            return None
+            # Legacy shape: exhaustive_declaration.stop_criteria (pre-#2539 run logs).
+            decl = question.get("exhaustive_declaration")
+            if not isinstance(decl, dict):
+                return None
         crit = decl.get("stop_criteria")
         if not isinstance(crit, dict):
             return None
@@ -2000,7 +2027,7 @@ def find_unpersisted_conflict_resolutions(
                 "kind": CONFLICT_UNPERSISTED_KIND,
                 "detail": (
                     f"proof_summary {ps_id} (question {qid}) relies on a resolved "
-                    "conflict per its exhaustive_declaration.stop_criteria."
+                    "conflict per its search_stop.stop_criteria."
                     "conflict_resolution, but conflicts[] holds no record of it "
                     "(empty, or not holding the c_ id the stop-criterion names)"
                 ),

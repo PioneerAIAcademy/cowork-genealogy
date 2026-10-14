@@ -11,6 +11,7 @@ import {
 import { writerToolResult } from "../../src/tool-result.js";
 import { setProjectStore, type ProjectStore } from "../../src/store/project-store.js";
 import { NO_PROJECT_MESSAGE_READ } from "../../src/utils/project-io.js";
+import { ON_PG, fileStoreOnly } from "../helpers/store-backend.js";
 
 /** The CLI spills any tool result longer than this to a file (spec §4). */
 const CLI_SPILL_CHARS = 50_000;
@@ -66,12 +67,15 @@ describe("sidecar_read", () => {
     const verdict = JSON.stringify({ focus: "proof-critique", verdict: "not craft", notes: "x" });
     await put("evaluations/proof-critique-ps_001-2026-09-14.json", verdict);
     const r = await sidecarRead({ projectPath: dir, ref: "evaluations/proof-critique-ps_001-2026-09-14.json" });
+    // A jsonb document comes back as its value re-serialized, not the bytes written.
+    const content = ON_PG && r.ok ? r.content : verdict;
+    if (ON_PG) expect(JSON.parse(content)).toEqual(JSON.parse(verdict));
     expect(r).toEqual({
       ok: true,
       ref: "evaluations/proof-critique-ps_001-2026-09-14.json",
-      totalChars: verdict.length,
+      totalChars: content.length,
       offset: 0,
-      content: verdict,
+      content,
       truncated: false,
     });
   });
@@ -292,6 +296,7 @@ describe("sidecar_read", () => {
   }
 
   it("rejects a ref that names an existing directory as invalid_ref, not not_found", async () => {
+    fileStoreOnly("a ref naming a directory has no Postgres meaning: refs name rows");
     await put("uploads/scans/page-1.txt", "one");
     const r = await sidecarRead({ projectPath: dir, ref: "uploads/scans" });
     expect(r.ok).toBe(false);
@@ -312,6 +317,7 @@ describe("sidecar_read", () => {
   it.skipIf(process.platform === "win32")(
     "a symlink under uploads/ that leaves the project goes loud, never returns the target",
     async () => {
+      fileStoreOnly("a symlink has no Postgres meaning");
       // The tool's own §3 rule sees a clean ref; the store's real-path check is
       // the line that catches this one, and it throws rather than returning bytes.
       const outside = await mkdtemp(join(tmpdir(), "sidecar-read-outside-"));
@@ -349,6 +355,7 @@ describe("sidecar_read", () => {
   it.skipIf(process.platform === "win32")(
     "a segment longer than the filesystem allows (ENAMETOOLONG) is invalid_ref, not loud",
     async () => {
+      fileStoreOnly("ENAMETOOLONG is a filesystem limit; a Postgres key has none");
       // The parent must exist, or realpath fails with ENOENT on `uploads` first.
       await put("uploads/ok.txt", "ok");
       const r = await sidecarRead({ projectPath: dir, ref: "uploads/" + "a".repeat(300) });

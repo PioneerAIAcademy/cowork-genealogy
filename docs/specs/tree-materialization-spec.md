@@ -268,6 +268,20 @@ Couple edge per §4.5, rather than being invented onto her as a person-level
 fact. She is a sourced name because that is all there is, not because
 something was lost.
 
+**Enriching an existing person needs a link.** When `personId` names a person
+already in the tree, the persona arm refuses unless a live `probable` or
+`confident` `person_evidence` entry links one of the persona's assertions
+(`record_id` + `record_role`) to that person. A `speculative` link is a
+candidate, not an identity, so it does not qualify. Minting needs no link (the
+link to a new person is written after it exists), and neither does re-running a
+record onto the stub it minted (`mintedFromThisRecord`). Persons are checked as
+the tree stands at each op, so a batch that mints a person from one record cannot
+copy a second record onto them without a link. The named-party arm (§4.6) writes
+a name, not facts, and is not gated. Replayed over the committed e2e run logs
+(2026-10-12), 52 writes onto existing persons lacked such a link; about 30 came
+from links `research_append` had wrongly capped on a birthplace written without
+its country, which no longer happens.
+
 > Reading assertions to *instantiate* a person is still an evidence-driven
 > act (it reads assertions, not nodes), so it stays on the correct side of
 > the §3 seam. It is not a merge — nothing is collapsed.

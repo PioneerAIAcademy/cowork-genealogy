@@ -2808,3 +2808,41 @@ def test_capture_runs_before_session_cleanup(tmp_path, monkeypatch):
                                   "models": ["claude-sonnet-4-6"]}
     # The real cleanup ran afterwards and removed the store.
     assert not seen["cache"].exists()
+
+
+def test_pg_store_faults_reach_the_run_logs_warnings(tmp_path, monkeypatch):
+    """U15: the orchestrator collects the prelude's faults for the workspace
+    after the run and folds them into output.warnings, so a fault the mock-side
+    pipelines swallowed is still in the run log. Drives the real
+    `_run_one_test_async`; reverting the capture line or the fold fails here."""
+    spec = load_test(WIKI_TEST_PATH)
+    paths = OrchestratorPaths(runlogs_root=tmp_path)
+    auth = AuthConfig(skill_runner_mode="api_key", api_key="x", detail="stub")
+    seen_workspaces: list = []
+
+    async def fake_run_skill(**kwargs):
+        from harness.skill_runner import SkillRunResult
+        return SkillRunResult(
+            text_response="done.", skills_invoked=[], tool_calls=[], duration_ms=10.0,
+            usage={"total_cost_usd": 0.0, "usage": {"input_tokens": 1, "output_tokens": 1}},
+            attempted_mcp_calls=[],
+        )
+
+    def fake_faults(workspace):
+        seen_workspaces.append(workspace)
+        return [{"op": "writeBytes", "message": "NoSuchBucket: gone"}]
+
+    monkeypatch.setattr(orchestrator, "run_skill", fake_run_skill)
+    monkeypatch.setattr(orchestrator, "seed_pg_workspace", lambda ws: None)
+    monkeypatch.setattr(orchestrator, "pg_store_faults", fake_faults)
+    monkeypatch.setattr(orchestrator, "grade", lambda **kw: (_ for _ in ()).throw(JudgeError("no judge")))
+
+    entry = asyncio.run(_run_one_test_async(
+        spec=spec, auth=auth, paths=paths,
+        model="claude-sonnet-4-6", judge_model="claude-haiku-4-5-20251001",
+        timestamp="2026-10-12_10-30-00",
+    ))
+    warnings = entry["runs"][0]["output"].get("warnings") or []
+    (w,) = [w for w in warnings if w["kind"] == "pg_store_fault"]
+    assert w["faults"] == [{"op": "writeBytes", "message": "NoSuchBucket: gone"}]
+    assert seen_workspaces, "the faults were read for the run's workspace"

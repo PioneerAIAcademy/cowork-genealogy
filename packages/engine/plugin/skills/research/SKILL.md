@@ -17,6 +17,7 @@ allowed-tools:
   - validate_research_schema
   - research_query
   - extraction_append
+  - research_delivered
   - person_read
   - source_attachments
 ---
@@ -107,7 +108,7 @@ transcription; where the records are for a place and period; a research plan;
 a records-request letter; whether a person's children or siblings are complete;
 a status question such as "where are we?".
 Two or more of them in one message is still bounded: deliver each, name each,
-and end the turn when the last one is met. A message that also asks for
+and end the turn when the last one is met, the same way a single one ends it. A message that also asks for
 open-ended research is a job.
 
 **A job** — everything else. Route it exactly as the rest of this file says.
@@ -133,13 +134,17 @@ attached sources and relatives, `source_attachments` for where a source
 is already attached. Never search for a record that is already attached,
 and never offer to add a person who is already in the tree.
 
-When a bounded request is met, **end your turn**. Say what you produced first:
-the turn ends where you stop, so anything you were going to add afterwards never
-reaches the researcher. Name what this turn saved and where — "Saved to Susan
-Cornwell: death index, 4 Apr 1892" — and name anything this turn found but did
-not save: the record and the person it was for, not "an extraction did not
-finish". Then offer to take it further, and end. The offer is not
-something you wait for — their answer arrives as the next message.
+When a bounded request is met, **end your turn by calling `research_delivered`**.
+Say what you produced first: the turn ends where you stop, so anything you were
+going to add afterwards never reaches the researcher. Name what this turn saved
+and where — "Saved to Susan Cornwell: death index, 4 Apr 1892" — and name
+anything this turn found but did not save: the record and the person it was for,
+not "an extraction did not finish". Then offer to take it further. The offer is
+not something you wait for — their answer arrives as the next message.
+
+Call it last, with a one-sentence summary of what you delivered, after everything
+you want the researcher to read. If you do not already hold its schema, search for
+it by name.
 
 ## What to do
 
@@ -196,7 +201,7 @@ something you wait for — their answer arrives as the next message.
    every other entry is a `Skill` call.**
    Writing "proceed to research-exhaustiveness" or "proceed directly
    to proof-conclusion" and then hand-authoring the fields that skill
-   would have written (an `exhaustive_declaration`, a `proof_summaries`
+   would have written (a `search_stop`, a `proof_summaries`
    entry, the concluded tree relationship/fact) is not invoking it — it
    is skipping it while leaving state that looks like it ran. See the
    **Exhaustiveness/proof-conclusion contract** below.
@@ -211,7 +216,7 @@ something you wait for — their answer arrives as the next message.
    | A plan item targets a **digitized-but-unindexed** FamilySearch record set (browse-only images — `volume_search` shows image groups with ~0% record-searchable), or indexed/full-text search has been exhausted and the remaining path is reading register pages directly | `search-images` (browses the volume page-by-page: `volume_search` → `image_search` → `image_read`) |
    | **Any** log entry with a positive/partial outcome and no assertion referencing it — even one such entry, even if other entries from the same or a later search already went through extraction | FamilySearch records: `extraction_append({ recordIds })`, one call for every pending record. Any other source: `@plugin:record-structurer`, one spawn for the batch. (See the enforced contract below.) |
    | Assertions not yet linked to persons | `@plugin:person-evidence` — **always the agent, never inline.** You (the orchestrator) never write `person_evidence` entries or add record-derived facts/relationships to tree persons yourself: person-evidence owns the identity decision and scores every cross-record link with `same_person` before it links. Writing `pe_` links inline skips that check — it is exactly how a same-named stranger's record gets attached to the subject (a b. 1814 man was given a 1918 death, age 104, this way). Extraction never links; its output ALWAYS flows through person-evidence next |
-   | Evidence conflicts present | `conflict-resolution` |
+   | Evidence conflicts present | `@plugin:conflict-resolution` |
    | Identity uncertainty across assertions | `@plugin:hypothesis-tracking` |
    | Analyzed evidence now plausibly answers the active question | `@plugin:research-exhaustiveness` (consult the stop criteria *before* draining the rest of the plan; it sends you back to `research-plan` if the question — e.g. a completeness "did they have *any other* children?" question — is not yet reasonably exhausted) |
    | All plan items for a question are `completed` or `skipped`, and analysis above is done | `@plugin:research-exhaustiveness` |
@@ -253,7 +258,7 @@ something you wait for — their answer arrives as the next message.
    citation and tier checks for proof-conclusion), and a hand-authored
    `research_append` reproducing their expected output fields skips that
    analysis while still passing schema validation. Concretely: never write
-   `exhaustive_declaration` on a question, a `proof_summaries` entry, or the
+   `search_stop` on a question, a `proof_summaries` entry, or the
    tree relationship/fact a proof concludes, except as the direct result of
    spawning `@plugin:research-exhaustiveness` or `@plugin:proof-conclusion`
    in this same run. If you catch yourself narrating "proceed to
@@ -266,9 +271,10 @@ something you wait for — their answer arrives as the next message.
    **Every spawn names `projectPath` and the id the agent works on** — a
    `questionId` for `@plugin:research-exhaustiveness` and
    `@plugin:proof-conclusion`, the assertion ids for
-   `@plugin:person-evidence`, the `h_`/`c_`/assertion ids at issue for
-   `@plugin:hypothesis-tracking`, the place and period for
-   `@plugin:locality-guide`, the `planItemId` (plus the parish page as
+   `@plugin:person-evidence`, the conflict or competing assertion ids for
+   `@plugin:conflict-resolution`, the `h_`/`c_`/assertion ids at issue for
+   `@plugin:hypothesis-tracking`, one jurisdiction and its period per call for
+   `@plugin:locality-guide` (several jurisdictions mean several separate calls in the same turn), and the `planItemId` (plus the parish page as
    `baseUrl` when one is known, `userPresent` (`no` only when you are running autonomously and will not wait for the researcher, otherwise `yes`), and for a returned capture its
    file path or the results text) for `@plugin:search-external-sites`, and the
    `personId` (and, on the second spawn, the researcher's verdicts) for
@@ -462,8 +468,9 @@ turn to report progress or to say what you'll do next; return to step 2
 of "What to do" and invoke the next sub-skill. (See "Continuous work".)
 
 **A bounded request has a fifth: its deliverable.** When everything the
-message asked for is produced — one deliverable or several — end the turn;
-see §"Bounded request or job".
+message asked for is produced — one deliverable or several — end the turn as
+§"Bounded request or job" says to.
+
 
 ### Candidates, not verdicts
 

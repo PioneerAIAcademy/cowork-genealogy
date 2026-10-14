@@ -106,7 +106,12 @@ prototype-only. Pricing a description change is a separate decision, not taken h
 
 **The fifth stop condition has to be worded carefully.** PR #3147 deliberately kept
 `research_delivered` out of skill bodies, so the new stop condition can only say "end your
-turn" — it must NOT name the tool. On the hosted path a toolless voluntary stop is vetoed
+turn" — it must NOT name the tool. **Superseded 2026-10-12.** The paragraph below correctly
+identified that a toolless voluntary stop is vetoed and nudged, and concluded the pairing
+works "only because the per-turn `DELIVERY_GUIDANCE` names the tool". The field says it did
+not: alpha reported the agent answering a bounded question and carrying on. "End your turn"
+in the body and "call `research_delivered`" in the prompt competed, and the body won. The
+router's bounded close names the tool now. On the hosted path a toolless voluntary stop is vetoed
 and nudged with `CONTINUE_REASON` ("invoke the next GPS sub-skill now"), which contradicts
 the rule being added mid-run. The pairing works only because the per-turn `DELIVERY_GUIDANCE`
 names the tool; the prototype-worker acceptance bullet is what catches it if the two drift.
@@ -237,8 +242,9 @@ in fresh context**."* Every callee is stubbed — `route-no-questions.json` carr
 - item 6's "candidates with match strength" — the reporting happens downstream of a stub.
 - item 5's test goes with item 5.
 
-Also: `research_delivered` is **not advertised in the unit harness at all**
-(`eval/harness/harness/mock_mcp.py`, absent from `LIVE_TOOLS`), so "the turn ends
+**Superseded 2026-10-12:** the tool is a `LIVE_TOOL` in the unit harness now, so it is
+advertised and callable there. It remains inert — no hook binds — so what a unit test
+can grade is whether the model MADE the call, not what the call did.
 `delivered`" is unobservable here and must not appear in a unit-test description.
 
 **Keep in `eval/tests/unit/research/` — two tests:**
@@ -279,9 +285,7 @@ new tests make wrong.
   fails `test_calibrate_judge_does_not_import_agent_sdk` with "No module named 'e2e'"
   (its subprocess inherits the cwd), an artifact that reads exactly like a regression.
   An earlier draft stated this backwards.
-- `npx vitest run tests/packaging` in `packages/engine/mcp-server` — `prompt-budget` will
-  red until `prompt-sizes.json` is regenerated, because SKILL.md's byte count changes.
-  **Regenerate with `UPDATE_PROMPT_SIZES=1`, never by hand.**
+- `npx vitest run tests/packaging` in `packages/engine/mcp-server`.
 - `~/.claude/projects/-home-praise-cowork-genealogy/mutation-check.sh` with the suite that
   GUARDS these files (the harness suite, not the engine one). **It lives outside the repo**,
   so a `git grep` for it returns nothing — review flagged it as non-existent on exactly that

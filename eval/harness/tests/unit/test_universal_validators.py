@@ -226,6 +226,37 @@ def test_extraction_append_does_not_reach_a_section_it_does_not_write():
     assert "conflicts" in str(e.value)
 
 
+_RESEARCH_APPEND = [{"tool": "mcp__genealogy__research_append", "args": {"section": "assertions", "op": "update"}}]
+
+
+def test_an_informant_bias_notes_update_is_authorized_for_any_caller():
+    """research_append accepts one assertions write from any caller: an update
+    setting only informant_bias_notes (ut_conflict_resolution_016)."""
+    before = research(assertions=[{"id": "a_001", "value": "Tannetje [?]"}])
+    after = research(assertions=[{"id": "a_001", "value": "Tannetje [?]", "informant_bias_notes": "user reads T"}])
+    check_research(before, after, {"name": "conflict-resolution"}, POSITIVE, tool_calls=_RESEARCH_APPEND)
+
+
+def test_a_notes_update_does_not_license_any_other_assertion_change():
+    before = research(assertions=[{"id": "a_001", "value": "Tannetje [?]"}])
+    for after in (
+        research(assertions=[{"id": "a_001", "value": "Tannetje", "informant_bias_notes": "user reads T"}]),
+        research(assertions=[{"id": "a_001", "value": "Tannetje [?]"}, {"id": "a_002"}]),
+        research(assertions=[]),
+    ):
+        with pytest.raises(AssertionError) as e:
+            check_research(before, after, {"name": "conflict-resolution"}, POSITIVE, tool_calls=_RESEARCH_APPEND)
+        assert "assertions" in str(e.value)
+
+
+def test_a_notes_update_without_a_research_append_call_fails():
+    before = research(assertions=[{"id": "a_001"}])
+    after = research(assertions=[{"id": "a_001", "informant_bias_notes": "n"}])
+    with pytest.raises(AssertionError) as e:
+        check_research(before, after, {"name": "conflict-resolution"}, POSITIVE, tool_calls=[])
+    assert "assertions" in str(e.value)
+
+
 # ── tree.gedcomx.json ──────────────────────────────────────────────────────
 
 

@@ -8,7 +8,8 @@
     "tags": [
       "routing",
       "routes-to:image-reader",
-      "bounded-request"
+      "bounded-request",
+      "ends-with-delivery"
     ]
   },
   "input": {

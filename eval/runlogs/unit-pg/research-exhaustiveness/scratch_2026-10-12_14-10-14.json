@@ -1,0 +1,360 @@
+{
+  "schema_version": 3,
+  "skill": "research-exhaustiveness",
+  "version": null,
+  "released": false,
+  "releasable": false,
+  "invocation": "test",
+  "timestamp": "2026-10-12_14-10-14",
+  "harness_version": "0.1.0",
+  "model": "claude-sonnet-4-6",
+  "judge_prompt_hash": "0ec4cfbbfee949ee39d19136867fe47e26cc377bc3697cf58c148f42371468f8",
+  "snapshot": {
+    "packages/engine/plugin/agents/research-exhaustiveness.md": "e3fb620cafc346a168d4d5919ea0439f5b66c0c2b5c9f072cd409759abf5a34a",
+    "eval/tests/unit/research-exhaustiveness/already-declared-no-redeclare.json": "5c62b9e5e1ca2c3cd6a2fd413d227bc9c1bba746988aade472a364d590ef8b8d",
+    "eval/tests/unit/research-exhaustiveness/child-link-marriage-not-sufficient.json": "5b7cfc5e99a9a7b7e5f6a8daf5c3853cbe8c8764498fc13bd931f8c381bc1185",
+    "eval/tests/unit/research-exhaustiveness/decline-incomplete-research.json": "b8a1764fc128d83307792056bea5214037318ceff3c8a08e8b0ed3187cf04278",
+    "eval/tests/unit/research-exhaustiveness/direct-declare-exhaustive-complete.json": "c65a8b8eb5bd3e8bad077768bc0c0b03497ca2a60cd89fbb4273c8d5702b25c5",
+    "eval/tests/unit/research-exhaustiveness/direct-exhaustiveness-birth-record-era-gate.json": "6cbda06222235adcccfa2a62cd58efdd2922527c9f0e94153fe81a5fac84b5c9",
+    "eval/tests/unit/research-exhaustiveness/direct-refuse-while-in-progress.json": "8925a48652778744ebe943c38ed3c502cb02b5b7d96670a2ae9fa86c184c2e72",
+    "eval/tests/unit/research-exhaustiveness/direct-ut_research_exhaustiveness_d3c.json": "2dc483b0c009a014d4f3d061b60186cde67e4d3a0354c7a7c2bf1734769a4ca5",
+    "eval/tests/unit/research-exhaustiveness/direct-ut_research_exhaustiveness_d4d.json": "a0fdddd987de030de636a8ea01b093453a078d6ed7be015390001bf44270bb0c",
+    "eval/tests/unit/research-exhaustiveness/exhaustiveness-decisive-record-gate.json": "cb0d9120f1f9703804fad4ec14c0e1378f2c7d7ff239aa66b713381da4a647df",
+    "eval/tests/unit/research-exhaustiveness/honest-early-termination.json": "946f2d241393fee33412f9e67b2c87a7e835772f7b2ee2a000c68254e24f413d",
+    "eval/tests/unit/research-exhaustiveness/precondition-proceeds-corroborating-unlinked.json": "cc4c9a742470fd2cadde40f7df7c7a8b408f03dfe5be60159376663599456017",
+    "eval/tests/unit/research-exhaustiveness/rubric.md": "67f877eae5dee59eac00636ac7148d9fb4b4512199d9efefc6ad6eaa66d8f500",
+    "eval/tests/unit/research-exhaustiveness/sealed-record-not-a-gap.json": "18c4d7eeace4f527843c8141d7dee7794b7f33ab928a134bf552977527eb9723",
+    "eval/tests/unit/research-exhaustiveness/tentative-value-alternative-record-gate.json": "0e89ea0048f6dbc9b6d199521d8a318dced441290604193b574854148b672820",
+    "eval/tests/unit/research-exhaustiveness/ut_research_exhaustiveness_012.json": "70ba184f12379cde43465859fa1d73e8471663d53d99ae35696fabb84e730e2a",
+    "eval/fixtures/scenarios/bride-surname-illegible-cert/README.md": "3fd29f8ee73b89cd7ae264d061ed60419fb25ab28b9b7737f17ff81acc58cdbc",
+    "eval/fixtures/scenarios/bride-surname-illegible-cert/research.json": "fcb0d5e54857b77a21b0a7aa4321249bcef16dffc7efc29e27860c6d69a54625",
+    "eval/fixtures/scenarios/bride-surname-illegible-cert/results/log_001.json": "0ef4e323b4072592d5345c1d9d4f43064bf78b6072cfe85d1e515f5d6181712e",
+    "eval/fixtures/scenarios/bride-surname-illegible-cert/tree.gedcomx.json": "fc0eb610954b8687f6df6db8bee546094644c07d6bcee4d31f9e765bc17e2ede",
+    "eval/fixtures/scenarios/flynn-census-exhausted/README.md": "99884e9b80f1deea24d51e0329c91aeeea6f51565eee3d766aae4495732aa1dd",
+    "eval/fixtures/scenarios/flynn-census-exhausted/research.json": "cd4b5effd92d5a21373a834c61aa13962541e53cc7b60391b3ce12ecf4016f81",
+    "eval/fixtures/scenarios/flynn-census-exhausted/tree.gedcomx.json": "65b54727a642fb1e5cfc1ee482bf2284c8f4477c9bfed99f5a2c26b6b2f3f4f0",
+    "eval/fixtures/scenarios/flynn-decisive-record-unsearched/README.md": "3634dac4a108183de4cf96a4b2f35f28652d17772457dca2e26816381debe528",
+    "eval/fixtures/scenarios/flynn-decisive-record-unsearched/research.json": "089d947675724e9546b83b7d79ffca90d2dc34a6f426c9d0c33b254eb3687bfb",
+    "eval/fixtures/scenarios/flynn-decisive-record-unsearched/tree.gedcomx.json": "e21f5c009354ae7940f2f3ccccdb15aa00c39a07116d1cb5802b77402a49d4dd",
+    "eval/fixtures/scenarios/flynn-exhaustive-ready/README.md": "3800ae00f822cbe81cfa6d35d8a26909a103b570024286854dcfbc1c63675144",
+    "eval/fixtures/scenarios/flynn-exhaustive-ready/research.json": "aeb5d3c0f9747e4bf6a67df4e41ce91c84cebd4bfe28f19623a1e16b65e36867",
+    "eval/fixtures/scenarios/flynn-exhaustive-ready/tree.gedcomx.json": "65b54727a642fb1e5cfc1ee482bf2284c8f4477c9bfed99f5a2c26b6b2f3f4f0",
+    "eval/fixtures/scenarios/flynn-marriage-only-no-child-link/README.md": "6e462eaae91f9bd3446867c3fe8635c45533f1ed57fe2189d1d3b8b58c0a95fd",
+    "eval/fixtures/scenarios/flynn-marriage-only-no-child-link/research.json": "20f3864007704146c0e0cbd3f6ff2243efcf163cb69cf7c5f25801eab4d5e8c1",
+    "eval/fixtures/scenarios/flynn-marriage-only-no-child-link/tree.gedcomx.json": "aad972efa297faf66001c17a5acbb0735dce6b4e4ec178aa9054cc2964784de4",
+    "eval/fixtures/scenarios/flynn-plan-in-progress/README.md": "f8c71aa71f752cbe886bd8f7bb6e11254f8d787032b5bdadda09a1884edc0cb3",
+    "eval/fixtures/scenarios/flynn-plan-in-progress/research.json": "1825b96e56d7765d42cf91ed13a7dc4d4581b51854565ae3540608cb488c1ffc",
+    "eval/fixtures/scenarios/flynn-plan-in-progress/tree.gedcomx.json": "e59c3cdc882d3717f6c89d16ae70e435c4ac32f4b6bd34584f078c28c291b3e7",
+    "eval/fixtures/scenarios/flynn-resolved/README.md": "ac925a6fc1693e61f8b3238313289aa0c1227df574179a8b44bdd58bff3a622b",
+    "eval/fixtures/scenarios/flynn-resolved/research.json": "0990e86f1870708062229e51dba30fb4b23f0ed917f6d9c61ec668f1c1d8de76",
+    "eval/fixtures/scenarios/flynn-resolved/tree.gedcomx.json": "65b54727a642fb1e5cfc1ee482bf2284c8f4477c9bfed99f5a2c26b6b2f3f4f0",
+    "eval/fixtures/scenarios/flynn-skipped-death-cert/README.md": "615a4a8d71cf1a0a16c1e3cb4bcaa16b1c24dae84962dd79cef7dd315e2d2404",
+    "eval/fixtures/scenarios/flynn-skipped-death-cert/research.json": "dd3246849ad0108a55f522305aebf5615e37154ce3852aff6b42bca2889b9686",
+    "eval/fixtures/scenarios/flynn-skipped-death-cert/tree.gedcomx.json": "60fe09957a1b952fc54952271a1e2850e5751a61edaaee93bafa264272f98174",
+    "eval/fixtures/scenarios/flynn-unresolved-conflict/README.md": "53c9b4be456d4a539e13ccf693593617526d9494a22bf4d8a01c0bc9623b8341",
+    "eval/fixtures/scenarios/flynn-unresolved-conflict/research.json": "2de1bf6e28ffc83656a5537ee951639ff0c6ec128213b22503804b06d6fdef32",
+    "eval/fixtures/scenarios/flynn-unresolved-conflict/tree.gedcomx.json": "65b54727a642fb1e5cfc1ee482bf2284c8f4477c9bfed99f5a2c26b6b2f3f4f0",
+    "eval/fixtures/scenarios/ma-birth-record-unsearched/README.md": "9e08237bcbe35f51e7ac9630ba3d562d529b167703bcea14b99c88b8b8567815",
+    "eval/fixtures/scenarios/ma-birth-record-unsearched/research.json": "fadfe631e9e6591cfbd13edc39757dd6aab25d581ccf1335635f4ef433a424dd",
+    "eval/fixtures/scenarios/ma-birth-record-unsearched/tree.gedcomx.json": "67d313b0b7b4ec40ebd504b72b5c69db05e007ecf79c6682fef90369bbce68f9",
+    "eval/fixtures/scenarios/recent-birth-sealed/README.md": "3100f501ee412563c360a97bde21ebb7c6f4fc366f5f8d400c4c0ca60e200c56",
+    "eval/fixtures/scenarios/recent-birth-sealed/research.json": "81f613bec756b2907fa2c00b7f274f39dd076b326560b4bdd82563c60ea4c3b2",
+    "eval/fixtures/scenarios/recent-birth-sealed/tree.gedcomx.json": "09fcd1bfd31cc882e048c62647607edeb99d7878d57fc4ab371a65414a2d8d77",
+    "eval/fixtures/mcp/validate-research-schema.json": "0d794d9b0d5461968cecdc6ca7a9c59c4c14ea588ea1b02fdee9aa0436a0572b",
+    "eval/fixtures/mcp/wiki-read-iowa-vital-records.json": "0d08807400a9df10a65a38ad53aa0a43ac539e9b6d5fcccfcf6492df28f71646",
+    "eval/fixtures/mcp/wiki-read-ireland-civil-registration.json": "6f6bede25a9b8315b9e855c8a5015efe5cbe11fe8b1241e31c7d467671b67b5e",
+    "eval/fixtures/mcp/wiki-read-massachusetts-vital-records.json": "a2f0c044df9190e8386bfbece4ca1c228c6a6aef6dec32053a852a0dd8e955a7",
+    "eval/fixtures/mcp/wiki-read-pennsylvania-vital-records.json": "b3a5549f98a8819ce20a9709a49deb113b67eb62430f822fa9cf48f01ce05062",
+    "eval/fixtures/mcp/wiki-read-utah-vital-records.json": "ad7c8419987bfdf3fe832247c056455e9770dd8c92487be762d12e273e75f051"
+  },
+  "tests": [
+    {
+      "test_id": "ut_research_exhaustiveness_d5e",
+      "test_type": "positive",
+      "expected_outcome": "pass",
+      "scenario": "flynn-exhaustive-ready",
+      "mcp_fixtures": [
+        "wiki-read-pennsylvania-vital-records"
+      ],
+      "outcome": "aborted",
+      "flaky": false,
+      "outcome_summary": {
+        "per_run_outcomes": [
+          "aborted"
+        ],
+        "aggregated_dimensions": [],
+        "review_dimensions": []
+      },
+      "totals": {
+        "duration_ms": 1170.603165999637,
+        "duration_api_ms": 0.0,
+        "judge_duration_ms": 0.0,
+        "wall_clock_ms": 31594.24090385437,
+        "num_turns": 1,
+        "input_tokens": 0,
+        "cached_input_tokens": 0,
+        "cache_creation_input_tokens": 0,
+        "output_tokens": 0,
+        "judge_input_tokens": 0,
+        "judge_cached_input_tokens": 0,
+        "judge_output_tokens": 0,
+        "skill_cost_usd": 0.0,
+        "judge_cost_usd": 0.0,
+        "total_cost_usd": 0.0
+      },
+      "runs": [
+        {
+          "run_index": 0,
+          "run_id": "run_ut_research_exhaustiveness_d5e_2026-10-12_14-10-14_0",
+          "outcome": "aborted",
+          "aborted_reason": "error",
+          "error": "Exception: Claude Code returned an error result: success",
+          "duration_ms": 1170.603165999637,
+          "duration_api_ms": 0.0,
+          "num_turns": 1,
+          "skill_attempts": 3,
+          "input_tokens": 0,
+          "cached_input_tokens": 0,
+          "cache_creation_input_tokens": 0,
+          "output_tokens": 0,
+          "model_usage": {},
+          "no_result_message": false,
+          "subagents": [],
+          "subagent_capture_status": "matched_no_transcripts",
+          "main_thread": {
+            "peak_window_tokens": 0,
+            "compactions": [],
+            "models": []
+          },
+          "skill_cost_usd": 0.0,
+          "output": {
+            "text_response": "Your group's usage limit is set to $0",
+            "activated": false,
+            "skills_invoked": [],
+            "tool_calls": [],
+            "files_created": []
+          },
+          "validators": {
+            "passed": false,
+            "results": [
+              {
+                "name": "test_activated_run_produces_response",
+                "passed": true,
+                "error": "skipped: skill did not activate",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_decline_response_nonempty",
+                "passed": true,
+                "error": "skipped: positive test",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_direct_delegation_relayed_verbatim",
+                "passed": false,
+                "error": "the main thread did not relay the delegation verbatim.\n\nEXPECTED to find, as an exact substring:\nAssess whether question q_001 is reasonably exhaustive and record the outcome \u2014 declaring if the criteria are met, and recording an honest `declared: false` termination if they are not.\n\nquestionId: q_001\nprojectPath: <workspace>\n\nACTUAL spawn prompt(s):\n(no spawn prompt recorded)",
+                "outcome": "failed"
+              },
+              {
+                "name": "test_direct_test_spawned_its_agent",
+                "passed": false,
+                "error": "direct test did not spawn its agent: expected subagent_type 'research-exhaustiveness', recorded spawns = (none). A spawn with no `subagent_type` is a general-purpose subagent and does not count.",
+                "outcome": "failed"
+              },
+              {
+                "name": "test_hand_back_names_its_owner",
+                "passed": true,
+                "error": "skipped: not a hand-back test",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_id_references_resolve",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_log_append_only",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_no_duplicate_tree_ids",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_no_entries_deleted",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_no_main_thread_subagent_only_calls",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_no_out_of_lane_section_writes",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_no_raw_writes_to_protected_files",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_ownership_table",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_parent_child_age_plausibility_flagged",
+                "passed": true,
+                "error": "skipped: no new ParentChild relationships",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_project_file_changes_route_through_writer_tools",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_project_files_pass_full_validation",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_research_json_validates_schema",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_skill_calls_name_a_shipped_skill",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_tool_allowlist",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_tree_facts_agree_with_linked_assertions",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_tree_gedcomx_json_validates_schema",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_tree_ownership_table",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_write_then_validate",
+                "passed": true,
+                "error": "skipped: skill does not declare validate_research_schema",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_declared_has_full_stop_criteria",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_declared_has_log_entry_ids",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_declared_implies_exhaustive_declared_status",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_fetches_registration_start_date",
+                "passed": false,
+                "error": "the agent did not fetch the jurisdiction's registration start date \u2014 no wiki_read call. `## 1. Gather evidence` names it unconditionally. Tools called: none",
+                "outcome": "failed"
+              },
+              {
+                "name": "test_no_exhaustive_declaration",
+                "passed": true,
+                "error": "skipped: not a no-exhaustive-declaration scenario",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_no_new_questions",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_refusal_names_the_blocking_plan_item",
+                "passed": true,
+                "error": "skipped: not a refuse-in-progress test \u2014 no blocking item to name",
+                "outcome": "skipped"
+              }
+            ]
+          },
+          "judge": {
+            "skipped": true,
+            "dimensions": [],
+            "judge_cost_usd": 0.0,
+            "duration_ms": 0.0,
+            "error": null,
+            "input_tokens": 0,
+            "cached_input_tokens": 0,
+            "output_tokens": 0
+          },
+          "started_at": 1791815036.822592,
+          "ended_at": 1791815068.416833
+        }
+      ],
+      "grading_mode": "dimensions",
+      "dimensions_gate_outcome": true
+    }
+  ],
+  "totals": {
+    "duration_ms": 1170.603165999637,
+    "duration_api_ms": 0,
+    "judge_duration_ms": 0,
+    "num_turns": 1,
+    "input_tokens": 0,
+    "cached_input_tokens": 0,
+    "cache_creation_input_tokens": 0,
+    "output_tokens": 0,
+    "judge_input_tokens": 0,
+    "judge_cached_input_tokens": 0,
+    "judge_output_tokens": 0,
+    "skill_cost_usd": 0,
+    "judge_cost_usd": 0,
+    "total_cost_usd": 0,
+    "wall_clock_ms": 31594.24090385437
+  },
+  "judge_model": "claude-haiku-4-5-20251001",
+  "tool_search": true,
+  "store": "pg"
+}

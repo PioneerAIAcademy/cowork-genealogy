@@ -1,0 +1,166 @@
+{
+  "run_log": "v4_2026-10-12_17-31-01.json",
+  "annotator": "edenosas1@gmail.com",
+  "corrections": [
+    {
+      "test_id": "ut_question_selection_007",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Wrote q_003 'Who was the mother of Patrick Flynn, born ca. 1845 in Ireland, enumerated in Schuylkill County, Pennsylvania in 1850?' with selection_basis objective_decomposition; the Ireland birthplace is the one the resolved conflict c_001 accepted over the death certificate's Pennsylvania, so the identifying detail is supported, and the 1850 enumeration is identifying context, not the fact sought."
+    },
+    {
+      "test_id": "ut_question_selection_007",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Persisted depends_on ['q_001','q_002'] and unblocks [] (an array, as the test requires), and the rationale names the 1850/1860 Thomas Flynn household census entries as the place most likely to name the wife. The user paragraph says the father is confirmed and the mother is the one remaining gap, with no ids, and paragraph 2 is a single plain sentence about census, church, naturalization and probate searches."
+    },
+    {
+      "test_id": "ut_question_selection_007",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Made 8 live calls: project_context, research_query for questions/conflicts/hypotheses, plans for q_001 and q_002 (with no status filter, as Step 1a requires), timelines for I1, then one research_append to questions with every required field. No fixture_not_found."
+    },
+    {
+      "test_id": "ut_question_selection_007",
+      "dimension_source": "rubric",
+      "dimension_name": "Question specificity",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "The question asks for one unknown, the mother's identity, for a named person with an approximate birth year, a birthplace and an 1850 county of residence, so a search can be designed from it directly."
+    },
+    {
+      "test_id": "ut_question_selection_014",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Wrote q_001 'Do independent records confirm or refute that Johann Vogt and Maria Vogt are the parents of Anton Vogt (b. ca. 1860, Wisconsin)?' on objective_decomposition, which is the sanctioned confirm-or-refute test of a disputed relationship already on the tree, not an acceptance of it. One small overreach: the rationale says the Luxembourg death 'conflicts with the compiled data', but the tree has no death fact, and a Luxembourg death does not contradict a Wisconsin birth."
+    },
+    {
+      "test_id": "ut_question_selection_014",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Persisted the question with depends_on [], unblocks [] and an unstarted exhaustive_declaration. The user paragraph explains, without ids, that the parent link comes only from an unverified compiled tree and that the user's Luxembourg death record raises doubt; the next-step sentence names Wisconsin census, baptismal and vital records from the 1860s-1880s."
+    },
+    {
+      "test_id": "ut_question_selection_014",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Made 7 live calls (the judge said six): project_context, research_query for questions, conflicts, hypotheses, timelines and plans, then research_append with a well-formed question entry. All returned ok."
+    },
+    {
+      "test_id": "ut_question_selection_014",
+      "dimension_source": "rubric",
+      "dimension_name": "Question specificity",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "The question names the subject and both disputed parents, gives a birth year and state, and poses one testable claim, the parent-child link, as confirm-or-refute."
+    },
+    {
+      "test_id": "ut_question_selection_015",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "It did not stall to ask the user for evidence. It wrote the same confirm-or-refute question as _014, 'Do independent records confirm or refute that Johann Vogt and Maria Vogt are the parents of Anton Vogt (b. ca. 1860, Wisconsin)?', and took 'ca. 1860, Wisconsin' from the tree's F1 birth fact, so nothing was fabricated even though the user gave no coordinates."
+    },
+    {
+      "test_id": "ut_question_selection_015",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Persisted q_001 (objective_decomposition, depends_on [], unblocks []), with a rationale calling the parent assignment the load-bearing premise. The user paragraph has no ids, but it refers to the reader in the third person ('The user's doubt means that assignment is in question'); paragraph 2 is one sentence about Wisconsin vital, church and census records."
+    },
+    {
+      "test_id": "ut_question_selection_015",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Made 7 live calls (the judge said six): project_context, research_query for questions, conflicts, hypotheses, timelines and assertions, then research_append. No errors, and the entry passed validation."
+    },
+    {
+      "test_id": "ut_question_selection_015",
+      "dimension_source": "rubric",
+      "dimension_name": "Question specificity",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Same text as _014: one claim under test (Johann and Maria as Anton's parents), with the subject identified by name, approximate birth year and state."
+    },
+    {
+      "test_id": "ut_question_selection_d02",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Wrote q_001 'Who were the parents of Patrick Flynn, born ca. 1845 in Pennsylvania, who died in 1908 in Schuylkill County, PA?', which restates the single-fact objective at its own scope with no record named and no father/mother split, on selection_basis objective_decomposition. The user paragraph adds an unsupported flourish ('spent his life in Schuylkill County'), but the persisted state is correct."
+    },
+    {
+      "test_id": "ut_question_selection_d02",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Persisted depends_on [] and unblocks [] with an unstarted exhaustive_declaration. The user paragraph names the question in plain words and addresses objective versus question only by saying the goal is one relationship question and therefore 'also the first and central question to pursue', a merge rather than an explicit separation of the two terms, which is acceptable for a single-fact objective. The next-step sentence lists record types without naming a skill or tool."
+    },
+    {
+      "test_id": "ut_question_selection_d02",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Made 6 live calls (the judge said five): project_context, research_query for questions, conflicts, hypotheses and timelines, then research_append; it also Read the tree. All returned ok."
+    },
+    {
+      "test_id": "ut_question_selection_d02",
+      "dimension_source": "rubric",
+      "dimension_name": "Question specificity",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "The question names the person, a birth year and state, and a death year and county, and asks for one fact, his parents."
+    },
+    {
+      "test_id": "ut_question_selection_d05",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "It turned the 'why did they come' objective into one event question, 'When did Patrick Flynn (born ca. 1845 in Pennsylvania, died 1908 in Schuylkill County, PA) and his family settle in Schuylkill County?', on objective_decomposition. The question does not ask the reason and does not cap the evidence to 1850-1880. Its 'Irish immigration' framing in the rationale and summary is speculative, since nothing on file says the family was Irish."
+    },
+    {
+      "test_id": "ut_question_selection_d05",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Paragraph 1 names the question in plain words and says 'That kind of \"why\" question in history cannot be proved the way a birth date can — it is explained through the historical circumstances of the time and place once we know exactly when they arrived', which is the required sentence. There are no ids, skill names or 'GPS'; paragraph 2 is one sentence about the 1850-1880 Schuylkill censuses."
+    },
+    {
+      "test_id": "ut_question_selection_d05",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Made 8 live calls: project_context, research_query for questions, conflicts, hypotheses, timelines, plans and assertions, then research_append with depends_on [] and unblocks []. It also Read the tree, and every call returned ok."
+    },
+    {
+      "test_id": "ut_question_selection_d05",
+      "dimension_source": "rubric",
+      "dimension_name": "Question specificity",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "There is one unknown (when), and it does not combine 'when and from where'; the subject is identified by birth year, state, death year and county."
+    }
+  ]
+}

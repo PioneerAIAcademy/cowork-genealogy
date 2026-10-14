@@ -671,7 +671,7 @@ the `max_cost_usd` note in §6 step 5.
    | Tool-call cap | `tool_cap` | Total tool calls > `caps.tool_calls`. The run ends at the first SDK message after the crossing call, and the label outranks a `cost_cap` the final message would set. |
    | Turn cap | `max_turns` | SDK turn count > `caps.max_turns` |
    | Cost cap | `cost_cap` | Final cost (the last CLI process's, on a resumed run) > `caps.max_cost_usd`. **Label only — this does not stop a run.** See note below. |
-   | SDK natural end | `natural_end` | Voluntary end with `project.status != "completed"` after the continue-nudge budget is exhausted (or a nudge made no progress). The terminal hand-back is classified and counted in `usage.hand_back_classes` — these are the two gate-False reasons that ARE agent defects — see note below |
+   | SDK natural end | `natural_end` | Voluntary end with `project.status != "completed"` after the continue-nudge budget is exhausted (or a nudge made no progress), or with `research.json` missing or unreadable, which is never nudged. The terminal hand-back is classified and counted in `usage.hand_back_classes` — the first two are the gate-False reasons that ARE agent defects; the last is counted as `terminal_ok` — see note below |
    | Harness error | `error` | Unhandled exception in the harness or SDK |
    | **Genealogy MCP surface absent** | `mcp_unavailable` | The CLI's `system`/`init` message reports the `genealogy` server `failed` / `needs-auth` / `disabled`, or does not list it at all; **or** the mid-run backstop sees `CONSECUTIVE_TOOL_SEARCH_MISSES` no-match `ToolSearch` results with no `mcp__` call dispatched in between. A *matched* lookup does **not** clear that count — tool search defers the built-ins too, so matching one of those is no evidence about the genealogy surface, and treating it as such let a dead server starve the counter indefinitely. **This run writes no files — see the retention rule below.** |
    | **Host slept** | `host_slept` | The heartbeat (`SleepDetector`) counted `usage.counted_sleep_seconds >= caps.inactivity_seconds` of host sleep. Outranks the cap/watchdog reason it replaces (`timeout` / `inactivity`) and `completed`, because on Windows `time.monotonic()` advances through Modern Standby, so the sleep is billed against the wall-clock cap and the run is cut mid-standby. **This run IS committed but is not graded and is excluded from outcome rates — see the retention rule below.** |
@@ -804,7 +804,8 @@ the `max_cost_usd` note in §6 step 5.
 
    **Continue-nudge on a hand-back.** An autonomous `/research` run must end at
    `project.status == "completed"`. A `Stop` hook vetoes every voluntary yield before
-   that with **one** reply, the prototype worker's `CONTINUE_REASON`
+   that (except on a session with no `research.json`) with **one** reply, the prototype
+   worker's `CONTINUE_REASON`
    (`apps/server/app/agent/continue_policy.py`) verbatim, so a paired grade compares
    two stacks under one Stop policy (handoff U17; `test_continue_policy_parity.py` pins
    the copy). Before replying, the hook classifies the agent's closing words
@@ -837,13 +838,14 @@ the `max_cost_usd` note in §6 step 5.
    so the three-class taxonomy has no separate slot for it. Recorded here rather than
    left implicit; a fourth class is a live option if the distinction starts mattering.
 
-   **What is NOT counted as a defect.** `should_continue_run` returns False for four
+   **What is NOT counted as a defect.** `should_continue_run` returns False for five
    reasons and only two are about the agent: budget exhausted and no-progress. A stop
    on `project.status == "completed"` is the successful path (134 of the 181 committed
-   run logs) and `mcp_unavailable` is an infrastructure failure rather than agent
-   behaviour; both are recorded as
-   `terminal_completed` / `terminal_mcp_unavailable` and neither counts as a
-   hand-back defect. In particular a `completion_claim` on a project that *is*
+   run logs), `mcp_unavailable` is an infrastructure failure rather than agent
+   behaviour, and a missing or unreadable `research.json` leaves no project for a
+   hand-back to be a defect against; all three are recorded as
+   `terminal_completed` / `terminal_mcp_unavailable` / `terminal_ok` and none counts
+   as a hand-back defect. In particular a `completion_claim` on a project that *is*
    completed is a **truthful** completion, never a `false_completion`. The nudge is bounded by
    `caps.max_continue_nudges` (**40**, raised from 20) plus a no-progress guard. The
    raise is sized for the regime in which the skill emits the hand-back line, where a
@@ -1638,7 +1640,7 @@ checks over the final project state and the run's tool-call log
 1. **`find_effects_without_invocation`** — a guardrail skill's documented
    effect is present in `research.json` or `tree.gedcomx.json` (a
    `proof_summaries` entry, `person_evidence` link, resolved `conflicts`
-   entry, `exhaustive_declaration.declared`, or a tree write one of them
+   entry, `search_stop.stopped_because`, or a tree write one of them
    owns) with no successful invocation of it anywhere in the run. Either
    route counts: a `Skill` call naming the skill, or a typed `Agent`/`Task`
    spawn whose `subagent_type`, plugin namespace stripped, names it (the
@@ -1747,7 +1749,7 @@ legitimately-not-yet-uploaded evidence only a genealogist can price.
 relies on a resolved conflict that was never persisted.**
 `find_unpersisted_conflict_resolutions` (in `harness/skill_invocation.py`) reads
 the final `research.json` and, for each written `proof_summaries` conclusion,
-flags a question whose `exhaustive_declaration.stop_criteria.conflict_resolution`
+flags a question whose `search_stop.stop_criteria.conflict_resolution`
 asserts a resolution (positive resolution language, not merely the absence of "no
 conflict" wording — a required field that is always populated would otherwise
 default to firing) while `conflicts[]` holds no record of it: the array is empty,
@@ -1942,7 +1944,7 @@ editing one unreadable line, and it had already accreted a duplicated clause.
 | `usage.message_usage` | Per-assistant-message context window, split by thread: `[thread, input, cache_read, cache_creation]`. See 8.1.4. |
 | `usage.thread_windows` | Per-thread summary — `main: {peak_window_tokens, message_count}`, `sub: {message_count}`. See 8.1.4. |
 | `usage.continue_nudges` | How many times the Stop hook vetoed a voluntary yield and told the agent to resume — every class, all with the same continue text (U17). The weak-signal reading belongs to `silent`, `step` and `false_completion` in `hand_back_classes`, not to this total. |
-| `usage.hand_back_classes` | Per-class tally of how the agent handed back: `step` / `silent` / `false_completion`, plus `terminal_completed` / `terminal_mcp_unavailable` for the two gate-False reasons that are **not** agent defects. Counts hand-backs **including the terminal one**, so a hook-terminated run carries one more than `continue_nudges` — but a run killed by a cap or an error never reaches the hook and records no terminal class at all, so this is not universally the larger number. `step` is the retired hand-back line, so 0 on runs since 2026-09-27. See the Continue-nudge note in §6. |
+| `usage.hand_back_classes` | Per-class tally of how the agent handed back: `step` / `silent` / `false_completion`, plus `terminal_completed` / `terminal_mcp_unavailable` / `terminal_ok` for the three gate-False reasons that are **not** agent defects. Counts hand-backs **including the terminal one**, so a hook-terminated run carries one more than `continue_nudges` — but a run killed by a cap or an error never reaches the hook and records no terminal class at all, so this is not universally the larger number. `step` is the retired hand-back line, so 0 on runs since 2026-09-27. See the Continue-nudge note in §6. |
 | `wall_clock_seconds` | Active time: monotonic minus `counted_sleep_seconds` — §6 "Clocks". Alongside `real_clock_seconds`, `slept_seconds`, `counted_sleep_seconds` (sleep the heartbeat counted because monotonic did not leave it out, the Windows case), `judge_seconds`. |
 | `resumes`, `session_id` | §6 "Stall-detect + resume". |
 | `agent_model` | Effective parent model. |
@@ -2342,10 +2344,9 @@ console output is also the artifact stakeholders see.
 
 ## 10. Privacy
 
-All fixtures use deceased-person data only. FamilySearch's terms
-permit this for FS-sponsored work, which covers this project. Each
-fixture's `README.md` states the PID and confirms the person is
-deceased. No additional anonymization for v1.
+All fixtures use deceased-person data only. Each fixture's `README.md`
+states the PID and confirms the person is deceased. No additional
+anonymization for v1.
 
 **This is mechanically enforced, not just a documentation convention.**
 `e2e/author.py`'s `living_gate()` refuses to snapshot a person marked

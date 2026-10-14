@@ -46,6 +46,7 @@ from harness.auth import env_for_sdk, resolve_auth
 from harness.context_policy import (
     OWNED_DECLARATIONS as OWNED_DECLARATION_OWNERS,  # the SHIPPED hook's map, not a copy
     OWNED_FIELDS as OWNED_FIELD_OWNERS,  # the SHIPPED hook's map, not a copy
+    OWNED_CLAIMS as OWNED_CLAIM_ROUTES,  # the SHIPPED hook's map, not a copy
     OWNED_SECTIONS as OWNED_SECTION_OWNERS,  # the SHIPPED hook's map, not a copy
     bare_tool_name as _bare_tool_name,  # re-exported: callers + tests import it from here
     is_subagent_call,
@@ -1117,9 +1118,11 @@ def build_workspace(
     # NOT (it's output-only — verified). This is *a* working effort lever, not
     # the only one: `ClaudeAgentOptions.effort` also works and always has —
     # the SDK's subprocess transport emits `--effort` unconditionally when the
-    # option is set, at every version this repo has pinned. The settings-file
-    # route is kept because it is the one that provably reaches subagents; the
-    # SDK option's subagent propagation is unverified. Do not restate this as
+    # option is set, at every version this repo has pinned. Both reach
+    # subagents: `apps/server/dev/probe_effort_capture.py` read a person-evidence
+    # subagent's request body carrying `medium` under either lever (CLI 2.1.215 and
+    # 2.1.220, 2026-10-12, issue #3263). This harness runs CLI 2.1.139, where subagent
+    # reach is unprobed for either lever. Do not restate this as
     # "the only lever" — that claim shaped a spend decision before it was
     # checked. Session-wide (parent + every subagent that does not pin its own
     # `effort:` — agent frontmatter overrides this, verified live in Cowork and
@@ -2290,10 +2293,12 @@ async def _run_agent(
                 owned_section, _, field = owned.partition(".")
                 agent = OWNED_DECLARATION_OWNERS[(owned_section, field)]
                 text = (
-                    f"`{bare}` denied on `{owned_section}` — declaring a question "
-                    f"exhaustive is routed to the {agent} agent. Creating a question "
-                    "and recording an honest `declared: false` termination are both "
-                    "unaffected; delegate the claim rather than making it here."
+                    f"`{bare}` denied on `{owned_section}` — writing a stop-gate "
+                    f"`stopped_because` value is routed to the {agent} agent. "
+                    "Writing `stopped_because: null` (new question) and non-gate "
+                    "values (`resources_spent`, `blocked_by_conflict`) are both "
+                    "unaffected; delegate the stop-gate claim rather than making "
+                    "it here."
                 )
             elif rule == "owned_field":
                 owned_section, _, field = owned.partition(".")
@@ -2303,6 +2308,15 @@ async def _run_agent(
                     f"routed to the {agent} agent. Every other write to "
                     f"`{owned_section}` is unaffected; delegate this field rather "
                     "than setting it here."
+                )
+            elif rule == "claim":
+                agent = OWNED_CLAIM_ROUTES[owned][0]
+                text = (
+                    f"`{bare}` denied on `{owned}` — recording a conflict's analysis "
+                    f"or resolution is routed to the {agent} agent. Opening a "
+                    "conflict with its required fields, and re-opening one as "
+                    "`unresolved`, are both unaffected; delegate the analysis "
+                    "rather than writing it here."
                 )
             else:
                 text = (
@@ -2572,9 +2586,10 @@ async def _run_agent(
             mcp_unavailable=mcp_state["unavailable"],
         ):
             # Terminal. Count the class only where the stop is a defect — `completed`
-            # is the successful path (134 of 181 committed runs) and `mcp_unavailable`
-            # is infrastructure (#941); attributing either to the agent's hand-back
-            # would make the rate dominated by runs that did the right thing.
+            # is the successful path (134 of 181 committed runs), `mcp_unavailable`
+            # is infrastructure (#941) and `ok` has no project (#3274); attributing any
+            # of them to the agent's hand-back would make the rate dominated by runs
+            # that did the right thing.
             reason = terminal_reason(
                 research=research,
                 nudges_used=continue_nudges["n"],

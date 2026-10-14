@@ -86,7 +86,7 @@ inspected; `validate_research_schema` remains the diagnosis tool.
 | `person_evidence` | `personId` | `person_id` | exact |
 | | `assertionId` | `assertion_id` | exact |
 | `conflicts` | `assertionId` | `competing_assertion_ids` | contains |
-| | `questionId` | `blocks_question_ids` | contains |
+| | `questionId` | `blocks_question_ids`, OR a `competing_assertion_ids` entry whose assertion's `extracted_for_question_ids` contains the value — the link the completion gate derives; any status, so a resolved conflict (whose `blocks_question_ids` is empty) still answers for its question | via assertions |
 | | `status` | `status` | exact |
 | `hypotheses` | `questionId` | `related_question_ids` | contains |
 | | `assertionId` | `supporting_assertion_ids` OR `contradicting_assertion_ids` | contains-either |

@@ -592,6 +592,37 @@ def _explained_by_appends(before_section, after_section) -> bool:
     return len(after_section) > len(before_section)
 
 
+#: The assertion fields any caller may update through `research_append`.
+#: Mirrors CALLER_ASSERTION_FIELDS in research-append.ts; a literal because this
+#: plane is Python. A field added there and not here is refused here, which
+#: fails closed.
+_CALLER_ASSERTION_FIELDS = frozenset({"informant_bias_notes"})
+
+
+def _explained_by_caller_assertion_update(before_section, after_section) -> bool:
+    """True when the only change to `assertions` is caller-writable fields on
+    existing entries — the one assertions write `research_append` accepts from
+    any caller. Same ids, same count, every other field identical.
+    """
+    if not isinstance(before_section, list) or not isinstance(after_section, list):
+        return False
+    if len(before_section) != len(after_section):
+        return False
+    before_by_id = {e.get("id"): e for e in before_section if isinstance(e, dict)}
+    changed = False
+    for e in after_section:
+        old = before_by_id.get(e.get("id")) if isinstance(e, dict) else None
+        if old is None:
+            return False
+        for key in set(old) | set(e):
+            if old.get(key) == e.get(key):
+                continue
+            if key not in _CALLER_ASSERTION_FIELDS:
+                return False
+            changed = True
+    return changed
+
+
 def _explained_by_merge(before_section, after_section, remap: dict[str, str]) -> bool:
     """True when the section's whole delta is the merge's id permutation.
 
@@ -629,7 +660,9 @@ def test_ownership_table(before_state, after_state, skill_frontmatter, test, too
 
     `extraction_append` is the second tool-identity path: it decides roles and
     classifications in code, so which skill calls it does not matter, and it is
-    authorized for appends only (`_explained_by_appends`).
+    authorized for appends only (`_explained_by_appends`). The third is
+    `research_append`'s one caller write to `assertions`, an update of
+    `informant_bias_notes` alone (`_explained_by_caller_assertion_update`).
 
     The merge path is scoped to research.json. `test_tree_ownership_table` does
     NOT take it: the tree rows already list `merge_tree_persons` among their
@@ -713,6 +746,12 @@ def test_ownership_table(before_state, after_state, skill_frontmatter, test, too
             if "extraction_append" in (identity_tools.get(section) or set()) and (
                 "extraction_append" in called
             ) and _explained_by_appends(before.get(section), after.get(section)):
+                continue
+            # research_append: any caller may update an assertion's
+            # caller-writable fields and nothing else.
+            if section == "assertions" and "research_append" in called and (
+                _explained_by_caller_assertion_update(before.get(section), after.get(section))
+            ):
                 continue
             unauthorized.append(section)
 
@@ -1858,9 +1897,9 @@ def test_parent_child_age_plausibility_flagged(before_state, after_state):
     dropped pending issue #1837.
 
     A relationship this flags must carry a `notes[]` entry using inference/
-    uncertainty language (see _UNCERTAINTY_MARKERS) -- the same shape as
-    test_pre1880_census_structure_marked_inferred's marker check, applied to
-    the tree side rather than the search log.
+    uncertainty language (see _UNCERTAINTY_MARKERS) -- the shape the search-log
+    pre-1880 census check had before it moved into research_log_append (issue
+    #3054), applied to the tree side rather than the search log.
     """
     before_tree = before_state.get("tree_gedcomx_json") or before_state.get(
         "tree_gedcomx"

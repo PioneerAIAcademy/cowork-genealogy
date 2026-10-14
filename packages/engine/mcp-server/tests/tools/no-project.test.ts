@@ -278,6 +278,7 @@ describe("a real project directory that cannot be read", () => {
   // access() succeeds and this never reaches the EACCES branch — it would pass
   // whether or not the distinction exists.
   it.skipIf(process.platform === "win32")("stays loud rather than claiming the folder is not a project", async () => {
+    fileStoreOnly("folder permissions have no Postgres meaning");
     await writeResearch();
     await writeTree();
     await chmod(dir, 0o600);
@@ -295,12 +296,14 @@ describe("a real project directory that cannot be read", () => {
 
 describe("a project file that is present but unparseable", () => {
   it("research_query stays loud on invalid research.json", async () => {
+    fileStoreOnly("a document that is not JSON cannot exist in the Postgres store");
     await writeFile(join(dir, "research.json"), "{not json");
     await expectLoud("research_query", CALLS.find((c) => c.tool === "research_query")!.call, dir,
       /research\.json is not valid JSON/);
   });
 
   it("tree_edit stays loud on invalid tree.gedcomx.json", async () => {
+    fileStoreOnly("a document that is not JSON cannot exist in the Postgres store");
     await writeResearch();
     await writeFile(join(dir, "tree.gedcomx.json"), "{not json");
     await expectLoud("tree_edit", CALLS.find((c) => c.tool === "tree_edit")!.call, dir,
@@ -351,6 +354,7 @@ describe("build_external_search_url with projectPath", () => {
 import { readFileSync, existsSync } from "fs";
 import { resolve, relative, dirname } from "path";
 import { allToolSchemas } from "../../src/tool-schemas.js";
+import { fileStoreOnly } from "../helpers/store-backend.js";
 
 /** Modules whose import means the tool reads or writes project files. */
 const PROJECT_MODULES = new Set([
