@@ -188,9 +188,14 @@
   padding: 0.5rem 0.75rem;
   font-size: 0.85rem;
   font-weight: 600;
-  color: var(--color-text-muted, #666);
-  background: var(--color-surface-subtle, #f6f6f6);
-  border-top: 1px solid var(--color-border, #ddd);
+  /* `--color-text-muted`, `--color-surface-subtle` and `--color-border` were never
+     tokens in this theme -- nothing defines them -- so all three `var()`s fell through
+     to their hardcoded LIGHT fallbacks and ignored the theme entirely. In dark mode this
+     row was a near-white bar carrying grey text, which is the one row in the table you
+     could not read. The real tokens carry a dark value too. */
+  color: var(--text-secondary);
+  background: var(--bg-secondary);
+  border-top: 1px solid var(--border-color);
 }
 
 /* The collapsed row's identity line — who/where/when the search was for. Quiet and
@@ -198,7 +203,8 @@
 .entryIdentity {
   display: block;
   font-size: 0.8rem;
-  color: var(--color-text-muted, #666);
+  /* Same undefined token as above: #666 on a #1a1714 background in dark mode. */
+  color: var(--text-secondary);
 }
 
 
