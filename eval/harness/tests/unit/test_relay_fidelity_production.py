@@ -46,7 +46,7 @@ def counts():
 def test_counts_are_exactly_the_hand_count():
     c = counts()
     assert {k: v for k, v in c.items() if k != "window"} == {
-        "logs_seen": 9,
+        "logs_seen": 10,
         "logs_excluded_by_window": 0,
         "excluded_is_error": 1,
         "excluded_no_agent_type": 0,
@@ -56,12 +56,12 @@ def test_counts_are_exactly_the_hand_count():
         "no_main_narration_for_call": 0,
         "logs_too_old_schema": 2,
         "logs_no_narration": 0,
-        "agent_calls": 7,
+        "agent_calls": 9,
         "returns_truncated": 1,
-        "eligible": 3,
-        "exact": 1,
-        "normalized": 1,
-        "dropped": 2,
+        "eligible": 5,
+        "exact": 2,
+        "normalized": 2,
+        "dropped": 3,
     }
 
 
@@ -87,8 +87,8 @@ def test_a_subagents_own_words_are_not_credited_to_the_relay():
     `exact`, crediting the relay with words only the subagent said.
     """
     c = counts()
-    assert c["exact"] == 1, "only 10-00-00 is a real verbatim relay"
-    assert c["dropped"] == 2, "12-00-00 must land here, not in exact"
+    assert c["exact"] == 2, "10-00-00, and 19-00-00's first call"
+    assert c["dropped"] == 3, "12-00-00 must land here, not in exact"
 
 
 def test_an_errored_spawn_is_excluded_first():
@@ -113,13 +113,13 @@ def test_a_return_with_no_final_rule_is_not_scored_against_its_whole_body():
     `dropped`."""
     c = counts()
     assert c["no_tail"] == 1
-    assert c["eligible"] == 3, "the tailless return is not in the denominator"
+    assert c["eligible"] == 5, "the tailless return is not in the denominator"
 
 
 def test_a_log_truncated_return_is_excluded_not_scored():
     c = counts()
     assert c["returns_truncated"] == 1
-    assert c["eligible"] == 3
+    assert c["eligible"] == 5
 
 
 def test_a_non_integer_schema_version_does_not_abort_the_run():
@@ -127,14 +127,14 @@ def test_a_non_integer_schema_version_does_not_abort_the_run():
     parse guard above it states."""
     c = counts()
     assert c["logs_too_old_schema"] == 2, "the v7 log and the 'v8' string one"
-    assert c["logs_seen"] == 9
+    assert c["logs_seen"] == 10
 
 
 def test_sibling_files_are_not_mistaken_for_run_logs():
     """`run-*.json` also matches `run-<ts>.ann.json` and `run-<ts>.final-*.json`.
     Now delegated to `runlog_selection.is_result_json` rather than re-derived;
     the re-derived version reported 611 logs against the real 203."""
-    assert counts()["logs_seen"] == 9
+    assert counts()["logs_seen"] == 10
 
 
 def test_the_window_line_is_reported():
@@ -202,7 +202,7 @@ def test_a_long_return_is_kept_AND_scored_end_to_end():
     assert "[truncated by harness" not in raw
 
     c = counts()
-    assert c["exact"] == 1, "the long return is the one scored verbatim"
+    assert c["exact"] == 2, "the long return is among those scored verbatim"
 
 
 def test_a_slug_filter_narrows_the_corpus():
@@ -210,7 +210,25 @@ def test_a_slug_filter_narrows_the_corpus():
     Without it `make e2e-relay-fidelity TEST=x` silently reported everything."""
     assert rfr.compute_production_counts(
         FIXTURES, cutoff=None, agents_root=AGENTS, test_slug="alpha"
-    )["logs_seen"] == 9
+    )["logs_seen"] == 10
     assert rfr.compute_production_counts(
         FIXTURES, cutoff=None, agents_root=AGENTS, test_slug="no-such-fixture"
     )["logs_seen"] == 0
+
+
+def test_each_call_is_scored_against_its_own_window_not_the_whole_run():
+    """19-00-00: two Agent calls returning the SAME formulaic tail. The main
+    thread relays the first faithfully and says only "All done." after the
+    second.
+
+    Pooling the run's narration scores BOTH `exact` -- 100% verbatim fidelity
+    where the truth is 50% -- because the first relay's words are still in the
+    blob when the second call is scored. Measured at exactly that before the
+    fix. The body says a busy run carries 20-30 Agent calls, so this is the
+    normal shape, not an edge case, and it fails in the direction that HIDES
+    the defect the report exists to find.
+    """
+    c = counts()
+    assert c["agent_calls"] == 9, "the two-call log adds two"
+    assert c["exact"] == 2, "one from 10-00-00, one from 19-00-00's first call"
+    assert c["dropped"] == 3, "19-00-00's second call must land here"

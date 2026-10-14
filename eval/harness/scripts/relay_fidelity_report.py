@@ -88,6 +88,7 @@ from harness.skill_runner import strip_agent_return_trailer  # noqa: E402
 from harness.snapshot import hash_file  # noqa: E402
 from harness.since_window import (  # noqa: E402
     add_since_arg,
+    parse_since,
     describe_window,
     filter_since,
 )
@@ -419,18 +420,34 @@ def compute_production_counts(
         # ABSENCE of `thread`: the nine harness/blocked append sites carry no
         # message and so no tag, and treating untagged as main would fold a
         # subagent's own words into the relay it is being compared against.
-        relay = " ".join(
-            n.get("text") or ""
+        narration = [
+            n
             for n in (data.get("narration") or [])
             if n.get("kind") == "assistant" and n.get("thread") == "main"
-        )
-        if not relay.strip():
+        ]
+        if not any((n.get("text") or "").strip() for n in narration):
             out["logs_no_narration"] += 1
 
-        for call in data.get("tool_calls") or []:
-            if not _is_agent_call(call.get("tool")):
-                continue
+        # Positioned, not pooled. Only prose emitted AFTER this Agent call and
+        # before the next one can be a relay OF it. `tool_calls_before` is a
+        # COUNT: N means the entry sits between tool_calls[N-1] and
+        # tool_calls[N] (e2e-test-spec.md). Pooling the whole run's narration
+        # credits call #7 with words said before call #1, and credits a dropped
+        # second return whenever an earlier call of the same agent type was
+        # relayed faithfully — measured at 100% verbatim on a two-call log whose
+        # true rate is 50%. That is over-credit in the same direction as
+        # crediting a subagent's own words, which the `thread` tag exists to stop.
+        calls = data.get("tool_calls") or []
+        agent_idx = [i for i, c in enumerate(calls) if _is_agent_call(c.get("tool"))]
+        for nth, idx in enumerate(agent_idx):
+            call = calls[idx]
             out["agent_calls"] += 1
+            nxt = agent_idx[nth + 1] if nth + 1 < len(agent_idx) else len(calls)
+            relay = " ".join(
+                n.get("text") or ""
+                for n in narration
+                if idx < (n.get("tool_calls_before") or 0) <= nxt
+            )
 
             # FIRST, as the unit arm does: an errored spawn's text is the
             # harness's own denial, not the agent's. Charging the relay for a
@@ -648,6 +665,15 @@ def main() -> int:
     )
     add_since_arg(parser)
     args = parser.parse_args()
+    # Compare against the CONVERTED default, not the raw one: `add_since_arg`
+    # runs its string default through `parse_since`, so `args.since` is a date
+    # and `get_default("since")` is still "14" — they never compare equal, and
+    # a naive check fires on every bare invocation.
+    since_supplied = args.since != parse_since(parser.get_default("since"))
+    if (args.test or since_supplied) and not args.production:
+        # Accepting a flag and ignoring it is the "exit 0 having done nothing"
+        # shape this PR exists to remove, not to add.
+        parser.error("--test and --since apply to --production only")
 
     if args.production:
         counts = compute_production_counts(
