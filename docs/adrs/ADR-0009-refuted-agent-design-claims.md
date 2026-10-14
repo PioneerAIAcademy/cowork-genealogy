@@ -10,7 +10,9 @@
 
 - **Status:** Accepted
 - **Decided:** 2026-08-09
-- **Last updated:** 2026-09-11 (added the acquisition-seam section — three
+- **Last updated:** 2026-10-12 (constraint 5's reason restated: a thin tree
+  person, not a missing ARK, is what scores near zero; issue #1529). Previously
+  2026-09-11 (added the acquisition-seam section — three
   claims refuted while deciding where image reading belongs). Previously
   2026-08-31 (added the issue #1344 section — four claims about
   `gps-mentor`'s never-called wiki tools, including the two tidy explanations a
@@ -279,8 +281,11 @@ a graduation, must satisfy all six:
 4. **Batch semantics.** Keep `proofSummaryInvariants`' pre-call-state discipline
    (`docs/specs/guardrail-enforcement-spec.md` §5, "Prefer this shape") with
    defined handling for an assertion and its link arriving in one batch.
-5. **Demand the call, not a score threshold.** An ark-less stub legitimately
-   returns a degenerate score the skill must treat as *no score*.
+5. **Demand the call, not a score threshold.** A thin tree person — one name
+   and one fact — legitimately scores near zero against everything, because the
+   match engine scores on document content (`same-person-flynn-degenerate`), so
+   a threshold would block a correct link. Having no FamilySearch ARK is not such
+   a case: the person is still scored on content (constraint 6's probe).
 6. **Satisfiability.** State **which call shape satisfies the gate, and how often
    agents actually produce that shape.** A constraint an agent cannot practically
    meet is a denial of service, not a guardrail — and none of constraints 1–5
