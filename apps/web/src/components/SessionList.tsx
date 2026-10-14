@@ -60,7 +60,13 @@ export default function SessionList({
   const remove = async (id: string, e: React.MouseEvent): Promise<void> => {
     e.stopPropagation()
     if (!confirm('Delete this session and its sandbox? This cannot be undone.')) return
-    await api.deleteSession(id)
+    setError(null)
+    try {
+      await api.deleteSession(id)
+    } catch (err) {
+      setError(err instanceof ApiError ? err.message : 'Failed to delete session')
+      return
+    }
     void load()
   }
 
@@ -130,6 +136,12 @@ export default function SessionList({
                 <div className="sessionCardTitle">{s.title}</div>
                 <div className="sessionCardMeta">
                   <span className="pill">{s.model.replace('claude-', '')}</span>
+                  {/* Strictly false: the prototype omits the field, and absent is not ended. */}
+                  {s.continuable === false && (
+                    <span className="pill pillEnded" title="More than 24 hours old: you can read it, but not continue it">
+                      ended
+                    </span>
+                  )}
                   <span className="muted">active {relativeTime(s.last_active)}</span>
                 </div>
                 <button

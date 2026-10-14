@@ -734,8 +734,9 @@ derivation.
 Eval harness: registered as a `LIVE_TOOL` in `mock_mcp.py` (calling the
 compiled `build/**` output directly, same as `convert_calendar`) rather than
 fixture-mocked — a canned fixture would supply the exact URL string the eval
-exists to measure. `check_tool_coverage.py`'s `EXEMPT_TOOLS` carries the same
-justification `convert_calendar` does. The harness rebases a `projectPath` the
+exists to measure. **Updated 2026-10-12:** `check_tool_coverage.py` no longer
+carries either entry by hand — both were deleted when the exemption became derived
+from `mock_mcp.LIVE_TOOLS`, which covers every live tool and cannot drift from it. The harness rebases a `projectPath` the
 agent sent onto the workspace and never adds one (`_OPTIONAL_PROJECT_PATH_TOOLS`
 in `mock_mcp.py`): production does not supply it on the model's behalf, and an
 injected one would write a hand-off entry the agent never asked for. `replay.py`

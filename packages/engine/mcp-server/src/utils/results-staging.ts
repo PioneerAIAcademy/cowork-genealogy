@@ -13,7 +13,7 @@
 import { join, resolve, dirname } from "path";
 import { randomUUID } from "node:crypto";
 import { getProjectStore } from "../store/project-store.js";
-import { isInsideProject, assertInsideProject, readProjectJson } from "./project-io.js";
+import { isInsideProject, assertInsideProject, projectRelativeRef, readProjectJson } from "./project-io.js";
 
 /** The mandatory staging subdirectory. Invisible to the validator orphan check
  *  (which scans results/ non-recursively for top-level *.json). */
@@ -166,6 +166,7 @@ export async function checkStagedResults(args: {
       `stagedResultsRef '${stagedResultsRef}' is not inside ${STAGING_SUBDIR}/`,
     );
   }
+  const ref = projectRelativeRef(projectPath, stagedResultsRef);
 
   // 2. Read the staged envelope. A missing file is the common case (the ref was
   //    already logged, pruned, or never staged) and gets a message saying which
@@ -173,11 +174,11 @@ export async function checkStagedResults(args: {
   let envelope: StagingEnvelope;
   let text: string;
   try {
-    text = await store.readText(projectPath, stagedResultsRef);
+    text = await store.readText(projectPath, ref);
   } catch (e) {
     // Only an absent file gets the "logged once" advice; a store fault reading a
     // file that is there must not tell the agent to re-run a search it already has.
-    if (await store.exists(projectPath, stagedResultsRef)) {
+    if (await store.exists(projectPath, ref)) {
       throw new Error(
         `stagedResultsRef '${stagedResultsRef}' could not be read: ` +
           (e instanceof Error ? e.message : String(e)),
@@ -280,7 +281,7 @@ export async function consumeStagedResults(
 ): Promise<void> {
   const store = getProjectStore();
   for (const ref of stagedResultsRefs) {
-    await store.remove(projectPath, ref);
+    await store.remove(projectPath, projectRelativeRef(projectPath, ref));
   }
 }
 
@@ -317,7 +318,9 @@ export async function readStagedEnvelopeQuery(
   try {
     const abs = assertInsideProject(projectPath, stagedResultsRef);
     if (!isInsideProject(join(projectPath, STAGING_SUBDIR), abs)) return undefined;
-    const envelope = JSON.parse(await getProjectStore().readText(projectPath, stagedResultsRef));
+    const envelope = JSON.parse(
+      await getProjectStore().readText(projectPath, projectRelativeRef(projectPath, stagedResultsRef)),
+    );
     if (typeof envelope?.tool !== "string") return undefined;
     return { tool: envelope.tool, query: stripQueryPlumbing(envelope.payload?.query) };
   } catch {
@@ -645,7 +648,9 @@ export async function readStagedResults(
   }
   let envelope: { payload?: { results?: unknown[] } };
   try {
-    envelope = JSON.parse(await getProjectStore().readText(projectPath, stagedResultsRef));
+    envelope = JSON.parse(
+      await getProjectStore().readText(projectPath, projectRelativeRef(projectPath, stagedResultsRef)),
+    );
   } catch {
     throw new Error(
       `stagedResultsRef '${stagedResultsRef}' does not exist or is invalid JSON.`,

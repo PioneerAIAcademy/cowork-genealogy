@@ -19,6 +19,7 @@ allowed-tools:
   - research_query
   - place_search
   - place_search_all
+  - person_read
   - wiki_read
   - research_append
 ---
@@ -57,6 +58,7 @@ subject triggers** (Step 3 pre-work) and **write the plan**:
 | `project_context`, `research_query`, `external_links_search` | FS-curated third-party collections, stored per place (Step 2(b)) |
 | `place_search` | Resolve a place name to its canonical `standardPlace` + hierarchy, for writing plan items |
 | `place_search_all` | Jurisdiction succession over time — the boundary-correct jurisdiction at the event date |
+| `person_read` | The question person's FamilySearch profile — relatives, facts and attached sources the project tree lacks |
 | `wiki_read` | One FamilySearch wiki record-type page by constructed URL, for the Step 3 pre-work triggers only |
 | `research_append` | Write `plans` / `plan_items` (assigns ids, validates, enforces the one-active-plan invariant) |
 
@@ -90,28 +92,39 @@ check whether starting-point facts are documented or merely assumed.
 Flag unsupported assumptions (e.g., "widow = mother of all children")
 and add plan items to verify them before relying on them.
 
-**Survey what's already attached, before planning new searches.** For
-the subject and every other person in scope for this question, check
-`tree.gedcomx.json` for the source(s) already attached to their facts
-and relationships. For every one you find, **write down its date,
-place, and value before deciding what to plan for that person** —
+**Read the question person's FamilySearch profile first.** For each
+person the question is about whose tree entry has an `ark`, call
+`person_read({ personId, projectPath })` with the id after the ark's last `:`, before
+writing any plan item. Whatever it holds that the project tree lacks —
+parents, spouses, facts, attached sources — is a lead: state it in the
+rationale and plan items that test it, never searches that treat it as
+unknown. Say "project tree" or "FamilySearch tree" when saying something is
+missing. If the call fails, say so and plan from the tree.
+
+**Survey what the tree already holds, before planning new searches.** For
+the subject and every other person in scope for this question, read
+`tree.gedcomx.json` for the facts, relationships and person-level
+`sources` it already records for them — **every fact, whether or not a
+source is attached to it.** For every one you find, **write down its date,
+place, and value (for a source, what it records) before deciding what to
+plan for that person** —
 literally state what the fact records, in the plan's rationale,
-before the plan item. "Person X already has a source attached" is
-noticing it exists; it is not the survey. Neither is "review this
+before the plan item. "Person X is already in the tree" is
+noticing they exist; it is not the survey. Neither is "review this
 first" as a note to yourself for later — if you wrote that, go read it
 now, in this same pass, before the plan item for that person, not as a
 deferred step folded into the new item's own rationale.
 
 Two things a real read of the content catches that noticing a
-source's existence does not: a plan item that re-requests a record
-type already covered by an attached source, and a detail already
-sitting on an attached source — a stated residence, a death date, a
+fact's existence does not: a plan item that re-requests a record
+type the tree already documents, and a detail already
+sitting on a recorded fact — a stated residence, a death date, a
 place named in passing — that bears on the question even though it
-isn't what that source was originally cited for. If the survey itself
+isn't what that fact was originally recorded for. If the survey itself
 answers part of the question or changes what still needs searching,
 say so in the plan's rationale, stating the fact's content, rather
 than silently planning around it — and rather than planning a new
-search for something an already-attached fact already states.
+search for something a fact the tree already holds already states.
 
 ### 1a. Decide the planning mode
 
@@ -438,7 +451,7 @@ you are about to write:
 6. If no baptism can be expected (Step 3), is there an item for the
    **subject's own** death or burial entry, dated after the birth window
    and placed in the parish where the subject last lived — not a parent's,
-   a spouse's or a child's?
+   a spouse's or a child's? A marriage item does not answer this one.
 If any answer is no, add the missing item(s) now, before Step 5 — not as
 a revision after being asked. A plan that hits the size range above while
 staying narrow in record-type diversity is not reasonably exhaustive.

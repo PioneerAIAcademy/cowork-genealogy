@@ -160,6 +160,56 @@ def test_predicate_match_dispatches_to_matching_fixture():
         assert call_log[1]["expected_args"] == {"args.q": "Iowa"}
 
 
+def test_is_error_fixture_sets_is_error_only_on_its_own_match():
+    """A fixture marked `is_error` answers with the flag production's catch arms
+    set on a thrown error; a sibling fixture of the same tool, unmarked, does not."""
+    with tempfile.TemporaryDirectory() as tmp:
+        tmp = Path(tmp)
+        (tmp / "refused.json").write_text(json.dumps({
+            "tool": "image_transcribe",
+            "args": {"imageId": "004452257_00021"},
+            "is_error": True,
+            "response": {"error": "Image cap reached: ..."},
+        }), encoding="utf-8")
+        (tmp / "ok.json").write_text(json.dumps({
+            "tool": "image_transcribe",
+            "args": {"imageId": "~"},
+            "response": {"transcription": "page text"},
+        }), encoding="utf-8")
+        server, call_log, tools_by_name = create_mock_server(["refused", "ok"], tmp)
+        refused = _invoke(tools_by_name, "image_transcribe", {"imageId": "004452257_00021"})
+        assert refused.get("is_error") is True
+        assert _extract_response_dict(refused) == {"error": "Image cap reached: ..."}
+        ok = _invoke(tools_by_name, "image_transcribe", {"imageId": "004452257_00001"})
+        assert "is_error" not in ok
+
+
+def test_error_fixture_without_the_flag_keeps_its_old_envelope():
+    """Opt-in: an unmarked `{error}` fixture still answers with no flag."""
+    server, call_log, tools_by_name = create_mock_server(
+        ["wikipedia-search-hollow-creek-error"], FIXTURES_DIR
+    )
+    result = _invoke(tools_by_name, "wikipedia_search", {"query": "Hollow Creek"})
+    assert "error" in _extract_response_dict(result)
+    assert "is_error" not in result
+
+
+@pytest.mark.parametrize("fixture, why", [
+    ({"is_error": "true", "response": {"error": "x"}}, "must be a boolean"),
+    ({"is_error": True, "response": {"error": "x", "code": 1}}, "exactly"),
+    ({"is_error": True, "response": {"transcription": "x"}}, "exactly"),
+    ({"is_error": True, "response": {"error": 503}}, "exactly"),
+])
+def test_is_error_fixture_must_carry_the_thrown_error_envelope(fixture, why):
+    with tempfile.TemporaryDirectory() as tmp:
+        tmp = Path(tmp)
+        (tmp / "bad.json").write_text(json.dumps({
+            "tool": "image_transcribe", "args": {"imageId": "~"}, **fixture,
+        }), encoding="utf-8")
+        with pytest.raises(InvalidFixtureError, match=why):
+            create_mock_server(["bad"], tmp)
+
+
 def test_unmatched_call_returns_fixture_not_found_error():
     with tempfile.TemporaryDirectory() as tmp:
         tmp = Path(tmp)
