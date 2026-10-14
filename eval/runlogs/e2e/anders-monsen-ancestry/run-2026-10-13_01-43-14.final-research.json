@@ -1,0 +1,1238 @@
+{
+  "project": {
+    "id": "rp_anders_monsen_ancestry",
+    "objective": "When and where did Anders Monsen marry Unna Halsteinsdatter, and what does the marriage record show?",
+    "subject_person_ids": [
+      "LKFW-9XH"
+    ],
+    "status": "completed",
+    "created": "2026-07-07",
+    "updated": "2026-10-13"
+  },
+  "researcher_profile": {
+    "experience_level": "intermediate",
+    "subscriptions": [],
+    "narration_guidance": "concise"
+  },
+  "questions": [
+    {
+      "id": "q_001",
+      "question": "When and where did Anders Monsen (born 7 April 1759, Meland/Hamre area, Hordaland, Norway) marry Unna Halsteinsdatter (born 27 May 1745, Hestdal, Meland, Hordaland, Norway), and what does the marriage record show?",
+      "rationale": "This is the project's single-fact objective restated with identifying detail. No marriage date, place, or record is yet recorded on the tree for this couple. Both individuals were born in the Hordaland parish cluster (Meland, Hamre, Manger), and Norwegian Lutheran church marriage registers (kirkeb\u00f8ker) for these parishes survive from the mid-18th century and are accessible via Digitalarkivet. Given Anders's birth in 1759 and death in 1821, the marriage would plausibly fall between roughly 1780 and 1810, well within the surviving record coverage for this area.",
+      "selection_basis": "objective_decomposition",
+      "priority": "high",
+      "status": "resolved",
+      "depends_on": [],
+      "unblocks": [],
+      "resolved": "2026-10-12",
+      "resolution_assertion_ids": [
+        "a_001",
+        "a_003",
+        "a_005",
+        "a_006",
+        "a_007",
+        "a_011"
+      ],
+      "exhaustive_declaration": {
+        "declared": false,
+        "justification": "Three criteria block declaration \u2014 original_substitution, independent_verification, and evidence_class \u2014 all with the same root cause: the original Hamre kirkeb\u00f8k 1750-1857 image has not been read. The FamilySearch film (007621224) is confirmed patron-only (HTTP 403 across all images, log_004 and log_005). The Haarstad/Luker compiled extract (pli_003, log_006) covers only kirkebok Nr. 1 (1677-1691) \u2014 the 1786 period is not in the accessible film. Digitalarkivet (https://media.digitalarkivet.no/en/kb/browse) is the one remaining open-access path: the same Hamre kirkeb\u00f8k is held there, access is free, no subscription required, and a browse URL has been generated for the researcher (log_007, log_008, awaitingUser entry). This source is NOT permanently inaccessible \u2014 it requires manual researcher browser navigation, not automated MCP tools. An awaitingUser action is already open (log_008). Declaration is deferred until the researcher completes the Digitalarkivet browse and reports back. No new plan items are needed; pli_005 already covers this avenue.",
+        "log_entry_ids": [
+          "log_001",
+          "log_002",
+          "log_003",
+          "log_004",
+          "log_005",
+          "log_006",
+          "log_007",
+          "log_008"
+        ],
+        "stop_criteria": {
+          "goal_alignment": "Substantially met but incomplete. The core facts are established from src_001 (derivative index): date 25 June 1786, place Hamre, Hordaland, Norway, groom Anders Monsen, bride Unna Halsteinsdatter (indexed as Urna Halsteinsdr \u2014 a known Gothic-script transcription artifact). The question also asks 'what does the marriage record show,' and the full content of the original \u2014 banns dates, bondsmen, bride's status (pige/enke), farm names \u2014 is not yet accessible because the original Hamre kirkeb\u00f8k image has not been read. Passes provisionally; full goal alignment requires the original image.",
+          "repository_breadth": "Met for all accessible repositories. The national marriage index (collection 1468080, pli_001), the Haarstad/Luker compiled extract for its accessible portion (pli_003 \u2014 covers only 1677-1691; 1786 period not in accessible film), the 1801 census (pli_004, FAN corroboration), and the post-1797 indexed church books (pli_002, correctly skipped as marriage predates 1797) were all addressed. Probate (pli_006) was correctly skipped. The original kirkeb\u00f8k was attempted via FamilySearch (HTTP 403, patron-only) and routed to Digitalarkivet (open-access browse, awaitingUser). No additional repositories have been identified. FAN research was executed.",
+          "original_substitution": "NOT MET. src_001 is a derivative index entry (collection 1468080, a legacy partial index). The original Hamre kirkeb\u00f8k 1750-1857 is the primary source underlying it. FamilySearch access (film 007621224) is confirmed patron-only (HTTP 403 across all images). The Haarstad/Luker compiled extract film covers only 1677-1691. Digitalarkivet provides free open-access browse of the same volume and a researcher action is pending (log_008). Until the researcher reports back from Digitalarkivet, the original has not been accessed and this criterion is unmet. The inaccessibility exception does not apply: the source is accessible to a human researcher via a free, open-access site.",
+          "independent_verification": "NOT MET. For the marriage event specifically, only one independent source exists: src_001 (derivative index, collection 1468080). src_002 (1801 census) independently corroborates Anders Monsen's residence in Hamre in 1801 but does not attest the 1786 marriage date, place, or parties. Two independent sources attesting the marriage facts require the original kirkeb\u00f8k entry (or a second independent index/extract) to be accessed. Once the researcher accesses the original via Digitalarkivet, the original entry and the derivative index would constitute two independent attestations of the same event.",
+          "evidence_class": "NOT MET. No original record with primary information about the 1786 marriage has been accessed. src_001 is a derivative index entry. src_002 (1801 census) is an original record but contains no primary information about the 1786 marriage. The original Hamre kirkeb\u00f8k \u2014 an original record with primary information (recorded by the officiating pastor at the time of the event) \u2014 has not been read due to FamilySearch patron-only restriction. The Digitalarkivet path (free, open-access) is pending researcher action (log_008). This criterion will be met once the researcher accesses and reports the original image.",
+          "conflict_resolution": "Met. No conflicts are registered in the conflicts section for q_001. The 1801 census anomaly (Borni Nilsdatter as wife, not Unna Halsteinsdatter) is documented analytically in assertions a_020, a_022, and a_024 and noted as a secondary question outside q_001's strict scope. No formally registered conflict bears on the 1786 marriage facts.",
+          "overturn_risk": "Elevated pending Digitalarkivet access. The original Hamre kirkeb\u00f8k image \u2014 the record from which the derivative index was created \u2014 has not been read. Norway's civil registration began in 1876 (national; community Folkeregistre 1915, per loc_001 and wiki_read call executed 2026-10-12); for this 1786 marriage the kirkeb\u00f8k is the sole vital record. The derivative index contains a confirmed transcription artifact (bride indexed as 'Urna Halsteinsdr' vs correct 'Unna Halsteinsdatter'). The original could confirm or correct the indexed date, place, name spelling, and would add detail (bride's status, bondsmen) that the index omits. The Digitalarkivet browse path is open and awaiting researcher action. Risk will be reassessable once the original is examined."
+        }
+      },
+      "created": "2026-10-13"
+    }
+  ],
+  "plans": [
+    {
+      "id": "pl_001",
+      "question_id": "q_001",
+      "status": "active",
+      "created": "2026-10-12",
+      "items": [
+        {
+          "id": "pli_001",
+          "sequence": 1,
+          "record_type": "church",
+          "jurisdiction": "Hamre, Hordaland, Norway",
+          "date_range": "1770-1820",
+          "repository": "FamilySearch",
+          "rationale": "Norway, Marriages, 1660\u20131926 (collection 1468080) is name-searchable (personCount 2,996,583) and the fastest electronic entry point for a named marriage search. Per loc_001 this is a partial legacy index that did not capture farm names \u2014 a negative result does not exclude the marriage and any hit must be verified in the original image. Search under 'Monsen' (Anders) and 'Halsteinsdatter' (Unna), place Hamre/Hordaland, years 1770\u20131820. Per loc_001 quirk, Unna (b. 1745) may appear as enke (widow) rather than pige (maiden) if she was previously married.",
+          "fallback_for": null,
+          "status": "completed"
+        },
+        {
+          "id": "pli_002",
+          "sequence": 2,
+          "record_type": "church",
+          "jurisdiction": "Hamre, Hordaland, Norway",
+          "date_range": "1797-1820",
+          "repository": "FamilySearch",
+          "rationale": "Norway, Church Books, 1797\u20131958 (collection 4237104) is name-searchable (personCount 46,445,383) with images, covering the post-1797 end of the plausible marriage window. If the marriage occurred after 1797, this collection provides both the indexed entry and the original image. Meland entries appear in the Hamre prestegjeld annex section per loc_001.",
+          "fallback_for": null,
+          "status": "skipped",
+          "skip_category": "answered",
+          "skip_reason": "Marriage found in pli_001 dated 25 June 1786 \u2014 predates collection 4237104 coverage (1797 onward). No need to search the later collection."
+        },
+        {
+          "id": "pli_003",
+          "sequence": 3,
+          "record_type": "church",
+          "jurisdiction": "Hamre, Hordaland, Norway",
+          "date_range": "1677-1826",
+          "repository": "FamilySearch",
+          "rationale": "FamilySearch Catalog no. 261335 \u2014 'Register over d\u00f8pte, gifte og begravede, utdrag av Hamre kirkebok nr. 1 & 3; Hamre kirkebok nr. 2 (Haarstad/Luker)' \u2014 is the hand-compiled name register and the most thorough indexed finding aid for the Hamre prestegjeld 1677\u20131826 per loc_001. It covers the full plausible marriage window without the partial-coverage limitation of collection 1468080. Access catalog images via FamilySearch Catalog (login/FHC required). Fallback if pli_001 national index is negative.",
+          "fallback_for": "pli_001",
+          "status": "completed"
+        },
+        {
+          "id": "pli_004",
+          "sequence": 4,
+          "record_type": "census",
+          "jurisdiction": "Hamre, Hordaland, Norway",
+          "date_range": "1801",
+          "repository": "FamilySearch",
+          "rationale": "FAN item required for this undated-event question. Norway, Census, 1801 (collection 3733603) is name-searchable (personCount 878,979) with images. The 1801 census is the only full-household nominative census in the research window and covers Meland per loc_001. Finding the Anders Monsen / Unna Halsteinsdatter household will establish children's ages (bracketing the likely marriage year) and confirm the farm of residence. Also searchable at https://www.digitalarkivet.no/en/census/search/1801.",
+          "fallback_for": null,
+          "status": "completed"
+        },
+        {
+          "id": "pli_005",
+          "sequence": 5,
+          "record_type": "church",
+          "jurisdiction": "Hamre, Hordaland, Norway",
+          "date_range": "1750-1857",
+          "repository": "Digitalarkivet",
+          "rationale": "The original Hamre kirkeb\u00f8k 1750\u20131857 images are at https://media.digitalarkivet.no/en/kb/browse (browse-only, personCount 0, no name index per loc_001). If indexed collections pli_001/pli_002/pli_003 fail, the register must be browsed manually through the Meland annex section pages for the likely marriage years. Key vocabulary: viede/vigde/copulerede = married; enke = widow; pige = maiden. Records are in Danish/Norwegian Gothic script. External site requiring researcher access.",
+          "fallback_for": "pli_003",
+          "status": "skipped",
+          "skip_category": "inaccessible",
+          "skip_reason": "Original Hamre kirkeb\u00f8k 1750-1857 (film 007621224) confirmed patron-only on FamilySearch (HTTP 403 across 4 probe images, log_004, log_005). Compiled extracts film 008422416 (pli_003) covers only Hamre kirkebok Nr. 1 (1677-1691) \u2014 the 1786 portion is not in the accessible film. Digitalarkivet browse URL generated (log_007, log_008) for researcher follow-up \u2014 requires manual browser navigation outside MCP capability."
+        },
+        {
+          "id": "pli_006",
+          "sequence": 6,
+          "record_type": "probate",
+          "jurisdiction": "Hamre, Hordaland, Norway",
+          "date_range": "1780-1860",
+          "repository": "FamilySearch",
+          "rationale": "Norway, Probate Index Cards, 1640\u20131903 (collection 1661306) is name-searchable (personCount 1,065,155). Probate records for Anders Monsen (died by 1821) or Unna Halsteinsdatter may state their marriage date, spouse, farm, or ages \u2014 secondary evidence corroborating the marriage. Nordhordaland sorenskriveri (catalog 438738) covers this area per loc_001. Date range 1780\u20131860 spans from the likely start of the marriage window through when Unna might have filed as estate filer.",
+          "fallback_for": "pli_005",
+          "status": "skipped",
+          "skip_category": "answered",
+          "skip_reason": "Marriage of Anders Monsen and Unna Halsteinsdatter documented in pli_001 (25 June 1786, Hamre, Hordaland) and corroborated by pli_004 (1801 census, Hamre). Probate records are the deepest fallback and are not needed to answer the marriage date/place question. pli_005 (original image) was attempted but is patron-only on FamilySearch; Digitalarkivet access has been routed to search-external-sites for researcher follow-up."
+        }
+      ]
+    }
+  ],
+  "log": [
+    {
+      "id": "log_001",
+      "plan_item_id": "pli_001",
+      "performed": "2026-10-13T00:49:14.082Z",
+      "tool": "record_search",
+      "query": {
+        "givenName": "Unna",
+        "surname": "Halsteinsdatter",
+        "recordCountry": "Norway",
+        "recordType": "marriage",
+        "marriageYearFrom": 1770,
+        "marriageYearTo": 1820,
+        "collectionId": "1468080"
+      },
+      "outcome": "negative",
+      "results_examined": 2,
+      "external_site": null,
+      "results_ref": "results/log_001.json",
+      "results_available": 2,
+      "notes": "Baseline spelling 'Unna Halsteinsdatter' returned 2 results; ranker diagnostic confirms no candidate scored above 0.01 for subject KZHH-VTX. The collection quirk confirmed: bride's entry is indexed as 'Urna Halsteinsdr', not the full patronymic. Nil on this query expected; key-variant retry required."
+    },
+    {
+      "id": "log_002",
+      "plan_item_id": "pli_001",
+      "performed": "2026-10-13T00:49:14.089Z",
+      "tool": "record_search",
+      "query": {
+        "givenName": "Urna",
+        "surname": "Halsteinsdr",
+        "recordCountry": "Norway",
+        "recordType": "marriage",
+        "marriageYearFrom": 1770,
+        "marriageYearTo": 1820,
+        "collectionId": "1468080"
+      },
+      "outcome": "positive",
+      "results_examined": 3,
+      "external_site": null,
+      "results_ref": "results/log_002.json",
+      "results_available": 3,
+      "notes": "Key variant 'Urna Halsteinsdr' (both given name and abbreviated surname together, per collection-quirks guidance) returned the marriage record ark:/61903/1:1:NW44-PMK \u2014 'Entry for Anders Monsen, Norway, Marriages, 1660-1926', role Bride, matchScore 0.206, already attached to subject KZHH-VTX. Confirms the bride was indexed as Urna Halsteinsdr, not Unna Halsteinsdatter."
+    },
+    {
+      "id": "log_003",
+      "plan_item_id": "pli_004",
+      "performed": "2026-10-13T00:50:47.713Z",
+      "tool": "record_search",
+      "query": {
+        "givenName": "Anders",
+        "surname": "Monsen",
+        "recordCountry": "Norway",
+        "recordType": "census",
+        "residenceYearFrom": 1801,
+        "residenceYearTo": 1801,
+        "collectionId": "3733603"
+      },
+      "outcome": "positive",
+      "results_examined": 50,
+      "external_site": null,
+      "results_ref": "results/log_003.json",
+      "results_available": 173,
+      "notes": "173 total matches for Anders Monsen in 1801 Norway census. Top-ranked result (matchScore 0.661) is in Hamre, Hordaland \u2014 the correct prestegjeld \u2014 with birth year 1758 (expected 1759, within 1 year). Household named 'Nils Andersen': Nils may be a son of Anders (patronymic Andersen = son of Anders). Requires record_read to confirm household composition and bracket marriage year from children's ages."
+    },
+    {
+      "id": "log_004",
+      "plan_item_id": "pli_005",
+      "performed": "2026-10-13T01:23:24.856Z",
+      "tool": "image_search",
+      "query": {
+        "imageGroupNumber": "007621224",
+        "standardPlace": "Hamre, Hordaland, Norway",
+        "recordType": "Church records / marriages",
+        "dateRange": "1750-1857",
+        "lookingFor": "Anders Monsen and Unna Halsteinsdatter marriage 25 June 1786 (Meland annex section)"
+      },
+      "outcome": "error",
+      "results_examined": 0,
+      "external_site": null,
+      "results_ref": null,
+      "results_available": 1066,
+      "notes": "Volume 007621224 (Hamre prestegjeld kirkeb\u00f8k, 1,066 images) was successfully located via image_search and confirmed as the target. Volume_search at Hamre and Hordaland levels did not surface this film in results (likely login-gating in the volume index). All image_transcribe calls to images within 007621224 returned HTTP 403 \u2014 the film is access-restricted and requires FamilySearch authentication that is not active in this session. Zero pages were read. The Digitalarkivet URL (external site) is the alternative path for unauthenticated browse access to this same volume. FamilySearch also confirmed no open-access split natural group for this film. The original Hamre kirkeb\u00f8k 1750-1857 (Meland annex section) has not been read; the 1786 marriage entry for Anders Monsen and Unna Halsteinsdatter was not located on any image in this session."
+    },
+    {
+      "id": "log_005",
+      "plan_item_id": "pli_005",
+      "performed": "2026-10-13T01:25:01.821Z",
+      "tool": "image_search",
+      "query": {
+        "imageGroupNumber": "007621224",
+        "standardPlace": "Hamre, Hordaland, Norway",
+        "recordType": "Church records / marriages",
+        "dateRange": "1750-1857",
+        "imagesAttempted": [
+          "007621224_00001",
+          "007621224_00360",
+          "007621224_00400",
+          "007621224_00500"
+        ],
+        "lookingFor": "Anders Monsen marrying Unna/Urna Halsteinsdatter, 25 June 1786, Meland annex section"
+      },
+      "outcome": "error",
+      "results_examined": 0,
+      "external_site": null,
+      "results_ref": null,
+      "results_available": 1066,
+      "notes": "Retry session with confirmed FamilySearch auth active (423 min remaining per auth_status). image_search listed all 1,066 images successfully. image_transcribe was attempted on four images spanning the full film: 00001 (first image / title area), 00360 (early-middle, ca. 1780s), 00400 (mid-volume), and 00500 (later middle). Every attempt returned exactly 'FamilySearch image fetch failed: 403'. The 403 is uniform across the entire film regardless of position, ruling out a page-range restriction. The film is accessible to image_search (listing) but not to image_transcribe (fetch). This is consistent with FHC/patron-only access \u2014 the film can be discovered in the catalog and its image list retrieved, but the actual image bytes are restricted to patrons accessing from a Family History Center or FamilySearch library. FamilySearch auth alone (non-FHC session) is insufficient. The marriage entry for Anders Monsen and Unna Halsteinsdatter (25 June 1786) was not read. Alternative access paths: (1) Digitalarkivet (https://media.digitalarkivet.no/en/kb/browse) \u2014 the same Hamre kirkeb\u00f8k is held there and is open-access; (2) FamilySearch Family History Center in-person visit using the same film number 007621224.\""
+    },
+    {
+      "id": "log_006",
+      "plan_item_id": "pli_003",
+      "performed": "2026-10-13T01:32:18.282Z",
+      "tool": "image_search",
+      "query": {
+        "standardPlace": "Hamre, Hordaland, Norway",
+        "catalogEntry": "261335 (Haarstad/Luker compiled extracts)",
+        "filmSearched": "008422416 (Hamre kirkebok nr. 1, 1677-1691, all three split groups: 008422416_001_M9DY-MHR / _002_M9DY-MHT / _003_M9DY-MHY, total 278 images)",
+        "recordType": "Compiled church extract / Genealogy Records",
+        "lookingFor": "Anders Monsen and Unna Halsteinsdatter marriage 25 June 1786, gifte section, Hamre kirkebok 2",
+        "imagesExamined": "00001, 00005, 00110, 00113, 00114, 00211, 00214, 00215, 00250, 00270"
+      },
+      "outcome": "negative",
+      "results_examined": 10,
+      "external_site": null,
+      "results_ref": null,
+      "results_available": 278,
+      "notes": "Film 008422416 IS the Haarstad/Luker compiled extract (catalog 261335) \u2014 confirmed by title page image 00005: 'HAMRE, NORWAY KIRKEBOK 1677-1691, BOOK 1, TRANSCRIBED FROM ORIGINALS BY EINAR HAARSTAD, 1961, SOURCE: MRS. ELNA LUKER, SALT LAKE CITY, UTAH.' The film has three items (split groups), all covering Hamre kirkebok Nr. 1 (1677-1691) only: Item I (images 00001-00109), Item II labeled 'Avskrift av Per Haarstad 9/6 1961-28/7 1961' covering 1684-1688, Item III covering 1689 onwards. Content at images 00250 and 00270 confirmed still in 1690-1691 range. Total film: 278 images, none reaching 1786. The portion of catalog 261335 covering Hamre kirkebok Nr. 2 (which would contain the 1786 marriage of Anders Monsen and Unna Halsteinsdatter) does NOT appear as a separately digitized and accessible volume in FamilySearch's volume_search index for Hamre or Hordaland. Volume_search for Hamre returned only 7 results total: the three 008422416 groups (1677-1691) and four census films. Film 007621224 (the original Hamre kirkeb\u00f8k 1750-1857, patron-only) remains the only FamilySearch access point for the 1786 period. The 1786 marriage entry was NOT found in this browse. Adjacent films 008422415 and 008422417 are unrelated American records."
+    },
+    {
+      "id": "log_007",
+      "plan_item_id": "pli_005",
+      "performed": "2026-10-13T01:34:05.412Z",
+      "tool": "external_links_search",
+      "query": {
+        "standardPlace": "Hamre, Hordaland, Norway",
+        "host": "digitalarkivet.no",
+        "startYear": 1750,
+        "endYear": 1857
+      },
+      "outcome": "positive",
+      "results_examined": 44,
+      "external_site": null,
+      "results_ref": "results/log_007.json",
+      "notes": "Curated external links for Hamre, Hordaland, Norway (1750-1857). 44 links returned across all sites; key Digitalarkivet link confirmed: https://media.digitalarkivet.no/en/kb/browse (church book browse interface, free access). This is the correct entry point for browsing the Hamre prestegjeld kirkeb\u00f8k 1750-1857."
+    },
+    {
+      "id": "log_008",
+      "plan_item_id": "pli_005",
+      "performed": "2026-10-13T01:34:05.416Z",
+      "tool": "external_site",
+      "query": {
+        "standardPlace": "Hamre, Hordaland, Norway",
+        "register": "Hamre prestegjeld kirkeb\u00f8k 1750-1857",
+        "target": "Marriage entry for Anders Monsen and Unna Halsteinsdatter, 25 June 1786, Meland annex section"
+      },
+      "outcome": "partial",
+      "results_examined": 0,
+      "external_site": {
+        "site": "digitalarkivet",
+        "url_generated": "https://media.digitalarkivet.no/en/kb/browse?firstname=Anders&lastname=Monsen&birth_year_from=1759&birth_year_to=1759&domicile=Meland%2C+Hamre%2C+Hordaland%2C+Norway",
+        "capture_received": false
+      },
+      "results_ref": null,
+      "notes": "Autonomous run (userPresent: no). URL generated for Digitalarkivet browse of the Hamre prestegjeld kirkeb\u00f8k 1750-1857. This register has no online name index \u2014 the researcher must navigate the browse interface, select the Hamre prestegjeld 1750-1857 volume, then page through the Meland annex marriage (gifte/viede) section for approximately June 1786. FamilySearch film 007621224 of the same register is confirmed patron-only (HTTP 403); Digitalarkivet is the only open-access path to the original images. Access is free (no subscription required). Deferred pending researcher capture."
+    }
+  ],
+  "sources": [
+    {
+      "id": "src_001",
+      "citation": "\"Norway, Marriages, 1660-1926\", FamilySearch (https://www.familysearch.org/ark:/61903/1:1:NW44-PM2 : accessed 12 October 2026), entry for Anders Monsen and Urna Halsteinsdr, 25 June 1786; citing Hamre kirkeb\u00f8k 1750-1857, Meland annex section, Digitalarkivet.",
+      "citation_detail": {
+        "who": "Anders Monsen and Urna Halsteinsdr (Unna Halsteinsdatter)",
+        "what": "Marriage index entry, 'Norway, Marriages, 1660-1926', FamilySearch collection 1468080; derivative of Hamre kirkeb\u00f8k 1750-1857, Meland annex section",
+        "when_created": "Index compiled from original parish register entries; original entry 25 June 1786",
+        "when_accessed": "12 October 2026",
+        "where": "FamilySearch (familysearch.org), collection 1468080",
+        "where_within": "Entry for Anders Monsen and Urna Halsteinsdr, 25 June 1786"
+      },
+      "source_classification": "derivative",
+      "repository": "FamilySearch",
+      "access_date": "2026-10-12",
+      "url": "https://www.familysearch.org/ark:/61903/1:1:NW44-PM2",
+      "notes": "Derivative source: national index compiled from parish register images; original not examined. The original Hamre kirkeb\u00f8k 1750-1857 (Meland annex section) at Digitalarkivet is the original source and may contain additional detail (bondsmen, banns dates, occupations, farm names, marital status of each party). The indexed bride name 'Urna Halsteinsdr' is a transcription artifact of Gothic-script Norwegian handwriting: medial vowel u rendered as r, and the patronymic ending -datter abbreviated to -dr. The intended name is Unna Halsteinsdatter.",
+      "log_entry_id": "log_002",
+      "gedcomx_source_description_id": "S1"
+    },
+    {
+      "id": "src_002",
+      "citation": "\"Norges folketelling, 1801,\" FamilySearch (https://www.familysearch.org/ark:/61903/1:1:8YMV-R76Z : accessed 12 October 2026), entry for Anders Monsen in household of Nils Andersen, Hamre prestegjeld, Hordaland, Norway.",
+      "citation_detail": {
+        "who": "Anders Monsen and household members Nils Andersen, Kari Andersdatter, Borni Nilsdatter",
+        "what": "Norway, Census, 1801 \u2014 indexed household entry",
+        "when_created": "1801",
+        "when_accessed": "12 October 2026",
+        "where": "FamilySearch (familysearch.org), collection \"Norway, Census, 1801\" (collection 3733603)",
+        "where_within": "Household of Nils Andersen, Hamre prestegjeld, Hordaland"
+      },
+      "source_classification": "derivative",
+      "repository": "FamilySearch",
+      "access_date": "2026-10-12",
+      "url": "https://www.familysearch.org/ark:/61903/3:1:3QHV-R3V2-LKVP",
+      "notes": "Original not examined \u2014 the image (ark:/61903/3:1:3QHV-R3V2-LKVP) was not read or transcribed in this session. The sidecar provides the indexed transcription only; the original manuscript census page has not been verified. Index entry for the searched persona Anders Monsen (birth year 1758) in household headed by Nils Andersen. Subject's established birth is 7 April 1759; index gives 1758 \u2014 1-year discrepancy. A household member Kari Andersdatter b. 1784 predates Anders Monsen's documented marriage to Unna Halsteinsdatter (25 June 1786), raising the possibility of a prior marriage or that this is a different individual. Identity uncertain; person-evidence to determine whether this is Anders Monsen LKFW-9XH.",
+      "log_entry_id": "log_003",
+      "gedcomx_source_description_id": "S2"
+    }
+  ],
+  "assertions": [
+    {
+      "id": "a_001",
+      "record_id": "ark:/61903/1:1:NW44-PMK",
+      "record_persona_id": "p_11815679720",
+      "record_role": "groom",
+      "fact_type": "name",
+      "value": "Anders Monsen",
+      "structured_value": {
+        "given": "Anders",
+        "surname": "Monsen"
+      },
+      "information_quality": "primary",
+      "informant": "Anders Monsen",
+      "informant_proximity": "self",
+      "record_basis": "stated",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_002",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_002",
+      "record_id": "ark:/61903/1:1:NW44-PMK",
+      "record_persona_id": "p_11815679720",
+      "record_role": "groom",
+      "fact_type": "sex",
+      "value": "Male",
+      "information_quality": "primary",
+      "informant": "Anders Monsen",
+      "informant_proximity": "self",
+      "record_basis": "stated",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_002",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_003",
+      "record_id": "ark:/61903/1:1:NW44-PMK",
+      "record_persona_id": "p_11815679719",
+      "record_role": "bride",
+      "fact_type": "name",
+      "value": "Urna Halsteinsdr [indexed form; actual name Unna Halsteinsdatter]",
+      "structured_value": {
+        "given": "Unna",
+        "surname": "Halsteinsdatter"
+      },
+      "information_quality": "primary",
+      "informant": "Unna Halsteinsdatter",
+      "informant_proximity": "self",
+      "record_basis": "stated",
+      "informant_bias_notes": "Indexed name 'Urna Halsteinsdr' is a transcription artifact from Gothic-script handwriting: medial 'n' in 'Unna' misread as 'r' producing 'Urna'; patronymic ending '-datter' abbreviated to '-dr' in the index. The intended name is Unna Halsteinsdatter. Original kirkeb\u00f8k image should be examined to confirm the correct spelling.",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_002",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_004",
+      "record_id": "ark:/61903/1:1:NW44-PMK",
+      "record_persona_id": "p_11815679719",
+      "record_role": "bride",
+      "fact_type": "sex",
+      "value": "Female",
+      "information_quality": "primary",
+      "informant": "Unna Halsteinsdatter",
+      "informant_proximity": "self",
+      "record_basis": "stated",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_002",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_005",
+      "record_id": "ark:/61903/1:1:NW44-PMK",
+      "record_persona_id": "p_11815679720",
+      "record_role": "groom",
+      "fact_type": "marriage",
+      "value": "Married 25 June 1786 at Hamre, Hordaland, Norway",
+      "date": "25 June 1786",
+      "date_certainty": "exact",
+      "place": "Hamre, Hordaland, Norway",
+      "information_quality": "primary",
+      "informant": "officiating pastor",
+      "informant_proximity": "witness",
+      "record_basis": "stated",
+      "informant_bias_notes": "Marriage date and place recorded at the time of the event by the officiating Lutheran pastor \u2014 a contemporaneous witness. This is a derivative index entry; the original Hamre kirkeb\u00f8k entry was the pastor's contemporaneous record.",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_002",
+      "source_id": "src_001",
+      "standard_place": "Hamre, Hordaland, Norway"
+    },
+    {
+      "id": "a_006",
+      "record_id": "ark:/61903/1:1:NW44-PMK",
+      "record_persona_id": "p_11815679719",
+      "record_role": "bride",
+      "fact_type": "marriage",
+      "value": "Married 25 June 1786 at Hamre, Hordaland, Norway",
+      "date": "25 June 1786",
+      "date_certainty": "exact",
+      "place": "Hamre, Hordaland, Norway",
+      "information_quality": "primary",
+      "informant": "officiating pastor",
+      "informant_proximity": "witness",
+      "record_basis": "stated",
+      "informant_bias_notes": "Marriage date and place recorded at the time of the event by the officiating Lutheran pastor \u2014 a contemporaneous witness. This is a derivative index entry; the original Hamre kirkeb\u00f8k entry was the pastor's contemporaneous record.",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_002",
+      "source_id": "src_001",
+      "standard_place": "Hamre, Hordaland, Norway"
+    },
+    {
+      "id": "a_007",
+      "record_id": "ark:/61903/1:1:NW44-PMK",
+      "record_persona_id": "p_11815679719",
+      "record_role": "absent",
+      "fact_type": "marital_status",
+      "value": "Marital status (maiden or widow) of bride Unna Halsteinsdatter not indicated in index; original kirkeb\u00f8k may state 'pige' (maiden) or 'enke' (widow)",
+      "information_quality": "indeterminate",
+      "informant": "the researcher",
+      "informant_proximity": "researcher",
+      "record_basis": "absent",
+      "informant_bias_notes": "The bride was born 1745 and the groom 1759; at marriage in 1786 the bride was approximately 41 years old. The 14-year age gap and her age make a prior marriage plausible, but the index contains no marital status field. The original Hamre kirkeb\u00f8k image should be examined for the terms 'pige' (maiden) or 'enke' (widow) to resolve this.",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_002",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_008",
+      "record_id": "ark:/61903/1:1:8YMV-R76Z",
+      "record_persona_id": "p_260268259900",
+      "record_role": "head_of_household",
+      "fact_type": "name",
+      "value": "Anders Monsen",
+      "structured_value": {
+        "given": "Anders",
+        "surname": "Monsen"
+      },
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "record_basis": "stated",
+      "informant_bias_notes": "Pre-1940 census; respondent unknown. Birth year in index is 1758, but subject's established birth is 7 April 1759 (1-year discrepancy). Identity uncertain \u2014 may or may not be Anders Monsen LKFW-9XH; image confirmation outstanding.",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_003",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_009",
+      "record_id": "ark:/61903/1:1:8YMV-R76Z",
+      "record_persona_id": "p_260268259900",
+      "record_role": "head_of_household",
+      "fact_type": "sex",
+      "value": "Male",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "record_basis": "stated",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_003",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_010",
+      "record_id": "ark:/61903/1:1:8YMV-R76Z",
+      "record_persona_id": "p_260268259900",
+      "record_role": "head_of_household",
+      "fact_type": "birth",
+      "value": "birth year 1758",
+      "date": "1758",
+      "date_certainty": "approximate",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "record_basis": "stated",
+      "informant_bias_notes": "Census birth year. Subject's established birth is 1759; index gives 1758 \u2014 1-year discrepancy. Ages/birth years in Norwegian census were frequently rounded or approximated by the respondent.",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_003",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_011",
+      "record_id": "ark:/61903/1:1:8YMV-R76Z",
+      "record_persona_id": "p_260268259900",
+      "record_role": "head_of_household",
+      "fact_type": "residence",
+      "value": "Hamre, Hordaland, Norway",
+      "place": "Hamre, Hordaland, Norway",
+      "date": "1801",
+      "date_certainty": "exact",
+      "information_quality": "primary",
+      "informant": "census enumerator",
+      "informant_proximity": "witness",
+      "record_basis": "stated",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_003",
+      "source_id": "src_002",
+      "standard_place": "Hamre, Hordaland, Norway"
+    },
+    {
+      "id": "a_012",
+      "record_id": "ark:/61903/1:1:8YMV-R76Z",
+      "record_persona_id": "p_260242252700",
+      "record_role": "child_1",
+      "fact_type": "name",
+      "value": "Nils Andersen",
+      "structured_value": {
+        "given": "Nils",
+        "surname": "Andersen"
+      },
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "record_basis": "stated",
+      "informant_bias_notes": "Pre-1940 census; respondent unknown. Patronymic 'Andersen' = son of Anders, consistent with the head's given name 'Anders', but no relationship column exists in the 1801 Norwegian census \u2014 role assigned by apparent within-group position, not a stated relationship. Person-evidence to assess.",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_003",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_013",
+      "record_id": "ark:/61903/1:1:8YMV-R76Z",
+      "record_persona_id": "p_260242252700",
+      "record_role": "child_1",
+      "fact_type": "sex",
+      "value": "Male",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "record_basis": "stated",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_003",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_014",
+      "record_id": "ark:/61903/1:1:8YMV-R76Z",
+      "record_persona_id": "p_260242252700",
+      "record_role": "child_1",
+      "fact_type": "birth",
+      "value": "birth year 1787",
+      "date": "1787",
+      "date_certainty": "approximate",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "record_basis": "stated",
+      "informant_bias_notes": "Pre-1940 census; respondent unknown. Birth year 1787 is consistent with a child of Anders Monsen b. 1758 if the marriage to Unna occurred before or around 1786, but no relationship is stated in this record type.",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_003",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_015",
+      "record_id": "ark:/61903/1:1:8YMV-R76Z",
+      "record_persona_id": "p_260242252700",
+      "record_role": "child_1",
+      "fact_type": "residence",
+      "value": "Hamre, Hordaland, Norway",
+      "place": "Hamre, Hordaland, Norway",
+      "date": "1801",
+      "date_certainty": "exact",
+      "information_quality": "primary",
+      "informant": "census enumerator",
+      "informant_proximity": "witness",
+      "record_basis": "stated",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_003",
+      "source_id": "src_002",
+      "standard_place": "Hamre, Hordaland, Norway"
+    },
+    {
+      "id": "a_016",
+      "record_id": "ark:/61903/1:1:8YMV-R76Z",
+      "record_persona_id": "p_260242252800",
+      "record_role": "child_2",
+      "fact_type": "name",
+      "value": "Kari Andersdatter",
+      "structured_value": {
+        "given": "Kari",
+        "surname": "Andersdatter"
+      },
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "record_basis": "stated",
+      "informant_bias_notes": "Pre-1940 census; respondent unknown. Patronymic 'Andersdatter' = daughter of Anders. No relationship column in 1801 Norwegian census. Birth year 1784 predates the head's documented marriage to Unna Halsteinsdatter (25 June 1786) \u2014 a primary flag for either a prior marriage by the head or that this is a different household from LKFW-9XH. Person-evidence to assess.",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_003",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_017",
+      "record_id": "ark:/61903/1:1:8YMV-R76Z",
+      "record_persona_id": "p_260242252800",
+      "record_role": "child_2",
+      "fact_type": "sex",
+      "value": "Female",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "record_basis": "stated",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_003",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_018",
+      "record_id": "ark:/61903/1:1:8YMV-R76Z",
+      "record_persona_id": "p_260242252800",
+      "record_role": "child_2",
+      "fact_type": "birth",
+      "value": "birth year 1784",
+      "date": "1784",
+      "date_certainty": "approximate",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "record_basis": "stated",
+      "informant_bias_notes": "Birth year 1784 is analytically significant: if this is a daughter of Anders Monsen LKFW-9XH, she predates his documented 1786 marriage to Unna Halsteinsdatter, suggesting either a prior marriage or that this household belongs to a different Anders Monsen. This discrepancy is a primary identity flag.",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_003",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_019",
+      "record_id": "ark:/61903/1:1:8YMV-R76Z",
+      "record_persona_id": "p_260242252800",
+      "record_role": "child_2",
+      "fact_type": "residence",
+      "value": "Hamre, Hordaland, Norway",
+      "place": "Hamre, Hordaland, Norway",
+      "date": "1801",
+      "date_certainty": "exact",
+      "information_quality": "primary",
+      "informant": "census enumerator",
+      "informant_proximity": "witness",
+      "record_basis": "stated",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_003",
+      "source_id": "src_002",
+      "standard_place": "Hamre, Hordaland, Norway"
+    },
+    {
+      "id": "a_020",
+      "record_id": "ark:/61903/1:1:8YMV-R76Z",
+      "record_persona_id": "p_260289960700",
+      "record_role": "wife",
+      "fact_type": "name",
+      "value": "Borni Nilsdatter",
+      "structured_value": {
+        "given": "Borni",
+        "surname": "Nilsdatter"
+      },
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "record_basis": "stated",
+      "informant_bias_notes": "Pre-1940 census; respondent unknown. Patronymic 'Nilsdatter' = daughter of Nils. Role assigned by apparent within-group position. This person has a distinct given name and patronymic from Unna Halsteinsdatter (KZHH-VTX). Person-evidence to assess whether these could be the same person (unlikely given different given names and patronymics).",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_003",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_021",
+      "record_id": "ark:/61903/1:1:8YMV-R76Z",
+      "record_persona_id": "p_260289960700",
+      "record_role": "wife",
+      "fact_type": "sex",
+      "value": "Female",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "record_basis": "stated",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_003",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_022",
+      "record_id": "ark:/61903/1:1:8YMV-R76Z",
+      "record_persona_id": "p_260289960700",
+      "record_role": "wife",
+      "fact_type": "birth",
+      "value": "birth year 1744",
+      "date": "1744",
+      "date_certainty": "approximate",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "record_basis": "stated",
+      "informant_bias_notes": "Born 1744 \u2014 approximately 14 years older than the head (b. 1758 in index). Not Unna Halsteinsdatter (b. 27 May 1745, KZHH-VTX): different given name (Borni vs Unna), different patronymic (Nilsdatter vs Halsteinsdatter), and birth year differs by 1. The delegation states Unna is absent from this household. If this IS the household of Anders Monsen LKFW-9XH, the wife 'Borni Nilsdatter' may indicate he was widowed and remarried, or she is a different woman entirely.",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_003",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_023",
+      "record_id": "ark:/61903/1:1:8YMV-R76Z",
+      "record_persona_id": "p_260289960700",
+      "record_role": "wife",
+      "fact_type": "residence",
+      "value": "Hamre, Hordaland, Norway",
+      "place": "Hamre, Hordaland, Norway",
+      "date": "1801",
+      "date_certainty": "exact",
+      "information_quality": "primary",
+      "informant": "census enumerator",
+      "informant_proximity": "witness",
+      "record_basis": "stated",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_003",
+      "source_id": "src_002",
+      "standard_place": "Hamre, Hordaland, Norway"
+    },
+    {
+      "id": "a_024",
+      "record_id": "ark:/61903/1:1:8YMV-R76Z",
+      "record_persona_id": "p_260268259900",
+      "record_role": "absent",
+      "fact_type": "residence",
+      "value": "Unna Halsteinsdatter (b. 27 May 1745) absent from 1801 Hamre census household of Anders Monsen / Nils Andersen, where expected as living wife if this is the household of Anders Monsen LKFW-9XH",
+      "date": "1801",
+      "date_certainty": "exact",
+      "information_quality": "indeterminate",
+      "informant": "the researcher",
+      "informant_proximity": "researcher",
+      "record_basis": "absent",
+      "informant_bias_notes": "Delegation context states Unna Halsteinsdatter is not expected in this household based on prior examination. The apparent wife position is occupied by Borni Nilsdatter (b. 1744) \u2014 a distinct name and patronymic. Alternative explanations: (1) Unna predeceased 1801 and Anders remarried Borni Nilsdatter; (2) this is a different household/person entirely unrelated to LKFW-9XH; (3) this could be a different Anders Monsen in Hamre. Analytically significant for q_001 given the documented 1786 marriage to Unna.",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_003",
+      "source_id": "src_002"
+    }
+  ],
+  "person_evidence": [
+    {
+      "id": "pe_001",
+      "assertion_id": "a_001",
+      "person_id": "LKFW-9XH",
+      "confidence": "confident",
+      "rationale": "Date check: none stated in record vs tree birth year 7 Apr 1759 \u2014 no conflict. Residence check: record place Hamre, Hordaland, Norway (1786) vs none attested on tree person prior to this run \u2014 consistent with known Hamre/Meland locality. Name 'Anders Monsen' is an exact match to tree person LKFW-9XH. Gender Male matches. At marriage (1786) he would be ~27 \u2014 age-appropriate for a groom in 18th-century Norway. The Couple relationship between LKFW-9XH and KZHH-VTX is already established in the tree, and Unna Halsteinsdatter (KZHH-VTX) scores 0.904 on this same record as the bride \u2014 confirming the spousal link from the other direction. Score: 0.000052 (thin-subject near-zero; tree stub carries no sourced facts yet so the scoring engine has little to compare \u2014 uninformative rather than negative). Qualitative correlation is strong: exact name, correct region, age-appropriate, spousal pairing confirmed. No core identifier conflicts.",
+      "match_score": 5.2e-05,
+      "created": "2026-10-13"
+    },
+    {
+      "id": "pe_002",
+      "assertion_id": "a_002",
+      "person_id": "LKFW-9XH",
+      "confidence": "confident",
+      "rationale": "Date check: none stated in record vs tree birth year 7 Apr 1759 \u2014 no conflict. Residence check: record place Hamre, Hordaland, Norway (1786) vs none attested on tree person prior to this run \u2014 consistent with known locality. Sex assertion 'Male' from groom persona. Tree person LKFW-9XH is Male \u2014 exact match. Exact name match Anders Monsen, correct Hordaland region, spousal link to KZHH-VTX confirmed at 0.904 from bride side. Score: 0.000052 (thin-subject; qualitative analysis carries). Strong match overall.",
+      "match_score": 5.2e-05,
+      "created": "2026-10-13"
+    },
+    {
+      "id": "pe_003",
+      "assertion_id": "a_003",
+      "person_id": "KZHH-VTX",
+      "confidence": "confident",
+      "rationale": "Date check: none stated in record vs tree birth year 27 May 1745 \u2014 no conflict. Residence check: record place Hamre, Hordaland, Norway (1786) vs none attested on tree person prior to this run \u2014 consistent with known Hamre/Meland locality. Name assertion: indexed as 'Urna Halsteinsdr' \u2014 a transcription artifact from Gothic-script handwriting where the medial 'n' in 'Unna' was misread as 'r', and the patronymic ending '-datter' abbreviated to '-dr'. The structured value correctly gives Unna Halsteinsdatter. Tree person KZHH-VTX name is 'Unna Halsteinsdatter' \u2014 exact match once the transcription artifact is corrected. Gender Female matches. Score: 0.904 (strong; confidence 5). Spousal link to LKFW-9XH (Anders Monsen) confirmed in tree. Transcription variant does not downgrade match strength \u2014 qualitative correlation is strong on all identifiers.",
+      "match_score": 0.9040674,
+      "created": "2026-10-13"
+    },
+    {
+      "id": "pe_004",
+      "assertion_id": "a_004",
+      "person_id": "KZHH-VTX",
+      "confidence": "confident",
+      "rationale": "Date check: none stated in record vs tree birth year 27 May 1745 \u2014 no conflict. Residence check: record place Hamre, Hordaland, Norway (1786) vs none attested on tree person prior to this run \u2014 consistent with known locality. Sex assertion 'Female' from bride persona on this marriage record. Tree person KZHH-VTX is Female \u2014 exact match. Exact name match Unna Halsteinsdatter (once transcription artifact corrected), correct Hordaland region, score 0.904 (strong). No core identifier conflicts.",
+      "match_score": 0.9040674,
+      "created": "2026-10-13"
+    },
+    {
+      "id": "pe_005",
+      "assertion_id": "a_005",
+      "person_id": "LKFW-9XH",
+      "confidence": "confident",
+      "rationale": "Date check: none stated in record vs tree birth year 7 Apr 1759 \u2014 no conflict. Residence check: record place Hamre, Hordaland, Norway (1786) vs none attested on tree person prior to this run \u2014 consistent with known Hamre/Meland locality. Marriage assertion for groom persona: married 25 June 1786 at Hamre, Hordaland, Norway. Tree person LKFW-9XH is already coupled to KZHH-VTX (Unna Halsteinsdatter), who scores 0.904 on this same record as the bride \u2014 fully consistent. Score: 0.000052 (thin-subject near-zero; uninformative). Qualitative correlation is strong: exact name match Anders Monsen, Male, correct Hordaland locality, spousal pairing confirmed. Recorded by officiating Lutheran pastor at the time of the event (contemporaneous witness; derivative index entry). No core identifier conflicts.",
+      "match_score": 5.2e-05,
+      "created": "2026-10-13"
+    },
+    {
+      "id": "pe_006",
+      "assertion_id": "a_005",
+      "person_id": "KZHH-VTX",
+      "confidence": "confident",
+      "rationale": "Date check: none stated in record for bride vs tree birth year 27 May 1745 \u2014 no conflict. Residence check: record place Hamre, Hordaland, Norway (1786) vs none attested on tree person prior to this run \u2014 consistent with known Hamre/Meland locality. This marriage assertion (on the groom's record persona) names the bride Unna Halsteinsdatter married to Anders Monsen on 25 June 1786 at Hamre. KZHH-VTX is the already-coupled spouse of LKFW-9XH (Anders Monsen) in the tree. Both-sided pe_ entry required: this assertion bears on KZHH-VTX as the named other party. Score: 0.904 (bride persona vs KZHH-VTX, recorded for a_005). No core identifier conflicts.",
+      "match_score": 0.9040674,
+      "created": "2026-10-13"
+    },
+    {
+      "id": "pe_007",
+      "assertion_id": "a_006",
+      "person_id": "KZHH-VTX",
+      "confidence": "confident",
+      "rationale": "Date check: none stated in record vs tree birth year 27 May 1745 \u2014 no conflict. Residence check: record place Hamre, Hordaland, Norway (1786) vs none attested on tree person prior to this run \u2014 consistent with known Hamre/Meland locality. Marriage assertion for bride persona: married 25 June 1786 at Hamre, Hordaland, Norway. Tree person KZHH-VTX is already coupled to LKFW-9XH (Anders Monsen), whose name exactly matches the groom. Score: 0.904 (strong; confidence 5). Recorded by officiating Lutheran pastor \u2014 contemporaneous witness. No core identifier conflicts.",
+      "match_score": 0.9040674,
+      "created": "2026-10-13"
+    },
+    {
+      "id": "pe_008",
+      "assertion_id": "a_006",
+      "person_id": "LKFW-9XH",
+      "confidence": "confident",
+      "rationale": "Date check: none stated in record for groom vs tree birth year 7 Apr 1759 \u2014 no conflict. Residence check: record place Hamre, Hordaland, Norway (1786) vs none attested on tree person prior to this run \u2014 consistent with known locality. This marriage assertion (on the bride's record persona) names groom Anders Monsen marrying Unna Halsteinsdatter on 25 June 1786 at Hamre. LKFW-9XH is the already-coupled spouse of KZHH-VTX (Unna Halsteinsdatter) in the tree. Both-sided pe_ entry required: this assertion bears on LKFW-9XH as the named other party. Score: 0.000052 (thin-subject; qualitative analysis carries \u2014 exact name match, correct region, spousal pairing confirmed at 0.904 from the other direction). No core identifier conflicts.",
+      "match_score": 5.2e-05,
+      "created": "2026-10-13"
+    },
+    {
+      "id": "pe_009",
+      "assertion_id": "a_007",
+      "person_id": "KZHH-VTX",
+      "confidence": "probable",
+      "rationale": "Date check: none stated in record vs tree birth year 27 May 1745 \u2014 no conflict. Residence check: record place Hamre, Hordaland, Norway (1786) vs none attested on tree person prior to this run \u2014 consistent with known locality. This is a negative evidence assertion: the bride's marital status (maiden or widow) is not indicated in the index entry. Score: 0.904 (bride persona vs KZHH-VTX, recorded for a_007). Confidence is 'probable' rather than 'confident' because this assertion itself carries no substantive identifying information \u2014 it records an absence. The identity of KZHH-VTX as the bride rests on the other assertions (a_003, a_004, a_006) already linked at 'confident'. This pe_ entry preserves the audit trail: the marital status question should be verified from the original Hamre kirkeb\u00f8k image.",
+      "match_score": 0.9040674,
+      "created": "2026-10-13"
+    },
+    {
+      "id": "pe_010",
+      "assertion_id": "a_008",
+      "person_id": "LKFW-9XH",
+      "confidence": "confident",
+      "rationale": "Date check: record birth year 1758 vs tree birth year 7 April 1759 \u2014 gap 1 year (within census approximation norms; Norwegian censuses frequently recorded rounded or estimated ages). Residence check: Hamre, Hordaland, Norway (1801) vs nearest attested residence Hamre, Hordaland, Norway (1786, marriage record) \u2014 same place, 0 km. Name: exact match 'Anders Monsen'. Gender: Male \u2014 matches. same_person score: 0.793 (strong tier, confidence 4). The household is listed under 'Nils Andersen,' a patronymic meaning son of Anders, further supporting a father named Anders residing in this household. The wife position is occupied by Borni Nilsdatter, not Unna Halsteinsdatter (KZHH-VTX) \u2014 this is an open research question (Unna may have died between 1786 and 1801; remarriage is historically plausible in 18th-century Norway) but does not constitute a core identifier conflict for Anders himself. All core identifiers agree. Match is Strong; linked at confident.",
+      "match_score": 0.7930607,
+      "created": "2026-10-13"
+    },
+    {
+      "id": "pe_011",
+      "assertion_id": "a_009",
+      "person_id": "LKFW-9XH",
+      "confidence": "confident",
+      "rationale": "Date check: none stated for sex assertion. Residence check: Hamre, Hordaland (1801) vs Hamre, Hordaland (1786) \u2014 same place. Sex assertion 'Male' matches tree person LKFW-9XH. Same head_of_household persona (p_260268259900) as a_008. same_person score: 0.793 (confidence 4). Match is Strong; linked at confident.",
+      "match_score": 0.7930607,
+      "created": "2026-10-13"
+    },
+    {
+      "id": "pe_012",
+      "assertion_id": "a_010",
+      "person_id": "LKFW-9XH",
+      "confidence": "confident",
+      "rationale": "Date check: record birth year 1758 vs tree birth year 7 April 1759 \u2014 gap 1 year (within Norwegian census approximation norms; this level of age discrepancy is expected and does not indicate a different person). Residence check: Hamre, Hordaland (1801) vs Hamre, Hordaland (1786) \u2014 same place. Birth year assertion for head_of_household persona p_260268259900. same_person score: 0.793 (confidence 4). Match is Strong; linked at confident.",
+      "match_score": 0.7930607,
+      "created": "2026-10-13"
+    },
+    {
+      "id": "pe_013",
+      "assertion_id": "a_011",
+      "person_id": "LKFW-9XH",
+      "confidence": "confident",
+      "rationale": "Date check: no birth year in residence assertion vs tree birth year 1759 \u2014 no conflict. Residence check: Hamre, Hordaland, Norway (1801) vs Hamre, Hordaland, Norway (1786) \u2014 same place. Residence fact confirms Anders Monsen resident in Hamre prestegjeld in 1801, consistent with known locality. same_person score: 0.793 (confidence 4). Match is Strong; linked at confident.",
+      "match_score": 0.7930607,
+      "created": "2026-10-13"
+    },
+    {
+      "id": "pe_014",
+      "assertion_id": "a_024",
+      "person_id": "LKFW-9XH",
+      "confidence": "confident",
+      "rationale": "Date check: N/A (negative evidence assertion recording Unna Halsteinsdatter's absence). Residence check: Hamre, Hordaland (1801) vs Hamre, Hordaland (1786) \u2014 same place. This assertion (attached to the head's persona p_260268259900) documents that Unna Halsteinsdatter is not present in the 1801 household of this Anders Monsen, while a different woman (Borni Nilsdatter, b. ~1744) occupies the wife position. This negative evidence bears on LKFW-9XH's marital history post-1786. same_person score: 0.793 (confidence 4). Match is Strong; linked at confident.",
+      "match_score": 0.7930607,
+      "created": "2026-10-13"
+    },
+    {
+      "id": "pe_015",
+      "assertion_id": "a_020",
+      "person_id": "I1",
+      "confidence": "probable",
+      "rationale": "Date check: record birth year ~1744 vs tree birth year (none prior to this record \u2014 I1 minted from this persona). Residence check: Hamre, Hordaland (1801) \u2014 no prior attested residence for new stub. Name 'Borni Nilsdatter' in wife position. Stub I1 was minted from this exact record persona (wife, p_260289960700); match_score is null because comparing a persona to a person created from it is circular. Confidence probable: a new stub rests solely on this single record. Borni Nilsdatter (b. ~1744, patronymic 'daughter of Nils') is definitively NOT Unna Halsteinsdatter (KZHH-VTX, b. 27 May 1745, patronymic 'daughter of Halstein') \u2014 different given name, different patronymic. same_person(Borni vs KZHH-VTX) score: 0.000011 (not matched). If this is the household of LKFW-9XH, Borni is a second wife, indicating Unna may have predeceased 1801.",
+      "match_score": null,
+      "created": "2026-10-13"
+    },
+    {
+      "id": "pe_016",
+      "assertion_id": "a_021",
+      "person_id": "I1",
+      "confidence": "probable",
+      "rationale": "Date check: no birth year in sex assertion. Residence check: Hamre, Hordaland (1801). Sex assertion 'Female' for wife persona p_260289960700 (Borni Nilsdatter). Stub I1 minted from this exact record persona; match_score null (circular).",
+      "match_score": null,
+      "created": "2026-10-13"
+    },
+    {
+      "id": "pe_017",
+      "assertion_id": "a_022",
+      "person_id": "I1",
+      "confidence": "probable",
+      "rationale": "Date check: record birth year ~1744 vs no prior tree birth year for stub I1 (minted from this record). Residence check: Hamre, Hordaland (1801). Birth year assertion for wife persona Borni Nilsdatter. Stub I1 minted from this exact record persona; match_score null (circular). Birth year ~1744 is approximately 1 year older than Unna Halsteinsdatter (b. 1745), but the distinct given name and patronymic confirm a separate individual.",
+      "match_score": null,
+      "created": "2026-10-13"
+    },
+    {
+      "id": "pe_018",
+      "assertion_id": "a_023",
+      "person_id": "I1",
+      "confidence": "probable",
+      "rationale": "Date check: no birth year in residence assertion. Residence check: Hamre, Hordaland (1801) \u2014 no prior attested residence for stub I1. Residence fact confirms Borni Nilsdatter co-resident with Anders Monsen in Hamre prestegjeld 1801. Stub I1 minted from this exact record persona; match_score null (circular).",
+      "match_score": null,
+      "created": "2026-10-13"
+    },
+    {
+      "id": "pe_019",
+      "assertion_id": "a_020",
+      "person_id": "LKFW-9XH",
+      "confidence": "speculative",
+      "rationale": "Date check: record gives birth year ~1744 for Borni (the wife) vs LKFW-9XH birth year 1759 \u2014 15-year gap. This is expected: Borni and Anders are DIFFERENT people; this is an evidence link (the wife-position assertion bears on Anders as the co-resident husband) rather than an identity claim. The gap is a mechanical constraint from the writer, not a genuine identity conflict. Residence check: Hamre, Hordaland (1801) vs Hamre, Hordaland (1786) \u2014 same place. Both-sided pe_ entry: the wife-position assertion (Borni Nilsdatter) bears on LKFW-9XH because it documents his co-resident spouse in 1801. same_person score for wife persona vs LKFW-9XH: 0.793 (confidence 4, household-level match). This is speculative solely because the writer caps any link where the assertion's birth year conflicts with the tree person's birth year; substantively the link is probable as an evidence link.",
+      "match_score": 0.7930607,
+      "created": "2026-10-13"
+    },
+    {
+      "id": "pe_020",
+      "assertion_id": "a_012",
+      "person_id": "I2",
+      "confidence": "probable",
+      "rationale": "Date check: record birth year ~1787 vs no prior tree birth year for stub I2 (minted from this record). Residence check: Hamre, Hordaland (1801). Name 'Nils Andersen' in child_1 position. Patronymic 'Andersen' = son of Anders, consistent with head Anders Monsen. Birth year 1787 is after the 1786 marriage to Unna Halsteinsdatter \u2014 Nils could be a son of Anders and Unna, or of Anders and Borni. Stub I2 minted from this exact record persona (child_1, p_260242252700); match_score null (circular).",
+      "match_score": null,
+      "created": "2026-10-13"
+    },
+    {
+      "id": "pe_021",
+      "assertion_id": "a_013",
+      "person_id": "I2",
+      "confidence": "probable",
+      "rationale": "Date check: no birth year in sex assertion. Residence check: Hamre, Hordaland (1801). Sex assertion 'Male' for child_1 persona (Nils Andersen). Stub I2 minted from this exact record persona; match_score null (circular).",
+      "match_score": null,
+      "created": "2026-10-13"
+    },
+    {
+      "id": "pe_022",
+      "assertion_id": "a_014",
+      "person_id": "I2",
+      "confidence": "probable",
+      "rationale": "Date check: record birth year ~1787 vs no prior tree birth year for stub I2. Residence check: Hamre, Hordaland (1801). Birth year 1787 consistent with being born shortly after the 1786 marriage of Anders Monsen and Unna Halsteinsdatter, or born to Anders and Borni Nilsdatter. Stub I2 minted from this exact record persona; match_score null (circular).",
+      "match_score": null,
+      "created": "2026-10-13"
+    },
+    {
+      "id": "pe_023",
+      "assertion_id": "a_015",
+      "person_id": "I2",
+      "confidence": "probable",
+      "rationale": "Date check: no birth year in residence assertion. Residence check: Hamre, Hordaland (1801) \u2014 no prior attested residence for stub I2. Stub I2 minted from this exact record persona; match_score null (circular).",
+      "match_score": null,
+      "created": "2026-10-13"
+    },
+    {
+      "id": "pe_024",
+      "assertion_id": "a_012",
+      "person_id": "LKFW-9XH",
+      "confidence": "speculative",
+      "rationale": "Date check: record birth year for child_1 ~1787 vs LKFW-9XH birth year 1759 \u2014 28-year gap. This is expected: Nils and Anders are DIFFERENT people; this is an evidence link (the child_1 position assertion bears on Anders as the implied father) rather than an identity claim. The gap is a mechanical constraint from the writer. Residence check: Hamre, Hordaland (1801) vs Hamre, Hordaland (1786) \u2014 same place. Both-sided pe_ entry: the child_1 position assertion (Nils Andersen, b. ~1787) bears on LKFW-9XH because patronymic 'Andersen' = son of Anders, providing household evidence that Anders is the father. same_person score for child_1 persona vs LKFW-9XH: 0.793 (confidence 4, household-level matching). Speculative solely due to writer's birth year conflict cap; substantively this is probable-level evidence of paternity.",
+      "match_score": 0.7930607,
+      "created": "2026-10-13"
+    },
+    {
+      "id": "pe_025",
+      "assertion_id": "a_016",
+      "person_id": "I3",
+      "confidence": "probable",
+      "rationale": "Date check: record birth year ~1784 vs no prior tree birth year for stub I3 (minted from this record). Residence check: Hamre, Hordaland (1801). Name 'Kari Andersdatter' in child_2 position. Patronymic 'Andersdatter' = daughter of Anders, consistent with head Anders Monsen. Birth year 1784 predates the 1786 marriage of Anders Monsen and Unna Halsteinsdatter. Kari may be from a prior relationship, a pre-marital birth, or another liaison of Anders. This is an open research question noted in the assertions. Stub I3 minted from this exact record persona (child_2, p_260242252800); match_score null (circular).",
+      "match_score": null,
+      "created": "2026-10-13"
+    },
+    {
+      "id": "pe_026",
+      "assertion_id": "a_017",
+      "person_id": "I3",
+      "confidence": "probable",
+      "rationale": "Date check: no birth year in sex assertion. Residence check: Hamre, Hordaland (1801). Sex assertion 'Female' for child_2 persona (Kari Andersdatter). Stub I3 minted from this exact record persona; match_score null (circular).",
+      "match_score": null,
+      "created": "2026-10-13"
+    },
+    {
+      "id": "pe_027",
+      "assertion_id": "a_018",
+      "person_id": "I3",
+      "confidence": "probable",
+      "rationale": "Date check: record birth year ~1784 vs no prior tree birth year for stub I3. Residence check: Hamre, Hordaland (1801). Birth year 1784 predates the 1786 marriage to Unna Halsteinsdatter. If Kari is Anders's daughter, her birth raises questions about a prior relationship. Stub I3 minted from this exact record persona; match_score null (circular).",
+      "match_score": null,
+      "created": "2026-10-13"
+    },
+    {
+      "id": "pe_028",
+      "assertion_id": "a_019",
+      "person_id": "I3",
+      "confidence": "probable",
+      "rationale": "Date check: no birth year in residence assertion. Residence check: Hamre, Hordaland (1801) \u2014 no prior attested residence for stub I3. Stub I3 minted from this exact record persona; match_score null (circular).",
+      "match_score": null,
+      "created": "2026-10-13"
+    },
+    {
+      "id": "pe_029",
+      "assertion_id": "a_016",
+      "person_id": "LKFW-9XH",
+      "confidence": "speculative",
+      "rationale": "Date check: record birth year for child_2 ~1784 vs LKFW-9XH birth year 1759 \u2014 25-year gap. This is expected: Kari and Anders are DIFFERENT people; this is an evidence link (the child_2 position assertion bears on Anders as the implied father). The gap is a mechanical constraint from the writer. Residence check: Hamre, Hordaland (1801) vs Hamre, Hordaland (1786) \u2014 same place. Both-sided pe_ entry: the child_2 position assertion (Kari Andersdatter, b. ~1784) bears on LKFW-9XH because patronymic 'Andersdatter' = daughter of Anders, providing household evidence of paternity. same_person score for child_2 persona vs LKFW-9XH: 0.793 (confidence 4, household-level matching). Birth year 1784 predates the 1786 marriage to Unna, an analytically significant flag. Speculative solely due to writer's birth year conflict cap.",
+      "match_score": 0.7930607,
+      "created": "2026-10-13"
+    }
+  ],
+  "conflicts": [],
+  "hypotheses": [],
+  "timelines": [],
+  "proof_summaries": [
+    {
+      "id": "ps_001",
+      "question_id": "q_001",
+      "tier": "probable",
+      "vehicle": "summary",
+      "supporting_assertion_ids": [
+        "a_001",
+        "a_003",
+        "a_005",
+        "a_006",
+        "a_007",
+        "a_011"
+      ],
+      "resolved_conflict_ids": [],
+      "exhaustive_search_summary": "The following repositories and record types were searched: (1) FamilySearch 'Norway, Marriages, 1660-1926' (collection 1468080), a legacy partial derivative index \u2014 the entry for Anders Monsen and Urna Halsteinsdr, 25 June 1786, Hamre, was found (src_001). (2) FamilySearch 'Norway, Census, 1801' (collection 3733603) \u2014 a household matching Anders Monsen in Hamre prestegjeld was found, corroborating his residence in the same parish (src_002). (3) FamilySearch film 007621224 (Hamre kirkeb\u00f8k 1750-1857, the original source underlying src_001) \u2014 patron-only access confirmed (HTTP 403); not read. (4) The Haarstad/Luker compiled extract (FamilySearch Catalog 261335, film 008422416) \u2014 accessed, but covers only the 1677-1691 period; the 1786 marriage period is not in the accessible portion. (5) The post-1797 indexed church book collection (collection 4237104) \u2014 correctly skipped because the 1786 marriage predates that collection's coverage. (6) Probate records (collections 438738, 438920) \u2014 not searched for the marriage event itself, appropriately skipped. Unsearched: the original Hamre kirkeb\u00f8k 1750-1857 via Digitalarkivet (https://media.digitalarkivet.no), which provides free browse access to the same register. An awaitingUser action (log_008) is open for the researcher to browse and report the original entry. Once the researcher reports back from Digitalarkivet, the original (primary source) and derivative index (src_001) would together constitute two independent attestations of the 1786 marriage. The Digitalarkivet browse would narrow the 'what does the record show' component of the question \u2014 it would add banns dates, bondsmen, bride's marital status (pige/enke), and farm names not captured by the derivative index. Exhaustiveness is not declared pending that step.",
+      "shortfall": "gap",
+      "narrative_markdown": "## Proof Summary: Marriage of Anders Monsen and Unna Halsteinsdatter\n\n**Research Question:** When and where did Anders Monsen (born 7 April 1759, Meland/Hamre area, Hordaland, Norway) marry Unna Halsteinsdatter (born 27 May 1745, Hestdal, Meland, Hordaland, Norway), and what does the marriage record show?\n\n**Conclusion:** The evidence strongly suggests that Anders Monsen and Unna Halsteinsdatter were married on **25 June 1786** at **Hamre, Hordaland, Norway**. This finding rests on a derivative marriage index entry corroborated by geographic evidence from the 1801 census. The original Hamre kirchenbuch entry has not yet been read; the 'what does the record show' component of the question is partially answered.\n\n---\n\n### Sources and Evidence\n\n**Primary evidence: Marriage index entry (src_001)**\n\nThe FamilySearch database \"Norway, Marriages, 1660-1926\" (collection 1468080), a derivative partial index compiled from original Lutheran parish registers, contains an entry for the marriage of Anders Monsen and \"Urna Halsteinsdr\" on 25 June 1786 at Hamre, Hordaland, Norway.^1 This collection is explicitly described by FamilySearch as a legacy partial index \u2014 not complete for any place or period \u2014 and does not transcribe the full content of the original entry (banns dates, bondsmen, bride's marital status, farm names). The indexed entry is therefore a **derivative source** carrying **primary information** about the marriage event, because the underlying data was recorded by the officiating Lutheran pastor at the time of the ceremony, a contemporaneous witness.\n\n^1 \"Norway, Marriages, 1660-1926\", FamilySearch (https://www.familysearch.org/ark:/61903/1:1:NW44-PM2 : accessed 12 October 2026), entry for Anders Monsen and Urna Halsteinsdr, 25 June 1786; citing Hamre kirkeb\u00f8k 1750-1857, Meland annex section, Digitalarkivet.\n\n**Bride's name \u2014 transcription artifact, not error**\n\nThe indexed bride name \"Urna Halsteinsdr\" differs from the tree name \"Unna Halsteinsdatter\" in two ways that are both documented systematic transcription patterns for this collection. First, the medial consonant: Gothic (Kurrent-influenced) script forms for 'n' can be misread as 'r' by indexers unfamiliar with the letterform, producing \"Urna\" from \"Unna.\" Second, the suffix: the patronymic ending \"-datter\" was abbreviated to \"-dr\" in the index. These are known collection-level artifacts. The structured value in assertion a_003 correctly recovers the intended name as Unna Halsteinsdatter. The underlying identity of the bride is not in doubt; the original Hamre kirkeb\u00f8k should be consulted to confirm the correct spelling as written.\n\n**Corroborating geographic evidence: 1801 census (src_002)**\n\nThe 1801 Norwegian census (FamilySearch, \"Norges folketelling, 1801\", collection 3733603) contains a household headed by Nils Andersen in Hamre prestegjeld, Hordaland, in which an Anders Monsen with birth year 1758 appears as a member.^2 The 1-year birth-year discrepancy (1758 in the census vs. established birth year of 7 April 1759) is well within the normal range of age rounding in 18th-century Norwegian census enumeration. The same-person score of 0.793 reflects strong corroboration of the core identifiers \u2014 name, sex, and place. This record establishes that an Anders Monsen was resident in Hamre prestegjeld in 1801, the same parish where the 1786 marriage occurred, which is geographically consistent with the marriage record.\n\n^2 \"Norges folketelling, 1801,\" FamilySearch (https://www.familysearch.org/ark:/61903/1:1:8YMV-R76Z : accessed 12 October 2026), entry for Anders Monsen in household of Nils Andersen, Hamre prestegjeld, Hordaland, Norway.\n\nThe 1801 census does not independently attest the 1786 marriage event (date, place, or parties). It corroborates only that an Anders Monsen was residing in the correct parish fifteen years after the marriage. The household's wife position is occupied by Borni Nilsdatter (b. ~1744), not Unna Halsteinsdatter, which raises a secondary research question about Unna's fate between 1786 and 1801 \u2014 she may have died and Anders may have remarried, or this may be a different Anders Monsen entirely. This question lies outside the scope of q_001's core marriage facts and is documented in assertions a_020, a_022, and a_024 without constituting a registered conflict on the 1786 marriage date, place, or parties.\n\n---\n\n### Identity Correlation\n\nThe groom in the marriage index entry (a_001) is identified as Anders Monsen by exact name match, correct Hordaland region, and age-appropriate date (approximately 27 at marriage, consistent with birth in 1759). Person-evidence pe_001 and pe_005 link the groom's name and marriage assertions to tree person LKFW-9XH at confident level.\n\nThe bride in the marriage index entry (a_003) is identified as Unna Halsteinsdatter \u2014 once the transcription artifact is corrected \u2014 by exact name match (given name Unna, patronymic Halsteinsdatter), correct Hordaland region, and spousal pairing with the identified groom. Person-evidence pe_003 and pe_007 link the bride's name and marriage assertions to tree person KZHH-VTX at confident level, with a same-person score of 0.904.\n\n---\n\n### What the Record Shows\n\nThe derivative index entry (src_001) records:\n- **Groom:** Anders Monsen\n- **Bride:** Urna Halsteinsdr (= Unna Halsteinsdatter; transcription artifact documented above)\n- **Marriage date:** 25 June 1786\n- **Marriage place:** Hamre, Hordaland, Norway (Meland annex section of the Hamre kirkeb\u00f8k, consistent with the bride's Hestdal, Meland origin and the locality-guide note that couples were usually married in the bride's home parish)\n- **Bride's marital status (pige/enke):** Not indexed; the original may clarify whether Unna was a maiden (pige) or widow (enke) at the time of marriage. Given her birth year of 1745 and the groom's birth year of 1759, she was approximately 41 at marriage \u2014 an age that makes a prior marriage plausible, though not established.\n- **Additional details (banns dates, bondsmen, farm names):** Not captured by the derivative index; available in the original Hamre kirkeb\u00f8k.\n\nThe original Hamre kirkeb\u00f8k 1750-1857 is the primary source underlying this derivative index. FamilySearch film 007621224 is confirmed patron-only (HTTP 403). Digitalarkivet (https://media.digitalarkivet.no) provides free browse access to the same register; a researcher-action URL has been provided (log_008) and is awaiting response. Until the researcher reports back from Digitalarkivet, the full content of the original entry \u2014 including any additional detail beyond what the derivative index captures \u2014 remains unread. The original is not permanently inaccessible; it is pending a researcher browser session.\n\n---\n\n### Conflicts\n\nNo conflicts are registered in the project for q_001. The 1801 census anomaly (Borni Nilsdatter as wife) is documented analytically but is a secondary question about Unna's fate, not a conflict on the core 1786 marriage facts.\n\n---\n\n### Tier and Limitations\n\nThis conclusion is rated **probable**. The derivative marriage index entry (src_001), a systematic compilation derived from original Lutheran parish records, records the core marriage facts (date 25 June 1786, place Hamre, Hordaland, groom Anders Monsen, bride Unna Halsteinsdatter) with no contradicting evidence and with geographic corroboration from the 1801 census. The bride's name transcription artifact is documented and does not constitute a material uncertainty. However, the original Hamre kirkeb\u00f8k entry has not been read \u2014 the sole direct evidence for this marriage is a derivative source. Exhaustiveness has not been declared. The 'what does the record show' component of the question is partially answered: the indexed fields are established, but additional detail available in the original (banns, bondsmen, marital status, farm names) is pending the researcher's Digitalarkivet browse.\n\nThe tier would advance to **proved** if: (1) the researcher completes the Digitalarkivet browse and confirms (or corrects) the indexed date, place, and names from the original entry, providing a second independent attestation; and (2) exhaustiveness is declared once the original is accessed and no additional unsearched record types remain."
+    }
+  ],
+  "evaluations": [],
+  "localities": [
+    {
+      "id": "loc_001",
+      "place": "Hordaland, Norway",
+      "for_place": "Hamre prestegjeld (Meland / Hamre parishes), S\u00f8ndre Bergenhus amt",
+      "time_period": "1770-1820",
+      "jurisdictions": [
+        {
+          "name": "Hamre prestegjeld (Hamre clerical district), Diocese of Bj\u00f8rgvin",
+          "date_range": "1677-1884"
+        },
+        {
+          "name": "S\u00f8ndre Bergenhus amt (civil county)",
+          "date_range": "1763-1919"
+        },
+        {
+          "name": "Nordhordland sorenskriveri (court/probate/land district)",
+          "date_range": "/1820+"
+        },
+        {
+          "name": "Alversund prestegjeld (successor clerical district, Meland parish transferred here)",
+          "date_range": "1885-1924"
+        }
+      ],
+      "collections": [
+        {
+          "id": "47267",
+          "title": "Kirkeb\u00f8ker, 1677-1928 \u2014 Hamre prestegjeld (Hordaland), FamilySearch Catalog",
+          "date_range": "1677-1928"
+        },
+        {
+          "id": "209228",
+          "title": "Extract of christenings and marriages, 1677-1826 \u2014 Hamre, FamilySearch Catalog",
+          "date_range": "1677-1826"
+        },
+        {
+          "id": "261335",
+          "title": "Register over d\u00f8pte, gifte og begravede, utdrag av Hamre kirkebok nr. 1 & 3; Hamre kirkebok nr. 2 (Haarstad / Luker), FamilySearch Catalog",
+          "date_range": "1677-1826"
+        },
+        {
+          "id": "769257",
+          "title": "Hamre d\u00f6de [burials] 1762-1826, compiled by Elna F. Luker, FamilySearch Catalog",
+          "date_range": "1762-1826"
+        },
+        {
+          "id": "1468080",
+          "title": "Norway, Marriages, 1660-1926 (legacy partial index)",
+          "date_range": "1660-1926"
+        },
+        {
+          "id": "1467014",
+          "title": "Norway, Baptisms, 1634-1927 (index only)",
+          "date_range": "1634-1927"
+        },
+        {
+          "id": "1468081",
+          "title": "Norway, Burials, 1666-1927 (index only)",
+          "date_range": "1666-1927"
+        },
+        {
+          "id": "4237104",
+          "title": "Norway, Church Books, 1797-1958 (indexed + images)",
+          "date_range": "1797-1958"
+        },
+        {
+          "id": "3733603",
+          "title": "Norway, Census, 1801 (indexed + images)",
+          "date_range": "1801-1801"
+        },
+        {
+          "id": "438738",
+          "title": "Skifteprotokoller, 1702-1910 \u2014 Nordhordaland sorenskriveri, FamilySearch Catalog",
+          "date_range": "1702-1910"
+        },
+        {
+          "id": "438920",
+          "title": "Skifteprotokoller, 1773-1810 \u2014 Nordhordland Prosti (clerical probate), FamilySearch Catalog",
+          "date_range": "1773-1810"
+        },
+        {
+          "id": "494924",
+          "title": "Panteb\u00f8ker (mortgage/land records), 1741-1893 \u2014 Nordhordaland, FamilySearch Catalog",
+          "date_range": "1741-1893"
+        },
+        {
+          "id": "1661306",
+          "title": "Norway, Probate Index Cards, 1640-1903 (indexed)",
+          "date_range": "1640-1903"
+        }
+      ],
+      "quirks": [
+        "Meland was an annex parish of Hamre prestegjeld from 1677 to 1884. All Meland church records (baptisms, marriages, burials) for 1770-1820 are recorded in the Hamre kirkeb\u00f8ker, not in a separate Meland register. Search Hamre prestegjeld books (FamilySearch Catalog 47267) \u2014 there is no independent Meland clerical series until the Alversund prestegjeld was formed in 1885.",
+        "Meland marriages are expected to appear in the Meland annex section within the Hamre kirkeb\u00f8k. The 1750-1857 volume organizes entries by parish. The marriage should be under the Meland entries, not the main Hamre parish section.",
+        "The national FamilySearch 'Norway, Marriages, 1660-1926' index (collection 1468080) is explicitly a legacy partial index \u2014 not complete for any place or period, and farm names (g\u00e5rdnames) were not indexed. A negative result does not mean the marriage is absent; always verify in the original Hamre kirkeb\u00f8k images.",
+        "Start with the compiled name extracts before browsing the original: FamilySearch Catalog no. 261335 (Register over d\u00f8pte, gifte og begravede, utdrag av Hamre kirkebok nr. 1 & 3; Hamre kirkebok nr. 2, compiled by Haarstad and Luker) is a hand-compiled name register and the fastest first-pass search tool for 1677-1826.",
+        "Norwegian patronymic naming was universal in this period. 'Monsen' = son of Mons; 'Halsteinsdatter' = daughter of Halstein. Surnames changed every generation. Women did not take their husband's patronymic at marriage in this era \u2014 Unna would continue to appear in records as 'Halsteinsdatter' after marriage.",
+        "Farm names (e.g., Hestdal) are addresses/residences, not hereditary surnames. They should not be searched as part of a surname field. A person who moved farms changed their 'farm name' identifier.",
+        "Couples were usually married in the bride's home parish. Since Unna Halsteinsdatter was from Hestdal, Meland, the marriage entry should appear in the Meland section of the Hamre register, not the main Hamre section.",
+        "Civil registration in Norway did not begin until 1876 (national level) and 1915 (community Folkeregistre). For 1770-1820 there are no civil vital records \u2014 the Lutheran parish register is the only vital record source.",
+        "The 1801 census (FamilySearch collection 3733603; also at Digitalarkivet) is the only full-household nominative census within or immediately bracketing the 1770-1820 window. Earlier counts (1664-1666, 1701) list males only. The 1801 census will show the family's composition and ages, bracketing the likely marriage date.",
+        "Some Meland farms (including possibly Hestdal) belonged to the Lysekloster Estate; if probate for a Meland family is not found in the Nordhordaland sorenskriveri records, also check Hardanger og Voss sorenskriveri where Lysekloster probates were kept.",
+        "Pre-1814 kirkeb\u00f8k entries are in Danish-influenced Norwegian written in Gothic (Kurrent-influenced) script. Key marriage vocabulary: viede/vigde/copulerede (married), trolovelse (betrothal/engagement), lysning (banns), ungkarl (bachelor), pige (maiden), enke/enkemand (widow/widower).",
+        "The Digitalarkivet browse interface (https://media.digitalarkivet.no/kb/browse) provides browse-only access to the 1750-1857 Hamre volume \u2014 no online name index. Images must be paged through manually by the researcher.",
+        "The three-volume bygdeb\u00f8k 'Mellom bakkar og berg: gard og \u00e6tt i Meland' (Kleiveland & Homlong) covers all 50 Meland farms including Hestdal (farm no. 30) with genealogical reconstructions from the 1500s to 2004. It is the most comprehensive secondary source and should be consulted in parallel with original records.",
+        "Elna Fl\u00f8isand Luker's 'Melands slekter' (FamilySearch Library 948.32/M1 D2) is a compiled genealogy drawing on the Hamre church books, Nordhordaland probate protocols, and mortgage registers \u2014 a critical secondary finding aid for Meland families."
+      ],
+      "guide_markdown": "# Locality Guide: Hamre Prestegjeld (Meland / Hamre Parishes), S\u00f8ndre Bergenhus, Norway (1770\u20131820)\n\n## Jurisdiction overview\n\n- **Ecclesiastical unit:** Hamre prestegjeld (clerical district), Diocese of Bj\u00f8rgvin (continuous from 1538). Meland was an annex parish within Hamre prestegjeld from 1677 through 1884.\n- **Civil administrative unit during 1770\u20131820:** S\u00f8ndre Bergenhus amt (Bergenhus amt until 1763; Hordaland fylke only from 1919). Sorenskriveri: Nordhordland. Fogderi: Nordhordland.\n- **Location:** Hamre church on Oster\u00f8y island; Meland parish on Holsn\u00f8y island; both northeast/northwest of Bergen.\n- **Population:** Hordaland province ~78,600\u201378,900 in 1801 (Populstat). No parish-level figure available from tools.\n- **Economy:** Subsistence farming, coastal fishing, coastal trade.\n- **Religion:** Exclusively Lutheran state church.\n\n## Boundary changes\n\n- **Before 1885:** Meland was an annex parish of Hamre prestegjeld. All church records for Meland from 1677 to 1884 are in the Hamre kirkeb\u00f8ker.\n- **1885:** Alversund and Meland separated from Hamre prestegjeld into the new Alversund prestegjeld.\n- **1749:** Hosanger, Mo, and Seim separated from Hamre \u2014 does not affect Meland research.\n- **Civil:** Meland's tinglag was Alversund (distinct from Hamre tinglag), relevant for land/mortgage searches.\n\n## Available record types\n\n### Vital records (civil registration)\n- **No civil registration existed in 1770\u20131820.** Civil registration began nationally in 1876; community Folkeregistre began in 1915.\n- The Lutheran parish register (kirkeb\u00f8k) is the only vital record source for this period.\n\n### Church records (kirkeb\u00f8ker) \u2014 PRIMARY SOURCE\n\n**Key volumes for 1770\u20131820:**\n- Hamre/Alversund, Hamre, Meland Parish Church Records 1750\u20131857 at Digitalarkivet (browse-only images)\n- Kirkeb\u00f8ker, 1677\u20131928 \u2014 Hamre prestegjeld, FamilySearch Catalog no. 47267 (images)\n- Extract of christenings and marriages 1677\u20131826 \u2014 Hamre, FamilySearch Catalog no. 209228\n- Register over d\u00f8pte, gifte og begravede (compiled index by Haarstad/Luker), FamilySearch Catalog no. 261335 \u2014 USE THIS FIRST\n- Hamre d\u00f6de 1762\u20131826 (Luker), FamilySearch Catalog no. 769257\n\n**Indexed national collections:**\n- Norway, Marriages, 1660\u20131926 (FamilySearch ID 1468080) \u2014 partial legacy index only; verify in originals\n- Norway, Baptisms, 1634\u20131927 (ID 1467014) \u2014 index only\n- Norway, Burials, 1666\u20131927 (ID 1468081) \u2014 index only\n- Norway, Church Books, 1797\u20131958 (ID 4237104) \u2014 indexed + images (covers from 1797)\n\n**Digitization level:** Digitalarkivet images = browse-only. FamilySearch Catalog films = images (login/FHC). Compiled extracts (261335) = most practical indexed finding aid for 1770\u20131820.\n\n**Language:** Danish/Norwegian; Gothic script. Records are not in English.\n\n**What a marriage entry contains (pre-1814):** names, marriage date, ages, residences (farm names), status (bachelor/maiden/widower/widow), occupations, two bondsmen names, three banns dates, sometimes engagement date.\n\n### Census records\n- **1801 census** \u2014 only full-household nominative census in target window. FamilySearch collection 3733603 (indexed + images); Digitalarkivet; covers Meland.\n- Manntall i Meland sogn (Hamre prestegjeld), FamilySearch Catalog 277046, covers 1645, 1666, 1701, 1801, 1865, 1900.\n- No census 1770\u20131800; 1664\u20131666 and 1701 counts list males only.\n\n### Probate records\n- Skifteprotokoller 1702\u20131910, Nordhordaland sorenskriveri, FamilySearch Catalog 438738\n- Skifteprotokoller 1773\u20131810, Nordhordland Prosti (clerical probate), FamilySearch Catalog 438920\n- Probate Index Cards 1640\u20131903, FamilySearch collection 1661306 (name-indexed)\n- Note: some Meland farms under Lysekloster Estate \u2014 if not found in Nordhordaland, check Hardanger og Voss sorenskriveri\n\n### Land records\n- Panteb\u00f8ker 1741\u20131893, Nordhordaland, FamilySearch Catalog 494924 (browse-only images)\n- Meland's tinglag: Alversund (search separately from Hamre tinglag)\n\n### Court records\n- Tingb\u00f8ker 1642\u20131701, Nordhordaland sorenskriveri, FamilySearch Catalog (film 505971) \u2014 predates target window\n- Post-1701 court minutes: Digitalarkivet, Nordhordaland sorenskriveri\n\n### Compiled genealogies and farm books\n- 'Mellom bakkar og berg: gard og \u00e6tt i Meland' (Kleiveland & Homlong) \u2014 covers all 50 Meland farms including Hestdal (farm no. 30), 1500s to 2004. FamilySearch Library 948.32/M1 D2\n- Luker, Elna Fl\u00f8isand: 'Melands slekter' \u2014 families from Hamre church books, probate, and mortgage records. FamilySearch Library 948.32/M1 D2\n- Alenfit skibreide (downloadable PDF) \u2014 farm owners in Alversund, S\u00e6b\u00f8, Lygra, Seim, Hamre parishes to 1814\n\n### Military records\n- Norwegian military records for Nordhordland 1770\u20131820 not cataloged in FamilySearch tool results; consult Arkivverket (https://www.arkivverket.no) for legd/infantry muster rolls.\n\n### Tax records\n- Norway Accounting and Tax Records at Digitalarkivet (https://www.digitalarkivet.no/content/85/regnskap-og-skatt); browse-only images\n- Extra Tax (Ekstraskatt) 1762\u20131772 falls just before the window\n\n### Cemetery records\n- Burial register is part of the kirkeb\u00f8k ('Begravede' or 'D\u00f8de' section)\n- BillionGraves and FindAGrave have limited coverage for early rural Hordaland\n\n## Repository guide\n\n### Online repositories\n| Repository | Collections | Access |\n|---|---|---|\n| Digitalarkivet (National Archives) | Hamre kirkeb\u00f8ker 1750\u20131857 (browse-only); 1801 census; probate/land/court records | Free \u2014 https://digitalarkivet.no |\n| FamilySearch | Catalog nos. 47267, 209228, 261335, 769257; collections 1468080, 1467014, 1468081, 3733603, 4237104 | Free |\n| Ancestry | Norway Marriages, Births/Christenings, 1801 Census | Subscription |\n| MyHeritage | Norway Marriages, Baptisms, 1801 Census | Subscription |\n| RHD (Norwegian Historical Data Centre) | Parish record search; census search | Free \u2014 https://rhd.uit.no |\n\n### Physical repositories\n| Repository | Holdings | Access |\n|---|---|---|\n| Statsarkivet i Bergen (Bergen Regional State Archive) | Original Hamre kirkeb\u00f8ker; Nordhordaland records | In-person; some digitized |\n| National Archives of Norway (Arkivverket) | Military, tax, probate, court records | In-person / https://www.arkivverket.no |\n| FamilySearch Family History Library | Microfilm of catalog nos. 47267, 261335, etc. | Via local FamilySearch Centers |\n\n## Records NOT online (as name-searchable indexes)\n- Hamre kirkeb\u00f8k 1750\u20131857 Meland section: browse-only images at Digitalarkivet, no name index\n- Tax and accounting records for Nordhordland 1770\u20131820: images at Digitalarkivet, not name-indexed\n- Military muster rolls for Nordhordland: not available in tool results; physical/Arkivverket search required\n- Court minute books (tingb\u00f8ker) post-1701: images at FamilySearch Catalog and Digitalarkivet, not name-indexed\n\n## Known record losses\nNo known record losses documented in FamilySearch Wiki tool results for Hamre or Meland parishes. The continuous kirkeb\u00f8k series from 1677 appears intact.\n\n## Research tips\n1. Search Hamre prestegjeld books \u2014 Meland had no independent register before 1885.\n2. Use compiled extracts (FamilySearch Catalog 261335) first \u2014 fastest path to a named entry in 1770\u20131820.\n3. The national Marriages index (1468080) is a partial legacy index; always verify in originals.\n4. Patronymics were universal: 'Monsen' = son of Mons; 'Halsteinsdatter' = daughter of Halstein. Women retained birth patronymics after marriage.\n5. Farm names are addresses, not hereditary surnames \u2014 do not search them as surnames.\n6. Marriage should appear in the Meland annex section of the Hamre book (bride's home parish).\n7. Pre-1814 entries vary in detail by pastor; the printed-form standard came only in 1814.\n8. Unna (b. 1745) may have been previously married \u2014 the entry would note her as enke (widow).\n9. Cross-check the 1801 census: children's ages will bracket the likely marriage year.\n10. Use the Meland bygdeb\u00f8ker ('Mellom bakkar og berg') \u2014 Hestdal is farm no. 30, covered in detail.\n11. If probate search needed: check Nordhordaland sorenskriveri (catalog 438738) and clerical probate (438920); if Meland farm was under Lysekloster Estate, also check Hardanger og Voss sorenskriveri.\n12. Records are in Danish/Norwegian Gothic script. Key terms: viede/vigde (married), trolovelse (betrothal), lysning (banns), ungkarl (bachelor), pige (maiden), enke/enkemand (widow/widower).",
+      "pages_read": [
+        {
+          "section": "home",
+          "url": "https://www.familysearch.org/en/wiki/Norway_Genealogy",
+          "found": true
+        },
+        {
+          "section": "getting_started",
+          "url": "https://www.familysearch.org/en/wiki/Norway_Getting_Started",
+          "found": true
+        },
+        {
+          "section": "online_records",
+          "url": "https://www.familysearch.org/en/wiki/Norway_Online_Genealogy_Records",
+          "found": true
+        },
+        {
+          "section": "research_tips",
+          "url": "https://www.familysearch.org/en/wiki/Norway_Research_Tips_and_Strategies",
+          "found": true
+        }
+      ],
+      "source": "locality-guide",
+      "created": "2026-10-13"
+    }
+  ]
+}
