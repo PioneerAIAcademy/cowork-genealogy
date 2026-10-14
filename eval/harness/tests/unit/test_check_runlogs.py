@@ -710,7 +710,9 @@ def test_touched_fixture_active_runlog_no_warning(monkeypatch, capsys, tmp_path)
     rc = check_runlogs.main()
     out = capsys.readouterr().out
     assert rc == 0
-    assert "uses-fixture" not in out
+    # Rule 2f's own message. Rule 2c also grades a fixture-touched suite now, and
+    # on this log (no `instrument`) it rightly warns "no instrument recorded".
+    assert "a shared fixture this PR changed" not in out
     assert "All runlog rules satisfied" in out
 
 
@@ -2930,3 +2932,37 @@ def test_the_cosmetic_skip_label_waives_rule2c_for_its_skill_only(
         assert "waives rule 2c" in out
     else:
         assert "::error" in out
+
+
+
+def test_a_non_test_validator_module_marks_every_suite():
+    """A suite file can import a sibling module (`extraction_validators.py`), so an
+    edit there is graded on every suite; rule 2c's recompute decides which moved."""
+    for path in (
+        "eval/harness/validators/extraction_validators.py",
+        "eval/harness/validators/conftest.py",
+    ):
+        assert check_runlogs.instrument_touched_suites({path}, {"demo", "convert-dates"}) == {"demo", "convert-dates"}
+    assert check_runlogs.instrument_touched_suites(
+        {"eval/harness/validators/test_convert_dates.py"}, {"demo", "convert-dates"}
+    ) == {"convert-dates"}
+
+
+def test_a_changed_shared_fixture_opens_rule2c_on_the_suites_that_use_it(monkeypatch, capsys, tmp_path):
+    """A shared MCP fixture's `tool` field feeds `tools.fixture`; changing it is
+    graded on the PR that makes it, not left for the next author of those suites."""
+    runlogs = tmp_path / "runlogs"
+    runlogs.mkdir()
+    _seed_instrument_suite(runlogs, monkeypatch, _instr())
+    tests = tmp_path / "tests"
+    (tests / "convert-dates").mkdir(parents=True)
+    (tests / "convert-dates" / "t.json").write_text(
+        json.dumps({"test": {"id": "ut_convert_dates_900"}, "mcp_fixtures": ["shared-fix"]}), encoding="utf-8"
+    )
+    monkeypatch.setattr(check_runlogs, "TESTS_UNIT_DIR", tests)
+    _stub_current_instrument(monkeypatch, _instr(tools__fixture=_H["0"]))
+    monkeypatch.setattr(check_runlogs, "git_diff_touched_paths", lambda: ["eval/fixtures/mcp/shared-fix.json"])
+    rc = check_runlogs.main()
+    out = capsys.readouterr().out
+    assert rc == 1, out
+    assert "skill `convert-dates`" in out and "tools.fixture" in out

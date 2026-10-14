@@ -441,3 +441,59 @@ def test_a_fixture_that_is_not_an_object_is_skipped(tmp_path):
     (fixtures / "as-array.json").write_text("[1, 2]", encoding="utf-8")
     (fixtures / "as-object.json").write_text(json.dumps({"tool": "record_search"}), encoding="utf-8")
     assert instrument.fixture_tools("demo", tmp_path / "tests", fixtures) == {"record_search"}
+
+
+
+# --- sibling validator modules (self-review round 3) ------------------------------------
+
+
+def _copy_validators(tmp_path, names):
+    for name in names:
+        (tmp_path / name).write_text((VALIDATORS / name).read_text(encoding="utf-8"), encoding="utf-8")
+
+
+def test_a_suite_file_that_star_imports_its_checks_still_fingerprints_them(tmp_path):
+    """`test_extraction_append.py` is a docstring and `from extraction_validators
+    import *`. Inverting an assertion in the imported module must move the suite
+    half for both suites that import it, and leave an unrelated suite alone."""
+    names = (
+        "test_universal.py", "validators_lib.py", "extraction_validators.py",
+        "test_extraction_append.py", "test_record_structurer.py", "test_convert_dates.py",
+    )
+    _copy_validators(tmp_path, names)
+    before = {s: validators_fingerprint(s, tmp_path) for s in ("extraction-append", "record-structurer", "convert-dates")}
+    target = tmp_path / "extraction_validators.py"
+    source = target.read_text(encoding="utf-8")
+    assert "assert not " in source, "premise gone: no `assert not` to invert"
+    target.write_text(source.replace("assert not ", "assert ", 1), encoding="utf-8")
+    after = {s: validators_fingerprint(s, tmp_path) for s in before}
+    assert after["extraction-append"]["suite"] != before["extraction-append"]["suite"]
+    assert after["record-structurer"]["suite"] != before["record-structurer"]["suite"]
+    assert after["convert-dates"] == before["convert-dates"]
+
+
+def test_a_comment_in_an_imported_sibling_moves_nothing(tmp_path):
+    _copy_validators(tmp_path, ("test_universal.py", "validators_lib.py", "extraction_validators.py", "test_extraction_append.py"))
+    before = validators_fingerprint("extraction-append", tmp_path)
+    target = tmp_path / "extraction_validators.py"
+    target.write_text("# a comment that decides nothing\n" + target.read_text(encoding="utf-8"), encoding="utf-8")
+    assert validators_fingerprint("extraction-append", tmp_path) == before
+
+
+def test_sibling_imports_are_followed_transitively(tmp_path):
+    (tmp_path / "test_demo.py").write_text("from helper_a import *\n", encoding="utf-8")
+    (tmp_path / "helper_a.py").write_text("from helper_b import check\n", encoding="utf-8")
+    (tmp_path / "helper_b.py").write_text("def check(x):\n    assert x\n", encoding="utf-8")
+    assert instrument.sibling_validator_imports(tmp_path / "test_demo.py", tmp_path) == ["helper_a.py", "helper_b.py"]
+    before = validators_fingerprint("demo", tmp_path)
+    (tmp_path / "helper_b.py").write_text("def check(x):\n    assert not x\n", encoding="utf-8")
+    assert validators_fingerprint("demo", tmp_path)["suite"] != before["suite"]
+
+
+def test_a_skip_keyword_that_changes_behaviour_stays_in_the_hash():
+    """`allow_module_level=True` turns a raise into a whole-file skip; only the
+    reason string is a message."""
+    plain = "def test_a(x):\n    pytest.skip('why')\n"
+    module_level = "def test_a(x):\n    pytest.skip('why', allow_module_level=True)\n"
+    assert canonical_module(plain) != canonical_module(module_level)
+    assert canonical_module(plain) == canonical_module("def test_a(x):\n    pytest.skip(reason='other words')\n")

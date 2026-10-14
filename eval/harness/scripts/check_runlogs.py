@@ -653,10 +653,11 @@ def _is_confirmed_non_failing(correction: dict) -> bool:
 
 
 # Paths whose change can move ANY suite's instrument fingerprint: the shared
-# validators, the fingerprint's own definition and the mock that advertises tools,
-# and the engine's tool source and build inputs.
+# validators and every non-`test_` module beside them (a suite file can import
+# one -- extraction_validators.py), the fingerprint's own definition and the mock
+# that advertises tools, and the engine's tool source and build inputs.
 INSTRUMENT_EVERY_SUITE_RE = re.compile(
-    r"^(?:eval/harness/validators/(?:test_universal|validators_lib)\.py"
+    r"^(?:eval/harness/validators/(?:test_universal\.py|(?!test_)[a-z0-9_]+\.py)"
     r"|eval/harness/harness/(?:instrument|mock_mcp)\.py"
     r"|packages/engine/mcp-server/(?:src/.*|package\.json|package-lock\.json|tsconfig\.json))$"
 )
@@ -1756,6 +1757,10 @@ def main() -> int:
         {p.name for p in RUNLOGS_DIR.iterdir() if p.is_dir()} if RUNLOGS_DIR.is_dir() else set()
     )
     instrument_touched_skills = instrument_touched_suites(touched_paths, all_suites)
+    # A shared MCP fixture's `tool` field feeds `tools.fixture`, so a changed fixture
+    # opens rule 2c on the suites that reference it -- graded on this PR, not left
+    # for the next author to touch them.
+    instrument_touched_skills |= fixture_touched_skills
     instrument_touched_skills -= exempt_suiteless
 
     # Drop DELETED skills: when a PR removes a skill entirely — its skill dir

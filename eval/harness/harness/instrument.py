@@ -6,7 +6,9 @@ a run log that its instrument moved since it was written (issue #2479, PR 3):
 
 - ``validators`` -- the validator files `validator_runner.run_validators` loads
   for the suite, as a normalised whole-module AST. ``suite`` is
-  ``test_<skill>.py``; ``shared`` is ``test_universal.py`` + ``validators_lib.py``.
+  ``test_<skill>.py`` plus every sibling module in ``validators/`` it imports,
+  transitively (``extraction_validators.py`` for extraction-append and
+  record-structurer); ``shared`` is ``test_universal.py`` + ``validators_lib.py``.
 - ``tools`` -- the ``description`` and ``inputSchema`` the mock advertises, from
   ``build/tool-schemas.js``. ``fixture`` is every tool the suite's own fixtures
   serve; ``live`` is the remaining ``LIVE_TOOLS``, which every suite advertises.
@@ -228,8 +230,10 @@ class _DropMessages(ast.NodeTransformer):
     def visit_Call(self, node: ast.Call):
         self.generic_visit(node)
         if not self._in_report and ast.unparse(node.func) in _MESSAGE_CALLS:
+            # The message goes; keywords that change behaviour, such as
+            # `allow_module_level`, stay.
             node.args = []
-            node.keywords = []
+            node.keywords = [k for k in node.keywords if k.arg not in ("reason", "msg")]
         return node
 
     def visit_Raise(self, node: ast.Raise):
@@ -413,10 +417,47 @@ def hash_validator_file(path: Path) -> str:
     return _sha(canonical_module(path.read_text(encoding="utf-8")))
 
 
+def sibling_validator_imports(path: Path, validators_dir: Path) -> list[str]:
+    """Modules in `validators_dir` that `path` imports, transitively, other than
+    the shared ones. `test_extraction_append.py` is a docstring and `from
+    extraction_validators import *`: without following that import its `suite`
+    half would fingerprint no decision at all."""
+    found: set[str] = set()
+    pending = [path]
+    while pending:
+        current = pending.pop()
+        if not current.is_file():
+            continue
+        try:
+            tree = ast.parse(current.read_text(encoding="utf-8"))
+        except (SyntaxError, UnicodeDecodeError):
+            continue
+        names: set[str] = set()
+        for node in ast.walk(tree):
+            if isinstance(node, ast.ImportFrom) and node.level == 0 and node.module:
+                names.add(node.module)
+            elif isinstance(node, ast.Import):
+                names.update(a.name for a in node.names)
+        for name in names:
+            filename = f"{name}.py"
+            if (
+                filename not in SHARED_VALIDATOR_FILES
+                and filename not in found
+                and (validators_dir / filename).is_file()
+            ):
+                found.add(filename)
+                pending.append(validators_dir / filename)
+    return sorted(found)
+
+
 def validators_fingerprint(skill: str, validators_dir: Path) -> dict[str, str]:
     shared = {name: hash_validator_file(validators_dir / name) for name in SHARED_VALIDATOR_FILES}
+    suite_path = validators_dir / suite_validator_file(skill)
+    suite = {suite_path.name: hash_validator_file(suite_path)}
+    for name in sibling_validator_imports(suite_path, validators_dir):
+        suite[name] = hash_validator_file(validators_dir / name)
     return {
-        "suite": hash_validator_file(validators_dir / suite_validator_file(skill)),
+        "suite": _sha(json.dumps(suite, sort_keys=True)),
         "shared": _sha(json.dumps(shared, sort_keys=True)),
     }
 
