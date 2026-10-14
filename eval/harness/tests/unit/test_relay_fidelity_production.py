@@ -183,3 +183,34 @@ def test_a_missing_root_raises_rather_than_printing_zeros():
 
     with pytest.raises(FileNotFoundError):
         rfr.compute_production_counts(FIXTURES / "nope", agents_root=AGENTS)
+
+
+def test_a_long_return_is_kept_AND_scored_end_to_end():
+    """The acceptance check joined rather than proved in halves.
+
+    `test_agent_return_is_not_cut_at_the_500_char_bound` proves the orchestrator
+    keeps a long return; this proves one flows all the way through to a score.
+    Before the fixture was lengthened, every fixture return was ~200 chars, so
+    the two halves were each proven and never met.
+    """
+    import json
+
+    log = FIXTURES / "alpha" / "run-2026-10-13_10-00-00.json"
+    data = json.loads(log.read_text(encoding="utf-8"))
+    raw = json.loads(data["tool_calls"][0]["response_summary"])[0]["text"]
+    assert len(raw) > 500, "fixture must exercise a return past the old bound"
+    assert "[truncated by harness" not in raw
+
+    c = counts()
+    assert c["exact"] == 1, "the long return is the one scored verbatim"
+
+
+def test_a_slug_filter_narrows_the_corpus():
+    """`TEST=<slug>` matches the siblings (`e2e-corpus`, `e2e-latency`, …).
+    Without it `make e2e-relay-fidelity TEST=x` silently reported everything."""
+    assert rfr.compute_production_counts(
+        FIXTURES, cutoff=None, agents_root=AGENTS, test_slug="alpha"
+    )["logs_seen"] == 9
+    assert rfr.compute_production_counts(
+        FIXTURES, cutoff=None, agents_root=AGENTS, test_slug="no-such-fixture"
+    )["logs_seen"] == 0

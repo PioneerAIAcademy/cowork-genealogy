@@ -341,7 +341,11 @@ def compute_counts(
 
 
 def compute_production_counts(
-    e2e_root: Path, *, cutoff: Any = None, agents_root: Path | None = None
+    e2e_root: Path,
+    *,
+    cutoff: Any = None,
+    agents_root: Path | None = None,
+    test_slug: str | None = None,
 ) -> dict[str, Any]:
     """Relay fidelity on a REAL route: a subagent's return against what the
     main thread said afterwards.
@@ -379,10 +383,10 @@ def compute_production_counts(
     # used by every other e2e reader. Re-deriving it is how the first cut of this
     # arm counted 611 logs against the real 203: `run-*.json` also matches
     # `run-<ts>.ann.json` and both `run-<ts>.final-*.json` siblings.
-    paths = sorted(
-        p for d in sorted(e2e_root.iterdir()) if d.is_dir()
-        for p in sorted(d.iterdir()) if is_result_json(p)
-    )
+    dirs = [d for d in sorted(e2e_root.iterdir()) if d.is_dir()]
+    if test_slug:
+        dirs = [d for d in dirs if d.name == test_slug]
+    paths = sorted(p for d in dirs for p in sorted(d.iterdir()) if is_result_json(p))
     total_before_window = len(paths)
     paths = filter_since(paths, cutoff)
     out["logs_excluded_by_window"] = total_before_window - len(paths)
@@ -639,11 +643,16 @@ def main() -> int:
     # argparse runs it through `parse_since` too. A `default=None` silently
     # skips the converter and reads the whole corpus while the Makefile and
     # eval/CLAUDE.md both promise a 14-day window.
+    parser.add_argument(
+        "--test", metavar="SLUG", help="one e2e fixture slug instead of the corpus"
+    )
     add_since_arg(parser)
     args = parser.parse_args()
 
     if args.production:
-        counts = compute_production_counts(E2E_RUNLOGS_ROOT, cutoff=args.since)
+        counts = compute_production_counts(
+            E2E_RUNLOGS_ROOT, cutoff=args.since, test_slug=args.test
+        )
         print(format_production_report(counts))
         # Exit 2 on an empty denominator. A prose warning beside a success exit
         # relocates the silent zero to the exit code — the house pattern is the
