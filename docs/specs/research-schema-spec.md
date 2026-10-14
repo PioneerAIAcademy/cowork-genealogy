@@ -92,6 +92,7 @@ flagged. (One row below is the exception, and says so.)
 | `record_basis` | `stated`, `inferred`, `absent` | assertions |
 | `conflict_type` | `fact`, `identity` | conflicts |
 | `conflict_status` | `unresolved`, `resolved`, `moot` | conflicts |
+| `resolution_kind` | `competitor`, `tree`, `synthesis` | conflicts — how a `resolved` conflict was settled |
 | `hypothesis_status` | `active`, `supported`, `ruled_out` | hypotheses |
 | `proof_tier` | `proved`, `probable`, `possible`, `not_proved`, `disproved` | proof_summaries |
 | `proof_shortfall` | `ceiling`, `gap`, `conflict`, `none` | proof_summaries |
@@ -112,11 +113,15 @@ flagged. (One row below is the exception, and says so.)
 | `evaluation_target_type` | `question`, `proof_summary`, `project` | evaluations |
 | `evaluation_verdict` | `looks_solid`, `consider_addressing`, `address_first`, `refused` | evaluations |
 | `locality_page_section` | `home`, `getting_started`, `online_records`, `research_tips` | localities' `pages_read[].section` (Section 5.13) — the four FamilySearch Research Wiki place-page sections. `validate_research_schema` checks it at every `pages_read[]` item — the one place it descends into a locality's nested objects; the items' required and stray keys are still not deep-checked at the writer |
+| `stopped_because` | `question_answered`, `record_exhausted`, `nothing_further_reachable`, `resources_spent`, `blocked_by_conflict` | questions' `search_stop.stopped_because` (Section 5.2). The first three are stop-gate values that permit `status: "exhaustive_declared"` and a proof tier; the last two (`resources_spent`, `blocked_by_conflict`) keep status `in_progress`. Null on a newly created question (no stop decision yet). Replaces `exhaustive_declaration.declared` (2026-10-07) |
+| `stopped_because_gate` | `question_answered`, `record_exhausted`, `nothing_further_reachable` | Strict subset of `stopped_because`; the gate condition in `search_stop.allOf` that permits `status: "exhaustive_declared"`. Not directly written by skills — expressed as a separate `$def` so the JSON Schema conditional can `$ref` it rather than use an inline enum (ADR-0008 policy: no inline enums in `research.schema.json`) |
+| `stopped_because_non_gate` | `resources_spent`, `blocked_by_conflict` | The two non-gate values of `stopped_because` that keep status `in_progress`. Complement of `stopped_because_gate` within `stopped_because`; the non-gate `if` condition in `search_stop.allOf` that sets `stop_criteria: null`. Not directly written by skills — expressed as a separate `$def` so the JSON Schema conditional can `$ref` it rather than use an inline enum |
+| `not_reached_kind` | `nil_search`, `browse_only`, `over_transport_cap`, `paywalled`, `handed_to_user`, `privacy_sealed`, `skipped_plan_item`, `wiki_named_untouched` | questions' `search_stop.not_reached[].kind` (Section 5.2). What kind of source could not be reached — built only from things the agent already produces. Added 2026-10-07 |
 
 **Where these live in the machine-readable schemas.** All of them are defined in
 `enums.schema.json` and `$ref`'d from `research.schema.json` — none is declared
-inline in the research schema (`locality_page_section`, the last row above, was
-the last to move), and `enum-drift.test.ts` fails on any inline `enum` array
+inline in the research schema (`stopped_because`, `stopped_because_gate`, `stopped_because_non_gate`, and `not_reached_kind`, the last four rows above, were
+added 2026-10-07), and `enum-drift.test.ts` fails on any inline `enum` array
 that reappears there. Removing or renaming any closed-enum value additionally requires
 a repo-wide grep for the old value — the drift lint checks the full value *list*,
 which catches an addition, but a renamed or dropped value can leave a stale
@@ -272,7 +277,7 @@ described under "Who actually writes a row" below.
 | `project` | init-project (objective, title, subject_person_ids — **once, at creation**), proof-conclusion (status, updated) | all | Mutable (status, updated). Any skill may refresh `updated` alone — it is a per-session activity ping. The three creation fields are **set-once**: `research_append` refuses to rewrite one that already holds a value, because every later step plans against them. That constrains the system, not the researcher — a human edits the file directly |
 | `researcher_profile` | init-project (at creation, fixed values); any caller may correct a field later | all (every skill reads `narration_guidance`) | Mutable, deliberately **not** set-once — a researcher who picked the wrong experience level needs a route that is not starting over. Written through `research_append` as a singleton section. Optional: the object is created on its first real write, and an agent must never fabricate one, since a wrong profile is indistinguishable downstream from a real one while an absent one has a working fallback everywhere |
 | `known_holdings` | init-project (survey at creation) | question-selection, research-plan, all | Mutable (`promoted` flag); never delete. Written after the tree persons exist — `relates_to_person_ids` names them, and the validator rejects a reference to a person that does not yet exist |
-| `questions` | question-selection (new questions); research-exhaustiveness (`status` up through `exhaustive_declared`, `exhaustive_declaration`); proof-conclusion (`status` → `resolved`, `resolved` date, `resolution_assertion_ids` on the question being concluded) | research-plan, all downstream | Mutable; never delete. **A question is never retired** — `question_status` has no supersede value, so `status` only advances through the transitions in the Written-by column. An overtaken question stays as it is. A `resolved` write is additionally refused by `research_append` unless a proof summary already references the question. Two further `research_append` preconditions guard the exhaustiveness pair: `status: "exhaustive_declared"` requires `exhaustive_declaration.declared === true` (checked from either side, on the post-merge entry), and `declared: true` is refused while an item on the question's **active** plan is `in_progress` **or `planned`** (checked against the pre-call snapshot, since plan-item completion is the search work's step — a superseded or completed plan's items never block, or a re-planned question could never be declared) |
+| `questions` | question-selection (new questions); research-exhaustiveness (`status` up through `exhaustive_declared`, `search_stop`); proof-conclusion (`status` → `resolved`, `resolved` date, `resolution_assertion_ids` on the question being concluded) | research-plan, all downstream | Mutable; never delete. **A question is never retired** — `question_status` has no supersede value, so `status` only advances through the transitions in the Written-by column. An overtaken question stays as it is. A `resolved` write is additionally refused by `research_append` unless a proof summary already references the question. Two further `research_append` preconditions guard the exhaustiveness pair: `status: "exhaustive_declared"` requires `search_stop.stopped_because` to be a stop-gate value (`question_answered`, `record_exhausted`, or `nothing_further_reachable`) — checked from either side, on the post-merge entry — and a gate-value `stopped_because` is refused while an item on the question's **active** plan is `in_progress` **or `planned`** (checked against the pre-call snapshot, since plan-item completion is the search work's step — a superseded or completed plan's items never block, or a re-planned question could never be declared) |
 | `plans` | research-plan; search-records, search-external-sites, search-full-text, search-images, record-extraction (`items[].status`) | log, question-selection | Mutable; old plans set to `superseded`, never deleted. research-plan owns plan and item structure; the search and extraction skills update only an item's `status` after executing or extracting from it |
 | `log` | search-records, search-full-text, search-external-sites, search-images, search-hints (one entry per researcher verdict on a hint), record-extraction (each carries its own logging rules inline; the shared `references/research-log-protocol.md` copies are all deleted) | question-selection, all | **Append-only; entries never modified or deleted.** No single skill owns the section — `research_log_append` owns entry structure and id allocation, and takes no `section` argument |
 | `sources` | record-extraction, citation | all | Mutable (citation can be refined); never delete. citation refines and never creates — see §8 "Source ownership" |
@@ -566,16 +571,17 @@ Array of question objects.
 | `created` | string | yes | ISO 8601 date |
 | `resolved` | string or null | yes | ISO 8601 date when resolved, or null |
 | `resolution_assertion_ids` | string[] | yes | Assertion IDs that resolved this question (may be empty) |
-| `exhaustive_declaration` | object | yes | See below |
+| `search_stop` | object | yes | See below |
 
-**`exhaustive_declaration`** — The GPS requires an explicit claim that research on a question is reasonably exhaustive, with references to the log entries that justify it. The `stop_criteria` object maps to the 7-Point Stop Criteria from GPS Step 1.
+**`search_stop`** — Why searching stopped on this question and what could not be reached. The GPS requires an explicit claim that research is reasonably exhaustive, with references to the log entries and a 7-Point Stop Criteria assessment. Renamed from `exhaustive_declaration` (2026-10-07); legacy documents with `exhaustive_declaration.declared === true` are read via the `isStopGateSatisfied` helper.
 
 | Field | Type | Required | Description |
 |-------|------|----------|-------------|
-| `declared` | boolean | yes | Whether exhaustive search has been declared |
-| `justification` | string or null | no | Prose explaining why the search is exhaustive |
-| `log_entry_ids` | string[] | yes | Log entry IDs supporting the exhaustive claim (required non-empty when `declared` is true) |
-| `stop_criteria` | object or null | yes | Null when `declared` is false; required object when `declared` is true. Always present as a key (null, not omitted) for consistency. See below |
+| `stopped_because` | `stopped_because` or null | yes | Why searching stopped; null on a newly created question. The three stop-gate values permit `status: "exhaustive_declared"` and a proof tier; the two non-gate values keep `in_progress` |
+| `justification` | string or null | no | Prose explaining why the search stopped |
+| `log_entry_ids` | string[] | yes | Log entry IDs supporting the stop claim (required non-empty when `stopped_because` is a gate value) |
+| `stop_criteria` | object or null | yes | Null when `stopped_because` is null or a non-gate value; required object when `stopped_because` is a gate value. Always present as a key (null, not omitted) for consistency. See below |
+| `not_reached` | object[] | yes | Sources that could not be reached, each with `kind`, `description`, and optional `wiki_title`. See below |
 
 **`stop_criteria`** — Structured assessment against the GPS 7-Point Stop Criteria. Each field is a brief assessment (1-2 sentences).
 
@@ -588,6 +594,15 @@ Array of question objects.
 | `evidence_class` | string | yes | Does the evidence include at least one original record with primary information? |
 | `conflict_resolution` | string | yes | Have all discrepancies been resolved through reasoning? |
 | `overturn_risk` | string | yes | What is the likelihood that new evidence would overturn this conclusion? |
+
+**`not_reached` entries** — Each entry records a source that could not be accessed during the search. Built only from things the agent already produces — never from claims about what might exist offline.
+
+| Field | Type | Required | Description |
+|-------|------|----------|-------------|
+| `kind` | `not_reached_kind` | yes | What type of barrier prevented access |
+| `description` | string | yes | Brief description of what could not be reached |
+| `log_entry_id` | string or null | yes | Log entry that corroborates the barrier; null when no direct search produced it |
+| `wiki_title` | string or null | yes | FamilySearch Research Wiki page title; non-null when `kind` is `wiki_named_untouched`; null otherwise |
 
 ### 5.3 `plans`
 
@@ -835,12 +850,16 @@ Array of conflict objects. Conflicts are both fact-level (three different birthp
 | `competing_assertion_ids` | string[] | yes | `a_` references. At least 2 for `fact` conflicts (two assertions disagree). At least 1 for `identity` conflicts (a single assertion whose person linkage is uncertain). |
 | `independence_analysis` | string or null | no | Analysis of whether the competing sources are independent |
 | `weighing_analysis` | string or null | no | Application of the preponderance hierarchy |
-| `preferred_assertion_id` | string or null | no | `a_` reference to the favored assertion |
-| `resolution_rationale` | string or null | no | Why the preferred assertion was chosen |
+| `preferred_assertion_id` | string or null | no | `a_` reference to the favored assertion. Required, and one of `competing_assertion_ids`, when `resolution_kind` is `competitor` |
+| `resolution_rationale` | string or null | no | Why the conflict was settled as it was. When `resolution_kind` is `synthesis` it cites at least two distinct `src_`/`a_` ids — the records the value is built from |
+| `resolution_kind` | `resolution_kind` or null | no | How a `resolved` conflict was settled: `competitor` (one competing assertion wins, named in `preferred_assertion_id`), `tree` (the tree's existing conclusion stands against the competing records), or `synthesis` (no single assertion wins; the value is built from several). Required on a resolve by `research_append` (research-append-tool-spec.md §5); absent on conflicts resolved before it existed |
+| `resolved_value` | string or null | no | The value a `synthesis` resolution settles on, which no competing assertion states (e.g. "about 1844"). Required when `resolution_kind` is `synthesis` |
 | `status` | `conflict_status` | yes | Current status |
 | `blocks_question_ids` | string[] | yes | Question IDs blocked by this unresolved conflict (may be empty) |
 
 `independence_analysis` and `weighing_analysis` are kept as separate fields because source independence is a distinct analytical step from evidence weighing per the GPS.
+
+`resolution_kind` exists because a resolved conflict's winner is not always one of the competing assertions. A genealogist's reading of the eleven committed conflicts resolved without a winner found two where the tree's pre-existing value stood, five where the winning value was built from several records, three where a competitor did win but was not named, and one that was not resolved at all. Before the field, the schema could record only the first shape, so a resolve naming no winner said nothing about which of the others it was. Both new fields are optional in the schema and nullable, so a conflict resolved before they existed stays valid; the writer tool requires the kind on each new resolve.
 
 **Uncertain-preference invariant.** `preferred_assertion_id` may not name an assertion whose `value` contains `[?]` (the structural doubt marker) unless a corroborating assertion exists. Corroboration requires all four conditions: (1) the corroborator's own `value` carries no `[?]`; (2) it is on a different record, compared as `record_id ?? source_id`; (3) it has the same `fact_type` and its `value` equals the preferred value once `[?]` is removed, whitespace is collapsed and case is folded; (4) it is tied to the same person — it is in the conflict's `competing_assertion_ids`, or a live `person_evidence` row (no `superseded_by`) links it to a `person_id` that a live row also links the preferred assertion to. A null `preferred_assertion_id` (deferral) is always legal.
 
@@ -986,7 +1005,7 @@ to the top tier, and the section is titled Findings.
 | `proved` / `probable` / `possible` / `not_proved` / `disproved` | well established / likely / tentative / not established / ruled out |
 | `probable` as a `person_evidence_confidence` | likely (the map is keyed on the value) |
 | `original` / `derivative` / `authored` (`source_classification`) | Record image / Index or transcript / Compiled work |
-| `exhaustive_declared` (question status), and a declared `exhaustive_declaration` | all reachable searched |
+| `exhaustive_declared` (question status), and a stop-gate `search_stop.stopped_because` | all reachable searched |
 | `ceiling` / `gap` / `conflict` (`shortfall`) | limit of online records / evidence missing / conflicting evidence |
 | `none` (`shortfall`) | no badge |
 | `proof_summaries` (section) | Findings |
@@ -1113,7 +1132,7 @@ evaluations
 
 **Why timelines are keyed by ID and label, not by person ID.** Timeline construction is itself an identity-resolution exercise. You build a candidate timeline to test whether records cohere into one life. Keying by person ID forces you to decide identity before testing it. A labeled timeline like "John Smith assuming Augusta = Rockingham" can aggregate multiple GedcomX person IDs that might merge.
 
-**Why `independence_analysis` and `weighing_analysis` are separate fields.** Source independence is a distinct analytical step in the GPS. Two derivative indexes of the same original record are not independent sources — determining this requires analysis separate from weighing the evidence. Keeping them separate forces the conflict-resolution skill to actually perform both steps rather than folding independence into general weighing prose.
+**Why `independence_analysis` and `weighing_analysis` are separate fields.** Source independence is a distinct analytical step in the GPS. Two derivative indexes of the same original record are not independent sources — determining this requires analysis separate from weighing the evidence. Keeping them separate forces the conflict-resolution agent to actually perform both steps rather than folding independence into general weighing prose.
 
 **Why `log` is append-only but other sections are mutable.** The log is the primary audit trail for "reasonably exhaustive" claims. If log entries could be edited or deleted, the exhaustive search declaration would be unfalsifiable. Other sections allow updates (refining a citation, revising a classification, resolving a conflict) because analytical conclusions legitimately evolve. But no section allows deletion — a `person_evidence` revision sets `superseded_by` on the old entry, and a re-plan sets the old plan's `status` to `superseded`.
 
@@ -1275,11 +1294,12 @@ Research objective: Identify the parents of Patrick Flynn, born ~1845 in Pennsyl
       "created": "2026-05-01",
       "resolved": null,
       "resolution_assertion_ids": [],
-      "exhaustive_declaration": {
-        "declared": false,
+      "search_stop": {
+        "stopped_because": null,
         "justification": null,
         "log_entry_ids": [],
-        "stop_criteria": null
+        "stop_criteria": null,
+        "not_reached": []
       }
     },
     {
@@ -1294,8 +1314,8 @@ Research objective: Identify the parents of Patrick Flynn, born ~1845 in Pennsyl
       "created": "2026-05-01",
       "resolved": "2026-05-02",
       "resolution_assertion_ids": ["a_001", "a_002", "a_003"],
-      "exhaustive_declaration": {
-        "declared": true,
+      "search_stop": {
+        "stopped_because": "question_answered",
         "justification": "Searched 1850 census for Schuylkill County on FamilySearch (indexed and browse), Ancestry (indexed), and MyHeritage (indexed). All three returned the same household. No other Patrick Flynn of matching age found in the county.",
         "log_entry_ids": ["log_001", "log_002", "log_003"],
         "stop_criteria": {
@@ -1306,7 +1326,8 @@ Research objective: Identify the parents of Patrick Flynn, born ~1845 in Pennsyl
           "evidence_class": "Yes — FamilySearch provides original census image with indeterminate-quality information.",
           "conflict_resolution": "No conflicts on the 1850 census placement question.",
           "overturn_risk": "Low — all three repositories agree, and no competing Patrick Flynn of matching age exists in the county."
-        }
+        },
+        "not_reached": []
       }
     }
   ],
@@ -1995,6 +2016,7 @@ This section documents what changed from the earlier pre-implementation draft an
 | `external_site` added to log entries | Tracks the generate-click-capture-analyze workflow for commercial sites |
 | `conflict_type` and `identity_question` added to conflicts | Supports identity-level conflicts, not just fact-level |
 | `resolution_rationale` added to conflicts | Captures why the preferred assertion was chosen |
+| `resolution_kind` and `resolved_value` added to conflicts | A winner is not always a competing assertion: the tree's value can stand, or the value can be built from several records |
 | Timelines keyed by `t_` ID with label, not person ID | Timeline construction is itself identity resolution; labels support hypothesis testing |
 | `hypothesis_id` and `person_ids` added to timelines | Connects timelines to the hypotheses they test |
 | `fan_evidence_ids` removed from hypotheses | FAN findings are regular assertions; no special entity needed |

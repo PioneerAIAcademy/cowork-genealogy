@@ -1,0 +1,48 @@
+{
+  "test": {
+    "id": "ut_research_plan_pshape",
+    "skill": "research-plan",
+    "name": "Production-shaped tree: survey must surface Patrick's 1875 deed, which is attached to him as a person, not to any fact",
+    "type": "positive",
+    "description": "ut_research_plan_bpx's scenario in the shape project_create writes today (#3066, #3140): every fact refs the blanket 'FamilySearch Family Tree' source S1, and Patrick's own attachment -- the 1875 Schuylkill County deed, S2 -- is referenced from persons[I2].sources, not from a fact. His Residence fact carries only the date and place; what he bought and where it is recorded is in S2 alone. Measures whether the survey reads a relative's person-level attachments, not only facts. No person carries an `ark`, so the profile-read step does not fire here (that is ut_research_plan_prof).",
+    "tags": [
+      "planning",
+      "fan-cluster",
+      "already-attached",
+      "migration",
+      "research-plan-new-plan-for-q-001",
+      "new-plan-items-planned-status",
+      "first-plan-fan-production-shape",
+      "issue-2208",
+      "production-tree-shape"
+    ]
+  },
+  "input": {
+    "user_message": "Create the first research plan for q_001 -- why did Michael Sheahan move to Schuylkill County around 1882?",
+    "scenario": "first-plan-fan-production-shape"
+  },
+  "mcp_fixtures": [
+    "place-search-schuylkill-county",
+    "place-search-pennsylvania",
+    "place-search-all-schuylkill",
+    "place-population-schuylkill",
+    "collections-search-schuylkill",
+    "collections-search-pennsylvania",
+    "external-links-search-schuylkill",
+    "volume-search-schuylkill",
+    "collections-search-us-national"
+  ],
+  "judge_context": [
+    "GENERAL RULE UNDER TEST: before planning new searches, the skill must survey what the project's tree already holds for every in-scope FAN-cluster person, not just the subject -- research-plan's own stated inputs include tree.gedcomx.json, which already holds this. Skipping straight to new-record planning without this survey is the specific failure this test guards against.",
+    "The tree gives Patrick Sheahan (I2, Michael's brother, linked via I3) an 1875 Residence fact in Schuylkill County, and attaches a source to Patrick himself (person-level, S2): 'Schuylkill County, Pennsylvania, Recorder of Deeds, Deed Book 42, p. 118, Patrick Sheahan from James Kelly, 1875' -- a land purchase seven years before Michael's earliest confirmed Schuylkill presence (1882, log_002). The response should surface this: a sibling already established in the destination county years before Michael's own move bears directly on a 'why did Michael move' question (chain/pull migration via family already there).",
+    "This does not have to be a numbered plan item, but it must state what S2 records (a land purchase, a deed -- e.g. 'purchased land', 'Deed Book 42'), not just that Patrick lived in Schuylkill County in 1875: the fact gives only that much, and the place and year are already implicit in the question's framing. Content from S2 anywhere in the response -- survey section, plan item rationale, or summary -- counts; grade from what the response actually says. Total silence about Patrick, or naming only his residence and year, is the failure.",
+    "The plan should still include new record-type items for Michael's own movement and its cause (land/deed, tax, church/parish, probate, or naturalization, per the localities entry -- civil vital registration doesn't start until 1906, so it's out of scope for this 1870-1882 window) -- surfacing Patrick's fact is additive, not a replacement for planning new searches about Michael himself.",
+    "Should NOT plan a new search to (re)discover Patrick's 1875 land purchase -- the deed is already attached to him in the project's own tree (S2); planning a fresh search for it shows the skill re-searched rather than surveyed.",
+    "Grade on whether S2's content -- not just Patrick's existence, date or place -- reached the response, however briefly. Silence about Patrick is one failure; naming his 1875 residence without what the deed records is the same failure in a quieter form."
+  ],
+  "judge_reads_files": true,
+  "execution": {
+    "max_wall_clock_seconds": 900,
+    "sdk_message_silence_seconds": 300
+  }
+}

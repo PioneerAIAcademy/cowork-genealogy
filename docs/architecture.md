@@ -221,15 +221,16 @@ are relative to `packages/engine/mcp-server/` unless shown otherwise.)*
 | Component | Count | Where | What it is for |
 |---|---|---|---|
 | **MCP tools** — `src/tools/`, advertised via `allToolSchemas` in `src/tool-schemas.ts` | every tool in `allToolSchemas` | host | Network access (FamilySearch, the wiki sidecar, OpenRouter OCR) and **validate-before-persist** writes to project state. Invariants live here because a tool contract cannot be argued past. |
-| **Skills** — `packages/engine/plugin/skills/<name>/SKILL.md` | **7** | VM, in the session's own context | Judgment and procedure: GPS doctrine, routing, when-to-stop criteria. A skill folder may also carry `references/` (§3.3) and `templates/`. |
-| **Plugin agents** — `packages/engine/plugin/agents/*.md` | **27** | VM, **fresh context** | Heavy or capability-restricted work delegated off the main thread. Each spawns with **no session state** — only its own `tools:` allow-list and its `model:` pin. (`disallowedTools:` was deleted from all five on 2026-08-30 — §5.2.) |
+| **Skills** — `packages/engine/plugin/skills/<name>/SKILL.md` | **6** | VM, in the session's own context | Judgment and procedure: GPS doctrine, routing, when-to-stop criteria. A skill folder may also carry `references/` (§3.3) and `templates/`. |
+| **Plugin agents** — `packages/engine/plugin/agents/*.md` | **28** | VM, **fresh context** | Heavy or capability-restricted work delegated off the main thread. Each spawns with **no session state** — only its own `tools:` allow-list and its `model:` pin. (`disallowedTools:` was deleted from all five on 2026-08-30 — §5.2.) |
 
-The twenty-seven agents are `gps-mentor`, `record-extractor`, `image-reader`,
+The twenty-eight agents are `gps-mentor`, `record-extractor`, `image-reader`,
 `proof-conclusion`, `research-exhaustiveness`, `person-evidence`,
 `search-full-text`, `search-images`, `citation`, `question-selection`, `search-wikipedia`, `convert-dates`,
 `search-familysearch-wiki`, `check-warnings`, `translation`, `tree-edit`, `validate-schema`,
 `hypothesis-tracking`, `locality-guide`, `historical-context`, `project-status`,
-`search-external-sites`, `source-evaluation`, `survey-surname`, `search-hints`, `init-project` and `tree-survey`.
+`search-external-sites`, `source-evaluation`, `survey-surname`, `search-hints`, `conflict-resolution`,
+`init-project` and `tree-survey`.
 
 > Plugin agents (`packages/engine/plugin/agents/`) are consumed by the **Cowork
 > runtime** and are a different thing from Claude Code subagents
@@ -354,7 +355,7 @@ descriptions because a user may still invoke any of them directly.
 
 ### 3.3 `references/` — the fourth artifact, duplicated on purpose
 
-5 of the 7 skills carry a `references/` folder, loaded on demand, in-session,
+4 of the 6 skills carry a `references/` folder, loaded on demand, in-session,
 for material too long to sit in the skill body.
 
 **A reference is loaded deliberately only if its own `SKILL.md` names it** — or if
@@ -1193,12 +1194,15 @@ itself:
    op writing a section another unit owns — `OWNED_SECTIONS` reserves
    `proof_summaries` to `proof-conclusion` and `person_evidence` to
    `person-evidence`, `OWNED_DECLARATIONS` reserves
-   `questions.exhaustive_declaration` to `research-exhaustiveness`, and
-   `OWNED_FIELDS` reserves `project.status` to `proof-conclusion`. The three
-   differ in granularity and key: a whole section, a field at a particular claim
-   value, and a field on presence alone. `project` is co-written — `init-project`
-   authors it and any writer may refresh `updated` — so only the one field is
-   routed.
+   `questions.search_stop` (any non-null `stopped_because`) to `research-exhaustiveness`, and
+   `OWNED_FIELDS` reserves `project.status` to `proof-conclusion`, and
+   `OWNED_CLAIMS` reserves a conflict's analytical product — a resolve, a moot,
+   or any of its analysis fields set — to `conflict-resolution`. The four differ
+   in granularity and key: a whole section, a field at a particular claim value,
+   a field on presence alone, and a claim spread over several fields of one
+   section. `project` is co-written — `init-project` authors it and any writer
+   may refresh `updated` — so only the one field is routed; `conflicts` is
+   opened by six skills, so only the analysis is.
 3. **The reverse rule.** `AGENT_WRITABLE_SECTIONS` stops every agent that holds
    `research_append` writing *outside* its own set (a test requires the lane),
    added after a measured 2026-08-19 incident in which
@@ -1509,7 +1513,7 @@ document** — never mixing them across the repo, which is intentional.
 
 ### 6.5 State reaches the prompt too
 
-All 7 skills carry a `**Narration:**` line as the first line of the body,
+All 6 skills carry a `**Narration:**` line as the first line of the body,
 instructing Claude to read
 `researcher_profile.narration_guidance` from `research.json` and apply it as that
 invocation's narration style. The `init-project` agent writes the profile at
@@ -1713,7 +1717,11 @@ it costs nothing at runtime, and **it is not a gap and no decision waits on it.*
   re-arms the full window on every `/connect`, so reaching the cap pauses rather
   than kills and the next request resumes (~1s). A session therefore runs for as
   many hours as it needs. **Do not read the cap as a session-length limit** —
-  both "there is a 1-hour cap" and "sessions run for hours" are true at once.
+  both "there is a 1-hour cap" and "sessions run for hours" are true at once. The
+  control plane sets the outer limit: `/connect` refuses a session more than 24 h
+  past `projects.created` with a 410 (`SESSION_MAX_AGE` in `app/sessions.py`),
+  because its sandbox still runs the agent code it was created with. `/resume` and
+  the read endpoints stay open, so an ended session's research can still be read.
   Whether a pause landing mid-turn breaks that turn is **asserted, not
   measured** — which is exactly why the 2026-09-21 continuous-work ruling
   refused to accept the pause. Since continuous work shipped, `set_timeout` is no longer

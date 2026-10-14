@@ -63,7 +63,7 @@ neither does.
 
 The five completed items (two censuses, the 1946 death registration, a
 negative parish baptism, a negative probate), both candidate parents, and
-`declared: false`. Note that `ut_research_exhaustiveness_018` and `_d2b`
+`stopped_because: null`. Note that `ut_research_exhaustiveness_018` and `_d2b`
 already grade the source scenario on the *absence* of a birth-record item;
 this fork adds one and disposes of it, which is the different question.
 The source is left untouched.
