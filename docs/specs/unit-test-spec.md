@@ -786,11 +786,13 @@ The judge reads it on every direct test. **Validators do not yet, uniformly.**
 `skill_runner.agent_return_text`, the same call the judge makes) and falls back
 to `text_response`, so a **routed** test -- whose reply genuinely is the
 subject's -- is unaffected. `research-exhaustiveness`'s
-`test_refusal_names_the_blocking_plan_item` still reads `text_response`
-directly, so on that suite's direct tests it grades the dispatcher's relay. It
-is named here rather than fixed because it belongs to that suite's eval slot;
-any validator grading reply shape on a direct test should move to
-`agent_return_text`.
+`test_refusal_names_the_blocking_plan_item` and
+`report_refusal_marks_the_blocker_open` read `subject_reply_text`, which is
+stricter on a direct test: an empty agent return grades as nothing, with no
+fallback to `text_response`. A validator edit does not touch a suite's eval slot
+(`check_runlogs.py` does not count `eval/harness/validators/` as a touched
+path), so any validator grading reply shape on a direct test should move to
+`agent_return_text` or `subject_reply_text` when next edited.
 
 **The dispatcher prompt cannot be constrained from a test.** `DIRECT_DISPATCH_PROMPT`
 is harness-owned precisely so "no test can weaken the relay instruction", so
