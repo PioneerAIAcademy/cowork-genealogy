@@ -476,6 +476,31 @@ describe("Project Validator", () => {
       ).toBe(true);
     });
 
+    it("reports invalid selection_basis with the list of valid values", async () => {
+      const research = {
+        ...minimalResearch,
+        questions: [
+          {
+            id: "q_001",
+            question: "Test?",
+            rationale: "Testing",
+            selection_basis: "pedigree_gap",
+            priority: "high",
+            status: "open",
+            created: "2026-01-01",
+          },
+        ],
+      };
+      await writeProject(research, minimalTree);
+      const result = await validateProject(testDir);
+      expect(result.valid).toBe(false);
+      expect(
+        result.errors.some((e) =>
+          e.message.includes("not a valid selection_basis") && e.message.includes("expected one of:")
+        )
+      ).toBe(true);
+    });
+
     it("reports invalid date_certainty for timeline event", async () => {
       const research = {
         ...minimalResearch,
@@ -2165,6 +2190,60 @@ describe("Project Validator", () => {
 
       const result = await validateProject(testDir);
       expect(result.errors.some((e) => e.message.includes("does not match any result's recordId"))).toBe(true);
+    });
+
+    it("D5: accepts a record_persona_id on a record_read-sourced assertion when the persona exists in the sidecar", async () => {
+      const research = {
+        ...minimalResearch,
+        log: [
+          { id: "log_001", plan_item_id: null, performed: "2026-01-01T00:00:00Z", tool: "record_read", query: {}, outcome: "positive", results_examined: 1, results_ref: "results/log_001.json", external_site: null },
+        ],
+        sources: [
+          { id: "src_001", gedcomx_source_description_id: "SD-001", citation: "Test", citation_detail: { who: "Test", what: "Test", when_created: "2020", when_accessed: "2026-01-01", where: "Test", where_within: "Test" }, source_classification: "original", repository: "Test", access_date: "2026-01-01" },
+        ],
+        assertions: [
+          { id: "a_001", source_id: "src_001", record_id: "ark:/61903/1:1:ABCD-123", record_role: "principal", record_persona_id: "P1", fact_type: "birth", value: "1850", information_quality: "primary", informant: "self", informant_proximity: "self", record_basis: "stated", extracted_for_question_ids: [], log_entry_id: "log_001" },
+        ],
+      };
+      const sidecar = {
+        log_id: "log_001", tool: "record_read", retrieved: "2026-01-01T00:00:00Z", returned_count: 1,
+        payload: { results: [{ recordId: "ark:/61903/1:1:ABCD-123", gedcomx: { persons: [{ id: "P1" }, { id: "P2" }] } }] },
+      };
+      const tree = { ...minimalTree, sources: [{ id: "SD-001", title: "Test" }] };
+      await writeProject(research, tree);
+      await mkdir(join(testDir, "results"));
+      await writeFile(join(testDir, "results/log_001.json"), JSON.stringify(sidecar));
+
+      const result = await validateProject(testDir);
+      expect(result.errors.some((e) => e.message.includes("record_persona_id must be null"))).toBe(false);
+      expect(result.errors.some((e) => e.message.includes("does not resolve to a person"))).toBe(false);
+    });
+
+    it("D5: rejects a record_persona_id that does not match any persona in a record_read sidecar", async () => {
+      const research = {
+        ...minimalResearch,
+        log: [
+          { id: "log_001", plan_item_id: null, performed: "2026-01-01T00:00:00Z", tool: "record_read", query: {}, outcome: "positive", results_examined: 1, results_ref: "results/log_001.json", external_site: null },
+        ],
+        sources: [
+          { id: "src_001", gedcomx_source_description_id: "SD-001", citation: "Test", citation_detail: { who: "Test", what: "Test", when_created: "2020", when_accessed: "2026-01-01", where: "Test", where_within: "Test" }, source_classification: "original", repository: "Test", access_date: "2026-01-01" },
+        ],
+        assertions: [
+          { id: "a_001", source_id: "src_001", record_id: "ark:/61903/1:1:ABCD-123", record_role: "principal", record_persona_id: "NONEXISTENT", fact_type: "birth", value: "1850", information_quality: "primary", informant: "self", informant_proximity: "self", record_basis: "stated", extracted_for_question_ids: [], log_entry_id: "log_001" },
+        ],
+      };
+      const sidecar = {
+        log_id: "log_001", tool: "record_read", retrieved: "2026-01-01T00:00:00Z", returned_count: 1,
+        payload: { results: [{ recordId: "ark:/61903/1:1:ABCD-123", gedcomx: { persons: [{ id: "P1" }] } }] },
+      };
+      const tree = { ...minimalTree, sources: [{ id: "SD-001", title: "Test" }] };
+      await writeProject(research, tree);
+      await mkdir(join(testDir, "results"));
+      await writeFile(join(testDir, "results/log_001.json"), JSON.stringify(sidecar));
+
+      const result = await validateProject(testDir);
+      expect(result.valid).toBe(false);
+      expect(result.errors.some((e) => e.message.includes("does not resolve to a person in record"))).toBe(true);
     });
 
     it("D5: rejects a record_persona_id on a fulltext_search-sourced assertion with a named error (#2038)", async () => {

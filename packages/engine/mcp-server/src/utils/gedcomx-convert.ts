@@ -25,6 +25,7 @@ import {
   resolveStandardPlace,
   mapWithConcurrency,
   countryConsistency,
+  isNonPlacePhrase,
 } from "./place-resolver.js";
 
 const URI_PREFIX = "http://gedcomx.org/";
@@ -328,8 +329,10 @@ function simplifyFact(fact: GedcomXFact): SimplifiedFact {
     // straight from the raw GedcomX `normalized` values when present — pure, no
     // network. Free-text places that lack a normalized value are filled later
     // by the document-level standardization pass (toSimplifiedStandardized).
+    // A non-place phrase ("Same House") keeps no standard form, even one
+    // FamilySearch supplies.
     const standard = pickNormalizedPlace(fact.place.normalized);
-    if (standard) out.standard_place = standard;
+    if (standard && !isNonPlacePhrase(out.place ?? "")) out.standard_place = standard;
   }
 
   // Preserve the fact-level value (the qualifier carrying the meaning of

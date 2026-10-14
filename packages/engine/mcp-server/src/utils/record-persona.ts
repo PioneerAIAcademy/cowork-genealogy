@@ -74,6 +74,41 @@ export const COUPLE_EVENT_TYPES: ReadonlySet<string> = new Set([
   "Marriage", "Divorce", "Annulment", "Engagement", "MarriageBanns", "Separation",
 ]);
 
+/** Fold a `fact_type` to its comparison key: lowercased, non-alphanumerics
+ *  stripped. `fact_type` is an OPEN enum with no pattern, so one event reaches
+ *  us spelled several ways — `marriage_bann`, `marriage banns` and
+ *  `MarriageBanns` are the same event — and matching the raw string catches
+ *  only whichever spelling someone happened to write down. Lifted out of
+ *  `research-append.ts`, whose five call sites all folded `fact_type` with this
+ *  exact rule; it lives here because this file owns the fact-type vocabulary
+ *  and a util may not import from a tool. */
+export function factTypeKey(raw: unknown): string {
+  return String(raw ?? "").toLowerCase().replace(/[^a-z0-9]/g, "");
+}
+
+/** Couple events as folded keys. A couple event belongs on the Couple
+ *  relationship's `facts[]`, never on a person, so none of these may
+ *  materialize onto a persona.
+ *
+ *  Only `marriage` was skipped before, and matching was on the raw lowercased
+ *  string, so every other spelling wrote a person-level fact. Three live e2e
+ *  runs did exactly that, each with a different separator shape:
+ *  `marriage_intention` (esther-leroux-marriage), `marriage_bann`
+ *  (sebastiano-mingazzini-son) and `marriage_date` (ferber-marriage). No
+ *  fixture carries any of them, which is why nothing caught it. */
+export const COUPLE_EVENT_FACT_KEYS: ReadonlySet<string> = new Set([
+  ...[...COUPLE_EVENT_TYPES].map(factTypeKey),
+  "marriagebann", "banns", "bann",
+  "marriageintention", "marriageintent",
+  "marriagelicense", "marriagelicence",
+  "marriagedate",
+]);
+
+/** Whether this `fact_type` names a couple event, in any spelling. */
+export function isCoupleEventFactType(raw: unknown): boolean {
+  return COUPLE_EVENT_FACT_KEYS.has(factTypeKey(raw));
+}
+
 /** Tree fact types whose `value` is null (events + place/duration attributes) —
  *  the qualifier `value` field is meaningful only for value-bearing types
  *  (Occupation, Race, Religion, Nationality, …). Exported so
@@ -218,7 +253,13 @@ export function materializesToPersonFact(assertion: any): boolean {
   // set the scalar; `name` becomes a tree name; SKIP_TYPES are two-party links.
   if (recordBasisOf(assertion) === "absent") return false;
   const t = String(assertion?.fact_type ?? "").toLowerCase();
-  return t !== "" && !NAME_TYPES.has(t) && !GENDER_TYPES.has(t) && !SKIP_TYPES.has(t);
+  return (
+    t !== "" &&
+    !NAME_TYPES.has(t) &&
+    !GENDER_TYPES.has(t) &&
+    !SKIP_TYPES.has(t) &&
+    !isCoupleEventFactType(t)
+  );
 }
 
 /** The tree type an assertion's `fact_type` materializes as. Exported so the
