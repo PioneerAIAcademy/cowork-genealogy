@@ -31,6 +31,7 @@
   "judge_context": [
     "This is a ROUTING test. The only assertion that matters is whether @plugin:tree-survey is the first hand-off. A deterministic validator (test_routes_to_expected_skill) owns that check — do not grade the routing decision yourself.",
     "The folder is empty (no research.json) and the message states no person and no question, so the routing table row is 'No research.json at all, and the message states no objective -> tree-survey'. init-project as the first hand-off is wrong here.",
+    "The people in the suggestions (Hannah Pruitt, Frank Ellery, Ruth Ashby) come from the stubbed tree-survey, not from the router, and an empty project folder is expected: tree-survey reads the FamilySearch tree, not the folder. Relaying them is correct; do not score them as fabricated.",
     "tree-survey is stubbed with two suggestions that end with a request to pick one. The router should relay the suggestions and stop for the researcher's pick; spawning init-project with a person the researcher never chose is a fault. Grade only the quality of the router's own work: state derivation and narration.",
     "ROUTING IS NOT YOURS TO GRADE. The hand-off is asserted deterministically by test_routes_to_expected_skill, which reads the PreToolUse hook records. Do NOT score Correctness or Completeness on whether the router reached the right callee."
   ],
