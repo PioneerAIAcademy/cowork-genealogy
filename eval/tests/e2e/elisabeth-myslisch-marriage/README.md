@@ -56,7 +56,8 @@ children christened at Oxhöft: Elisabeth on 26 Nov 1845 and Valentin on
 
 **The register image is restricted, and nothing here rests on it.** The hint's
 image `ark:/61903/3:1:3Q9M-CSZ5-19VL-2` returns HTTP 403, as does
-`3:1:3Q9M-CSZ5-19VL-R`, while a control image from another film downloads.
+`3:1:3Q9M-CSZ5-19VL-R` (the image of the undated Dermer entry below), while a
+control image from another film downloads.
 The assigned genealogist could not open it by hand either. No same-page read
 check was possible, so `image_basis` is not set.
 
@@ -82,11 +83,18 @@ check was possible, so `image_basis` is not set.
   have died, and Anton remarried, within months, before the first baptism. A
   second Anton Netzel of the right age would have to have married at Oxhöft
   unindexed. Nothing found supports either.
+- **The undated Dermer entry is a possible earlier marriage.** `1:1:6ZMX-B9G1`
+  indexes an undated Oxhöft marriage of Anton Netzel and Elisabeth **Dermer**.
+  Its image, `3:1:3Q9M-CSZ5-19VL-R`, is filed in the marriage volume
+  FamilySearch dates **1824–1844**. The hint's image `19VL-2` is in the
+  **1845–1899** volume. So it is not shown to be the same entry. It may record
+  an earlier marriage, of the same Anton or of another Anton Netzel, to an
+  Elisabeth Dermer. If it is the same Anton, the 1845 wedding was not his
+  first. The image is restricted, so the entry cannot be dated or read.
 
 **Against, and why it is not proved.**
-- **The surname never matches.** The bride is indexed as Desmer, and a second
-  index of the entry, `1:1:6ZMX-B9G1` (undated), has **Dermer**. Neither looks
-  like a misreading of Myslisch. The match therefore assumes she was a widow
+- **The surname never matches.** The 1845 bride is indexed as Desmer, which
+  does not look like a misreading of Myslisch. The match therefore assumes she was a widow
   using a first husband's surname.
 - **No first marriage was found.** Searches of collection 4111605 for Desmer
   marriages (55 hits), marriages of an Elisabeth Myslisz (10 hits), and Desmer
