@@ -15,5 +15,5 @@
     "judge": "claude-haiku-4-5-20251001"
   },
   "difficulty": "medium",
-  "notes": "Record-hint fixture (filtered-list-samples-3.csv row 18, hint-samples.csv row 616, flag adds_birth, confidence 3). Draft transcribed from an 1877 Bygland, Aust-Agder church book baptism entry; unverified."
+  "notes": "Record-hint fixture (filtered-list-samples-3.csv row 18, hint-samples.csv row 616, flag adds_birth, confidence 3). Resolved 2026-10-14 (#3339): true match. The 1877 Bygland baptism (ark:/61903/1:1:683T-H1R2) gives the birth year 1846; identity confirmed by the 1900 census Klep household (ark:/61903/1:1:DDYV-D52M). Decided from indexes alone."
 }
