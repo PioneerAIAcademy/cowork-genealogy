@@ -475,8 +475,9 @@ analyses are ALREADY persisted to the `conflicts` entry by
 generate (~16-20 ms/token, independent of model tier), so the single
 biggest latency lever is generating fewer tokens. Do NOT reproduce
 `independence_analysis`, `weighing_analysis`, or `resolution_rationale`
-in chat — that full prose lives in the persisted artifact. Present a
-terse summary ONLY, per conflict:
+in chat — that full prose lives in the persisted artifact. When other
+conflicts were left open, open with one sentence naming them and why this
+one came first. Then present a terse summary ONLY, per conflict:
 - The `c_` id written and its `status` (resolved / unresolved / moot)
 - 2-4 sentences: what the conflict was, the decisive finding, and — if
   resolved — the `preferred_assertion_id`
@@ -525,7 +526,9 @@ Suggest next steps:
 - **Write only the `conflicts` section.** Do not modify `assertions`,
   `person_evidence`, `sources`, or `tree.gedcomx.json`. If resolving
   a conflict reveals needed changes, report it and recommend the
-  owning skill.
+  owning skill. A reading the user reports or disputes goes in the
+  conflict's `description` and analysis, never onto the assertion
+  (not even `informant_bias_notes`).
 - **Independence analysis and weighing are separate steps.** Do not
   skip the independence analysis (Standard 46).
 - **A conflict transitions to `resolved` only when fully populated.**
@@ -599,7 +602,8 @@ a second `c_` covering the same assertion set.
 ## Return contract
 
 Step 7 above is the caller-facing half of the return, and its output economy
-governs it unchanged: the terse per-conflict lines, and nothing more above them.
+governs it unchanged: the opening sentence on any conflicts left open, the terse
+per-conflict lines, and nothing more above them.
 
 ### `summary_for_user`
 
