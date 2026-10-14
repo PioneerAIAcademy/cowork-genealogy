@@ -50,12 +50,46 @@
       "pattern": "^\\d{4}-\\d{2}-\\d{2}_\\d{2}-\\d{2}-\\d{2}$",
       "description": "UTC timestamp YYYY-MM-DD_HH-MM-SS (underscore between date and time for readability)."
     },
-    "harness_version": { "type": "string" },
+    "harness_version": {
+      "type": "string",
+      "description": "The harness package version (`eval/harness/pyproject.toml`). Not an invalidation signal: it is a hand-bumped literal nothing gates on. What decides whether a run log's instrument is current is `instrument`."
+    },
     "model": { "type": "string" },
     "judge_prompt_hash": {
       "type": "string",
       "pattern": "^([a-f0-9]{64})?$",
       "description": "SHA-256 of eval/harness/judge/prompt.md after normalization. Empty when the judge prompt file is missing. Not part of the snapshot — the judge prompt is project-global, tracked separately so judge edits don't clobber every skill on activate."
+    },
+    "instrument": {
+      "type": "object",
+      "description": "What produced and graded this run log, beside `snapshot` (which covers the skill-side files). Read by check_runlogs rule 2c (issue #2479 PR 3). Optional: absent in run logs written before the field, and when the tool catalog could not be read. Hashes are computed by `eval/harness/harness/instrument.py`.",
+      "additionalProperties": false,
+      "required": ["validators", "tools"],
+      "properties": {
+        "validators": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["suite", "shared"],
+          "properties": {
+            "suite": { "type": "string", "pattern": "^[a-f0-9]{64}$", "description": "Normalised AST of `eval/harness/validators/test_<skill>.py` (an absent marker when the suite has none). A change blocks." },
+            "shared": { "type": "string", "pattern": "^[a-f0-9]{64}$", "description": "Normalised AST of `test_universal.py` and `validators_lib.py`. A change warns." }
+          }
+        },
+        "tools": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["fixture", "live"],
+          "properties": {
+            "fixture": { "type": "string", "pattern": "^[a-f0-9]{64}$", "description": "description + inputSchema of every tool this suite's fixtures serve. A change blocks." },
+            "live": { "type": "string", "pattern": "^[a-f0-9]{64}$", "description": "description + inputSchema of the remaining LIVE_TOOLS, advertised to every suite. A change warns." }
+          }
+        },
+        "live_modules": {
+          "type": "object",
+          "description": "SHA-256 of the compiled entry module of each live tool this run called, keyed by bare tool name. A change warns.",
+          "additionalProperties": { "type": "string", "pattern": "^[a-f0-9]{64}$" }
+        }
+      }
     },
     "judge_model": {
       "type": "string",

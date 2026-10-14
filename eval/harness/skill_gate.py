@@ -53,6 +53,7 @@ from typing import Any
 from harness.auth import AuthConfig, AuthError, resolve_auth
 from harness.loader import InvalidTestError, TestSpec, load_test
 from harness.orchestrator import REPO_ROOT, OrchestratorPaths, run_one_test
+from harness.instrument import stale_build_files
 from harness.snapshot import diff_snapshot_vs_disk
 
 _SCORE_LABEL = {3: "pass", 2: "partial", 1: "fail", None: "n/a"}
@@ -453,10 +454,12 @@ def _has_uncommitted_skill_edit(skill: str) -> bool:
 def _build_is_stale() -> bool:
     """Mirror of run_tests._check_mcp_build_fresh: a stale build makes LIVE_TOOLS
     fail inside the run and looks like a skill failure."""
-    src = REPO_ROOT / "packages" / "engine" / "mcp-server" / "src"
-    build = REPO_ROOT / "packages" / "engine" / "mcp-server" / "build"
-    if not src.exists():
-        return False
+    return bool(
+        stale_build_files(
+            REPO_ROOT / "packages" / "engine" / "mcp-server" / "src",
+            REPO_ROOT / "packages" / "engine" / "mcp-server" / "build",
+        )
+    )
     for ts in src.rglob("*.ts"):
         if ts.name.endswith(".d.ts"):
             continue

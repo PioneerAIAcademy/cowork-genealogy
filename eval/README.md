@@ -196,6 +196,7 @@ Run logs are JSON envelopes validated against [`docs/specs/schemas/run-log.schem
 
 - `schema_version` (currently `3`), `skill`, `version`, `released`, `releasable`, `invocation`, `timestamp`, `model`, `harness_version`.
 - `judge_prompt_hash` — SHA-256 of the normalized `eval/harness/judge/prompt.md` at run time (NOT in the snapshot — the judge prompt is project-global, so it's tracked separately so judge edits don't clobber every skill on activate).
+- `instrument` — what produced and graded the run, beside the skill-side `snapshot`: `validators.{suite,shared}` (normalised AST of the validator files), `tools.{fixture,live}` (the advertised tool schemas) and `live_modules` (the compiled module of each live tool the run called). Optional; read by check_runlogs rule 2c, which blocks on the suite-specific halves and warns on the rest.
 - `snapshot` — `{repo-relative-path: sha256-of-normalized-content}` of every skill-side file used to produce this run (`packages/engine/plugin/skills/<skill>/**`, `eval/tests/unit/<skill>/**`, referenced scenarios + fixtures). Values are digests, not content: git already holds the bytes, and the active-state check only has to compare. MCP source (`packages/engine/mcp-server/src/**`) is **not** tracked — the harness serves tool calls from mock fixtures, so a `src/` change does not make prior run logs inactive.
 - `tests[]` — per-test entries:
   - `outcome` (`pass | partial | fail | aborted`; suppression of a declared-xfail failure is read from the `expected_outcome` marker beside it)

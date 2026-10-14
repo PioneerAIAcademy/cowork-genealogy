@@ -68,6 +68,7 @@ from harness.runlog import (
     unit_dir_name,
 )
 from harness.skill_runner import DEFAULT_MODEL, QUOTA_ABORT_REASON
+from harness.instrument import CatalogUnavailable, instrument_for, live_tools_called, load_tool_catalog, stale_build_files
 from harness.snapshot import build_snapshot, hash_file
 from harness.review_sample import select_review_sample
 from harness.warning_kinds import JUDGE_WARNING_KINDS, iter_run_warnings
@@ -682,22 +683,10 @@ def _check_mcp_build_fresh() -> list[tuple[Path, str]]:
     Returns a list of (ts_path, reason) for stale or missing artifacts.
     Empty list means the build is fresh.
     """
-    src_root = REPO_ROOT / "packages" / "engine" / "mcp-server" / "src"
-    build_root = REPO_ROOT / "packages" / "engine" / "mcp-server" / "build"
-    if not src_root.exists():
-        return []
-
-    stale: list[tuple[Path, str]] = []
-    for ts_path in src_root.rglob("*.ts"):
-        if ts_path.name.endswith(".d.ts"):
-            continue
-        rel = ts_path.relative_to(src_root).with_suffix(".js")
-        js_path = build_root / rel
-        if not js_path.exists():
-            stale.append((ts_path, "missing"))
-        elif js_path.stat().st_mtime < ts_path.stat().st_mtime:
-            stale.append((ts_path, "outdated"))
-    return stale
+    return stale_build_files(
+        REPO_ROOT / "packages" / "engine" / "mcp-server" / "src",
+        REPO_ROOT / "packages" / "engine" / "mcp-server" / "build",
+    )
 
 
 def _classify_invocation(args) -> tuple[str, bool]:
@@ -1021,6 +1010,22 @@ def main(argv: list[str] | None = None) -> int:
         if skill not in snapshot_cache:
             snapshot_cache[skill] = build_snapshot(skill=skill, repo_root=REPO_ROOT)
         return snapshot_cache[skill]
+
+    # The tool catalog the `instrument` fingerprint reads (issue #2479 PR 3). Loaded
+    # once; a failure leaves the field off the log (rule 2c then warns "instrument
+    # not recorded") rather than failing a paid run at the last step.
+    try:
+        tool_catalog: dict | None = load_tool_catalog()
+    except CatalogUnavailable as e:
+        tool_catalog = None
+        print(f"WARNING: no instrument fingerprint will be recorded: {e}", file=sys.stderr)
+
+    def _instrument_for(skill: str, entries: list[dict]) -> dict | None:
+        if tool_catalog is None:
+            return None
+        return instrument_for(
+            skill, REPO_ROOT, catalog=tool_catalog, live_called=live_tools_called(entries)
+        )
 
     def _flush_partials() -> None:
         """(Over)write the partial scratch envelope for every skill that has
@@ -1447,6 +1452,7 @@ def main(argv: list[str] | None = None) -> int:
             model=DEFAULT_MODEL,
             judge_prompt_hash=judge_hash,
             judge_model=judge_model,
+            instrument=_instrument_for(skill, entries),
             snapshot=_snapshot_for(skill),
             tests=entries,
             review_sample=sample,
