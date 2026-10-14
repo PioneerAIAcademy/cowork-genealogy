@@ -165,10 +165,11 @@ LIVE_TOOLS: set[str] = {
     # whenever tool_calls is empty, so the defect switched off the dimension that
     # covers it. conflict-resolution declares it too. Issue #1654 (deep dive).
     "convert_calendar",
-    # Same rationale as convert_calendar: pure census arithmetic whose computed
-    # answer (how many children are missing, and each birth window) is exactly what
-    # its callers' unit tests will grade once check-warnings and question-selection
-    # are granted it. A canned fixture would grade a number the test author typed.
+    # Census arithmetic whose computed answer (how many children are missing, and
+    # each birth window) is exactly what check-warnings' tests grade; a canned
+    # fixture would grade a number the test author typed. Unlike convert_calendar
+    # it reads workspace state in tree mode (motherId): the injected projectPath
+    # points it at the test's own tree.
     "census_children_gap",
     # Same rationale as convert_calendar: URL-templating with no network
     # dependency, so a canned fixture would supply the exact URL string
@@ -1547,7 +1548,7 @@ _COMPILED_TOOLS: dict[str, tuple[str, str]] = {
     "research_query": ("research-query.js", "researchQuery"),
     "project_create": ("project-create.js", "projectCreate"),
     "convert_calendar": ("convert-calendar.js", "convertCalendar"),
-    "census_children_gap": ("census-children-gap.js", "censusChildrenGap"),
+    "census_children_gap": ("census-children-gap.js", "censusChildrenGapTool"),
     "build_external_search_url": ("build-external-search-url.js", "buildExternalSearchUrlTool"),
     "sidecar_read": ("sidecar-read.js", "sidecarRead"),
     "get_name_variants": ("name-variants.js", "getNameVariants"),
