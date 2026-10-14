@@ -563,8 +563,8 @@ def make_pretool_hook(
 # engine's imports), so a research_query or Read result quoting the text is no reauth.
 REAUTH_ENTRY = re.compile(r"call the login tool|Reconnect FamilySearch", re.I)
 FS_TOOLS = frozenset({
-    "build_external_search_url", "catalog_search", "collections_search", "fulltext_search", "image_read",
-    "image_search", "image_transcribe", "person_ancestors", "person_quality", "person_read",
+    "build_external_search_url", "catalog_search", "collections_search", "extraction_append", "fulltext_search",
+    "image_read", "image_search", "image_transcribe", "person_ancestors", "person_quality", "person_read",
     "person_person_matches", "person_record_matches", "person_search", "rank_search_matches", "record_read",
     "record_person_matches", "record_record_matches", "record_search", "same_person", "source_attachments",
     "tree_gaps", "volume_bisect", "volume_search",
