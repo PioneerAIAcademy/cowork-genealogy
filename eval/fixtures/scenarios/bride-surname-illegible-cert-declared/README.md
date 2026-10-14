@@ -2,7 +2,7 @@
 
 Identical facts to `bride-surname-illegible-cert`, but `q_001` has been
 **prematurely declared exhaustive** (`status: exhaustive_declared`,
-`exhaustive_declaration.declared: true`) despite the bride's maiden surname
+`search_stop.stopped_because: "question_answered"`) despite the bride's maiden surname
 still being tentative (illegible on the only record).
 
 Used to exercise `proof-conclusion` directly: given this (flawed) declared

@@ -349,6 +349,11 @@ const KNOWN_ABSENT: { file: string; path: string; why: string }[] = [
     path: "docs/plan/orchestrator-state-diet-plan.md",
     why: "dated closing report naming a plan since retired",
   },
+  {
+    file: "docs/search-agent-prototype-report.md",
+    path: "apps/server/proto/exports/",
+    why: "prototype project exports, kept per developer; gitignored, so it is absent at rest",
+  },
 ];
 
 /**

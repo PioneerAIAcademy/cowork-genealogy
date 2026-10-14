@@ -490,7 +490,7 @@ const AGENT_PERMISSIONS: Record<string, { tools: string[]; denies: string[] }> =
     ],
     denies: [],
   },
-  // The only caller permitted to set `exhaustive_declaration.declared: true`;
+  // The only caller permitted to set `search_stop.stopped_because` to a stop-gate value;
   // the plugin PreToolUse hook denies that claim to everyone else. Like
   // proof-conclusion it holds the BROAD research_append, and the hook's caller
   // check — not this list — is what restricts it.
@@ -581,6 +581,28 @@ const AGENT_PERMISSIONS: Record<string, { tools: string[]; denies: string[] }> =
       "Read",
       "research_append",
       "validate_research_schema",
+      "wiki_read",
+    ],
+    denies: [],
+  },
+
+  // conflict-resolution (issue #1852) holds the six tools the skill it replaced
+  // declared, plus `Read` for research.json and `research_query`, which Step 1
+  // reads assertions and person_evidence with. `research_append` is the conflict
+  // write, and the plugin hook routes a conflict's analytical product (a
+  // resolve, or any analysis field) to this agent alone. The research-side place
+  // tools its folded places guidance lists (collections, volumes, external
+  // links, population, wiki place pages) are deliberately absent: it resolves
+  // place names and does not search.
+  "conflict-resolution.md": {
+    tools: [
+      "Read",
+      "convert_calendar",
+      "place_distance",
+      "place_search",
+      "place_search_all",
+      "research_append",
+      "research_query",
       "wiki_read",
     ],
     denies: [],
@@ -852,9 +874,12 @@ const AGENT_PERMISSIONS: Record<string, { tools: string[]; denies: string[] }> =
 
   // The folded source-evaluation skill (issue #2796) holds the four tools that
   // skill declared, plus `Read` for the Narration line's read of research.json
-  // and the name match against tree.gedcomx.json. Writes nothing, so no hook
-  // route. A request belonging to conflict-resolution, check-warnings or
-  // record-extraction is handed back by name, so no spawn tool.
+  // and the name match against tree.gedcomx.json. `person_warnings` (issue
+  // #2942) runs the impossible-date check over the project tree when it holds
+  // the audited person; it reads the tree and writes nothing. Writes nothing,
+  // so no hook route. A request belonging to conflict-resolution,
+  // check-warnings or record-extraction is handed back by name, so no spawn
+  // tool.
   "source-evaluation.md": {
     tools: [
       "Read",
@@ -862,6 +887,7 @@ const AGENT_PERMISSIONS: Record<string, { tools: string[]; denies: string[] }> =
       "record_read",
       "source_attachments",
       "person_quality",
+      "person_warnings",
     ],
     denies: [],
   },

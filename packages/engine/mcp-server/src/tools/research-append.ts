@@ -53,6 +53,7 @@ import { nextId } from "../utils/gedcomx-ids.js";
 import { arkToBareId } from "../utils/ark.js";
 import { PERSONA_BEARING_PRODUCERS } from "../utils/results-staging.js";
 import { resolveStandardPlace, countryConsistency } from "../utils/place-resolver.js";
+import { isStopGateSatisfied, getStoppedBecause } from "../utils/question-stop.js";
 
 // Re-exported for back-compat: tests and any other importer that reaches this
 // check via research-append.ts (its original home) keep working unchanged.
@@ -402,6 +403,88 @@ function conflictInvariants(entry: any): string[] {
   return errs;
 }
 
+/** The `conflicts` fields a resolve can set. An update naming none of them
+ *  leaves the resolution as it stood, so the kind rule does not re-judge it. */
+const RESOLUTION_FIELDS = [
+  "status",
+  "resolution_kind",
+  "preferred_assertion_id",
+  "resolved_value",
+  "resolution_rationale",
+] as const;
+
+/** Distinct `src_` / `a_` ids a rationale cites. */
+function citedEvidenceIds(text: string): Set<string> {
+  return new Set([...text.matchAll(/\b(?:src|a)_\d+\b/gi)].map((m) => m[0].toLowerCase()));
+}
+
+/** A resolve must say how it was settled (research-append-tool-spec.md §5).
+ *
+ *  `resolution_kind` is required on a conflict that lands `resolved`, and each
+ *  kind carries its own proof: `competitor` names the winning assertion
+ *  (`preferred_assertion_id`, one of `competing_assertion_ids`); `tree` keeps
+ *  the tree's existing conclusion and owes nothing more; `synthesis` builds a
+ *  value no single assertion states (`resolved_value`), and its
+ *  `resolution_rationale` cites at least two distinct `src_`/`a_` ids. Before
+ *  this rule a resolve could name no winner and say nothing about why — 12 of
+ *  68 resolved conflicts in the committed e2e corpus do.
+ *
+ *  Scoped like the place-containment rule below: an append that lands
+ *  resolved, and an update that touches the resolution (status, the kind, the
+ *  winner, the value or the rationale). An unrelated edit to a conflict
+ *  resolved before this rule existed is not refused. `moot` is untouched:
+ *  `conflictInvariants` owns it. No override (ADR-0011, 2026-08-24). */
+function resolutionKindInvariants(entry: any, op: { op: string; fields?: Record<string, unknown> }): string[] {
+  if (entry?.status !== "resolved") return [];
+  const fields = op.fields ?? {};
+  if (op.op !== "append" && !RESOLUTION_FIELDS.some((f) => Object.hasOwn(fields, f))) return [];
+  const requirements =
+    "Name how it was settled with resolution_kind: 'competitor' — one competing assertion wins, " +
+    "named in preferred_assertion_id (one of competing_assertion_ids); 'tree' — the tree's existing " +
+    "conclusion stands and nothing more is owed; 'synthesis' — no single assertion wins, so give the " +
+    "value built from several in resolved_value and cite at least two src_/a_ ids in " +
+    "resolution_rationale.";
+  const kind = entry.resolution_kind;
+  if (!VALIDATOR_ENUMS.resolution_kind.has(kind)) {
+    return [
+      `a resolved conflict requires 'resolution_kind'${kind == null ? "" : ` (got ${JSON.stringify(kind)})`}. ${requirements}`,
+    ];
+  }
+  const competing = Array.isArray(entry.competing_assertion_ids) ? entry.competing_assertion_ids : [];
+  if (kind === "competitor") {
+    const winner = entry.preferred_assertion_id;
+    if (typeof winner !== "string" || winner.trim() === "" || !competing.includes(winner)) {
+      return [
+        "resolution_kind 'competitor' requires preferred_assertion_id naming one of " +
+          `competing_assertion_ids (${competing.join(", ") || "none"}). If no single assertion wins, ` +
+          "use 'tree' (the tree's existing conclusion stands) or 'synthesis' (a value built from " +
+          "several, with resolved_value and a rationale citing at least two src_/a_ ids).",
+      ];
+    }
+    return [];
+  }
+  if (kind === "synthesis") {
+    const errs: string[] = [];
+    const value = entry.resolved_value;
+    if (typeof value !== "string" || value.trim() === "") {
+      errs.push(
+        "resolution_kind 'synthesis' requires resolved_value — the value the evidence supports " +
+          "when no single assertion states it (e.g. \"about 1844\").",
+      );
+    }
+    const rationale = typeof entry.resolution_rationale === "string" ? entry.resolution_rationale : "";
+    const cited = citedEvidenceIds(rationale);
+    if (cited.size < 2) {
+      errs.push(
+        "resolution_kind 'synthesis' requires a resolution_rationale citing at least two distinct " +
+          `src_/a_ ids — the records the value is built from (it cites ${cited.size}).`,
+      );
+    }
+    return errs;
+  }
+  return [];
+}
+
 /** A [?] assertion cannot win a conflict on its own evidence — it needs
  *  corroboration from a different record with the same fact_type, same value
  *  (once [?] is stripped, whitespace collapsed and case folded), no [?] of its
@@ -466,10 +549,12 @@ function uncertainPreferenceInvariants(entry: any, research: any): string[] {
   return [
     `preferred_assertion_id '${entry.preferred_assertion_id}' carries an uncertain reading ` +
       `([?]) and no assertion from a different record corroborates it. To settle the conflict: ` +
-      `find a second record whose reading agrees, or update the assertion (op: "update", ` +
-      `entryId: "${entry.preferred_assertion_id}", fields: {value: "<confirmed reading>"}) to ` +
-      `remove the [?] once the user confirms the reading. Leaving preferred_assertion_id null ` +
-      `— a deferral is a finding, not an omission — stays legal.`,
+      `find a second record whose reading agrees, or — once the user confirms the reading — hand ` +
+      `the correction of assertion '${entry.preferred_assertion_id}' back to record-extraction, ` +
+      `which owns \`assertions\`; a conflict write cannot change an assertion. Leaving ` +
+      `preferred_assertion_id null — a deferral is a finding, not an omission — stays legal: leave ` +
+      `the conflict unresolved, or resolve it with resolution_kind 'tree' when the tree's existing ` +
+      `conclusion stands.`,
   ];
 }
 
@@ -1536,7 +1621,7 @@ function sourcesWithoutAssertionsWarning(research: any, applied: AppliedOp[]): s
 /** Tier/exhaustiveness cross-field guardrail (docs/specs/guardrail-enforcement-spec.md
  *  §4.2). `proved`/`disproved` claim the research is reasonably exhaustive by
  *  definition, so either tier requires the referenced question's
- *  `exhaustive_declaration.declared` to already be `true` — checked against
+ *  `search_stop.stopped_because` to already be a stop-gate value — checked against
  *  `preCallExhaustiveDeclared`, a snapshot taken BEFORE this call's ops began
  *  applying, never the live-mutating `research` object. Checking the live
  *  object would let one batch call both declare exhaustiveness and consume it
@@ -1710,7 +1795,10 @@ const ASCII_EDGE_WHITESPACE_RE = /^[ \t\n\r\f\v]+|[ \t\n\r\f\v]+$/g;
 
 /** The stop-criterion text when it claims a conflict was resolved, else null. */
 function claimedConflictResolution(question: any): string | null {
-  const cr = question?.exhaustive_declaration?.stop_criteria?.conflict_resolution;
+  // New shape first; fall back to legacy for documents written before #2539.
+  const cr =
+    question?.search_stop?.stop_criteria?.conflict_resolution ??
+    question?.exhaustive_declaration?.stop_criteria?.conflict_resolution;
   if (typeof cr !== "string") return null;
   const crl = cr.replace(ASCII_EDGE_WHITESPACE_RE, "").toLowerCase();
   if (NO_CONFLICT_EXACT.has(crl)) return null;
@@ -1724,7 +1812,7 @@ const conflictKey = (value: unknown): string | null =>
   typeof value === "string" && value !== "" ? value.toLowerCase() : null;
 
 /** A `proof_summaries` write whose question's
- *  `exhaustive_declaration.stop_criteria.conflict_resolution` claims a conflict
+ *  `search_stop.stop_criteria.conflict_resolution` claims a conflict
  *  was resolved, while `conflicts[]` holds no record of it — the resolution lives
  *  only in prose, the viewer's Conflicts section is blank, and every conflict
  *  gate here passes vacuously because each one iterates the array that was never
@@ -1800,7 +1888,7 @@ export function unpersistedConflictResolutionInvariants(entry: any, research: an
       : "conflicts[] is empty";
   return [
     `proof_summaries ${entry.id ?? "(new entry)"}: question ${qid}'s ` +
-      `exhaustive_declaration.stop_criteria.conflict_resolution says a conflict was resolved — ` +
+      `search_stop.stop_criteria.conflict_resolution says a conflict was resolved — ` +
       `"${quote}" — but conflicts[] holds no record of it (${missing}). A resolution that lives ` +
       `only in prose never reaches the Conflicts section, and no conflict gate can see it. ` +
       `Record the conflict and its resolution with conflict-resolution, the only writer of ` +
@@ -1899,41 +1987,43 @@ function oneSummaryPerQuestion(entry: any, research: any, appendedId: string | u
   ];
 }
 
-/** A question's `status` may not claim an exhaustiveness that its declaration
+/** A question's `status` may not claim an exhaustiveness that its stop decision
  *  does not carry.
  *
  *  **Why both spellings need gating.** `status: "exhaustive_declared"` is what
  *  every downstream reader treats as "GPS Component 1 is satisfied", and
- *  `exhaustive_declaration.declared` is the record that is supposed to back it.
+ *  `search_stop.stopped_because` being a gate value is the record that backs it.
  *  The harness has asserted one direction since the validator shipped —
- *  `test_declared_implies_exhaustive_declared_status`, declared ⟹ status — and
+ *  `test_declared_implies_exhaustive_declared_status`, gate value ⟹ status — and
  *  nothing has ever asserted the other, which is the direction that leaves a
- *  question looking finished with no declaration behind it.
+ *  question looking finished with no stop decision behind it.
  *
  *  **Reads the MERGED entry, deliberately.** `applyOne` shallow-merges `fields`
- *  before invariants run, so `entry.exhaustive_declaration` is "set by this op,
- *  or already true from an earlier call" — exactly the live read ADR-0011
+ *  before invariants run, so `entry.search_stop` is "set by this op,
+ *  or already gate-valued from an earlier call" — exactly the live read ADR-0011
  *  prescribes when the precondition is the same author's own prior step. A
  *  pre-call snapshot would refuse the 123 corpus writes that declare and set the
  *  status in one op, which is the common and correct shape.
  *
  *  **A zero-violation arm, and named as one.** Replayed over 157 committed e2e
  *  runs: 125 ops set this status and none of them would be refused. It ships as
- *  a cheap invariant closing a reachable hole — `exhaustive_declaration` is a
- *  required question property so it is always present, and 219 corpus writes set
- *  `declared: false` — not as a gate with demonstrated catches. Its test vector
- *  is synthetic for that reason. */
+ *  a cheap invariant closing a reachable hole — `search_stop` is a required
+ *  question property so it is always present, and corpus writes use non-gate
+ *  `stopped_because` values — not as a gate with demonstrated catches. Its test
+ *  vector is synthetic for that reason. */
 function declarationStatusInvariants(entry: any): string[] {
   if (entry?.status !== "exhaustive_declared") return [];
-  if (entry?.exhaustive_declaration?.declared === true) return [];
+  if (isStopGateSatisfied(entry)) return [];
+  const sb = getStoppedBecause(entry);
   return [
-    `status 'exhaustive_declared' requires exhaustive_declaration.declared === true on ` +
+    `status 'exhaustive_declared' requires search_stop.stopped_because to be a stop-gate value ` +
+      `('question_answered', 'record_exhausted', or 'nothing_further_reachable') on ` +
       `question '${entry?.id}', and it is ` +
-      `${entry?.exhaustive_declaration === undefined ? "absent" : JSON.stringify(entry?.exhaustive_declaration?.declared)}. ` +
+      `${sb === null ? "absent or null" : JSON.stringify(sb)}. ` +
       "That status is what every later reader treats as GPS Component 1 satisfied, so it may " +
-      "not stand without the declaration that backs it. Set both in this call, or leave the " +
-      "status alone: an honest early termination writes `declared: false` and keeps " +
-      "`status: \"in_progress\"`.",
+      "not stand without the stop decision that backs it. Set both in this call, or leave the " +
+      "status alone: an honest early termination sets stopped_because to a non-gate value and " +
+      "keeps `status: \"in_progress\"`.",
   ];
 }
 
@@ -1986,7 +2076,7 @@ function declarationStatusInvariants(entry: any): string[] {
  *  looser reading that also counts unattached plans is indistinguishable today —
  *  it is pinned here and by a synthetic test rather than by the corpus. */
 function planCompleteInvariants(entry: any, preCallResearch: any): string[] {
-  if (entry?.exhaustive_declaration?.declared !== true) return [];
+  if (!isStopGateSatisfied(entry)) return [];
   const qid = entry?.id;
   if (typeof qid !== "string" || qid === "") return [];
   // Of `plan_item_status`'s four, the two that are not disposed. Derived from
@@ -2196,7 +2286,7 @@ function planItemLogAttributionInvariants(
       `plan_items[${pid}]: an appended item cannot arrive 'completed' — its id is assigned in ` +
         `this call, so no log[] entry can name it. Don't add a plan item for a search that ` +
         `was already done: cite that search's log id in the question's ` +
-        `exhaustive_declaration.log_entry_ids when you declare. If the search has not been ` +
+        `search_stop.log_entry_ids when you declare. If the search has not been ` +
         `done yet, append the item as 'planned', then complete it after logging the search ` +
         `with research_log_append({ planItemId: "<its id>", ... }).`,
     ];
@@ -2330,10 +2420,11 @@ function proofSummaryInvariants(
   const declaredBeforeThisCall = preCallExhaustiveDeclared?.get(entry?.question_id) === true;
   if (!declaredBeforeThisCall) {
     return [
-      `tier '${tier}' requires question '${entry?.question_id}' to already carry ` +
-        `exhaustive_declaration.declared === true from BEFORE this call (a batch may not ` +
-        `declare exhaustiveness and consume it for a tier in the same call) — invoke ` +
-        `research-exhaustiveness first, in its own call.`,
+      `tier '${tier}' requires question '${entry?.question_id}' to already have its stop gate ` +
+        `satisfied (search_stop.stopped_because is 'question_answered', 'record_exhausted', or ` +
+        `'nothing_further_reachable') from BEFORE this call (a batch may not declare exhaustiveness ` +
+        `and consume it for a tier in the same call) — invoke research-exhaustiveness first, in its ` +
+        `own call.`,
     ];
   }
   return [];
@@ -3487,12 +3578,14 @@ function applyOne(
           `cannot set project.status = "completed": unresolved blocking conflict(s) ${names}. ` +
             "GPS Component 4 requires conflicting evidence to be resolved before concluding. " +
             "Run conflict-resolution for each — set its status to 'resolved' (with " +
-            "independence_analysis, weighing_analysis, and resolution_rationale) or 'moot' " +
-            "(with a rationale for why it no longer matters) — then retry completing the project. " +
-            "A conflict you weighed and could not settle is still recorded as 'resolved' with all " +
-            "three analyses, saying in resolution_rationale why it cannot be settled and what " +
-            "would settle it, and leaving preferred_assertion_id null — a deferral is a finding, " +
-            "not an omission, but it is not 'moot', which means the conflict no longer matters. " +
+            "independence_analysis, weighing_analysis, resolution_rationale and a resolution_kind: " +
+            "'competitor' naming the winning assertion, 'tree' where the tree's existing conclusion " +
+            "stands, or 'synthesis' with a resolved_value) or 'moot' (with a rationale for why it " +
+            "no longer matters) — then retry completing the project. A conflict you weighed and " +
+            "could not settle is still recorded as 'resolved' with all three analyses and " +
+            "resolution_kind 'tree', saying in resolution_rationale why it cannot be settled and " +
+            "what would settle it — a deferral is a finding, not an omission, but it is not " +
+            "'moot', which means the conflict no longer matters. " +
             "A conflict settled in the same batch as this update does not count; complete it in " +
             "a later call.",
         );
@@ -3627,11 +3720,14 @@ function applyOne(
 
     // Questions: re-declaring exhaustiveness on an already-declared question is
     // a no-op — never overwrite a settled GPS Component-1 record. Only when the
-    // declaration is the SOLE field being set, so a bundled update that also
+    // stop decision is the SOLE field being set, so a bundled update that also
     // changes other fields is not silently dropped.
     if (section === "questions" && Object.keys(op.fields).length === 1) {
-      const newEd = op.fields.exhaustive_declaration as any;
-      if (existing.exhaustive_declaration?.declared === true && newEd?.declared === true) {
+      const newSs = op.fields.search_stop;
+      if (
+        isStopGateSatisfied(existing) &&
+        isStopGateSatisfied(newSs !== undefined ? { search_stop: newSs } : op.fields)
+      ) {
         return {
           section,
           op: op.op,
@@ -3705,7 +3801,7 @@ function applyOne(
     // re-trigger either. `append` always sets both.
     const declarationTouchedThisOp =
       op.op === "append" ||
-      Object.prototype.hasOwnProperty.call(fields, "exhaustive_declaration");
+      Object.prototype.hasOwnProperty.call(fields, "search_stop");
     if (declarationTouchedThisOp) {
       invariantErrors.push(...planCompleteInvariants(resultEntry, preCallResearch));
     }
@@ -3716,18 +3812,19 @@ function applyOne(
       op.op === "append" || Object.prototype.hasOwnProperty.call(fields, "status");
     // EITHER side, because the invariant couples two fields and an op that
     // touches one can break it without naming the other. Gating on `status`
-    // alone left the mirror-image hole open: an update lowering
-    // `exhaustive_declaration.declared` to false on a question already sitting
-    // at `status: "exhaustive_declared"` never ran the check and persisted
-    // exactly the state it forbids. That is not hypothetical — it is the
-    // agent's own documented re-invocation path, which writes `declared: false`
-    // and is told to leave `status` alone.
+    // alone left the mirror-image hole open: an update changing
+    // `search_stop.stopped_because` to a non-gate value on a question already
+    // sitting at `status: "exhaustive_declared"` never ran the check and
+    // persisted exactly the state it forbids. That is not hypothetical — it is
+    // the agent's own documented re-invocation path, which may change the stop
+    // reason and is told to leave `status` alone.
     if (statusTouchedThisOp || declarationTouchedThisOp) {
       invariantErrors.push(...declarationStatusInvariants(resultEntry));
     }
   }
   if (section === "conflicts") {
     invariantErrors.push(...conflictInvariants(resultEntry));
+    invariantErrors.push(...resolutionKindInvariants(resultEntry, op));
     // Place containment: on append, and on an update that (re)sets the pairing.
     // Scoped that way so an unrelated edit to a conflict written before this
     // rule existed is not refused — the freeze #2354 had to design around.
@@ -5084,7 +5181,7 @@ export async function researchAppend(
     const preCallExhaustiveDeclared = new Map<string, boolean>(
       (Array.isArray(research.questions) ? research.questions : []).map((q: any) => [
         q?.id,
-        q?.exhaustive_declaration?.declared === true,
+        isStopGateSatisfied(q),
       ]),
     );
     // Same discipline, for the conflict gate on project.status = "completed": the

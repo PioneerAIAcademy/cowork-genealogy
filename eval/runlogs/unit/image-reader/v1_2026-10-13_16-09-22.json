@@ -1,0 +1,481 @@
+{
+  "schema_version": 3,
+  "skill": "image-reader",
+  "version": 1,
+  "released": false,
+  "releasable": true,
+  "invocation": "skill",
+  "timestamp": "2026-10-13_16-09-22",
+  "harness_version": "0.1.0",
+  "model": "claude-sonnet-4-6",
+  "judge_prompt_hash": "0ec4cfbbfee949ee39d19136867fe47e26cc377bc3697cf58c148f42371468f8",
+  "snapshot": {
+    "packages/engine/plugin/agents/image-reader.md": "6092d8f518be75236d45c09e3b8493da21bafd5700778a28500707759e86c5fb",
+    "eval/tests/unit/image-reader/cap-refusal-relayed.json": "8f3dbf521f8af313f7f9caaa510f93317b5a314d1dd75aca722b7f4fd6d239bb",
+    "eval/tests/unit/image-reader/rubric.md": "5930ea4fbca3de6f0ce6025df31c5ebe0bbf9d911155e21eb094532f249d668a",
+    "eval/fixtures/scenarios/mid-research-flynn/README.md": "f7020ae65e077c8a6c1a25013de7f884210cffc17fea88eae2c8b48558702ddc",
+    "eval/fixtures/scenarios/mid-research-flynn/research.json": "573b6ee9ec156040fca3355a04852ff75cd680030f37495072ac3f2b160723e2",
+    "eval/fixtures/scenarios/mid-research-flynn/tree.gedcomx.json": "efb4f78453dd94f4d94c6ff8d2bd16ae9519b67a6a8aa179d9e9bf41d1326d86",
+    "eval/fixtures/mcp/image-transcribe-cap-reached.json": "1edd22774d09de3fc24b99fca99b64e5c96a4c3db046d8aa0829ef08857143c8"
+  },
+  "tests": [
+    {
+      "test_id": "ut_image_reader_d1",
+      "test_type": "positive",
+      "expected_outcome": "pass",
+      "scenario": "mid-research-flynn",
+      "mcp_fixtures": [
+        "image-transcribe-cap-reached"
+      ],
+      "outcome": "pass",
+      "flaky": false,
+      "outcome_summary": {
+        "per_run_outcomes": [
+          "pass"
+        ],
+        "aggregated_dimensions": [
+          {
+            "source": "base",
+            "name": "Correctness",
+            "score": 3,
+            "rationale": "The skill correctly relayed the image_transcribe error without fabrication. The response includes the NOT READ line, the exact error message with the link (https://www.familysearch.org/search/film/004452257?i=20), and all instructions intact: log the browse as partial, move to other routes, and name the unfinished browse with the link. No transcription or extracted facts were presented for the unread image."
+          },
+          {
+            "source": "base",
+            "name": "Completeness",
+            "score": 3,
+            "rationale": "The skill addressed everything required by the per-test context. It provided the NOT READ line, quoted the full error message with its link and instructions, and offered actionable guidance (record_search, fulltext_search alternatives) to the caller. The error's instructions for the caller\u2014log the browse, move to other routes, name the unfinished browse\u2014are all present and intact."
+          },
+          {
+            "source": "base",
+            "name": "Tool Arguments",
+            "score": 3,
+            "rationale": "The image_transcribe call passed the correct imageId (004452257_00021) matching expected_args. The call included lookingFor and projectPath as additional context, which are reasonable additions that do not contradict the fixture's expectations. The tool was called exactly once with the correct critical identifier."
+          },
+          {
+            "source": "rubric",
+            "name": "Failed-read relay",
+            "score": 3,
+            "rationale": "The return includes 'NOT READ: 004452257_00021' on its own line and quotes the exact error message with the link (https://www.familysearch.org/search/film/004452257?i=20) and all instructions intact: 'Log this browse as partial with research_log_append', 'move to other routes (record_search, fulltext_search, other collections)', and 'name the unfinished browse in your final summary with this link'. The caller receives everything needed to act on the refusal."
+          },
+          {
+            "source": "rubric",
+            "name": "No fabricated page",
+            "score": 3,
+            "rationale": "No transcription, extracted facts, or FOUND/NOT FOUND pointer for the unread image were presented. The response contains only the error relay and recommended pivots; no content from the image itself was fabricated or claimed to have been read."
+          },
+          {
+            "source": "rubric",
+            "name": "One call",
+            "score": 3,
+            "rationale": "The agent made exactly one image_transcribe call for imageId 004452257_00021 and stopped. No second call to the same image, no call to another image, and no attempt at another route (browser, different tool) occurred. The single call received an error and the agent correctly relayed it without retrying."
+          }
+        ],
+        "review_dimensions": [
+          {
+            "source": "base",
+            "name": "Correctness",
+            "score": 3,
+            "rationale": "The skill correctly relayed the image_transcribe error without fabrication. The response includes the NOT READ line, the exact error message with the link (https://www.familysearch.org/search/film/004452257?i=20), and all instructions intact: log the browse as partial, move to other routes, and name the unfinished browse with the link. No transcription or extracted facts were presented for the unread image."
+          },
+          {
+            "source": "base",
+            "name": "Completeness",
+            "score": 3,
+            "rationale": "The skill addressed everything required by the per-test context. It provided the NOT READ line, quoted the full error message with its link and instructions, and offered actionable guidance (record_search, fulltext_search alternatives) to the caller. The error's instructions for the caller\u2014log the browse, move to other routes, name the unfinished browse\u2014are all present and intact."
+          },
+          {
+            "source": "base",
+            "name": "Tool Arguments",
+            "score": 3,
+            "rationale": "The image_transcribe call passed the correct imageId (004452257_00021) matching expected_args. The call included lookingFor and projectPath as additional context, which are reasonable additions that do not contradict the fixture's expectations. The tool was called exactly once with the correct critical identifier."
+          },
+          {
+            "source": "rubric",
+            "name": "Failed-read relay",
+            "score": 3,
+            "rationale": "The return includes 'NOT READ: 004452257_00021' on its own line and quotes the exact error message with the link (https://www.familysearch.org/search/film/004452257?i=20) and all instructions intact: 'Log this browse as partial with research_log_append', 'move to other routes (record_search, fulltext_search, other collections)', and 'name the unfinished browse in your final summary with this link'. The caller receives everything needed to act on the refusal."
+          },
+          {
+            "source": "rubric",
+            "name": "No fabricated page",
+            "score": 3,
+            "rationale": "No transcription, extracted facts, or FOUND/NOT FOUND pointer for the unread image were presented. The response contains only the error relay and recommended pivots; no content from the image itself was fabricated or claimed to have been read."
+          },
+          {
+            "source": "rubric",
+            "name": "One call",
+            "score": 3,
+            "rationale": "The agent made exactly one image_transcribe call for imageId 004452257_00021 and stopped. No second call to the same image, no call to another image, and no attempt at another route (browser, different tool) occurred. The single call received an error and the agent correctly relayed it without retrying."
+          }
+        ]
+      },
+      "totals": {
+        "duration_ms": 18341.335333010647,
+        "duration_api_ms": 14905.0,
+        "judge_duration_ms": 8434.887542010983,
+        "wall_clock_ms": 27028.179168701172,
+        "num_turns": 2,
+        "input_tokens": 558,
+        "cached_input_tokens": 25223,
+        "cache_creation_input_tokens": 26201,
+        "output_tokens": 932,
+        "judge_input_tokens": 13354,
+        "judge_cached_input_tokens": 0,
+        "judge_output_tokens": 748,
+        "skill_cost_usd": 0.12021264999999999,
+        "judge_cost_usd": 0.017093999999999998,
+        "total_cost_usd": 0.13730664999999997
+      },
+      "runs": [
+        {
+          "run_index": 0,
+          "run_id": "run_ut_image_reader_d1_2026-10-13_16-09-22_0",
+          "outcome": "pass",
+          "aborted_reason": null,
+          "error": null,
+          "duration_ms": 18341.335333010647,
+          "duration_api_ms": 14905.0,
+          "num_turns": 2,
+          "skill_attempts": 1,
+          "input_tokens": 558,
+          "cached_input_tokens": 25223,
+          "cache_creation_input_tokens": 26201,
+          "output_tokens": 932,
+          "model_usage": {
+            "claude-haiku-4-5-20251001": {
+              "inputTokens": 551,
+              "outputTokens": 16,
+              "cacheReadInputTokens": 0,
+              "cacheCreationInputTokens": 0,
+              "webSearchRequests": 0,
+              "costUSD": 0.0006309999999999999,
+              "contextWindow": 200000,
+              "maxOutputTokens": 32000
+            },
+            "claude-sonnet-4-6": {
+              "inputTokens": 7,
+              "outputTokens": 916,
+              "cacheReadInputTokens": 25223,
+              "cacheCreationInputTokens": 26201,
+              "webSearchRequests": 0,
+              "costUSD": 0.11958165,
+              "contextWindow": 200000,
+              "maxOutputTokens": 32000
+            }
+          },
+          "no_result_message": false,
+          "subagents": [
+            {
+              "agent_type": "image-reader",
+              "description": "Transcribe image scan for burial entry",
+              "num_assistant_turns": 3,
+              "max_output_tokens": 346,
+              "hit_output_cap": false,
+              "runaway_thinking": false,
+              "usage": {
+                "input_tokens": 4,
+                "output_tokens": 519,
+                "cache_read_input_tokens": 4357,
+                "cache_creation_input_tokens": 4736
+              },
+              "peak_window_tokens": 4737,
+              "compactions": [],
+              "models": [
+                "claude-sonnet-4-6"
+              ],
+              "duration_seconds": 8.121
+            }
+          ],
+          "subagent_capture_status": "captured",
+          "main_thread": {
+            "peak_window_tokens": 21466,
+            "compactions": [],
+            "models": [
+              "claude-sonnet-4-6"
+            ]
+          },
+          "skill_cost_usd": 0.12021264999999999,
+          "output": {
+            "text_response": "The image-reader agent was unable to fetch the scan. Here is its full response:\n\n---\n\n**NOT READ: 004452257_00021**\n\nThe image could not be fetched. The session has already read 20 distinct images from image group **004452257**, which is the per-session cap. Re-reading any of those 20 previously-read images still works, but no new pages from that film can be fetched automatically.\n\n**Recommended pivots:**\n\n- Use `record_search` or `fulltext_search` to look for an indexed burial record for **Patrick Flynn, 1882**, rather than browsing the film directly.\n- Search related collections that may cover the same parish or jurisdiction for the same time period.\n- You can continue browsing this film **by hand** at: [https://www.familysearch.org/search/film/004452257?i=20](https://www.familysearch.org/search/film/004452257?i=20)",
+            "activated": true,
+            "skills_invoked": [],
+            "tool_calls": [
+              {
+                "tool": "mcp__genealogy__image_transcribe",
+                "args": {
+                  "imageId": "004452257_00021",
+                  "lookingFor": "a burial entry for Patrick Flynn, 1882",
+                  "projectPath": "/private/var/folders/ml/615yqgf91nb_nb5lzkw2dtmc0000gp/T/eval-ut_image_reader_d1-0-0-awa7gnvw"
+                },
+                "expected_args": {
+                  "imageId": "004452257_00021"
+                },
+                "matched": {
+                  "kind": "predicate",
+                  "index": 0
+                },
+                "response_fixture": "image-transcribe-cap-reached"
+              }
+            ],
+            "files_created": [],
+            "builtin_tool_calls": [
+              {
+                "tool": "Agent",
+                "args": {
+                  "description": "Transcribe image scan for burial entry",
+                  "prompt": "Read this page scan and transcribe it.\n\nimageId: 004452257_00021\nlooking_for: a burial entry for Patrick Flynn, 1882\nproject_path: <workspace>",
+                  "subagent_type": "image-reader"
+                }
+              }
+            ],
+            "agent_returns": [
+              {
+                "subagent_type": "image-reader",
+                "text": "NOT READ: 004452257_00021\n\nThe image could not be fetched. The exact error returned was:\n\n\"Image cap reached: 20 distinct images from image group 004452257 have already been read in this project (or in this server session, for reads with no projectPath), so 004452257_00021 (https://www.familysearch.org/search/film/004452257?i=20) was not fetched. Re-reading any of those 20 still works. To find one year's page in a browse-only volume, run volume_bisect first, then read the narrowed range. Log this browse as partial with research_log_append (the group, the pages you read, what you were looking for), move to other routes (record_search, fulltext_search, other collections), and name the unfinished browse in your final summary with this link so the researcher can continue it by hand.\"\n\nThis session has already read 20 distinct images from film group 004452257, which is the per-session cap. No further pages from that film can be fetched automatically.\n\nRecommended pivots:\n\n- Use `record_search` or `fulltext_search` to look for an indexed burial record for Patrick Flynn, 1882, rather than browsing the film directly.\n- Search related collections that may cover the same parish or jurisdiction for the same time period.\n- You can continue browsing this film by hand at: https://www.familysearch.org/search/film/004452257?i=20"
+              }
+            ],
+            "warnings": [
+              {
+                "kind": "prose_observation",
+                "check": "report_no_internal_identifiers_in_response",
+                "observation": "internal identifiers in the reply: record_search"
+              },
+              {
+                "kind": "scenario_readme_fallback",
+                "scenario": "mid-research-flynn",
+                "advisory": "Scenario 'mid-research-flynn' has no judge-brief.md, so the judge read its whole README.md, which may state the outcome this run is graded on (issue #2478)."
+              }
+            ]
+          },
+          "validators": {
+            "passed": true,
+            "results": [
+              {
+                "name": "test_activated_run_produces_response",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_decline_response_nonempty",
+                "passed": true,
+                "error": "skipped: positive test",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_direct_delegation_relayed_verbatim",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_direct_test_spawned_its_agent",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_hand_back_names_its_owner",
+                "passed": true,
+                "error": "skipped: not a hand-back test",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_id_references_resolve",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_log_append_only",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_no_duplicate_tree_ids",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_no_entries_deleted",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_no_main_thread_subagent_only_calls",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_no_out_of_lane_section_writes",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_no_raw_writes_to_protected_files",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_ownership_table",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_parent_child_age_plausibility_flagged",
+                "passed": true,
+                "error": "skipped: no new ParentChild relationships",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_project_file_changes_route_through_writer_tools",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_project_files_pass_full_validation",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_research_json_validates_schema",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_skill_calls_name_a_shipped_skill",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_tool_allowlist",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_tree_facts_agree_with_linked_assertions",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_tree_gedcomx_json_validates_schema",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_tree_ownership_table",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_write_then_validate",
+                "passed": true,
+                "error": "skipped: skill does not declare validate_research_schema",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_cap_refusal_relayed_to_the_caller",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              }
+            ]
+          },
+          "judge": {
+            "skipped": false,
+            "dimensions": [
+              {
+                "source": "base",
+                "name": "Correctness",
+                "score": 3,
+                "rationale": "The skill correctly relayed the image_transcribe error without fabrication. The response includes the NOT READ line, the exact error message with the link (https://www.familysearch.org/search/film/004452257?i=20), and all instructions intact: log the browse as partial, move to other routes, and name the unfinished browse with the link. No transcription or extracted facts were presented for the unread image."
+              },
+              {
+                "source": "base",
+                "name": "Completeness",
+                "score": 3,
+                "rationale": "The skill addressed everything required by the per-test context. It provided the NOT READ line, quoted the full error message with its link and instructions, and offered actionable guidance (record_search, fulltext_search alternatives) to the caller. The error's instructions for the caller\u2014log the browse, move to other routes, name the unfinished browse\u2014are all present and intact."
+              },
+              {
+                "source": "base",
+                "name": "Tool Arguments",
+                "score": 3,
+                "rationale": "The image_transcribe call passed the correct imageId (004452257_00021) matching expected_args. The call included lookingFor and projectPath as additional context, which are reasonable additions that do not contradict the fixture's expectations. The tool was called exactly once with the correct critical identifier."
+              },
+              {
+                "source": "rubric",
+                "name": "Failed-read relay",
+                "score": 3,
+                "rationale": "The return includes 'NOT READ: 004452257_00021' on its own line and quotes the exact error message with the link (https://www.familysearch.org/search/film/004452257?i=20) and all instructions intact: 'Log this browse as partial with research_log_append', 'move to other routes (record_search, fulltext_search, other collections)', and 'name the unfinished browse in your final summary with this link'. The caller receives everything needed to act on the refusal."
+              },
+              {
+                "source": "rubric",
+                "name": "No fabricated page",
+                "score": 3,
+                "rationale": "No transcription, extracted facts, or FOUND/NOT FOUND pointer for the unread image were presented. The response contains only the error relay and recommended pivots; no content from the image itself was fabricated or claimed to have been read."
+              },
+              {
+                "source": "rubric",
+                "name": "One call",
+                "score": 3,
+                "rationale": "The agent made exactly one image_transcribe call for imageId 004452257_00021 and stopped. No second call to the same image, no call to another image, and no attempt at another route (browser, different tool) occurred. The single call received an error and the agent correctly relayed it without retrying."
+              }
+            ],
+            "judge_cost_usd": 0.017093999999999998,
+            "duration_ms": 8434.887542010983,
+            "error": null,
+            "input_tokens": 13354,
+            "cached_input_tokens": 0,
+            "output_tokens": 748
+          },
+          "started_at": 1791907762.641053,
+          "ended_at": 1791907789.6692321
+        }
+      ],
+      "grading_mode": "dimensions",
+      "dimensions_gate_outcome": true
+    }
+  ],
+  "totals": {
+    "duration_ms": 18341.335333010647,
+    "duration_api_ms": 14905.0,
+    "judge_duration_ms": 8434.887542010983,
+    "num_turns": 2,
+    "input_tokens": 558,
+    "cached_input_tokens": 25223,
+    "cache_creation_input_tokens": 26201,
+    "output_tokens": 932,
+    "judge_input_tokens": 13354,
+    "judge_cached_input_tokens": 0,
+    "judge_output_tokens": 748,
+    "skill_cost_usd": 0.12021264999999999,
+    "judge_cost_usd": 0.017093999999999998,
+    "total_cost_usd": 0.13730664999999997,
+    "wall_clock_ms": 27028.179168701172
+  },
+  "judge_model": "claude-haiku-4-5-20251001",
+  "review_sample": {
+    "tests": [
+      "ut_image_reader_d1"
+    ],
+    "cursor": [],
+    "seed": 2169
+  },
+  "tool_search": true
+}
