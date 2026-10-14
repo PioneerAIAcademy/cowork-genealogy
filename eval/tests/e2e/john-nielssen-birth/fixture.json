@@ -1,6 +1,6 @@
 {
   "id": "john-nielssen-birth",
-  "name": "John Nielssen — birth about 1846, Norway",
+  "name": "John Nielssen — birth 1844, Åseral, Norway",
   "genre": "record-hint",
   "source_pid": "KHKC-867",
   "captured": "2026-10-12",
@@ -15,5 +15,5 @@
     "judge": "claude-haiku-4-5-20251001"
   },
   "difficulty": "medium",
-  "notes": "Record-hint fixture (filtered-list-samples-3.csv row 18, hint-samples.csv row 616, flag adds_birth, confidence 3). Resolved 2026-10-14 (#3339): true match. The 1877 Bygland baptism (ark:/61903/1:1:683T-H1R2) gives the birth year 1846; identity confirmed by the 1900 census Klep household (ark:/61903/1:1:DDYV-D52M). Decided from indexes alone."
+  "notes": "Record-hint fixture (filtered-list-samples-3.csv row 18, hint-samples.csv row 616, flag adds_birth, confidence 3). Resolved 2026-10-14 (#3339): true match, fuller answer (outcome 2). The hint's 1846 is corrected to 1844 and Åseral added as the birthplace, from the 1875 census Klep household (Digitalarkivet pf01052207002762), the 1865 census (ark:/61903/1:1:DDCG-V3ZM) and the 1844 Bygland baptism (ark:/61903/1:1:683T-XFQ9). Decided from indexes and Digitalarkivet's transcription; no page image read."
 }

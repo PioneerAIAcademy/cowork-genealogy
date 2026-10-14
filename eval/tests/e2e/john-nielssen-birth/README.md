@@ -1,4 +1,4 @@
-# John Nielssen — birth about 1846, Norway
+# John Nielssen — birth 1844, Åseral, Norway
 
 **Source PID:** `KHKC-867`
 **John Nielssen is deceased.** (FamilySearch ToS requires
@@ -28,27 +28,37 @@ match strength.
 
 ## Notes for reviewers
 
-**Resolved 2026-10-14 (#3339): true match.** The hint record — "Norway, Church Books, 1797-1958", the Bygland baptism on 17 October 1877 of Torjus (born 24 May), son of Jon Nilson, born 1846, and Anne Torjusdatter, born 1852, of Klep (`ark:/61903/1:1:683T-H1R2`) — concerns the tree's John Nielssen. The finding is his birth year, 1846. No record found gives his birthplace. The hint batch was `filtered-list-samples-3.csv` row 18, `hint-samples.csv` row 616, flag `adds_birth`, confidence 3.
+**Resolved 2026-10-14 (#3339): true match, fuller answer (outcome 2).** The hint record is about the tree's John Nielssen. It is "Norway, Church Books, 1797-1958", the Bygland baptism on 17 October 1877 of Torjus (born 24 May), son of Jon Nilson, born 1846, and Anne Torjusdatter, born 1852, of Klep (`ark:/61903/1:1:683T-H1R2`). Its 1846 is the wrong year. John was born in **1844 in Åseral parish**. The hint batch was `filtered-list-samples-3.csv` row 18, `hint-samples.csv` row 616, flag `adds_birth`, confidence 3.
 
 **Baseline.** The tree's sources are the 1870 and 1872 "Norway, Baptisms, 1634-1927" entries for Ingeborg and Nils (`ark:/61903/1:1:NCWK-B8T`, `ark:/61903/1:1:NHF2-9RV` and their re-indexes). They name John Nielssen / John Nilsen and Anne Torjusdr / Thorgjusdr but give no ages and no farm. The hint record is attached to no tree person (`source_attachments`), so it is not a re-index of an existing source.
 
-**What decided the identity: the 1900 census, not the 1875 one.** The 1875 census named in the issue cannot be checked on FamilySearch. The "Norway, Census, 1875" index (collection 1529106) covers only Østfold, Akershus, Hedmark, Oppland, Buskerud and Vestfold, and even the Setesdal surname Torjussen returns no Agder hits. The 1900 census does settle it (household `ark:/61903/1:2:4NLJ-PMN2`, "Klep, Nedenes"):
+**What decided it: the 1875 census, on Digitalarkivet.** FamilySearch's "Norway, Census, 1875" index (collection 1529106) covers only Østfold, Akershus, Hedmark, Oppland, Buskerud and Vestfold, so the census is not searchable there. Digitalarkivet holds the Bygland returns (Folketelling 1875 for 0938P Bygland prestegjeld, Klep, https://www.digitalarkivet.no/census/rural-residence/bf01052207002757):
+
+- **Household 02:** John Nilsen, married, born 1844 in "Aaserals S og Prgj" (person `pf01052207002762`); wife Anne Torjusdatter, born 1852; Nils Johnsen, born 1872; Ingeborg Johnsdatter, born 1870. The last three were all born in "Aardal S Bygland Prgj". This is the household the issue asked for: the tree's wife and both of the tree's children.
+- **Household 01:** his father Nils Johnsen, born 1821 in Åseral; Ingeborg Grundesdatter, born 1813; and Gunstein (1856) and Birgit (1854) Nilsen/Nilsdatter, both born in Åseral.
+
+**The year: 1844, not 1846.** There are three independent witnesses, and the two closest to the event agree:
+
+- **1844 baptism** (`ark:/61903/1:1:683T-XFQ9`): John Nielsen Klefs, born 19 March, baptized 4 April 1844 in Bygland, son of Niels Johnsen and Ingeborg Grundsdatter of Klep. These are the same parents as the 1865 and 1875 households. It is recorded at the event, so it is the best witness for the date.
+- **1865 census** (`ark:/61903/1:1:DDCG-V3ZM`): John Niltsøn, born 1843 in Åseral, single, at Klep in the household of Nils Johnsøn (born 1818), Ingeborg Grundesdatter and siblings Torgrim (1847), Berit (1849), Birgit (1853) and Gunstein (1855), all born in Åseral. That census recorded age, not birth year, so 1843 is one year from 1844.
+- **1877 baptism** (the hint): 1846, a parent's age entered in his son's baptism 33 years later. This is the outlier.
+
+**The place: Åseral, with one conflict noted.** Both censuses give Åseral as his birth parish, as they do for every sibling born 1847–1855. The 1844 baptism, however, was entered in Bygland's church book, with the family resident at Klep. A baptism place is not a birthplace, and two independent censuses ten years apart agree, so the finding names Åseral parish. A run that names Bygland as the birthplace on the strength of the baptism has misread the baptism.
+
+**The identity.** The 1875 household above settles it. The 1900 census confirms it after Jon's death (household `ark:/61903/1:2:4NLJ-PMN2`, "Klep, Nedenes"):
 
 - Anne Torgjusd. Klep, widowed, born 1852 in Bygland (`ark:/61903/1:1:DDYV-D52M`).
-- Nils Jonson Klep, born 1872 in Bygland (`ark:/61903/1:1:DDR4-TQT2`) — the tree's Nils, baptized 6 October 1872.
+- Nils Jonson Klep, born 1872 in Bygland (`ark:/61903/1:1:DDR4-TQT2`).
 - Mari (1880), Siri (1884), Torbjørg (1887) and Torgjus (1889) Jonsdatter/Jonson. The second Torgjus suggests the 1877 Torjus died young.
 
-The hint's mother — Anne Torjusdatter, born 1852, of Klep — is matched independently on name, birth year and farm. The household carries the tree's son Nils, and Jonson/Jonsdatter for the father. A second Jon Nilsen and Anne Torjusdatter couple at Klep with a son Nils born 1872 is not credible. She is widowed by 1900, so Jon died between 1877 and 1900.
+Jon died between 1877 and 1900.
 
-**What stays thin: the year.** 1846 has one witness, the 1877 baptism. Nothing contradicts it, and nothing independently confirms it. These searches came up empty:
+**Why the first pass missed him.** The 1865 search looked only in Setesdal and only for births in 1845–1847, following the hint's 1846. A man born in 1843–1844 in Åseral fell outside it, and the index's "Niltsøn" spelling did not rank him in the first page. He was found through his brother Gunstein. Other searches:
 
-- **1865 census** (collection 3756102): no Jon Nilsen born 1845–1847 anywhere in Setesdal. Surname spellings are normalised, so all variants return one set, and every page was read. Anne Thorjusdatter, born 1851, is in the Bygland household of the widow Mari Olsdatter, with four other Thorjus children (the index gives no relationships) (`ark:/61903/1:1:DDCT-VG6Z`). Jon may have been born outside Bygland and married onto Klep.
-- **Marriage, 1865–1872:** none for the couple in Agder.
+- **Marriage, 1865–1872:** none for the couple in Agder (all 250 results read).
 - **Burial, 1877–1900:** none found. The country-wide death search has 3,949 results and only the top 100 were read; filtering by Bygland as the death place returned no burial records at all. Not proved absent.
 - **1891 census:** neither Jon nor the Klep household appears in the index.
 
-A run that reports "born about 1846, birthplace not found" is right. A run that names a birthplace needs a record this search did not find.
-
-**Retrieval** was tool-assisted (`packages/engine/mcp-server/dev/try-*.ts` against live FamilySearch); the identity judgement is the genealogist's. Only index text was read; no page image. One search caveat for whoever re-derives this: `record_search` returns 0 for any hyphenated county (`Aust-Agder`, `Vest-Agder`, `Sør-Trøndelag`), even for Ole Olsen, so every search above was run at country level and filtered by the returned places.
+**Retrieval** was tool-assisted (`packages/engine/mcp-server/dev/try-*.ts` against live FamilySearch). The 1875 census was read from Digitalarkivet's transcription, and no page image was read. The identity judgement is the genealogist's. One search caveat for whoever re-derives this: `record_search` returns 0 for any hyphenated county (issue #3455), so every search above was run at country level and filtered by the returned places.
 
 The tree also holds two Ingeborg persons (christened 16 and 18 October 1870, PIDs M6W2-GR5 and M6W2-GY4). That is a tree duplicate and does not affect this call.
