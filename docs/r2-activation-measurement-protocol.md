@@ -141,13 +141,15 @@ pausing about an hour after `LIVE_WINDOW_S` (4 h since the browser last attached
 Budget three runs of that order, watch them, and accept that a stop voids the run rather
 than salvaging it.
 
-## Currently blocked
+## Currently blocked on one allowlist entry
 
-R2 cannot start: **FamilySearch stopped returning `email`** from
-`/platform/users/current`, and the hosted alpha's allowlist keys on it, so every sign-in
-403s — confirmed on `genealogy-workbench.fly.dev`, 2026-10-14. The fix (accept the FS
-account id as the allowlist key) is written and tested but needs the lead's sign-off,
-because it changes how the allowlist is administered.
+Sign-in works. The earlier reading — that FamilySearch had dropped `email` from
+`/platform/users/current` and shut the alpha to everyone — was wrong, and the measurement
+behind it was one account. `email` is optional **per account**: it is returned only when
+the account has a recovery email registered (churchofjesuschrist.org → Account Settings →
+Recovery and Notifications), and the key is absent otherwise. Other people were signing in
+normally throughout.
 
-`AUTO_CONTINUE` was turned back on the same day, so that half is clear. This is the only
-remaining blocker.
+What remains is ordinary: `praisenato@gmail.com` has to be added to `ALLOWED_EMAILS`.
+Nothing in the code needs to change for R2 — the gate works as designed, and only
+allowlisted accounts sign in.
