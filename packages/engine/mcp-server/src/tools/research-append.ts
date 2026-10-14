@@ -2361,8 +2361,24 @@ function planItemLogAttributionInvariants(
 // A capture that arrived is a later entry, and step 6 does not carry
 // `planItemId` onto it, so an arrival is matched on `(site, url_generated)`
 // (which every external-site entry carries) under this item's id or a null one.
+//
+// Two documented `skipped` paths are exempt (`CAPTURE_PENDING_SKIP_EXEMPT`):
+// `search-external-sites.md` step 4 tells the agent to mark an external-site
+// item `skipped` when no user is present to make the capture or the site cannot
+// be reached (`inaccessible`), or when the user asked to skip it
+// (`user_declined`). Refusing those denies the skill's own instruction, and the
+// "leave it in_progress" remedy would stall an autonomous run — exhaustiveness
+// will not declare while an item is `in_progress` (EdmondOware review,
+// 2026-10-14). `completed` is never exempt (it claims the search happened), and
+// a `skipped` with any other category — the `ut_search_records_026` escalation
+// shape, where a real user capture is still outstanding — is still refused.
+const CAPTURE_PENDING_SKIP_EXEMPT = new Set(["inaccessible", "user_declined"]);
+
 export function planItemCapturePendingInvariants(entry: any, research: any): string[] {
   if (entry?.status !== "completed" && entry?.status !== "skipped") return [];
+  if (entry?.status === "skipped" && CAPTURE_PENDING_SKIP_EXEMPT.has(entry?.skip_category)) {
+    return [];
+  }
   const pid = entry?.id;
   // Guarded for shape rather than assumed — fires before document validation,
   // the same reason planItemLogAttributionInvariants guards its id.

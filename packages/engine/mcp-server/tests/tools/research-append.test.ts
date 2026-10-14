@@ -9607,6 +9607,35 @@ describe("research_append — capture-pending plan item not terminal (#1226, #24
     await writeProject(captureResearch("in_progress", true));
     expect(singleOk(await researchAppend(setItemStatusViaPlans("skipped") as any))).toBeTruthy();
   });
+
+  // The documented autonomous no-user / inaccessible-site skip: search-external-
+  // sites.md step 4 tells the agent to mark the item `skipped` with one of these
+  // categories when a capture cannot be obtained. Refusing it would deny the
+  // skill's own instruction and stall the run (EdmondOware review).
+  const setSkipWithCategory = (skip_category: string) => ({
+    projectPath: dir,
+    section: "plan_items" as const,
+    op: "update" as const,
+    planId: "pl_001",
+    entryId: "pli_001",
+    fields: { status: "skipped", skip_category, skip_reason: "no user available in autonomous run" },
+  });
+
+  it("allows a capture-pending 'skipped' with skip_category 'inaccessible' (no user to capture)", async () => {
+    await writeProject(captureResearch("in_progress", false));
+    expect(singleOk(await researchAppend(setSkipWithCategory("inaccessible") as any))).toBeTruthy();
+  });
+
+  it("allows a capture-pending 'skipped' with skip_category 'user_declined'", async () => {
+    await writeProject(captureResearch("in_progress", false));
+    expect(singleOk(await researchAppend(setSkipWithCategory("user_declined") as any))).toBeTruthy();
+  });
+
+  it("still refuses a capture-pending 'skipped' with a non-exempt skip_category (the _026 escalation shape)", async () => {
+    await writeProject(captureResearch("in_progress", false));
+    const errs = failure(await researchAppend(setSkipWithCategory("answered") as any)).errors.join(" ");
+    expect(errs).toMatch(/awaiting a capture/);
+  });
 });
 
 
