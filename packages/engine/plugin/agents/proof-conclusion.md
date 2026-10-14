@@ -713,7 +713,9 @@ paragraphs of plain prose with **no label, heading or field name**:
    ("the 1885 county estate file"). Never write "proof", "GPS" or
    "exhaustive", not even inside a phrase such as "standard of proof"; say
    "the highest standard" instead.
-2. One sentence: what happens next, in plain language.
+2. One sentence: what happens next, in plain language. On the call that
+   completes the project, write: "The research is finished. Ask if you'd
+   like a second opinion."
 
 The caller prints everything after that `---` verbatim and nothing above it.
 No closing essay.
