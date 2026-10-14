@@ -68,7 +68,14 @@ from harness.runlog import (
     unit_dir_name,
 )
 from harness.skill_runner import DEFAULT_MODEL, QUOTA_ABORT_REASON
-from harness.instrument import CatalogUnavailable, instrument_for, live_tools_called, load_tool_catalog, stale_build_files
+from harness.instrument import (
+    CatalogUnavailable,
+    instrument_for,
+    live_modules_fingerprint,
+    live_tools_called,
+    load_tool_catalog,
+    stale_build_files,
+)
 from harness.snapshot import build_snapshot, hash_file
 from harness.review_sample import select_review_sample
 from harness.warning_kinds import JUDGE_WARNING_KINDS, iter_run_warnings
@@ -1006,11 +1013,6 @@ def main(argv: list[str] | None = None) -> int:
     snapshot_cache: dict[str, dict] = {}
     partial_paths: dict[str, Path] = {}
 
-    def _snapshot_for(skill: str) -> dict:
-        if skill not in snapshot_cache:
-            snapshot_cache[skill] = build_snapshot(skill=skill, repo_root=REPO_ROOT)
-        return snapshot_cache[skill]
-
     # The tool catalog the `instrument` fingerprint reads (issue #2479 PR 3). Loaded
     # once; a failure leaves the field off the log (rule 2c then warns "instrument
     # not recorded") rather than failing a paid run at the last step.
@@ -1020,12 +1022,32 @@ def main(argv: list[str] | None = None) -> int:
         tool_catalog = None
         print(f"WARNING: no instrument fingerprint will be recorded: {e}", file=sys.stderr)
 
+    instrument_cache: dict[str, dict | None] = {}
+
+    def _snapshot_for(skill: str) -> dict:
+        if skill not in snapshot_cache:
+            snapshot_cache[skill] = build_snapshot(skill=skill, repo_root=REPO_ROOT)
+            # Fingerprinted at the same moment as the snapshot, so a validator or
+            # tool edited mid-run is not recorded as what graded earlier tests.
+            instrument_cache[skill] = (
+                instrument_for(skill, REPO_ROOT, catalog=tool_catalog)
+                if tool_catalog is not None
+                else None
+            )
+        return snapshot_cache[skill]
+
     def _instrument_for(skill: str, entries: list[dict]) -> dict | None:
-        if tool_catalog is None:
+        _snapshot_for(skill)
+        base = instrument_cache.get(skill)
+        if base is None:
             return None
-        return instrument_for(
-            skill, REPO_ROOT, catalog=tool_catalog, live_called=live_tools_called(entries)
-        )
+        return {
+            **base,
+            "live_modules": live_modules_fingerprint(
+                live_tools_called(entries),
+                REPO_ROOT / "packages" / "engine" / "mcp-server" / "build",
+            ),
+        }
 
     def _flush_partials() -> None:
         """(Over)write the partial scratch envelope for every skill that has

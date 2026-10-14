@@ -2767,13 +2767,25 @@ def test_rule2c_warns_and_passes_on_a_log_with_no_instrument(monkeypatch, capsys
     assert "::warning" in out and "no instrument recorded" in out
 
 
-def test_rule2c_downgrades_on_a_log_rule2_already_reports_stale(monkeypatch, capsys):
+def test_rule2c_downgrades_only_when_rule2_itself_blocked_the_log(monkeypatch, capsys):
+    _stub_current_instrument(monkeypatch, _instr(validators__suite=_H["0"]))
+    rc = check_runlogs.rule2c_instrument(
+        "demo", {"snapshot": {}, "instrument": _instr()}, "v1.json", rule2_blocked=True
+    )
+    assert rc == 0
+    out = capsys.readouterr().out
+    assert "::warning" in out and "::error" not in out and "Rule 2 already blocks" in out
+
+
+def test_rule2c_still_blocks_a_merely_stale_log_rule2_did_not_block(monkeypatch, capsys):
+    """Review finding: 20 of 32 suites are already skill-side stale on main, and
+    rule 2 never runs on an instrument-arm suite. Downgrading on staleness alone
+    turned the suite-specific block into a warning for most of the corpus."""
     _stub_current_instrument(monkeypatch, _instr(validators__suite=_H["0"]))
     stale = {"snapshot": {"eval/__no_such_cosmetic_test__/x.md": "expected\n"}, "instrument": _instr()}
     rc = check_runlogs.rule2c_instrument("demo", stale, "v1.json")
-    assert rc == 0
-    out = capsys.readouterr().out
-    assert "::warning" in out and "::error" not in out and "skill-side stale" in out
+    assert rc == 1
+    assert "::error" in capsys.readouterr().out
 
 
 def test_rule2c_blocks_when_the_catalog_cannot_be_read(monkeypatch, capsys):
@@ -2877,3 +2889,27 @@ def test_main_rule2c_recomputes_for_real_and_a_moved_validator_blocks(monkeypatc
     assert check_runlogs.main() == 1
     out = capsys.readouterr().out
     assert "skill `convert-dates`" in out and "validators.suite" in out
+
+
+def test_a_cosmetic_skip_on_rule2_does_not_waive_rule2c(monkeypatch, capsys, tmp_path):
+    """Review finding: a SKILL.md typo plus a validator logic change, with
+    `eval-cosmetic-skip:<skill>` applied. Rule 2 warns (the label), so rule 2c must
+    still block: the label is defined as covering rule 2 only."""
+    stale = {"eval/__no_such_cosmetic_test__/x.md": "expected\n"}
+    skill_dir = tmp_path / "demo"
+    skill_dir.mkdir()
+    log = {"schema_version": 3, "skill": "demo", "snapshot": stale, "tests": [], "instrument": _instr()}
+    (skill_dir / "v1_2026-10-14_00-00-00.json").write_text(json.dumps(log), encoding="utf-8")
+    monkeypatch.setattr(check_runlogs, "RUNLOGS_DIR", tmp_path)
+    monkeypatch.setattr(check_runlogs, "PLUGIN_SKILLS_DIR", tmp_path / "skills")
+    monkeypatch.setattr(check_runlogs, "TESTS_UNIT_DIR", tmp_path / "tests")
+    (tmp_path / "skills" / "demo").mkdir(parents=True)
+    (tmp_path / "tests" / "demo").mkdir(parents=True)
+    monkeypatch.setenv("COSMETIC_SKIP_LABELS", "eval-cosmetic-skip:demo")
+    monkeypatch.setattr(check_runlogs, "rule3_completeness", lambda *a, **k: 0)
+    _patch_diffs(monkeypatch, ["packages/engine/plugin/skills/demo/SKILL.md", "eval/harness/validators/test_demo.py"])
+    _stub_current_instrument(monkeypatch, _instr(validators__suite=_H["0"]))
+    rc = check_runlogs.main()
+    out = capsys.readouterr().out
+    assert rc == 1, out
+    assert "validators.suite" in out and "::error" in out

@@ -342,3 +342,87 @@ def test_instrument_for_validates_against_the_run_log_schema():
     jsonschema.validate(value, sub)
     assert set(value) == {"validators", "tools", "live_modules"}
     assert set(value["live_modules"]) == {"convert_calendar"}
+
+
+# --- review findings ----------------------------------------------------------------
+
+
+def test_a_report_function_message_is_graded_so_it_moves_the_hash():
+    """A failed `report_*` result's message is the observation the judge reads, so
+    rewording it changes what gets graded. In a `test_*` function it does not."""
+    report = 'def report_x(reply):\n    assert "locator" not in reply, "The reply quotes an invented locator"\n'
+    assert canonical_module(report) != canonical_module(report.replace("an invented locator", "nothing"))
+    test = report.replace("report_x", "test_x")
+    assert canonical_module(test) == canonical_module(test.replace("an invented locator", "nothing"))
+
+
+def test_a_report_function_raise_message_moves_the_hash():
+    src = "def report_y(r):\n    if r:\n        raise AssertionError('first wording')\n"
+    assert canonical_module(src) != canonical_module(src.replace("first wording", "second wording"))
+
+
+@pytest.mark.parametrize(
+    "src, changed",
+    [
+        # a match capture repointed to a different read
+        (
+            "def test_m(x):\n    y = 0\n    match x:\n        case [y]:\n            return y\n",
+            "def test_m(x):\n    z = 0\n    match x:\n        case [y]:\n            return z\n",
+        ),
+        # a keyword argument that no longer names the nested function's parameter
+        (
+            "def test_k(t):\n    def inner(x):\n        return x\n    assert inner(x=t)\n",
+            "def test_k(t):\n    def inner(q):\n        return q\n    assert inner(x=t)\n",
+        ),
+    ],
+    ids=["match-capture", "nested-keyword"],
+)
+def test_bindings_held_as_plain_strings_are_renamed_with_their_reads(src, changed):
+    """Review finding: a binding stored as a plain string (a match capture, a
+    nested function's parameter named by a keyword) was left alone while its reads
+    were renamed, so two different programs hashed equal."""
+    assert canonical_module(src) != canonical_module(changed)
+
+
+def test_renaming_a_match_capture_consistently_leaves_the_hash_alone():
+    src = "def test_m(x):\n    match x:\n        case [y]:\n            return y\n"
+    assert canonical_module(src) == canonical_module(src.replace("y", "item"))
+
+
+def test_an_external_keyword_argument_is_not_renamed_with_a_same_named_local():
+    """Only a keyword naming a NESTED function's parameter is a reference to a
+    binding; `f(count=count)` to an external callee must survive a local rename."""
+    src = "def test_c(f):\n    count = 1\n    assert f(count=count)\n"
+    renamed = "def test_c(f):\n    n = 1\n    assert f(count=n)\n"
+    assert canonical_module(src) == canonical_module(renamed)
+
+
+def test_a_decode_error_from_node_reads_as_unavailable(tmp_path):
+    def _raises(_script):
+        raise UnicodeDecodeError("utf-8", b"\x97", 0, 1, "invalid start byte")
+
+    with pytest.raises(CatalogUnavailable):
+        load_tool_catalog(_build(tmp_path), run=_raises, src_dir=tmp_path / "src")
+
+
+def test_mock_mcp_survives_a_decode_error_from_node(monkeypatch):
+    from harness import mock_mcp
+
+    def _raises(*_a, **_k):
+        raise UnicodeDecodeError("utf-8", b"\x97", 0, 1, "invalid start byte")
+
+    monkeypatch.setattr(mock_mcp, "_run_node_eval", _raises)
+    assert mock_mcp._load_build_tool_catalog_uncached() == {}
+
+
+def test_a_fixture_that_is_not_an_object_is_skipped(tmp_path):
+    suite = tmp_path / "tests" / "demo"
+    suite.mkdir(parents=True)
+    (suite / "t.json").write_text(
+        json.dumps({"test": {"id": "ut_demo_001"}, "mcp_fixtures": ["as-array", "as-object"]}), encoding="utf-8"
+    )
+    fixtures = tmp_path / "fixtures"
+    fixtures.mkdir()
+    (fixtures / "as-array.json").write_text("[1, 2]", encoding="utf-8")
+    (fixtures / "as-object.json").write_text(json.dumps({"tool": "record_search"}), encoding="utf-8")
+    assert instrument.fixture_tools("demo", tmp_path / "tests", fixtures) == {"record_search"}

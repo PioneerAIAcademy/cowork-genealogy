@@ -695,6 +695,7 @@ def rule2c_instrument(
     filename: str,
     *,
     graded: str = GRADED_DEFAULT,
+    rule2_blocked: bool = False,
 ) -> int:
     """Rule 2c: the run log's `instrument` fingerprint matches the current one.
 
@@ -704,9 +705,11 @@ def rule2c_instrument(
     `validators.shared`, `tools.live`, `live_modules` -- because blocking on them
     would owe a paid re-run of every suite (decided 2026-10-14 on issue #2479).
     A log with no `instrument` (written before the field) warns and passes.
-    Downgrades a block to a warning when rule 2 already reports the log
-    skill-side stale. `eval-cosmetic-skip` does not apply: an instrument change
-    is never cosmetic to the skill. Returns 1 on block, 0 otherwise.
+    Downgrades a block to a warning only when rule 2 itself blocked this same log
+    in this run (`rule2_blocked`), so the one re-run is owed once. A snapshot that
+    is merely stale is not enough: rule 2 does not run on instrument-arm suites,
+    and a cosmetic-skip label turns its block into a warning -- neither owes a
+    re-run, so 2c must still block. Returns 1 on block, 0 otherwise.
     """
     stored = log.get("instrument")
     head = f"skill `{skill}`: `{filename}`, {graded},"
@@ -758,10 +761,10 @@ def rule2c_instrument(
         f"{head} was produced or graded by an instrument that has since changed: "
         f"{'; '.join(blocking)}."
     )
-    if diff_snapshot_vs_disk(log.get("snapshot") or {}, REPO_ROOT):
+    if rule2_blocked:
         gh_warning(
-            f"{message} Rule 2 already reports this log as skill-side stale and owes "
-            f"the same re-run, so rule 2c warns rather than blocks."
+            f"{message} Rule 2 already blocks this log and owes the same re-run, so "
+            f"rule 2c warns rather than blocks."
         )
         return 0
     gh_error(
@@ -1850,7 +1853,8 @@ def main() -> int:
                 continue
         if target is not None:
             filename, log = target
-            fails += rule2_active(skill, log, filename, graded=graded)
+            rule2_result = rule2_active(skill, log, filename, graded=graded)
+            fails += rule2_result
             fails += rule2b_judge_prompt(
                 skill,
                 log,
@@ -1858,7 +1862,9 @@ def main() -> int:
                 graded=graded,
                 judge_prompt_edited=judge_prompt_edited,
             )
-            fails += rule2c_instrument(skill, log, filename, graded=graded)
+            fails += rule2c_instrument(
+                skill, log, filename, graded=graded, rule2_blocked=bool(rule2_result)
+            )
             fails += rule3_completeness(
                 skill, log, filename, skill_dir, graded=graded
             )

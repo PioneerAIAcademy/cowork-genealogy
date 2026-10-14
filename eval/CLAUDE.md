@@ -265,7 +265,7 @@ Scratch runs are gitignored via `.gitignore` patterns on `eval/runlogs/unit/*/sc
 
 ## GitHub Action rules
 
-`.github/workflows/check-runlogs.yml` invokes `eval/harness/scripts/check_runlogs.py` on every PR that touches `eval/runlogs/unit/**`, `eval/tests/unit/**`, `packages/engine/plugin/skills/**`, `eval/fixtures/**`, or `eval/harness/**`. `packages/engine/mcp-server/src/**` and the engine's `package.json`, `package-lock.json` and `tsconfig.json` trigger it too, for rule 2c: MCP source is not in the snapshot, but a tool description edit moves the `instrument` fingerprint. Nine blocking rules + two warn-only checks (per `docs/plan/eval-runlog-versioning.md` §C6):
+`.github/workflows/check-runlogs.yml` invokes `eval/harness/scripts/check_runlogs.py` on every PR that touches `eval/runlogs/unit/**`, `eval/tests/unit/**`, `packages/engine/plugin/skills/**`, `eval/fixtures/**`, or `eval/harness/**`. `packages/engine/mcp-server/src/**` and the engine's `package.json`, `package-lock.json` and `tsconfig.json` trigger it too, for rule 2c: MCP source is not in the snapshot, but a tool description edit moves the `instrument` fingerprint. Twelve blocking rules (2b and 2c block on part of their scope and warn on the rest) + two warn-only checks (per `docs/plan/eval-runlog-versioning.md` §C6):
 
 | Rule | Severity | What |
 |---|---|---|

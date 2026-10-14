@@ -187,23 +187,41 @@ def _drop_docstring(body: list[ast.stmt]) -> list[ast.stmt]:
 
 class _DropMessages(ast.NodeTransformer):
     """Remove what a check *says* while keeping what it *decides*: docstrings,
-    assertion messages, skip/fail reasons and AssertionError arguments."""
+    assertion messages, skip/fail reasons and AssertionError arguments.
 
-    def _strip(self, node):  # Module, ClassDef, FunctionDef, AsyncFunctionDef
+    Except inside a `report_*` function: its failure message is the observation
+    `validator_runner` hands the judge, so there the message IS graded input.
+    """
+
+    def __init__(self) -> None:
+        self._in_report = False
+
+    def _strip(self, node):  # Module, ClassDef
         node.body = _drop_docstring(node.body)
         self.generic_visit(node)
         return node
 
-    visit_Module = visit_ClassDef = visit_FunctionDef = visit_AsyncFunctionDef = _strip
+    visit_Module = visit_ClassDef = _strip
+
+    def _function(self, node):  # FunctionDef, AsyncFunctionDef
+        outer = self._in_report
+        self._in_report = outer or node.name.startswith("report_")
+        try:
+            return self._strip(node)
+        finally:
+            self._in_report = outer
+
+    visit_FunctionDef = visit_AsyncFunctionDef = _function
 
     def visit_Assert(self, node: ast.Assert):
-        node.msg = None
+        if not self._in_report:
+            node.msg = None
         self.generic_visit(node)
         return node
 
     def visit_Call(self, node: ast.Call):
         self.generic_visit(node)
-        if ast.unparse(node.func) in _MESSAGE_CALLS:
+        if not self._in_report and ast.unparse(node.func) in _MESSAGE_CALLS:
             node.args = []
             node.keywords = []
         return node
@@ -211,7 +229,11 @@ class _DropMessages(ast.NodeTransformer):
     def visit_Raise(self, node: ast.Raise):
         self.generic_visit(node)
         exc = node.exc
-        if isinstance(exc, ast.Call) and ast.unparse(exc.func) == "AssertionError":
+        if (
+            not self._in_report
+            and isinstance(exc, ast.Call)
+            and ast.unparse(exc.func) == "AssertionError"
+        ):
             exc.args = []
             exc.keywords = []
         return node
@@ -246,12 +268,51 @@ def _bound_names(fn: ast.FunctionDef | ast.AsyncFunctionDef) -> list[str]:
                 add(node.name)
             elif isinstance(node, ast.alias) and "." not in node.name:
                 add(node.asname or node.name)
+            elif isinstance(node, (ast.MatchAs, ast.MatchStar)):
+                add(node.name)
+            elif isinstance(node, ast.MatchMapping):
+                add(node.rest)
     return [n for n in names if n not in declared]
 
 
+def _nested_params(fn: ast.FunctionDef | ast.AsyncFunctionDef) -> set[str]:
+    """Parameter names of the functions and lambdas nested inside `fn`: a keyword
+    argument naming one of them is a reference to that binding."""
+    out: set[str] = set()
+    for stmt in fn.body:
+        for node in ast.walk(stmt):
+            if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef, ast.Lambda)):
+                a = node.args
+                out.update(x.arg for x in (*a.posonlyargs, *a.args, *a.kwonlyargs))
+    return out
+
+
 class _Rename(ast.NodeTransformer):
-    def __init__(self, mapping: dict[str, str]):
+    def __init__(self, mapping: dict[str, str], keyword_names: set[str]):
         self.m = mapping
+        self.keyword_names = keyword_names
+
+    def visit_keyword(self, node: ast.keyword):
+        if node.arg in self.keyword_names:
+            node.arg = self.m.get(node.arg, node.arg)
+        self.generic_visit(node)
+        return node
+
+    def _match_name(self, node, attr):
+        value = getattr(node, attr)
+        if value:
+            setattr(node, attr, self.m.get(value, value))
+        self.generic_visit(node)
+        return node
+
+    def visit_MatchAs(self, node: ast.MatchAs):
+        return self._match_name(node, "name")
+
+    def visit_MatchStar(self, node: ast.MatchStar):
+        return self._match_name(node, "name")
+
+    def visit_MatchMapping(self, node: ast.MatchMapping):
+        return self._match_name(node, "rest")
 
     def visit_Name(self, node: ast.Name):
         node.id = self.m.get(node.id, node.id)
@@ -313,7 +374,7 @@ def _normalise_locals(tree: ast.Module) -> None:
         mapping = {name: f"_v{i}" for i, name in enumerate(bound)}
         if not mapping:
             continue
-        renamer = _Rename(mapping)
+        renamer = _Rename(mapping, _nested_params(fn) & set(mapping))
         fn.body = [renamer.visit(stmt) for stmt in fn.body]
 
 
@@ -358,9 +419,10 @@ def fixture_tools(skill: str, tests_dir: Path, fixtures_dir: Path) -> set[str]:
     for name in collect_refs(suite, None)["fixtures"]:
         path = fixtures_dir / f"{name}.json"
         try:
-            tool = json.loads(path.read_text(encoding="utf-8")).get("tool")
-        except (OSError, json.JSONDecodeError):
+            data = json.loads(path.read_text(encoding="utf-8"))
+        except (OSError, UnicodeDecodeError, json.JSONDecodeError):
             continue
+        tool = data.get("tool") if isinstance(data, dict) else None
         if isinstance(tool, str) and tool:
             tools.add(tool)
     return tools
@@ -481,7 +543,9 @@ def load_tool_catalog(
     )
     try:
         proc = run(script)
-    except (OSError, subprocess.SubprocessError) as e:
+    except (OSError, ValueError, subprocess.SubprocessError) as e:
+        # ValueError covers UnicodeDecodeError: a stray non-UTF-8 byte on node's
+        # stdout/stderr must read as "unavailable", not escape as a traceback.
         raise CatalogUnavailable(f"could not run node on {schemas_js}: {e}") from e
     if getattr(proc, "returncode", 0) not in (0, None):
         raise CatalogUnavailable(
