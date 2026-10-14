@@ -274,27 +274,30 @@ def _census_year_of_entry(entry: str) -> int | None:
     # but not "a vital-event marker is always lowercase": a round-6 review
     # found capitalized markers in running prose throughout the corpus
     # ("Married Sarah Millard" in a narrative sentence), so that claim is
-    # false as stated. What actually holds, over every parenthetical
-    # carrying a year in the tracked corpus under `eval/` (excluding the
-    # `_2491-exploratory-quarantine` plane, same exclusion this PR's other
-    # corpus measurements use) -- a marker immediately followed by a year is
-    # capitalized in 73 instances and lowercase in 5,349; re-derive before
-    # quoting. A marker naming an event in running prose can be capitalized;
-    # a marker paired with its OWN date is written lowercase-abbreviated
-    # ("m. 1859", "b. 1861") essentially every time it is. The jurisdiction
-    # half of the claim is unaffected -- a jurisdiction name is a proper
-    # noun and is always capitalized, with or without a date beside it.
-    # Checking the opening letter's case instead of matching it against
-    # either a comma or a word list needs no enumeration at all and closes
-    # every marker the hand-written list missed by construction, not by
-    # addition. The narrower claim also names this rule's own residual gap
-    # precisely: a capitalized marker immediately followed by a year --
-    # "(Married 1859)", "(M. 1859)", "(Bapt. 1814)", "(Born 1861)" -- reads
-    # as naming the census year under this rule, same as "(England & Wales,
-    # 1861)" does. The 73-instance corpus measurement above is exactly why
-    # this is an accepted gap rather than a fix owed: nothing in the real
-    # corpus pairs a marker with its own date that way, so nothing exercises
-    # it today, but a future one would reopen finding #4 for that phrasing.
+    # false as stated. A round-7 review found a cited corpus count for the
+    # narrower claim (how often a marker paired with its OWN date is
+    # capitalized) unreliable on re-measurement -- different scans of
+    # "every parenthetical with a year anywhere under eval/" returned
+    # different totals depending on scope (prose fields far from this
+    # function's own input skew the count, and a scan held to exactly the
+    # field this function reads -- `timelines[].gaps[].expected_events[]`
+    # entries -- finds no marker-plus-year parenthetical at all, in either
+    # case, across the whole tracked corpus). There is no committed instance
+    # to count either direction, so the claim rests on the structural
+    # argument alone, not a corpus count: a jurisdiction name is a proper
+    # noun and is always capitalized, with or without a date beside it; a
+    # vital-event marker is a common noun or verb, and this corpus's own
+    # genealogical shorthand for one paired with its own date ("m. 1859",
+    # "b. 1861") is conventionally lowercase-abbreviated. Checking the
+    # opening letter's case instead of matching it against either a comma or
+    # a word list needs no enumeration at all and closes every marker the
+    # hand-written list missed by construction, not by addition. The
+    # residual gap this leaves is named precisely: a capitalized marker
+    # immediately followed by a year -- "(Married 1859)", "(M. 1859)",
+    # "(Bapt. 1814)", "(Born 1861)" -- reads as naming the census year under
+    # this rule, same as "(England & Wales, 1861)" does. Nothing in the
+    # committed corpus writes a marker that way today, so nothing exercises
+    # this gap, but a future entry phrased that way would reopen finding #4.
     def _names_census_year(paren_text: str) -> bool:
         inner = paren_text[1:-1].lstrip()
         if _YEAR_RE.match(inner) is not None:

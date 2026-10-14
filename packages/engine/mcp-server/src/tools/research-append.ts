@@ -451,6 +451,22 @@ function unorderableDateWarnings(entry: any, research: any): string[] {
 // kept on the same case-sensitive regex for consistency.
 const TIMELINE_CENSUS_RE = /census/i;
 const TIMELINE_1890_RE = /(?<!\d)1890(?!\d)/;
+// Any 18xx/19xx year, not just 1890 -- round-7 review: `ut_timeline_001`
+// wrote `expected_events: ["census","census","census","census"]` for a gap
+// whose own `notes` call 1870/1880/1890/1900 "four surviving federal census
+// years" and then say the 1890 schedules did not survive. None of the four
+// entries names ANY year, so `TIMELINE_1890_RE` -- which only ever looks for
+// the literal digits "1890" -- cannot see that one of the four is the
+// non-surviving census this whole guard exists to catch; the entry reads as
+// "not about 1890" and passes, which is exactly backwards. The tool can
+// decide this from the entry alone: a census-type `expected_events` string
+// that names no year at all is too vague to verify against anything, 1890
+// included, so it is refused outright rather than silently let through.
+// This is a SEPARATE condition from the 1890-specific one below, not the
+// same check with a wider net -- a bare "census" entry on an all-1870s
+// timeline is refused here for being unverifiable, never because it is
+// mistaken for 1890.
+const TIMELINE_ANY_YEAR_RE = /(?<!\d)1[89]\d\d(?!\d)/;
 const TIMELINE_VETERAN_RE = /veteran/i;
 const TIMELINE_NAMES_US_RE = /united states|u\.s\./i;
 const TIMELINE_NAMES_US_ABBREV_RE = /\bUS\b|\bUSA\b/;
@@ -569,8 +585,17 @@ export function timelineCensus1890Invariants(entry: any): string[] {
     for (const item of expectedEvents) {
       const text = String(item ?? "");
       if (!TIMELINE_CENSUS_RE.test(text)) continue;
-      if (!TIMELINE_1890_RE.test(text)) continue;
       if (TIMELINE_VETERAN_RE.test(text)) continue;
+      if (!TIMELINE_ANY_YEAR_RE.test(text)) {
+        errs.push(
+          `gaps[].expected_events entry '${text}' names a census but no year -- name the ` +
+            "specific surviving year this gap expects (e.g. '1870 census'), not a bare " +
+            "record-type placeholder, since there is no way to tell it apart from the " +
+            "non-surviving US 1890 federal census otherwise.",
+        );
+        continue;
+      }
+      if (!TIMELINE_1890_RE.test(text)) continue;
       const namesUS = TIMELINE_NAMES_US_RE.test(text) || TIMELINE_NAMES_US_ABBREV_RE.test(text);
       if (!namesUS) {
         const otherJurisdiction = text.match(TIMELINE_NAMES_OTHER_JURISDICTION_RE);
@@ -627,6 +652,88 @@ function conflictInvariants(entry: any): string[] {
     errs.push("preferred_assertion_id must be one of competing_assertion_ids");
   }
   return errs;
+}
+
+/** The `conflicts` fields a resolve can set. An update naming none of them
+ *  leaves the resolution as it stood, so the kind rule does not re-judge it. */
+const RESOLUTION_FIELDS = [
+  "status",
+  "resolution_kind",
+  "preferred_assertion_id",
+  "resolved_value",
+  "resolution_rationale",
+] as const;
+
+/** Distinct `src_` / `a_` ids a rationale cites. */
+function citedEvidenceIds(text: string): Set<string> {
+  return new Set([...text.matchAll(/\b(?:src|a)_\d+\b/gi)].map((m) => m[0].toLowerCase()));
+}
+
+/** A resolve must say how it was settled (research-append-tool-spec.md §5).
+ *
+ *  `resolution_kind` is required on a conflict that lands `resolved`, and each
+ *  kind carries its own proof: `competitor` names the winning assertion
+ *  (`preferred_assertion_id`, one of `competing_assertion_ids`); `tree` keeps
+ *  the tree's existing conclusion and owes nothing more; `synthesis` builds a
+ *  value no single assertion states (`resolved_value`), and its
+ *  `resolution_rationale` cites at least two distinct `src_`/`a_` ids. Before
+ *  this rule a resolve could name no winner and say nothing about why — 12 of
+ *  68 resolved conflicts in the committed e2e corpus do.
+ *
+ *  Scoped like the place-containment rule below: an append that lands
+ *  resolved, and an update that touches the resolution (status, the kind, the
+ *  winner, the value or the rationale). An unrelated edit to a conflict
+ *  resolved before this rule existed is not refused. `moot` is untouched:
+ *  `conflictInvariants` owns it. No override (ADR-0011, 2026-08-24). */
+function resolutionKindInvariants(entry: any, op: { op: string; fields?: Record<string, unknown> }): string[] {
+  if (entry?.status !== "resolved") return [];
+  const fields = op.fields ?? {};
+  if (op.op !== "append" && !RESOLUTION_FIELDS.some((f) => Object.hasOwn(fields, f))) return [];
+  const requirements =
+    "Name how it was settled with resolution_kind: 'competitor' — one competing assertion wins, " +
+    "named in preferred_assertion_id (one of competing_assertion_ids); 'tree' — the tree's existing " +
+    "conclusion stands and nothing more is owed; 'synthesis' — no single assertion wins, so give the " +
+    "value built from several in resolved_value and cite at least two src_/a_ ids in " +
+    "resolution_rationale.";
+  const kind = entry.resolution_kind;
+  if (!VALIDATOR_ENUMS.resolution_kind.has(kind)) {
+    return [
+      `a resolved conflict requires 'resolution_kind'${kind == null ? "" : ` (got ${JSON.stringify(kind)})`}. ${requirements}`,
+    ];
+  }
+  const competing = Array.isArray(entry.competing_assertion_ids) ? entry.competing_assertion_ids : [];
+  if (kind === "competitor") {
+    const winner = entry.preferred_assertion_id;
+    if (typeof winner !== "string" || winner.trim() === "" || !competing.includes(winner)) {
+      return [
+        "resolution_kind 'competitor' requires preferred_assertion_id naming one of " +
+          `competing_assertion_ids (${competing.join(", ") || "none"}). If no single assertion wins, ` +
+          "use 'tree' (the tree's existing conclusion stands) or 'synthesis' (a value built from " +
+          "several, with resolved_value and a rationale citing at least two src_/a_ ids).",
+      ];
+    }
+    return [];
+  }
+  if (kind === "synthesis") {
+    const errs: string[] = [];
+    const value = entry.resolved_value;
+    if (typeof value !== "string" || value.trim() === "") {
+      errs.push(
+        "resolution_kind 'synthesis' requires resolved_value — the value the evidence supports " +
+          "when no single assertion states it (e.g. \"about 1844\").",
+      );
+    }
+    const rationale = typeof entry.resolution_rationale === "string" ? entry.resolution_rationale : "";
+    const cited = citedEvidenceIds(rationale);
+    if (cited.size < 2) {
+      errs.push(
+        "resolution_kind 'synthesis' requires a resolution_rationale citing at least two distinct " +
+          `src_/a_ ids — the records the value is built from (it cites ${cited.size}).`,
+      );
+    }
+    return errs;
+  }
+  return [];
 }
 
 /** A [?] assertion cannot win a conflict on its own evidence — it needs
@@ -693,10 +800,12 @@ function uncertainPreferenceInvariants(entry: any, research: any): string[] {
   return [
     `preferred_assertion_id '${entry.preferred_assertion_id}' carries an uncertain reading ` +
       `([?]) and no assertion from a different record corroborates it. To settle the conflict: ` +
-      `find a second record whose reading agrees, or update the assertion (op: "update", ` +
-      `entryId: "${entry.preferred_assertion_id}", fields: {value: "<confirmed reading>"}) to ` +
-      `remove the [?] once the user confirms the reading. Leaving preferred_assertion_id null ` +
-      `— a deferral is a finding, not an omission — stays legal.`,
+      `find a second record whose reading agrees, or — once the user confirms the reading — hand ` +
+      `the correction of assertion '${entry.preferred_assertion_id}' back to record-extraction, ` +
+      `which owns \`assertions\`; a conflict write cannot change an assertion. Leaving ` +
+      `preferred_assertion_id null — a deferral is a finding, not an omission — stays legal: leave ` +
+      `the conflict unresolved, or resolve it with resolution_kind 'tree' when the tree's existing ` +
+      `conclusion stands.`,
   ];
 }
 
@@ -3720,12 +3829,14 @@ function applyOne(
           `cannot set project.status = "completed": unresolved blocking conflict(s) ${names}. ` +
             "GPS Component 4 requires conflicting evidence to be resolved before concluding. " +
             "Run conflict-resolution for each — set its status to 'resolved' (with " +
-            "independence_analysis, weighing_analysis, and resolution_rationale) or 'moot' " +
-            "(with a rationale for why it no longer matters) — then retry completing the project. " +
-            "A conflict you weighed and could not settle is still recorded as 'resolved' with all " +
-            "three analyses, saying in resolution_rationale why it cannot be settled and what " +
-            "would settle it, and leaving preferred_assertion_id null — a deferral is a finding, " +
-            "not an omission, but it is not 'moot', which means the conflict no longer matters. " +
+            "independence_analysis, weighing_analysis, resolution_rationale and a resolution_kind: " +
+            "'competitor' naming the winning assertion, 'tree' where the tree's existing conclusion " +
+            "stands, or 'synthesis' with a resolved_value) or 'moot' (with a rationale for why it " +
+            "no longer matters) — then retry completing the project. A conflict you weighed and " +
+            "could not settle is still recorded as 'resolved' with all three analyses and " +
+            "resolution_kind 'tree', saying in resolution_rationale why it cannot be settled and " +
+            "what would settle it — a deferral is a finding, not an omission, but it is not " +
+            "'moot', which means the conflict no longer matters. " +
             "A conflict settled in the same batch as this update does not count; complete it in " +
             "a later call.",
         );
@@ -3964,6 +4075,7 @@ function applyOne(
   }
   if (section === "conflicts") {
     invariantErrors.push(...conflictInvariants(resultEntry));
+    invariantErrors.push(...resolutionKindInvariants(resultEntry, op));
     // Place containment: on append, and on an update that (re)sets the pairing.
     // Scoped that way so an unrelated edit to a conflict written before this
     // rule existed is not refused — the freeze #2354 had to design around.

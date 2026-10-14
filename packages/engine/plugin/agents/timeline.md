@@ -295,7 +295,11 @@ precise, than the events they come from.
 - Census: the years the residence country enumerated whose returns survive, read
   from its `{Country}_Census` page fetched above — one expected census event per
   surviving enumerated year the person was alive and resident there, not a fixed
-  list. Exclude any year the page marks destroyed, lost, or not surviving (for
+  list. **Each entry names its own year** — `"1870 census"`, `"1880 census"` —
+  never a bare `"census"` repeated once per year. A bare entry does not say
+  which year it is for, so there is no way to tell it apart from a year that
+  does not survive; naming the year is what lets the rest of this list's own
+  exclusion rule actually apply to it. Exclude any year the page marks destroyed, lost, or not surviving (for
   example the US 1890 federal census, the Irish 1821–1891 censuses, and the
   English 1931 census); never put a non-surviving year in `expected_events`.
   **A caveat does not rescue it.** `census 1890 (destroyed)`,
