@@ -1,9 +1,10 @@
 """What a session has cost, and the bound on it (PR #2870 item 1e).
 
-Only the search-agent prototype's worker reads it (via ``proto/worker/options.py``): the
-alpha's spend limit was removed in PR #2870, since the prototype replaces it. It lives in
-``app.agent`` beside ``continue_policy`` so a second reader takes this table rather than
-hand-keeping another.
+The search-agent prototype's worker reads it for its cap (via ``proto/worker/options.py``):
+the alpha's spend limit was removed in PR #2870, since the prototype replaces it. The
+alpha's credential proxy reads only the prices, to record what each call cost
+(``anthropic_proxy``). It lives in ``app.agent`` beside ``continue_policy`` so a second
+reader takes this table rather than hand-keeping another.
 
 **Why this is not in ``continue_policy``.** That module is lifted into a clean namespace
 by ``tests/test_continue_policy_parity.py``, which evaluates its module-level constants

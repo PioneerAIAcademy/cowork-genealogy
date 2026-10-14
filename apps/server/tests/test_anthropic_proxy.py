@@ -1,4 +1,4 @@
-"""Credential proxy — token derivation, verification, and request routing.
+"""Credential proxy — token derivation, verification, request routing and usage metering.
 
 The proxy validates a per-sandbox HMAC token, replaces it with the real
 Anthropic API key, and streams the response from api.anthropic.com. The
@@ -6,11 +6,15 @@ sandbox never holds the real key.
 """
 import gzip
 import json
+from datetime import timedelta
 
 import httpx
 import pytest
 from fastapi.testclient import TestClient
+from sqlmodel import Session, select
 
+from app import anthropic_proxy
+from app.agent.spend import price_usd
 from app.anthropic_proxy import (
     _PROXY_PREFIX,
     make_upstream_client,
@@ -19,7 +23,9 @@ from app.anthropic_proxy import (
     verify_proxy_token,
 )
 from app.config import get_settings
+from app.db import get_engine, init_db
 from app.main import app
+from app.models import ApiCall, Project, utcnow
 
 
 # ── token derivation ────────────────────────────────────────────
@@ -89,7 +95,8 @@ def test_proxy_active_is_true_for_https(monkeypatch):
 # tests that need a valid token accepted so they can reach the forwarding path.
 @pytest.fixture
 def _mock_sandbox_exists(monkeypatch):
-    monkeypatch.setattr("app.anthropic_proxy._sandbox_exists", lambda sid: True)
+    monkeypatch.setattr("app.anthropic_proxy._active_project",
+                        lambda sid: Project(id="prj_mock", user_id="u_mock", sandbox_id=sid))
 
 
 def test_invalid_token_returns_401():
@@ -113,7 +120,7 @@ def test_missing_token_returns_401():
 
 def test_valid_token_for_unknown_sandbox_returns_401(_mock_sandbox_exists, monkeypatch):
     """A valid HMAC but no matching active Project row → 401."""
-    monkeypatch.setattr("app.anthropic_proxy._sandbox_exists", lambda sid: False)
+    monkeypatch.setattr("app.anthropic_proxy._active_project", lambda sid: None)
     token = proxy_token("ghost-sandbox")
     with TestClient(app) as client:
         resp = client.post(
@@ -278,3 +285,152 @@ def test_proxy_strips_content_encoding_from_gzipped_response(
     assert resp.status_code == 200
     assert "content-encoding" not in resp.headers
     assert resp.json()["content"] == "hello"
+
+
+# ── usage metering (api_calls) ──────────────────────────────────
+
+
+def _sse(*events) -> bytes:
+    return b"".join(f"event: {name}\ndata: {json.dumps(data)}\n\n".encode() for name, data in events)
+
+
+_STREAM = _sse(
+    ("message_start", {"type": "message_start", "message": {
+        "model": "claude-sonnet-4-6",
+        "usage": {"input_tokens": 100, "cache_creation_input_tokens": 2000,
+                  "cache_read_input_tokens": 30000, "output_tokens": 1,
+                  "cache_creation": {"ephemeral_5m_input_tokens": 2000},
+                  "service_tier": "standard"}}}),
+    ("content_block_delta", {"type": "content_block_delta", "index": 0, "delta": {
+        "type": "text_delta",
+        "text": 'event: message_delta\ndata: {"usage": {"output_tokens": 999}}'}}),
+    ("message_delta", {"type": "message_delta", "delta": {"stop_reason": None},
+                       "usage": {"output_tokens": 50}}),
+    ("message_delta", {"type": "message_delta", "delta": {"stop_reason": "end_turn"},
+                       "usage": {"output_tokens": 120}}),
+    ("message_stop", {"type": "message_stop"}),
+)
+_FINAL = (100, 2000, 30000, 120)
+
+
+def _chunked(body: bytes, size: int):
+    async def stream():
+        for i in range(0, len(body), size):
+            yield body[i:i + size]
+    return stream()
+
+
+def _streamed(content, status=200):
+    return lambda req: httpx.Response(status, content=content,
+                                      headers={"content-type": "text/event-stream"})
+
+
+def _recorded() -> list[ApiCall]:
+    anthropic_proxy._usage_writer.submit(lambda: None).result(timeout=5)
+    with Session(get_engine()) as s:
+        return list(s.exec(select(ApiCall)).all())
+
+
+@pytest.fixture
+def send(monkeypatch):
+    """Sandbox sbx-meter belongs to a real session created 30 hours ago. Yields a function
+    that sends one call through the proxy, answered upstream by `respond`."""
+    monkeypatch.setattr(get_settings(), "anthropic_api_key", "sk-ant-real-key")
+    init_db()
+
+    def clear():
+        with Session(get_engine()) as s:
+            for model in (ApiCall, Project):
+                for row in s.exec(select(model)).all():
+                    s.delete(row)
+            s.commit()
+
+    clear()
+    with Session(get_engine()) as s:
+        s.add(Project(id="prj_meter", user_id="u_meter", sandbox_id="sbx-meter",
+                      created=utcnow() - timedelta(hours=30)))
+        s.commit()
+
+    def _send(respond, path="v1/messages", method="POST"):
+        with TestClient(app) as client:
+            saved = app.state.anthropic_proxy_client
+            app.state.anthropic_proxy_client = httpx.AsyncClient(
+                transport=httpx.MockTransport(respond))
+            try:
+                return client.request(method, f"{_PROXY_PREFIX}/{path}",
+                                      headers={"x-api-key": proxy_token("sbx-meter")},
+                                      json={"model": "claude-sonnet-4-6", "messages": []})
+            finally:
+                app.state.anthropic_proxy_client = saved
+
+    yield _send
+    _recorded()
+    clear()
+
+
+@pytest.mark.parametrize("body, size", [
+    (_STREAM, len(_STREAM)),
+    (_STREAM, 1),
+    (_STREAM.replace(b"\n", b"\r\n"), 7),
+], ids=["one-chunk", "byte-by-byte", "crlf"])
+def test_a_streamed_call_is_recorded_once_with_its_final_counts(send, body, size):
+    resp = send(_streamed(_chunked(body, size)))
+    assert resp.status_code == 200 and resp.content == body, "the meter altered the relay"
+    [row] = _recorded()
+    assert (row.project_id, row.user_id, row.model) == ("prj_meter", "u_meter", "claude-sonnet-4-6")
+    assert (row.input_tokens, row.cache_creation_input_tokens,
+            row.cache_read_input_tokens, row.output_tokens) == _FINAL, (
+        "output_tokens is a running total: the last message_delta is the count")
+    assert row.cost_usd == pytest.approx(price_usd(_FINAL))
+    assert abs(row.session_age_s - 30 * 3600) < 60
+
+
+def test_an_unstreamed_call_is_recorded_from_its_body(send):
+    body = {"type": "message", "model": "claude-haiku-4-5", "content": [],
+            "usage": {"input_tokens": 10, "cache_creation_input_tokens": 0,
+                      "cache_read_input_tokens": 0, "output_tokens": 5}}
+    assert send(lambda req: httpx.Response(200, json=body)).json() == body
+    assert [(r.model, r.input_tokens, r.output_tokens) for r in _recorded()] == [
+        ("claude-haiku-4-5", 10, 5)]
+
+
+@pytest.mark.parametrize("method, path, status", [
+    ("POST", "v1/messages/count_tokens", 200),
+    ("GET", "v1/models", 200),
+    ("POST", "v1/messages", 529),
+])
+def test_only_a_successful_messages_call_is_metered(send, method, path, status):
+    """Every answer here carries a usage block, so only the filter keeps it out."""
+    billable = {"type": "message", "model": "claude-sonnet-4-6",
+                "usage": {"input_tokens": 10, "output_tokens": 5}}
+    resp = send(lambda req: httpx.Response(status, json=billable), path=path, method=method)
+    assert resp.status_code == status
+    assert _recorded() == []
+
+
+def test_a_call_cut_off_mid_stream_is_still_recorded(send):
+    async def dropped():
+        yield _STREAM.split(b"event: content_block_delta")[0]
+        raise httpx.ReadError("upstream dropped the stream")
+
+    with pytest.raises(httpx.ReadError):
+        send(_streamed(dropped()))
+    assert [(r.input_tokens, r.output_tokens) for r in _recorded()] == [(100, 1)]
+
+
+def test_an_unreadable_usage_line_is_relayed_untouched_and_records_nothing(send):
+    body = (b'event: message_start\ndata: {"type": "message_start", "message": {"model"\n\n'
+            b'event: message_stop\ndata: {"type": "message_stop"}\n\n')
+    resp = send(_streamed(body))
+    assert resp.status_code == 200 and resp.content == body
+    assert _recorded() == []
+
+
+def test_a_failing_meter_never_reaches_the_relay(send, monkeypatch):
+    def broken(tokens):
+        raise RuntimeError("pricing is broken")
+
+    monkeypatch.setattr(anthropic_proxy, "price_usd", broken)
+    resp = send(_streamed(_STREAM))
+    assert resp.status_code == 200 and resp.content == _STREAM
+    assert _recorded() == []
