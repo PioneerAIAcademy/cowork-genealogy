@@ -63,14 +63,14 @@ class Settings(BaseSettings):
     # run past it simply stops being nudged onward and ends where it chose to stop.
     #
     # It therefore bounds nothing for the ~31% of runs that never yield, AND THERE IS NO
-    # SPEND METER BEHIND IT ON THIS PLANE. An earlier draft of this comment said those
+    # SPEND LIMIT BEHIND IT ON THIS PLANE. An earlier draft of this comment said those
     # runs were "held only by SESSION_SPEND_CAP_USD"; that cap is read only by the
-    # search-agent prototype's worker (`app/agent/spend.py`), and the alpha deliberately
-    # carries no meter at all (lead ruling 2026-09-25, pinned by
-    # `test_the_alpha_carries_no_spend_meter`). Short of the researcher or the model
-    # ending such a run, its only automatic halt is the E2B sandbox pausing about an
-    # hour after `LIVE_WINDOW_S` (`sandbox_heartbeat.py`: 4 h since the browser last
-    # attached), and a reconnect restarts that clock.
+    # search-agent prototype's worker (`app/agent/spend.py`). The alpha's credential proxy
+    # records what each call cost (`api_calls`) but never stops one (lead ruling
+    # 2026-09-25, pinned by `test_the_alpha_carries_no_spend_limit`). Short of the
+    # researcher or the model ending such a run, its only automatic halt is the E2B
+    # sandbox pausing about an hour after `LIVE_WINDOW_S` (`sandbox_heartbeat.py`: 4 h
+    # since the browser last attached), and a reconnect restarts that clock.
     #
     # NOT the prototype's cap. `proto/web/app.py`'s DEFAULT_MAX_NUDGES and the Beanstalk
     # template both stay at 60 on purpose: that is a separate deployment with its own

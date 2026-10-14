@@ -623,6 +623,20 @@ const advertisedTools = new Set(allToolSchemas.map((s) => s.name));
  */
 const ASPIRATIONAL_TOOLS = new Set<string>();
 
+/**
+ * Keys a fixture's `response` may carry that the tool never returns inline,
+ * because the mock STAGES them and strips them before answering.
+ *
+ * `record_read` stages `indexFields` beside `gedcomx` in its sidecar
+ * (`record-read.ts`) and never returns it. A canned live read that should
+ * behave like a real one therefore needs somewhere to hold it, and the mock's
+ * `_stage_record_read` (eval/harness/harness/mock_mcp.py) takes it from here
+ * and removes it from the inline response. Nothing else is allowed through.
+ */
+const MOCK_STAGED_ONLY_KEYS: Record<string, readonly string[]> = {
+  record_read: ["indexFields"],
+};
+
 const fixtures: Fixture[] = fixturePaths(fixturesDir).map((rel) => {
   const raw = JSON.parse(readFileSync(join(fixturesDir, rel), "utf8")) as Record<
     string,
@@ -755,9 +769,11 @@ describe("eval/fixtures/mcp response shapes match the tools' return types", () =
         );
         continue;
       }
-      const reasons = alternatives.map((alt) =>
-        mismatch(response as Record<string, unknown>, alt),
+      const stagedOnly = new Set(MOCK_STAGED_ONLY_KEYS[fixture.tool] ?? []);
+      const served = Object.fromEntries(
+        Object.entries(response as Record<string, unknown>).filter(([k]) => !stagedOnly.has(k)),
       );
+      const reasons = alternatives.map((alt) => mismatch(served, alt));
       if (reasons.every((r) => r !== null)) {
         failures.push(`${fixture.name} (${fixture.tool}): ${reasons.join(" | ")}`);
       }

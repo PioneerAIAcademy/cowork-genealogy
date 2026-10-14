@@ -141,7 +141,10 @@ no time limit.
   small model, `GATEWAY_SMALL_MODEL`). Each has its own TPM row. All three draw on one
   per-day quota.
 - **Before F5 the quota is not ours.** Until our `tap-gateway-invoke` role exists (ETA
-  December), every call goes through TAP's shared pool (R2). Other tenants draw on the same
+  December), every call goes through TAP's shared pool (R2). TAP's EKS gateway has no
+  per-consumer role today: it invokes Bedrock as its own pod-identity role in the P25 TAP
+  Integ account (`fs-eng/tap-gateway` main, 2026-10-14), so whether the role is still planned
+  is part of F5. Other tenants draw on the same
   quota, and its CloudWatch sits in TAP's account.
 
 ## 2. The scaling metric
@@ -307,7 +310,7 @@ t3.xlarge $0.1664/h, m7i.xlarge $0.2016/h.
 ## 5. The load run (still open)
 
 It needs F1 (integ URL and key) and F5 (our `tap-gateway-invoke` role and its account, with
-read access to its `AWS/Bedrock` metrics and the gateway's ECS metrics). Before F5, only
+read access to its `AWS/Bedrock` metrics and the gateway's EKS metrics). Before F5, only
 non-throttling steps may run, with APT's agreement.
 
 - **Calibration** (~$12, single tenant only):
@@ -337,10 +340,11 @@ non-throttling steps may run, with APT's agreement.
 - The applied quotas in our account, for Sonnet 4.6, Sonnet 5, Haiku 4.5 and Cross-Model
   Max Tokens Per Day. Who files the increase, and that the per-day quota goes in the same
   Support case.
-- Read access to `AWS/Bedrock` in that account, and to the gateway's ECS metrics and
+- Read access to `AWS/Bedrock` in that account, and to the gateway's EKS metrics and
   access log for the load run.
-- Does agentgateway retry 429s itself, apply a per-consumer limit, or log each request's
-  `max_tokens` and usage?
+- No longer asked, answered by TAP's EKS config (2026-10-14): no route carries a rate-limit
+  or retry policy, and the trace records usage but not `max_tokens`. Whether agentgateway
+  retries a 429 by default the load run measures.
 - F14, Blueprint: can `Simple Scaling v1_0` carry two policies on different SQS
   metrics, name a custom metric, or take a metric-math target? Can the worker role call
   `SetInstanceProtection` on its own group? Which T3 credit mode applies?
