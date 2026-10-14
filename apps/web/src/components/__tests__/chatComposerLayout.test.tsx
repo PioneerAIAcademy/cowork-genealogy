@@ -48,7 +48,8 @@ describe('chat composer layout', () => {
     expect(textarea?.parentElement).toBe(bar)
     expect(controls?.parentElement).toBe(bar)
     // And the box comes FIRST, which is both the visual order and the tab order.
-    expect(textarea?.compareDocumentPosition(controls!) & Node.DOCUMENT_POSITION_FOLLOWING)
+    expect(textarea).not.toBeNull()
+    expect(textarea!.compareDocumentPosition(controls!) & Node.DOCUMENT_POSITION_FOLLOWING)
       .toBeTruthy()
   })
 
