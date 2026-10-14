@@ -514,6 +514,7 @@ describe("placeSearch (internal)", () => {
   it("throws when placeName is missing", async () => {
     await expect(placeSearch("" as any)).rejects.toThrow("placeName is required");
     await expect(placeSearch(undefined as any)).rejects.toThrow("placeName is required");
+    await expect(placeSearch("   " as any)).rejects.toThrow("placeName is required");
   });
 
   it("narrows to matches whose fullName contains the context name", async () => {

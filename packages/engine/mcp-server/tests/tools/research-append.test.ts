@@ -6301,6 +6301,7 @@ describe("research_append (composite persist + enforcement)", () => {
     expect(bad.ok).toBe(false);
     if (bad.ok) return;
     expect(bad.errors[0]).toMatch(/record_persona_id must be null/);
+    expect(bad.errors[0]).toMatch(/no persona document to point at/);
   });
 
   // ── Joint write: nothing written on failure ──
