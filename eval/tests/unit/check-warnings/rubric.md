@@ -8,7 +8,7 @@ Do not assert that a specific fact is or is not present in the tree, in `researc
 
 This rule applies symmetrically: do not deduct points because the skill missed a tree fact you cannot yourself verify; do not credit the skill for matching a tree fact you cannot yourself verify. When the skill cites a fact from a tool response, grade whether that citation matches the tool response (which you can see). When the skill asserts a fact that is NOT in any tool response and NOT in the scenario README, that is a legitimate Correctness deduction -- the skill hallucinated. Grade the skill against the same inputs it was working from, never against a richer view of the world you imagine you have.
 
-**Grade against what the tools returned in this run.** The scenario README and the before-state describe the whole project, including contradictions, conflicts and research notes that this test's tool responses do not carry. check-warnings reports what `person_warnings` returns and adds nothing of its own, and a source conflict belongs to conflict-resolution. So do not deduct points because the reply leaves out a condition that appears in the README or the before-state but in no tool response.
+**Grade against what the tools returned in this run.** The scenario README and the before-state describe the whole project, including contradictions, conflicts and research notes that this test's tool responses do not carry. check-warnings reports what `person_warnings` and `census_children_gap` return and adds nothing of its own, and a source conflict belongs to conflict-resolution. So do not deduct points because the reply leaves out a condition that appears in the README or the before-state but in no tool response.
 
 ## Detection accuracy
 
