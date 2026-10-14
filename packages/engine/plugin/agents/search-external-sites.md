@@ -14,12 +14,12 @@ description: >-
   capture. Hand back, without acting, when the target is FamilySearch
   (search-records); when they are still choosing what or where to search
   (research-plan); or to analyze a single record already in context
-  (record-extraction).
+  (the record-structurer agent).
 model: claude-sonnet-4-6
 tools:
   # Listed under all three server spellings: `genealogy` (harnesses, .mcp.json,
   # hosted web), `remote-devices__Genealogy_Research` (bridged), and
-  # `Genealogy_Research` (bare display_name). See record-extractor.md for the
+  # `Genealogy_Research` (bare display_name). See CLAUDE.md, "Dual-spelled tool names", for the
   # full rationale; guarded by tests/packaging/agent-tool-names.test.ts.
   - Read
   - mcp__genealogy__research_query
@@ -134,7 +134,7 @@ tool and write nothing.
   should I look for Patrick's parents?"): "That's planning — hand it to
   research-plan."
 - **A single record already in hand, to analyze** ("here is the record — add it
-  as a source"): "You already have the record — hand it to record-extraction."
+  as a source"): "You already have the record — hand it to the record-structurer agent."
 
 Never spawn another agent; name it and return.
 
@@ -187,7 +187,7 @@ Sections below to apply when the moment arrives:
    results`): don't ask for a PDF, and don't tell the user a capture is
    outstanding. One log entry covers it, written at step 6.
 4. **Analyze** — you read the results, triage them, and name the promising
-   records for record-extraction in your return.
+   records for the record-structurer agent in your return.
 
 Repeat for each external-site plan item.
 
@@ -569,11 +569,12 @@ below are the same either way:
    family links).
 5. **On selection, request the individual record.** "Click result #1 to
    open the full record page, then save it as a PDF and upload it." That
-   single-record PDF goes to record-extraction. If the record page's
-   content is **already in the delegation**, name it for record-extraction in
-   your return and don't ask for a PDF.
+   single-record PDF's text goes to the record-structurer agent as a source,
+   with a `capture:<descriptive>` recordId. If the record page's content is
+   **already in the delegation**, name it for the agent in your return and
+   don't ask for a PDF.
 
-Don't send the raw search-results PDF straight to record-extraction — the
+Don't send the raw search-results PDF straight to the agent — the
 user picks which records are worth examining.
 
 ### 6. Log results, including nil results
@@ -637,7 +638,7 @@ not mark it `completed` for handing over a URL.
 `skipped` on any other row requires the user to have asked for it — never infer
 it from an access failure alone. On `{ ok: false }`, surface the errors and fix the
 inputs — never hand-edit `research.json`. You write only `log[]`
-entries and the plan-item status; record-extraction writes any
+entries and the plan-item status; the record-structurer agent writes any
 source/assertion entries when it is given a single-record capture. Then name
 the natural next move in your return:
 - More plan items → "Shall I continue with the next search?"
@@ -679,7 +680,7 @@ find the originals they point to.
 You write only to `research.json`: append-only `log[]` entries (one of them
 through `build_external_search_url`) and the `status` on the matching
 `plans[].items[]`. You do not write source or assertion entries —
-record-extraction does that when the user returns a single-record capture.
+the record-structurer agent does that when the user returns a single-record capture.
 
 Re-running a search is itself a logged event by design (the log is the
 exhaustive-search audit trail), so always append a new `log_` entry and
@@ -1044,7 +1045,7 @@ Return **≤12 lines** to the caller, in this order:
 - for a triage: the numbered result list with each rating, and the question of
   which record to examine
 - what the researcher has to do next, if anything (the capture to make, the
-  record page to open) — or the agent to hand to (record-extraction,
+  record page to open) — or the agent to hand to (the record-structurer agent,
   search-records, research-plan)
 
 ### `summary_for_user`

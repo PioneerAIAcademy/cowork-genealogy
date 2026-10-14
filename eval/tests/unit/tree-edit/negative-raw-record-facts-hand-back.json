@@ -2,13 +2,13 @@
   "test": {
     "id": "ut_tree_edit_016",
     "skill": "tree-edit",
-    "name": "A newly found record's raw facts are handed back to record-extraction, never written to the tree",
+    "name": "A newly found record's raw facts are handed back to extraction, never written to the tree",
     "type": "negative",
-    "description": "The 1880 census for Patrick Flynn has been located and logged (log_006) but not extracted: there are no 1880 sources, assertions or tree facts. The delegation asks tree-edit to write that record's facts straight onto the tree. Facts reach the tree from a record only through record-extraction (assertions) then person-evidence (materialize_facts), so the agent must write nothing and hand the request back, naming record-extraction in its caller-facing lines. Restores the invariant ut_tree_edit_003 carried before PR #2812 deleted it (issue #2805). grade_on_invariant: true hands the verdict to the tag-gated validators (test_tree_edit_noop: tree byte-identical; test_hand_back_names_its_owner: no MCP tool call and the return names record-extraction); the judge is diagnostic.",
+    "description": "The 1880 census for Patrick Flynn has been located and logged (log_006) but not extracted: there are no 1880 sources, assertions or tree facts. The delegation asks tree-edit to write that record's facts straight onto the tree. Facts reach the tree from a record only through extraction (assertions) then person-evidence (materialize_facts), so the agent must write nothing and hand the request back, naming extraction in its caller-facing lines. Restores the invariant ut_tree_edit_003 carried before PR #2812 deleted it (issue #2805). grade_on_invariant: true hands the verdict to the tag-gated validators (test_tree_edit_noop: tree byte-identical; test_hand_back_names_its_owner: no MCP tool call and the return names extraction); the judge is diagnostic.",
     "tags": [
       "negative",
       "boundary",
-      "record-extraction",
+      "extraction",
       "tree-edit-noop",
       "hand-back",
       "direct-arm"
@@ -19,15 +19,13 @@
     "scenario": "mid-research-flynn-1880-found"
   },
   "negative": {
-    "correct_skill": [
-      "record-extraction"
-    ],
+    "correct_skill": [],
     "grade_on_invariant": true,
-    "explanation": "A record that has been found but not extracted has no assertions and no source entry, so nothing it says may land on the tree yet. Sourced facts reach tree persons through record-extraction (assertions) and person-evidence (materialize_facts); tree-edit's ad-hoc path is for corrections and confirmed merges, not for bypassing the GPS pipeline. The agent body requires a hand-back: no tool call, and one caller-facing `Hand-back: record-extraction` line."
+    "explanation": "A record that has been found but not extracted has no assertions and no source entry, so nothing it says may land on the tree yet. Sourced facts reach tree persons through extraction (`extraction_append`, or the record-structurer agent) and person-evidence (materialize_facts); tree-edit's ad-hoc path is for corrections and confirmed merges, not for bypassing the GPS pipeline. The agent body requires a hand-back: no tool call, and one caller-facing `Hand-back: extraction` line. Extraction is a tool call and an agent rather than a skill, so no skill is the correct route (genealogist ruling 2026-09-30, option B); the invariant validator is the gate."
   },
   "judge_context": [
     "Should NOT call tree_edit, tree_correct or merge_tree_persons — tree.gedcomx.json must be byte-identical after the run",
-    "Should hand the request back: no tool call and a caller-facing line naming record-extraction before the final `---`",
+    "Should hand the request back: no tool call and a caller-facing line naming extraction before the final `---`",
     "The two researcher-facing paragraphs after the final `---` must name no skill, agent, tool or field"
   ],
   "execution": {

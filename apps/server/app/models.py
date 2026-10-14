@@ -86,3 +86,25 @@ class TurnCost(SQLModel, table=True):
     # Stops the Stop hook overrode during this turn; 0 when the hook is off.
     continuations: int | None = None
     created: datetime = Field(default_factory=utcnow, sa_type=_TZ, index=True)
+
+
+class ApiCall(SQLModel, table=True):
+    """One row per Messages API call the credential proxy relayed, with the usage Anthropic
+    reported for it (``anthropic_proxy``). Every sandbox's calls pass through the proxy,
+    whatever build it runs, so a day's sum is the alpha's whole bill; ``turn_costs`` sees
+    only the sandboxes new enough to report. Recorded, never enforced: the alpha has no
+    spend limit (lead ruling 2026-09-25). No foreign keys, as for ``turn_costs``."""
+    __tablename__ = "api_calls"
+    id: int | None = Field(default=None, primary_key=True)
+    project_id: str = Field(index=True)
+    user_id: str = Field(index=True)
+    model: str | None = None
+    input_tokens: int = 0
+    cache_creation_input_tokens: int = 0
+    cache_read_input_tokens: int = 0
+    output_tokens: int = 0
+    cost_usd: float
+    # How old the session was when the call ended, so a reopened old session's spend can
+    # be told from a new one's.
+    session_age_s: int
+    created: datetime = Field(default_factory=utcnow, sa_type=_TZ, index=True)
