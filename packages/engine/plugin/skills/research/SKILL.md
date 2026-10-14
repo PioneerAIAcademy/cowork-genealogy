@@ -16,6 +16,7 @@ description: >-
 allowed-tools:
   - validate_research_schema
   - research_query
+  - extraction_append
   - research_delivered
   - person_read
   - source_attachments
@@ -123,7 +124,7 @@ sequences a *job*, and on a project with no questions yet its first satisfiable
 row sends you to `@plugin:question-selection` — the one place a bounded request
 must not go. Deliver what was asked, and stop: at least one hand-off per
 deliverable, since one deliverable can need two (a record found goes on through
-`record-extraction`), and a status question is answered from `project_context`
+extraction), and a status question is answered from `project_context`
 without a hand-off at all.
 
 **Start from what is already attached.** Before routing to any search —
@@ -207,14 +208,15 @@ it by name.
 
    | If research.json has... | Invoke |
    |-------------------------|--------|
-   | **No `research.json` at all** | `@plugin:init-project`. With one present, do NOT invoke it: the project exists and the delegation is wasted |
+   | **No `research.json` at all**, and the message states **no objective** (no person and question to research) | `@plugin:tree-survey`, passing the FamilySearch id if one was given and no `projectPath`. Relay its suggestions and stop for the researcher's pick; then `@plugin:init-project` with that person and question as the objective |
+   | **No `research.json` at all**, and the message states a person or objective | `@plugin:init-project`. With one present, do NOT invoke it: the project exists and the delegation is wasted |
    | Objective but no questions | `@plugin:question-selection`. **Even when the message already states the question**, it is not a question until question-selection WRITES it: `research-plan` may not write `questions`, and a plan referencing an unregistered one is refused by the validator. Registration, not derivation |
    | A question with no plan, and **no `localities` entry yet for its target jurisdiction** | `@plugin:locality-guide` (survey the place first — it persists a `loc_` entry with the how-to-search facts and quirks that research-plan then plans from) |
    | A question with no plan, and its jurisdiction **already has a `localities` entry** | `research-plan` |
    | The question's **`active`** plan has items not yet executed, and no analyzed evidence yet plausibly answers it — query `plans` with `status: "active"`; never dispatch an item off a `superseded` or `exhausted` plan, which a revision leaves behind still `planned` | `search-records` (or `@plugin:search-external-sites` for non-FS sources) |
    | A plan item targets a **digitized-but-unindexed** FamilySearch record set (browse-only images — `volume_search` shows image groups with ~0% record-searchable), or indexed/full-text search has been exhausted and the remaining path is reading register pages directly | `search-images` (browses the volume page-by-page: `volume_search` → `image_search` → `image_read`) |
-   | **Any** log entry with a positive/partial outcome and no assertion referencing it — even one such entry, even if other entries from the same or a later search already went through extraction | `record-extraction` (see the enforced contract below) |
-   | Assertions not yet linked to persons | `@plugin:person-evidence` — **always the agent, never inline.** You (the orchestrator) never write `person_evidence` entries or add record-derived facts/relationships to tree persons yourself: person-evidence owns the identity decision and scores every cross-record link with `same_person` before it links. Writing `pe_` links inline skips that check — it is exactly how a same-named stranger's record gets attached to the subject (a b. 1814 man was given a 1918 death, age 104, this way). The record-extractor agent deliberately cannot and does not link; its output ALWAYS flows through person-evidence next |
+   | **Any** log entry with a positive/partial outcome and no assertion referencing it — even one such entry, even if other entries from the same or a later search already went through extraction | FamilySearch records: `extraction_append({ recordIds })`, one call for every pending record. Any other source: `@plugin:record-structurer`, one spawn for the batch. (See the enforced contract below.) |
+   | Assertions not yet linked to persons | `@plugin:person-evidence` — **always the agent, never inline.** You (the orchestrator) never write `person_evidence` entries or add record-derived facts/relationships to tree persons yourself: person-evidence owns the identity decision and scores every cross-record link with `same_person` before it links. Writing `pe_` links inline skips that check — it is exactly how a same-named stranger's record gets attached to the subject (a b. 1814 man was given a 1918 death, age 104, this way). Extraction never links; its output ALWAYS flows through person-evidence next |
    | Evidence conflicts present | `@plugin:conflict-resolution` |
    | Identity uncertainty across assertions | `@plugin:hypothesis-tracking` |
    | Analyzed evidence now plausibly answers the active question | `@plugin:research-exhaustiveness` (consult the stop criteria *before* draining the rest of the plan; it sends you back to `research-plan` if the question — e.g. a completeness "did they have *any other* children?" question — is not yet reasonably exhausted) |
@@ -223,20 +225,19 @@ it by name.
    | `research-exhaustiveness` reported the declaration refused because items on the active plan are still `planned` | `research-plan` to **dispose of the named items** — complete each one whose search was done, or skip it with a `skip_category`. Not an extension: the stop criteria have already been judged |
     | `proof-conclusion` wrote `<ps_id>` at tier ≥ probable **but the concluded relationship or fact is not yet in `tree.gedcomx.json`** (a parentage link, a Couple, or a vital fact — e.g. the concluded death date/place, bounded expressions included; check each claim's own relationship when `claims[]` is present, not just the scalar's) | `@plugin:proof-conclusion` again for the same question — it must encode the conclusion before you proceed (see **Tree-encoding gate**) |
     | A question is at `status: "exhaustive_declared"` with no `proof_summaries` entry yet | `@plugin:proof-conclusion` |
-    | All questions are `resolved` and `project.status` still `active` | **First verify the tree-encoding gate — do not write `completed` until it holds:** every tier-≥-probable conclusion is encoded in `tree.gedcomx.json` (see **Tree-encoding gate**; per claim where a `claims[]` breakdown exists); if not, re-invoke `@plugin:proof-conclusion` for that question. Marking a question `resolved` is not, by itself, evidence the check happened. Once it is verified, re-invoke `@plugin:proof-conclusion` for the last resolved question — its §8 owns the `project.status` write. **You never write it yourself:** this router holds no writer tool, and `docs/specs/schemas/ownership.json` names `proof-conclusion`, not this router, as the `project` section's only skill caller. Then stop. |
+    | All questions are `resolved` and `project.status` still `active` | **First verify the tree-encoding gate — do not write `completed` until it holds:** every tier-≥-probable conclusion is encoded in `tree.gedcomx.json` (see **Tree-encoding gate**; per claim where a `claims[]` breakdown exists); if not, re-invoke `@plugin:proof-conclusion` for that question. Marking a question `resolved` is not, by itself, evidence the check happened. Once it is verified, re-invoke `@plugin:proof-conclusion` for the last resolved question — its §8 owns the `project.status` write. **You never write it yourself:** this router's only writer tool is `extraction_append`, which cannot reach `project`, and `docs/specs/schemas/ownership.json` names `proof-conclusion`, not this router, as the `project` section's only skill caller. Then stop. |
    | All questions are `resolved` and `project.status` is `completed` | Stop |
 
-   **Record-extraction contract — enforced, not advisory.** Inline
-   extraction is **forbidden**: you never write sources, assertions, or
-   classifications from this context, no matter how small the record or
-   how deep into the run you are. Every positive/partial log entry that
-   lacks a linked assertion routes through the `record-extraction`
-   skill — invoke it **once per batch of pending records** (it delegates
-   internally, one `record-extractor` agent per record). Classification
-   is **final at extraction**: there is no downstream classification
-   pass, so never re-derive or "refine" `record_basis` /
-   `information_quality` yourself — conflict-resolution and
-   proof-conclusion trust what is recorded.
+   **Extraction contract — enforced, not advisory.** You never compose
+   sources, assertions or classifications yourself. Every positive/partial
+   log entry that lacks a linked assertion is extracted in code: FamilySearch
+   records by **one** `extraction_append({ projectPath, recordIds, questionIds })`
+   call for the whole batch, and every other source (a transcription, a PDF,
+   pasted text) by **one** `@plugin:record-structurer` spawn for the batch.
+   Relay the summary each returns, verbatim. Classifications come from the
+   extraction table and are final: never re-derive `record_basis` /
+   `information_quality` yourself. A disagreement based on evidence outside
+   the record goes to conflict-resolution or proof-conclusion.
 
    **Conflict/hypothesis contract — enforced, not advisory.** Inline
    elimination of a namesake or other candidate, or inline comparison of
@@ -252,7 +253,7 @@ it by name.
    **Exhaustiveness/proof-conclusion contract — enforced, not advisory.**
    `research-exhaustiveness`, `proof-conclusion` and `person-evidence` are
    `Agent` spawns of `@plugin:<name>`, never inline writes from this context
-   — the same rule as record-extraction above, and for the same reason:
+   — the same rule as extraction above, and for the same reason:
    each of those skills carries analysis this context does not (the
    7-point stop criteria for exhaustiveness; the
    citation and tier checks for proof-conclusion), and a hand-authored
@@ -278,7 +279,7 @@ it by name.
    `baseUrl` when one is known, `userPresent` (`no` only when you are running autonomously and will not wait for the researcher, otherwise `yes`), and for a returned capture its
    file path or the results text) for `@plugin:search-external-sites`, and the
    `personId` (and, on the second spawn, the researcher's verdicts) for
-   `@plugin:search-hints`. The agent runs in fresh context and reads the
+   `@plugin:search-hints`. A `@plugin:tree-survey` spawn takes no `projectPath`. The agent runs in fresh context and reads the
    project itself; a delegation missing `projectPath` fails on its first tool
    call.
 
@@ -435,7 +436,7 @@ which only the user can supply (§"When to stop"). When the researcher answers,
 spawn `@plugin:search-hints` again with `personId`, `projectPath` and their
 verdicts as `{ark, verdict}` per hint, verbatim. Never pass a verdict the
 researcher did not state — a triage recommendation is not one. The accepted
-hints' positive log entries then route to `record-extraction` through the table.
+hints' positive log entries then route to extraction through the table.
 
 ## When to stop
 
@@ -501,9 +502,10 @@ what it rests on.
   person-linking, person-linking precedes conflict detection, conflict
   resolution precedes proof. Shortcuts break the audit trail.
 - It does not interview the user for project setup. If
-  `research.json` does not exist, route to `@plugin:init-project` first,
-  passing the researcher's own words verbatim, plus `projectPath`, and
-  nothing else.
+  `research.json` does not exist and the message states an objective, route to
+  `@plugin:init-project` first, passing the researcher's own words verbatim, plus
+  `projectPath`, and nothing else. With no objective stated, the first row of the
+  table applies.
 
 ## Re-invocation behavior
 

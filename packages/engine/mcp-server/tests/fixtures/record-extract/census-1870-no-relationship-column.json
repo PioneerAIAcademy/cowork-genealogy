@@ -1,0 +1,275 @@
+{
+  "_why": "US 1870: schedule has NO relationship column, yet the index supplies PR_RELATIONSHIP_TO_HEAD='Head'. The record that proves the year table cannot be replaced by reading the field.",
+  "_capturedFrom": "MZGS-1BH",
+  "element": {
+    "recordId": "MZGS-1BH",
+    "gedcomx": {
+      "persons": [
+        {
+          "id": "p_260900945",
+          "ark": "ark:/61903/1:1:MZGS-1B7",
+          "principal": true,
+          "gender": "Male",
+          "names": [
+            {
+              "id": "50b8043f-ec31-4e71-89bf-14da77106330",
+              "type": "BirthName",
+              "surname": "Boyer",
+              "given": "John"
+            }
+          ],
+          "facts": [
+            {
+              "id": "1ca5d59e-5f66-4f41-bea2-35713488f55b",
+              "type": "Birth",
+              "date": "1845",
+              "standard_date": "1845",
+              "place": "Pennsylvania"
+            },
+            {
+              "id": "8f161ca4-f1ef-4ea5-b44a-9193068f82c0",
+              "type": "Census",
+              "primary": true,
+              "date": "1870",
+              "standard_date": "1870",
+              "place": "Lower Towamensing Township, Carbon, Pennsylvania, United States"
+            },
+            {
+              "type": "Race",
+              "value": "White"
+            }
+          ],
+          "sources": [
+            {
+              "ref": "sd_da1"
+            }
+          ]
+        },
+        {
+          "id": "p_260900946",
+          "ark": "ark:/61903/1:1:MZGS-1BW",
+          "principal": true,
+          "gender": "Female",
+          "names": [
+            {
+              "id": "750a753d-d6eb-4eb7-8bf4-a5877e15dd5a",
+              "type": "BirthName",
+              "surname": "Boyer",
+              "given": "Anna"
+            }
+          ],
+          "facts": [
+            {
+              "id": "eb12a72b-220e-49ab-89ba-d3431fd2528b",
+              "type": "Census",
+              "primary": true,
+              "date": "1870",
+              "standard_date": "1870",
+              "place": "Lower Towamensing Township, Carbon, Pennsylvania, United States"
+            },
+            {
+              "id": "e448f223-db92-4ddd-b9f5-c6270713617c",
+              "type": "Birth",
+              "date": "1849",
+              "standard_date": "1849",
+              "place": "Pennsylvania"
+            },
+            {
+              "type": "Race",
+              "value": "White"
+            }
+          ],
+          "sources": [
+            {
+              "ref": "sd_da1"
+            }
+          ]
+        },
+        {
+          "id": "p_260900947",
+          "ark": "ark:/61903/1:1:MZGS-1B4",
+          "principal": true,
+          "gender": "Male",
+          "names": [
+            {
+              "id": "e4234d48-38bb-4b3e-b530-d1f4bca439b0",
+              "type": "BirthName",
+              "surname": "Miller",
+              "given": "Henry"
+            }
+          ],
+          "facts": [
+            {
+              "id": "03773ae3-aadd-4142-bcd9-32625a47533b",
+              "type": "Birth",
+              "date": "1791",
+              "standard_date": "1791",
+              "place": "Pennsylvania"
+            },
+            {
+              "id": "0463e685-9927-4031-be70-c4c8e08cd842",
+              "type": "Census",
+              "primary": true,
+              "date": "1870",
+              "standard_date": "1870",
+              "place": "Lower Towamensing Township, Carbon, Pennsylvania, United States"
+            },
+            {
+              "type": "Race",
+              "value": "White"
+            }
+          ],
+          "sources": [
+            {
+              "ref": "sd_da1"
+            }
+          ]
+        },
+        {
+          "id": "p_260900948",
+          "ark": "ark:/61903/1:1:MZGS-1BH",
+          "principal": true,
+          "gender": "Female",
+          "names": [
+            {
+              "id": "cea20d28-4345-4888-bcde-353478682bf9",
+              "type": "BirthName",
+              "surname": "Miller",
+              "given": "Catharine"
+            }
+          ],
+          "facts": [
+            {
+              "id": "8b3c0268-bf75-47e3-89b5-a12c3bdb2c59",
+              "type": "Birth",
+              "date": "1805",
+              "standard_date": "1805",
+              "place": "Pennsylvania"
+            },
+            {
+              "id": "bb33ecd5-6771-46c3-a3da-fd9a5e8e7416",
+              "type": "Census",
+              "primary": true,
+              "date": "1870",
+              "standard_date": "1870",
+              "place": "Lower Towamensing Township, Carbon, Pennsylvania, United States"
+            },
+            {
+              "type": "Race",
+              "value": "White"
+            }
+          ],
+          "sources": [
+            {
+              "ref": "sd_da1"
+            }
+          ]
+        }
+      ],
+      "sources": [
+        {
+          "id": "src_r_185519091",
+          "resource_type": "Record",
+          "title": "Household of John Boyer, \"United States, Census, 1870\"",
+          "citation": "\"United States, Census, 1870\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:MZGS-1B7 : Fri Jul 17 21:23:04 UTC 2026), Entry for John Boyer and Anna Boyer, 1870.",
+          "url": "https://www.familysearch.org/ark:/61903/1:2:M4K9-SCL",
+          "coverage": {
+            "place_rep_id": "4839681",
+            "date_range": "1870",
+            "record_type": "Census",
+            "standard_place": "Lower Towamensing Township, Carbon, Pennsylvania, United States"
+          }
+        },
+        {
+          "id": "sd_c_1438024",
+          "resource_type": "Collection",
+          "title": "United States, Census, 1870",
+          "url": "https://www.familysearch.org/service/cds/recapi/collections/1438024",
+          "coverage": {
+            "place_rep_id": "1",
+            "date_range": "1870/1870",
+            "record_type": "Census",
+            "standard_place": "United States"
+          }
+        },
+        {
+          "id": "sd_da1",
+          "resource_type": "DigitalArtifact",
+          "url": "https://www.familysearch.org/ark:/61903/3:1:S3HT-D1J7-QDW",
+          "coverage": {
+            "place_rep_id": "395685",
+            "date_range": "1870",
+            "record_type": "Census",
+            "standard_place": "Carbon, Pennsylvania, United States"
+          }
+        },
+        {
+          "id": "sd_p_260900947",
+          "resource_type": "Person",
+          "title": "Henry Miller, \"United States, Census, 1870\"",
+          "citation": "\"United States, Census, 1870\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:MZGS-1B7 : Fri Jul 17 21:23:04 UTC 2026), Entry for John Boyer and Anna Boyer, 1870.",
+          "url": "https://www.familysearch.org/ark:/61903/1:1:MZGS-1B4"
+        },
+        {
+          "id": "sd_p_260900945",
+          "resource_type": "Person",
+          "title": "John Boyer, \"United States, Census, 1870\"",
+          "citation": "\"United States, Census, 1870\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:MZGS-1B7 : Fri Jul 17 21:23:04 UTC 2026), Entry for John Boyer and Anna Boyer, 1870.",
+          "url": "https://www.familysearch.org/ark:/61903/1:1:MZGS-1B7"
+        },
+        {
+          "id": "sd_p_260900948",
+          "resource_type": "Person",
+          "title": "Catharine Miller, \"United States, Census, 1870\"",
+          "citation": "\"United States, Census, 1870\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:MZGS-1B7 : Fri Jul 17 21:23:04 UTC 2026), Entry for John Boyer and Anna Boyer, 1870.",
+          "url": "https://www.familysearch.org/ark:/61903/1:1:MZGS-1BH"
+        },
+        {
+          "id": "sd_p_260900946",
+          "resource_type": "Person",
+          "title": "Anna Boyer, \"United States, Census, 1870\"",
+          "citation": "\"United States, Census, 1870\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:MZGS-1B7 : Fri Jul 17 21:23:04 UTC 2026), Entry for John Boyer and Anna Boyer, 1870.",
+          "url": "https://www.familysearch.org/ark:/61903/1:1:MZGS-1BW"
+        },
+        {
+          "id": "sd_auto_M9JT-92D",
+          "resource_type": "auto",
+          "title": "United States, Residences, Census, from 1793 to 1964",
+          "coverage": {
+            "place_rep_id": "1",
+            "date_range": "+1793-01-01T00:00:00Z/+1964-12-31T23:59:59Z",
+            "standard_place": "United States"
+          }
+        }
+      ],
+      "places": [
+        {
+          "id": "place_4839681"
+        }
+      ]
+    },
+    "indexFields": {
+      "p_260900945": {
+        "relationshipToHead": "Head",
+        "sortKey": "0000000004278519_00311_12107_0000000185519091_000",
+        "householdId": "144",
+        "age": "25 years"
+      },
+      "p_260900946": {
+        "sortKey": "0000000004278519_00311_12107_0000000185519091_001",
+        "householdId": "144",
+        "age": "21 years"
+      },
+      "p_260900947": {
+        "sortKey": "0000000004278519_00311_12107_0000000185519091_002",
+        "householdId": "144",
+        "age": "79 years"
+      },
+      "p_260900948": {
+        "sortKey": "0000000004278519_00311_12107_0000000185519091_003",
+        "householdId": "144",
+        "age": "65 years"
+      }
+    }
+  }
+}

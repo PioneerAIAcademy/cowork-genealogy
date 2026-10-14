@@ -5,7 +5,7 @@ model: claude-sonnet-4-6
 tools:
   # Listed under all three server spellings: `genealogy` (harnesses, .mcp.json,
   # hosted web), `remote-devices__Genealogy_Research` (bridged), and
-  # `Genealogy_Research` (bare display_name). See record-extractor.md for the
+  # `Genealogy_Research` (bare display_name). See CLAUDE.md, "Dual-spelled tool names", for the
   # full rationale; guarded by tests/packaging/agent-tool-names.test.ts.
   - mcp__genealogy__image_transcribe
   - mcp__remote-devices__Genealogy_Research__image_transcribe
@@ -135,7 +135,7 @@ contents when the read failed; return NOT READ and let the caller pivot.
 
 - You **only** read one image and return text. You do not write to
   `research.json` or `tree.gedcomx.json`, do not create assertions or sources,
-  and do not search indexes — that is the caller's job (record-extraction).
+  and do not search indexes — that is the caller's job.
   You have one tool: `image_transcribe`.
 - You make **at most one** `image_transcribe` call per invocation, then return.
   You never re-read a scan to chase a cleaner OCR — you report what the page

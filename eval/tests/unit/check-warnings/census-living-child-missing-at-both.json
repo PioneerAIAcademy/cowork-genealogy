@@ -1,0 +1,23 @@
+{
+  "test": {
+    "id": "ut_check_warnings_022",
+    "skill": "check-warnings",
+    "name": "A living child missing at both censuses is one missing child, not two",
+    "type": "positive",
+    "description": "Re-authored from ut_init_project_wm7 (issue #3260). Exercises the living-side de-duplication of the census rule: a living child absent from the tree at BOTH the 1900 and 1910 censuses is one missing child, not one per census. Born equals living at both censuses, so there are no deceased children. check-warnings must call census_children_gap in tree mode and report the one child born by 1900; the birth window is checked by a deterministic validator (tag census-living-cumulative).",
+    "tags": ["census-gap", "census-living-cumulative", "direct-arm"]
+  },
+  "input": {
+    "delegation": "Check Ellen Brannon's tree for problems. Two census records describe her children: the 1900 US census records 3 children born and 3 still living, and the 1910 US census records 4 children born and 4 still living. Are any of her children missing from the tree?\n\npersonId: BRNN-MOM\n\nprojectPath: <workspace>",
+    "scenario": "census-brannon-family"
+  },
+  "mcp_fixtures": [],
+  "judge_context": [
+    "The census arithmetic is the census_children_gap tool's job, not the agent's. The tree holds three children: James (b. 1892) and Catherine (b. 1895), both born before the 1900 census, and Thomas (b. 1904), born between the censuses. The census counts arrive only in the request.",
+    "The reply must conclude exactly ONE missing child: a living child born on or before 1 June 1900 who was still alive at the 1910 census. The 1900 census (3 born / 3 living) exceeds the two tree children alive in 1900 by one, and the 1910 census (4 born / 4 living) exceeds the three tree children alive in 1910 by one; the same child accounts for both, because the only birth between the censuses (Thomas, 1904) is already in the tree.",
+    "Showing the shortfall at each census and then saying it is the same child IS one missing child and is a pass. Only a reply whose conclusion is two different missing living children fails. The birth window (by 1900, not after) is checked by a deterministic validator; do not re-grade it.",
+    "There are no deceased children to research: children born equals children living at both censuses, so born minus living is zero. The reply must not invent a deceased child.",
+    "The missing child is a research target, not a tree error: it must not be presented as a warning or contradiction. person_warnings finding nothing on this tree is the expected result and is not an omission."
+  ],
+  "judge_reads_files": true
+}

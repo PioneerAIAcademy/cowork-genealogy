@@ -33,6 +33,8 @@ const HEADING = /^#{2,4}\s+`summary_for_user`\s*$/m;
 
 const EXCLUDED: Record<string, string> = {
   "image-reader.md": "returns a full transcription and nothing else, by spec",
+  "record-structurer.md":
+    "returns extraction_append's code-written summary verbatim (lead, 2026-09-29)",
   // Issue #2796, applying issue #2793's "PS return: A" ruling (2026-09-24): the
   // agent writes nothing, so the per-source findings ARE the deliverable, and a
   // summary_for_user paragraph (no identifiers) printed in place of the return

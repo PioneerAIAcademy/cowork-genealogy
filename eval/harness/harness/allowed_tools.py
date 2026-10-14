@@ -91,7 +91,12 @@ def suite_body_path(
     answers empty rather than raising.
     """
     skill_md = Path(skills_dir) / name / "SKILL.md"
-    return skill_md if skill_md.is_file() else Path(agents_dir) / f"{name}.md"
+    if skill_md.is_file():
+        return skill_md
+    from harness.workspace import TEST_ONLY_SKILLS
+
+    test_only = TEST_ONLY_SKILLS / name / "SKILL.md"
+    return test_only if test_only.is_file() else Path(agents_dir) / f"{name}.md"
 
 
 def declared_tools(fm: dict[str, Any]) -> list[str]:
@@ -271,7 +276,7 @@ def declared_skill_tools(skill_name: str, skills_dir: Path) -> set[str]:
     `agent_id` presence alone discriminates (see `context_policy.py` and
     `e2e/orchestrator.py`).
     """
-    fm = load_skill_frontmatter(skills_dir / skill_name / "SKILL.md")
+    fm = load_skill_frontmatter(suite_body_path(skill_name, skills_dir))
     return {
         entry.rsplit("__", 1)[-1] if "__" in entry else entry
         for entry in (fm.get("allowed-tools", []) or [])
