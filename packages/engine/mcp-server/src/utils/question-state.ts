@@ -440,7 +440,7 @@ export function questionStatus(research: any, question: any, tree: any = null): 
   } else if (state === "planned") {
     nextStep = "search-records";
   } else if (state === "searching") {
-    nextStep = "record-extraction";
+    nextStep = "extraction (extraction_append for FamilySearch records, record-structurer for any other source)";
   } else if (state === "evidence-gathered") {
     nextStep = "research-exhaustiveness, then proof-conclusion";
   }

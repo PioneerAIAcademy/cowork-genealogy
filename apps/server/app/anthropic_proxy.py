@@ -10,21 +10,29 @@ we validate it, replace it with the real key, and stream the response from
 Token format: ``{sandbox_id}:{hmac_hex}``.  The sandbox_id is embedded so the
 proxy can verify without a lookup table — same derivation pattern as
 ``ws_token.sandbox_secret``.
+
+Each Messages API call's usage is read off the response on its way back
+(``_UsageMeter``) and recorded to ``api_calls``. Recording only: the alpha has no
+spend limit (lead ruling 2026-09-25), so nothing here refuses a call on cost.
 """
 from __future__ import annotations
 
 import hashlib
 import hmac as _hmac
+import json
 import logging
+from concurrent.futures import ThreadPoolExecutor
+from datetime import timezone
 
 import httpx
 from fastapi import APIRouter, Request, Response
 from fastapi.responses import StreamingResponse
 from sqlmodel import Session, select
 
+from .agent.spend import price_usd, usage_tokens
 from .config import get_settings
 from .db import get_engine
-from .models import Project
+from .models import ApiCall, Project, utcnow
 
 log = logging.getLogger(__name__)
 
@@ -41,6 +49,12 @@ _DROP_RESPONSE_HEADERS = frozenset({
 })
 
 _UPSTREAM_TIMEOUT = httpx.Timeout(connect=30.0, read=600.0, write=30.0, pool=30.0)
+
+_METERED_PATH = "v1/messages"
+_USAGE_EVENTS = (b"message_start", b"message_delta")
+# One thread writes every row: off the event loop and in order, so a test can wait for
+# the rows by queueing behind them.
+_usage_writer = ThreadPoolExecutor(max_workers=1, thread_name_prefix="api-usage")
 
 
 def proxy_active() -> bool:
@@ -73,20 +87,99 @@ def verify_proxy_token(token: str) -> str | None:
     return None
 
 
-def _sandbox_exists(sandbox_id: str) -> bool:
-    """Liveness check: is there an active Project row for this sandbox?"""
+def _active_project(sandbox_id: str) -> Project | None:
+    """Liveness check: the active Project row for this sandbox, if there is one."""
     with Session(get_engine()) as session:
-        row = session.exec(
-            select(Project.sandbox_id).where(
+        return session.exec(
+            select(Project).where(
                 Project.sandbox_id == sandbox_id,
                 Project.status == "active",
             )
         ).first()
-        return row is not None
 
 
 def make_upstream_client() -> httpx.AsyncClient:
     return httpx.AsyncClient(timeout=_UPSTREAM_TIMEOUT)
+
+
+def _save(row: ApiCall) -> None:
+    try:
+        with Session(get_engine()) as session:
+            session.add(row)
+            session.commit()
+    except Exception:  # noqa: BLE001 — raised here, it would vanish into an unread Future
+        log.exception("proxy: could not record an API call for project %s", row.project_id)
+
+
+class _UsageMeter:
+    """Reads one Messages API call's usage off the response as the relay passes it on.
+
+    Streamed, ``message_start`` carries the model and the input-side counts, and each
+    ``message_delta`` the counts so far. Every count is a running total, so a later one
+    replaces an earlier one and none is ever added to another. Not streamed, the body
+    carries ``usage`` itself. Nothing here raises into the relay."""
+
+    def __init__(self, project: Project, streaming: bool):
+        self._project = project
+        self._streaming = streaming
+        self._buf = b""
+        self._event = b""
+        self._model: str | None = None
+        self._usage: dict[str, int] = {}
+
+    def feed(self, chunk: bytes) -> None:
+        self._buf += chunk
+        if self._streaming:
+            *lines, self._buf = self._buf.split(b"\n")
+            for line in lines:
+                self._line(line.rstrip(b"\r"))
+
+    def _line(self, line: bytes) -> None:
+        if not line:
+            self._event = b""
+        elif line.startswith(b"event:"):
+            self._event = line[6:].strip()
+        elif line.startswith(b"data:") and self._event in _USAGE_EVENTS:
+            self._take(line[5:])
+
+    def _take(self, raw: bytes) -> None:
+        try:
+            data = json.loads(raw)
+            body = data.get("message") or data
+            self._model = body.get("model") or self._model
+            self._usage.update(
+                (k, v) for k, v in (body.get("usage") or {}).items() if isinstance(v, int)
+            )
+        except Exception:  # noqa: BLE001 — never into the relay
+            log.warning("proxy: unreadable usage for project %s", self._project.id)
+
+    def record(self) -> None:
+        """Queue this call's row for the writer. The relay calls it in its ``finally``
+        before anything there awaits: a dropped connection cancels the relay, and a call
+        cut off mid-stream was still billed for what it had read."""
+        try:
+            if not self._streaming:
+                self._take(self._buf)
+            if self._model is None and not self._usage:
+                return
+            tokens = usage_tokens(self._usage)
+            created = self._project.created
+            if created.tzinfo is None:  # SQLite hands back naive datetimes
+                created = created.replace(tzinfo=timezone.utc)
+            _usage_writer.submit(_save, ApiCall(
+                project_id=self._project.id,
+                user_id=self._project.user_id,
+                model=self._model,
+                input_tokens=tokens[0],
+                cache_creation_input_tokens=tokens[1],
+                cache_read_input_tokens=tokens[2],
+                output_tokens=tokens[3],
+                cost_usd=price_usd(tokens, self._model),
+                session_age_s=int((utcnow() - created).total_seconds()),
+            ))
+        except Exception:  # noqa: BLE001 — the relay's finally must reach aclose()
+            log.exception("proxy: could not meter an API call for project %s",
+                          self._project.id)
 
 
 router = APIRouter()
@@ -113,7 +206,8 @@ async def anthropic_proxy(path: str, request: Request) -> Response:
             media_type="application/json",
         )
 
-    if not _sandbox_exists(sandbox_id):
+    project = _active_project(sandbox_id)
+    if project is None:
         log.warning("proxy: sandbox %s not found or archived", sandbox_id)
         return Response(
             content=_error_json("authentication_error",
@@ -170,11 +264,21 @@ async def anthropic_proxy(path: str, request: Request) -> Response:
         if k.lower() not in _DROP_RESPONSE_HEADERS
     }
 
+    content_type = upstream_resp.headers.get("content-type", "")
+    meter = None
+    if (request.method == "POST" and path.strip("/") == _METERED_PATH
+            and upstream_resp.status_code == 200):
+        meter = _UsageMeter(project, streaming=content_type.startswith("text/event-stream"))
+
     async def _relay():
         try:
             async for chunk in upstream_resp.aiter_bytes():
+                if meter is not None:
+                    meter.feed(chunk)
                 yield chunk
         finally:
+            if meter is not None:
+                meter.record()
             await upstream_resp.aclose()
 
     return StreamingResponse(
