@@ -137,6 +137,9 @@ export async function placeSearch(
   placeName: string,
   contextName?: string
 ): Promise<PlaceResult[]> {
+  if (!placeName) {
+    throw new Error("placeName is required");
+  }
   const key = placeSearchCacheKey(placeName, contextName);
   const cached = placeSearchCache.get(key);
   if (cached) return cached;

@@ -209,7 +209,7 @@ export async function recordReadTool(
           // any, so a record type with no index fields stages what it always did.
           results: [
             {
-              recordId: entityId,
+              recordId: `ark:/61903/1:1:${entityId}`,
               gedcomx: simplified,
               ...(indexFields ? { indexFields } : {}),
             },
