@@ -1,6 +1,6 @@
 name: Engine tests
 
-# Runs the MCP server's vitest suite (`packages/engine/mcp-server`, ~1570 tests)
+# Runs the MCP server's vitest suite (`packages/engine/mcp-server`)
 # on every pull request. Nothing ran this suite in CI before, so a red test
 # could sit on main indefinitely — the places-guidance drift lint
 # (tests/packaging/skill-guidance.test.ts) did, for three days, after 8bf43be2
@@ -86,3 +86,98 @@ jobs:
       # the plugin's frontmatter gate already runs under the runlogs check.
       - name: Build both shipped artifacts (.mcpb + plugin zip) and verify the bundle
         run: make mcpb && ./scripts/verify-mcpb.sh && make plugin
+
+  # U15: the same suite with every tool's project I/O on PgS3ProjectStore —
+  # `PROTO_STORE=pg` installs tests/helpers/pg-routing-store.ts as the process
+  # store (tests/setup/proto-store.ts), and the run fails on any skipped test
+  # or on a router that answered no call (tests/setup/proto-store-reporter.ts).
+  # A job of its own so it runs beside `vitest` rather than after it; it is
+  # advisory until the protect-main ruleset names it. The services are
+  # `docker run` steps, not `services:`, because MinIO needs a command; the
+  # images are the compose stack's (apps/server/proto/docker-compose.yml, which
+  # says why MinIO comes from pgsty). `make engine-test-pg` is the local twin.
+  vitest-pg:
+    runs-on: ubuntu-latest
+    env:
+      PROTO_PG_DSN: postgresql://postgres:proto@localhost:5432/proto
+      PROTO_S3_ENDPOINT: http://localhost:9000
+      PROTO_S3_BUCKET: projects
+      PROTO_S3_ACCESS_KEY: proto
+      PROTO_S3_SECRET_KEY: protoproto
+    steps:
+      - name: Check out PR
+        uses: actions/checkout@v7
+
+      - name: Start Postgres and MinIO
+        run: |
+          set -euo pipefail
+          docker run -d --name pg -e POSTGRES_DB=proto -e POSTGRES_PASSWORD=proto -p 5432:5432 postgres:16-alpine
+          docker run -d --name minio -e MINIO_ROOT_USER=proto -e MINIO_ROOT_PASSWORD=protoproto -p 9000:9000 \
+            pgsty/minio:RELEASE.2026-08-04T00-00-00Z server /data
+
+      - name: Set up uv (Python 3.12, for the migrations runner and the harness)
+        uses: astral-sh/setup-uv@v7
+        with:
+          python-version: '3.12'
+
+      - name: Set up Node
+        uses: actions/setup-node@v7
+        with:
+          node-version: '22'
+          cache: 'npm'
+          cache-dependency-path: packages/engine/mcp-server/package-lock.json
+
+      - name: Install the pinned npm (from the packageManager field)
+        run: |
+          NPM_VER="$(node -p "require('./packages/engine/mcp-server/package.json').packageManager.split('@')[1]")"
+          npm install -g "npm@${NPM_VER}"
+
+      - name: Install dependencies
+        working-directory: packages/engine/mcp-server
+        run: npm ci
+
+      - name: Wait for both, create the bucket, apply the schema
+        run: |
+          set -euo pipefail
+          ready() {
+            for _ in $(seq 1 60); do
+              if "$@" >/dev/null 2>&1; then return 0; fi
+              sleep 1
+            done
+            return 1
+          }
+          ready docker exec pg pg_isready -U postgres -h 127.0.0.1 || { docker logs pg; echo "::error::postgres never became ready"; exit 1; }
+          ready docker exec minio mc ready local || { docker logs minio; echo "::error::minio never became ready"; exit 1; }
+          docker exec minio mc alias set proto http://127.0.0.1:9000 proto protoproto
+          docker exec minio mc mb --ignore-existing proto/projects
+          cd apps/server && MIGRATE_PG_DSN="$PROTO_PG_DSN" uv run --frozen python proto/migrate.py
+
+      - name: Run vitest on the Postgres store (pretest builds first)
+        working-directory: packages/engine/mcp-server
+        env:
+          PROTO_STORE: pg
+        run: npm test
+
+      # The harness's `--store pg` cases (eval/harness/harness/pg_store_prelude.mjs).
+      # They skip without a stack, so on this job's stack a skip fails the step.
+      - name: Run the harness's --store pg cases
+        working-directory: eval/harness
+        run: |
+          set -euo pipefail
+          uv run --frozen pytest -q -rs tests/unit/test_pg_store_switch.py | tee "$RUNNER_TEMP/pg-switch.txt"
+          if grep -qi skipped "$RUNNER_TEMP/pg-switch.txt"; then echo "::error::a --store pg case skipped"; exit 1; fi
+
+      # The keyless arm of `make proto-store-test` (U8): the MinIO keys only as
+      # AWS_*, everything else that could sign isolated, so the SDK default
+      # chain's environment provider is the only way the store authenticates.
+      - name: Run the store suites keyless
+        working-directory: packages/engine/mcp-server
+        env:
+          PROTO_STORE: pg
+          PROTO_S3_KEYLESS: '1'
+          AWS_ACCESS_KEY_ID: proto
+          AWS_SECRET_ACCESS_KEY: protoproto
+          AWS_SHARED_CREDENTIALS_FILE: /nonexistent
+          AWS_CONFIG_FILE: /nonexistent
+          AWS_EC2_METADATA_DISABLED: 'true'
+        run: npx vitest run tests/store/pg-s3-project-store.test.ts tests/http/http-server-pg.test.ts tests/store/pg-routing-store.test.ts tests/store/s3-orphan-sweep.test.ts

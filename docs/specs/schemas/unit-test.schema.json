@@ -261,14 +261,6 @@
         }
       }
     },
-    "refinement_targets": {
-      "type": "array",
-      "items": {
-        "type": "string"
-      },
-      "description": "Optional list of `a_` assertion ids a classification-refinement test expects the run to update in place. Checked mechanically by test_refinement_preserves_extraction_fields_and_avoids_duplication in eval/harness/validators/test_record_extraction.py (issue #2021, F12): each named id must still exist under the same id, its extraction fields (source_id, record_id, record_role, fact_type, value, structured_value, date, date_certainty, place) must be unchanged, at least one classification field must actually differ, every other pre-existing assertion must be untouched, and no new assertion may share a target's (source_id, record_role, fact_type) shape (an append standing in for an update). Record-extraction only; other skills leave this unset.",
-      "minItems": 1
-    },
     "negative": {
       "type": "object",
       "required": [

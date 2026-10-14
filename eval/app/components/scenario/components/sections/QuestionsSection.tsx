@@ -6,7 +6,9 @@ import type { Question } from '../../lib/schema'
 import styles from './QuestionsSection.module.css'
 
 function QuestionCard({ question }: { question: Question }): React.JSX.Element {
-  const { exhaustive_declaration } = question
+  const { search_stop } = question
+  const _STOP_GATE = new Set(["question_answered", "record_exhausted", "nothing_further_reachable"])
+  const isGate = _STOP_GATE.has(search_stop?.stopped_because ?? "")
 
   return (
     <Card
@@ -16,7 +18,7 @@ function QuestionCard({ question }: { question: Question }): React.JSX.Element {
         <>
           <StatusBadge value={question.status} />
           <StatusBadge value={question.priority} />
-          {exhaustive_declaration.declared && <StatusBadge value="exhaustive" color="blue" />}
+          {isGate && <StatusBadge value="exhaustive" color="blue" />}
         </>
       }
       summary={question.rationale}
@@ -66,9 +68,9 @@ function QuestionCard({ question }: { question: Question }): React.JSX.Element {
         </div>
       )}
 
-      {exhaustive_declaration.declared && exhaustive_declaration.stop_criteria && (
+      {isGate && search_stop?.stop_criteria && (
         <dl className={styles.stopCriteria}>
-          {Object.entries(exhaustive_declaration.stop_criteria).map(([key, value]) => (
+          {Object.entries(search_stop.stop_criteria).map(([key, value]) => (
             <div key={key}>
               <dt>{key.replace(/_/g, ' ')}</dt>
               <dd>{value}</dd>

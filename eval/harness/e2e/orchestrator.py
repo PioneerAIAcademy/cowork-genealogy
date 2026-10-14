@@ -46,6 +46,7 @@ from harness.auth import env_for_sdk, resolve_auth
 from harness.context_policy import (
     OWNED_DECLARATIONS as OWNED_DECLARATION_OWNERS,  # the SHIPPED hook's map, not a copy
     OWNED_FIELDS as OWNED_FIELD_OWNERS,  # the SHIPPED hook's map, not a copy
+    OWNED_CLAIMS as OWNED_CLAIM_ROUTES,  # the SHIPPED hook's map, not a copy
     OWNED_SECTIONS as OWNED_SECTION_OWNERS,  # the SHIPPED hook's map, not a copy
     bare_tool_name as _bare_tool_name,  # re-exported: callers + tests import it from here
     is_subagent_call,
@@ -248,14 +249,21 @@ def is_blocked_tree_tool(
 def is_main_thread_subagent_only_tool(input_data: dict[str, Any]) -> bool:
     """Whether this is a main-thread call to a `SUBAGENT_ONLY_TOOLS` member.
 
-    Both members are declared by NO skill's `allowed-tools`: `extraction_append`
-    lives only on `agents/record-extractor.md` (the #942 case), and `image_read`
-    is declared by no agent at all since `image-reader-opus` was retired (issue
-    #2013) — the deny is kept regardless, because it is what keeps inline base64
-    off the main thread. A call on the main thread (no `agent_id`) is the router
-    substituting for a failed spawn and doing the work itself.
+    The set has ONE member today: `image_read`, declared by no skill and by no
+    agent since `image-reader-opus` was retired (issue #2013) — the deny is kept
+    regardless, because it is what keeps inline base64 off the main thread. A
+    call on the main thread (no `agent_id`) is the router substituting for a
+    failed spawn and doing the work itself.
 
-    The policy binds in e2e for both because `agent_id` presence alone is a
+    `extraction_append` was the other member (the #942 case) and LEFT the set in
+    issue #2937, which routes indexed-record extraction through code called from
+    the main thread. See `harness.context_policy`'s set comment for what that
+    retires — in particular that this predicate is exactly the arm that cannot
+    express the declared-tools exemption, so the unindexed-path substitution #942
+    guarded is now unchecked in e2e, which is filed on the `nothing-checks`
+    register.
+
+    The policy binds in e2e because `agent_id` presence alone is a
     sufficient discriminator — which is all e2e can see, since its sub-skills run
     in the same session via the `Skill` tool with no `agent_id` to attribute them
     (see `harness.context_policy` docstring). We deny the bare tool directly
@@ -2027,8 +2035,8 @@ async def _run_agent(
     # in the result so a reviewer can audit the run. See spec §6.1.
     blocked_tree_reads: list[dict[str, Any]] = []
     # Every call the per-context policy denied — BOTH arms, not just the one this
-    # comment used to name: a main-thread `extraction_append`/`image_read` (the
-    # router doing a subagent's job after a failed spawn, #942), and an
+    # comment used to name: a main-thread `image_read` (the
+    # router doing a subagent's job after a failed spawn, #942/#1273), and an
     # owned-section `research_append` (#1273), which fires for a named subagent
     # too. The attempt itself is in `tool_calls` (streamed from the ToolUseBlock
     # before the PreToolUse deny); this list is the record that it did not run.
@@ -2213,8 +2221,9 @@ async def _run_agent(
 
         # The per-context tool policy (harness/context_policy.py): a main-thread
         # call to any SUBAGENT_ONLY_TOOLS member is the router substituting for a
-        # failed subagent spawn. Both members are enforced here — `extraction_append`
-        # (#942) and `image_read` — since neither is declared by any skill and
+        # failed subagent spawn. Every member is enforced here — today just
+        # `image_read`, since `extraction_append` (#942) left the set in issue
+        # #2937 — because no remaining member is declared by any skill and
         # `agent_id` presence alone discriminates, which is all e2e can see (its
         # sub-skills run in this same session via the Skill tool with no `agent_id`).
         # We deny the bare tool directly rather than through `subagent_only_violation`,
@@ -2234,9 +2243,8 @@ async def _run_agent(
             # this line alone. For image_read the recovery is the transcription
             # plugin @plugin:image-reader, which is now also the only image reader
             # (image-reader-opus retired, issue #2013).
-            # The fallback covers a future third guarded tool.
+            # The fallback covers a future second guarded tool.
             recovery = {
-                "extraction_append": "@plugin:record-extractor",
                 "image_read": "@plugin:image-reader",
             }.get(bare, "the owning subagent")
             narration.append(
@@ -2254,7 +2262,7 @@ async def _run_agent(
 
         # An owned SECTION, not an owned tool — a separate arm on purpose. The
         # block above says the whole tool is reserved for a subagent, which is
-        # true of extraction_append and false of research_append: that one is
+        # true of image_read and false of research_append: that one is
         # the general writer, called from the main thread constantly for plans,
         # questions, conflicts and the log. Sharing the branch handed the agent
         # a deny telling it the tool was off-limits, and a narration naming the
@@ -2285,10 +2293,12 @@ async def _run_agent(
                 owned_section, _, field = owned.partition(".")
                 agent = OWNED_DECLARATION_OWNERS[(owned_section, field)]
                 text = (
-                    f"`{bare}` denied on `{owned_section}` — declaring a question "
-                    f"exhaustive is routed to the {agent} agent. Creating a question "
-                    "and recording an honest `declared: false` termination are both "
-                    "unaffected; delegate the claim rather than making it here."
+                    f"`{bare}` denied on `{owned_section}` — writing a stop-gate "
+                    f"`stopped_because` value is routed to the {agent} agent. "
+                    "Writing `stopped_because: null` (new question) and non-gate "
+                    "values (`resources_spent`, `blocked_by_conflict`) are both "
+                    "unaffected; delegate the stop-gate claim rather than making "
+                    "it here."
                 )
             elif rule == "owned_field":
                 owned_section, _, field = owned.partition(".")
@@ -2298,6 +2308,15 @@ async def _run_agent(
                     f"routed to the {agent} agent. Every other write to "
                     f"`{owned_section}` is unaffected; delegate this field rather "
                     "than setting it here."
+                )
+            elif rule == "claim":
+                agent = OWNED_CLAIM_ROUTES[owned][0]
+                text = (
+                    f"`{bare}` denied on `{owned}` — recording a conflict's analysis "
+                    f"or resolution is routed to the {agent} agent. Opening a "
+                    "conflict with its required fields, and re-opening one as "
+                    "`unresolved`, are both unaffected; delegate the analysis "
+                    "rather than writing it here."
                 )
             else:
                 text = (
@@ -2567,9 +2586,10 @@ async def _run_agent(
             mcp_unavailable=mcp_state["unavailable"],
         ):
             # Terminal. Count the class only where the stop is a defect — `completed`
-            # is the successful path (134 of 181 committed runs) and `mcp_unavailable`
-            # is infrastructure (#941); attributing either to the agent's hand-back
-            # would make the rate dominated by runs that did the right thing.
+            # is the successful path (134 of 181 committed runs), `mcp_unavailable`
+            # is infrastructure (#941) and `ok` has no project (#3274); attributing any
+            # of them to the agent's hand-back would make the rate dominated by runs
+            # that did the right thing.
             reason = terminal_reason(
                 research=research,
                 nudges_used=continue_nudges["n"],

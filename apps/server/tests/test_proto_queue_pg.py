@@ -31,7 +31,7 @@ import pytest
 
 from proto import enqueue, grants
 from proto.worker import worker
-from tests._proto_pg import PROTO, database, session, sql, turn
+from tests._proto_pg import PROTO, AsyncPausingConn, database, session, sql, turn
 
 sys.path.insert(0, str(PROTO))
 
@@ -143,29 +143,6 @@ class _PausingCursor:
 
     def __getattr__(self, name):
         return getattr(self._cur, name)
-
-
-class AsyncPausingConn:
-    """The same for the web tier's AsyncConnection; ``pause`` is awaited."""
-
-    def __init__(self, conn, marker: str, pause) -> None:
-        self._conn, self._marker, self._pause = conn, marker, pause
-
-    async def __aenter__(self):
-        await self._conn.__aenter__()
-        return self
-
-    async def __aexit__(self, *exc):
-        return await self._conn.__aexit__(*exc)
-
-    async def execute(self, statement, params=None):
-        if self._pause is not None and self._marker in statement:
-            pause, self._pause = self._pause, None
-            await pause()
-        return await self._conn.execute(statement, params)
-
-    def __getattr__(self, name):
-        return getattr(self._conn, name)
 
 
 def pausing_store(dsn: str, marker: str, pause) -> PgStore:
