@@ -143,12 +143,16 @@ jobs:
             // "Item added to project" automation fills the empty Status with
             // Ready (issue #3442, run 38588244440). Every call here is safe to
             // repeat: reads, an idempotent add, and a write of the same value.
+            // But a retry waits long enough for that automation to land, so
+            // `retried` tells act() not to trust a status it reads after one.
+            let retried = false;
             async function gql(query, variables) {
               for (let attempt = 1; ; attempt++) {
                 try {
                   return await github.graphql(query, variables);
                 } catch (e) {
                   if (attempt === 3) throw e;
+                  retried = true;
                   core.warning(`GitHub API error, retrying in ${2 * attempt}s: ${e.message}`);
                   await new Promise(r => setTimeout(r, 2000 * attempt));
                 }
@@ -278,6 +282,7 @@ jobs:
                 return [`#${issue.number}`, `WOULD add to ${status}`, issue.title.slice(0, 60)];
               }
 
+              retried = false;
               const added = await gql(`
                 mutation($project: ID!, $content: ID!) {
                   addProjectV2ItemById(input: { projectId: $project, contentId: $content }) {
@@ -295,9 +300,11 @@ jobs:
 
               // Re-read rather than trusting step 1: the add closes a race
               // window, and an item that acquired a status in between was set
-              // by a human or by Claude. Do not touch it.
+              // by a human or by Claude. Do not touch it, unless a call since
+              // the add was retried: that wait outlasts the built-in
+              // automation, so the status read here may be its Ready.
               const after = await existingCard(issue);
-              if (after?.status) {
+              if (after?.status && !retried) {
                 return [`#${issue.number}`, `left in ${after.status}`, issue.title.slice(0, 60)];
               }
 
