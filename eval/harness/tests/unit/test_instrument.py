@@ -361,6 +361,16 @@ def test_a_report_function_raise_message_moves_the_hash():
     assert canonical_module(src) != canonical_module(src.replace("first wording", "second wording"))
 
 
+def test_a_keyword_to_an_external_callee_is_not_tied_to_a_nested_parameter():
+    """`sorted(xs, key=inner)` names sorted's parameter, not inner's: renaming the
+    nested helper's own parameter must not read as a change (round-2 review)."""
+    src = "def test_s(xs):\n    def inner(key):\n        return key\n    assert sorted(xs, key=inner)\n"
+    renamed = "def test_s(xs):\n    def inner(k):\n        return k\n    assert sorted(xs, key=inner)\n"
+    assert canonical_module(src) == canonical_module(renamed)
+    broken = "def test_s(xs):\n    def inner(rev):\n        return rev\n    assert sorted(xs, rev=inner)\n"
+    assert canonical_module(src) != canonical_module(broken)
+
+
 @pytest.mark.parametrize(
     "src, changed",
     [
@@ -405,14 +415,19 @@ def test_a_decode_error_from_node_reads_as_unavailable(tmp_path):
         load_tool_catalog(_build(tmp_path), run=_raises, src_dir=tmp_path / "src")
 
 
-def test_mock_mcp_survives_a_decode_error_from_node(monkeypatch):
+def test_mock_mcp_survives_a_decode_error_from_node(monkeypatch, tmp_path):
     from harness import mock_mcp
 
+    reached = []
+
     def _raises(*_a, **_k):
+        reached.append(True)
         raise UnicodeDecodeError("utf-8", b"\x97", 0, 1, "invalid start byte")
 
+    monkeypatch.setattr(mock_mcp, "_MCP_BUILD", _build(tmp_path))
     monkeypatch.setattr(mock_mcp, "_run_node_eval", _raises)
     assert mock_mcp._load_build_tool_catalog_uncached() == {}
+    assert reached, "the decode path was never exercised"
 
 
 def test_a_fixture_that_is_not_an_object_is_skipped(tmp_path):

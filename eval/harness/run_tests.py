@@ -1027,13 +1027,20 @@ def main(argv: list[str] | None = None) -> int:
     def _snapshot_for(skill: str) -> dict:
         if skill not in snapshot_cache:
             snapshot_cache[skill] = build_snapshot(skill=skill, repo_root=REPO_ROOT)
-            # Fingerprinted at the same moment as the snapshot, so a validator or
-            # tool edited mid-run is not recorded as what graded earlier tests.
-            instrument_cache[skill] = (
-                instrument_for(skill, REPO_ROOT, catalog=tool_catalog)
-                if tool_catalog is not None
-                else None
-            )
+            # Fingerprinted at the same moment as the snapshot (when the skill's
+            # first test completes), so the two describe the same tree. A failure
+            # -- a validator mid-edit that does not parse, say -- leaves the field
+            # off this log, as the catalog failure above does; it never stops a
+            # paid run.
+            instrument_cache[skill] = None
+            if tool_catalog is not None:
+                try:
+                    instrument_cache[skill] = instrument_for(skill, REPO_ROOT, catalog=tool_catalog)
+                except Exception as e:  # noqa: BLE001 -- the fingerprint must not cost the run
+                    print(
+                        f"WARNING: no instrument fingerprint for {skill}: {e!r}",
+                        file=sys.stderr,
+                    )
         return snapshot_cache[skill]
 
     def _instrument_for(skill: str, entries: list[dict]) -> dict | None:

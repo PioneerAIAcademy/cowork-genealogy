@@ -275,26 +275,34 @@ def _bound_names(fn: ast.FunctionDef | ast.AsyncFunctionDef) -> list[str]:
     return [n for n in names if n not in declared]
 
 
-def _nested_params(fn: ast.FunctionDef | ast.AsyncFunctionDef) -> set[str]:
-    """Parameter names of the functions and lambdas nested inside `fn`: a keyword
-    argument naming one of them is a reference to that binding."""
-    out: set[str] = set()
+def _nested_params(fn: ast.FunctionDef | ast.AsyncFunctionDef) -> dict[str, set[str]]:
+    """Each function nested inside `fn`, by name, with its parameter names: a
+    keyword argument on a call to it is a reference to one of those bindings."""
+    out: dict[str, set[str]] = {}
     for stmt in fn.body:
         for node in ast.walk(stmt):
-            if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef, ast.Lambda)):
+            if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)):
                 a = node.args
-                out.update(x.arg for x in (*a.posonlyargs, *a.args, *a.kwonlyargs))
+                out.setdefault(node.name, set()).update(
+                    x.arg for x in (*a.posonlyargs, *a.args, *a.kwonlyargs)
+                )
     return out
 
 
 class _Rename(ast.NodeTransformer):
-    def __init__(self, mapping: dict[str, str], keyword_names: set[str]):
+    def __init__(self, mapping: dict[str, str], nested: dict[str, set[str]]):
         self.m = mapping
-        self.keyword_names = keyword_names
+        # nested function name -> its parameter names
+        self.nested = nested
 
-    def visit_keyword(self, node: ast.keyword):
-        if node.arg in self.keyword_names:
-            node.arg = self.m.get(node.arg, node.arg)
+    def visit_Call(self, node: ast.Call):
+        # A keyword names a binding only on a call to the nested function that
+        # declares it; on any other callee it is that callee's parameter name.
+        callee = node.func.id if isinstance(node.func, ast.Name) else None
+        params = self.nested.get(callee, set())
+        for kw in node.keywords:
+            if kw.arg in params:
+                kw.arg = self.m.get(kw.arg, kw.arg)
         self.generic_visit(node)
         return node
 
@@ -374,7 +382,7 @@ def _normalise_locals(tree: ast.Module) -> None:
         mapping = {name: f"_v{i}" for i, name in enumerate(bound)}
         if not mapping:
             continue
-        renamer = _Rename(mapping, _nested_params(fn) & set(mapping))
+        renamer = _Rename(mapping, _nested_params(fn))
         fn.body = [renamer.visit(stmt) for stmt in fn.body]
 
 
