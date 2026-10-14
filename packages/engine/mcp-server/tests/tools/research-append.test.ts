@@ -9575,6 +9575,38 @@ describe("research_append — capture-pending plan item not terminal (#1226, #24
     const r: any = await researchAppend(setStatus("skipped") as any);
     expect(JSON.stringify(r.errors ?? [])).not.toContain("awaiting a capture");
   });
+
+  // The `plans` route reaches items[] directly (a `plans` update's `fields:
+  // { items }` is copied through), so the guard has to hold there too or it is
+  // one inline edit away from being bypassed — the gap EdmondOware's review
+  // flagged. `skip_category` is sent so only the capture-pending rule can fire.
+  const setItemStatusViaPlans = (status: string) => ({
+    projectPath: dir,
+    section: "plans" as const,
+    op: "update" as const,
+    entryId: "pl_001",
+    fields: {
+      items: [
+        {
+          ...seededPlanItem("pli_001"),
+          status,
+          ...(status === "skipped" ? { skip_category: "answered" } : {}),
+        },
+      ],
+    },
+  });
+
+  it("refuses 'skipped' set inline through a plans update while the capture is pending", async () => {
+    await writeProject(captureResearch("in_progress", false));
+    const errs = failure(await researchAppend(setItemStatusViaPlans("skipped") as any)).errors.join(" ");
+    expect(errs).toMatch(/pli_001/);
+    expect(errs).toMatch(/awaiting a capture/);
+  });
+
+  it("allows 'skipped' inline through a plans update once the capture has arrived", async () => {
+    await writeProject(captureResearch("in_progress", true));
+    expect(singleOk(await researchAppend(setItemStatusViaPlans("skipped") as any))).toBeTruthy();
+  });
 });
 
 

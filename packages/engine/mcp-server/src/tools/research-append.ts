@@ -2361,7 +2361,7 @@ function planItemLogAttributionInvariants(
 // A capture that arrived is a later entry, and step 6 does not carry
 // `planItemId` onto it, so an arrival is matched on `(site, url_generated)`
 // (which every external-site entry carries) under this item's id or a null one.
-function planItemCapturePendingInvariants(entry: any, research: any): string[] {
+export function planItemCapturePendingInvariants(entry: any, research: any): string[] {
   if (entry?.status !== "completed" && entry?.status !== "skipped") return [];
   const pid = entry?.id;
   // Guarded for shape rather than assumed — fires before document validation,
@@ -4080,6 +4080,11 @@ function applyOne(
           .filter((it: any) => it && it.status === "skipped")
           .map((it: any) => it.id),
       );
+      const storedStatusById = new Map<string, unknown>(
+        (Array.isArray(storedPlan?.items) ? storedPlan.items : [])
+          .filter((it: any) => it && typeof it.id === "string")
+          .map((it: any) => [it.id, it.status]),
+      );
       for (const item of Array.isArray(resultEntry?.items) ? resultEntry.items : []) {
         if (item && alreadyCompleted.has(item.id)) continue;
         invariantErrors.push(...planItemLogAttributionInvariants(item, research));
@@ -4089,6 +4094,13 @@ function applyOne(
         // no prior rationale to overwrite, so only the category clause applies.
         if (item && !alreadySkipped.has(item.id)) {
           invariantErrors.push(...planItemSkipInvariants(item, {}, true));
+        }
+        // The capture-pending guard reaches the same field for the same reason:
+        // a `skipped`/`completed` item set inline on a `plans` op would bypass
+        // the `plan_items` arm below. Gated on a genuine status change, so an
+        // item re-sent at its stored status (an append has none) is untouched.
+        if (item && storedStatusById.get(item.id) !== item.status) {
+          invariantErrors.push(...planItemCapturePendingInvariants(item, research));
         }
       }
     }
