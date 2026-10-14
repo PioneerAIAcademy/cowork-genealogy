@@ -1329,6 +1329,24 @@ def test_the_usage_limit_marker_is_live_too(monkeypatch, tmp_path):
     assert result.aborted_reason == QUOTA_ABORT_REASON
 
 
+def test_the_extra_usage_quota_prose_is_caught(monkeypatch, tmp_path):
+    """The prose an exhausted extra-usage allowance emits, in the shape PR #3312's
+    research-plan v7_2026-10-12_12-37-51 recorded it: `error` names only the SDK
+    exception and the quota text arrives as assistant text. Neither older marker
+    matches it, so seven tests were retried and logged as `error`."""
+    from harness.skill_runner import QUOTA_ABORT_REASON
+
+    result = _run_with_messages(
+        monkeypatch,
+        tmp_path,
+        [
+            _assistant_text("You're out of extra usage \u00b7 resets 3:20pm (Atlantic/Reykjavik)"),
+            _result_message(result=None, stop_reason=None),
+        ],
+    )
+    assert result.aborted_reason == QUOTA_ABORT_REASON
+
+
 def test_an_anthropic_429_body_is_not_read_as_a_subscription_quota(
     monkeypatch, tmp_path
 ):

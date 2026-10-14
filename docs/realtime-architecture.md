@@ -194,6 +194,15 @@ the full 20-retry budget would multiply that against a control plane already
 failing to answer — trading a wedge for a stampede. Two attempts, then
 `chat_error`, which `ChatPane` renders as "Chat unavailable: …".
 
+**A 410 from `/connect` is terminal, and it is not `chat_error`.** The control
+plane answers 410 for a session more than 24 hours past `projects.created`, and
+will never answer otherwise. The connection marks itself closed, never retries,
+does not reconnect on focus, and emits one `status: session_expired` frame;
+`ChatPane` replaces the composer with "This session is more than 24 hours old and
+can't be continued." It is checked before the `hidden` guard, so a refusal that
+lands in a background tab still ends the session. Pinned by the 410 cases in
+`SessionConnection.test.ts`.
+
 **Worst case the user waits about 60 seconds** before "Chat unavailable"
 appears: two 30-second bounds plus the retry delay between them. That is the
 trade against an indefinite "Connecting to the agent…" placeholder, and it is
