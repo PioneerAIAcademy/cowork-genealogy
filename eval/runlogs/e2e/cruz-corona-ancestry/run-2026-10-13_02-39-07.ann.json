@@ -1,10 +1,10 @@
 {
   "per_finding": {
-    "f1": "partial",
+    "f1": "false",
     "f2": "partial",
     "f3": "partial",
-    "f4": "partial",
-    "f5": "partial"
+    "f4": "false",
+    "f5": "false"
   },
   "notes": {
     "f1": "The correct birth registration and the exact date and place are documented in research.json, but the tree's Birth fact still says “about 1910, near Nueva Italia, Michoacán” and has no source attached. The finding was researched but not recovered into the tree.",
