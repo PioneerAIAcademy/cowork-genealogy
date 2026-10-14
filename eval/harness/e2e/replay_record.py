@@ -1,5 +1,5 @@
 """`make replay-record` — record the upstream answers `make replay-sizes`
-replays the FamilySearch and wiki tools from (PLAN-T1.4c §1.1, §1.5).
+replays the FamilySearch and wiki tools from (eval/fixtures/replay/README.md).
 
 It re-asks each committed network-tool call of the chosen runs ONCE, live, to
 one engine build, with the fetch hook (`replay_fetch.mjs`) in record mode. No

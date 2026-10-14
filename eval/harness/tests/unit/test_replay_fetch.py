@@ -1,5 +1,5 @@
 """The replay fetch hook (`e2e/replay_fetch.mjs`), run in a `node` subprocess
-with no network (PLAN-T1.4c §1.6).
+with no network.
 
 What a broken hook costs: a key that moves between two identical requests makes
 every recorded call a miss (the replay reads "stale" and measures nothing); a

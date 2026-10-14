@@ -555,7 +555,7 @@ def _check_answer(text: str, where: str) -> None:
 
 def write_hook_bootstrap(directory: Path, config: dict[str, Any]) -> str:
     """A per-invocation `--import` module that installs `replay_fetch.mjs` with
-    `config`. A temp file, not an env var (PLAN-T1.4c §1.1). Returns its URL."""
+    `config`. A temp file, not an env var. Returns its URL."""
     directory.mkdir(parents=True, exist_ok=True)
     boot = directory / "replay-hook-bootstrap.mjs"
     boot.write_text(

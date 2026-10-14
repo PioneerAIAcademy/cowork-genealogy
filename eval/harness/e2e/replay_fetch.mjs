@@ -1,5 +1,5 @@
 // replay_fetch.mjs — the fetch hook behind `make replay-sizes` (replay mode)
-// and `make replay-record` (record mode). PLAN-T1.4c §1.1.
+// and `make replay-record` (record mode). See eval/fixtures/replay/README.md.
 //
 // Loaded with `node --import <bootstrap.mjs>` OUTSIDE the engine: the bootstrap
 // imports this file and calls `install(config)`, which swaps

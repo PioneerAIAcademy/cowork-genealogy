@@ -1,4 +1,4 @@
-"""The replay-cassette privacy lint (`e2e/replay_privacy.py`) — PLAN-T1.4c §1.4, §4.
+"""The replay-cassette privacy lint (`e2e/replay_privacy.py`) — the rules are in eval/fixtures/replay/README.md.
 
 Cassettes under `eval/fixtures/replay/` hold upstream FamilySearch answers in a
 public repo. Dallan's 2026-10-06 ruling allowed that only on the premise that

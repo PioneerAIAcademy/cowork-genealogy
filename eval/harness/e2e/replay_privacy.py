@@ -17,7 +17,7 @@ person's data reaches the public repo. This module is what holds that premise.
 Default deny: an endpoint not on the allowlist taints its call, and a filter
 failure aborts the whole recording.
 
-The four rules (PLAN-T1.4c §1.4):
+The four rules (eval/fixtures/replay/README.md):
 
 1. **Endpoint allowlist** — scheme + exact host + path prefix + method.
 2. **Living-person year floor** (`recording year - 100`) — read from structured
