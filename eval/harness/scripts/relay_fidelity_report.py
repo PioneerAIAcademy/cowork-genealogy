@@ -67,6 +67,7 @@ the two drift.
 
 from __future__ import annotations
 
+import argparse
 import json
 import re
 import sys
@@ -85,16 +86,32 @@ from check_runlogs import latest_full_skill_runlog  # noqa: E402
 from harness.loader import InvalidTestError, load_test  # noqa: E402
 from harness.skill_runner import strip_agent_return_trailer  # noqa: E402
 from harness.snapshot import hash_file  # noqa: E402
+from harness.since_window import filter_since, parse_since  # noqa: E402
 
 # Module constants so the unit test can point all three at a fixture tree.
 RUNLOGS_ROOT = REPO / "eval" / "runlogs" / "unit"
 TESTS_ROOT = REPO / "eval" / "tests" / "unit"
 AGENTS_ROOT = REPO / "packages" / "engine" / "plugin" / "agents"
+E2E_RUNLOGS_ROOT = REPO / "eval" / "runlogs" / "e2e"
+
+# A run log older than this records an `Agent` return cut at 500 chars, and a
+# narration with no `thread` key. Both are un-attributable rather than clean:
+# scoring them would read the LOG's truncation, and the subagent's own
+# messages, as the main thread's relay. See e2e/result.py entry 8.
+MIN_PRODUCTION_SCHEMA_VERSION = 8
+PRODUCTION_LABEL = "production arm — real routes, e2e corpus"
 
 # Ported from agent-return-contract.test.ts. Levels 2-4 because that test
 # accepts any of them, though every shipped agent uses `###`.
 HEADING = re.compile(r"^#{2,4}\s+`summary_for_user`\s*$", re.M)
 _FENCE = re.compile(r"(?s)```.*?```")
+
+# Emitted by `_summarize_response` when it cuts a string. Its presence means
+# the LOG truncated the return, so a comparison would measure the log.
+TRUNCATION_MARKER = "[truncated by harness for prompt size;"
+
+# The run log itself, not its `.ann.json` or `.final-*.json` siblings.
+_RUN_LOG_NAME = re.compile(r"^run-[0-9_\-]+\.json$")
 
 DIRECT_LABEL = "direct arm — DISPATCHER fidelity, not production"
 ROUTED_LABEL = "routed arm — by calling skill"
@@ -320,6 +337,121 @@ def compute_counts(
     return suites
 
 
+def compute_production_counts(
+    e2e_root: Path, *, cutoff: Any = None
+) -> dict[str, Any]:
+    """Relay fidelity on a REAL route: a subagent's return against what the
+    main thread said afterwards.
+
+    Reports its own denominators. Every way this can come back empty also
+    produces a cheerful zero -- no logs, no `Agent` calls, every log below
+    `MIN_PRODUCTION_SCHEMA_VERSION` -- and a silent zero here reads as "every
+    relay was faithful", which is this report's own failure mode pointed
+    backwards. `eligible` is the number the percentages are OF; when it is 0
+    the caller must say so rather than print 0%.
+    """
+    if not e2e_root.exists():
+        raise FileNotFoundError(f"e2e runlog root not found: {e2e_root}")
+
+    out: dict[str, Any] = {
+        "logs_seen": 0,
+        "logs_too_old_schema": 0,
+        "logs_no_narration": 0,
+        "agent_calls": 0,
+        "returns_truncated": 0,
+        "eligible": 0,
+        "exact": 0,
+        "normalized": 0,
+        "dropped": 0,
+    }
+    # `run-*.json` also matches `run-<ts>.ann.json` and the two
+    # `run-<ts>.final-*.json` siblings; a substring filter on ".ann." leaves the
+    # finals in and inflates `logs_seen` threefold (611 against 203 on today's
+    # corpus). Match the whole name instead.
+    paths = sorted(p for p in e2e_root.glob("*/run-*.json") if _RUN_LOG_NAME.match(p.name))
+    if cutoff is not None:
+        paths = filter_since(paths, cutoff)
+
+    for path in paths:
+        try:
+            data = json.loads(path.read_text(encoding="utf-8"))
+        except (OSError, json.JSONDecodeError, UnicodeDecodeError):
+            # A log that cannot be read is skipped, not fatal: this is a
+            # report over a corpus, and one bad file must not cost the rest.
+            # `logs_seen` is incremented only below, so an unreadable log
+            # never pads a denominator either.
+            continue
+        out["logs_seen"] += 1
+
+        if int(data.get("harness_schema_version") or 0) < MIN_PRODUCTION_SCHEMA_VERSION:
+            out["logs_too_old_schema"] += 1
+            continue
+
+        # Main-thread prose only. Selected on `kind` AND `thread`, never on the
+        # ABSENCE of `thread`: the nine harness/blocked append sites carry no
+        # message and so no tag, and treating untagged as main would fold a
+        # subagent's own words into the relay it is being compared against.
+        relay = " ".join(
+            n.get("text") or ""
+            for n in (data.get("narration") or [])
+            if n.get("kind") == "assistant" and n.get("thread") == "main"
+        )
+        if not relay.strip():
+            out["logs_no_narration"] += 1
+
+        for call in data.get("tool_calls") or []:
+            if not _is_agent_call(call.get("tool")):
+                continue
+            out["agent_calls"] += 1
+            raw = _agent_return_text(call.get("response_summary"))
+            if raw is None:
+                continue
+            if TRUNCATION_MARKER in raw:
+                # The log cut it; comparing would measure the log, not the relay.
+                out["returns_truncated"] += 1
+                continue
+            tail = tail_after_final_rule(raw) or raw
+            if not tail.strip() or not relay.strip():
+                continue
+            out["eligible"] += 1
+            if tail.strip() in relay:
+                out["exact"] += 1
+                out["normalized"] += 1
+            elif normalize(tail) in normalize(relay):
+                out["normalized"] += 1
+            else:
+                out["dropped"] += 1
+    return out
+
+
+def _is_agent_call(tool: Any) -> bool:
+    """Suffix match, as the orchestrator does, so every server spelling resolves."""
+    return isinstance(tool, str) and (tool.endswith("Agent") or tool.endswith("Task"))
+
+
+def _agent_return_text(summary: Any) -> str | None:
+    """The agent's own return out of a recorded `response_summary`.
+
+    An `Agent` result is two text blocks -- the return, then an
+    `agentId:/<usage>` announcement, last in all 845 corpus cases -- so take
+    the FIRST text block, not the last, and strip the runtime trailer the unit
+    side strips too.
+    """
+    if not isinstance(summary, str):
+        return None
+    try:
+        parsed = json.loads(summary)
+    except json.JSONDecodeError:
+        return None
+    blocks = parsed if isinstance(parsed, list) else None
+    if not blocks:
+        return None
+    for block in blocks:
+        if isinstance(block, dict) and block.get("type") == "text":
+            return strip_agent_return_trailer(block.get("text") or "")
+    return None
+
+
 def format_report(suites: dict[str, Any]) -> str:
     """Human-readable rendering. Timestamps live here, never in the counts."""
     out: list[str] = []
@@ -369,6 +501,38 @@ def format_report(suites: dict[str, Any]) -> str:
     return "\n".join(out)
 
 
+def format_production_report(c: dict[str, Any]) -> str:
+    """Denominators first. Every way this comes back empty also produces a
+    clean-looking zero, so the counts that explain an empty run are printed
+    whether or not anything was scored."""
+    lines = [
+        PRODUCTION_LABEL,
+        "=" * len(PRODUCTION_LABEL),
+        f"  e2e run logs read            {c['logs_seen']}",
+        f"    below schema v{MIN_PRODUCTION_SCHEMA_VERSION} (unscorable)   {c['logs_too_old_schema']}",
+        f"    no main-thread narration   {c['logs_no_narration']}",
+        f"  Agent calls                  {c['agent_calls']}",
+        f"    return truncated by the log {c['returns_truncated']}",
+        f"  SCORED (eligible)            {c['eligible']}",
+    ]
+    if not c["eligible"]:
+        lines += [
+            "",
+            "  Nothing scored. That is NOT a clean result — read the lines above",
+            f"  for which reason. A log below v{MIN_PRODUCTION_SCHEMA_VERSION} records an Agent return cut at",
+            "  500 chars and a narration with no `thread` tag; scoring either would",
+            "  measure this harness rather than the relay.",
+        ]
+        return "\n".join(lines)
+    pct = lambda n: f"{100 * n / c['eligible']:.0f}%"  # noqa: E731
+    lines += [
+        f"    relayed verbatim           {c['exact']} ({pct(c['exact'])})",
+        f"    survives normalization     {c['normalized']} ({pct(c['normalized'])})",
+        f"    dropped by the relay       {c['dropped']} ({pct(c['dropped'])})",
+    ]
+    return "\n".join(lines)
+
+
 def main() -> int:
     # The labels carry an em dash, and the genealogist team runs Windows where
     # the console is cp1252 -- without this the report dies with
@@ -378,6 +542,19 @@ def main() -> int:
     if hasattr(sys.stdout, "reconfigure"):
         sys.stdout.reconfigure(encoding="utf-8")
         sys.stderr.reconfigure(encoding="utf-8")
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument(
+        "--production",
+        action="store_true",
+        help="relay fidelity on real e2e routes instead of the unit dispatcher",
+    )
+    parser.add_argument("--since", type=parse_since, default=None)
+    args = parser.parse_args()
+
+    if args.production:
+        counts = compute_production_counts(E2E_RUNLOGS_ROOT, cutoff=args.since)
+        print(format_production_report(counts))
+        return 0
     print(format_report(compute_counts()))
     return 0
 

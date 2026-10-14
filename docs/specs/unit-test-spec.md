@@ -637,6 +637,13 @@ annotations, which key on `(test_id, dimension_source, dimension_name)`.
 > about the harness.) `make unit-relay-fidelity` measures it offline over the
 > committed run logs instead — a report, never a gate, whose direct block is
 > dispatcher fidelity rather than a statement about production.
+> `make e2e-relay-fidelity` is the production counterpart, over the committed
+> e2e corpus: it scores a subagent's full return against main-thread narration
+> on a real route. A run log below `harness_schema_version` 8 is reported
+> **unscorable rather than clean** — such a log records the return cut at 500
+> characters and a narration with no `thread` tag, so scoring it would read
+> this harness's own truncation, and a subagent's own words, as the relay's
+> work.
 
 **A converted suite is the one case where the direct test keeps the original
 `test.id`.** Once a skill is deleted outright rather than thinned into a router
