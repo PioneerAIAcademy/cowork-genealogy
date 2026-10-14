@@ -28,17 +28,29 @@ match strength.
 
 ## Notes for reviewers
 
-**DRAFT PENDING ADJUDICATION.** This fixture comes from a hint batch
-(`filtered-list-samples-3.csv` row 9, `hint-samples.csv` row 345,
-flags `adds_father,adds_mother,adds_birth,adds_christening`, confidence 3) in which roughly half the hint records are
-**false matches**, and the authors do not know which.
-`expected-findings.json` was transcribed from the hint record — "England, Births and Christenings, 1538-1975", a birth entry for Katharine Ganden Smith born 12 July 1831 at New Church Street, Bermondsey, Surrey, daughter of James Smith and Mary Ann Hunt, with Mary Ann's father indexed as Philip Hunt.
-The genealogist + developer teams must decide (a) true match — keep the
-findings; (b) different answer — edit `expected-findings.json`; or (c) no
-findable answer — replace the findings with a `"polarity": "avoid"` guard
-naming the July 1831 birth and the parents James Smith and Mary Ann Hunt, plus a `required` finding that the report documents
-the rejection.
+**Resolved 2026-10-14: true match.** The hint record (`ark:/61903/1:1:C6B4-MMW2`) is the birth of tree person Katherine Ganden Smith `GLPD-4GL`. Her nonconformist birth entry gives 12 July 1831, New Church Street, Bermondsey, Surrey, and names her parents as James Smith and Mary Ann Hunt. The identity call was made by the assigned genealogist (@Emruthwill). Retrieval was tool-assisted: `packages/engine/mcp-server/dev/try-record-read.ts` and `try-record-search.ts` against live FamilySearch, then the genealogist opened each record on familysearch.org. The call rests on the indexes alone. No page image was read, so the same-page image check did not apply, and `image_basis` is off.
 
-A strong candidate on the name alone. "Ganden" is a rare middle name, and the tree's only source for her, the 1851 marriage index entry (`ark:/61903/1:1:2D3B-P9Q`), spells her exactly as this entry does, Katharine Ganden Smith; a July 1831 birth makes her about 20 at that marriage and 20 at Kate's birth in April 1852. The place fits too: her husband was christened in Bermondsey in 1828 and their children were born next door in Camberwell. That marriage index is the only record the tree cites for her, so nothing here is a re-index of this birth.
+**What decided it:**
+- **Rare name, exact spelling.** The tree's only source for her, the 1851 Q3 Camberwell marriage index (`ark:/61903/1:1:2D3B-P9Q`, vol. 4 p. 44), spells her "Katharine Ganden Smith", exactly as the hint does. The same index lists Richard Henry Cullen as a possible spouse (`ark:/61903/1:1:2D3T-HB9`), which is consistent with the tree. No other Katharine or Katherine Ganden, Garden or Gauden Smith turned up in the searches.
+- **The same birth, indexed twice more.** "England and Wales, Non-Conformist Record Indexes (RG4-8)" carries:
+  - Katherine **Garden** Smith, born 12 Jul 1831, with parents James Smith and Mary Ann (`ark:/61903/1:1:FQ51-CPJ`). Its place, "Cripplegate, London", is where Dr Williams's Library birth registry stood (Redcross Street), not the birthplace.
+  - Katherine **Gauden** Smith, baptised 10 Aug 1831 at Bermondsey, with parents James Smith and Mary Ann (`ark:/61903/1:1:F738-LZR`).
+  - Ganden, Garden and Gauden are readings of one written name.
+- **Age and place fit.** A July 1831 birth makes her 19 or 20 at the 1851 marriage, and 20 at daughter Kate's birth in April 1852. Bermondsey is where her husband was christened in 1828, and their children were born next door in Camberwell.
+- **Not a re-index.** The marriage index is the only record the tree cites for her, so the hint adds a new event rather than re-indexing an attached source.
 
-What is thin is the parentage: James Smith and Mary Ann Hunt are common names, and the tree has no parents to test them against. The `adds_christening` flag is a template artefact: the index carries a Christening fact with no date and only "England" as its place, so nobody should add a christening from it; the "0891" before the street in the indexed birthplace looks like an entry or house number, not a place. A street address, a birth date and the mother's father named is the shape of a nonconformist birth registry (Dr Williams's Library style), which is worth confirming on the image. The discriminating check is the 1851 marriage certificate behind the tree's index entry: it names the bride's father. James Smith would settle the parentage; a different father would leave the birth plausible on the name but break the parents.
+**What is thin.** The three birth and baptism indexes are probably all derived from the same nonconformist register, so they corroborate each other's reading but are not independent evidence of parentage. The mother's surname, Hunt, comes from the Births and Christenings index alone; both RG4 indexes give only "Mary Ann". Nothing found names the bride's father independently. Searches for these returned nothing:
+- a Camberwell church marriage for Richard Cullen and Katharine Smith in 1851;
+- a census household or a death for Mrs Katherine Cullen, 1851–1911;
+- an 1851–1871 census for Richard (Henry) Cullen, born 1828, with a wife Katherine.
+
+The GRO certificate behind the marriage index would name her father, but it is not on FamilySearch. The identity is supported; the parent relationships remain less certain than the birth.
+
+**What changed and why.** The draft's findings are kept in substance, but three edits were made, which goes beyond the skill's outcome-1 rule of appending an ark:
+- **f1's description now gives only the date and Bermondsey.** The street and the parents were taken out of it. A street-level place would make the finding's own "Bermondsey, Surrey, England" read as a broader place than the claim. The parents would turn into f1 components, so missing them would fail f1 and f2 together.
+- **Philip Hunt was dropped from f2.** The research question asks only for her parents, and only the Births and Christenings index names Mary Ann's father.
+- **`supporting_sources` now carry the hint's ark and both RG4 arks.**
+
+**Template artefacts.** Two things in the hint are not facts to add:
+- The hint's `adds_christening` flag comes from a Christening fact with no date and only "England" as its place, so nobody should add a christening from it. The real baptism is the RG4 one, 10 Aug 1831 at Bermondsey.
+- The "0891" before the street in the indexed birthplace is an entry or house number, not a place.

@@ -15,5 +15,5 @@
     "judge": "claude-haiku-4-5-20251001"
   },
   "difficulty": "medium",
-  "notes": "Record-hint fixture (filtered-list-samples-3.csv row 9, hint-samples.csv row 345, flags adds_father/adds_mother/adds_birth/adds_christening, confidence 3). Draft transcribed from an 1831 Bermondsey birth entry; unverified."
+  "notes": "Record-hint fixture (filtered-list-samples-3.csv row 9, hint-samples.csv row 345, flags adds_father/adds_mother/adds_birth/adds_christening, confidence 3). Resolved 2026-10-14 (#3332): true match. The 12 Jul 1831 Bermondsey nonconformist birth is corroborated by the RG4 indexes of the same entry's birth (ark:/61903/1:1:FQ51-CPJ) and its 10 Aug 1831 Bermondsey baptism (ark:/61903/1:1:F738-LZR); decided from the indexes, image_basis off."
 }
