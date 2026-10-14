@@ -806,7 +806,7 @@ because the field carries the persona's own role on 14 of 1844 assertions
 (`tree-materialization-spec.md`, the 2026-09-07 rejection). Comparing the prose
 needs no table and checks against the layer a human reads. Two further
 candidates do not reach: `record_persona_id` plus the sidecar GedcomX is null
-for full-text-, image-, PDF- and `record_read`-sourced assertions, and the tree
+for full-text-, image- and PDF-sourced assertions (and unstaged `record_read`), and the tree
 does not exist at extraction time. Revisit with a measurement of both, not with
 an assumption that one is impossible.
 
