@@ -1,19 +1,11 @@
 {
   "run_log": "v4.json",
-  "annotator": "83524248+taiwo-stack@users.noreply.github.com",
+  "annotator": "mercybocumy2000@gmail.com",
   "corrections": [
     {
-      "test_id": "ut_question_selection_d05",
+      "test_id": "ut_question_selection_d01",
       "dimension_source": "base",
-      "dimension_name": "Completeness",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_question_selection_d05",
-      "dimension_source": "base",
-      "dimension_name": "Tool Arguments",
+      "dimension_name": "Correctness",
       "llm_score": 3,
       "corrected_score": 3,
       "comment": null
@@ -21,7 +13,15 @@
     {
       "test_id": "ut_question_selection_d01",
       "dimension_source": "base",
-      "dimension_name": "Correctness",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_question_selection_d01",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
       "llm_score": 3,
       "corrected_score": 3,
       "comment": null
@@ -35,38 +35,6 @@
       "comment": null
     },
     {
-      "test_id": "ut_question_selection_d01",
-      "dimension_source": "base",
-      "dimension_name": "Tool Arguments",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_question_selection_d01",
-      "dimension_source": "base",
-      "dimension_name": "Completeness",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_question_selection_001",
-      "dimension_source": "base",
-      "dimension_name": "Completeness",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_question_selection_001",
-      "dimension_source": "base",
-      "dimension_name": "Tool Arguments",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
       "test_id": "ut_question_selection_001",
       "dimension_source": "rubric",
       "dimension_name": "Question specificity",
@@ -77,6 +45,22 @@
     {
       "test_id": "ut_question_selection_001",
       "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_question_selection_001",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_question_selection_001",
+      "dimension_source": "base",
       "dimension_name": "Correctness",
       "llm_score": 3,
       "corrected_score": 3,
@@ -116,14 +100,6 @@
     },
     {
       "test_id": "ut_question_selection_005",
-      "dimension_source": "base",
-      "dimension_name": "Tool Arguments",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_question_selection_005",
       "dimension_source": "rubric",
       "dimension_name": "Question specificity",
       "llm_score": 3,
@@ -133,7 +109,7 @@
     {
       "test_id": "ut_question_selection_005",
       "dimension_source": "base",
-      "dimension_name": "Correctness",
+      "dimension_name": "Tool Arguments",
       "llm_score": 3,
       "corrected_score": 3,
       "comment": null
@@ -147,7 +123,7 @@
       "comment": null
     },
     {
-      "test_id": "ut_question_selection_016",
+      "test_id": "ut_question_selection_005",
       "dimension_source": "base",
       "dimension_name": "Correctness",
       "llm_score": 3,
@@ -155,7 +131,15 @@
       "comment": null
     },
     {
-      "test_id": "ut_question_selection_016",
+      "test_id": "ut_question_selection_006",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_question_selection_006",
       "dimension_source": "base",
       "dimension_name": "Completeness",
       "llm_score": 3,
@@ -163,7 +147,7 @@
       "comment": null
     },
     {
-      "test_id": "ut_question_selection_016",
+      "test_id": "ut_question_selection_006",
       "dimension_source": "base",
       "dimension_name": "Tool Arguments",
       "llm_score": 3,
@@ -171,28 +155,12 @@
       "comment": null
     },
     {
-      "test_id": "ut_question_selection_016",
+      "test_id": "ut_question_selection_006",
       "dimension_source": "rubric",
       "dimension_name": "Question specificity",
       "llm_score": 3,
       "corrected_score": 3,
       "comment": null
-    },
-    {
-      "test_id": "ut_question_selection_d05",
-      "dimension_source": "rubric",
-      "dimension_name": "Question specificity",
-      "llm_score": 2,
-      "corrected_score": 2,
-      "comment": "Agree with 2. Checked the run log: the question written to research.json is \"When and from where did Patrick Flynn (born ca. 1845 in Pennsylvania, died 1908 in Schuylkill County, PA) relocate to Schuylkill County?\". That is two unknowns (date and origin) in one question, and this test's judge_context says outright that \"When and from where did they arrive?\" scores Question specificity down. The decomposition itself was right: it asks about the migration, not the reason, so the motivation check passes. Only the single-unknown rule is missed. Small correction to the rationale: the question names Patrick, his dates and Schuylkill County but no time period; \"1850–1880\" appears only in the rationale field."
-    },
-    {
-      "test_id": "ut_question_selection_d05",
-      "dimension_source": "base",
-      "dimension_name": "Correctness",
-      "llm_score": 2,
-      "corrected_score": 3,
-      "comment": "Changed 2 to3. Checked the written question (\"When and from where did Patrick Flynn … relocate to Schuylkill County?\") against this test's judge_context. For Correctness, the judge_context names two failures: asking for the reason itself (\"Why did they move?\" or a yes/no cause hypothesis), or capping the evidence to the 1850–1880 window. The question does neither. It is a correct event question about the migration, which is the decomposition the ruling on issue #2003 asks for, and the motivation check passed. The two-unknowns problem is real, but the judge_context assigns it to Question specificity (\"is two facts and scores Question specificity down\"), where it is already scored 2. Scoring it here as well counts the same flaw twice.\n"
     }
   ]
 }

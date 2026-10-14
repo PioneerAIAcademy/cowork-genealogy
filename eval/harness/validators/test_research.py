@@ -16,8 +16,9 @@ from __future__ import annotations
 
 import pytest
 
+from validators_lib import bare_tool_name
 from validators_lib import new_log_entries as _new_log_entries
-from validators_lib import check_no_exhaustive_declaration
+from validators_lib import check_no_gate_stop
 
 _ROUTES_TO_PREFIX = "routes-to:"
 
@@ -416,17 +417,16 @@ def test_reads_attachments_before_searching(
 # ── Moved from test_research_exhaustiveness.py (issue #2738) ───────────
 
 
-def test_no_exhaustive_declaration(before_state, after_state, test):
+def test_no_gate_stop(before_state, after_state, test):
     """Tag-gated: when the test expects the router to decline an
     exhaustiveness request (near-miss negative), no question should
-    transition to `exhaustive_declared` or flip `declared` to true."""
+    transition to `exhaustive_declared` or write a stop-gate `stopped_because`."""
     if "no-exhaustive-declaration" not in test.get("tags", []):
         pytest.skip("not a no-exhaustive-declaration scenario")
     if before_state.get("research_json") is None or after_state.get("research_json") is None:
         pytest.skip("missing research.json for diff")
-    bad = check_no_exhaustive_declaration(before_state, after_state)
-    assert not bad, "Unexpected declaration:\n  - " + "\n  - ".join(bad)
-
+    bad = check_no_gate_stop(before_state, after_state)
+    assert not bad, "Unexpected stop-gate write:\n  - " + "\n  - ".join(bad)
 
 _DELIVERS_PREFIX = "delivers:"
 
@@ -481,7 +481,6 @@ def test_every_bounded_deliverable_is_handed_off(skills_invoked, builtin_tool_ca
         "path, which a bounded request must not enter."
     )
 
-
 # ---------------------------------------------------------------------------
 # `negative-status-question` tag (issue #3112)
 # ---------------------------------------------------------------------------
@@ -499,10 +498,6 @@ _PROJECT_ID_PREFIXES = (
 _PROJECT_ID_RE = re.compile(
     r"\b(?:" + "|".join(re.escape(p) for p in _PROJECT_ID_PREFIXES) + r")\d+\b"
 )
-
-
-def _tool_bare_name(call: dict) -> str:
-    return (call.get("tool") or "").split("__")[-1]
 
 
 def test_status_question_answered_from_project_context_only(
@@ -537,7 +532,7 @@ def test_status_question_answered_from_project_context_only(
         pytest.skip("not a negative-status-question scenario")
 
     # 1. project_context was called.
-    pc_calls = [c for c in (tool_calls or []) if _tool_bare_name(c) == "project_context"]
+    pc_calls = [c for c in (tool_calls or []) if bare_tool_name(str(c.get("tool") or "")) == "project_context"]
     assert pc_calls, (
         "status question must call project_context — the tool's description "
         "instructs the main thread to answer from it"
@@ -564,7 +559,7 @@ def test_status_question_answered_from_project_context_only(
     )
 
     # 4. No research_append write.
-    appends = [c for c in (tool_calls or []) if _tool_bare_name(c) == "research_append"]
+    appends = [c for c in (tool_calls or []) if bare_tool_name(str(c.get("tool") or "")) == "research_append"]
     assert not appends, (
         "status question must not write to research.json; got "
         f"{len(appends)} research_append call(s)"
@@ -576,4 +571,77 @@ def test_status_question_answered_from_project_context_only(
     assert not hits, (
         "status answer must contain no project identifiers; found: "
         f"{sorted(set(hits))}"
+    )
+
+
+_ENDS_WITH_DELIVERY_TAG = "ends-with-delivery"
+_DELIVERED_TOOL = "research_delivered"
+
+
+def test_a_bounded_turn_ends_with_the_delivery_signal(tool_calls, test):
+    """Tag-gated (``ends-with-delivery``). Issue #2813 item 1, the enforcement half.
+
+    The skill body telling the model to "end your turn" is not what ends it. On the
+    hosted plane an SDK Stop hook VETOES a voluntary stop while the project objective
+    is incomplete and nudges the agent onward; the only arm that lets a bounded turn
+    stop is `delivered`, set when the model calls `research_delivered`
+    (`apps/server/app/agent/real_agent.py`, `should_continue_run`). A bounded turn that
+    ends without the call is answered and then nudged back into more research -- the
+    alpha report behind this test.
+
+    Gated on its own tag, NOT on `bounded-request`: `ut_research_023` carries that tag
+    and is the `--autonomous` carve-out, where the router must run the job and must NOT
+    deliver. One tag for "is bounded", another for "must end with the signal".
+
+    Nothing asserted this before, and the tool was advertised nowhere in this harness,
+    so every unit run graded the skill on prose it had no way to act on.
+    """
+    tags = test.get("tags") or []
+    if _ENDS_WITH_DELIVERY_TAG not in tags:
+        pytest.skip(f"not an {_ENDS_WITH_DELIVERY_TAG} test")
+
+    # `bare_tool_name(...) == `, not `.endswith(...)`: the suffix form accepts a
+    # LOOKALIKE -- `mcp__genealogy__not_research_delivered` ends with the name and
+    # satisfied this. The helper strips whichever of the three server spellings the
+    # run exposed, so all of them and the bare name still match (clack391, #3372).
+    first = next(
+        (i for i, c in enumerate(tool_calls)
+         if bare_tool_name(str(c.get("tool", ""))) == _DELIVERED_TOOL),
+        None,
+    )
+    assert first is not None, (
+        f"a bounded turn must end by calling `{_DELIVERED_TOOL}`; it never did. "
+        f"Tools called: {sorted({str(c.get('tool')) for c in tool_calls})}. "
+        "Without it the hosted PreToolUse arm never halts the turn, the nudge arm sees an "
+        "incomplete objective, and the agent is pushed on into more research -- which is "
+        "what the researcher reports as 'it would not stop'."
+    )
+
+    # The FIRST call, and no MCP call after it. `tool_calls` is the mock's MCP dispatch
+    # log only, so a built-in `Skill`/`Agent` hand-off AFTER the delivery is invisible
+    # here -- seeing it needs a shared order across both lists, which neither carries.
+    # The hosted arm halts on the first MAIN-THREAD
+    # call, so that is where the turn actually ends and whose summary the researcher
+    # reads. Asserting only "called somewhere" accepted
+    # research_delivered -> record_search -> research_append: deliver-then-keep-
+    # researching, the exact regression this test exists to catch, invisible here because
+    # the tool is inert in this harness.
+    after = [str(c.get("tool")) for c in tool_calls[first + 1:]]
+    assert not after, (
+        f"`{_DELIVERED_TOOL}` must be the LAST tool call of the turn; {len(after)} "
+        f"follow it: {after}. On the hosted plane the first main-thread call halts the "
+        "turn, so anything queued after it never runs and never reaches the researcher."
+    )
+
+    # `[first]`, though the assertion above makes it provably the same element as
+    # `[-1]`: no input can distinguish the two once "nothing follows it" holds, and
+    # swapping them reds no test. Written as `first` because it states the rule the
+    # hosted plane actually follows -- it halts on the FIRST main-thread call -- and
+    # it stays correct if the last-call assertion is ever relaxed.
+    summary = (tool_calls[first].get("args") or {}).get("summary")
+    assert isinstance(summary, str) and summary.strip(), (
+        f"`{_DELIVERED_TOOL}` needs a one-sentence summary naming what was delivered; "
+        f"got {summary!r}. Read from the FIRST call, which is the one the hosted plane "
+        "halts on and puts in front of the stop reason -- an empty summary there is what "
+        "the researcher reads, however well-formed a later call might be."
     )

@@ -21,13 +21,14 @@
       "unblocks": [],
       "resolved": null,
       "resolution_assertion_ids": [],
-      "exhaustive_declaration": {
-        "declared": false,
+      "created": "2026-06-01",
+      "search_stop": {
+        "stopped_because": null,
         "justification": null,
         "log_entry_ids": [],
-        "stop_criteria": null
-      },
-      "created": "2026-06-01"
+        "stop_criteria": null,
+        "not_reached": []
+      }
     }
   ],
   "plans": [

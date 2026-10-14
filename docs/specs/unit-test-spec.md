@@ -192,6 +192,7 @@ Format:
 | `description` | string | yes | Human-readable description for the UI dropdown |
 | `args` | object | yes | Argument-match predicate AND grading target. Keys are dotted paths into the tool call's `args` object; values are exact-match scalars or, if prefixed with `~`, case-insensitive substring matches. All keys must match for the fixture to fire during dispatch. The LLM judge also reads this block as the canonical expected args for the **Tool Arguments** base dimension (Section 7) |
 | `response` | object | yes | The exact JSON response the harness returns when this tool is called |
+| `is_error` | boolean | no | `true` marks a thrown-error fixture: the harness returns `response` with `is_error` set, as production's catch arms set `isError: true` beside `{error}`. Requires `response` to be exactly `{"error": "<message>"}`; the harness rejects any other shape. Default `false` |
 
 **Match semantics.** When the skill calls a tool, the harness selects a response in this order:
 
@@ -204,7 +205,7 @@ A fixture's `args` block is **always required and non-empty.** It serves two pur
 
 **Error fixtures.** To test how a skill handles error responses (auth failure, upstream 5xx, malformed response), set `response` to the error envelope the real MCP tool would return. The harness returns whatever object is in `response` verbatim — there is no separate "error" mode.
 
-**The failure envelope is one key, `error`, holding the message string.** Every dispatch arm in `src/server.ts` catches identically and returns `{"error": <the thrown message>}`, and no arm produces any other shape for a THROWN error. A companion `message`, `status` or `code` key is therefore not a shape any tool can produce, and the fixture-shape check below rejects it. (The tools in `OK_FALSE_IS_FAILURE` are a separate case: they report an *expected* failure by returning `{ok: false, reason, errors}`, which `src/tool-result.ts` turns into `isError`. They are not all writers, and most of them still re-throw an unexpected error into the envelope above. The one fixture-served member, `external_links_search`, never returns that shape — it fails by throwing — so no fixture should carry it either.) Note also that production sets `isError: true` alongside `{error}` and a fixture-served response never does, so an error fixture exercises the body and not the flag:
+**The failure envelope is one key, `error`, holding the message string.** Every dispatch arm in `src/server.ts` catches identically and returns `{"error": <the thrown message>}`, and no arm produces any other shape for a THROWN error. A companion `message`, `status` or `code` key is therefore not a shape any tool can produce, and the fixture-shape check below rejects it. (The tools in `OK_FALSE_IS_FAILURE` are a separate case: they report an *expected* failure by returning `{ok: false, reason, errors}`, which `src/tool-result.ts` turns into `isError`. They are not all writers, and most of them still re-throw an unexpected error into the envelope above. The one fixture-served member, `external_links_search`, never returns that shape — it fails by throwing — so no fixture should carry it either.) Note also that production sets `isError: true` alongside `{error}`, and a fixture-served response carries the flag only when the fixture sets `is_error: true`. Without it an error fixture exercises the body and not the flag. The flag is opt-in so the existing error fixtures keep the envelope their runs were graded on:
 
 ```json
 // auth failure
@@ -587,7 +588,7 @@ The machine-readable schema lives at [`docs/specs/schemas/unit-test.schema.json`
 | `name` | string | yes | Short human-readable name shown in the test list view |
 | `type` | string | yes | `"positive"` or `"negative"`. Determines which other fields are present |
 | `description` | string | yes | 1-2 sentences explaining what this test verifies and why it matters |
-| `tags` | string[] | yes | Freeform tags for filtering and grouping. May be empty. The UI uses these for filtering the test list. Useful tag dimensions: record type (`census`, `vital-record`, `probate`), time period (`1850`, `1860`), GPS concept (`informant-weighting`, `independence`, `negative-evidence`), test pattern (`near-miss`, `multi-person`, `stateless`) |
+| `tags` | string[] | yes | Freeform tags for filtering and grouping. May be empty. The UI uses these for filtering the test list. Useful tag dimensions: record type (`census`, `vital-record`, `probate`), time period (`1850`, `1860`), GPS concept (`informant-weighting`, `independence`, `negative-evidence`), test pattern (`near-miss`, `multi-person`, `stateless`). **Some tags are not freeform — they GATE a validator** and change what is asserted. `routes-to:<skill>` (the first hand-off), `delivers:<skill>` (one per deliverable on a compound bounded ask) and `ends-with-delivery` (the turn must end by calling `research_delivered`) are examples, not the list: `attached-first` gates one too, and several of the record-type tags above do double duty. Grep the skill's validator file for `tags` before assuming a tag is inert. A gating tag is an explicit opt-in, never inferred from a neighbour: `ends-with-delivery` is deliberately separate from `bounded-request` because `ut_research_023` is bounded in shape yet enters with `--autonomous`, where running the job is correct and delivering is the failure. Adding a gating tag to a test is a behavioural change, and `tags` is **not** cosmetic to the snapshot: it selects validators and changes outcome computation, so editing one stales the run log |
 | `holdout` | boolean | no | `false` (default) or `true`. Holds this test out of the set `/improve-skill` forms edits from, so a fix can be judged against cases it was not written from. The harness runs holdout tests like any other; the flag governs only the improver — `gate-skill` **no longer reads it** (see the note below this table). Mark ~2-3 of a skill's tests holdout (diverse, representative ones — not the easy ones), and keep them stable across iterations. See `docs/skill-lifecycle.md` |
 | `expected_outcome` | string | no | **Retired (lead, 2026-10-06): add no new `"xfail"`.** `check_runlogs.py` rule 10 blocks any PR that touches a skill still carrying one, so the committed markers go when their skill is next edited, and rule 6 no longer suppresses a marked failure. That PR makes the test pass. If its fix belongs to another open issue, delete the test file instead (keep its scenario and MCP fixtures) and add "restore `<test id>` from git (deleted in PR #N) and make it pass 3 of 3" to that issue's done-when, naming any validator the deletion leaves with no test (lead, 2026-10-06). `"pass"` (default) or `"xfail"`; `run_tests.py` alone still reads a marked failure as suppressed in its exit code. |
 | `xfail_reason` | string | conditional | Required when `expected_outcome` is `"xfail"`. Brief explanation, ideally with an issue link and a removal condition (e.g., "blocked on <issue link>; remove when fixed") |
@@ -859,7 +860,7 @@ that is the measured production failure mode the arm exists to catch — and it 
 not a synthetic shape: of the 11 real orchestrator delegations to a paired agent
 in the committed e2e corpus, most carry a caller-written research-state summary
 and one instructs the agent outright to *'verify all seven criteria now pass and
-issue the exhaustive_declaration'*. Write the delegation as that caller writes
+issue the search_stop'*. Write the delegation as that caller writes
 one: the arguments the routing skill specifies (`questionId`, `projectPath`, and
 the like), plus whatever framing the twin is testing the agent's resistance to.
 A `<workspace>` placeholder in a path argument is fine — the live writer tools
@@ -2290,7 +2291,7 @@ Unit tests and e2e tests are complementary (see `e2e-test-spec.md`):
 | MCP data | Mocked via fixtures | Live API calls |
 | Grading layers | Deterministic + LLM judge + human | Deterministic + LLM judge + human |
 
-Skill rubric dimensions should align with the e2e base rubric dimensions where they overlap. For example, the conflict-resolution skill rubric's "evidence weighing" dimension corresponds to the e2e base rubric's "conflict handling" dimension. This ensures unit test improvements translate to e2e improvements.
+Skill rubric dimensions should align with the e2e base rubric dimensions where they overlap. For example, the conflict-resolution suite rubric's "evidence weighing" dimension corresponds to the e2e base rubric's "conflict handling" dimension. This ensures unit test improvements translate to e2e improvements.
 
 ---
 
