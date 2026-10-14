@@ -866,6 +866,24 @@ describe("tree_edit", () => {
     if (!r.ok) expect(JSON.stringify(r)).toMatch(/would duplicate 'R1'/);
   });
 
+  it("update_relationship refuses a non-string subtype rather than throwing", async () => {
+    // The batch loop re-throws anything that is not a TreeEditError, so a bare
+    // `.trim()` on a malformed op escaped as an unhandled TypeError instead of
+    // a refusal naming the op. Every other check in the switch is a truthiness
+    // test or `===`, which are safe on any value; this is the one method call.
+    const t = twoPersons();
+    (t as any).relationships = [
+      { id: "R1", type: "ParentChild", parent: "I1", child: "I2", sources: [{ ref: "S1" }] },
+    ];
+    await writeProject(t);
+    for (const subtype of [5, true, { a: 1 }, ["Step"]]) {
+      const r = await treeCorrect({ projectPath: dir, operation: "update_relationship", relationshipId: "R1", subtype } as any);
+      expect(r.ok).toBe(false);
+      if (!r.ok) expect(JSON.stringify(r)).toMatch(/`subtype` must be a string/);
+    }
+    expect(((await readTree()) as any).relationships[0].subtype).toBeUndefined();
+  });
+
   it("update_relationship refuses an empty subtype", async () => {
     // `relationshipMatches` reads any DEFINED subtype as explicit, so "" would
     // match an absent subtype but never match 'Biological' — an edge that pairs

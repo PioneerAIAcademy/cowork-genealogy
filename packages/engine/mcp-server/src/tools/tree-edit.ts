@@ -815,6 +815,17 @@ async function applyOperation(
       if (input.subtype === undefined) {
         throw new TreeEditError("update_relationship requires a `subtype` — it is the only field it sets");
       }
+      // Types are trusted everywhere else in this switch because every other
+      // check is a truthiness test or `===`, both safe on any value. `.trim()`
+      // below is a method call, so a non-string `subtype` from a malformed op
+      // would raise a TypeError — and the batch loop re-throws anything that is
+      // not a TreeEditError, so it would escape as an unhandled exception
+      // instead of a refusal naming the op.
+      if (typeof input.subtype !== "string") {
+        throw new TreeEditError(
+          `update_relationship: \`subtype\` must be a string, got ${typeof input.subtype}`,
+        );
+      }
       // An empty string is not "clear the subtype": `relationshipMatches` reads
       // any defined subtype as an explicit one, so `""` would match an absent
       // subtype but never match 'Biological' — a phantom type that pairs with
