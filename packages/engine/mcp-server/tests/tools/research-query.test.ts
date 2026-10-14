@@ -903,3 +903,233 @@ describe("research_query — log × questionId", () => {
     expect(JSON.stringify(r)).toContain("supported: planItemId, questionId");
   });
 });
+
+// --- T2.3: the four id keys take a list ------------------------------------
+
+describe("research_query — plural ids", () => {
+  let dir: string;
+  beforeEach(async () => {
+    dir = await mkdtemp(join(tmpdir(), "research-query-plural-"));
+  });
+  afterEach(async () => {
+    await rm(dir, { recursive: true, force: true });
+  });
+
+  const fixture = {
+    plans: [],
+    log: [
+      { id: "log_001", plan_item_id: "pli_001" },
+      { id: "log_002", plan_item_id: null },
+    ],
+    sources: [{ id: "src_001" }, { id: "src_002" }, { id: "src_003" }],
+    assertions: [
+      { id: "a_1", record_id: "R1", record_role: "principal", source_id: "src_001", fact_type: "birth", place: "England" },
+      { id: "a_2", record_id: "R2", record_role: "principal", source_id: "src_002", fact_type: "birth", place: "Alabama, United States" },
+      { id: "a_3", record_id: "R1", record_role: "child", source_id: "src_001", fact_type: "birth" },
+      { id: "a_4", record_id: "R3", record_role: "principal", source_id: "src_003", fact_type: "death" },
+    ],
+    // Interleaved, so document order is not "all of I1, then all of I2".
+    person_evidence: [
+      { id: "pe_1", person_id: "I1", assertion_id: "a_1" },
+      { id: "pe_2", person_id: "I2", assertion_id: "a_2" },
+      { id: "pe_3", person_id: "I1", assertion_id: "a_3" },
+      { id: "pe_4", person_id: "I3", assertion_id: "a_4" },
+      { id: "pe_5", person_id: "I2", assertion_id: "a_1" },
+    ],
+    conflicts: [
+      { id: "c_1", status: "unresolved", competing_assertion_ids: ["a_1", "a_2"] },
+      { id: "c_2", status: "unresolved", competing_assertion_ids: ["a_2", "a_4"] },
+      { id: "c_3", status: "resolved", competing_assertion_ids: ["a_3", "a_4"] },
+    ],
+    hypotheses: [{ id: "h_1", supporting_assertion_ids: ["a_1"], contradicting_assertion_ids: ["a_2"] }],
+    timelines: [{ id: "t_1", person_ids: ["I1", "I2"] }],
+    proof_summaries: [],
+  };
+
+  async function query(args: Record<string, unknown>, research: any = fixture) {
+    await writeFile(join(dir, "research.json"), JSON.stringify(research), "utf-8");
+    return researchQuery({ projectPath: dir, ...args } as never);
+  }
+
+  async function ok(args: Record<string, unknown>, research: any = fixture) {
+    const r = await query(args, research);
+    if (!r.ok) throw new Error(`expected ok, got ${JSON.stringify(r)}`);
+    return r;
+  }
+
+  async function rejected(args: Record<string, unknown>, research: any = fixture) {
+    const r = await query(args, research);
+    expect(r.ok).toBe(false);
+    if (r.ok) throw new Error("unreachable");
+    return r.errors.join(" ");
+  }
+
+  it("a list answers the union of the singular answers, in document order, with countById", async () => {
+    const plural = await ok({ section: "person_evidence", personId: ["I2", "I1"] });
+    const singles = [
+      await ok({ section: "person_evidence", personId: "I2" }),
+      await ok({ section: "person_evidence", personId: "I1" }),
+    ];
+    const union = new Set(singles.flatMap((s) => s.items.map((i) => i.id)));
+    expect(plural.items.map((i) => i.id)).toEqual(
+      fixture.person_evidence.filter((p) => union.has(p.id)).map((p) => p.id),
+    );
+    expect(plural.items.map((i) => i.id)).toEqual(["pe_1", "pe_2", "pe_3", "pe_5"]);
+    expect(plural.count).toBe(4);
+    expect(plural.countById).toEqual({ I2: singles[0].count, I1: singles[1].count });
+    expect(plural.truncated).toBe(false);
+  });
+
+  it("a list ANDs with a fixed filter, and countById counts under it", async () => {
+    const plural = await ok({ section: "assertions", recordId: ["R1", "R2"], recordRole: "principal" });
+    expect(plural.items.map((i) => i.id)).toEqual(["a_1", "a_2"]);
+    expect(plural.countById).toEqual({ R1: 1, R2: 1 });
+  });
+
+  it("a singular answer keeps exactly today's keys, with no countById", async () => {
+    const single = await ok({ section: "person_evidence", personId: "I1" });
+    expect(Object.keys(single).sort()).toEqual(["count", "items", "ok", "section", "truncated"]);
+  });
+
+  it("an item naming two listed ids appears once and counts under both", async () => {
+    const r = await ok({ section: "conflicts", assertionId: ["a_1", "a_2"], status: "unresolved" });
+    expect(r.items.map((i) => i.id)).toEqual(["c_1", "c_2"]);
+    expect(r.count).toBe(2);
+    expect(r.countById).toEqual({ a_1: 1, a_2: 2 });
+    const sum = Object.values(r.countById ?? {}).reduce((a, b) => a + b, 0);
+    expect(sum).toBeGreaterThan(r.count);
+  });
+
+  it("contains-any (hypotheses) and contains (timelines) take a list too", async () => {
+    const h = await ok({ section: "hypotheses", assertionId: ["a_2", "a_9"] });
+    expect(h.items.map((i) => i.id)).toEqual(["h_1"]);
+    expect(h.countById).toEqual({ a_2: 1, a_9: 0 });
+    const t = await ok({ section: "timelines", personId: ["I2", "I3"] });
+    expect(t.items.map((i) => i.id)).toEqual(["t_1"]);
+    expect(t.countById).toEqual({ I2: 1, I3: 0 });
+  });
+
+  it("pages a 60-match list exactly as a singular answer pages, countById identical on every page", async () => {
+    const person_evidence = Array.from({ length: 60 }, (_, k) => ({
+      id: `pe_${k}`,
+      person_id: `I${k % 3}`,
+      assertion_id: "a_1",
+    }));
+    const research = { ...fixture, person_evidence };
+    const first = await ok({ section: "person_evidence", personId: ["I0", "I1", "I2"] }, research);
+    const second = await ok({ section: "person_evidence", personId: ["I0", "I1", "I2"], offset: 50 }, research);
+    expect(first).toMatchObject({ count: 60, truncated: true });
+    expect(first.items).toHaveLength(50);
+    expect(second.items).toHaveLength(10);
+    expect(second.truncated).toBe(false);
+    expect(first.countById).toEqual({ I0: 20, I1: 20, I2: 20 });
+    expect(second.countById).toEqual(first.countById);
+    const ids = [...first.items, ...second.items].map((i) => i.id);
+    expect(new Set(ids).size).toBe(60);
+  });
+
+  it("an unmatched id is present in countById as 0, not omitted", async () => {
+    const r = await ok({ section: "person_evidence", personId: ["I1", "NOPE"] });
+    expect(r.countById).toEqual({ I1: 2, NOPE: 0 });
+    const empty = await ok({ section: "sources", sourceId: ["src_9", "src_8"] });
+    expect(empty).toMatchObject({ count: 0, items: [], countById: { src_9: 0, src_8: 0 } });
+  });
+
+  it("narrows unregisteredDisagreements to those naming any listed assertionId", async () => {
+    // a_1 and a_2 are both I2's birth, and their places disagree; nobody registered it.
+    const disagree = {
+      ...fixture,
+      conflicts: [],
+      person_evidence: [
+        { id: "pe_1", person_id: "I2", assertion_id: "a_1" },
+        { id: "pe_2", person_id: "I2", assertion_id: "a_2" },
+      ],
+    };
+    const naming = await ok({ section: "conflicts", assertionId: ["a_4", "a_2"] }, disagree);
+    expect(naming.unregisteredDisagreements?.map((d) => d.assertionIds)).toEqual([["a_1", "a_2"]]);
+    const other = await ok({ section: "conflicts", assertionId: ["a_3", "a_4"] }, disagree);
+    expect(other.unregisteredDisagreements).toEqual([]);
+  });
+
+  it("a JSON-array string is the same answer as the list", async () => {
+    const list = await ok({ section: "person_evidence", personId: ["I1", "I2"] });
+    // Pinned, so "both forms answer count 0" (the pre-T2.3 build) cannot pass.
+    expect(list).toMatchObject({ count: 4, countById: { I1: 2, I2: 2 } });
+    expect(await ok({ section: "person_evidence", personId: '["I1","I2"]' })).toEqual(list);
+    expect(await ok({ section: "person_evidence", personId: ' [ "I1" , "I2" ] ' })).toEqual(list);
+  });
+
+  it("duplicate ids collapse to one countById key", async () => {
+    const r = await ok({ section: "person_evidence", personId: ["I1", "I1"] });
+    expect(r.countById).toEqual({ I1: 2 });
+    expect(r.count).toBe(2);
+  });
+
+  it("rejects a string that starts with '[' but is not JSON", async () => {
+    expect(await rejected({ section: "person_evidence", personId: "[not json" })).toMatch(
+      /'personId' starts with '\[' but is not a JSON array/,
+    );
+  });
+
+  it("rejects a JSON-array string of non-strings", async () => {
+    expect(await rejected({ section: "person_evidence", personId: "[1,2]" })).toMatch(
+      /'personId' must list non-empty id strings/,
+    );
+  });
+
+  it("rejects an empty list, as a list and as a string", async () => {
+    expect(await rejected({ section: "person_evidence", personId: [] })).toMatch(/'personId' is an empty list/);
+    expect(await rejected({ section: "person_evidence", personId: "[]" })).toMatch(/'personId' is an empty list/);
+  });
+
+  it("rejects a mixed list", async () => {
+    expect(await rejected({ section: "person_evidence", personId: ["I1", 3] })).toMatch(
+      /must list non-empty id strings/,
+    );
+  });
+
+  it("rejects an empty-string id in a list", async () => {
+    expect(await rejected({ section: "person_evidence", personId: [""] })).toMatch(/must list non-empty id strings/);
+  });
+
+  it("rejects more than 50 distinct ids", async () => {
+    const ids = Array.from({ length: 51 }, (_, k) => `I${k}`);
+    expect(await rejected({ section: "person_evidence", personId: ids })).toMatch(/lists 51 ids; the limit is 50/);
+    // 51 entries that dedupe to 50 are within the limit.
+    await ok({ section: "person_evidence", personId: [...ids.slice(0, 50), "I0"] });
+  });
+
+  it("rejects two list-valued filters in one call", async () => {
+    expect(await rejected({ section: "person_evidence", personId: ["I1"], assertionId: ["a_1"] })).toMatch(
+      /only one filter may be a list per call \(got lists on 'personId' and 'assertionId'\)/,
+    );
+    // One list plus a singular id key is fine.
+    const r = await ok({ section: "person_evidence", personId: ["I1", "I2"], assertionId: "a_1" });
+    expect(r.items.map((i) => i.id)).toEqual(["pe_1", "pe_5"]);
+  });
+
+  it.each([
+    ["questions", "questionId"],
+    ["log", "planItemId"],
+    ["external_collections", "place"],
+  ])("rejects a list on %s × %s, a key that takes one value", async (section, key) => {
+    expect(await rejected({ section, [key]: ["x", "y"] })).toMatch(
+      new RegExp(`'${key}' must be a string; only personId, assertionId, sourceId, recordId take a list`),
+    );
+  });
+
+  it.each([5, null, {}, true])("rejects personId: %j instead of answering count 0", async (value) => {
+    expect(await rejected({ section: "person_evidence", personId: value })).toMatch(
+      /'personId' must be a string or a list of strings/,
+    );
+  });
+
+  it("rejects planItemId: null, which used to match the null-plan-item log entries", async () => {
+    expect(await rejected({ section: "log", planItemId: null })).toMatch(/'planItemId' must be a string \(got null\)/);
+  });
+
+  it("a non-plural key's string that starts with '[' stays one value", async () => {
+    const r = await ok({ section: "log", planItemId: "[pli_001]" });
+    expect(r.count).toBe(0);
+  });
+});
