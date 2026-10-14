@@ -1,7 +1,9 @@
 # Cut e2e research cost and latency as far as they go
 
 **Status:** In progress — T1.3 (PR #3194), T1.4 (PR #3195), T1.11 (PR #3256) and
-T2.1 (PR #3230) landed. Owner: **Promise Igbojionu**, shepherding from 2026-09-27.
+T2.1 (PR #3230) landed. T1.4c (network replay) is built; it replays nothing until the
+first recording is made and Dallan answers Q1 (`eval/fixtures/replay/README.md`).
+Owner: **Promise Igbojionu**, shepherding from 2026-09-27.
 **No lead gates** — every ruling this plan once waited on has been
 made. Update this line as waves land; delete this file when the work ships.
 
@@ -321,7 +323,12 @@ the first time it is pulled.
   and `compactions`, shown per agent by `make e2e-agent-spend`. Awaits its first run.
 
 **The replay harness — built (T1.4): `make replay-sizes`.** Local-state read tools
-only (~36% of recorded answer chars); the network half is T1.4c. Re-issue a committed
+(~36% of recorded answer chars), plus — T1.4c, built — the seven FamilySearch and wiki
+tools, served from recorded upstream answers ("cassettes", `eval/fixtures/replay/`,
+written by `make replay-record` under four privacy rules). The network half replays
+only once cassettes are recorded; until Dallan answers Q1 they stay in a scratch dir
+outside the repo. `image_transcribe` is split to T1.4c-2, and `record_read`'s sidecar
+mode is deferred. Re-issue a committed
 runlog's tool calls against a candidate tool implementation and diff the payload
 sizes. **Zero model calls**, repeatable, and it measures exactly what Waves 1–2
 change. This is the fast loop; `make gate-skill` cannot be it, because the unit plane

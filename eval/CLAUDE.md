@@ -44,6 +44,7 @@ eval/
   fixtures/
     scenarios/           Shared project state fixtures (research.json + tree.gedcomx.json + README.md, optional judge-brief.md)
     mcp/                 Mocked MCP tool response fixtures
+    replay/              Recorded upstream answers `make replay-sizes` replays the FamilySearch/wiki tools from (README.md, manifest.json, cassettes/)
   tests/                 Test definitions (version-controlled source of truth)
     e2e/                 GPS proof statement tests (each in its own directory)
     unit/
@@ -84,6 +85,7 @@ eval/
   unknown `--skill` is an error (exit 2), not an empty clean pass. Issue #1972 V7.
 - **`harness/validators/`** — Developer-written Python validators (one `test_*.py` file per skill). Run automatically by the harness after each test execution. Results visible in the CRUD UI.
 - **`fixtures/scenarios/`** — Shared project state fixtures. Each scenario is a directory with `research.json`, `tree.gedcomx.json`, and `README.md`, plus an optional `judge-brief.md`: when present the judge reads it in place of the README, which then reaches no grader (`harness/scenario_brief.py`; `docs/specs/unit-test-spec.md` §3.1). A run graded against a README because no brief exists carries a `scenario_readme_fallback` warning, and one whose scenario has neither file carries `scenario_brief_missing`; both are counted at the end of the suite. Tests reference scenarios by directory name.
+- **`fixtures/replay/`** — Recorded upstream FamilySearch and wiki answers ("cassettes") that let `make replay-sizes` replay the seven network tools with no network. Written only by `make replay-record` (live FamilySearch login, zero model calls), never by hand: every body passes `e2e/replay_privacy.py` — endpoint allowlist, living-person year floor, tree-id rewrite, credentials — inside the recorder's fetch hook before the engine sees it, and `tests/unit/test_replay_cassettes.py` re-checks the committed set. Its `README.md` records the ruling it rests on (no living people's data in the public repo) and Dallan's open Q1. Not a unit fixture: `check_runlogs.py`'s `FIXTURE_PATH_RE` matches only `scenarios|mcp`, so the runlog gate ignores it, while the eval-harness workflow's `^eval/fixtures/` pattern still runs the lint on a cassette-only PR.
 - **`fixtures/mcp/`** — Mocked MCP tool response fixtures. Each fixture is a single JSON file with `tool`, `description`, `args` (a non-empty match predicate), and `response` fields. Tests reference fixtures by filename. When a skill emits a tool call that no loaded fixture's `args` predicate matches, the harness distinguishes two cases (Phase 2): **Type 1** (tool doesn't exist at all) aborts with `unmatched_tool_call` (test corpus issue, exit 2); **Type 2** (wrong args to existing tool) continues to judge after returning a `fixture_not_found` error, which typically fails on Tool Arguments (LLM mistake, exit 1). Warnings flag which fixtures need to be added or corrected. See `docs/specs/unit-test-spec.md` §15 "Uncovered tool calls". A fixture's `response` must be a shape its tool can actually return: the top-level fields are checked against the handler's declared return type by `packages/engine/mcp-server/tests/packaging/mcp-fixture-shape.test.ts`, so copy the envelope from a sibling fixture for the same tool rather than writing a short form.
 
 > **NEVER hand-write or edit *unit* `.ann.json` files (under `runlogs/unit/`) — and if
@@ -154,7 +156,10 @@ two reader families handle it differently (`harness/since_window.py`):
   the house window. `make replay-sizes` is not windowed either: it compares two
   engine builds on the same fixed inputs, so mixing eras cannot corrupt it, and
   its inputs — runs carrying `tool_calls[].result_chars` — all postdate the
-  2026-08-23 strip fix, so a stripped one still replays intact.
+  2026-08-23 strip fix, so a stripped one still replays intact. Its network
+  tools replay only the runs `eval/fixtures/replay/manifest.json` names, and
+  both builds read the same recorded upstream bytes, so upstream drift since
+  the recording cannot read as a size change either.
   `make replay-collapse` is not windowed for the same reason, but it reads one
   thing the strip removes: each walk call's recorded `count`. A stripped run's
   walks therefore report `unverifiable` (and if every walk is, it exits 2) —

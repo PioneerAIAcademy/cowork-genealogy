@@ -882,20 +882,51 @@ unit-relay-fidelity: ## How much of an agent's return survives the main thread's
 	cd eval/harness && uv run python scripts/relay_fidelity_report.py
 
 .PHONY: replay-sizes
-replay-sizes: $(ENGINE_BUILD) ## Replay committed e2e tool calls against a base and a candidate engine build and diff answer sizes — zero model calls, zero network: make replay-sizes [BASE=<ref>] [TEST=<slug>] [TOOLS=a,b] [TRACKED_ONLY=1] [JSON=<path>]
-	# T1.4 of docs/plan/cost-latency-10x.md. Re-asks every recorded call to the
-	# local-state read tools (research_query, project_context, person_warnings,
-	# merge_warnings, validate_research_schema — ~36% of recorded answer chars)
-	# to the BASE build (default: merge-base with origin/main, built once into a
+replay-sizes: $(ENGINE_BUILD) ## Replay committed e2e tool calls against a base and a candidate engine build and diff answer sizes — zero model calls, zero network: make replay-sizes [BASE=<ref>|BASE_BUILD=<dir>] [CANDIDATE_BUILD=<dir>] [TEST=<slug>] [TOOLS=a,b] [TRACKED_ONLY=1] [RECORDED_RUNS=1] [CASSETTES=<dir>[,<dir>...]] [JSON=<path>]
+	# T1.4 + T1.4c of docs/plan/cost-latency-10x.md. Re-asks every recorded call
+	# to the local-state read tools (research_query, project_context,
+	# person_warnings, merge_warnings, validate_research_schema) and to the
+	# FamilySearch/wiki tools (wiki_read, wiki_place_page, wiki_search,
+	# record_search, record_read, volume_search, fulltext_search) — the latter
+	# served from recorded upstream answers in CASSETTES (default
+	# eval/fixtures/replay; extra dirs listed FIRST overlay it; record them with
+	# `make replay-record`) through e2e/replay_fetch.mjs, never the network — to
+	# the BASE build (default: merge-base with origin/main, built once into a
 	# cached sparse worktree under $$TMPDIR/genealogy-replay-builds/; remove with
-	# `git worktree remove <dir>`) and to the working-tree build, over
-	# research.json rebuilt as of each call (harness/replay.py) and the run's
-	# FINAL tree (approximate). The headline is candidate - base, never vs the
-	# recorded size. FamilySearch/wiki tools are listed as NOT REPLAYED (T1.4c).
+	# `git worktree remove <dir>`; or BASE_BUILD=<dir>) and to the working-tree
+	# build (or CANDIDATE_BUILD=<dir>), over research.json rebuilt as of each
+	# call (harness/replay.py) and the run's FINAL tree (approximate). The
+	# headline is candidate - base, never vs the recorded size. A network call in
+	# a run the cassettes do not cover, excluded at record time, or a sidecar-mode
+	# record_read is listed as NOT REPLAYED; RECORDED_RUNS=1 replays exactly the
+	# cassette manifest's runs. Paths are made absolute here because the recipe
+	# cd's into eval/harness first.
 	# Exit 2: selection, usage or build error. Exit 3: the replay is not
 	# measuring what it claims (rebase broke, state errors over the margin, a
-	# read wrote files, a network call) — it refuses to print a misleading 0%.
-	cd eval/harness && uv run python -m e2e.replay_sizes $(if $(BASE),--base $(BASE),) $(if $(TEST),--test $(TEST),) $(if $(TOOLS),--tools $(TOOLS),) $(if $(TRACKED_ONLY),--tracked-only,) $(if $(JSON),--json $(abspath $(JSON)),)
+	# read wrote files, a local tool touched the network, the base build missed
+	# the cassettes beyond the margin — "cassettes stale: re-record") — it
+	# refuses to print a misleading 0%.
+	cd eval/harness && uv run python -m e2e.replay_sizes $(if $(BASE),--base $(BASE),) $(if $(BASE_BUILD),--base-build $(abspath $(BASE_BUILD)),) $(if $(CANDIDATE_BUILD),--candidate-build $(abspath $(CANDIDATE_BUILD)),) $(if $(TEST),--test $(TEST),) $(if $(TOOLS),--tools $(TOOLS),) $(if $(TRACKED_ONLY),--tracked-only,) $(if $(RECORDED_RUNS),--recorded-runs,) $(if $(CASSETTES),--cassettes $(subst $(REPLAY_SPACE),$(REPLAY_COMMA),$(foreach d,$(subst $(REPLAY_COMMA), ,$(CASSETTES)),$(abspath $(d)))),) $(if $(JSON),--json $(abspath $(JSON)),)
+
+REPLAY_COMMA := ,
+REPLAY_EMPTY :=
+REPLAY_SPACE := $(REPLAY_EMPTY) $(REPLAY_EMPTY)
+
+.PHONY: replay-record
+replay-record: $(ENGINE_BUILD) ## Record the upstream answers replay-sizes serves the FamilySearch/wiki tools from — LIVE FamilySearch + wiki, zero model calls, needs `login`: make replay-record OUT=<dir> [RUNS=newest-per-fixture|all|<path,...>] [BUILD=<dir>] [MERGE=1] [EXCLUDE_TREE=1]
+	# T1.4c. Re-asks each committed network-tool call of the chosen runs ONCE to
+	# BUILD (default the working-tree build) with e2e/replay_fetch.mjs in record
+	# mode. Every upstream body passes e2e/replay_privacy.py (allowlist, living-
+	# person year floor, tree-id rewrite) BEFORE the engine sees it, and only
+	# that filtered body is written; the cassettes then pass the same check
+	# before replacing OUT/cassettes + OUT/manifest.json (anything else in OUT,
+	# e.g. its README, stays). Uses the REAL HOME so a token refresh writes back
+	# (#2859). OUT is refused under eval/runlogs/. Record to a scratch dir
+	# outside the repo until Dallan answers Q1 (eval/fixtures/replay/README.md).
+	# MERGE=1 adds to OUT (record base and candidate into one scratch dir);
+	# EXCLUDE_TREE=1 is Q1 option (a). Exit 3 = aborted, nothing written.
+	@test -n "$(OUT)" || { echo "make replay-record: OUT=<dir> is required" >&2; exit 2; }
+	cd eval/harness && uv run python -m e2e.replay_record --out $(abspath $(OUT)) $(if $(RUNS),--runs $(RUNS),) $(if $(BUILD),--build $(abspath $(BUILD)),) $(if $(MERGE),--merge,) $(if $(EXCLUDE_TREE),--exclude-tree-subrequests,)
 
 .PHONY: replay-collapse
 replay-collapse: $(ENGINE_BUILD) ## Replay each recorded research_query plan-log walk against the one log×questionId call that replaces it (T2.1) — zero model calls: make replay-collapse [BASE=<ref>] [TEST=<slug>] [TRACKED_ONLY=1] [JSON=<path>]
