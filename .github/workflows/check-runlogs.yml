@@ -68,7 +68,7 @@ permissions:
   pull-requests: read
   issues: read
 
-# Cosmetic-skip escape hatch (rule 2 only), PER SKILL. A senior applies
+# Cosmetic-skip escape hatch (rules 2 and 2c), PER SKILL. A senior applies
 # `eval-cosmetic-skip:<skill>` for each skill whose change is behavior-neutral
 # (rewording, typo), keeping that skill's prior run log active without a re-run
 # + re-grade. `<skill>` is the run-log directory name, the one rule 2's error

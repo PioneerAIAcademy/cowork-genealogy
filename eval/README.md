@@ -244,6 +244,8 @@ That edit changes the skill-side snapshot, which flips the latest run log
 changed. A senior can waive that for a genuinely behavior-neutral edit by
 applying a **PR label** — no branch checkout, no commands, nothing to install.
 
+The same label waives rule 2c for that skill, so a typo fix in an advertised tool description does not owe a paid re-run either.
+
 **The waiver is per skill.** The label is `eval-cosmetic-skip:<skill>`, where
 `<skill>` is the name in `eval/runlogs/unit/<skill>/` — the name rule 2's error
 prints. It waives that one skill. Every other skill the PR touches keeps the

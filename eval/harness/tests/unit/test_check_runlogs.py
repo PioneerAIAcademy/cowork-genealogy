@@ -2891,11 +2891,24 @@ def test_main_rule2c_recomputes_for_real_and_a_moved_validator_blocks(monkeypatc
     assert "skill `convert-dates`" in out and "validators.suite" in out
 
 
-def test_a_cosmetic_skip_on_rule2_does_not_waive_rule2c(monkeypatch, capsys, tmp_path):
-    """Review finding: a SKILL.md typo plus a validator logic change, with
-    `eval-cosmetic-skip:<skill>` applied. Rule 2 warns (the label), so rule 2c must
-    still block: the label is defined as covering rule 2 only."""
-    stale = {"eval/__no_such_cosmetic_test__/x.md": "expected\n"}
+@pytest.mark.parametrize(
+    "labels, expect_rc",
+    [
+        ("eval-cosmetic-skip:demo", 0),
+        ("eval-cosmetic-skip:other-skill", 1),
+        ("eval-cosmetic-skip", 1),
+        ("", 1),
+    ],
+    ids=["this-skill", "another-skill", "bare-label", "no-label"],
+)
+def test_the_cosmetic_skip_label_waives_rule2c_for_its_skill_only(
+    monkeypatch, capsys, tmp_path, labels, expect_rc
+):
+    """A senior's `eval-cosmetic-skip:<skill>` waives rule 2c for that skill, as it
+    does rule 2, so a typo fix in an advertised description owes no paid re-run.
+    The label for another skill, the bare label, or none, still blocks -- and a
+    merely stale snapshot is not a waiver (that was the round-1 review bug)."""
+    stale = {}  # rule 2 stays quiet, so rule 2c alone decides
     skill_dir = tmp_path / "demo"
     skill_dir.mkdir()
     log = {"schema_version": 3, "skill": "demo", "snapshot": stale, "tests": [], "instrument": _instr()}
@@ -2905,11 +2918,15 @@ def test_a_cosmetic_skip_on_rule2_does_not_waive_rule2c(monkeypatch, capsys, tmp
     monkeypatch.setattr(check_runlogs, "TESTS_UNIT_DIR", tmp_path / "tests")
     (tmp_path / "skills" / "demo").mkdir(parents=True)
     (tmp_path / "tests" / "demo").mkdir(parents=True)
-    monkeypatch.setenv("COSMETIC_SKIP_LABELS", "eval-cosmetic-skip:demo")
+    monkeypatch.setenv("COSMETIC_SKIP_LABELS", labels)
     monkeypatch.setattr(check_runlogs, "rule3_completeness", lambda *a, **k: 0)
     _patch_diffs(monkeypatch, ["packages/engine/plugin/skills/demo/SKILL.md", "eval/harness/validators/test_demo.py"])
     _stub_current_instrument(monkeypatch, _instr(validators__suite=_H["0"]))
     rc = check_runlogs.main()
     out = capsys.readouterr().out
-    assert rc == 1, out
-    assert "validators.suite" in out and "::error" in out
+    assert rc == expect_rc, out
+    assert "validators.suite" in out
+    if expect_rc == 0:
+        assert "waives rule 2c" in out
+    else:
+        assert "::error" in out

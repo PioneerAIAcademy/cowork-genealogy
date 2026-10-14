@@ -705,11 +705,13 @@ def rule2c_instrument(
     `validators.shared`, `tools.live`, `live_modules` -- because blocking on them
     would owe a paid re-run of every suite (decided 2026-10-14 on issue #2479).
     A log with no `instrument` (written before the field) warns and passes.
-    Downgrades a block to a warning only when rule 2 itself blocked this same log
-    in this run (`rule2_blocked`), so the one re-run is owed once. A snapshot that
-    is merely stale is not enough: rule 2 does not run on instrument-arm suites,
-    and a cosmetic-skip label turns its block into a warning -- neither owes a
-    re-run, so 2c must still block. Returns 1 on block, 0 otherwise.
+    Downgrades a block to a warning when rule 2 itself blocked this same log in
+    this run (`rule2_blocked`), so the one re-run is owed once; a snapshot that is
+    merely stale is not enough, since rule 2 does not run on instrument-arm suites.
+    Also downgrades when the PR carries `eval-cosmetic-skip:<skill>`, exactly as
+    rule 2 does: a senior judged the change behaviour-neutral (a typo in a tool
+    description, say), and a new push voids the label. Returns 1 on block, 0
+    otherwise.
     """
     stored = log.get("instrument")
     head = f"skill `{skill}`: `{filename}`, {graded},"
@@ -761,6 +763,13 @@ def rule2c_instrument(
         f"{head} was produced or graded by an instrument that has since changed: "
         f"{'; '.join(blocking)}."
     )
+    label = cosmetic_skip_label(skill)
+    if label in cosmetic_skip_labels():
+        gh_warning(
+            f"{message} The `{label}` label waives rule 2c for this skill, as it does "
+            f"rule 2: a senior judged the change behaviour-neutral."
+        )
+        return 0
     if rule2_blocked:
         gh_warning(
             f"{message} Rule 2 already blocks this log and owes the same re-run, so "

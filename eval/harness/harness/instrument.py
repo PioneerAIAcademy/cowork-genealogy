@@ -17,10 +17,15 @@ The suite-specific halves (``validators.suite``, ``tools.fixture``) block;
 blocking corpus-wide input would owe a paid re-run of every suite (decided
 2026-10-14 on issue #2479; see eval/CLAUDE.md, rule 2c).
 
-Not covered, by construction: a live tool's imports beyond its entry module;
-the harness modules validators import (`harness.skill_runner`, `ownership`,
-`ts_validator`, `schema_validator`, `record_basis`); and the catalog read through
-`validators_lib.tool_input_keys`. ``ast.dump`` output is specific to the Python
+Not covered, by construction: a live tool's imports beyond its entry module; and
+every module a validator file imports other than `validators_lib` -- today
+`harness.allowed_tools`, `harness.dates` (via `validators_lib`), `harness.mock_mcp`
+(the catalog read through `validators_lib.tool_input_keys`), `harness.ownership`,
+`harness.record_basis`, `harness.schema_validator`, `harness.skill_invocation`,
+`harness.skill_runner`, `harness.ts_validator`, `harness.workspace` and the
+top-level `provenance_report` (re-derive with an AST walk of the imports in
+`eval/harness/validators/*.py`). A change there can move a verdict without moving
+this fingerprint. ``ast.dump`` output is specific to the Python
 minor version, so a bump from 3.12 re-hashes every suite.
 
 Stdlib-only: `check_runlogs.py` imports this on a bare interpreter.
