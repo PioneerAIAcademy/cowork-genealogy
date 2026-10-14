@@ -56,6 +56,66 @@
       }
     },
     {
+      "id": "claims-child-three-parents-one-hypothesis",
+      "expect": "fire",
+      "shape": "claims-with-one-hypothesis",
+      "why": "A claims[] proof whose child (prs-001) has three biological ParentChild parents in the tree, with exactly one hypothesis listing the question — fewer than two, so the gate fires.",
+      "write": "ps_001",
+      "tree": {
+        "relationships": [
+          {
+            "type": "ParentChild",
+            "parent": "prs-101",
+            "child": "prs-001"
+          },
+          {
+            "type": "ParentChild",
+            "parent": "prs-102",
+            "child": "prs-001"
+          },
+          {
+            "type": "ParentChild",
+            "parent": "prs-103",
+            "child": "prs-001"
+          }
+        ]
+      },
+      "research": {
+        "proof_summaries": [
+          {
+            "id": "ps_001",
+            "question_id": "q_001",
+            "tier": "probable",
+            "claims": [
+              {
+                "claim": "paternity",
+                "proof_tier": "probable",
+                "relationship": {
+                  "type": "ParentChild",
+                  "parent": "prs-101",
+                  "child": "prs-001"
+                }
+              }
+            ]
+          }
+        ],
+        "hypotheses": [
+          {
+            "id": "h_001",
+            "related_question_ids": [
+              "q_001"
+            ],
+            "status": "active"
+          }
+        ],
+        "project": {
+          "subject_person_ids": [
+            "prs-001"
+          ]
+        }
+      }
+    },
+    {
       "id": "exactly-two-parents",
       "expect": "silent",
       "why": "The concluded child (prs-001) has exactly two biological parents — the normal case for a known biological couple. The gate must not fire.",
