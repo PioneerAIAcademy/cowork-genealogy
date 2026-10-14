@@ -251,3 +251,79 @@ def test_revoked_cookie_is_not_resurrected_by_a_later_login():
         if u:
             s.delete(u)
             s.commit()
+
+
+# --- issue #3406: a session more than 24 h old can be read but not continued ---
+
+
+def _new_session_aged(client: TestClient, hours: float, naive: bool = False) -> str:
+    from datetime import timedelta
+
+    from app.models import Project, utcnow
+
+    sid = client.post("/api/sessions", json={}).json()["id"]
+    with Session(get_engine()) as s:
+        p = s.get(Project, sid)
+        created = utcnow() - timedelta(hours=hours)
+        p.created = created.replace(tzinfo=None) if naive else created
+        s.add(p)
+        s.commit()
+    return sid
+
+
+def _count_resumes(monkeypatch) -> list[str]:
+    provider = app.state.provider
+    real = provider.resume
+    calls: list[str] = []
+
+    async def counting(sandbox_id, *a, **kw):
+        calls.append(sandbox_id)
+        return await real(sandbox_id, *a, **kw)
+
+    monkeypatch.setattr(provider, "resume", counting)
+    return calls
+
+
+def test_connect_refuses_a_session_older_than_24h_without_waking_it(monkeypatch):
+    with TestClient(app) as client:
+        client.post("/auth/dev-login", json={"email": "tester@example.com"})
+        sid = _new_session_aged(client, 25)
+        resumes = _count_resumes(monkeypatch)
+        r = client.post(f"/api/sessions/{sid}/connect")
+        assert r.status_code == 410, r.text
+        assert "more than 24 hours old" in r.json()["detail"]
+        assert resumes == []
+        # Reading stays open.
+        assert client.post(f"/api/sessions/{sid}/resume").status_code == 200
+        assert client.get(f"/api/sessions/{sid}/state").status_code == 200
+        client.delete(f"/api/sessions/{sid}")
+
+
+def test_connect_accepts_a_session_younger_than_24h():
+    with TestClient(app) as client:
+        client.post("/auth/dev-login", json={"email": "tester@example.com"})
+        sid = _new_session_aged(client, 23)
+        r = client.post(f"/api/sessions/{sid}/connect")
+        assert r.status_code == 200, r.text
+        assert r.json()["token"]
+        client.delete(f"/api/sessions/{sid}")
+
+
+def test_session_list_reports_continuable():
+    with TestClient(app) as client:
+        client.post("/auth/dev-login", json={"email": "tester@example.com"})
+        old = _new_session_aged(client, 25)
+        young = _new_session_aged(client, 23)
+        rows = {p["id"]: p for p in client.get("/api/sessions").json()}
+        assert rows[old]["continuable"] is False
+        assert rows[young]["continuable"] is True
+        client.delete(f"/api/sessions/{old}")
+        client.delete(f"/api/sessions/{young}")
+
+
+def test_naive_created_is_read_as_utc_not_a_500():
+    with TestClient(app) as client:
+        client.post("/auth/dev-login", json={"email": "tester@example.com"})
+        sid = _new_session_aged(client, 25, naive=True)
+        assert client.post(f"/api/sessions/{sid}/connect").status_code == 410
+        client.delete(f"/api/sessions/{sid}")
