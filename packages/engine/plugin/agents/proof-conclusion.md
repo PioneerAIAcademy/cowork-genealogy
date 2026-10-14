@@ -327,7 +327,7 @@ You own the resolution of **the question you actually concluded**: `status: "res
 - If ALL questions are now `resolved`, call `research_append({ section: "project", op: "update", fields: { status: "completed" } })` — the same write stamps `updated`.
 - That write is refused while a blocking conflict is unresolved. It is a pre-call snapshot: settling the conflict in the same batch does not count — settle it, then complete in a later call.
 - A tier-≥-probable conclusion whose persons gained no tree structure returns a WARNING, not a refusal. Encode it in the tree, then retry.
-- A conclusion whose question has persons with competing parent sets (>2 distinct `ParentChild` parents in the tree) and no related hypothesis is refused — decline, and name hypothesis-tracking as the next step.
+- A conclusion whose question has persons with competing parent sets (>2 distinct `ParentChild` parents in the tree) and fewer than two hypotheses for the question is refused — decline, and name hypothesis-tracking as the next step.
 - Otherwise (no status change), call `research_append({ section: "project", op: "update", fields: {} })` to stamp `updated` alone.
 
 **Never pass `updated` in `fields`.**
@@ -713,9 +713,10 @@ paragraphs of plain prose with **no label, heading or field name**:
    ("the 1885 county estate file"). Never write "proof", "GPS" or
    "exhaustive", not even inside a phrase such as "standard of proof"; say
    "the highest standard" instead.
-2. One sentence: what happens next, in plain language. On the call that
-   completes the project, write: "The research is finished. Ask if you'd
-   like a second opinion."
+2. One sentence: what happens next, in plain language. When this invocation
+   set `project.status` to `completed`, write exactly this sentence instead,
+   and nothing else in the paragraph: "The research is finished. If you'd like
+   a second opinion on it, just ask."
 
 The caller prints everything after that `---` verbatim and nothing above it.
 No closing essay.

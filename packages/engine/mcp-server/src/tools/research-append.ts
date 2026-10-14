@@ -2087,7 +2087,7 @@ export function competingParentSetsInvariants(
     .join("; ");
   return [
     `proof_summaries ${entry.id ?? "(new entry)"}: question ${qid} has persons with competing ` +
-      `parent sets — ${details} — but no hypothesis in hypotheses[] lists "${qid}" in ` +
+      `parent sets — ${details} — but fewer than two hypotheses in hypotheses[] list "${qid}" in ` +
       `related_question_ids. Decline to conclude; name hypothesis-tracking as the next step.`,
   ];
 }
@@ -4317,9 +4317,8 @@ function applyOne(
     // so an ordinary update of an existing summary still passes.
     invariantErrors.push(...oneSummaryPerQuestion(resultEntry, research, resultEntry?.id));
     // Reads PRE-CALL tree and PRE-CALL research: a same-batch hypothesis write
-    // does not satisfy this precondition. The check is not tier-gated because
-    // the competing-parent-sets condition is about the project state at write
-    // time, regardless of which fields this particular op touches.
+    // does not satisfy this precondition. Gated only on the entry's standing
+    // tier (not_proved/disproved pass), not on which fields this op touches.
     invariantErrors.push(...competingParentSetsInvariants(resultEntry, preCallResearch, tree));
   }
   if (invariantErrors.length > 0) {

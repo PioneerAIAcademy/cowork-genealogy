@@ -11,9 +11,21 @@
       "write": "ps_001",
       "tree": {
         "relationships": [
-          { "type": "ParentChild", "parent": "prs-101", "child": "prs-001" },
-          { "type": "ParentChild", "parent": "prs-102", "child": "prs-001" },
-          { "type": "ParentChild", "parent": "prs-103", "child": "prs-001" }
+          {
+            "type": "ParentChild",
+            "parent": "prs-101",
+            "child": "prs-001"
+          },
+          {
+            "type": "ParentChild",
+            "parent": "prs-102",
+            "child": "prs-001"
+          },
+          {
+            "type": "ParentChild",
+            "parent": "prs-103",
+            "child": "prs-001"
+          }
         ]
       },
       "research": {
@@ -26,13 +38,21 @@
               {
                 "claim": "paternity",
                 "proof_tier": "probable",
-                "relationship": { "type": "ParentChild", "parent": "prs-101", "child": "prs-001" }
+                "relationship": {
+                  "type": "ParentChild",
+                  "parent": "prs-101",
+                  "child": "prs-001"
+                }
               }
             ]
           }
         ],
         "hypotheses": [],
-        "project": { "subject_person_ids": ["prs-001"] }
+        "project": {
+          "subject_person_ids": [
+            "prs-001"
+          ]
+        }
       }
     },
     {
@@ -43,9 +63,21 @@
       "write": "ps_001",
       "tree": {
         "relationships": [
-          { "type": "ParentChild", "parent": "prs-101", "child": "prs-001" },
-          { "type": "ParentChild", "parent": "prs-102", "child": "prs-001" },
-          { "type": "ParentChild", "parent": "prs-103", "child": "prs-001" }
+          {
+            "type": "ParentChild",
+            "parent": "prs-101",
+            "child": "prs-001"
+          },
+          {
+            "type": "ParentChild",
+            "parent": "prs-102",
+            "child": "prs-001"
+          },
+          {
+            "type": "ParentChild",
+            "parent": "prs-103",
+            "child": "prs-001"
+          }
         ]
       },
       "research": {
@@ -54,17 +86,27 @@
             "id": "ps_001",
             "question_id": "q_001",
             "tier": "probable",
-            "supporting_assertion_ids": ["a_001"]
+            "supporting_assertion_ids": [
+              "a_001"
+            ]
           }
         ],
         "assertions": [
           {
             "id": "a_001",
-            "relationship": { "type": "ParentChild", "parent": "prs-101", "child": "prs-001" }
+            "relationship": {
+              "type": "ParentChild",
+              "parent": "prs-101",
+              "child": "prs-001"
+            }
           }
         ],
         "hypotheses": [],
-        "project": { "subject_person_ids": ["prs-001"] }
+        "project": {
+          "subject_person_ids": [
+            "prs-001"
+          ]
+        }
       }
     },
     {
@@ -74,8 +116,16 @@
       "write": "ps_001",
       "tree": {
         "relationships": [
-          { "type": "ParentChild", "parent": "prs-101", "child": "prs-001" },
-          { "type": "ParentChild", "parent": "prs-102", "child": "prs-001" }
+          {
+            "type": "ParentChild",
+            "parent": "prs-101",
+            "child": "prs-001"
+          },
+          {
+            "type": "ParentChild",
+            "parent": "prs-102",
+            "child": "prs-001"
+          }
         ]
       },
       "research": {
@@ -88,13 +138,21 @@
               {
                 "claim": "paternity",
                 "proof_tier": "probable",
-                "relationship": { "type": "ParentChild", "parent": "prs-101", "child": "prs-001" }
+                "relationship": {
+                  "type": "ParentChild",
+                  "parent": "prs-101",
+                  "child": "prs-001"
+                }
               }
             ]
           }
         ],
         "hypotheses": [],
-        "project": { "subject_person_ids": ["prs-001"] }
+        "project": {
+          "subject_person_ids": [
+            "prs-001"
+          ]
+        }
       }
     },
     {
@@ -104,9 +162,21 @@
       "write": "ps_001",
       "tree": {
         "relationships": [
-          { "type": "ParentChild", "parent": "prs-101", "child": "prs-001" },
-          { "type": "ParentChild", "parent": "prs-102", "child": "prs-001" },
-          { "type": "ParentChild", "parent": "prs-103", "child": "prs-001" }
+          {
+            "type": "ParentChild",
+            "parent": "prs-101",
+            "child": "prs-001"
+          },
+          {
+            "type": "ParentChild",
+            "parent": "prs-102",
+            "child": "prs-001"
+          },
+          {
+            "type": "ParentChild",
+            "parent": "prs-103",
+            "child": "prs-001"
+          }
         ]
       },
       "research": {
@@ -119,16 +189,36 @@
               {
                 "claim": "paternity",
                 "proof_tier": "probable",
-                "relationship": { "type": "ParentChild", "parent": "prs-101", "child": "prs-001" }
+                "relationship": {
+                  "type": "ParentChild",
+                  "parent": "prs-101",
+                  "child": "prs-001"
+                }
               }
             ]
           }
         ],
         "hypotheses": [
-          { "id": "h_001", "related_question_ids": ["q_001"], "status": "active" },
-          { "id": "h_002", "related_question_ids": ["q_001"], "status": "active" }
+          {
+            "id": "h_001",
+            "related_question_ids": [
+              "q_001"
+            ],
+            "status": "active"
+          },
+          {
+            "id": "h_002",
+            "related_question_ids": [
+              "q_001"
+            ],
+            "status": "active"
+          }
         ],
-        "project": { "subject_person_ids": ["prs-001"] }
+        "project": {
+          "subject_person_ids": [
+            "prs-001"
+          ]
+        }
       }
     },
     {
@@ -138,18 +228,42 @@
       "write": "ps_001",
       "tree": {
         "relationships": [
-          { "type": "ParentChild", "parent": "prs-101", "child": "prs-001" },
-          { "type": "ParentChild", "parent": "prs-102", "child": "prs-001" },
-          { "type": "ParentChild", "parent": "prs-103", "child": "prs-001" },
-          { "type": "ParentChild", "parent": "prs-001", "child": "prs-201" }
+          {
+            "type": "ParentChild",
+            "parent": "prs-101",
+            "child": "prs-001"
+          },
+          {
+            "type": "ParentChild",
+            "parent": "prs-102",
+            "child": "prs-001"
+          },
+          {
+            "type": "ParentChild",
+            "parent": "prs-103",
+            "child": "prs-001"
+          },
+          {
+            "type": "ParentChild",
+            "parent": "prs-001",
+            "child": "prs-201"
+          }
         ]
       },
       "research": {
         "proof_summaries": [
-          { "id": "ps_001", "question_id": "q_001", "tier": "probable" }
+          {
+            "id": "ps_001",
+            "question_id": "q_001",
+            "tier": "probable"
+          }
         ],
         "hypotheses": [],
-        "project": { "subject_person_ids": ["prs-001"] }
+        "project": {
+          "subject_person_ids": [
+            "prs-001"
+          ]
+        }
       }
     },
     {
@@ -159,9 +273,21 @@
       "write": "ps_001",
       "tree": {
         "relationships": [
-          { "type": "ParentChild", "parent": "prs-101", "child": "prs-001" },
-          { "type": "ParentChild", "parent": "prs-102", "child": "prs-001" },
-          { "type": "ParentChild", "parent": "prs-103", "child": "prs-001" }
+          {
+            "type": "ParentChild",
+            "parent": "prs-101",
+            "child": "prs-001"
+          },
+          {
+            "type": "ParentChild",
+            "parent": "prs-102",
+            "child": "prs-001"
+          },
+          {
+            "type": "ParentChild",
+            "parent": "prs-103",
+            "child": "prs-001"
+          }
         ]
       },
       "research": {
@@ -174,13 +300,21 @@
               {
                 "claim": "paternity",
                 "proof_tier": "not_proved",
-                "relationship": { "type": "ParentChild", "parent": "prs-101", "child": "prs-001" }
+                "relationship": {
+                  "type": "ParentChild",
+                  "parent": "prs-101",
+                  "child": "prs-001"
+                }
               }
             ]
           }
         ],
         "hypotheses": [],
-        "project": { "subject_person_ids": ["prs-001"] }
+        "project": {
+          "subject_person_ids": [
+            "prs-001"
+          ]
+        }
       }
     },
     {
@@ -190,9 +324,22 @@
       "write": "ps_001",
       "tree": {
         "relationships": [
-          { "type": "ParentChild", "parent": "prs-101", "child": "prs-001" },
-          { "type": "ParentChild", "parent": "prs-102", "child": "prs-001" },
-          { "type": "ParentChild", "subtype": "step", "parent": "prs-103", "child": "prs-001" }
+          {
+            "type": "ParentChild",
+            "parent": "prs-101",
+            "child": "prs-001"
+          },
+          {
+            "type": "ParentChild",
+            "parent": "prs-102",
+            "child": "prs-001"
+          },
+          {
+            "type": "ParentChild",
+            "subtype": "step",
+            "parent": "prs-103",
+            "child": "prs-001"
+          }
         ]
       },
       "research": {
@@ -205,13 +352,77 @@
               {
                 "claim": "paternity",
                 "proof_tier": "probable",
-                "relationship": { "type": "ParentChild", "parent": "prs-101", "child": "prs-001" }
+                "relationship": {
+                  "type": "ParentChild",
+                  "parent": "prs-101",
+                  "child": "prs-001"
+                }
               }
             ]
           }
         ],
         "hypotheses": [],
-        "project": { "subject_person_ids": ["prs-001"] }
+        "project": {
+          "subject_person_ids": [
+            "prs-001"
+          ]
+        }
+      }
+    },
+    {
+      "id": "children-proof-subject-has-competing-parents",
+      "expect": "silent",
+      "why": "The subject (prs-001) has three parents in the tree, but this proof concludes prs-001 as the parent of prs-201, who has one. Only the concluded child is in scope.",
+      "write": "ps_001",
+      "tree": {
+        "relationships": [
+          {
+            "type": "ParentChild",
+            "parent": "prs-101",
+            "child": "prs-001"
+          },
+          {
+            "type": "ParentChild",
+            "parent": "prs-102",
+            "child": "prs-001"
+          },
+          {
+            "type": "ParentChild",
+            "parent": "prs-103",
+            "child": "prs-001"
+          },
+          {
+            "type": "ParentChild",
+            "parent": "prs-001",
+            "child": "prs-201"
+          }
+        ]
+      },
+      "research": {
+        "proof_summaries": [
+          {
+            "id": "ps_001",
+            "question_id": "q_001",
+            "tier": "probable",
+            "claims": [
+              {
+                "claim": "paternity",
+                "proof_tier": "probable",
+                "relationship": {
+                  "type": "ParentChild",
+                  "parent": "prs-001",
+                  "child": "prs-201"
+                }
+              }
+            ]
+          }
+        ],
+        "hypotheses": [],
+        "project": {
+          "subject_person_ids": [
+            "prs-001"
+          ]
+        }
       }
     }
   ]

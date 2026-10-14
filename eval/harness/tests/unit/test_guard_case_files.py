@@ -97,7 +97,7 @@ def _duplicates(registry: dict) -> list[str]:
     dupes = []
     for e in _entries(registry):
         d, k = _detector_of(e), e.get("kind")
-        if d in seen_detectors:
+        if d is not None and d in seen_detectors:
             dupes.append(f"{d}: listed twice")
         if k is not None and k in seen_kinds:
             dupes.append(f"{k}: listed twice")
