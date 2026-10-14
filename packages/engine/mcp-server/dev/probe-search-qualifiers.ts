@@ -5856,15 +5856,21 @@ async function sectionJ(): Promise<void> {
   // Issue #3296: empirically confirm the upstream `params` format at the
   // county (recordPlace2) and city (recordPlace3) levels. Only recordPlace0
   // ("10") and recordPlace1 ("10,Alabama") were captured before this.
+  //
+  // How drill-down works: `m.defaultFacets=on` returns region-level Place
+  // facets. Each region item's `params` carries `c.recordPlace1=on` (a facet-
+  // enable flag, not a filter). To see STATE-level items, pass
+  // `c.recordPlace1=on&f.recordPlace0=<regionId>` instead of
+  // `m.defaultFacets=on`. Each state item's `params` should then carry
+  // `f.recordPlace1=<value>`, which is the measured form we need.
   console.log("\n  Phase 2b: drilling down for recordPlace2/3 facet param forms");
   if (usRegionId !== null) {
-    // Drill from region to state: send f.recordPlace0=<regionId> with facets on,
-    // then capture the raw `params` of the first state-level facet item.
+    // Step 1: Request state-level facets using c.recordPlace1=on.
     const stateBaseQuery =
       "q.text=" + encodeURIComponent("+executor") +
       "&f.collectionId=" + encodeURIComponent(cid) +
       `&f.recordPlace0=${usRegionId}` +
-      "&m.defaultFacets=on";
+      "&c.recordPlace1=on";
     const stateUrl = `${FULLTEXT_URL}?${stateBaseQuery}&${REQUIRE_SWITCH}&count=1`;
     const stateRes = await fetchRetry(stateUrl, {
       headers: {
@@ -5872,7 +5878,7 @@ async function sectionJ(): Promise<void> {
         Accept: "application/json",
         "User-Agent": BROWSER_USER_AGENT,
       },
-    }, { label: "facets: state-level drill-down" });
+    }, { label: "facets: state-level drill-down (c.recordPlace1=on)" });
     let stateParams: string | null = null;
     let countyParams: string | null = null;
     let cityParams: string | null = null;
@@ -5885,22 +5891,39 @@ async function sectionJ(): Promise<void> {
       }
       for (const facet of stateParsed.facets ?? []) {
         if (facet.displayName !== "Place") continue;
-        const stateItem = (facet.facets ?? []).find((f) => f.params);
+        // State items are nested inside the region item's sub-facets.
+        // The first sub-facet is a re-entry for the country itself (params
+        // ending with a trailing comma, e.g. "f.recordPlace1=10,"); real
+        // state items start at index 1+ and carry params like
+        // "c.recordPlace2=on&f.recordPlace1=10,Alabama".
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const regionItem: any = (facet.facets ?? []).find((f: any) => f.params);
+        const subFacets: Array<{ displayName?: string; params?: string; facets?: any[] }> = regionItem?.facets ?? [];
+        // Skip the country re-entry (index 0) — its params has a trailing comma.
+        const stateItem = subFacets.find((sf, idx) => idx > 0 && sf.params?.includes("f.recordPlace1="));
         if (stateItem?.params) {
           stateParams = stateItem.params;
           console.log(`  state-level raw params: ${stateParams}`);
+          console.log(`  state-level displayName: ${stateItem.displayName}`);
           record("J", "facet:stateParams", stateParams);
 
           // Extract the f.recordPlace1 value to drill down further.
           const rp1Match = stateParams.match(/f\.recordPlace1=([^&]+)/);
           if (rp1Match) {
             const rp1Value = decodeURIComponent(rp1Match[1]);
-            // Drill from state to county: send f.recordPlace1=<value> with facets on.
+            console.log(`  extracted recordPlace1 value: ${rp1Value}`);
+            // Step 2: Request county-level facets using c.recordPlace2=on.
+            // Drop the collection filter — the anchor collection (Alabama
+            // Legal) does not have county-level place breakdown, but other
+            // collections (e.g. censuses) do.
+            // Note: the comma in the recordPlace value must NOT be percent-
+            // encoded — Phase 2's T4/T5 used unencoded commas successfully,
+            // and %2C may not be recognised as a separator by the API.
             const countyBaseQuery =
               "q.text=" + encodeURIComponent("+executor") +
-              "&f.collectionId=" + encodeURIComponent(cid) +
-              `&f.recordPlace1=${encodeURIComponent(rp1Value)}` +
-              "&m.defaultFacets=on";
+              `&f.recordPlace0=${usRegionId}` +
+              `&f.recordPlace1=${rp1Value.replace(/ /g, "%20")}` +
+              "&c.recordPlace2=on";
             const countyUrl = `${FULLTEXT_URL}?${countyBaseQuery}&${REQUIRE_SWITCH}&count=1`;
             const countyRes = await fetchRetry(countyUrl, {
               headers: {
@@ -5908,9 +5931,10 @@ async function sectionJ(): Promise<void> {
                 Accept: "application/json",
                 "User-Agent": BROWSER_USER_AGENT,
               },
-            }, { label: "facets: county-level drill-down" });
+            }, { label: "facets: county-level drill-down (c.recordPlace2=on)" });
             if (countyRes.ok) {
-              let countyParsed: { facets?: Array<{ displayName?: string; facets?: Array<{ displayName?: string; params?: string }> }> };
+              // eslint-disable-next-line @typescript-eslint/no-explicit-any
+              let countyParsed: any;
               try {
                 countyParsed = JSON.parse(await countyRes.text());
               } catch {
@@ -5918,21 +5942,31 @@ async function sectionJ(): Promise<void> {
               }
               for (const facet of countyParsed.facets ?? []) {
                 if (facet.displayName !== "Place") continue;
-                const countyItem = (facet.facets ?? []).find((f) => f.params);
+                // County items are nested 3 deep: Place → US → Alabama → counties.
+                // Walk: facet.facets[0] (US) → .facets[0] (Alabama) → .facets[N] (counties).
+                const usItem: any = (facet.facets ?? [])[0];
+                const stateInCounty: any = (usItem?.facets ?? [])[0];
+                const countyItems: any[] = stateInCounty?.facets ?? [];
+                const countyItem = countyItems.find((ci: any) => ci.params?.includes("f.recordPlace2="));
                 if (countyItem?.params) {
                   countyParams = countyItem.params;
                   console.log(`  county-level raw params: ${countyParams}`);
+                  console.log(`  county-level displayName: ${countyItem.displayName}`);
                   record("J", "facet:countyParams", countyParams);
 
                   // Extract the f.recordPlace2 value to drill for city.
                   const rp2Match = countyParams.match(/f\.recordPlace2=([^&]+)/);
                   if (rp2Match) {
                     const rp2Value = decodeURIComponent(rp2Match[1]);
+                    console.log(`  extracted recordPlace2 value: ${rp2Value}`);
+                    // Step 3: Request city-level facets using c.recordPlace3=on.
+                    // Include all parent filters (unencoded commas).
                     const cityBaseQuery =
                       "q.text=" + encodeURIComponent("+executor") +
-                      "&f.collectionId=" + encodeURIComponent(cid) +
-                      `&f.recordPlace2=${encodeURIComponent(rp2Value)}` +
-                      "&m.defaultFacets=on";
+                      `&f.recordPlace0=${usRegionId}` +
+                      `&f.recordPlace1=${rp1Value.replace(/ /g, "%20")}` +
+                      `&f.recordPlace2=${rp2Value.replace(/ /g, "%20")}` +
+                      "&c.recordPlace3=on";
                     const cityUrl = `${FULLTEXT_URL}?${cityBaseQuery}&${REQUIRE_SWITCH}&count=1`;
                     const cityRes = await fetchRetry(cityUrl, {
                       headers: {
@@ -5940,9 +5974,10 @@ async function sectionJ(): Promise<void> {
                         Accept: "application/json",
                         "User-Agent": BROWSER_USER_AGENT,
                       },
-                    }, { label: "facets: city-level drill-down" });
+                    }, { label: "facets: city-level drill-down (c.recordPlace3=on)" });
                     if (cityRes.ok) {
-                      let cityParsed: { facets?: Array<{ displayName?: string; facets?: Array<{ displayName?: string; params?: string }> }> };
+                      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                      let cityParsed: any;
                       try {
                         cityParsed = JSON.parse(await cityRes.text());
                       } catch {
@@ -5950,20 +5985,30 @@ async function sectionJ(): Promise<void> {
                       }
                       for (const facet of cityParsed.facets ?? []) {
                         if (facet.displayName !== "Place") continue;
-                        const cityItem = (facet.facets ?? []).find((f) => f.params);
+                        // City items nested 4 deep: Place → US → state → county → cities.
+                        const cityUs: any = (facet.facets ?? [])[0];
+                        const cityState: any = (cityUs?.facets ?? [])[0];
+                        const cityCounty: any = (cityState?.facets ?? [])[0];
+                        const cityItems: any[] = cityCounty?.facets ?? [];
+                        const cityItem = cityItems.find((ci: any) => ci.params?.includes("f.recordPlace3="));
                         if (cityItem?.params) {
                           cityParams = cityItem.params;
                           console.log(`  city-level raw params: ${cityParams}`);
+                          console.log(`  city-level displayName: ${cityItem.displayName}`);
                           record("J", "facet:cityParams", cityParams);
                         }
                         break;
                       }
                     }
                   }
+                } else {
+                  console.log(`  no county item with f.recordPlace2= found in response`);
                 }
                 break;
               }
             }
+          } else {
+            console.log(`  no f.recordPlace1= found in state params; cannot drill to county`);
           }
         }
         break;

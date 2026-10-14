@@ -30,9 +30,9 @@ const FS_FULLTEXT_URL =
 
 const RECORD_PLACE_EXAMPLES: Record<string, string> = {
   recordPlace0: '"10"',
-  recordPlace1: '"10,New Hampshire"',
-  recordPlace2: '"10,New Hampshire,Cheshire"',
-  recordPlace3: '"10,New Hampshire,Cheshire,Keene"',
+  recordPlace1: '"10,Alabama"',
+  recordPlace2: '"10,Alabama,Autauga"',
+  recordPlace3: '"10,Alabama,Autauga,Booth"',
 };
 
 function validateRecordPlace(field: string, value: string, level: number): void {
@@ -442,19 +442,19 @@ export const fulltextSearchToolSchema = {
         type: "string",
         description:
           "Filter by country/state. Must be the filterParam from a Place facet " +
-          '(e.g. "10,New Hampshire"). Drill down: send recordPlace0 with includeFacets: true.',
+          '(e.g. "10,Alabama"). Drill down: send recordPlace0 with includeFacets: true.',
       },
       recordPlace2: {
         type: "string",
         description:
           "Filter by county. Must be the filterParam from a Place facet " +
-          '(e.g. "10,New Hampshire,Cheshire"). Drill down from recordPlace1.',
+          '(e.g. "10,Alabama,Autauga"). Drill down from recordPlace1.',
       },
       recordPlace3: {
         type: "string",
         description:
           "Filter by city. Must be the filterParam from a Place facet " +
-          '(e.g. "10,New Hampshire,Cheshire,Keene"). Drill down from recordPlace2.',
+          '(e.g. "10,Alabama,Autauga,Booth"). Drill down from recordPlace2.',
       },
       count: {
         type: "number",

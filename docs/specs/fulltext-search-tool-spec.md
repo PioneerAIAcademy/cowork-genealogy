@@ -109,15 +109,15 @@ Arabic and Hebrew, and Eastern European records.
     },
     "recordPlace1": {
       "type": "string",
-      "description": "Filter by country/state. Must be the filterParam from a Place facet (e.g. \"10,New Hampshire\"). Drill down: send recordPlace0 with includeFacets: true."
+      "description": "Filter by country/state. Must be the filterParam from a Place facet (e.g. \"10,Alabama\"). Drill down: send recordPlace0 with includeFacets: true."
     },
     "recordPlace2": {
       "type": "string",
-      "description": "Filter by county. Must be the filterParam from a Place facet (e.g. \"10,New Hampshire,Cheshire\"). Drill down from recordPlace1."
+      "description": "Filter by county. Must be the filterParam from a Place facet (e.g. \"10,Alabama,Autauga\"). Drill down from recordPlace1."
     },
     "recordPlace3": {
       "type": "string",
-      "description": "Filter by city. Must be the filterParam from a Place facet (e.g. \"10,New Hampshire,Cheshire,Keene\"). Drill down from recordPlace2."
+      "description": "Filter by city. Must be the filterParam from a Place facet (e.g. \"10,Alabama,Autauga,Booth\"). Drill down from recordPlace2."
     },
     "count": {
       "type": "number",
