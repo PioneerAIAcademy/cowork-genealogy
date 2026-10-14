@@ -210,7 +210,7 @@ def test_the_nudge_cap_is_per_session_not_per_turn(tmp_path, monkeypatch):
     SIZED against: at 30 a drifting scope changes behaviour much sooner than it did at
     60. Whether it ought to reset per turn is a separate decision -- resetting would
     multiply the session bound by the number of turns, and on this plane there is no
-    spend meter behind it."""
+    spend limit behind it."""
     _write(tmp_path, "active")
 
     class StandInAgent:
@@ -521,7 +521,7 @@ def test_both_halt_carriers_read_the_pending_message_signal():
     assert "pending_user_message=bool(" in stop, "the Stop hook must pass the signal on"
 
 
-def test_the_alpha_carries_no_spend_meter():
+def test_the_alpha_carries_no_spend_limit():
     """Lead ruling 2026-09-25: no spend limit on the alpha. E2B is replaced by the
     search-agent prototype in about two months, so the alpha is not worth hardening -- and
     the meter this branch briefly added carried three defects of its own:
@@ -537,20 +537,29 @@ def test_the_alpha_carries_no_spend_meter():
     None of the three was caught by the tests that shipped with it: those drove a fake
     agent returning a fixed number, so they exercised the HALT'S DECISION and never the
     METER. That is why this guard is spelled against the module rather than a verdict --
-    what must not come back is the meter.
+    what must not come back is that meter.
+
+    The control plane's credential proxy records what every call cost (`api_calls`) and
+    must never refuse one on it. It takes its prices from `app.agent.spend`, beside the
+    prototype's cap, so the cap is the name it must not read.
 
     The prototype's $35 cap is untouched and stays as built."""
     import inspect
 
+    from app import anthropic_proxy
     from app.agent import real_agent as ra
 
     src = inspect.getsource(ra)
     for gone in ("session_spend_usd", "_record_usage", "_usage_by_message",
                  "SPEND_CAP_USD", "usage_tokens"):
         assert gone not in src, (
-            f"`{gone}` is back in real_agent.py. The alpha carries no spend meter "
+            f"`{gone}` is back in real_agent.py. The alpha's sandbox carries no spend meter "
             f"(lead ruling 2026-09-25); the prototype's cap is the one that ships."
         )
+    assert "SPEND_CAP_USD" not in inspect.getsource(anthropic_proxy), (
+        "the credential proxy reads the spend cap. It records what calls cost and refuses "
+        "none on it: the alpha has no spend limit (lead ruling 2026-09-25)."
+    )
     proto = (Path(__file__).resolve().parents[1]
              / "proto" / "worker" / "worker.py").read_text(encoding="utf-8")
     assert "SPEND_CAP_USD" in proto, "the prototype's $35 session cap must stay"
