@@ -185,9 +185,9 @@ class MockAgent:
                 "depends_on": [], "unblocks": [],
                 "created": "2026-06-06", "resolved": None,
                 "resolution_assertion_ids": [],
-                "exhaustive_declaration": {
-                    "declared": False, "justification": None,
-                    "log_entry_ids": [], "stop_criteria": None,
+                "search_stop": {
+                    "stopped_because": None, "justification": None,
+                    "log_entry_ids": [], "stop_criteria": None, "not_reached": [],
                 },
             }],
             "plans": [], "log": [], "sources": [], "assertions": [],

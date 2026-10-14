@@ -657,7 +657,7 @@ def test_the_declaration_arm_is_driven_through_the_real_hook(tmp_path, monkeypat
             _rule_payload(
                 "questions",
                 "proof-conclusion",
-                entry={"exhaustive_declaration": {"declared": True}},
+                entry={"search_stop": {"stopped_because": "question_answered", "log_entry_ids": ["log_001"], "stop_criteria": None, "not_reached": []}},
             )
         ],
     )
@@ -665,7 +665,7 @@ def test_the_declaration_arm_is_driven_through_the_real_hook(tmp_path, monkeypat
     assert returns[0]["hookSpecificOutput"]["permissionDecision"] == "deny"
     assert [
         (c["section"], c["rule"]) for c in result.blocked_owned_section_writes
-    ] == [("questions.exhaustive_declaration", "declaration")]
+    ] == [("questions.search_stop", "declaration")]
 
 
 # --- routing short-circuit: the hand-off message must not be dropped (#2189) ---
@@ -1325,6 +1325,24 @@ def test_the_usage_limit_marker_is_live_too(monkeypatch, tmp_path):
 
     result = _run_with_messages(
         monkeypatch, tmp_path, [_result_message(result="monthly usage limit reached")]
+    )
+    assert result.aborted_reason == QUOTA_ABORT_REASON
+
+
+def test_the_extra_usage_quota_prose_is_caught(monkeypatch, tmp_path):
+    """The prose an exhausted extra-usage allowance emits, in the shape PR #3312's
+    research-plan v7_2026-10-12_12-37-51 recorded it: `error` names only the SDK
+    exception and the quota text arrives as assistant text. Neither older marker
+    matches it, so seven tests were retried and logged as `error`."""
+    from harness.skill_runner import QUOTA_ABORT_REASON
+
+    result = _run_with_messages(
+        monkeypatch,
+        tmp_path,
+        [
+            _assistant_text("You're out of extra usage \u00b7 resets 3:20pm (Atlantic/Reykjavik)"),
+            _result_message(result=None, stop_reason=None),
+        ],
     )
     assert result.aborted_reason == QUOTA_ABORT_REASON
 

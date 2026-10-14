@@ -1,3 +1,4 @@
+import { ApiError } from '../api'
 // The client realtime seam. Two implementations: WsSessionConnection below (one
 // bidirectional WebSocket straight to the in-sandbox WS server — the hosted alpha)
 // and SseSessionConnection (an EventSource + REST against the search-agent
@@ -97,6 +98,11 @@ export class WsSessionConnection implements SessionConnection {
   // silently billing compute for a tab nobody is viewing. Reconnects pause while
   // hidden and resume on focus.
   private hidden = false
+  // The 410 frame, kept because it can arrive before ChatPane subscribes: the
+  // refusal returns before any sandbox work, often inside the first render.
+  // `on()` replays it to a late listener. Every other terminal frame comes after
+  // seconds of retries, by which time the subscriber exists.
+  private expiredFrame: WsMessage | null = null
   // Guards the await window inside connect(): without it a retry firing while
   // the credentials request is in flight would open a second socket.
   private connecting = false
@@ -186,6 +192,21 @@ export class WsSessionConnection implements SessionConnection {
         // The control plane is unreachable or the session is gone. Same backoff
         // as a refused socket, so this can't spin and can't hang silently.
         this.connecting = false
+        // 410: the session is more than 24 h old and the server will never accept
+        // it (#3406). Terminal and never retried, checked before the `hidden`
+        // return so a tab that is hidden when it lands does not ask again on
+        // focus. Not `fail()`, whose "Chat unavailable" is the wrong message, and
+        // not `close()`, which would drop the listener that must hear this.
+        if (err instanceof ApiError && err.status === 410) {
+          if (this.closed) return
+          this.closed = true
+          if (typeof document !== 'undefined') {
+            document.removeEventListener('visibilitychange', this.onVisibility)
+          }
+          this.expiredFrame = { type: 'status', state: 'session_expired', message: err.message }
+          for (const l of [...this.listeners]) l(this.expiredFrame)
+          return
+        }
         if (this.closed || this.hidden) return
         if (err instanceof CredentialsTimeout) {
           this.credentialTimeouts += 1
@@ -319,6 +340,7 @@ export class WsSessionConnection implements SessionConnection {
 
   on(listener: Listener): () => void {
     this.listeners.add(listener)
+    if (this.expiredFrame) listener(this.expiredFrame)
     return () => this.listeners.delete(listener)
   }
 

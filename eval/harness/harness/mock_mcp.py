@@ -165,10 +165,11 @@ LIVE_TOOLS: set[str] = {
     # whenever tool_calls is empty, so the defect switched off the dimension that
     # covers it. conflict-resolution declares it too. Issue #1654 (deep dive).
     "convert_calendar",
-    # Same rationale as convert_calendar: pure census arithmetic whose computed
-    # answer (how many children are missing, and each birth window) is exactly what
-    # its callers' unit tests will grade once check-warnings and question-selection
-    # are granted it. A canned fixture would grade a number the test author typed.
+    # Census arithmetic whose computed answer (how many children are missing, and
+    # each birth window) is exactly what check-warnings' tests grade; a canned
+    # fixture would grade a number the test author typed. Unlike convert_calendar
+    # it reads workspace state in tree mode (motherId): the injected projectPath
+    # points it at the test's own tree.
     "census_children_gap",
     # Same rationale as convert_calendar: URL-templating with no network
     # dependency, so a canned fixture would supply the exact URL string
@@ -905,6 +906,36 @@ def _stage_and_compact_search_results(
         return None, response, [], ranked
 
 
+def _stage_record_read(
+    workspace: Path, args: dict[str, Any], response: dict[str, Any]
+) -> dict[str, Any]:
+    """Stage a canned live `record_read` the way `record-read.ts` does, and
+    return the response with `staged` beside the record.
+
+    The payload is production's: `{ query: { recordId }, results: [{ recordId,
+    gedcomx, indexFields? }] }` under tool `record_read`. It goes through the
+    same compiled `stageSearchResults` the search tools use. A fixture may carry
+    `indexFields` beside the GedcomX (a captured `record_read` sidecar does);
+    it is staged and kept off the inline response, which production never
+    returns it on. On a node failure the read comes back with `staged: null`
+    and a `stagingError`, matching production's best-effort staging.
+    """
+    record_id = str(args.get("recordId") or "").strip()
+    gedcomx = {k: v for k, v in response.items() if k not in ("indexFields", "staged", "imageArk")}
+    element: dict[str, Any] = {"recordId": record_id, "gedcomx": gedcomx}
+    index_fields = response.get("indexFields")
+    if isinstance(index_fields, dict) and index_fields:
+        element["indexFields"] = index_fields
+    payload = {"query": {"recordId": record_id}, "results": [element]}
+    staged, _payload, _unlogged, _ranked = _stage_and_compact_search_results(
+        workspace, "record_read", payload
+    )
+    inline = {k: v for k, v in response.items() if k != "indexFields"}
+    if staged is None:
+        return {**inline, "staged": None, "stagingError": "mock: staging the canned record failed"}
+    return {**inline, "staged": staged}
+
+
 def _unlogged_staged_handles(
     workspace: Path,
     *,
@@ -1153,6 +1184,7 @@ def create_mock_server(
         if tool_name == "person_quality":
             continue  # served by _make_person_quality_handler below
         predicated = list(bucket["predicated"])
+        is_error_flags = list(bucket.get("is_error") or [False] * len(predicated))
         # Input schema precedence: the compiled production schema wins (the
         # single source of truth), so fixture-backed tools advertise exactly
         # what production does. A fixture-provided input_schema is honored only
@@ -1168,6 +1200,7 @@ def create_mock_server(
         async def handler(
             args,
             _predicated=predicated,
+            _is_error=is_error_flags,
             _name=tool_name,
             _workspace=workspace,
             _rank_predicated=rank_predicated,
@@ -1306,6 +1339,23 @@ def create_mock_server(
                     if _surname_hint:
                         response = {**response, SURNAME_VARIANT_HINTS_KEY: _surname_hint}
 
+            # A LIVE record_read given a projectPath stages the record and returns
+            # `staged.resultsRef` beside it, and extraction_append's extractor mode
+            # reads that sidecar. Without this the canned read staged nothing, the
+            # extractor refused ("no results sidecar"), and every FamilySearch
+            # record in the unit suite fell back to record-extractor, so no
+            # committed run could exercise the code path. A read WITH `resultsRef`
+            # is a sidecar read and stages nothing, exactly as production.
+            if (
+                _name == "record_read"
+                and _workspace is not None
+                and "error" not in response
+                and args.get("projectPath")
+                and not args.get("resultsRef")
+                and isinstance(response.get("persons"), list)
+            ):
+                response = _stage_record_read(_workspace, args, response)
+
             # Fold in the ranking the real record_search performs when the
             # caller names a subject. Matched against the test's own
             # rank_search_matches fixtures so each test keeps the ranking it was
@@ -1409,11 +1459,16 @@ def create_mock_server(
             entry["response"] = response
             entry["response_fixture"] = source_name
             call_log.append(entry)
-            return {
+            envelope: dict[str, Any] = {
                 "content": [
                     {"type": "text", "text": json.dumps(response)},
                 ],
             }
+            # A fixture marked `is_error` stands for a THROWN tool error, which
+            # production's catch arms return with `isError: true` beside `{error}`.
+            if entry["matched"]["kind"] == "predicate" and _is_error[entry["matched"]["index"]]:
+                envelope["is_error"] = True
+            return envelope
 
         # Prefer the production description; fall back to a generic stub
         # if the tool is not in the catalog (e.g., aspirational tools
@@ -1439,7 +1494,7 @@ def create_mock_server(
     fixture_backed = set(manifest.keys())
     for live_tool_name in sorted(LIVE_TOOLS - fixture_backed - {"person_quality"}):
         live_handler = _make_live_handler(
-            live_tool_name, workspace, call_log,
+            live_tool_name, workspace, call_log, manifest,
             place_predicated=list((manifest.get("place_search") or {}).get("predicated") or []),
         )
         description = tool_descriptions.get(
@@ -1484,7 +1539,6 @@ def create_mock_server(
 #: extraction_append's lane restriction (issue #695) lives inside its export,
 #: so calling it directly here — bypassing index.ts — still enforces the lane.
 _COMPILED_TOOLS: dict[str, tuple[str, str]] = {
-    "extraction_append": ("extraction-append.js", "extractionAppend"),
     "tree_edit": ("tree-edit.js", "treeEdit"),
     "tree_correct": ("tree-correct.js", "treeCorrect"),
     "materialize_facts": ("materialize-facts.js", "materializeFacts"),
@@ -1494,7 +1548,7 @@ _COMPILED_TOOLS: dict[str, tuple[str, str]] = {
     "research_query": ("research-query.js", "researchQuery"),
     "project_create": ("project-create.js", "projectCreate"),
     "convert_calendar": ("convert-calendar.js", "convertCalendar"),
-    "census_children_gap": ("census-children-gap.js", "censusChildrenGap"),
+    "census_children_gap": ("census-children-gap.js", "censusChildrenGapTool"),
     "build_external_search_url": ("build-external-search-url.js", "buildExternalSearchUrlTool"),
     "sidecar_read": ("sidecar-read.js", "sidecarRead"),
     "get_name_variants": ("name-variants.js", "getNameVariants"),
@@ -1532,9 +1586,12 @@ def _make_live_handler(
     tool_name: str,
     workspace: Path | None,
     call_log: list[dict[str, Any]],
+    manifest: dict[str, Any] | None = None,
     place_predicated: list | None = None,
 ):
     """Return an async handler for a live tool."""
+    if tool_name == "extraction_append":
+        return _make_extraction_append_handler(workspace, call_log, manifest or {})
     if tool_name == "validate_research_schema":
         return _make_validate_handler(workspace, call_log)
     if tool_name == "research_log_append":
@@ -1739,7 +1796,7 @@ def _make_research_append_handler(workspace: Path | None, call_log: list[dict[st
             input_obj["projectPath"] = str(_ws).replace("\\", "/")
 
             script = (
-                f"import {{ researchAppend }} from '{append_url}';"
+                f"import {{ researchAppendFromCaller as researchAppend }} from '{append_url}';"
                 " import { readFileSync } from 'node:fs';"
                 " const input = JSON.parse(readFileSync(0, 'utf-8'));"
                 " const r = await researchAppend(input);"
@@ -1972,6 +2029,97 @@ def _make_compiled_tool_handler(
         }
         call_log.append(entry)
         return _tool_envelope(tool_name, response)
+
+    return handler
+
+
+def _make_extraction_append_handler(
+    workspace: Path | None,
+    call_log: list[dict[str, Any]],
+    manifest: dict[str, Any],
+):
+    """The live `extraction_append`, reading FamilySearch records from the test's
+    `record_read` fixtures instead of the network (lead, 2026-09-30).
+
+    `recordIds` makes the tool read each record live. Here each id is matched
+    against the loaded `record_read` fixtures, the canned response is staged
+    through `_stage_record_read` (the compiled stager, so `staged` is real), and
+    the staged responses cross into the node script as a JSON map keyed by the
+    id exactly as the call sent it. `runExtractionAppend`'s injected `readRecord`
+    serves from that map, so every other step (the resend skip, the log batch,
+    the per-record writes, the summary) is the compiled production code. A call
+    with no `recordIds` goes through the same script with an empty map.
+    Principal is `LOCAL`: the harness is one user per process.
+    """
+    tool_js = _MCP_BUILD / "tools" / "extraction-append.js"
+    principal_js = _MCP_BUILD / "auth" / "principal.js"
+
+    def _url(p: Path) -> str:
+        posix = str(p).replace("\\", "/").replace("'", "\\'")
+        return ("file:///" + posix) if sys.platform == "win32" else posix
+
+    async def handler(args, _ws=workspace):
+        if _ws is None or not tool_js.exists():
+            reason = "workspace not provided" if _ws is None else f"build not found: {tool_js}"
+            response: dict[str, Any] = {"ok": False, "errors": [f"extraction_append: {reason}"]}
+        else:
+            input_obj = dict(args)
+            input_obj["projectPath"] = str(_ws).replace("\\", "/")
+            records: dict[str, Any] = {}
+            predicated = (manifest.get("record_read") or {}).get("predicated") or []
+            for rid in input_obj.get("recordIds") or []:
+                if not isinstance(rid, str):
+                    continue
+                key = rid.strip()
+                canned = next(
+                    (resp for pred, resp, *_ in predicated if matches(pred, {"recordId": key})),
+                    None,
+                )
+                if canned is None:
+                    records[key] = {"__error": f"no record_read fixture matches {key}"}
+                else:
+                    records[key] = _stage_record_read(
+                        _ws, {"recordId": key, "projectPath": input_obj["projectPath"]}, canned
+                    )
+            input_obj["__records"] = records
+            script = (
+                f"import {{ runExtractionAppend }} from '{_url(tool_js)}';"
+                f" import {{ LOCAL }} from '{_url(principal_js)}';"
+                " import { readFileSync } from 'node:fs';"
+                " const input = JSON.parse(readFileSync(0, 'utf-8'));"
+                " const records = input.__records; delete input.__records;"
+                " const deps = { readRecord: async ({ recordId }) => {"
+                "   const r = records[String(recordId).trim()];"
+                "   if (!r) throw new Error(`no record_read fixture for ${recordId}`);"
+                "   if (r.__error) throw new Error(r.__error);"
+                "   return r;"
+                " } };"
+                " const r = await runExtractionAppend(input, deps, LOCAL);"
+                " process.stdout.write(JSON.stringify(r));"
+            )
+            try:
+                proc = _run_node_eval(script, json.dumps(input_obj), timeout=NODE_EVAL_TIMEOUT_LONG)
+                if proc.stdout.strip():
+                    response = json.loads(proc.stdout)
+                else:
+                    stderr_msg = proc.stderr.strip()[:500] if proc.stderr else "no output"
+                    response = {
+                        "ok": False,
+                        "errors": [f"extraction_append: node produced no output (exit {proc.returncode}): {stderr_msg}"],
+                    }
+            except Exception as e:
+                response = {"ok": False, "errors": [f"extraction_append: {e}"]}
+        call_log.append(
+            {
+                "tool": "mcp__genealogy__extraction_append",
+                "args": dict(args),
+                "expected_args": None,
+                "matched": {"kind": "live", "index": None},
+                "response_fixture": "live:extraction_append",
+                "response": response,
+            }
+        )
+        return _tool_envelope("extraction_append", response)
 
     return handler
 

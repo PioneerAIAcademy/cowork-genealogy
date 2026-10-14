@@ -152,7 +152,7 @@ settle it. Do **not** resolve the question, and do **not** write the tree —
 is asserted. Then route to `conflict-resolution`. Re-invoked after the
 conflict is resolved, you update that same `ps_NNN` in place.
 Report the exact failing IDs and route to the missing skill for each gap
-(`record-extraction`, `person-evidence`, or `conflict-resolution`) instead of
+(extraction, `person-evidence`, or `conflict-resolution`) instead of
 asking — who decides changes nothing about whether the gate runs. Advisory unlinked fact/negative assertions (step 3)
 do **not** stop the gate — surface them as a note and continue.
 
@@ -179,13 +179,13 @@ cost in this skill. Scope every lookup to the question/persons at hand:
 - `research_query({ section: "person_evidence", personId })` — per person the
   question concerns (one call per person; `person_evidence` has no
   `questionId` filter, so key off the persons the assertions above name).
-- `research_query({ section: "conflicts", questionId })` — conflicts blocking
-  this question (`blocks_question_ids`); check `status` for which are
-  already resolved.
+- `research_query({ section: "conflicts", questionId })` — conflicts that name
+  this question in `blocks_question_ids` or dispute one of its assertions;
+  check `status` for which are already resolved.
 - `research_query({ section: "hypotheses", questionId })` — related
   hypotheses.
 - `research_query({ section: "questions", questionId })` — the question
-  entry itself, including its `exhaustive_declaration`.
+  entry itself, including its `search_stop`.
 - `research_query({ section: "timelines", personId })` — the subject's
   timeline, if one exists.
 
@@ -316,7 +316,7 @@ You own the resolution of **the question you actually concluded**: `status: "res
 
 **Only when you concluded it.** If the preconditions gate blocked you and you recorded the attempt at `not_proved`, the question stays **open** — you were prevented from concluding, which is not the same as concluding that nothing is there. A `not_proved` summary written after an exhaustive search that came back empty DOES close its question; a `not_proved` summary written because a conflict blocked the correlation does not. Leave it open and route.
 
-**What you do NOT write on the question:** `exhaustive_declaration` (research-exhaustiveness owns it) and the question's structure or text (question-selection mints questions and owns them). Do not create a follow-on question either — name what would advance the work in §9 and let question-selection mint it.
+**What you do NOT write on the question:** `search_stop` (research-exhaustiveness owns it) and the question's structure or text (question-selection mints questions and owns them). Do not create a follow-on question either — name what would advance the work in §9 and let question-selection mint it.
 
 `resolution_assertion_ids` are the `a_` ids the conclusion rests on — the same ones in the summary's `supporting_assertion_ids`.
 
@@ -386,7 +386,7 @@ is already persisted.
 
 **On repeat invocation for the same question:** update the existing `ps_NNN` in place via `research_append({ section: "proof_summaries", op: "update", entryId: "ps_NNN", fields: { /* only the changed fields */ } })` — the tool shallow-merges just those fields, so pass ONLY what changed and do NOT regenerate the full entry or re-emit `narrative_markdown` when it is unchanged. Never append a second proof_summary for the same `question_id`. Keep the tier/form re-selection terse — do NOT produce a full old-vs-new before/after narrative comparison table. On tier downgrade to `not_proved`/`disproved`, remove the previously concluded fact/relationship from the tree via `tree_correct({ operation: "remove", ... })`.
 
-**Never duplicate:** more than one `proof_summary` for the same `question_id`. Never write `exhaustive_declaration`, and never mint a question (see §7).
+**Never duplicate:** more than one `proof_summary` for the same `question_id`. Never write `search_stop`, and never mint a question (see §7).
 
 **Per-claim downgrade.** When a `claims[]` breakdown exists and just one claim's `proof_tier` is revised downward across the `probable` threshold on re-invocation (e.g. maternity from `probable` to `possible`), remove only that claim's relationship via `tree_correct` — independent of what happens to the other claim or to the scalar `tier`.
 
@@ -705,8 +705,9 @@ paragraphs of plain prose with **no label, heading or field name**:
    answered" below that. Call it a "finding", or a "conclusion" only at
    `proved`. End the paragraph with one plain sentence on what was not
    searched, restated from the unsearched records named in the summary's own
-   `exhaustive_search_summary`; if it names none, say that every place the
-   answer was likely to be recorded was searched. No identifiers, file names,
+   `exhaustive_search_summary` and in the question's `search_stop.not_reached`
+   list; if neither names any, say that every place the answer was likely to
+   be recorded was searched. No identifiers, file names,
    tool names or field names; a person is a name, a record is what it is
    ("the 1885 county estate file"). Never write "proof", "GPS" or
    "exhaustive", not even inside a phrase such as "standard of proof"; say

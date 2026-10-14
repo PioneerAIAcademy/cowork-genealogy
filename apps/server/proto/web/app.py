@@ -432,7 +432,7 @@ def queue_body(turn_id: str, session: SessionRow, text: str, enqueued_at: str, n
 
 
 def session_out(row: SessionRow) -> dict[str, Any]:
-    """Every key of api.ts's SessionSummary; SessionList dereferences model/last_active."""
+    """Every required key of api.ts's SessionSummary (`continuable` is optional and omitted, which reads as not ended); SessionList dereferences model/last_active."""
     return {
         "id": row.session_id,
         # The client cannot open a new session ON this project without it, which is

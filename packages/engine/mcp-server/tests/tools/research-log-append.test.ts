@@ -1606,7 +1606,7 @@ describe("research_log_append — nil-escalation note (#2735)", () => {
           created: "2026-05-04",
           resolved: null,
           resolution_assertion_ids: [],
-          exhaustive_declaration: { declared: false, justification: null, log_entry_ids: [], stop_criteria: null },
+          search_stop: { stopped_because: null, justification: null, log_entry_ids: [], stop_criteria: null, not_reached: [] },
         },
       ],
       plans: [

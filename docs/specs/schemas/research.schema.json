@@ -190,7 +190,7 @@
       }
     },
     "known_holding": {
-      "description": "One item the researcher already has on hand (document, prior research, living-relative knowledge), surveyed by init-project before new research begins. Lightweight by design — not a source or assertion. Promoted into proper sources/assertions by record-extraction/citation, which set 'promoted' to true; the entry is never deleted.",
+      "description": "One item the researcher already has on hand (document, prior research, living-relative knowledge), surveyed by init-project before new research begins. Lightweight by design — not a source or assertion. Promoted into proper sources/assertions once the document itself is extracted and cited, which sets 'promoted' to true; the entry is never deleted.",
       "type": "object",
       "required": [
         "id",
@@ -249,7 +249,7 @@
         "created",
         "resolved",
         "resolution_assertion_ids",
-        "exhaustive_declaration"
+        "search_stop"
       ],
       "additionalProperties": false,
       "properties": {
@@ -306,22 +306,31 @@
             "pattern": "^a_"
           }
         },
-        "exhaustive_declaration": {
-          "$ref": "#/$defs/exhaustive_declaration"
+        "search_stop": {
+          "$ref": "#/$defs/search_stop"
         }
       }
     },
-    "exhaustive_declaration": {
+    "search_stop": {
+      "description": "Why searching stopped on this question and what could not be reached. `stopped_because` is null on a newly created question (no stop decision yet). The three stop-gate values (`question_answered`, `record_exhausted`, `nothing_further_reachable`) permit status `exhaustive_declared` and a proof tier; the two non-gate values keep status `in_progress`. Renamed from `exhaustive_declaration` (issue #2539, 2026-10-07).",
       "type": "object",
       "required": [
-        "declared",
+        "stopped_because",
         "log_entry_ids",
-        "stop_criteria"
+        "stop_criteria",
+        "not_reached"
       ],
       "additionalProperties": false,
       "properties": {
-        "declared": {
-          "type": "boolean"
+        "stopped_because": {
+          "anyOf": [
+            {
+              "$ref": "enums.schema.json#/$defs/stopped_because"
+            },
+            {
+              "type": "null"
+            }
+          ]
         },
         "justification": {
           "type": [
@@ -345,29 +354,100 @@
               "type": "null"
             }
           ]
+        },
+        "not_reached": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/not_reached_entry"
+          }
         }
       },
       "allOf": [
         {
           "if": {
             "properties": {
-              "declared": {
-                "const": true
+              "stopped_because": {
+                "$ref": "enums.schema.json#/$defs/stopped_because_gate"
+              }
+            },
+            "required": ["stopped_because"]
+          },
+          "then": {
+            "properties": {
+              "log_entry_ids": { "minItems": 1 },
+              "stop_criteria": { "$ref": "#/$defs/stop_criteria" }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "stopped_because": {
+                "$ref": "enums.schema.json#/$defs/stopped_because_non_gate"
+              }
+            },
+            "required": ["stopped_because"]
+          },
+          "then": {
+            "properties": {
+              "stop_criteria": { "type": "null" }
+            }
+          }
+        }
+      ]
+    },
+    "not_reached_entry": {
+      "description": "One source, collection, or record type that could not be reached. Built from things the agent already produces: nil searches, browse-only collections, over-cap images, paywalled hits, handed-to-user items, privacy-sealed records, skipped plan items, and wiki-named record types never touched.",
+      "type": "object",
+      "required": [
+        "kind",
+        "description",
+        "log_entry_id",
+        "wiki_title"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "kind": {
+          "$ref": "enums.schema.json#/$defs/not_reached_kind"
+        },
+        "description": {
+          "type": "string"
+        },
+        "log_entry_id": {
+          "anyOf": [
+            {
+              "type": "string",
+              "pattern": "^log_"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "wiki_title": {
+          "type": [
+            "string",
+            "null"
+          ]
+        }
+      },
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "kind": {
+                "const": "wiki_named_untouched"
               }
             }
           },
           "then": {
             "properties": {
-              "log_entry_ids": {
-                "minItems": 1
-              },
-              "stop_criteria": {
-                "$ref": "#/$defs/stop_criteria"
+              "wiki_title": {
+                "type": "string"
               }
             },
             "required": [
-              "log_entry_ids",
-              "stop_criteria"
+              "wiki_title"
             ]
           }
         }
@@ -966,6 +1046,44 @@
         }
       }
     },
+    "rejected_link_entry": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "assertion_id",
+        "person_id",
+        "created"
+      ],
+      "properties": {
+        "id": {
+          "type": "string",
+          "pattern": "^rj_[0-9]{3}$"
+        },
+        "assertion_id": {
+          "type": "string",
+          "pattern": "^a_[0-9]{3}$"
+        },
+        "person_id": {
+          "type": "string"
+        },
+        "reason": {
+          "anyOf": [
+            {
+              "type": "string",
+              "minLength": 1
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "Optional. A rejection is never a demand for the right answer."
+        },
+        "created": {
+          "type": "string"
+        }
+      }
+    },
     "conflict": {
       "type": "object",
       "required": [
@@ -1031,6 +1149,22 @@
           ]
         },
         "resolution_rationale": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "resolution_kind": {
+          "anyOf": [
+            {
+              "$ref": "enums.schema.json#/$defs/resolution_kind"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "resolved_value": {
           "type": [
             "string",
             "null"
@@ -1643,44 +1777,6 @@
         },
         "recorded_at": {
           "$ref": "enums.schema.json#/$defs/iso_date"
-        }
-      }
-    },
-    "rejected_link_entry": {
-      "type": "object",
-      "additionalProperties": false,
-      "required": [
-        "id",
-        "assertion_id",
-        "person_id",
-        "created"
-      ],
-      "properties": {
-        "id": {
-          "type": "string",
-          "pattern": "^rj_[0-9]{3}$"
-        },
-        "assertion_id": {
-          "type": "string",
-          "pattern": "^a_[0-9]{3}$"
-        },
-        "person_id": {
-          "type": "string"
-        },
-        "reason": {
-          "anyOf": [
-            {
-              "type": "string",
-              "minLength": 1
-            },
-            {
-              "type": "null"
-            }
-          ],
-          "description": "Optional. A rejection is never a demand for the right answer."
-        },
-        "created": {
-          "type": "string"
         }
       }
     }

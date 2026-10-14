@@ -97,14 +97,14 @@ def stage_plugin_agents(project_dir: Path) -> list[str]:
     ``packages/engine/plugin/agents/*.md`` — but it registers each one under the
     plugin-NAMESPACED name ``genealogy-research:<agent>``, and nothing under the
     bare name. Every SKILL.md delegates by the bare name
-    (``@plugin:record-extractor``), so on the plugin path the Task call
-    hard-errors — "Agent type 'record-extractor' not found" — and the model then
+    (``@plugin:record-structurer``), so on the plugin path the Task call
+    hard-errors — "Agent type 'record-structurer' not found" — and the model then
     improvises: guess the namespaced spelling, fall back to ``general-purpose``,
     or do the work inline. The fallback is the dangerous one, because a
     general-purpose stand-in holds the session's whole tool set instead of the
-    agent's ``tools:`` allow-list and binds none of its ``disallowedTools:``
-    denies — the deny being the only thing keeping ``record-extractor`` off the
-    broad ``research_append`` under ``bypassPermissions`` (issue #695).
+    agent's ``tools:`` allow-list — the allow-list being the only thing keeping
+    an agent such as ``record-structurer`` off the broad ``research_append``
+    under ``bypassPermissions`` (issue #695).
 
     Staging into ``.claude/agents/`` is exactly what both eval harnesses do
     (``eval/harness/harness/workspace.py``, ``eval/harness/e2e/orchestrator.py``)
@@ -594,10 +594,18 @@ def _sdk_env(api_key: str | None = None) -> dict[str, str]:
     return env
 
 
-# PR #2870 item 1d. The alpha's veto cap per turn. Sized like the prototype's on STEP
-# count rather than on the nudge histogram: over the 189 committed e2e runs, Skill/Task/
-# Agent steps per run are median 15, p90 25, p99 51, max 76. 0 turns the hook off.
-_DEFAULT_MAX_NUDGES = 60
+# PR #2870 item 1d. The alpha's veto cap, per SESSION -- `nudges_used` below is created
+# once and never reset at a turn boundary. This said "per turn" until 2026-10-13 and was
+# wrong; the full consequence is written up on `Settings.autonomous_max_nudges`.
+#
+# Sized like the prototype's on STEP count rather than on the nudge histogram. Re-derived
+# 2026-10-13 by `test_proto_config._steps_per_run`'s method over the committed e2e corpus
+# (203 runs that day): median 15, p90 26, p99 48, max 76. 0 turns the hook off.
+#
+#: Matches `Settings.autonomous_max_nudges`, and a test pins them equal. This is the
+#: in-sandbox fallback used when the control plane sets no env var, so leaving it at 60
+#: while the setting moved to 30 would make the two disagree exactly where nobody looks.
+_DEFAULT_MAX_NUDGES = 30
 
 
 def _max_nudges(env=None) -> int:
@@ -804,7 +812,7 @@ def build_options(project_dir: Path, resume: str | None = None, api_key: str | N
         # explicit timeout — see _PRETOOL_MATCHER and _PRETOOL_TIMEOUT_S.
         hooks=_build_hooks(HookMatcher, project_dir, agent),
         # Stream partial assistant content. Without it a block reaches the UI only
-        # when its whole message completes, so a long turn — a record-extraction
+        # when its whole message completes, so a long turn — an extraction
         # subagent reasoning before its next tool call — shows nothing at all for
         # minutes. The deltas are also what keeps the socket's data frames flowing
         # through the sandbox's edge proxy during that stretch.
@@ -846,7 +854,7 @@ def map_message(
 
     **Subagent turns arrive on this same stream**, tagged with
     ``parent_tool_use_id`` rather than nested. Without reading it, a
-    record-extractor's text/thinking/tool calls are indistinguishable from the
+    record-structurer's text/thinking/tool calls are indistinguishable from the
     main agent's — they land in the same chat bubble and read as if the
     orchestrator did the work itself. Every event carries an ``agent`` label when
     it came from a subagent, resolved through ``tasks`` (tool_use_id → the Task's

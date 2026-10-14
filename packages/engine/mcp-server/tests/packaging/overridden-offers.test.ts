@@ -43,7 +43,7 @@ const KNOWN: Record<string, string> = {
   // failed to produce a clean log for a one-line prose change. Fix the stall first.
   "skills/research-plan/SKILL.md": "reverted — gate blocked by duration-linked stalls, not by the edit",
   "agents/search-full-text.md": "offer is a load-bearing stop — see note above; an agent since the main merge",
-  "skills/conflict-resolution/SKILL.md": "offer is a load-bearing stop — see note above",
+  "agents/conflict-resolution.md": "offer is a load-bearing stop — see note above; an agent since the main merge",
   "agents/person-evidence.md": "PR #2992 owns this file; batched behind it",
 };
 

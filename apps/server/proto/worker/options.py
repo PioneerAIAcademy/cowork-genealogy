@@ -231,7 +231,8 @@ def provider_env(worker_env: Mapping[str, str]) -> tuple[str | None, dict[str, s
         "ANTHROPIC_MODEL": GATEWAY_MODEL,
         "ANTHROPIC_DEFAULT_HAIKU_MODEL": GATEWAY_SMALL_MODEL,
         # agentgateway < 1.6 cannot parse tool_reference, so tool search fails on
-        # its second turn (plan P3f); tap-agentgateway pins 1.5.0.
+        # its second turn (plan P3f). TAP's Fargate stack pins 1.5.0; its EKS stack
+        # (tap-gateway) runs 1.6.0, where tool search is unverified (handoff U14).
         "ENABLE_TOOL_SEARCH": (worker_env.get("GATEWAY_TOOL_SEARCH") or "false").strip().lower(),
     }
 
@@ -651,8 +652,8 @@ def make_pretool_hook(
 # engine's imports), so a research_query or Read result quoting the text is no reauth.
 REAUTH_ENTRY = re.compile(r"call the login tool|Reconnect FamilySearch", re.I)
 FS_TOOLS = frozenset({
-    "build_external_search_url", "catalog_search", "collections_search", "fulltext_search", "image_read",
-    "image_search", "image_transcribe", "person_ancestors", "person_quality", "person_read",
+    "build_external_search_url", "catalog_search", "collections_search", "extraction_append", "fulltext_search",
+    "image_read", "image_search", "image_transcribe", "person_ancestors", "person_quality", "person_read",
     "person_person_matches", "person_record_matches", "person_search", "rank_search_matches", "record_read",
     "record_person_matches", "record_record_matches", "record_search", "same_person", "source_attachments",
     "tree_gaps", "volume_bisect", "volume_search",
