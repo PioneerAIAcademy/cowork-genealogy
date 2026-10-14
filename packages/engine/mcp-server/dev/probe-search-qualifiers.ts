@@ -5955,7 +5955,7 @@ async function sectionJ(): Promise<void> {
                   record("J", "facet:countyParams", countyParams);
 
                   // Extract the f.recordPlace2 value to drill for city.
-                  const rp2Match = countyParams.match(/f\.recordPlace2=([^&]+)/);
+                  const rp2Match = countyParams!.match(/f\.recordPlace2=([^&]+)/);
                   if (rp2Match) {
                     const rp2Value = decodeURIComponent(rp2Match[1]);
                     console.log(`  extracted recordPlace2 value: ${rp2Value}`);
