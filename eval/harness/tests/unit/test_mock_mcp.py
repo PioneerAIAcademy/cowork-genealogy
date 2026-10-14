@@ -160,6 +160,56 @@ def test_predicate_match_dispatches_to_matching_fixture():
         assert call_log[1]["expected_args"] == {"args.q": "Iowa"}
 
 
+def test_is_error_fixture_sets_is_error_only_on_its_own_match():
+    """A fixture marked `is_error` answers with the flag production's catch arms
+    set on a thrown error; a sibling fixture of the same tool, unmarked, does not."""
+    with tempfile.TemporaryDirectory() as tmp:
+        tmp = Path(tmp)
+        (tmp / "refused.json").write_text(json.dumps({
+            "tool": "image_transcribe",
+            "args": {"imageId": "004452257_00021"},
+            "is_error": True,
+            "response": {"error": "Image cap reached: ..."},
+        }), encoding="utf-8")
+        (tmp / "ok.json").write_text(json.dumps({
+            "tool": "image_transcribe",
+            "args": {"imageId": "~"},
+            "response": {"transcription": "page text"},
+        }), encoding="utf-8")
+        server, call_log, tools_by_name = create_mock_server(["refused", "ok"], tmp)
+        refused = _invoke(tools_by_name, "image_transcribe", {"imageId": "004452257_00021"})
+        assert refused.get("is_error") is True
+        assert _extract_response_dict(refused) == {"error": "Image cap reached: ..."}
+        ok = _invoke(tools_by_name, "image_transcribe", {"imageId": "004452257_00001"})
+        assert "is_error" not in ok
+
+
+def test_error_fixture_without_the_flag_keeps_its_old_envelope():
+    """Opt-in: an unmarked `{error}` fixture still answers with no flag."""
+    server, call_log, tools_by_name = create_mock_server(
+        ["wikipedia-search-hollow-creek-error"], FIXTURES_DIR
+    )
+    result = _invoke(tools_by_name, "wikipedia_search", {"query": "Hollow Creek"})
+    assert "error" in _extract_response_dict(result)
+    assert "is_error" not in result
+
+
+@pytest.mark.parametrize("fixture, why", [
+    ({"is_error": "true", "response": {"error": "x"}}, "must be a boolean"),
+    ({"is_error": True, "response": {"error": "x", "code": 1}}, "exactly"),
+    ({"is_error": True, "response": {"transcription": "x"}}, "exactly"),
+    ({"is_error": True, "response": {"error": 503}}, "exactly"),
+])
+def test_is_error_fixture_must_carry_the_thrown_error_envelope(fixture, why):
+    with tempfile.TemporaryDirectory() as tmp:
+        tmp = Path(tmp)
+        (tmp / "bad.json").write_text(json.dumps({
+            "tool": "image_transcribe", "args": {"imageId": "~"}, **fixture,
+        }), encoding="utf-8")
+        with pytest.raises(InvalidFixtureError, match=why):
+            create_mock_server(["bad"], tmp)
+
+
 def test_unmatched_call_returns_fixture_not_found_error():
     with tempfile.TemporaryDirectory() as tmp:
         tmp = Path(tmp)
@@ -1353,6 +1403,87 @@ def test_same_person_attestation_records_a_projection_route(tmp_path):
     rec = json.loads(written[0].read_text(encoding="utf-8"))
     entry = next(iter(rec["scores"].values()))
     assert entry["record_source"] == "projection"
+
+
+# --- A canned live record_read stages, so extractor mode is reachable ----------
+#
+# Before this, the mock staged only search responses. A canned `record_read`
+# returned no `staged.resultsRef`, extraction_append's extractor mode refused
+# ("no results sidecar"), and every FamilySearch record in the unit suite fell
+# back to record-extractor, so no committed run could exercise the code path.
+
+_SCENARIO = REPO_ROOT / "eval/fixtures/scenarios/empty-project-just-created"
+
+
+def _copy_scenario(tmp_path):
+    for name in ("research.json", "tree.gedcomx.json"):
+        (tmp_path / name).write_text(
+            (_SCENARIO / name).read_text(encoding="utf-8"), encoding="utf-8"
+        )
+
+
+@pytest.mark.requires_engine_build
+def test_live_record_read_stages_the_record_as_production_does(tmp_path):
+    _copy_scenario(tmp_path)
+    _s, _c, tools_by_name = create_mock_server(
+        ["record-read-68Q9-K34P"], FIXTURES_DIR, workspace=tmp_path
+    )
+    body = _extract_response_dict(
+        _invoke(tools_by_name, "record_read", {"recordId": "68Q9-K34P", "projectPath": str(tmp_path)})
+    )
+    assert body.get("staged"), body.get("stagingError")
+    assert body["persons"], "the record itself still comes back inline"
+    envelope = json.loads((tmp_path / body["staged"]["resultsRef"]).read_text(encoding="utf-8"))
+    assert envelope["tool"] == "record_read"
+    assert envelope["payload"]["query"] == {"recordId": "68Q9-K34P"}
+    [element] = envelope["payload"]["results"]
+    assert element["recordId"] == "68Q9-K34P"
+    assert element["gedcomx"]["persons"] == body["persons"]
+    assert "staged" not in element["gedcomx"]
+
+
+@pytest.mark.requires_engine_build
+def test_record_ids_are_served_from_record_read_fixtures(tmp_path):
+    """The path the unit eval could not reach: one call reads the record (from
+    its fixture), logs the read, and extracts it in code."""
+    _copy_scenario(tmp_path)
+    _s, _c, tools_by_name = create_mock_server(
+        ["record-read-68Q9-K34P"], FIXTURES_DIR, workspace=tmp_path
+    )
+    out = _extract_response_dict(
+        _invoke(
+            tools_by_name,
+            "extraction_append",
+            {"projectPath": str(tmp_path), "recordIds": ["68Q9-K34P"]},
+        )
+    )
+    assert out.get("ok"), out.get("errors")
+    [record] = out["records"]
+    assert record["status"] == "extracted", record
+    assert record["logId"] and record["srcId"]
+    assert "census" in record["summary"].lower(), record["summary"]
+
+
+@pytest.mark.requires_engine_build
+def test_record_read_stages_nothing_without_projectpath_or_with_resultsref(tmp_path):
+    """The other direction: production stages only a LIVE read given a project."""
+    _copy_scenario(tmp_path)
+    _s, _c, tools_by_name = create_mock_server(
+        ["record-read-68Q9-K34P"], FIXTURES_DIR, workspace=tmp_path
+    )
+    bare = _extract_response_dict(_invoke(tools_by_name, "record_read", {"recordId": "68Q9-K34P"}))
+    assert "staged" not in bare
+    sidecar = _extract_response_dict(
+        _invoke(
+            tools_by_name,
+            "record_read",
+            {"recordId": "68Q9-K34P", "projectPath": str(tmp_path), "resultsRef": "results/log_001.json"},
+        )
+    )
+    assert "staged" not in sidecar
+    assert not (tmp_path / "results" / ".staging").exists() or not any(
+        (tmp_path / "results" / ".staging").iterdir()
+    )
 
 
 # --- person_read stages its canned response (#2944) ---------------------------

@@ -1,0 +1,54 @@
+{
+  "run_log": "v1_2026-10-13_16-09-22.json",
+  "annotator": "chesworthrm@familysearch.org",
+  "corrections": [
+    {
+      "test_id": "ut_image_reader_d1",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Refusal relayed and nothing invented. One slip that does not change the score: the agent's own gloss calls it a per-session cap, where the quoted refusal says it counts per project."
+    },
+    {
+      "test_id": "ut_image_reader_d1",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "NOT READ line, the full quoted refusal, and pivots that repeat its other routes and the film link."
+    },
+    {
+      "test_id": "ut_image_reader_d1",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "imageId matches the fixture; lookingFor and projectPath were passed through from the delegation, as the agent body says."
+    },
+    {
+      "test_id": "ut_image_reader_d1",
+      "dimension_source": "rubric",
+      "dimension_name": "Failed-read relay",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Refusal quoted whole: link, research_log_append, partial and final-summary instructions all intact."
+    },
+    {
+      "test_id": "ut_image_reader_d1",
+      "dimension_source": "rubric",
+      "dimension_name": "No fabricated page",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "No Transcription, Extracted facts or FOUND/NOT FOUND section."
+    },
+    {
+      "test_id": "ut_image_reader_d1",
+      "dimension_source": "rubric",
+      "dimension_name": "One call",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Exactly one image_transcribe call, then the return."
+    }
+  ]
+}

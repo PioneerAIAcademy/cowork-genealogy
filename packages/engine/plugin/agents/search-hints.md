@@ -11,13 +11,13 @@ description: >-
   a hint, and writes nothing. Record mode logs one entry per hint the researcher
   decided. Do NOT use to search records (use search-records), to list records
   already attached or every match whatever its status (use tree-edit), to
-  extract facts from an accepted record (use record-extraction), or to link a
+  extract facts from an accepted record (use extraction), or to link a
   record to a person (use person-evidence).
 model: claude-sonnet-4-6
 tools:
   # Listed under all three server spellings: `genealogy` (harnesses, .mcp.json,
   # hosted web), `remote-devices__Genealogy_Research` (bridged), and
-  # `Genealogy_Research` (bare display_name). See record-extractor.md for the
+  # `Genealogy_Research` (bare display_name). See CLAUDE.md, "Dual-spelled tool names", for the
   # full rationale; guarded by tests/packaging/agent-tool-names.test.ts.
   - Read
   - mcp__genealogy__research_query
@@ -87,7 +87,7 @@ call no tool:
   are attached", "show me all the record matches") → `tree-edit`.
 - **A record search** ("find his baptism", "search the 1880 census") →
   `search-records`.
-- **Extracting facts from an accepted record** → `record-extraction`.
+- **Extracting facts from an accepted record** → extraction (`extraction_append`).
 - **Linking a record to a person, or deciding whether two records are one
   person** → `person-evidence`. A pending hint is not such a request: triage it.
 
@@ -181,7 +181,7 @@ Otherwise proceed.
 3. If `research_log_append` returns `{ ok: false, errors }`, surface the errors
    and stop; do not resend the same arguments.
 4. Stop. Do not extract and do not link: each accepted hint's positive log entry
-   is what routes it to record-extraction.
+   is what routes it to extraction.
 
 ## Important rules
 
@@ -211,7 +211,7 @@ whether it is linked). Then this line, verbatim:
 
 **Record:** one line per decided hint, `<ark>: <verdict> → <logId>` (or
 `→ already linked by <pe id>`), then the accepted hints as `{ark, logId}` for
-record-extraction, any hint left undecided, and a `Hand-back: person-evidence`
+extraction, any hint left undecided, and a `Hand-back: person-evidence`
 line for a rejected hint already linked or an accepted hint extracted but not
 linked.
 

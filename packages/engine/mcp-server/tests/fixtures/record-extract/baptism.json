@@ -1,0 +1,130 @@
+{
+  "_why": "principal -> child; presenting parents",
+  "_capturedFrom": "ark:/61903/1:1:XXDD-BX8",
+  "element": {
+    "recordId": "XXDD-BX8",
+    "gedcomx": {
+      "persons": [
+        {
+          "id": "p_10556269631",
+          "ark": "ark:/61903/1:1:XXDD-BX8",
+          "principal": true,
+          "gender": "Female",
+          "names": [
+            {
+              "type": "BirthName",
+              "given": "Cora",
+              "surname": "Miller"
+            }
+          ],
+          "facts": [
+            {
+              "type": "Birth",
+              "primary": true,
+              "date": "16 Oct 1888",
+              "standard_date": "16 Oct 1888",
+              "place": "Holmes, Ohio, United States"
+            }
+          ]
+        },
+        {
+          "id": "p_10556269632",
+          "ark": "ark:/61903/1:1:XXDD-BXD",
+          "gender": "Male",
+          "names": [
+            {
+              "type": "BirthName",
+              "given": "M. I.",
+              "surname": "Miller"
+            }
+          ]
+        },
+        {
+          "id": "p_10556269633",
+          "ark": "ark:/61903/1:1:XXDD-BX6",
+          "gender": "Female",
+          "names": [
+            {
+              "type": "BirthName",
+              "surname": "Mast"
+            }
+          ]
+        }
+      ],
+      "relationships": [
+        {
+          "id": "MM9.1.6/CSBG-2YM9",
+          "type": "Couple",
+          "person1": "p_10556269632",
+          "person2": "p_10556269633"
+        },
+        {
+          "id": "MM9.1.6/CSBG-2Y38",
+          "type": "ParentChild",
+          "parent": "p_10556269632",
+          "child": "p_10556269631"
+        },
+        {
+          "id": "MM9.1.6/CSBG-2YWL",
+          "type": "ParentChild",
+          "parent": "p_10556269633",
+          "child": "p_10556269631"
+        }
+      ],
+      "sources": [
+        {
+          "id": "sd_c_1680845",
+          "resource_type": "Collection",
+          "title": "Ohio, Births and Christenings, 1821-1962",
+          "url": "https://www.familysearch.org/service/cds/recapi/collections/1680845",
+          "coverage": {
+            "place_rep_id": "43",
+            "date_range": "1821/1962",
+            "record_type": "Vital",
+            "standard_place": "Japan"
+          }
+        },
+        {
+          "id": "src_r_805735383",
+          "resource_type": "Record",
+          "title": "Entry for Cora Miller, \"Ohio, Births and Christenings, 1821-1962\"",
+          "citation": "\"Ohio, Births and Christenings, 1821-1962\", , <i>FamilySearch</i> (https://familysearch.org/ark:/61903/1:2:93QG-9N3 : 19 January 2020), Entry for Cora Miller, 1888.",
+          "url": "https://www.familysearch.org/ark:/61903/1:2:93QG-9N3",
+          "coverage": {
+            "place_rep_id": "393216",
+            "date_range": "16 Oct 1888",
+            "record_type": "Vital",
+            "standard_place": "Holmes, Ohio, United States"
+          }
+        },
+        {
+          "id": "sd_p_10556269631",
+          "resource_type": "Person",
+          "title": "Cora Miller, \"Ohio, Births and Christenings, 1821-1962\"",
+          "citation": "\"Ohio, Births and Christenings, 1821-1962\", , <i>FamilySearch</i> (https://familysearch.org/ark:/61903/1:1:XXDD-BX8 : 19 January 2020), Cora Miller, 1888.",
+          "url": "https://www.familysearch.org/ark:/61903/1:1:XXDD-BX8"
+        },
+        {
+          "id": "sd_p_10556269632",
+          "resource_type": "Person",
+          "title": "M. I. Miller in entry for Cora Miller, \"Ohio, Births and Christenings, 1821-1962\"",
+          "citation": "\"Ohio, Births and Christenings, 1821-1962\", , <i>FamilySearch</i> (https://familysearch.org/ark:/61903/1:1:XXDD-BXD : 19 January 2020), M. I. Miller in entry for Cora Miller, 1888.",
+          "url": "https://www.familysearch.org/ark:/61903/1:1:XXDD-BXD"
+        },
+        {
+          "id": "sd_p_10556269633",
+          "resource_type": "Person",
+          "title": "Mast in entry for Cora Miller, \"Ohio, Births and Christenings, 1821-1962\"",
+          "citation": "\"Ohio, Births and Christenings, 1821-1962\", , <i>FamilySearch</i> (https://familysearch.org/ark:/61903/1:1:XXDD-BX6 : 19 January 2020), Mast in entry for Cora Miller, 1888.",
+          "url": "https://www.familysearch.org/ark:/61903/1:1:XXDD-BX6"
+        }
+      ],
+      "places": [
+        {},
+        {
+          "id": "place_1-43"
+        }
+      ]
+    }
+  }
+}

@@ -93,7 +93,7 @@ function fileRefProblem(ref: string): string | null {
   return null;
 }
 
-/** `capture:<basename without extension>` — the record-extraction id convention
+/** `capture:<basename without extension>` — the extraction id convention
  *  for a document that has no FamilySearch identifier. */
 function captureIdFor(ref: string): string {
   const base = ref.split("/").pop() ?? ref;
