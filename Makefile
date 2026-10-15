@@ -912,14 +912,19 @@ replay-sizes: $(ENGINE_BUILD) ## Replay committed e2e tool calls against a base 
 	cd eval/harness && uv run python -m e2e.replay_sizes $(if $(BASE),--base $(BASE),) $(if $(TEST),--test $(TEST),) $(if $(TOOLS),--tools $(TOOLS),) $(if $(TRACKED_ONLY),--tracked-only,) $(if $(JSON),--json $(abspath $(JSON)),)
 
 .PHONY: replay-collapse
-replay-collapse: $(ENGINE_BUILD) ## Replay each recorded research_query plan-log walk against the one log×questionId call that replaces it (T2.1) — zero model calls: make replay-collapse [BASE=<ref>] [TEST=<slug>] [TRACKED_ONLY=1] [JSON=<path>]
-	# Proves the replacement returns EXACTLY the walk's question's entries (an
-	# oracle computed from the rebuilt notes), and that the walk it is compared
-	# against is the real one: each replayed walk call's count must equal the
-	# count the run recorded, else exit 3. Reports N walk calls -> M replacement
-	# calls. Exit 1 = the candidate lacks the filter; exit 2 = nothing comparable
-	# (e.g. every group unverifiable after a capture strip); exit 3 = integrity.
-	cd eval/harness && uv run python -m e2e.replay_collapse $(if $(BASE),--base $(BASE),) $(if $(TEST),--test $(TEST),) $(if $(TRACKED_ONLY),--tracked-only,) $(if $(JSON),--json $(abspath $(JSON)),)
+replay-collapse: $(ENGINE_BUILD) ## Replay recorded research_query walks against the one call that replaces each — rule plan-log (log×planItemId walk -> log×questionId, T2.1) and rule plural-id (one-id walks -> one call with a list of ids, T2.3) — zero model calls: make replay-collapse [RULE=plan-log|plural-id] [BASE=<ref>] [TEST=<slug>] [TRACKED_ONLY=1] [JSON=<path>]
+	# Proves the replacement returns EXACTLY what the walk read (plan-log: an
+	# oracle computed from the rebuilt notes; plural-id: the base build's own
+	# singular pages, unioned in document order, with count and countById right
+	# on every page), and that the walk it is compared against is the real one:
+	# each replayed walk call's count must equal the count the run recorded,
+	# else exit 3 (plural-id classifies a miss: source-id-unstamped is allowed,
+	# ledger-missing-writes only for its pinned groups). Reports N walk calls ->
+	# M replacement calls. Exit 1 = the candidate lacks the filter (plan-log), or
+	# answered a list wrong or past the 50,000-char spill (plural-id: wrong /
+	# spill); exit 2 = nothing comparable (e.g. every group unverifiable after a
+	# capture strip); exit 3 = integrity.
+	cd eval/harness && uv run python -m e2e.replay_collapse $(if $(RULE),--rule $(RULE),) $(if $(BASE),--base $(BASE),) $(if $(TEST),--test $(TEST),) $(if $(TRACKED_ONLY),--tracked-only,) $(if $(JSON),--json $(abspath $(JSON)),)
 
 .PHONY: eval-skill
 eval-skill: $(ENGINE_BUILD) ## Run the skill eval harness, rebuilding first: make eval-skill SKILL=tree-edit [CONCURRENCY=8] [STORE=pg]; SKILL="a b c" runs several in one pool
