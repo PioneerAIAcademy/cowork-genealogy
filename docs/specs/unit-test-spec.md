@@ -1159,15 +1159,32 @@ remediation doctrine, where the remedy for a mis-transcribed field is to go
 back to what the index was made from and correct it, never to detach the
 source. Checked mechanically by
 `test_index_discrepancy_does_not_recommend_detaching`
-(`eval/harness/validators/test_source_evaluation.py`), which splits the reply
-into per-source passages and fails if the passage naming this source also
-recommends detaching or unlinking. The split is blank-line blocks, plus two
-shapes that carry one source's remedy per unit and would otherwise be judged
-whole: a markdown table is split per row, and a recap block ("In summary:",
-"**Bottom line:**") is split on clause boundaries. Both were added after a
-*correct* report failed the guard; the recap arm replaced an earlier version
-that skipped recap blocks entirely, which hid a detach recommended only in the
-recap — the shape the skill actually uses. Gated on the `index-discrepancy` tag; a test carrying
+(`eval/harness/validators/test_source_evaluation.py`), which attributes each
+detach recommendation to a **section** and fails if the section naming this
+source also recommends detaching or unlinking.
+
+A section runs from one markdown structural boundary to the next, and the
+boundaries are read off **markup, never vocabulary**: an ATX heading, a
+thematic break (`---`), or a bold first line — which is the heading form the
+agent's own return actually writes (`**2. Minnesota Death Index, 1908-2002 —
+indexing error**`). Measured over the 53 committed `index-discrepancy` replies
+*as the validator grades them*, ATX headings appear in 0 and bold leads in 53;
+the main thread's relay is the opposite way round, which is why a rule tuned
+against the relay reads clean and fires on real replies.
+
+Three unit shapes are left alone rather than merged into their section,
+because the existing split already makes each one a per-source scope and
+re-joining them re-creates the misreading they were added to fix: a markdown
+table (per row), a per-source bullet list (per item), and a recap block
+("In summary:", "**Bottom line:**", per clause). Each was added after a
+*correct* report failed the guard.
+
+This replaced co-occurrence inside one blank-line block, under which a reply
+naming the source in one block and recommending the detach in the next passed
+(issue #2481). Attribution now follows the section the author put them in, so
+re-chopping the same content cannot move the verdict — pinned by
+`test_the_same_violation_fires_in_every_shape`, which writes one meaning seven
+ways. Gated on the `index-discrepancy` tag; a test carrying
 that tag and no `index_error_source` fails rather than skipping, so the guard
 cannot be disarmed by omission.
 

@@ -65,6 +65,8 @@ _SUMMARY_LEAD = _VALIDATOR._SUMMARY_LEAD_RE
 _recommends_reread = _VALIDATOR.test_index_discrepancy_recommends_reread
 _no_detach = _VALIDATOR.test_index_discrepancy_does_not_recommend_detaching
 
+from harness.skill_runner import subject_reply_text  # noqa: E402
+
 _REPO = Path(__file__).resolve().parents[4]
 _PROTECTED = "Minnesota Death Index"
 _TEST = {
@@ -380,9 +382,13 @@ def test_both_guards_pass_on_every_committed_positive_run():
     agree with the corpus. A future widening that breaks a real reply fails
     here rather than inside the next paid run.
     """
+    # `v1_*` skipped `v1.json` and `v2.json` — 16 of the 53 index-discrepancy
+    # runs, and the two that carry the only false positives a wrong scope rule
+    # produces. A replay that cannot see a third of the corpus is how a clean
+    # number survives a broken guard.
     logs = sorted(
         p for p in glob.glob(
-            str(_REPO / "eval/runlogs/unit/source-evaluation/v1_*.json")
+            str(_REPO / "eval/runlogs/unit/source-evaluation/v*.json")
         )
         if not p.endswith(".ann.json")
     )
@@ -395,7 +401,19 @@ def test_both_guards_pass_on_every_committed_positive_run():
                 continue
             for run in entry.get("runs") or []:
                 output = run.get("output") or {}
-                reply = (output.get("text_response") or "").strip()
+                # GRADE WHAT THE VALIDATOR GRADES. `subject_reply_text` returns
+                # the agent's OWN return whenever it is non-empty, and on all 53
+                # committed index-discrepancy runs that text DIFFERS from the
+                # main thread's relay — the relay carries `##` headings in 52 of
+                # 53 and the agent's return in 0 of 53. Replaying the relay
+                # measures the dispatcher, not the subject, and a scope rule
+                # tuned against it reads clean while firing on real replies.
+                reply = subject_reply_text(
+                    output.get("agent_returns"),
+                    output.get("text_response"),
+                    "source-evaluation",
+                    _TEST,
+                ).strip()
                 if not reply:
                     continue
                 protected = _PROTECTED if "Hole" in reply else "Drouin Collection"
@@ -923,3 +941,70 @@ def test_warnings_guards_skip_an_untagged_test():
             fn([], {"tags": []})
     with pytest.raises(pytest.skip.Exception):
         _pw_verbatim([], "", {"tags": []})
+
+
+# --- #2481: attribution by section, so shape stops mattering ---------------
+
+
+_SHAPES = {
+    "atx heading, next block": (
+        "## Minnesota Death Index, 1908-2002\n\nYear disagrees.\n\n"
+        "**Recommendation:** detach it."
+    ),
+    "bold lead, next block": (
+        "**2. Minnesota Death Index, 1908-2002 — indexing error**\n\n"
+        "Year disagrees.\n\nNext: detach it."
+    ),
+    "bold lead, same block": (
+        "**2. Minnesota Death Index — indexing error**\n"
+        "Year disagrees. Next: detach it from KD96-TV2."
+    ),
+    "one paragraph": (
+        "The Minnesota Death Index year disagrees. Recommendation: detach it."
+    ),
+    "list item": "- **Minnesota Death Index** — detach it, the year is wrong.",
+    "table row": "| Minnesota Death Index | detach it |",
+    "two blocks apart": (
+        "## Minnesota Death Index\n\nA.\n\nB.\n\nNext: detach it."
+    ),
+}
+
+
+@pytest.mark.parametrize("shape", sorted(_SHAPES), ids=sorted(_SHAPES))
+def test_the_same_violation_fires_in_every_shape(shape):
+    """The card's bar, stated as a test.
+
+    One meaning — "detach the source this test declares an indexing error" —
+    written seven ways. Under the passage co-occurrence rule the first two,
+    third and last PASSED on `main`: the source name and the detach verb landed
+    in different blank-line blocks, so the guard saw no violation. Attribution
+    now comes from the section the author put them in, and re-chopping the same
+    content cannot move the verdict.
+    """
+    with pytest.raises(AssertionError):
+        _no_detach(_SHAPES[shape], dict(_TEST, index_error_source=_PROTECTED))
+
+
+def test_a_detach_under_another_sources_section_still_passes():
+    """The direction that matters more: a correct report detaches the genuinely
+    misattributed source, and must not be charged for it."""
+    _no_detach(
+        "**1. Minnesota Death Index — indexing error**\nCorrect the year.\n\n"
+        "**2. 1885 State Census — misattributed**\nDetach it; a different man.",
+        dict(_TEST, index_error_source=_PROTECTED),
+    )
+
+
+def test_emphasis_does_not_hide_a_negation():
+    """`Do **not** detach` read as a RECOMMENDATION on the shipped module while
+    the unemphasised form read as a negation — the asterisks sat between the
+    negator and the term. Two committed correct replies write it with the bold.
+    """
+    for text in (
+        "Do not detach; the record belongs here.",
+        "Do **not** detach; the record belongs here.",
+        "Do *not* detach yet.",
+        "Do __not__ detach.",
+    ):
+        assert not _VALIDATOR._recommends_detach(text), text
+    assert _VALIDATOR._recommends_detach("Detach it."), "a bare recommendation must fire"
