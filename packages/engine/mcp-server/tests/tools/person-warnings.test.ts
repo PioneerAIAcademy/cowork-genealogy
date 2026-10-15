@@ -1017,6 +1017,23 @@ describe("marriage warnings read the Couple edge, not only the person", () => {
     expect(hasLateMarriage(mob, 90)).toBe(false);
   });
 
+  it("the fired warning cites the Couple-edge marriage, not just the birth", () => {
+    // These tags refuse writes, and the refusal hands the agent the warning's
+    // `facts`. Citing only the birth tells it "married before age 14" and gives
+    // it nothing to check.
+    const warnings = calculateWarnings(
+      new Mob(coupleTree("1850", "1860"), "I1"),
+      new Mob(coupleTree("1850", "1860"), "I1"),
+      new Mob(coupleTree("1850", "1860"), "I1"),
+      true,
+    );
+    const early = warnings.find((w) => w.issueType === "hasEarlyMarriage14");
+    expect(early).toBeDefined();
+    const ids = (early?.facts ?? []).map((f) => f.id);
+    expect(ids).toContain("F2"); // the Marriage on the Couple edge
+    expect(ids).toContain("F1"); // and the Birth it is measured against
+  });
+
   it("reads only the anchor's own Couple edges, not another couple's", () => {
     const tree: SimplifiedGedcomX = {
       persons: [

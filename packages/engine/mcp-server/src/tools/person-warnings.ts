@@ -1655,7 +1655,15 @@ function checkHasLateMarriage90(mob: Mob): PersonWarning | null {
     severity: "implausible",
     personId: mob.anchorId,
     personName: getPersonName(mob.getPerson()),
-    facts: selfFactIds(mob, BIRTHLIKE_FACT_TYPES, MARRIAGELIKE_FACT_TYPES),
+    // The marriage that fired this is on the Couple edge, so cite it too.
+    // These tags refuse writes, and a refusal hands the agent this list: being
+    // told "married before age 14" while shown only a birth leaves nothing to
+    // check. Citing it changes the warning id, which is built from the fact
+    // ids — the same way a person-level marriage already behaves.
+    facts: unionFactIds(
+      selfFactIds(mob, BIRTHLIKE_FACT_TYPES, MARRIAGELIKE_FACT_TYPES),
+      warningFactsOfPerson({ facts: mob.coupleFacts() }, MARRIAGELIKE_FACT_TYPES),
+    ),
     message:
       "This person appears to have married more than 90 years after their birth, which is biologically unusual.",
   };
@@ -1669,7 +1677,15 @@ function checkHasEarlyMarriage14(mob: Mob): PersonWarning | null {
     severity: "implausible",
     personId: mob.anchorId,
     personName: getPersonName(mob.getPerson()),
-    facts: selfFactIds(mob, BIRTHLIKE_FACT_TYPES, MARRIAGELIKE_FACT_TYPES),
+    // The marriage that fired this is on the Couple edge, so cite it too.
+    // These tags refuse writes, and a refusal hands the agent this list: being
+    // told "married before age 14" while shown only a birth leaves nothing to
+    // check. Citing it changes the warning id, which is built from the fact
+    // ids — the same way a person-level marriage already behaves.
+    facts: unionFactIds(
+      selfFactIds(mob, BIRTHLIKE_FACT_TYPES, MARRIAGELIKE_FACT_TYPES),
+      warningFactsOfPerson({ facts: mob.coupleFacts() }, MARRIAGELIKE_FACT_TYPES),
+    ),
     message:
       "This person appears to have married before age 14, which is unusual.",
   };
