@@ -28,17 +28,22 @@ match strength.
 
 ## Notes for reviewers
 
-**DRAFT PENDING ADJUDICATION.** This fixture comes from a hint batch
-(`filtered-list-samples-3.csv` row 23, `hint-samples.csv` row 792,
-flag `adds_marriage`, confidence 3) in which roughly half the hint records are
-**false matches**, and the authors do not know which.
-`expected-findings.json` was transcribed from the hint record — "Scotland, Marriages, 1561-1910", a marriage entry for Hugh McLachlan and Catherine Muir in 1845 (year only) in Kilninian, Argyll, on the Isle of Mull. The entry carries no ages, parents, residences or image.
-The genealogist + developer teams must decide (a) true match — keep the
-findings; (b) different answer — edit `expected-findings.json`; or (c) no
-findable answer — replace the findings with a `"polarity": "avoid"` guard
-naming the 1845 Kilninian marriage, plus a `required` finding that the report documents
-the rejection.
+**Resolved 2026-10-15 (#3344): true match (outcome 1).** The hint, "Scotland, Marriages, 1561-1910", is a marriage of Hugh McLachlan and Catherine Muir in 1845 (year only) at Kilninian, Isle of Mull (`ark:/61903/1:1:XTK4-QYM`). It concerns the tree couple, and `expected-findings.json` keeps it, now citing the records below. The hint batch (`filtered-list-samples-3.csv` row 23, `hint-samples.csv` row 792, flag `adds_marriage`, confidence 3) is roughly half false matches, so this one was checked rather than assumed.
 
-A name-only match. Both names agree with the tree couple exactly (the tree's own baptism indexes spell her Catherine and Catharine), and 1845 is five years before the first child the tree knows of, which is unremarkable. The tree is four people resting on two baptism entries, Neil's (`ark:/61903/1:1:XY8B-655`) and James's (`ark:/61903/1:1:XY8B-JVN`); there is no marriage source, so this is not a re-index of anything already in the tree.
+**Baseline.** The tree is four people resting on two Campbeltown baptisms: Neil (`ark:/61903/1:1:XY8B-655`, born 25 May 1850) and James (`ark:/61903/1:1:XY8B-JVN`, born 7 December 1852, christened 20 June 1853), both to Hugh McLachlan and Catherine Muir. There is no marriage source, so the hint is not a re-index of anything already in the tree. The weak point was place: Kilninian is at the far end of Argyll from Campbeltown, and Hugh McLachlan is a common name across Argyll.
 
-The place is the weak point. Kilninian is on the Isle of Mull, at the far end of Argyll from Campbeltown, where both sons were christened five to eight years later, and Hugh McLachlan is a common name across Argyll. Scottish parish registers often entered a marriage in each party's parish, so a Mull entry for a couple who settled in Kintyre is possible, but nothing in the tree ties either of them to Mull. The discriminating check is the 1851 census of Campbeltown, which should show Hugh, Catharine and the infant Neil with their parishes of birth: a birthplace on Mull for either spouse supports the match, and both born in Kintyre points to a different couple.
+**What identifies the family.**
+- **1851 census, Campbeltown** (`ark:/61903/1:1:VYYQ-ZGH`; indexed district "Cantyre", image group Campbeltown): Hugh Mclachlin, about 32, married, fisher, born Midlothian; Cathrine, about 27, born Argyll (county only); Flora, about 4; Agness, about 2; Niel, under 1. Niel is the tree's Neil, born May 1850.
+- **1861 census, Campbeltown** (`ark:/61903/1:1:VB78-JSC`): Cathrine McLachlin, widow, laundress, about 36, born **Saddell**; Flora (about 1847), Annie (about 1849, the 1851 Agness), Neil (about 1851) and James (about 1853), all four given as born at **Tobermory**.
+- **James's marriage, Southend, Argyll** (`ark:/61903/1:1:XSF1-FGNL`, "Scotland, Civil Registration"): James McLauchlan, coppersmith, born about 1852, son of Hugh McLauchlan and Catherine Muir. This ties the census family to the tree's James and confirms the maiden name Muir.
+
+**What decided the call.** Neither spouse was born on Mull (Hugh in Midlothian, Catherine in Saddell, Kintyre). But the family has a direct tie to the hint's parish: Tobermory lies in Kilninian and Kilmore, and the 1861 census places the two eldest daughters' births there about 1847 and 1849. That puts the couple in Kilninian parish within two to four years of the 1845 marriage, before they moved to Campbeltown by May 1850, near Catherine's birthplace. A Kilninian marriage of this Hugh and Catherine Muir is what that sequence predicts, and nothing found contradicts it.
+
+**How strong that evidence is.** The 1861 census is evidence of a Mull connection, not proof that every listed child was born there. Neil and James are also given as born at Tobermory, but their baptisms are in Campbeltown (1850 and 1853), so the enumerator probably carried Flora's birthplace down the column. That makes the younger children's entries unreliable, though not Flora's, which is the first entry. The Tobermory tie therefore rests on one census, informant unknown. It is consistent with the 1851 household (two daughters born before the family's first Campbeltown baptism), and is not outweighed by anything found.
+
+**Searched and not found.**
+- Baptisms of Flora (about 1847) or Agnes/Ann (about 1849) in Kilninian and Kilmore with father Hugh: none indexed.
+- No other marriage of Hugh McLachlan and Catherine Muir turned up in the FamilySearch indexes.
+- A Hugh McLachlan marriage at Glasgow on 3 August 1851 was seen and set aside. The tree's Hugh was already married, with an infant, in Campbeltown on 30 March 1851.
+
+**Method.** Retrieval was tool-assisted: `dev/try-record-search.ts` and `dev/try-record-read.ts` against live FamilySearch, using the "Scotland, Census, 1851" collection (2028673) and record reads of the 1861 census and civil-registration entries. The identity judgement was the genealogist's (Emruthwill). Everything rests on FamilySearch indexes. No page image was read, so `image_basis` is not set, and ScotlandsPeople was not used: the original Kilninian register and the 1851 and 1861 enumeration pages were not examined.
