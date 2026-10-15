@@ -674,13 +674,13 @@ function classify(
 
   if (recordType === "marriage") {
     // The parties speak for themselves, but nobody witnessed their own birth or
-    // parentage: a party's birth date, birthplace and age, their "child of"
-    // relationship, and every fact of a parent role are `secondary` (lead
-    // ruling 2026-10-14, issue #3410). A party may have been an infant when the
+    // parentage: a party's birth date, birthplace, age and christening, their
+    // "child of" relationship, and every fact of a parent role are `secondary`
+    // (lead ruling 2026-10-14, issue #3410; christening ruled 2026-10-15). A party may have been an infant when the
     // parent they name died.
     if (family === "principal" || family === "spouse") {
       const ownOrigin =
-        /^(birth|birth_?(date|year|place)|birthplace|age)$/.test(factType ?? "") || relationshipType === "child";
+        /^(birth|birth_?(date|year|place)|birthplace|age|christening|baptism)$/.test(factType ?? "") || relationshipType === "child";
       return {
         informant: "the party",
         informant_proximity: "self",

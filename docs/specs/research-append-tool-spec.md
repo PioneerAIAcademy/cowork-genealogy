@@ -1819,7 +1819,7 @@ consistency, not predictive accuracy.
 | census | everything else | unknown household member | `household_member` | `indeterminate` |
 | census | a parent's birthplace, from the parent-birthplace columns (see below) | unknown household member | `household_member` | `secondary` |
 | marriage | a party's own facts (name, sex, marital status, occupation, residence, the marriage, "spouse of" the other party) | the party | `self` | `primary` |
-| marriage | a party's birth date, birthplace and age; their "child of" relationship; every fact of a parent role | the party | `self` | `secondary` |
+| marriage | a party's birth date, birthplace, age and christening or baptism; their "child of" relationship; every fact of a parent role | the party | `self` | `secondary` |
 | marriage | a witness's facts | the witness | `witness` | `primary` |
 | death | the death event | the certifying official | `official_duty` | `primary` |
 | death | the cause of death, and the last illness's duration | the certifying physician | `official_duty` | `primary` |

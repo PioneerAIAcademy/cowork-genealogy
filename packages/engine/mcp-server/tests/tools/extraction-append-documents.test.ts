@@ -323,7 +323,7 @@ describe("extraction_append: documents", () => {
     expect(await roleOf("James Gallagher")).toBe("father_of_bride");
   });
 
-  it("marriage: a party's birth facts and a parent named without an edge are self/secondary (#3410)", async () => {
+  it("marriage: a party's birth facts, christening, and a parent named without an edge are self/secondary (#3410)", async () => {
     const doc = {
       recordType: "marriage",
       documentForm: "verbatim_transcript",
@@ -334,6 +334,7 @@ describe("extraction_append: documents", () => {
           facts: [
             { type: "marriage", date: "1844", place: "Trowbridge, Wiltshire" },
             { type: "Birth Year", value: "1825" },
+            { type: "christening", date: "3 April 1825", place: "Trowbridge, Wiltshire" },
             { type: "birthplace", value: "Trowbridge" },
             { type: "occupation", value: "labourer" },
           ],
@@ -354,6 +355,7 @@ describe("extraction_append: documents", () => {
     };
     expect(q((a) => a.record_role === "groom" && a.fact_type === "birth_year")).toBe("self/secondary");
     expect(q((a) => a.record_role === "groom" && a.fact_type === "birth" && a.value === "Trowbridge")).toBe("self/secondary");
+    expect(q((a) => a.record_role === "groom" && a.fact_type === "christening")).toBe("self/secondary");
     expect(q((a) => a.record_role === "groom" && a.fact_type === "occupation")).toBe("self/primary");
     expect(q((a) => a.fact_type === "name" && a.value === "Thomas Purnel" && a.record_role !== "groom")).toBe("self/secondary");
     expect(q((a) => a.fact_type === "name" && a.value === "John Cook")).toBe("self/secondary");
