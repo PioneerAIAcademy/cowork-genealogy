@@ -1,7 +1,7 @@
 import { api } from '../api'
 import { type SessionConnection, WsSessionConnection } from './SessionConnection'
 import { SseSessionConnection } from './SseSessionConnection'
-import { sameOriginLoopback, devSandboxTunnel } from './sameOriginLoopback'
+import { sameOriginLoopback } from './sameOriginLoopback'
 
 // Two transports, chosen at build time:
 //
@@ -43,12 +43,6 @@ export async function makeSessionConnection(
     // `localhost` that is a CROSS-ORIGIN socket, and some browsers refuse it -- while
     // every HTTP call still succeeds through the dev proxy, so the app looks broken
     // and the backend looks healthy. Real deployment hosts are left untouched.
-      // Two rewrites, both no-ops outside local dev. The first fixes the HOST
-      // (127.0.0.1 and localhost are different origins to a browser); the second routes
-      // the socket through this dev server's own port, because some browsers block a
-      // direct ws:// to a different local port while proxied HTTP sails through.
-      const sameHost = sameOriginLoopback(r.wssUrl, window.location.hostname)
-      const tunnelled = devSandboxTunnel(sameHost, import.meta.env.DEV, window.location.origin)
-      return { wssUrl: tunnelled, token: r.token }
+    return { wssUrl: sameOriginLoopback(r.wssUrl, window.location.hostname), token: r.token }
   })
 }
