@@ -391,3 +391,87 @@ describe('a 410 that lands before anyone subscribes', () => {
     expect(seen.filter((m) => m.state === 'session_expired')).toHaveLength(1)
   })
 })
+
+describe('replay dedupe across reconnect (#3387)', () => {
+  // The server replays its whole history to every (re)connect, stamping each
+  // recorded frame with seq+epoch. The connection keeps a lastSeq cursor that
+  // survives the socket drop, so a silent reconnect inside the same mounted
+  // pane drops the replay instead of appending the transcript again.
+
+  async function openConn(): Promise<WsMessage[]> {
+    const conn = new WsSessionConnection(async () => ({ wssUrl: 'ws://x', token: 't' }))
+    const seen = listen(conn)
+    conn.connect()
+    await vi.advanceTimersByTimeAsync(0)
+    FakeSocket.instances[0].onopen?.()
+    return seen
+  }
+
+  const frame = (seq: number, epoch: string, text: string): { data: string } => ({
+    data: JSON.stringify({ type: 'agent_event', seq, epoch, event: { kind: 'text', text } })
+  })
+
+  const textsOf = (seen: WsMessage[]): string[] =>
+    seen
+      .filter((m) => m.type === 'agent_event')
+      .map((m) => String((m.event as Record<string, unknown>).text))
+
+  it('frames seen live and then replayed after a drop reach the listener once', async () => {
+    const seen = await openConn()
+    const sock = FakeSocket.instances[0]
+    sock.onmessage?.(frame(1, 'e1', 'a'))
+    sock.onmessage?.(frame(2, 'e1', 'b'))
+    sock.onmessage?.(frame(3, 'e1', 'c'))
+
+    // Drop; the retry opens a second socket, and the server replays history.
+    sock.close()
+    await vi.advanceTimersByTimeAsync(2000)
+    expect(FakeSocket.instances).toHaveLength(2)
+    const sock2 = FakeSocket.instances[1]
+    sock2.onopen?.()
+    sock2.onmessage?.(frame(1, 'e1', 'a'))
+    sock2.onmessage?.(frame(2, 'e1', 'b'))
+    sock2.onmessage?.(frame(3, 'e1', 'c'))
+    sock2.onmessage?.(frame(4, 'e1', 'd')) // new work after the replay
+
+    expect(textsOf(seen)).toEqual(['a', 'b', 'c', 'd'])
+  })
+
+  it('a replay under a new epoch is delivered in full', async () => {
+    // LocalProvider.ensure_server replaces a dead server, and the fresh
+    // process counts seq from 1 again — without the epoch reset a client
+    // holding lastSeq=3 would silently drop every new frame.
+    const seen = await openConn()
+    const sock = FakeSocket.instances[0]
+    sock.onmessage?.(frame(1, 'e1', 'a'))
+    sock.onmessage?.(frame(2, 'e1', 'b'))
+    sock.onmessage?.(frame(3, 'e1', 'c'))
+
+    sock.close()
+    await vi.advanceTimersByTimeAsync(2000)
+    const sock2 = FakeSocket.instances[1]
+    sock2.onopen?.()
+    sock2.onmessage?.(frame(1, 'e2', 'x'))
+    sock2.onmessage?.(frame(2, 'e2', 'y'))
+
+    expect(textsOf(seen)).toEqual(['a', 'b', 'c', 'x', 'y'])
+  })
+
+  it('frames with no seq are always delivered, even repeated', async () => {
+    // Old sandboxes keep running pre-#3387 server code for up to 24 h
+    // (sessions.py SESSION_MAX_AGE) and stamp nothing; their frames — and
+    // status/snapshot/ping from any server — must pass through as today.
+    const seen = await openConn()
+    const sock = FakeSocket.instances[0]
+    sock.onmessage?.(frame(5, 'e1', 'a'))
+    const status = { data: JSON.stringify({ type: 'status', state: 'turn_active' }) }
+    sock.onmessage?.(status)
+    sock.onmessage?.(status)
+    const bare = { data: JSON.stringify({ type: 'agent_event', event: { kind: 'text', text: 'old' } }) }
+    sock.onmessage?.(bare)
+    sock.onmessage?.(bare)
+
+    expect(seen.filter((m) => m.type === 'status' && m.state === 'turn_active')).toHaveLength(2)
+    expect(textsOf(seen)).toEqual(['a', 'old', 'old'])
+  })
+})

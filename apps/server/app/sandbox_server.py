@@ -93,6 +93,11 @@ class Hub:
         # connection so a page reload rebuilds the chat (the agent's own memory
         # persists in the sandbox; this restores the *UI* history). Capped.
         self._history: list[dict] = []
+        # Replay-dedupe cursor (#3387): every frame that enters _history is
+        # stamped via _stamp before it is broadcast, so the client can drop a
+        # replayed copy it has already folded.
+        self._next_seq = 1
+        self._epoch = os.urandom(8).hex()
         # Whether a turn is running right now. The client's "working" state is
         # otherwise purely local to the browser that hit Send, so a reload mid-turn
         # loses it and the UI looks idle while the agent is still working (the
@@ -103,6 +108,23 @@ class Hub:
         # Rejection-log throttle (see _REJECT_LOG_INTERVAL / _note_rejection).
         self._rej_count = 0
         self._rej_last = 0.0
+
+    def _stamp(self, msg: dict) -> dict:
+        """Stamp a frame that is about to be recorded, BEFORE it is broadcast.
+        Every live path broadcasts first and records second, so a stamp inside
+        _record would put the live copy on the wire bare — the client's lastSeq
+        would stay 0 and every reconnect would still replay everything (#3387).
+
+        The epoch rides with every seq because LocalProvider.ensure_server
+        starts a fresh sandbox_server when the old one has died, and a fresh
+        process counts from 1 again — a still-mounted client holding a high
+        lastSeq would silently drop every new frame. A changed epoch tells it
+        to reset its cursor to 0 instead.
+        """
+        msg["seq"] = self._next_seq
+        self._next_seq += 1
+        msg["epoch"] = self._epoch
+        return msg
 
     def _record(self, msg: dict) -> None:
         self._history.append(msg)
@@ -244,10 +266,14 @@ class Hub:
                 await self.broadcast({"type": "status", "state": "turn_active"})
             if kind == "turn_done":
                 self._turn_active = False
-            await self.broadcast(msg)
             # Deltas and task_progress are live-only. Recording them would evict
             # the real conversation from the capped replay buffer within a single
-            # streamed turn, so a reconnect would rebuild an empty chat.
+            # streamed turn, so a reconnect would rebuild an empty chat. Every
+            # frame that WILL be recorded is stamped here, before the broadcast,
+            # so the live copy and the replayed copy carry the same seq.
+            if not transient:
+                self._stamp(msg)
+            await self.broadcast(msg)
             if not transient:
                 self._record(msg)
         code = proc.poll()
@@ -277,7 +303,7 @@ class Hub:
             # push the frame out. `broadcast` does not touch `_record`,
             # and this is the one turn_done that does not come through the
             # runner's recorded path (runner.py:73 is the sole other source).
-            _turn_done = {"type": "agent_event", "event": {"kind": "turn_done"}}
+            _turn_done = self._stamp({"type": "agent_event", "event": {"kind": "turn_done"}})
             await self.broadcast(_turn_done)
             self._record(_turn_done)
             await self.broadcast({"type": "status", "state": "chat_error",
@@ -436,7 +462,9 @@ class Hub:
                 except json.JSONDecodeError:
                     continue
                 if msg.get("type") == "user_msg":
-                    self._record({"type": "user_msg", "text": msg.get("text", "")})
+                    # Recorded but never broadcast — stamped so its replayed
+                    # copy can be deduped like any other history frame.
+                    self._record(self._stamp({"type": "user_msg", "text": msg.get("text", "")}))
                     self._turn_active = True  # a turn is about to run (see connect note)
                     await self.send_input(raw)
                 elif msg.get("type") == "interrupt":

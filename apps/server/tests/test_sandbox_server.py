@@ -633,3 +633,179 @@ def test_an_auto_continue_event_is_broadcast_and_replayed():
     assert any(m.get("type") == "agent_event" and m["event"].get("kind") == "auto_continue" for m in sent)
     # And the synthetic turn re-arms the busy gate exactly as a queued user turn does.
     assert {"type": "status", "state": "turn_active"} in sent
+
+
+# --- #3387: seq/epoch stamps, so a reconnect's replay can be deduped --------
+#
+# The client (WsSessionConnection) keeps a lastSeq cursor and drops any frame
+# at or below it, so the whole-history replay on reconnect no longer duplicates
+# the transcript. That only works if the LIVE copy of each frame carries the
+# same seq as its replayed copy — which is why the stamp must land BEFORE the
+# broadcast, and why these tests observe the serialized wire payload rather
+# than hub internals.
+
+
+class _RecvWS:
+    """A fake client socket registered into hub._clients so the REAL
+    Hub.broadcast serializes each frame at send time. The _broadcasts() helper
+    captures the dict BY REFERENCE, and _stamp mutates in place — a stamp moved
+    after the broadcast (into _record) would still look stamped there. The
+    json.dumps inside broadcast() is what makes the ordering observable."""
+
+    def __init__(self):
+        self.received: list[dict] = []
+
+    async def send(self, payload):
+        self.received.append(json.loads(payload))
+
+
+def test_live_frames_are_stamped_at_send_time_not_at_record_time():
+    """Every live path broadcasts first and records second, so a stamp inside
+    _record would put the live copy on the wire bare: the client's lastSeq
+    stays 0 and every reconnect still replays everything (#3387)."""
+    import app.sandbox_server as ss
+
+    class FakeProc:
+        def poll(self):
+            return 0
+
+    hub = ss.Hub()
+    client = _RecvWS()
+    hub._clients.add(client)
+
+    q: asyncio.Queue = asyncio.Queue()
+    for ev in (
+        {"kind": "text", "text": "hello"},
+        {"kind": "task_progress", "agent": "x"},  # transient: never stamped
+        {"kind": "turn_start", "queued": True},   # also broadcasts a status frame
+        {"kind": "turn_done"},
+    ):
+        q.put_nowait(json.dumps({"type": "agent_event", "event": ev}))
+    q.put_nowait(None)
+    # proc is not hub._proc, so the crash path is skipped.
+    asyncio.run(hub._pump(q, FakeProc()))
+
+    # Count FIRST: broadcast() swallows a raising send and silently discards
+    # the client, so a broken fake would pass every per-frame assertion below
+    # over an empty list. 4 agent events + the turn_start's status broadcast.
+    assert len(client.received) == 5, client.received
+
+    stamped = [
+        m for m in client.received
+        if m.get("type") == "agent_event" and m["event"]["kind"] != "task_progress"
+    ]
+    assert [m["seq"] for m in stamped] == [1, 2, 3], stamped
+    assert {m["epoch"] for m in stamped} == {hub._epoch}
+
+    # The transient and the status frame pass through with no stamp.
+    for m in client.received:
+        if m not in stamped:
+            assert "seq" not in m and "epoch" not in m, m
+
+
+def test_crash_paths_synthetic_turn_done_is_stamped_at_send_time():
+    """The crashed-runner turn_done is the one recorded frame produced outside
+    the pump's relay loop; an unstamped copy would be replayed to every later
+    client with no way to dedupe it."""
+    import app.sandbox_server as ss
+
+    class FakeProc:
+        def poll(self):
+            return -9
+
+    hub = ss.Hub()
+    proc = FakeProc()
+    hub._proc = proc
+    client = _RecvWS()
+    hub._clients.add(client)
+
+    q: asyncio.Queue = asyncio.Queue()
+    q.put_nowait(None)
+    asyncio.run(hub._pump(q, proc))
+
+    dones = [
+        m for m in client.received
+        if m.get("type") == "agent_event" and m["event"].get("kind") == "turn_done"
+    ]
+    # Count first — a discarded fake receives nothing and passes vacuously.
+    assert len(dones) == 1, client.received
+    assert dones[0]["seq"] == 1 and dones[0]["epoch"] == hub._epoch
+    # The error bubble is live-only (broadcast, never recorded): no stamp.
+    errs = [
+        m for m in client.received
+        if m.get("type") == "agent_event" and m["event"].get("kind") == "error"
+    ]
+    assert len(errs) == 1 and "seq" not in errs[0], errs
+
+
+def test_history_items_carry_increasing_seq():
+    import app.sandbox_server as ss
+
+    class FakeProc:
+        def poll(self):
+            return 0
+
+    hub = ss.Hub()
+    q: asyncio.Queue = asyncio.Queue()
+    for ev in ({"kind": "text", "text": "a"}, {"kind": "text", "text": "b"}, {"kind": "turn_done"}):
+        q.put_nowait(json.dumps({"type": "agent_event", "event": ev}))
+    q.put_nowait(None)
+    asyncio.run(hub._pump(q, FakeProc()))
+
+    assert [m["seq"] for m in hub._history] == [1, 2, 3], hub._history
+    assert {m["epoch"] for m in hub._history} == {hub._epoch}
+
+
+def test_user_msg_record_is_stamped(monkeypatch):
+    """The user_msg record path (handle()) is recorded but never broadcast, so
+    a stamp only at the pump would leave it bare — its replayed copy would be
+    immune to the dedupe and the user's bubble would duplicate on every
+    reconnect, not just in the accepted one-second gap."""
+    import app.sandbox_server as ss
+
+    monkeypatch.setattr(ss, "SECRET", "")  # auth disabled → handshake passes
+
+    class FakeReq:
+        path = "/?token=x"
+
+    class FakeWS:
+        request = FakeReq()
+
+        def __init__(self):
+            self.frames = [json.dumps({"type": "user_msg", "text": "hi"})]
+
+        async def send(self, payload):
+            pass
+
+        async def close(self, *a):
+            pass
+
+        def __aiter__(self):
+            return self
+
+        async def __anext__(self):
+            if self.frames:
+                return self.frames.pop(0)
+            raise StopAsyncIteration
+
+    async def noop(*a, **k):
+        pass
+
+    hub = ss.Hub()
+    monkeypatch.setattr(hub, "ensure_started", noop)
+    monkeypatch.setattr(hub, "send_snapshot", noop)
+    monkeypatch.setattr(hub, "send_input", noop)
+    asyncio.run(hub.handle(FakeWS()))
+
+    assert len(hub._history) == 1, hub._history
+    rec = hub._history[0]
+    assert rec["type"] == "user_msg" and rec["seq"] == 1 and rec["epoch"] == hub._epoch
+
+
+def test_each_hub_gets_its_own_epoch():
+    """A fresh sandbox_server (LocalProvider.ensure_server replaces a dead one)
+    counts seq from 1 again; a distinct epoch is what lets a still-connected
+    client notice and reset its cursor instead of dropping every new frame."""
+    import app.sandbox_server as ss
+
+    assert ss.Hub()._epoch != ss.Hub()._epoch

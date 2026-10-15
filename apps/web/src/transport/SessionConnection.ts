@@ -114,6 +114,14 @@ export class WsSessionConnection implements SessionConnection {
   // than the one this card is about. Pinned by
   // "focus does not reset the credential-timeout budget".
   private credentialTimeouts = 0
+  // Replay-dedupe cursor (#3387). The server stamps every recorded frame with
+  // a seq before broadcasting it, then replays its whole history to each
+  // (re)connect. Instance fields, not per-socket: they survive the drop so the
+  // replay after a silent reconnect is dropped instead of folded again. A page
+  // reload constructs a new connection, so lastSeq=0 lets the full replay
+  // rebuild the chat.
+  private lastSeq = 0
+  private epoch: unknown = null
 
   private onVisibility = (): void => {
     if (typeof document === 'undefined') return
@@ -264,6 +272,20 @@ export class WsSessionConnection implements SessionConnection {
         msg = JSON.parse(ev.data)
       } catch {
         return
+      }
+      // Frames without a seq pass through untouched: status, snapshot and ping
+      // frames are never stamped, and a sandbox still running pre-#3387 server
+      // code stamps nothing — those sessions keep the replay bug, nothing breaks.
+      if (typeof msg.seq === 'number') {
+        // A fresh sandbox_server (LocalProvider.ensure_server replaces a dead
+        // one) counts seq from 1 again under a new epoch; without this reset a
+        // client holding a high lastSeq would silently drop every new frame.
+        if (msg.epoch !== this.epoch) {
+          this.epoch = msg.epoch
+          this.lastSeq = 0
+        }
+        if (msg.seq <= this.lastSeq) return // the reconnect edge: never fold a frame twice
+        this.lastSeq = msg.seq
       }
       for (const l of [...this.listeners]) l(msg)
     }
