@@ -76,13 +76,24 @@ def test_any_subagent_spawn_fails(spawn_tool):
         _run(builtin=[{"tool": spawn_tool, "args": {"subagent_type": "question-selection"}}])
 
 
+def test_an_unnamed_general_purpose_spawn_fails():
+    """A general-purpose spawn carries no `subagent_type`; it is still delegation."""
+    with pytest.raises(AssertionError, match="not delegated"):
+        _run(builtin=[{"tool": "Agent", "args": {"description": "summarize", "prompt": "where are we?"}}])
+
+
+def test_a_spawn_made_inside_a_subagent_is_not_the_main_threads():
+    _run(builtin=[{"tool": "Agent", "agent_id": "a1", "args": {"subagent_type": "image-reader"}}])
+
+
 @pytest.mark.parametrize(
     "call",
     [
         {"tool": "Read", "args": {"file_path": "/w/research.json"}},
         {"tool": "Grep", "args": {"pattern": "q_", "path": "/w/tree.gedcomx.json"}},
+        {"tool": "Grep", "args": {"pattern": "q_", "path": "/w", "glob": "research.json"}},
     ],
-    ids=["read", "grep"],
+    ids=["read", "grep", "grep-directory-glob"],
 )
 def test_reading_the_raw_project_files_fails(call):
     with pytest.raises(AssertionError, match="raw project files"):

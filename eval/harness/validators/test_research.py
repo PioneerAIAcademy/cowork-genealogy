@@ -523,7 +523,7 @@ def test_status_question_answered_from_project_context_only(
     `project_context` is ALWAYS_LOAD, so assertion 1 can hold even with the
     description clause removed; assertion 5 is the one that tracks the clause.
     """
-    from harness.skill_runner import spawned_agents
+    from harness.skill_runner import SPAWN_TOOL_NAMES
 
     if "negative-status-question" not in test.get("tags", []):
         pytest.skip("not a negative-status-question scenario")
@@ -540,14 +540,22 @@ def test_status_question_answered_from_project_context_only(
             continue
         args = c.get("args") or {}
         path = str(args.get("file_path") or args.get("path") or "")
-        if path.endswith(_PROJECT_FILES):
-            forbidden_reads.append(f"{c.get('tool')} {path}")
+        # A Grep over a directory reaches the file through its `glob` filter.
+        glob = str(args.get("glob") or "")
+        if path.endswith(_PROJECT_FILES) or any(name in glob for name in _PROJECT_FILES):
+            forbidden_reads.append(f"{c.get('tool')} {path} {glob}".strip())
     assert not forbidden_reads, (
         "status question must not read the raw project files; got: "
         f"{forbidden_reads}"
     )
 
-    spawns = spawned_agents(builtin_tool_calls or [])
+    # Every main-thread spawn, named or not: `spawned_agents()` skips a
+    # general-purpose spawn (no `subagent_type`), which is still a delegation.
+    spawns = [
+        (c.get("args") or {}).get("subagent_type") or "general-purpose"
+        for c in (builtin_tool_calls or [])
+        if c.get("tool") in SPAWN_TOOL_NAMES and "agent_id" not in c
+    ]
     assert not spawns, (
         f"status question must be answered by the main thread, not delegated; got {spawns}"
     )
