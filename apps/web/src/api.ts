@@ -11,7 +11,7 @@ export interface SessionSummary {
   created: string
   updated: string
   last_active: string
-  // false: more than 24 h old, so it can be read but not continued (#3406).
+  // false: more than 72 h old, so it can be read but not continued (#3406).
   // Optional on purpose: the prototype server never sends it, and absent means
   // not ended.
   continuable?: boolean

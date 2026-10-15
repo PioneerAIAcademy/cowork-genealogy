@@ -138,7 +138,7 @@ export default function SessionList({
                   <span className="pill">{s.model.replace('claude-', '')}</span>
                   {/* Strictly false: the prototype omits the field, and absent is not ended. */}
                   {s.continuable === false && (
-                    <span className="pill pillEnded" title="More than 24 hours old: you can read it, but not continue it">
+                    <span className="pill pillEnded" title="More than 72 hours old: you can read it, but not continue it">
                       ended
                     </span>
                   )}
