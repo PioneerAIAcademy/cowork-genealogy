@@ -89,7 +89,8 @@ NEWLY_ENFORCED = {"localities"}
 WIDENED: dict[str, set[str]] = {
     "questions": {"proof-conclusion"},
     #: `log` gains `survey-surname`. The agent calls `research_log_append` to log
-    #: each census-year search page. The `agent:survey-surname` caller was added to
+    #: each census-year search page, and its household table as one more entry
+    #: (issue #3414). The `agent:survey-surname` caller was added to
     #: ownership.json's `callers` so the ownership validator resolves it when the
     #: agent is the suite subject.
     #:
