@@ -90,7 +90,8 @@
     {
       "record_role": "father_of_groom",
       "fact_type": "name",
-      "record_basis": "stated"
+      "record_basis": "stated",
+      "information_quality": "secondary"
     },
     {
       "record_role": "mother_of_groom",
