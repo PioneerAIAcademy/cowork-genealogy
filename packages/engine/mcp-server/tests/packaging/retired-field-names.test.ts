@@ -123,6 +123,8 @@ const ALLOWED: Record<string, string> = {
     "dated findings from a run corpus that used the retired name",
   "docs/deep-dives/conflict-resolution-findings-2026-08-27.md":
     "dated findings from a run corpus that used the retired name",
+  "eval/fixtures/scenarios/compound-objective-part-unframed/README.md":
+    "the carve record of a 2026-10-09 patron project; it names the field it migrated away from",
 };
 
 const git = (...args: string[]) =>

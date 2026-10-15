@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """GH Action: enforce the per-PR runlog contract.
 
-Blocking rules plus two warn-only rules (2b, 2f) per
+Blocking rules plus one warn-only rule (2f) per
 docs/plan/eval-runlog-versioning.md §C6:
 
     Rule 1   ≤1 added-or-renamed-into-place v{N}.json per skill.
@@ -16,6 +16,11 @@ docs/plan/eval-runlog-versioning.md §C6:
              Downgrades to a warning on a run log rule 2 already
              reports skill-side stale (a regrade cannot satisfy a log
              that owes a paid `make eval-skill` run).
+    Rule 2c  the graded run log's `instrument` fingerprint matches the
+             current one: BLOCKS on `validators.suite` / `tools.fixture`,
+             warns on `validators.shared` / `tools.live` / `live_modules`.
+             Also graded on every suite the PR's paths could move
+             (`instrument_touched_suites`). Reads the engine build.
     Rule 2f  (warn-only fixture arm) a changed shared fixture under
              eval/fixtures/{scenarios,mcp}/ marks every skill whose tests
              reference it, and warns when that skill's run log is now stale
@@ -82,6 +87,12 @@ from harness.versioning import (  # noqa: E402
     prunable_candidates,
 )
 from harness.outcomes import aggregate_per_run_outcome  # noqa: E402
+from harness.instrument import (  # noqa: E402
+    CatalogUnavailable,
+    instrument_for,
+    load_tool_catalog,
+    suite_validator_file,
+)
 
 
 REPO_ROOT = HARNESS_DIR.parents[1]
@@ -639,6 +650,141 @@ def _is_confirmed_non_failing(correction: dict) -> bool:
     """
     llm, corrected = correction.get("llm_score"), correction.get("corrected_score")
     return llm == corrected and llm in (3, None)
+
+
+# Paths whose change can move ANY suite's instrument fingerprint: the shared
+# validators and every non-`test_` module beside them (a suite file can import
+# one -- extraction_validators.py), the fingerprint's own definition and the mock
+# that advertises tools, and the engine's tool source and build inputs.
+INSTRUMENT_EVERY_SUITE_RE = re.compile(
+    r"^(?:eval/harness/validators/(?:test_universal\.py|(?!test_)[a-z0-9_]+\.py)"
+    r"|eval/harness/harness/(?:instrument|mock_mcp)\.py"
+    r"|packages/engine/mcp-server/(?:src/.*|package\.json|package-lock\.json|tsconfig\.json))$"
+)
+# A per-skill validator file moves only its own suite's fingerprint.
+INSTRUMENT_SUITE_VALIDATOR_RE = re.compile(r"^eval/harness/validators/test_([a-z0-9_]+)\.py$")
+
+_tool_catalog_cache: dict | None = None
+
+
+def _tool_catalog() -> dict:
+    """The compiled tool catalog, loaded once and required fresh: a stale build
+    would fingerprint descriptions the source no longer says."""
+    global _tool_catalog_cache
+    if _tool_catalog_cache is None:
+        engine = REPO_ROOT / "packages" / "engine" / "mcp-server"
+        _tool_catalog_cache = load_tool_catalog(
+            engine / "build", require_fresh=True, src_dir=engine / "src"
+        )
+    return _tool_catalog_cache
+
+
+def instrument_touched_suites(touched_paths: set[str], all_suites: set[str]) -> set[str]:
+    """Suites whose instrument fingerprint a PR's paths could move."""
+    out: set[str] = set()
+    for path in touched_paths:
+        if INSTRUMENT_EVERY_SUITE_RE.match(path):
+            return set(all_suites)
+        m = INSTRUMENT_SUITE_VALIDATOR_RE.match(path)
+        if m:
+            suite = m.group(1).replace("_", "-")
+            if suite in all_suites and path.endswith(suite_validator_file(suite)):
+                out.add(suite)
+    return out
+
+
+def rule2c_instrument(
+    skill: str,
+    log: dict,
+    filename: str,
+    *,
+    graded: str = GRADED_DEFAULT,
+    rule2_blocked: bool = False,
+) -> int:
+    """Rule 2c: the run log's `instrument` fingerprint matches the current one.
+
+    BLOCKS on the suite-specific halves -- `validators.suite` (`test_<skill>.py`)
+    and `tools.fixture` (the tools this suite serves from its own fixtures):
+    clearing one costs that one suite's run. WARNS on the corpus-wide halves --
+    `validators.shared`, `tools.live`, `live_modules` -- because blocking on them
+    would owe a paid re-run of every suite (decided 2026-10-14 on issue #2479).
+    A log with no `instrument` (written before the field) warns and passes.
+    Downgrades a block to a warning when rule 2 itself blocked this same log in
+    this run (`rule2_blocked`), so the one re-run is owed once; a snapshot that is
+    merely stale is not enough, since rule 2 does not run on instrument-arm suites.
+    Also downgrades when the PR carries `eval-cosmetic-skip:<skill>`, exactly as
+    rule 2 does: a senior judged the change behaviour-neutral (a typo in a tool
+    description, say), and a new push voids the label. Returns 1 on block, 0
+    otherwise.
+    """
+    stored = log.get("instrument")
+    head = f"skill `{skill}`: `{filename}`, {graded},"
+    if not isinstance(stored, dict):
+        gh_warning(
+            f"{head} has no instrument recorded, so rule 2c cannot check what "
+            f"produced and graded it. It arms on this suite's next `make eval-skill`."
+        )
+        return 0
+    try:
+        catalog = _tool_catalog()
+    except CatalogUnavailable as e:
+        gh_error(f"{head} rule 2c could not read the tool catalog: {e}")
+        return 1
+    current = instrument_for(
+        skill,
+        REPO_ROOT,
+        catalog=catalog,
+        live_called=list((stored.get("live_modules") or {}).keys()),
+    )
+
+    def moved(group: str, key: str) -> bool:
+        return (stored.get(group) or {}).get(key) != current[group][key]
+
+    blocking = []
+    if moved("validators", "suite"):
+        blocking.append(f"validators.suite (`eval/harness/validators/{suite_validator_file(skill)}`)")
+    if moved("tools", "fixture"):
+        blocking.append("tools.fixture (the description/inputSchema of a tool this suite's fixtures serve)")
+    warning = []
+    if moved("validators", "shared"):
+        warning.append("validators.shared (`test_universal.py` / `validators_lib.py`)")
+    if moved("tools", "live"):
+        warning.append("tools.live (a LIVE_TOOLS description/inputSchema)")
+    stored_live = stored.get("live_modules") or {}
+    live_moved = sorted(t for t, h in stored_live.items() if current["live_modules"].get(t) != h)
+    if live_moved:
+        warning.append(f"live_modules ({', '.join(live_moved)})")
+
+    if warning:
+        gh_warning(
+            f"{head} was produced or graded by an instrument that has since changed: "
+            f"{'; '.join(warning)}. Corpus-wide, so rule 2c warns; the suite's next "
+            f"ordinary run re-records it."
+        )
+    if not blocking:
+        return 0
+    message = (
+        f"{head} was produced or graded by an instrument that has since changed: "
+        f"{'; '.join(blocking)}."
+    )
+    label = cosmetic_skip_label(skill)
+    if label in cosmetic_skip_labels():
+        gh_warning(
+            f"{message} The `{label}` label waives rule 2c for this skill, as it does "
+            f"rule 2: a senior judged the change behaviour-neutral."
+        )
+        return 0
+    if rule2_blocked:
+        gh_warning(
+            f"{message} Rule 2 already blocks this log and owes the same re-run, so "
+            f"rule 2c warns rather than blocks."
+        )
+        return 0
+    gh_error(
+        f"{message} Re-run the suite (`make eval-skill SKILL={skill}`) and commit "
+        f"the new run log in this PR."
+    )
+    return 1
 
 
 def rule3_completeness(
@@ -1603,6 +1749,20 @@ def main() -> int:
             }
         judge_prompt_touched_skills -= exempt_suiteless
 
+    # Instrument arm (issue #2479 PR 3): suites whose fingerprint this PR's paths
+    # could move. Kept apart from `touched_skills`, like the judge-prompt set, so
+    # it feeds only rule 2c; the rule recomputes, so a suite whose own fingerprint
+    # did not move passes.
+    all_suites = (
+        {p.name for p in RUNLOGS_DIR.iterdir() if p.is_dir()} if RUNLOGS_DIR.is_dir() else set()
+    )
+    instrument_touched_skills = instrument_touched_suites(touched_paths, all_suites)
+    # A shared MCP fixture's `tool` field feeds `tools.fixture`, so a changed fixture
+    # opens rule 2c on the suites that reference it -- graded on this PR, not left
+    # for the next author to touch them.
+    instrument_touched_skills |= fixture_touched_skills
+    instrument_touched_skills -= exempt_suiteless
+
     # Drop DELETED skills: when a PR removes a skill entirely — its skill dir
     # AND its unit-test dir are both absent from the working tree — there is
     # nothing left to re-run, so rules 2 + 3 have no gate target. Historical
@@ -1710,13 +1870,17 @@ def main() -> int:
                 continue
         if target is not None:
             filename, log = target
-            fails += rule2_active(skill, log, filename, graded=graded)
+            rule2_result = rule2_active(skill, log, filename, graded=graded)
+            fails += rule2_result
             fails += rule2b_judge_prompt(
                 skill,
                 log,
                 filename,
                 graded=graded,
                 judge_prompt_edited=judge_prompt_edited,
+            )
+            fails += rule2c_instrument(
+                skill, log, filename, graded=graded, rule2_blocked=bool(rule2_result)
             )
             fails += rule3_completeness(
                 skill, log, filename, skill_dir, graded=graded
@@ -1789,6 +1953,16 @@ def main() -> int:
         fails += rule2b_judge_prompt(
             skill, log, filename, judge_prompt_edited=True
         )
+
+    # Instrument arm: rule 2c on every suite the PR's paths could move that the
+    # main loop did not already grade. A suite with no committed full-skill log has
+    # nothing to check.
+    for skill in sorted(instrument_touched_skills - touched_skills):
+        status, latest = resolve_latest_runlog(RUNLOGS_DIR / skill)
+        if status in ("no_dir", "no_runlog"):
+            continue
+        filename, log = latest
+        fails += rule2c_instrument(skill, log, filename)
 
     # Every way rule 6 can end up inert also prints a clean pass, so it reports its
     # denominator -- the same standard eval/CLAUDE.md sets for conflict_verdict_report.

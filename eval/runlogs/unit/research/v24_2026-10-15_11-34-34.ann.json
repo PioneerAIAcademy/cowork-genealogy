@@ -1,9 +1,17 @@
 {
-  "run_log": "v24_2026-10-14_13-44-02.json",
-  "annotator": "mercybocumy2000@gmail.com",
+  "run_log": "v24_2026-10-15_11-34-34.json",
+  "annotator": "ikeboateng2018@gmail.com",
   "corrections": [
     {
-      "test_id": "ut_research_019",
+      "test_id": "ut_research_020",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_020",
       "dimension_source": "base",
       "dimension_name": "Tool Arguments",
       "llm_score": 3,
@@ -11,7 +19,7 @@
       "comment": null
     },
     {
-      "test_id": "ut_research_019",
+      "test_id": "ut_research_020",
       "dimension_source": "base",
       "dimension_name": "Completeness",
       "llm_score": 3,
@@ -19,23 +27,7 @@
       "comment": null
     },
     {
-      "test_id": "ut_research_019",
-      "dimension_source": "base",
-      "dimension_name": "Correctness",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_research_001",
-      "dimension_source": "base",
-      "dimension_name": "Correctness",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_research_001",
+      "test_id": "ut_research_004",
       "dimension_source": "base",
       "dimension_name": "Tool Arguments",
       "llm_score": 3,
@@ -43,55 +35,7 @@
       "comment": null
     },
     {
-      "test_id": "ut_research_zfp",
-      "dimension_source": "base",
-      "dimension_name": "Tool Arguments",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_research_zfp",
-      "dimension_source": "base",
-      "dimension_name": "Completeness",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_research_zfp",
-      "dimension_source": "base",
-      "dimension_name": "Correctness",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_research_tsv",
-      "dimension_source": "base",
-      "dimension_name": "Correctness",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_research_tsv",
-      "dimension_source": "base",
-      "dimension_name": "Completeness",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_research_tsv",
-      "dimension_source": "base",
-      "dimension_name": "Tool Arguments",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_research_tsi",
+      "test_id": "ut_research_017",
       "dimension_source": "base",
       "dimension_name": "Tool Arguments",
       "llm_score": null,
@@ -99,7 +43,7 @@
       "comment": null
     },
     {
-      "test_id": "ut_research_tsi",
+      "test_id": "ut_research_017",
       "dimension_source": "base",
       "dimension_name": "Completeness",
       "llm_score": 3,
@@ -107,7 +51,7 @@
       "comment": null
     },
     {
-      "test_id": "ut_research_tsi",
+      "test_id": "ut_research_017",
       "dimension_source": "base",
       "dimension_name": "Correctness",
       "llm_score": 3,
@@ -115,23 +59,31 @@
       "comment": null
     },
     {
-      "test_id": "ut_research_008",
-      "dimension_source": "base",
-      "dimension_name": "Correctness",
-      "llm_score": 1,
-      "corrected_score": 1,
-      "comment": "The AI correctly flags the skill for soliciting project details instead of routing to @plugin:tree-survey or @plugin:init-project for an empty-folder state."
-    },
-    {
-      "test_id": "ut_research_008",
+      "test_id": "ut_research_018",
       "dimension_source": "base",
       "dimension_name": "Completeness",
-      "llm_score": 1,
-      "corrected_score": 1,
-      "comment": "The AI correctly marks this incomplete — the required routing delegation was never performed."
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
     },
     {
-      "test_id": "ut_research_008",
+      "test_id": "ut_research_018",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_018",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_016",
       "dimension_source": "base",
       "dimension_name": "Tool Arguments",
       "llm_score": null,
@@ -139,12 +91,60 @@
       "comment": null
     },
     {
+      "test_id": "ut_research_016",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_016",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
       "test_id": "ut_research_001",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_001",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_001",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_004",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 2,
+      "corrected_score": 2,
+      "comment": "No source for the claim on coal-mining families in Schuylkill. I agree with the score."
+    },
+    {
+      "test_id": "ut_research_004",
       "dimension_source": "base",
       "dimension_name": "Completeness",
       "llm_score": 2,
-      "corrected_score": 3,
-      "comment": "delegating the mother search to research-plan is the correct orchestration pattern; the research skill’s job is to route, not execute the search itself."
+      "corrected_score": 2,
+      "comment": "The response for Patrick's origin was not complete and did not move the full use of the GPS workflow."
     }
   ]
 }
