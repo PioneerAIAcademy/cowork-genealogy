@@ -13,11 +13,12 @@
       "needs-review",
       "birth-year-conflict",
       "rank-search-matches",
-      "name-crowding"
+      "name-crowding",
+      "direct-arm"
     ]
   },
   "input": {
-    "user_message": "Execute plan item pli_001 — search FamilySearch's Wiltshire church records for the baptism of Job Purnell (born about 1826 in Trowbridge, Wiltshire) to identify his parents.",
+    "delegation": "Execute plan item pli_001 — search FamilySearch's Wiltshire church records for the baptism of Job Purnell (born about 1826 in Trowbridge, Wiltshire) to identify his parents.\n\nplanItemId: pli_001\nprojectPath: <workspace>",
     "scenario": "job-purnell-parents-identity"
   },
   "execution": {

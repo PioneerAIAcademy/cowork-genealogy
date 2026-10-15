@@ -2200,7 +2200,7 @@ def test_a_stub_naming_an_agent_reaches_run_skill_as_a_spawn_stub(tmp_path, monk
     import json
 
     raw = json.loads(WIKI_TEST_PATH.read_text(encoding="utf-8"))
-    raw["execution"] = {"stub_skills": ["gps-mentor", "search-records"]}
+    raw["execution"] = {"stub_skills": ["gps-mentor", "research-plan"]}
     spec = load_test_from_dict(raw)
     paths = OrchestratorPaths(runlogs_root=tmp_path)
     auth = AuthConfig(skill_runner_mode="api_key", api_key="x", detail="stub")
@@ -2222,7 +2222,7 @@ def test_a_stub_naming_an_agent_reaches_run_skill_as_a_spawn_stub(tmp_path, monk
         timestamp="2026-09-22_10-00-00",
     ))
     assert seen.get("stub_agents") == {"gps-mentor": None}
-    assert seen.get("stub_skills") == {"gps-mentor": None, "search-records": None}
+    assert seen.get("stub_skills") == {"gps-mentor": None, "research-plan": None}
 
 
 # --- stop_at_stub: a test that ends at its first stubbed hand-off (#3119) -----

@@ -612,15 +612,15 @@ re-issue it first. Then present the plan:
 - **If the invoking message already authorized execution** — a phrase
   like "...and start executing it," "...and continue with exhaustive
   research," or "...don't stop to check in with me" — hand off to
-  execution in this same turn instead of asking: `Skill("search-records")`
-  for FamilySearch items, a spawn of `@plugin:search-external-sites` for
+  execution in this same turn instead of asking: a spawn of
+  `@plugin:search-records` for FamilySearch items, a spawn of `@plugin:search-external-sites` for
   others, naming the plan item and never the result you expect.
   If only some items can execute right now (e.g. one
   repository or tool is unavailable but another isn't), execute those and
   report the block on the rest — don't let an item that's blocked for any
   reason hold up items that aren't.
 - Otherwise, suggest next step: "Would you like me to start executing this
-  plan?" (`search-records` / `@plugin:search-external-sites`, depending on
+  plan?" (`@plugin:search-records` / `@plugin:search-external-sites`, depending on
   the repositories)
 - **A plan item that ends at an external archive the researcher must open
   themselves** (Archion, Matricula, a paid site): give the link — the parish or
@@ -653,7 +653,7 @@ Ancestry (fallback), land records (fallback).
 | No `localities` entry exists for the jurisdiction you need to plan | Stop and return to the orchestrator noting the jurisdiction needs a locality survey — do **not** invoke `locality-guide` yourself. The orchestrator runs it, then re-invokes you |
 | Question is too vague to plan for | Return to `question-selection` to refine it |
 | All plan items exhausted, question unresolved | Set plan to `exhausted`; exhaustiveness must be evaluated against the GPS stop criteria before this question is answered — a direct user runs `research-exhaustiveness`; an orchestrator routes there by the call its own routing row names. If exhaustiveness returns "not yet exhaustive," follow its recommendation — extend the plan here, or invoke `question-selection` for a FAN pivot |
-| User says "start searching" | Hand off to `search-records` (FamilySearch items) or spawn `@plugin:search-external-sites` (other repositories) |
+| User says "start searching" | Spawn `@plugin:search-records` (FamilySearch items) or spawn `@plugin:search-external-sites` (other repositories) |
 | The invoking message already authorizes continuing (e.g. "...and start executing," "...and continue with exhaustive research") | Hand off to execution in the same turn — do not ask "would you like me to start?" first |
 
 ## Re-invocation behavior

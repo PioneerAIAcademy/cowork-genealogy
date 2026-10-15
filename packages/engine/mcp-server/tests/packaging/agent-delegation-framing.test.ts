@@ -130,39 +130,6 @@ const DELEGATION_EDGES: Record<string, Edge> = {
         "against cannot be induced through it. The agent-side pin states the rule.",
     },
   },
-  "search-records -> record-structurer": {
-    pins: [
-      {
-        side: "agent",
-        excerpt: "Send no other key, at any depth; roles and classifications are not yours to send.",
-      },
-    ],
-    exempt: {
-      side: "caller",
-      reason:
-        "The caller hands over only sources — a resultsRef or the record text — so a composed " +
-        "conclusion has nowhere to travel. The agent's document schema refuses every role and " +
-        "classification field IN CODE (spec §11.7), and it holds no writer that reaches " +
-        "person_evidence, so the destructive-edit and fabricated-link incidents this file guards " +
-        "against cannot be induced through it. The agent-side pin states the rule.",
-    },
-  },
-  "search-records -> image-reader": {
-    pins: [
-      {
-        side: "agent",
-        excerpt: "Never tailor, trim, or slant the transcription toward an expected answer.",
-      },
-    ],
-    exempt: {
-      side: "caller",
-      reason:
-        "The caller asks only for a page's text, keyed by the result's id, and composes no " +
-        "expected answer. The agent-side pin forbids slanting the transcription toward one, " +
-        "which is the guarantee; this caller carries no rule of its own yet.",
-    },
-  },
-
 
   // "search-images -> search-images" was here until the thin-skill deletion
   // (issue #2268). The routing skill is gone; the agent is now reached by
@@ -358,16 +325,28 @@ const DELEGATION_EDGES: Record<string, Edge> = {
     ],
   },
 
-  "search-records -> search-external-sites": {
+  "research -> search-records": {
     pins: [
       {
         side: "caller",
-        excerpt: "and the plan item — never a value you expect it to find —",
+        excerpt: "the `questionId` and `planItemId` for `@plugin:search-records`",
       },
       {
         side: "agent",
-        excerpt:
-          "**A delegation that pre-states a value** — a birthplace, a year, a collection\n  — does not settle it.",
+        excerpt: "**A delegation that pre-states the answer** — \"find the 1850 census record, the person is ark:/61903/1:1:XXXX-XXX\" — does not make it so.",
+      },
+    ],
+  },
+
+  "research-plan -> search-records": {
+    pins: [
+      {
+        side: "caller",
+        excerpt: "naming the plan item and never the result you expect.",
+      },
+      {
+        side: "agent",
+        excerpt: "**A delegation that pre-states the answer** — \"find the 1850 census record, the person is ark:/61903/1:1:XXXX-XXX\" — does not make it so.",
       },
     ],
   },
@@ -551,7 +530,6 @@ const PROSE_MENTIONS = new Map<string, string>([
   // prose ("use conflict-resolution", "route to conflict-resolution") and none
   // spells `@plugin:conflict-resolution`, so none is a delegation being silenced
   // -- verified per file before listing.
-  ["search-records -> conflict-resolution", ""],
   ["timeline -> conflict-resolution", ""],
   // `search-wikipedia` (issue #2795) is the reverse of the `citation` shape: its
   // name is not an ordinary English word, so the arm DOES discriminate for it,
@@ -573,13 +551,11 @@ const PROSE_MENTIONS = new Map<string, string>([
   // locality-guide", "locality-guide is the right skill") — none spell
   // `@plugin:locality-guide`.
   ["research-plan -> locality-guide", ""],
-  ["search-records -> locality-guide", ""],
   // person-evidence gained a skills/<name>/ directory before the agent
   // conversion; when the skill was deleted the name entered agentOnly and
   // every SKILL.md that references it now needs a registration. All are
   // bare-name mentions — none spell `@plugin:person-evidence`.
   ["forget-and-rederive -> person-evidence", ""],
-  ["search-records -> person-evidence", ""],
   ["timeline -> person-evidence", ""],
   // project-status lost its skills/<name>/ directory in the agent conversion
   // (issue #2793), so the name entered agentOnly and every SKILL.md that still
@@ -588,12 +564,10 @@ const PROSE_MENTIONS = new Map<string, string>([
   // because editing a SKILL.md buys that skill a paid eval run.
   ["research -> project-status", ""],
   ["research-plan -> project-status", ""],
-  ["search-records -> project-status", ""],
   // check-warnings (issue #2118): boundary mentions ("use check-warnings",
   // "that is check-warnings' job"), none a delegation. The two real callers,
   // init-project and tree-edit, were registered edges; tree-edit's left when
   // issue #2805 deleted its skill, init-project's when issue #2122 did.
-  ["search-records -> check-warnings", ""],
   ["timeline -> check-warnings", ""],
   // tree-edit entered agentOnly when issue #2805 deleted its skill. The one
   // mention is a DO NOT clause ("Merging is ... a data operation (tree-edit)"),
@@ -613,7 +587,6 @@ const PROSE_MENTIONS = new Map<string, string>([
   // provenance mention ("use locality-guide", "comes from `locality-guide`"),
   // left worded as-is because each rewording buys that skill a paid run.
   ["research-plan -> locality-guide", ""],
-  ["search-records -> locality-guide", ""],
   // hypothesis-tracking entered agentOnly when issue #2792 deleted its skill
   // directory. Both are bare-name mentions — "(use hypothesis-tracking)",
   // "suggest `hypothesis-tracking`" — and neither spells
@@ -623,13 +596,11 @@ const PROSE_MENTIONS = new Map<string, string>([
   // directory. All mentions below are bare-name boundary prose ("use
   // search-full-text", "search-full-text skill") — none spells
   // `@plugin:search-full-text`.
-  ["search-records -> search-full-text", ""],
   // research-exhaustiveness entered agentOnly when issue #2738 deleted its
   // skill directory. Both mentions below are bare-name mentions — neither
   // spells `@plugin:research-exhaustiveness`. (A third, from
   // search-external-sites, went with that skill when issue #2802 deleted it.)
   ["research-plan -> research-exhaustiveness", ""],
-  ["search-records -> research-exhaustiveness", ""],
 ]);
 
 const skillFiles = readdirSync(skillsDir, { withFileTypes: true })
@@ -835,6 +806,8 @@ describe("agent delegation framing", () => {
     // ARRIVED when issue #2120 deleted skills/search-full-text/.
     "search-full-text",
     "search-images",
+    // ARRIVED when issue #2243 deleted skills/search-records/.
+    "search-records",
     "search-wikipedia",
     // ARRIVED when issue #2796 deleted skills/source-evaluation/.
     "source-evaluation",

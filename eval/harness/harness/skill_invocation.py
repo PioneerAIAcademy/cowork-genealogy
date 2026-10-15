@@ -1171,6 +1171,10 @@ DEDICATED_AGENT_NAMES = frozenset(
         # unnamed-delegate bypass. Do not read its presence here as evidence that
         # a hook route exists.
         "search-images",
+        # Same shape as search-images (issue #2243): cost-motivated, no hook route.
+        # Its writes are `log` entries and a plan item's `status`; listed because
+        # the set is asserted equal to the shipped agent files.
+        "search-records",
         # Same shape as search-images, and for the same reason (issue #2799):
         # `citation` is a converted skill, not a hook-routed pair. No hook
         # routes anything to it. It is listed because the set is asserted equal
