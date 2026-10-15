@@ -621,12 +621,16 @@ describe("tree_edit", () => {
   // ── a couple event belongs on the Couple edge, never on a person ──────
   //
   // Replayed over the committed corpus this fires 6 times in 4 runs. The
-  // clearest is wilkins-marriage: the agent created a Couple edge carrying NO
-  // facts, then wrote the same "December 1834" Marriage onto BOTH spouses
-  // separately — the edge left factless and the event duplicated, which is
-  // exactly what this refuses.
+  // clearest is wilkins-marriage: in one batch the agent wrote the same
+  // "December 1834" Marriage onto BOTH spouses, then added the Couple edge
+  // between them carrying NO facts — the edge left factless and the event
+  // duplicated, which is exactly what this refuses.
 
-  it.each(["Marriage", "Divorce", "MarriageBanns", "Annulment"])(
+  it.each([
+    "Marriage", "Divorce", "MarriageBanns", "Annulment",
+    // spellings only the folded matcher knows; an exact six-name list misses them
+    "marriage_banns", "MarriageLicense", "Marriage Intention",
+  ])(
     "add_fact refuses a %s on a person and names the Couple route",
     async (type) => {
       await writeProject(twoPersons());
@@ -653,6 +657,32 @@ describe("tree_edit", () => {
     expect(r.ok).toBe(true);
   });
 
+  it("must not fire: update_fact retyping a Couple edge's fact into a Marriage", async () => {
+    const t = twoPersons();
+    (t as any).relationships = [{
+      id: "R1", type: "Couple", person1: "I1", person2: "I2", sources: [{ ref: "S1" }],
+      facts: [{ id: "F9", type: "Residence", date: "1850", sources: [{ ref: "S1" }] }],
+    }];
+    await writeProject(t);
+    const r = await treeCorrect({
+      projectPath: dir, operation: "update_fact", relationshipId: "R1", factId: "F9",
+      fact: { type: "Marriage" },
+    } as any);
+    expect(r.ok).toBe(true);
+  });
+
+  it("add_person refuses a non-array `facts` by name, single and batched", async () => {
+    await writeProject(twoPersons());
+    const person = { names: [{ given: "Bridget", surname: "Doyle" }], facts: { type: "Birth" } };
+    const single = await treeEdit({ projectPath: dir, operation: "add_person", person } as any);
+    expect(single.ok).toBe(false);
+    if (!single.ok) expect(JSON.stringify(single)).toMatch(/`person.facts` must be an array/);
+    const batch = await treeEdit({ projectPath: dir, ops: [{ operation: "add_person", person }] } as any);
+    expect(batch.ok).toBe(false);
+    if (!batch.ok) expect(JSON.stringify(batch)).toMatch(/ops\[0\]: add_person `person.facts` must be an array/);
+    expect((await readTree()).persons).toHaveLength(2);
+  });
+
   it("add_person refuses an inline couple event", async () => {
     await writeProject(twoPersons());
     const r = await treeEdit({
@@ -676,16 +706,17 @@ describe("tree_edit", () => {
     if (!r.ok) expect(JSON.stringify(r)).toMatch(/belongs on the Couple relationship/);
   });
 
-  // Decision 24: 13 person-level couple-event facts sit in 8 committed e2e
-  // starting trees. Refusing their correction would strand data the agent is
-  // meant to be able to fix, so an edit to one already there is admitted.
+  // 14 person-level couple-event facts sit in 9 committed e2e starting trees.
+  // Legacy documents are read, never repaired, and refusing their correction
+  // would strand data the agent is meant to be able to fix, so an edit to one
+  // already there is admitted.
   it("update_fact ADMITS editing a person-level couple event that is already there", async () => {
     const t = twoPersons();
     (t as any).persons[0].facts = [{ id: "F1", type: "Marriage", date: "1850", sources: [{ ref: "S1" }] }];
     await writeProject(t);
     // `type` is RE-STATED, not omitted. Omitting it leaves the guard unengaged
     // (it keys on `input.fact.type !== undefined`), so a test without it passes
-    // whether or not the Decision 24 exemption exists — it would prove nothing.
+    // whether or not the already-there exemption exists — it would prove nothing.
     const r = await treeCorrect({
       projectPath: dir, operation: "update_fact", personId: "I1", factId: "F1",
       fact: { type: "Marriage", date: "1851" },

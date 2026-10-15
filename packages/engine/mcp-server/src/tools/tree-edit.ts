@@ -218,20 +218,15 @@ function requirePerson(tree: SimplifiedGedcomX, personId: string | undefined): S
 type FactHolder = SimplifiedPerson | SimplifiedRelationship;
 
 /**
- * Resolve the target of add_fact/update_fact: exactly one of `personId` or
- * `relationshipId`. Facts on relationships are legal only on Couples
- * (Marriage, Divorce, …) — the tree schema rejects `facts` on ParentChild.
- */
-/**
  * A couple event belongs on the Couple relationship's `facts[]`, never on a
  * person — `tree_edit`'s own convention ("a Marriage/Divorce fact lives on the
  * Couple, never duplicated onto each spouse"). Writing one onto a person leaves
  * the Couple edge factless, which is the shape the materialize-facts skip
  * already refuses to create on the extraction side.
  *
- * Matched with the shared folded key, so every spelling of one event is caught
- * — `MarriageBanns` and a licence or intention spelling alike — rather than the
- * exact strings someone happened to list.
+ * Matched with `isCoupleEventFactType`, so every spelling it lists is caught —
+ * `marriage_banns`, `MarriageLicense` and `Marriage Intention` alike — rather
+ * than only the exact strings someone happened to list here.
  */
 function refuseCoupleEventOnPerson(type: unknown, op: string): void {
   if (!isCoupleEventFactType(type)) return;
@@ -242,6 +237,11 @@ function refuseCoupleEventOnPerson(type: unknown, op: string): void {
   );
 }
 
+/**
+ * Resolve the target of add_fact/update_fact: exactly one of `personId` or
+ * `relationshipId`. Facts on relationships are legal only on Couples
+ * (Marriage, Divorce, …) — the tree schema rejects `facts` on ParentChild.
+ */
 function requireFactHolder(tree: SimplifiedGedcomX, input: TreeEditInput, op: string): FactHolder {
   const targets = [input.personId, input.relationshipId].filter(Boolean);
   if (targets.length !== 1) {
@@ -498,10 +498,10 @@ async function applyOperation(
         const where = input.personId ? `person '${input.personId}'` : `relationship '${input.relationshipId}'`;
         throw new TreeEditError(`fact '${input.factId}' not found on ${where}`);
       }
-      // Decision 24: refuse only an op that MAKES a person-level couple event.
-      // Editing one already there is admitted — 13 such facts sit in 8 committed
-      // e2e starting trees, and refusing their correction would strand data the
-      // agent is supposed to be able to fix.
+      // Refuse only an op that MAKES a person-level couple event. Editing one
+      // already there is admitted: legacy documents are read, never repaired,
+      // 14 such facts sit in 9 committed e2e starting trees, and refusing their
+      // correction would strand data the agent is supposed to be able to fix.
       if (
         input.personId &&
         input.fact.type !== undefined &&
@@ -639,6 +639,11 @@ async function applyOperation(
         delete rawPerson.name;
       }
       // Inline facts take the same rule as add_fact: a new person is a person.
+      // Checked as an array first, so a malformed `facts` is a refusal naming
+      // the op rather than a TypeError escaping the batch loop.
+      if (input.person.facts != null && !Array.isArray(input.person.facts)) {
+        throw new TreeEditError("add_person `person.facts` must be an array of facts");
+      }
       for (const f of input.person.facts ?? []) {
         refuseCoupleEventOnPerson(f.type, "add_person");
       }
