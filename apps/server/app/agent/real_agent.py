@@ -704,10 +704,10 @@ def _build_hooks(HookMatcher, project_dir: Path, agent=None) -> dict:
         prototype's ``PreToolUse`` halt. Both reads are in-memory, so the no-I/O promise
         above still holds."""
         counter["tool_calls"] += 1
-        # Both arms below are gated on the MAIN thread (`"agent_id" not in _input_data`):
-        # a subagent calling either means its own leg is done, and halting the session there
-        # would strand the orchestrator mid-job -- it would take the subagent's last
-        # in-progress note as the final report and start a fresh subagent from scratch.
+        # Both arms below are gated on the MAIN thread (`"agent_id" not in _input_data`).
+        # Delivered: a subagent calling it means only its own leg is done. Pending message
+        # (#3376): halting a subagent mid-task strands the orchestrator, which takes its last
+        # in-progress note as the final report and re-does the work in a fresh subagent.
         # A bounded request was met and the model is stopping on purpose (#2813 item 1).
         if (_input_data or {}).get("tool_name") == DELIVERED_TOOL and "agent_id" not in (
             _input_data or {}

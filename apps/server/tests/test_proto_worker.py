@@ -3002,6 +3002,8 @@ def test_the_subagent_gate_is_the_handover_clause_alone_a_stop_still_halts(turn_
     monkeypatch.setattr(worker, "pending_user_message", lambda conn, sid: False)
     monkeypatch.setattr(worker, "stop_requested", lambda conn, sid: True)
     summary = _run(turn_env, [_init(), ToolCall(agent_id="ag_1"), _text("x"), _result(num_turns=2)])
+    assert turn_env["client"].pretool_replies[0].get("continue_") is False, (
+        "the subagent call itself must halt on Stop")
     assert summary["outcome"] == "stopped", "a subagent call is not exempt from Stop"
 
 
