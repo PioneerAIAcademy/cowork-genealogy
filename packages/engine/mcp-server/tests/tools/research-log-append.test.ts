@@ -1981,3 +1981,138 @@ describe("research_log_append — a mis-copied stagedResultsRef (resolveStagedRe
     expect(await exists(good)).toBe(true);
   });
 });
+
+/** A log entry against a superseded plan's item is refused (issue #2155). */
+describe("research_log_append — superseded plan items (#2155)", () => {
+  let dir: string;
+  beforeEach(async () => {
+    dir = await mkdtemp(join(tmpdir(), "log-append-superseded-"));
+  });
+  afterEach(async () => {
+    await rm(dir, { recursive: true, force: true });
+  });
+
+  const item = (id: string, sequence: number, status: string, record_type = "census") => ({
+    id,
+    sequence,
+    record_type,
+    jurisdiction: "Schuylkill County, Pennsylvania",
+    date_range: "1850-1880",
+    repository: "FamilySearch",
+    rationale: "Places Patrick in a household.",
+    fallback_for: null,
+    status,
+  });
+  const plan = (id: string, status: string, items: any[], question_id = "q_001") => ({
+    id,
+    question_id,
+    status,
+    created: "2026-05-04",
+    items,
+  });
+  function project(plans: any[]) {
+    return {
+      ...baseResearch(),
+      questions: [
+        {
+          id: "q_001",
+          question: "Who were the parents of Patrick Flynn (b. ~1845)?",
+          rationale: "Primary research objective.",
+          selection_basis: "objective_decomposition",
+          priority: "high",
+          status: "in_progress",
+          depends_on: [],
+          unblocks: [],
+          created: "2026-05-04",
+          resolved: null,
+          resolution_assertion_ids: [],
+          search_stop: { stopped_because: null, justification: null, log_entry_ids: [], stop_criteria: null, not_reached: [] },
+        },
+      ],
+      plans,
+    };
+  }
+  const replanned = () =>
+    project([
+      plan("pl_001", "superseded", [item("pli_001", 1, "planned")]),
+      plan("pl_002", "active", [
+        item("pli_002", 1, "completed"),
+        item("pli_003", 2, "planned", "probate"),
+      ]),
+    ]);
+  async function write(research: any) {
+    await writeFile(join(dir, "research.json"), JSON.stringify(research, null, 2));
+    await writeFile(join(dir, "tree.gedcomx.json"), JSON.stringify(minimalTree, null, 2));
+  }
+  const op = (planItemId: string | null) => ({
+    tool: "record_search",
+    query: { surname: "Flynn", givenName: "Patrick" },
+    outcome: "negative",
+    resultsExamined: 0,
+    planItemId,
+  });
+  const logged = async () => JSON.parse(await readFile(join(dir, "research.json"), "utf-8")).log;
+
+  it("refuses an item on a superseded plan and names the active plan's next item", async () => {
+    await write(replanned());
+    const r: any = await researchLogAppend({ projectPath: dir, ...op("pli_001") } as any);
+    expect(r.ok).toBe(false);
+    const msg = r.errors.join("\n");
+    expect(msg).toContain("planItemId 'pli_001' belongs to plan pl_001, which is superseded");
+    expect(msg).toContain("The active plan for question q_001 is pl_002");
+    expect(msg).toContain("its next open item is 'pli_003' (probate)");
+    expect(await logged()).toEqual([]);
+  });
+
+  it("still accepts the active plan's own item", async () => {
+    await write(replanned());
+    const r: any = await researchLogAppend({ projectPath: dir, ...op("pli_003") } as any);
+    expect(r.ok).toBe(true);
+    expect((await logged()).map((e: any) => e.plan_item_id)).toEqual(["pli_003"]);
+  });
+
+  it("accepts a completed plan's item, the case the corpus replay found with no active plan", async () => {
+    await write(project([plan("pl_001", "completed", [item("pli_001", 1, "completed")])]));
+    const r: any = await researchLogAppend({ projectPath: dir, ...op("pli_001") } as any);
+    expect(r.ok).toBe(true);
+  });
+
+  it("accepts a null planItemId on a replanned project", async () => {
+    await write(replanned());
+    const r: any = await researchLogAppend({ projectPath: dir, ...op(null) } as any);
+    expect(r.ok).toBe(true);
+  });
+
+  it("names an in-progress item ahead of a planned one", async () => {
+    const research = replanned();
+    research.plans[1].items.push(item("pli_004", 3, "in_progress", "land"));
+    await write(research);
+    const r: any = await researchLogAppend({ projectPath: dir, ...op("pli_001") } as any);
+    expect(r.ok).toBe(false);
+    expect(r.errors.join("\n")).toContain("its next open item is 'pli_004' (land)");
+  });
+
+  it("says so when the question has no active plan", async () => {
+    await write(project([plan("pl_001", "superseded", [item("pli_001", 1, "planned")])]));
+    const r: any = await researchLogAppend({ projectPath: dir, ...op("pli_001") } as any);
+    expect(r.ok).toBe(false);
+    expect(r.errors.join("\n")).toContain("Question q_001 has no active plan");
+  });
+
+  it("says so when the active plan has no open item", async () => {
+    const research = replanned();
+    research.plans[1].items[1].status = "completed";
+    await write(research);
+    const r: any = await researchLogAppend({ projectPath: dir, ...op("pli_001") } as any);
+    expect(r.ok).toBe(false);
+    expect(r.errors.join("\n")).toContain("none of its items is planned or in progress");
+  });
+
+  it("refuses the whole batch when one op targets a superseded item", async () => {
+    await write(replanned());
+    const r: any = await researchLogAppend({ projectPath: dir, ops: [op("pli_003"), op("pli_001")] } as any);
+    expect(r.ok).toBe(false);
+    expect(r.errors.join("\n")).toMatch(/ops\[1\].*pli_001.*superseded/s);
+    expect(await logged()).toEqual([]);
+  });
+});
