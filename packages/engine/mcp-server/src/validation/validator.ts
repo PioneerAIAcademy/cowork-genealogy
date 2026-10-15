@@ -816,7 +816,8 @@ function validateResearch(data: any, report: ValidationReport): ResearchIds {
       checkEnum(q.priority, "priority", qp, report);
     }
     if ("selection_basis" in q && !SELECTION_BASIS_VALUES.has(q.selection_basis)) {
-      addError(report, qp, `'${q.selection_basis}' is not a valid selection_basis`);
+      const sorted = Array.from(SELECTION_BASIS_VALUES).sort();
+      addError(report, qp, `'${q.selection_basis}' is not a valid selection_basis (expected one of: ${sorted.join(", ")})`);
     }
     checkIsoDate(q, "created", qp, report);
     checkIsoDate(q, "resolved", qp, report); // nullable — null skipped above

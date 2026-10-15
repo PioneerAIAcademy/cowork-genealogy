@@ -2239,9 +2239,15 @@ async def _run_turn(
                 return STOP_REASON
             return None
 
-        def handover_clause() -> str | None:
+        def handover_clause(subagent: bool = False) -> str | None:
             # 1b: a message the patron typed mid-turn.
             #
+            # Main-thread only (#3376): a subagent call returns before it touches `terminal`
+            # or logs `ev=handover`. The subagent finishes its leg; the orchestrator's next
+            # tool call takes the message. Every other clause halts a subagent as it would
+            # the main thread -- stop means stop.
+            if subagent:
+                return None
             # DEVIATION from the plan, stated here because it is one: the plan wires
             # `pending_user_message()` into the STOP hook only. But its own measurement
             # says the model yields a median of ONCE per run and 31% of runs never yield
@@ -2298,17 +2304,23 @@ async def _run_turn(
         halt_clauses = (("epoch", epoch_clause), ("lock", lock_clause), ("stop", stop_clause),
                         ("handover", handover_clause), ("transcript", transcript_clause), ("spend", spend_clause))
 
-        def halt() -> str | None:
+        def halt(subagent: bool = False) -> str | None:
             """U23: fail closed on a store outage. A clause that cannot reach Postgres
             (OperationalError, InterfaceError, or a broken connection) halts the attempt
             STORE_UNAVAILABLE, and every later call halts without asking Postgres. Any other
             error is logged and the next clause still runs, so one bug cannot skip the spend
-            clause as the Decimal one did (price_usd)."""
+            clause as the Decimal one did (price_usd).
+
+            ``subagent`` (true when the calling tool carries an ``agent_id``) is passed ONLY
+            to the handover clause (#3376), so a message typed mid-turn does not cut a
+            subagent off mid-task. Every other clause ignores it -- stop means stop."""
             if attempt["store_down"]:
                 return STORE_UNAVAILABLE_REASON
             for clause, check in halt_clauses:
                 try:
-                    reason = check()
+                    # Dispatch by IDENTITY, not by the tuple label: a renamed label would
+                    # silently stop passing the flag and revert #3376.
+                    reason = check(subagent) if check is handover_clause else check()
                 except Exception as exc:  # noqa: BLE001 - classified: down halts, else next clause
                     down = (isinstance(exc, (psycopg.OperationalError, psycopg.InterfaceError))
                             or bool(getattr(conn, "broken", False)))
