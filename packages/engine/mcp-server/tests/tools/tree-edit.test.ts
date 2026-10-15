@@ -62,7 +62,13 @@ describe("tree_edit", () => {
         names: [{ id: "N1", given: "John", surname: "Smith", preferred: true }],
         // Pre-existing (legacy) ref-less fact — tolerated; the delta guard fires
         // only on NEWLY-authored content, never on this one.
-        facts: [{ id: "F1", type: "Birth", date: "1850", primary: true }],
+        //
+        // Born 1820, not 1850: the Couple fixtures below marry I1 in 1843-1852,
+        // which against an 1850 birth is a marriage at age -7 to 2. That passed
+        // only while hasEarlyMarriage14 could not see a Marriage on the Couple
+        // edge. It can now, and tree_edit refuses an unjustified warning, so the
+        // fixture has to be a person who could actually have married.
+        facts: [{ id: "F1", type: "Birth", date: "1820", primary: true }],
       },
     ],
     relationships: [],
@@ -235,13 +241,13 @@ describe("tree_edit", () => {
           operation: "update_fact",
           personId: "I1",
           factId: "F1",
-          fact: { date: "1850", primary: true },
+          fact: { date: "1820", primary: true },
         }),
       );
       expect(r.ok).toBe(true);
       if (!r.ok) return;
       const f1 = (await readTree()).persons[0].facts[0];
-      expect(f1.date).toBe("1850");
+      expect(f1.date).toBe("1820");
       expect(f1.assertion_id).toBe("a_011");
       expect(r.validation.warnings.join(" ")).not.toMatch(/no longer linked/);
     });
