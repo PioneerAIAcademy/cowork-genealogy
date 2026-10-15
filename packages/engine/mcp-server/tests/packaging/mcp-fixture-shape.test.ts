@@ -5,7 +5,6 @@ import { fileURLToPath } from "node:url";
 import { dirname, join } from "node:path";
 import ts from "typescript";
 import { allToolSchemas } from "../../src/tool-schemas.js";
-import { decisiveness } from "../../src/utils/person-search-decisiveness.js";
 
 /**
  * A mock fixture's `response` must be a shape its tool can actually return.
@@ -689,17 +688,15 @@ function mismatch(
   return parts.join("; ");
 }
 
-describe("person_search fixtures agree with the decisiveness rule", () => {
+describe("person_search fixtures carry no retired `pick` field", () => {
   /**
-   * A `person_search` fixture's `pick` must be what `decisiveness()` computes from
-   * that fixture's own `results`. Shape alone cannot catch this: `pick` is an object
-   * of the right type either way.
+   * `pick`/`decisiveness()` were deleted when `init-project` stopped searching by name:
+   * it now always requires a FamilySearch PID, so nothing branches on whether a result
+   * set is decisive and nothing reads the field.
    *
-   * It matters because the mock serves a fixture VERBATIM. `init-project` now branches
-   * on `pick.decisive` -- auto-pick when true, stop and ask when false -- so a fixture
-   * whose `pick` disagrees with its scores teaches the eval a rule the tool does not
-   * implement, and every run stays green while measuring the wrong behaviour. That is
-   * this file's own defect class, one level deeper than shape.
+   * The guard is inverted rather than deleted. A fixture is served VERBATIM, so one that
+   * still carries `pick` would quietly teach the eval about a field the tool no longer
+   * emits — the same defect class this block was written for, pointing the other way.
    */
   const searchFixtures = fixtures.filter((f) => f.tool === "person_search");
 
@@ -707,33 +704,20 @@ describe("person_search fixtures agree with the decisiveness rule", () => {
     expect(searchFixtures.length).toBeGreaterThan(0);
   });
 
-  it("every fixture's `pick` is the one its own results produce", () => {
-    const problems: string[] = [];
-    for (const f of searchFixtures) {
-      const response = f.response as { pick?: unknown; results?: unknown } | null;
-      if (!response || typeof response !== "object") continue;
-      if (!Object.prototype.hasOwnProperty.call(response, "pick")) {
-        problems.push(`${f.name}: no \`pick\` — the tool always emits one`);
-        continue;
-      }
-      const results = Array.isArray(response.results) ? response.results : [];
-      const expected = decisiveness(results as Array<{ score?: number }>);
-      // Field by field, NOT `JSON.stringify` — that compares key ORDER too, so a
-      // fixture reserialized by any tool would red the build with identical values.
-      // Measured: reordering the three keys failed the stringify form (2026-09-30).
-      const actual = response.pick as Partial<ReturnType<typeof decisiveness>>;
-      const differs =
-        actual?.decisive !== expected.decisive ||
-        actual?.tiedAtTop !== expected.tiedAtTop ||
-        actual?.reason !== expected.reason;
-      if (differs) {
-        problems.push(
-          `${f.name}: pick is ${JSON.stringify(response.pick)} but its own results ` +
-            `compute ${JSON.stringify(expected)}`,
-        );
-      }
-    }
-    expect(problems, "a fixture may not disagree with the rule it stands in for").toEqual([]);
+  it("no fixture still carries it", () => {
+    const stale = searchFixtures
+      .filter((f) => {
+        const response = f.response as Record<string, unknown> | null;
+        return !!response && typeof response === "object"
+          && Object.prototype.hasOwnProperty.call(response, "pick");
+      })
+      .map((f) => f.name)
+      .sort();
+    expect(
+      stale,
+      "`pick` was removed from person_search; these fixtures still carry it and would " +
+        "serve a field the tool does not emit:\n" + stale.map((n) => `  - ${n}`).join("\n"),
+    ).toEqual([]);
   });
 });
 

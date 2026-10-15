@@ -3,7 +3,6 @@ import {
   foldChatEvent,
   joinTextBlocks,
   trackLiveTask,
-  withOpeningTurn,
   stripOpeningTurn,
   OPENING_TURN,
   type ChatMessage,
@@ -205,10 +204,14 @@ describe('replaying a captured subagent stream through the fold', () => {
   })
 })
 
-describe('opening turn', () => {
-  it('prefixes the opener on the wire and strips it back on replay', () => {
-    const wire = withOpeningTurn('Locate the siblings of LCZ8-949.')
-    expect(wire).toBe(`${OPENING_TURN}\n\nLocate the siblings of LCZ8-949.`)
+describe('opening turn — history only', () => {
+  // The client no longer SENDS the opener: the first message is exactly what the user
+  // typed, and the router sends a no-project message to init-project or tree-survey on
+  // its own (lead, 2026-10-15). The strip stays, because sessions created before the
+  // change carry the prefix on the wire and their first bubble would otherwise show the
+  // canned sentence.
+  it('still strips the opener off replayed history', () => {
+    const wire = `${OPENING_TURN}\n\nLocate the siblings of LCZ8-949.`
     expect(stripOpeningTurn(wire)).toBe('Locate the siblings of LCZ8-949.')
   })
   it('leaves a bare opener and ordinary messages alone', () => {

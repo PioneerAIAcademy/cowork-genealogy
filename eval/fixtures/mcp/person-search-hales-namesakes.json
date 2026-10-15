@@ -15,11 +15,6 @@
     "returned": 20,
     "offset": 0,
     "hasMore": true,
-    "pick": {
-      "decisive": false,
-      "tiedAtTop": 20,
-      "reason": "20 candidates share the top score (3.6236) — the same fields matched for all of them, so choosing between them needs a person."
-    },
     "results": [
       {
         "personId": "LBF1-LHF",

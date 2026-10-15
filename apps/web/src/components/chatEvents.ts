@@ -175,13 +175,15 @@ export function trackLiveTask(
 }
 
 // A new session's first message opens the project. The canned opener travels
-// on the wire ahead of whatever the user typed, so init-project runs and reads
-// the objective from the same turn; the bubble shows only the user's words.
+// HISTORY ONLY. The web client used to put this on the wire ahead of whatever the user
+// typed, so init-project ran and read the objective from the same turn. That was a
+// server-side patch over the plugin having two front doors, and it never reached Cowork;
+// the router now sends a no-project message to init-project or tree-survey by itself
+// (research/SKILL.md's routing table), so nothing prefixes anything (lead, 2026-10-15).
+//
+// The constant and the STRIP stay: sessions created before this change carry the prefix
+// on the wire, and without the strip their first bubble shows the canned sentence.
 export const OPENING_TURN = "Let's start a new genealogy research project."
-
-export function withOpeningTurn(text: string): string {
-  return `${OPENING_TURN}\n\n${text}`
-}
 
 // Replayed history carries the wire text; give the bubble back its own words.
 export function stripOpeningTurn(text: string): string {

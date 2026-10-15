@@ -1,0 +1,33 @@
+{
+  "test": {
+    "id": "ut_research_r2",
+    "skill": "research",
+    "name": "R2: a first message naming a PID triggers research, with no project and no slash command",
+    "type": "positive",
+    "description": "R2's activation acceptance, measured here instead of by three live alpha runs (lead, 2026-10-15). The behaviour: a researcher opens a fresh project folder and types an objective naming a FamilySearch person ID, in plain words. research must be invoked by its DESCRIPTION — no `/research`, no canned opener prefixed by the web client, no project to route from.\n\nThis is the trigger #2927 measured as a coin flip, which is why the bar is three consecutive passes: one pass of a 50/50 proves nothing.\n\nThe 3x is a RUN protocol, not a field. `runs_per_test` is schema-capped at 1 as standing policy (multi-run tests make the suite painfully slow), so the bar is met the way eval/CLAUDE.md's clearing protocol does it:\n\n    uv run python eval/harness/run_tests.py --skill research --test ut_research_r2 --runs-per-test 3\n\nThree passes clears R2. A flap is a defect to fix, and the fix goes in the plugin's PreToolUse hook — not before.\n\nDistinct from route-no-project-with-objective, which forces entry with `/research` and so measures the routing table rather than the trigger; and from negative-no-project, whose message carries no ID. Here the ID is present, so init-project can build the project rather than ask.\n\nIf this flaps, enforcement goes in the plugin's PreToolUse hook — not before.",
+    "tags": [
+      "grade:trigger",
+      "routing",
+      "r2",
+      "activation"
+    ]
+  },
+  "input": {
+    "user_message": "Find the parents of Patrick Flynn, FamilySearch ID LZNY-BRF.",
+    "scenario": "empty-folder-no-project"
+  },
+  "judge_context": [
+    "research must be the skill invoked — it is the only front door, and the message names a person and an objective",
+    "It must be triggered by the description alone: the message carries no slash command and no canned opening-turn prefix",
+    "research should then hand off to init-project, per the routing table's row for a no-project message naming a person",
+    "A FamilySearch person ID is present, so init-project should build the project rather than ask for an ID",
+    "Going straight to a sub-skill (question-selection, research-plan, search-records) without entering research is the failure this measures"
+  ],
+  "execution": {
+    "max_turns": 30,
+    "max_wall_clock_seconds": 600,
+    "stub_skills": [
+      "init-project"
+    ]
+  }
+}

@@ -12,7 +12,6 @@ import { api, ApiError } from '../api'
 import {
   foldChatEvent,
   trackLiveTask,
-  withOpeningTurn,
   stripOpeningTurn,
   KEEPS_RUNNING_NOTE,
   type ChatMessage,
@@ -311,7 +310,6 @@ export default function ChatPane({
   // tester hits after the dev server reloads.
   const [connectSlow, setConnectSlow] = useState(false)
   const scrollRef = useRef<HTMLDivElement>(null)
-  const startedRef = useRef(false)
   const [elapsed, setElapsed] = useState(0)
   const turnStartRef = useRef(0)
   const [activity, setActivity] = useState<AgentActivity | null>(null)
@@ -510,13 +508,10 @@ export default function ChatPane({
     // The server holds a message sent mid-turn and enqueues it when the turn
     // ends; the bubble says so.
     if (!trimmed) return
-    // A new session's first message is the opening turn: the canned opener goes
-    // on the wire ahead of it so init-project runs and consumes the objective in
-    // one turn (PR #2649), instead of a canned turn that asks "who?" first.
-    const opening = isNew && !startedRef.current
-    startedRef.current = true
     setMessages((prev) => [...prev, { role: 'user', text: trimmed, tools: [], queued: busy }])
-    conn.send({ type: 'user_msg', text: opening ? withOpeningTurn(trimmed) : trimmed })
+    // The first message is exactly what the user typed. The router sends a no-project
+    // message to init-project or tree-survey on its own, so the client prefixes nothing.
+    conn.send({ type: 'user_msg', text: trimmed })
     setOutcome(null) // 1c: a new message supersedes how the last turn ended
     setBusy(true)
     setInput('')

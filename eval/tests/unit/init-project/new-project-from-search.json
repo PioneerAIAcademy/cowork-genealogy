@@ -2,32 +2,27 @@
   "test": {
     "id": "ut_init_project_004",
     "skill": "init-project",
-    "name": "Initialize project by searching FamilySearch tree when no person ID provided",
+    "name": "Ask for the FamilySearch ID when the message names a person but gives no PID",
     "type": "positive",
-    "description": "User wants to start a project for Patrick Flynn but does not have his FamilySearch ID. The skill should call person_search to find candidates, select the top match (LZNY-BRF), call person_read with that ID, then create both project files normally.",
+    "description": "A project always starts from a FamilySearch person ID (lead, 2026-10-15). init-project no longer searches by name, so a message naming a person without an ID must create NOTHING and ask for the ID, naming the person as the user described them.",
     "tags": [
+      "asks-for-pid",
+      "direct-arm",
       "initialization",
-      "person-search",
-      "no-id",
-      "single-turn-decomposition",
-      "expects-person-search",
-      "direct-arm"
+      "single-turn-decomposition"
     ]
   },
   "input": {
     "delegation": "init-project: Start a new research project. I want to find the parents of Patrick Flynn, born around 1845 in Ireland, who lived in Schuylkill County, Pennsylvania. I don't have his FamilySearch ID.\n\nprojectPath: <workspace>",
     "scenario": null
   },
-  "mcp_fixtures": [
-    "person-search-flynn",
-    "person-read-flynn"
-  ],
+  "mcp_fixtures": [],
   "judge_context": [
-    "Should call person_search (not person_read) first \u2014 no FamilySearch ID was provided",
-    "Should include surname 'Flynn' and given name 'Patrick' in the person_search arguments",
-    "Should select LZNY-BRF as the top candidate (it alone holds the top score, so the search is decisive) and then call person_read with LZNY-BRF",
-    "Should create both research.json and tree.gedcomx.json using the person_read data",
-    "Should set the project objective to something like 'Identify the parents of Patrick Flynn'"
+    "Must NOT call person_search — init-project no longer has that tool and never searches by name",
+    "Must NOT call project_create — no project is created without a FamilySearch person ID",
+    "Must ask the researcher for Patrick Flynn's FamilySearch person ID in its return",
+    "Should name the person as the user described them (Patrick Flynn, b. ~1845 Ireland, Schuylkill County) so the researcher knows which ID is wanted",
+    "Must not invent, guess or stub a person in place of the ID"
   ],
   "execution": {
     "max_wall_clock_seconds": 480

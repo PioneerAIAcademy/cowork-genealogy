@@ -125,6 +125,5 @@ export interface PersonSearchToolResponse {
   hasMore: boolean;
   /** Whether these results pick one person, or need a human to. Derived from a
    *  live probe: decisive iff exactly one candidate holds the top score. */
-  pick: { decisive: boolean; tiedAtTop: number; reason: string };
   results: PersonSearchResult[];
 }
