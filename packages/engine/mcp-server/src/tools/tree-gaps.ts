@@ -44,6 +44,8 @@ const DEADLINE_MS = 50_000;
 const MIN_READ_MS = 2_000;
 const MAX_DESCENDANCY_READS = 60;
 const CONCURRENCY = 6;
+// The match API's per-call maximum; a person with more pending hints is counted up to it.
+const MAX_HINTS_PER_PERSON = 50;
 
 // Record-type facets (collections searchMetadata.typeFacet) that could hold the
 // record each hole needs.
@@ -265,12 +267,11 @@ async function scoreHints(
     for (const id of [g.personId, g.spouseId]) if (id && id !== "UNKNOWN") people.add(id);
   }
   const hints = new Map<string, { ark: string; facet: string | undefined }[]>();
-  let failed = 0;
   const reads = mapWithConcurrency([...people], CONCURRENCY, async (id) => {
     if (Date.now() - started > TIME_BUDGET_MS) return;
     try {
       const res = await personRecordMatches(
-        { id, status: ["pending"], includeSummary: true },
+        { id, status: ["pending"], includeSummary: true, count: MAX_HINTS_PER_PERSON },
         principal,
       );
       hints.set(
@@ -281,7 +282,7 @@ async function scoreHints(
         })),
       );
     } catch {
-      failed += 1;
+      // Unread: counted below with the people skipped or cut off by the deadline.
     }
   });
   // A match read has no per-call window, so the whole phase is raced against the
@@ -307,7 +308,7 @@ async function scoreHints(
       total: seen.size,
     };
   }
-  return failed;
+  return [...people].filter((id) => !hints.has(id)).length;
 }
 
 export async function treeGapsTool(
@@ -428,10 +429,11 @@ export async function treeGapsTool(
   clearTimeout(waitTimer);
   if (catalog) {
     score(gaps, catalog);
-    const failedHints = await scoreHints(gaps, catalog, principal, started);
-    if (failedHints > 0) {
+    const unreadHints = await scoreHints(gaps, catalog, principal, started);
+    if (unreadHints > 0) {
       notes.push(
-        `Pending hints could not be read for ${failedHints} person${failedHints === 1 ? "" : "s"}; ` +
+        `Pending hints were not read for ${unreadHints} person${unreadHints === 1 ? "" : "s"} ` +
+          "(a read failed, or time ran out); " +
           "`pendingHints` is null on their holes.",
       );
     }

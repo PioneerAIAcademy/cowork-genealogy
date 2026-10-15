@@ -286,7 +286,32 @@ describe("treeGapsTool", () => {
       survey(() => json({}, 500));
       const r = await treeGapsTool({ personId: "KNDX-MKG", ancestorGenerations: 1 }, LOCAL);
       expect(r.gaps.every((g) => g.pendingHints === null)).toBe(true);
-      expect(r.notes.join(" ")).toMatch(/Pending hints could not be read for 1 person/);
+      expect(r.notes.join(" ")).toMatch(/Pending hints were not read for 1 person/);
+    });
+
+    it("asks for pending matches with their summaries, at the API's maximum count", async () => {
+      survey(() => json({ entries: [] }));
+      await treeGapsTool({ personId: "KNDX-MKG", ancestorGenerations: 1 }, LOCAL);
+      const url = mockFetch.mock.calls.map((c) => String(c[0])).find((u) => u.includes("/match/resolutions/match/matches"))!;
+      expect(url).toContain("status=pending");
+      expect(url).toContain("includeSummary=true");
+      expect(url).toContain("count=50");
+    });
+
+    it("leaves pendingHints null, with a note, for people not read before the deadline", async () => {
+      survey(() => json({ entries: [hint("AAAA-111", "11")] }));
+      // First Date.now() is the tool's start stamp; every later one reads 41 s.
+      let calls = 0;
+      const now = vi.spyOn(Date, "now").mockImplementation(() => (calls++ === 0 ? 0 : 41_000));
+      try {
+        const r = await treeGapsTool({ personId: "KNDX-MKG", ancestorGenerations: 1 }, LOCAL);
+        expect(r.gaps.length).toBeGreaterThan(0);
+        expect(r.gaps.every((g) => g.pendingHints === null)).toBe(true);
+        expect(r.notes.join(" ")).toMatch(/Pending hints were not read for 1 person/);
+        expect(mockFetch.mock.calls.some((c) => String(c[0]).includes("/match/resolutions/match/matches"))).toBe(false);
+      } finally {
+        now.mockRestore();
+      }
     });
 
     it("leaves pendingHints null when the catalog is unavailable", async () => {

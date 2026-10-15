@@ -249,7 +249,8 @@ Same shape for all four tools:
     score: number;                                            // 0..1
     title: string;                                            // source/collection title
     status: "accepted" | "pending" | "rejected";
-    collection: string;                                       // matchInfo[0].collection URI
+    collection: string;                                       // matchInfo[0].collection URI (the same generic URL on every match)
+    collectionId?: string;                                    // catalog collection id, from the summary's Collection source description; only with includeSummary=true
     published?: string;                                       // ISO timestamp
     summary?: SimplifiedSummary;                              // only when includeSummary=true
   }>;

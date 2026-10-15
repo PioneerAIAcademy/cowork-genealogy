@@ -139,10 +139,6 @@ def test_suggestions_are_holes_at_most_five_and_distinct(tool_calls, agent_retur
 _FIRST_BY_TAG = {"many-holes": "TGAP-H3A", "misfit-hint": "TGAP-M2A"}
 
 
-# Ranking tests: the tag says which hole's person must lead the suggestions.
-_FIRST_BY_TAG = {"many-holes": "TGAP-H3A", "misfit-hint": "TGAP-M2A"}
-
-
 def test_the_hole_with_a_fitting_hint_ranks_first(agent_returns, text_response, test):
     tag = next((t for t in test.get("tags", []) if t in _FIRST_BY_TAG), None)
     if tag is None:

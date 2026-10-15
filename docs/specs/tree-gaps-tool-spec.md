@@ -210,8 +210,9 @@ the hole could not be read (the match service answers "no tree person" for some
 valid ids, and a read fails or is not started in time), or when the hole has no
 person to read. A partial count is never returned. Each person is read once
 however many holes name them, six at a time, started only before the 40 s time
-budget, and the whole phase is cut at the 50 s deadline. Unreadable people are
-counted in `notes`.
+budget, and the whole phase is cut at the 50 s deadline. People not read, whether the read failed, was never started or was cut off at the
+deadline, are counted in `notes`. Each read asks for the API maximum of 50 matches,
+so `total` stops at 50 per person.
 
 The agent ranks on `fitting`; it does not call `person_record_matches` itself.
 
