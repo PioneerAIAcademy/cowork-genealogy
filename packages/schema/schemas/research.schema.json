@@ -1058,11 +1058,11 @@
       "properties": {
         "id": {
           "type": "string",
-          "pattern": "^rj_[0-9]{3}$"
+          "pattern": "^rj_[0-9]+$"
         },
         "assertion_id": {
           "type": "string",
-          "pattern": "^a_[0-9]{3}$"
+          "pattern": "^a_[0-9]+$"
         },
         "person_id": {
           "type": "string"

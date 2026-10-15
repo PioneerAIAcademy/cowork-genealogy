@@ -195,3 +195,37 @@ describe("research_append refuses a rejected pair", () => {
     expect(text).not.toMatch(/rejected as not a match/);
   });
 });
+
+// --- A merge must not void the rejection (should-fix 9 of the #3262 self-review) ----
+
+import { iteratePersonIdRefs, PERSON_ID_REF_FIELDS } from "../../src/validation/person-id-refs.js";
+
+describe("rejected_links survives a merge", () => {
+  it("is a declared person-id reference field", () => {
+    // The walker is the single source of truth for both the validator's dangling-ref
+    // check and the merge remap, so a field missing here is missing from BOTH.
+    expect(PERSON_ID_REF_FIELDS).toContain("rejected_links");
+  });
+
+  it("repoints the rejected person to the survivor", () => {
+    // Without this the merge rewrites every other reference, the rejection keeps
+    // pointing at a person no longer on the tree, `isRejectedPair` stops matching,
+    // and the pair the researcher rejected becomes linkable again — silently.
+    const research = {
+      rejected_links: [
+        { id: "rj_001", assertion_id: "a_001", person_id: "I2", created: "2026-09-30" },
+      ],
+    };
+    for (const ref of iteratePersonIdRefs(research)) {
+      if (ref.pid === "I2") ref.set("I1");
+    }
+    expect(research.rejected_links[0].person_id).toBe("I1");
+  });
+
+  it("and the rejection still matches the pair afterwards", () => {
+    // The point of the remap, stated as the behaviour rather than the field write.
+    const rejected = [{ id: "rj_001", assertion_id: "a_001", person_id: "I1", created: "2026-09-30" }];
+    expect(isRejectedPair("a_001", "I1", rejected)).toBe(true);
+  });
+});
+

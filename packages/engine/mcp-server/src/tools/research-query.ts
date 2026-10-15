@@ -691,7 +691,10 @@ export const researchQuerySchema = {
     "of that question's plans), `sources` (sourceId), `assertions` " +
     "(recordId, recordRole, sourceId, questionId — matches " +
     "extracted_for_question_ids, assertionId — matches the assertion's own id), " +
-    "`person_evidence` (personId, assertionId), `conflicts` (assertionId — matches " +
+    "`person_evidence` (personId, assertionId — pass `orderBy: \"review\"` to order by " +
+    "consequence and get `reviewReasons`), `rejected_links` (no filters; the pairs a " +
+    "researcher ruled out, so a later step does not re-propose them), " +
+    "`conflicts` (assertionId — matches " +
     "competing_assertion_ids, questionId — matches blocks_question_ids or a competing " +
     "assertion of that question, at any status; status), " +
     "`hypotheses` (questionId — matches " +

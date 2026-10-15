@@ -200,6 +200,14 @@ export interface Assertion {
   extracted_for_question_ids: string[]
 }
 
+/**
+ * A candidate link ruled out, so the next session does not re-propose it.
+ * `rejected_links` on research.json; written by person-evidence alone.
+ *
+ * One interface, not two: this shipped as both `RejectedLink` and an identical
+ * `RejectedLinkEntry`, neither of which anything imported. The section-singular name
+ * is the convention here (`Source`, `Assertion`, `PersonEvidence`).
+ */
 export interface RejectedLink {
   id: string
   assertion_id: string
@@ -568,15 +576,3 @@ export function getPrimaryFact(person: GedcomxPerson, type: string): GedcomxFact
   )
 }
 
-/**
- * A candidate link ruled out, so the next session does not re-propose it.
- * `rejected_links` on research.json; written by person-evidence alone.
- */
-export interface RejectedLinkEntry {
-  id: string;
-  assertion_id: string;
-  person_id: string;
-  /** Optional. A rejection is never a demand for the right answer. */
-  reason?: string | null;
-  created: string;
-}

@@ -1287,6 +1287,34 @@ function validateResearch(data: any, report: ValidationReport): ResearchIds {
     }
   }
 
+  // Rejected links. RESEARCH_SHAPES.rejected_link_entry existed and was referenced
+  // NOWHERE, so the section had no shape check at all: a scratch write of
+  // `{assertion_id: 42, reason: "", bogus: 1}` persisted clean. The rule it carries --
+  // a rejection is kept so a later step cannot silently re-link the same pair -- is
+  // only as good as the rows it is read back from.
+  const rejectedLinks = Array.isArray(data.rejected_links) ? data.rejected_links : [];
+  for (let i = 0; i < rejectedLinks.length; i++) {
+    const rj = rejectedLinks[i];
+    const rp = `${path}/rejected_links[${i}]`;
+    if (!isObjectEntry(rj, rp, report)) continue;
+    checkRequired(rj, ["id", "assertion_id", "person_id", "created"], rp, report, NULLABLE_FIELDS);
+    checkAllowedKeys(rj, RESEARCH_SHAPES.rejected_link_entry, "rejected_links entries", rp, report);
+    if ("id" in rj) checkIdPrefix(rj.id, ID_PREFIXES.rejected_links, rp, report);
+    for (const field of ["assertion_id", "person_id"] as const) {
+      if (field in rj && typeof rj[field] !== "string") {
+        addError(report, rp, `${field} must be a string`);
+      }
+    }
+    // Optional, and "never a demand for the right answer" -- but an empty string is
+    // not a reason, and downstream it reads as one that was given.
+    if ("reason" in rj && rj.reason != null) {
+      if (typeof rj.reason !== "string" || rj.reason.trim() === "") {
+        addError(report, rp, "reason must be a non-empty string or null");
+      }
+    }
+    if ("created" in rj) checkIsoDate(rj, "created", rp, report);
+  }
+
   // Person evidence
   const personEvidence = Array.isArray(data.person_evidence) ? data.person_evidence : [];
   for (let i = 0; i < personEvidence.length; i++) {
