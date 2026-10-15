@@ -254,6 +254,10 @@ def gateway_agent_models(agents: Mapping[str, Any]) -> dict[str, Any]:
 # both or neither, else a 400 -- and the store refuses to commit a write once a newer claim
 # of that turn holds it. They are fixed per attempt (one mcp.json per attempt), which is
 # exactly an epoch's scope. The CLI opens the MCP session once per process, once per turn.
+# U4: the door is owner-checked. A request naming a project must also carry the fence, and
+# the server answers 403 before any transport unless the bearer's sha256 is the one this
+# attempt stamped on that open turn of that project (worker.STAMP_BEARER_SQL); a request
+# with no project header is not checked.
 # TOOL_SERVER_URL has no default (U11): a guessed host would be handed the patron's bearer.
 PROJECT_ID_HEADER = "X-Genealogy-Project-Id"
 TURN_ID_HEADER = "X-Genealogy-Turn-Id"
@@ -398,7 +402,10 @@ def make_pretool_hook(
     record: Callable[[dict[str, Any]], None],
     log: Callable[..., None] | None = None,
     blocked: frozenset[str] = frozenset(),
-    halt: Callable[[], str | None] | None = None,
+    # `Callable[..., ...]`, not `Callable[[bool], ...]`: the hook calls it by KEYWORD
+    # (`halt(subagent=...)`), a contract a positional-only annotation would misstate --
+    # and a conforming positional-only halt would TypeError into STORE_UNAVAILABLE.
+    halt: Callable[..., str | None] | None = None,
     on_delivered: Callable[[], None] | None = None,
     on_halt_failed: Callable[[], None] | None = None,
 ):
@@ -407,7 +414,10 @@ def make_pretool_hook(
     resumed turn; ``record`` writes one ``tool_calls`` row and may raise.
 
     ``halt()`` is 1c's and 1e's carrier: it returns a reason to END THE TURN NOW, or
-    None. It is checked HERE, before anything else, because this hook is bound with
+    None. It takes ``subagent`` -- true when this call carries an ``agent_id`` -- so the
+    handover clause alone can learn the caller's thread and decline to end a subagent
+    mid-task (#3376); every other clause ignores it. It is checked HERE, before anything
+    else, because this hook is bound with
     ``matcher=None`` and therefore fires on every tool call -- a median of 2.6 s apart --
     where the Stop hook fires at a voluntary yield, a median of ONCE per run. A Stop
     button wired to the Stop hook would take 53 minutes to answer.
@@ -429,7 +439,7 @@ def make_pretool_hook(
         stop_now: str | None = None
         try:
             if halt is not None:
-                stop_now = halt()
+                stop_now = halt(subagent="agent_id" in data)
         except Exception as exc:  # noqa: BLE001 - halts: the call may be one Stop or the cap forbids
             stop_now = STORE_UNAVAILABLE_REASON
             if log is not None:

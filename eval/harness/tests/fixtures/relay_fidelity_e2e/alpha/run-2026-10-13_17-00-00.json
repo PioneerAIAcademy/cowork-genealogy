@@ -1,0 +1,1 @@
+{"harness_schema_version": 8, "tool_calls": [{"tool": "Agent", "args": {"subagent_type": "good"}, "response_summary": "[{\"type\": \"text\", \"text\": \"No rule at all in this return.\"}, {\"type\": \"text\", \"text\": \"agentId: x\\n<usage>total_tokens: 1</usage>\"}]"}], "narration": [{"kind": "assistant", "thread": "main", "text": "Done.", "tool_calls_before": 1}]}

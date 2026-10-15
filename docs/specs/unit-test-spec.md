@@ -398,7 +398,7 @@ The machine-readable schema lives at [`docs/specs/schemas/unit-test.schema.json`
         "tags": {
           "type": "array",
           "items": { "type": "string" },
-          "description": "Freeform tags for filtering and grouping. May be empty."
+          "description": "Tags for filtering and grouping, and validator gates: a tag-gated validator runs only on tests that carry its tag, so a tag is a grading input, not a label. May be empty."
         },
         "holdout": {
           "type": "boolean",
@@ -586,7 +586,7 @@ The machine-readable schema lives at [`docs/specs/schemas/unit-test.schema.json`
 | `name` | string | yes | Short human-readable name shown in the test list view |
 | `type` | string | yes | `"positive"` or `"negative"`. Determines which other fields are present |
 | `description` | string | yes | 1-2 sentences explaining what this test verifies and why it matters |
-| `tags` | string[] | yes | Freeform tags for filtering and grouping. May be empty. The UI uses these for filtering the test list. Useful tag dimensions: record type (`census`, `vital-record`, `probate`), time period (`1850`, `1860`), GPS concept (`informant-weighting`, `independence`, `negative-evidence`), test pattern (`near-miss`, `multi-person`, `stateless`). **Some tags are not freeform — they GATE a validator** and change what is asserted. `routes-to:<skill>` (the first hand-off), `delivers:<skill>` (one per deliverable on a compound bounded ask) and `ends-with-delivery` (the turn must end by calling `research_delivered`) are examples, not the list: `attached-first` gates one too, and several of the record-type tags above do double duty. Grep the skill's validator file for `tags` before assuming a tag is inert. A gating tag is an explicit opt-in, never inferred from a neighbour: `ends-with-delivery` is deliberately separate from `bounded-request` because `ut_research_023` is bounded in shape yet enters with `--autonomous`, where running the job is correct and delivering is the failure. Adding a gating tag to a test is a behavioural change, and `tags` is **not** cosmetic to the snapshot: it selects validators and changes outcome computation, so editing one stales the run log |
+| `tags` | string[] | yes | Tags for filtering and grouping, and validator gates: a tag-gated validator runs only on tests that carry its tag, so a tag is a grading input, not a label. May be empty. The UI uses these for filtering the test list. Useful tag dimensions: record type (`census`, `vital-record`, `probate`), time period (`1850`, `1860`), GPS concept (`informant-weighting`, `independence`, `negative-evidence`), test pattern (`near-miss`, `multi-person`, `stateless`). **Some tags are not freeform — they GATE a validator** and change what is asserted. `routes-to:<skill>` (the first hand-off), `delivers:<skill>` (one per deliverable on a compound bounded ask) and `ends-with-delivery` (the turn must end by calling `research_delivered`) are examples, not the list: `attached-first` gates one too, and several of the record-type tags above do double duty. Grep the skill's validator file for `tags` before assuming a tag is inert. A gating tag is an explicit opt-in, never inferred from a neighbour: `ends-with-delivery` is deliberately separate from `bounded-request` because `ut_research_023` is bounded in shape yet enters with `--autonomous`, where running the job is correct and delivering is the failure. Adding a gating tag to a test is a behavioural change, and `tags` is **not** cosmetic to the snapshot: it selects validators and changes outcome computation, so editing one stales the run log |
 | `holdout` | boolean | no | `false` (default) or `true`. Holds this test out of the set `/improve-skill` forms edits from, so a fix can be judged against cases it was not written from. The harness runs holdout tests like any other; the flag governs only the improver — `gate-skill` **no longer reads it** (see the note below this table). Mark ~2-3 of a skill's tests holdout (diverse, representative ones — not the easy ones), and keep them stable across iterations. See `docs/skill-lifecycle.md` |
 | `expected_outcome` | string | no | **Retired (lead, 2026-10-06): add no new `"xfail"`.** `check_runlogs.py` rule 10 blocks any PR that touches a skill still carrying one, so the committed markers go when their skill is next edited, and rule 6 no longer suppresses a marked failure. That PR makes the test pass. If its fix belongs to another open issue, delete the test file instead (keep its scenario and MCP fixtures) and add "restore `<test id>` from git (deleted in PR #N) and make it pass 3 of 3" to that issue's done-when, naming any validator the deletion leaves with no test (lead, 2026-10-06). `"pass"` (default) or `"xfail"`; `run_tests.py` alone still reads a marked failure as suppressed in its exit code. |
 | `xfail_reason` | string | conditional | Required when `expected_outcome` is `"xfail"`. Brief explanation, ideally with an issue link and a removal condition (e.g., "blocked on <issue link>; remove when fixed") |
@@ -629,7 +629,7 @@ skill never fired still fails.
 | Field | Type | Required | Description |
 |-------|------|----------|-------------|
 | `user_message` | string | one of two | The exact user input fed to the test harness. For positive tests, this should trigger the skill. For negative tests, this should look like it might trigger the skill but shouldn't. **Known limitation:** this assumes single-turn interaction. Multi-turn skills (e.g., `search-external-sites`, which generates a URL then waits for a user to paste back a capture) are not supported in v1 |
-| `scenario` | string or null | no | Name of a shared scenario directory under `eval/fixtures/scenarios/`. The harness loads the scenario's `research.json` and `tree.gedcomx.json` as the starting project state. Null or omitted for stateless skills (search-wikipedia, translation, historical-context, locality-guide, convert-dates) |
+| `scenario` | string or null | no | Name of a shared scenario directory under `eval/fixtures/scenarios/`. The harness loads the scenario's `research.json` and `tree.gedcomx.json` as the starting project state. Null or omitted for stateless skills (translation, historical-context, locality-guide, convert-dates) |
 | `scenario_notes` | string or null | no | Documentation only — the harness ignores this field. Describes how the test's required state differs from the selected scenario. The scenario must already contain the exact required state for the test to be runnable. When a junior can't find an exact scenario, they pick the closest one and describe the gap here, then either create a new scenario that matches or wait for one to be created. If the same notes appear in 3+ tests, promote to a new named scenario |
 | `delegation` | string | one of two | **Direct-agent arm.** The exact text the orchestrator hands the pair's agent, in place of a user turn. A test carries `user_message` **or** `delegation`, never both and never neither (`input.oneOf` in the schema). On a direct test the harness sends the main thread its own dispatcher prompt wrapping this string, and `test_direct_delegation_relayed_verbatim` fails the run unless the recorded `Agent` spawn contains it as an exact substring — see §5.2.1 |
 
@@ -661,6 +661,13 @@ annotations, which key on `(test_id, dimension_source, dimension_name)`.
 > about the harness.) `make unit-relay-fidelity` measures it offline over the
 > committed run logs instead — a report, never a gate, whose direct block is
 > dispatcher fidelity rather than a statement about production.
+> `make e2e-relay-fidelity` is the production counterpart, over the committed
+> e2e corpus: it scores a subagent's full return against main-thread narration
+> on a real route. A run log below `harness_schema_version` 8 is reported
+> **unscorable rather than clean** — such a log records the return cut at 500
+> characters and a narration with no `thread` tag, so scoring it would read
+> this harness's own truncation, and a subagent's own words, as the relay's
+> work.
 
 **A converted suite is the one case where the direct test keeps the original
 `test.id`.** Once a skill is deleted outright rather than thinned into a router
@@ -1221,7 +1228,7 @@ For each run, the harness computes a derived boolean `output.activated` per the 
 **The skill under test is `activated: true` if it appears in `output.skills_invoked` AND any of the following is true:**
 
 1. **Owned-section writes.** The skill wrote to any section it owns per the ownership table in `research-schema-spec.md` Section 4. Examples: conflict-resolution wrote to `conflicts`; the test-only `extraction-append` skill wrote to `assertions` or `sources` through `extraction_append`.
-2. **Files created or modified.** The skill created or modified files in `cwd` other than those it normally reads (for stateless skills, e.g., search-wikipedia writing a markdown file in the user's working folder).
+2. **Files created or modified.** The skill created or modified files in `cwd` other than those it normally reads (e.g., an agent writing a markdown file in the user's working folder).
 3. **Substantive response.** The skill produced a response that is either (a) at least `_SUBSTANTIVE_MIN_WORDS_LONG` (30) words long, OR (b) does not pattern-match as a routing acknowledgement — short responses must not mention any other skill name. This catches legitimate concise outputs like `convert-dates` → `"1850-03-15"` while excluding "I see you're asking about X, but Y skill handles this" pure-routing.
 4. **A hand-off the run was stopped at.** On a test that sets `execution.stop_at_stub` (§5.7) the harness ends the run at the skill's first stubbed hand-off, before it can write or summarize, so the narration it leaves can be one short line naming the next row, which rule 3 reads as routing away. There the recorded hand-off is the skill's work (`derive_activated`'s `handed_off`). Only that stop sets it, so a skill that merely names another one is still not activated.
 
@@ -1793,6 +1800,7 @@ A run log represents N runs of one test (N from `runs_per_test`, default 1). The
   "judge_model": "string (e.g. claude-haiku-4-5-20251001)",
   "rubric_hash": "string (SHA-256 of eval/tests/unit/<skill>/rubric.md at run time)",
   "judge_prompt_hash": "string (SHA-256 of eval/harness/judge/prompt.md at run time)",
+  "instrument": "object (optional: validators.{suite,shared}, tools.{fixture,live}, live_modules)",
 
   "scenario": "string or null (scenario directory name)",
   "mcp_fixtures": ["string (fixture file names used)"],
@@ -1926,7 +1934,8 @@ A run log represents N runs of one test (N from `runs_per_test`, default 1). The
 
 - **`outcome`** — the real aggregate across runs per Section 7 (`pass | partial | fail | aborted`). Suppression is read from the `expected_outcome` marker beside it: a `fail` on an `xfail`-marked test is a suppressed failure (the bug is still there, as expected — not a regression), and a `pass` on one is an unexpected pass (investigate — the marker may be stale). Matches pytest convention.
 - **`flaky`** — true when the per-run outcomes are not unanimous. Composes orthogonally with `outcome` (Section 7). A test can be `outcome: pass, flaky: true` (modal-passing but unstable).
-- **`harness_version`** — the semver of the harness package. Bumping the harness (new validator, new judge prompt scaffolding, fixture-matching changes) invalidates apples-to-apples comparison with prior runs. Pinning the version makes that explicit.
+- **`harness_version`** — the version of the harness package. Not an invalidation signal: it is a hand-bumped literal that nothing gates on. `instrument` is.
+- **`instrument`** (envelope, optional) — what produced and graded the run: a normalised-AST hash of the suite's validator file and of the shared ones, the advertised tool schemas split into the suite's fixture-served tools and the LIVE_TOOLS, and the compiled module of each live tool the run called. Computed by `eval/harness/harness/instrument.py`; checked by `check_runlogs.py` rule 2c (see `eval/CLAUDE.md`).
 - **`rubric_hash` / `judge_prompt_hash`** — SHA-256 of the rubric and judge prompt template files at run time. A change to either silently invalidates historical scores; recording the hash forces a re-baseline rather than letting old runs look comparable.
 - **`judge_model`** — identifier of the judge model used for this run log (optional, envelope-level; absent on logs committed before the field was added). Lets a judge-model change be dated and compared rather than silently invalidating historical scores. Reversed the earlier "project-global, not per-run-versioned" rule (`eval/CLAUDE.md` § "Model Pinning"); `make judge-regrade` stamps this field alongside the refreshed `judge_prompt_hash` on each regraded log.
 - **`store`** (envelope) — `"pg"` under `--store pg`; absent on the file store, as on every earlier log. Also picks the directory: `unit-pg/` instead of `unit/`.
@@ -2131,7 +2140,7 @@ Junior genealogists create tests via the CRUD UI. Senior genealogists review a s
 }
 ```
 
-### 13.3 Positive test: search-wikipedia (stateless, direct-agent)
+### 13.3 Positive test: search-wikipedia (direct-agent)
 
 `search-wikipedia` became an agent on 2026-09-27, so `test.skill` names
 `agents/search-wikipedia.md` and the input is a `delegation` (§5.2.1).
@@ -2150,14 +2159,15 @@ Junior genealogists create tests via the CRUD UI. Senior genealogists review a s
   "input": {
     "delegation": "Look up Schuylkill County, Pennsylvania on Wikipedia
 
-topic: Schuylkill County, Pennsylvania",
-    "scenario": null
+topic: Schuylkill County, Pennsylvania
+projectPath: <workspace>",
+    "scenario": "empty-project-just-created"
   },
 
   "mcp_fixtures": ["wikipedia-search-schuylkill-county"],
 
   "judge_context": [
-    "Should save the summary to a file in the working folder, not just display it"
+    "Should log the summary as one research-log entry, the filled template in its notes, not just display it"
   ]
 }
 ```
@@ -2392,7 +2402,7 @@ After each run, the harness compares `before_state` and `after_state` to produce
    - `deleted`: IDs in `before` but not in `after` — emit the full old object. Should always be empty (no-delete enforcement).
    - `common`: IDs in both — for each, compare each field. If any field differs, emit `{id, changed_fields: {<field>: {before, after}}}`. If all fields match, omit.
 3. **The `project` section is a single object, not an array.** Treat it as a one-entry array keyed by `id` for purposes of diffing.
-4. **Files outside `research.json` / `tree.gedcomx.json`** (e.g., a markdown file from `search-wikipedia`) are not diffed structurally — they appear in `output.files_created` with their path, and content is left to the validators or judge to interpret.
+4. **Files outside `research.json` / `tree.gedcomx.json`** (e.g., a markdown table from `survey-surname`) are not diffed structurally — they appear in `output.files_created` with their path, and content is left to the validators or judge to interpret.
 
 The harness does not use RFC 6902 JSON Patch. Patch operations are less readable in the UI and would require teaching the LLM judge a separate format.
 
@@ -2523,7 +2533,7 @@ post_state = snapshot_json_files(tmp_dir)
 diff = compute_diff(pre_state, post_state)  # what changed, what was created
 ```
 
-For stateless skills that write new files (search-wikipedia saves a markdown file, init-project creates research.json), the harness detects newly created files in the temp directory.
+For stateless skills that write new files (survey-surname saves a markdown table, init-project creates research.json), the harness detects newly created files in the temp directory.
 
 ### Prompt caching
 

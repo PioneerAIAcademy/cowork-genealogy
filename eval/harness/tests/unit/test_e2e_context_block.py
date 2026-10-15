@@ -257,7 +257,7 @@ def test_main_thread_image_read_is_denied_and_recorded(tmp_path, monkeypatch):
             sink,
         )
 
-    monkeypatch.setattr(orchestrator, "query", fake_query)
+    monkeypatch.setattr(orchestrator, "open_query", fake_query)
     result = asyncio.run(
         _run_agent(fixture=_fixture(tmp_path), workspace=tmp_path, mcp_server_entry=Path("dummy"))
     )
@@ -313,7 +313,7 @@ def test_credential_read_is_denied_on_a_default_run(tmp_path, monkeypatch):
             hook, inputs, [SystemMessage(subtype="init", data={"session_id": "S1"}), _result()], sink
         )
 
-    monkeypatch.setattr(orchestrator, "query", fake_query)
+    monkeypatch.setattr(orchestrator, "open_query", fake_query)
     asyncio.run(_run_agent(fixture=_fixture(tmp_path), workspace=tmp_path, mcp_server_entry=Path("dummy")))
     assert sink["cred"]["hookSpecificOutput"]["permissionDecision"] == "deny"
     assert "credentials directory" in sink["cred"]["hookSpecificOutput"]["permissionDecisionReason"]
@@ -351,7 +351,7 @@ def _run_with_mcp_calls(tmp_path, monkeypatch, n_calls: int, cap: int):
         )
         return stream["agent"]
 
-    monkeypatch.setattr(orchestrator, "query", fake_query)
+    monkeypatch.setattr(orchestrator, "open_query", fake_query)
     result = asyncio.run(
         _run_agent(
             fixture=_fixture(tmp_path, caps={"tool_calls": cap}),
@@ -840,7 +840,7 @@ def test_project_status_narration_is_field_scoped_not_out_of_lane(tmp_path, monk
             sink,
         )
 
-    monkeypatch.setattr(orchestrator, "query", fake_query)
+    monkeypatch.setattr(orchestrator, "open_query", fake_query)
     result = asyncio.run(
         _run_agent(fixture=_fixture(tmp_path), workspace=tmp_path, mcp_server_entry=Path("dummy"))
     )
@@ -878,7 +878,7 @@ def _usage_after(tmp_path, monkeypatch, result_message):
         messages = [SystemMessage(subtype="init", data={"session_id": "S1"}), result_message]
         return _HookDrivingAgent(hook, [], messages, {})
 
-    monkeypatch.setattr(orchestrator, "query", fake_query)
+    monkeypatch.setattr(orchestrator, "open_query", fake_query)
     result = asyncio.run(
         _run_agent(fixture=_fixture(tmp_path), workspace=tmp_path, mcp_server_entry=Path("dummy"))
     )
@@ -912,9 +912,47 @@ def test_a_run_with_no_result_message_carries_no_ledger(tmp_path, monkeypatch):
         hook = kw["options"].hooks["PreToolUse"][0].hooks[0]
         return _HookDrivingAgent(hook, [], [SystemMessage(subtype="init", data={"session_id": "S1"})], {})
 
-    monkeypatch.setattr(orchestrator, "query", fake_query)
+    monkeypatch.setattr(orchestrator, "open_query", fake_query)
     usage = asyncio.run(
         _run_agent(fixture=_fixture(tmp_path), workspace=tmp_path, mcp_server_entry=Path("dummy"))
     )[2]
     assert usage is not None and usage.get("total_cost_usd") is None  # the fallback block
     assert "model_usage" not in usage
+
+
+def test_narration_thread_is_main_only_without_a_parent_tool_use_id(tmp_path, monkeypatch):
+    """Drives `_run_agent`'s assistant-narration branch. The AST pin in
+    test_e2e_orchestrator.py proves the `thread` key exists; only this proves its
+    polarity, which is the whole relay-fidelity selection (#3188)."""
+    from claude_agent_sdk import AssistantMessage, TextBlock
+    from harness.auth import AuthConfig
+
+    monkeypatch.setattr(
+        orchestrator,
+        "resolve_auth",
+        lambda: AuthConfig(skill_runner_mode="api_key", api_key="x", detail="stub"),
+    )
+
+    def fake_query(**kw):
+        return _HookDrivingAgent(
+            None,
+            [],
+            [
+                SystemMessage(subtype="init", data={"session_id": "S1"}),
+                AssistantMessage(content=[TextBlock(text="main says")], model="m"),
+                AssistantMessage(
+                    content=[TextBlock(text="sub says")],
+                    model="m",
+                    parent_tool_use_id="toolu_agent",
+                ),
+                _result(),
+            ],
+            {},
+        )
+
+    monkeypatch.setattr(orchestrator, "open_query", fake_query)
+    narration = asyncio.run(
+        _run_agent(fixture=_fixture(tmp_path), workspace=tmp_path, mcp_server_entry=Path("dummy"))
+    )[1]
+    threads = {n["text"]: n.get("thread") for n in narration if n.get("kind") == "assistant"}
+    assert threads == {"main says": "main", "sub says": "sub"}, narration

@@ -22,6 +22,11 @@ import { SseSessionConnection } from './SseSessionConnection'
 // including reconnects — so a grant that expires while the tab sits open (FS
 // caps it at 24h, far short of the 30-day app cookie) surfaces its banner at the
 // next reconnect, not only at page load.
+// The prototype tier has no sandbox, so no logs: its /logs route answers 501 and the
+// session header hides the button on that transport.
+export const sessionLogsAvailable = (): boolean =>
+  import.meta.env.VITE_SESSION_TRANSPORT !== 'sse'
+
 export async function makeSessionConnection(
   sessionId: string,
   onFsState?: (state: 'ok' | 'expired' | 'none' | undefined) => void

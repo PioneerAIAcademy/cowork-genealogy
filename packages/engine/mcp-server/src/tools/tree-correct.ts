@@ -44,8 +44,10 @@ export const treeCorrectSchema = {
     "additions (add_fact/add_name/add_person/add_relationship/add_source) live " +
     "in the tree_edit tool. update_fact targets a person (personId) or an " +
     "existing Couple relationship (relationshipId) — exactly one. remove takes " +
-    "exactly one of factId or relationshipId and never deletes a person (use " +
-    "merge_tree_persons to collapse duplicates).\n" +
+    "a factId or a relationshipId and never deletes a person (use " +
+    "merge_tree_persons to collapse duplicates). FamilySearch reuses fact ids " +
+    "across persons, so a factId more than one holder carries is REFUSED unless " +
+    "personId or relationshipId says whose copy to remove.\n" +
     "\n" +
     "Pick the `operation` and pass ONLY the fields to change (snake_case " +
     "simplified-GedcomX; ids are immutable). The tool swaps the " +
@@ -83,15 +85,23 @@ export const treeCorrectSchema = {
         type: "string",
         description:
           "Target person id — for update_fact (person-held facts; exactly one of personId or " +
-          "relationshipId), update_name, update_person.",
+          "relationshipId), update_name, update_person, and to scope a remove to this " +
+          "person's copy of a shared factId.",
       },
-      factId: { type: "string", description: "Target fact id — for update_fact and remove." },
+      factId: {
+        type: "string",
+        description:
+          "Target fact id — for update_fact and remove. Ids are shared across holders on a " +
+          "FamilySearch import, so scope a remove with personId or relationshipId when more " +
+          "than one carries it.",
+      },
       nameId: { type: "string", description: "Target name id — for update_name." },
       relationshipId: {
         type: "string",
         description:
           "Target relationship id — for update_fact on a Couple relationship's own facts " +
-          "(exactly one of personId or relationshipId), for update_relationship, and for remove.",
+          "(exactly one of personId or relationshipId), for update_relationship, for remove of " +
+          "the edge itself, and to scope a remove to this relationship's copy of a shared factId.",
       },
       sourceId: { type: "string", description: "Target source id — for update_source." },
       subtype: {

@@ -163,7 +163,9 @@ def build_snapshot(
     dependency of a run and tracking it produced churn with no eval signal
     — a `src/` edit flipped every skill's run log inactive even though the
     run never executed that code. Tool-code correctness is Vitest's job
-    (`packages/engine/mcp-server/tests/`), not this framework's.
+    (`packages/engine/mcp-server/tests/`), not this framework's. What the
+    model is *advertised* is tracked separately, in the envelope's
+    `instrument` field (`harness.instrument`, check_runlogs rule 2c).
 
     When `test_ids` is given, only those tests' scenarios + fixtures are
     embedded. When None, every test in the skill contributes.

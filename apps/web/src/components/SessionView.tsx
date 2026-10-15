@@ -3,7 +3,7 @@ import { App as ViewerApp } from '@genealogy/viewer-ui'
 import { api, type SessionSummary } from '../api'
 import { useAlpha } from '../lib/alpha'
 import { useChatWidth } from '../lib/chatWidth'
-import { makeSessionConnection } from '../transport/makeSessionConnection'
+import { makeSessionConnection, sessionLogsAvailable } from '../transport/makeSessionConnection'
 import type { SessionConnection } from '../transport/SessionConnection'
 import { WsResearchTransport } from '../transport/WsResearchTransport'
 import ChatPane, { type UsageDelta } from './ChatPane'
@@ -154,7 +154,7 @@ export default function SessionView({
             >
               {costLabel}
             </span>
-            {alpha && (
+            {alpha && sessionLogsAvailable() && (
               <button className="btnGhost" onClick={() => void viewLogs()} title="Sandbox WS + agent logs">
                 Logs
               </button>

@@ -56,6 +56,18 @@ describe("ORPHAN_KEY_RE", () => {
   });
 });
 
+// U20: the web tier's feedback bundles share the bucket under feedback/ (apps/server/proto/web/
+// feedback.py bundle_key; tests/test_proto_feedback.py pins that side). The last segment is
+// never a bare UUID, so the sweep must count one foreign and never delete it.
+const FEEDBACK_KEY = "feedback/usr_0a1b2c3d/proj_ab12/feedback-2026-10-13T12-00-00-123456Z-0f8fad5b.zip";
+
+describe("ORPHAN_KEY_RE and feedback bundles", () => {
+  it("does not read a feedback bundle's key as a store object", () => {
+    expect(ORPHAN_KEY_RE.test(FEEDBACK_KEY)).toBe(false);
+    expect(ORPHAN_KEY_RE.test(`proj_ab12/results/x.json/${UUID}`)).toBe(true);
+  });
+});
+
 describe("startOrphanSweep", () => {
   const REPORT: OrphanSweepReport = {
     listed: 3,
@@ -278,6 +290,19 @@ if (!DSN || !ENDPOINT) {
       expect(r).toMatchObject({ listed: 8, deleted: 8, projects: 2 });
       expect(await keysUnder(`${a.projectId}/`)).toEqual([]);
       expect(await keysUnder(`${b.projectId}/`)).toEqual([]);
+    });
+
+    it("counts a feedback bundle foreign and deletes nothing", async () => {
+      const { projectId } = await project();
+      const prefix = `feedback/usr_sweep/${projectId}/`;
+      const key = await plant(`${prefix}feedback-2026-10-13T12-00-00-123456Z-0f8fad5b.zip`);
+      try {
+        const r = await sweepOrphans(backend, { graceMs: 0, prefix, now: at(HOUR) });
+        expect(r).toMatchObject({ listed: 1, foreign: 1, deleted: 0, projects: 0 });
+        expect(await exists(key)).toBe(true);
+      } finally {
+        await backend.s3.send(new DeleteObjectsCommand({ Bucket: BUCKET, Delete: { Objects: [{ Key: key }] } }));
+      }
     });
 
     it("reaches nothing outside its prefix", async () => {

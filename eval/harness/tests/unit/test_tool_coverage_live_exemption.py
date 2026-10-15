@@ -1,4 +1,4 @@
-"""`check_tool_coverage.live_tools()` — the derived LIVE_TOOLS exemption.
+"""`check_tool_coverage.live_tools()` — the LIVE_TOOLS exemption, imported from `harness.instrument`.
 
 A LIVE_TOOL is exempt from the "declared but no fixture" warning by construction:
 the mock registers it unconditionally and its handler calls the real compiled
@@ -14,8 +14,6 @@ from __future__ import annotations
 import importlib.util
 import sys
 from pathlib import Path
-
-import pytest
 
 REPO = next(
     q for q in Path(__file__).resolve().parents
@@ -50,54 +48,6 @@ def test_a_tool_that_is_not_live_is_not_exempted():
     live = check_tool_coverage.live_tools()
     assert "tree_forget" not in live
     assert "same_person" not in live
-
-
-@pytest.mark.parametrize(
-    "body",
-    [
-        "",                                   # no LIVE_TOOLS at all
-        "LIVE_TOOLS = None\n",                # present but not a collection
-        "LIVE_TOOLS: set[str] = {A, B}\n",    # names, not literals
-        "LIVE_TOOLS = {\n",                   # a syntax error
-    ],
-    ids=["absent", "not-a-collection", "non-literal", "unparseable"],
-)
-def test_an_unreadable_source_exempts_nothing(monkeypatch, tmp_path, body):
-    """Fails OPEN to reporting gaps, never to hiding them.
-
-    Returning everything-exempt on a parse failure would silence the whole forward
-    check with one stray character, and because this lint is warn-only nothing
-    downstream would go red to say so."""
-    (tmp_path / "eval/harness/harness").mkdir(parents=True)
-    (tmp_path / "eval/harness/harness/mock_mcp.py").write_text(body, encoding="utf-8")
-    monkeypatch.setattr(check_tool_coverage, "REPO_ROOT", tmp_path)
-    assert check_tool_coverage.live_tools() == set()
-
-
-def test_a_missing_source_file_exempts_nothing(monkeypatch, tmp_path):
-    monkeypatch.setattr(check_tool_coverage, "REPO_ROOT", tmp_path)
-    assert check_tool_coverage.live_tools() == set()
-
-
-@pytest.mark.parametrize(
-    "literal, expected",
-    [
-        ('LIVE_TOOLS: set[str] = {"a", "b"}', {"a", "b"}),
-        ('LIVE_TOOLS = {"a", "b"}', {"a", "b"}),          # unannotated assignment
-        ('LIVE_TOOLS = frozenset({"a"})', set()),          # a call, not a literal
-        ('LIVE_TOOLS = ["a", "b"]', {"a", "b"}),           # list
-        ('LIVE_TOOLS = ("a", 7)', {"a"}),                  # non-strings dropped
-    ],
-    ids=["annotated-set", "bare-set", "frozenset-call", "list", "mixed-types"],
-)
-def test_it_accepts_the_shapes_the_declaration_could_take(monkeypatch, tmp_path, literal, expected):
-    """The other direction again: a reformat of the declaration must not silently
-    empty the exemption. `frozenset(...)` is a call rather than a literal, so it
-    yields nothing — documented here rather than discovered later."""
-    (tmp_path / "eval/harness/harness").mkdir(parents=True)
-    (tmp_path / "eval/harness/harness/mock_mcp.py").write_text(literal + "\n", encoding="utf-8")
-    monkeypatch.setattr(check_tool_coverage, "REPO_ROOT", tmp_path)
-    assert check_tool_coverage.live_tools() == expected
 
 
 def test_main_actually_subtracts_the_live_set(capsys):
@@ -140,17 +90,5 @@ def test_the_derived_exemption_is_printed(capsys):
     Deleting the print block left every other test green."""
     check_tool_coverage.main()
     out = capsys.readouterr().out
-    assert "derived from mock_mcp.LIVE_TOOLS" in out, "the derived exemptions are silent"
+    assert "derived from LIVE_TOOLS" in out, "the derived exemptions are silent"
     assert "research_delivered" in out, "and must name what they cover"
-
-
-def test_an_unhashable_set_element_does_not_escape(monkeypatch, tmp_path):
-    """`ast.literal_eval` raises TypeError, not ValueError, on an unhashable element in
-    a set literal. Catching only ValueError let it escape a lint documented as
-    empty-on-failure, crashing a warn-only check (clack391, #3372)."""
-    (tmp_path / "eval/harness/harness").mkdir(parents=True)
-    (tmp_path / "eval/harness/harness/mock_mcp.py").write_text(
-        "LIVE_TOOLS = {[1, 2], 'a'}\n", encoding="utf-8"
-    )
-    monkeypatch.setattr(check_tool_coverage, "REPO_ROOT", tmp_path)
-    assert check_tool_coverage.live_tools() == set()

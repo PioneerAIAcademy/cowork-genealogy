@@ -154,6 +154,8 @@ class FakeCursor:
             return (self.conn.completed_at, self.conn.claim_epoch)
         if sql == worker.CLAIM_CURRENT_SQL:  # the epoch halt clause (U6)
             return None if self.conn.superseded else (1,)
+        if sql == worker.STAMP_BEARER_SQL:  # the bearer stamp (U4): no row once superseded
+            return None if self.conn.superseded else (1,)
         if "SELECT outcome FROM turns" in sql:
             return (self.conn.outcome,)
         if "RETURNING sdk_session_id" in sql:
@@ -290,6 +292,10 @@ def test_a_real_claim_stamps_the_web_tier_s_row_and_inserts_nothing():
     # U6: a claim of an open row mints the next epoch; a closed row keeps the closer's.
     assert ("claim_epoch = CASE WHEN turns.completed_at IS NULL THEN turns.claim_epoch + 1 "
             "ELSE turns.claim_epoch END") in sql
+    # U4: and clears an open row's bearer stamp, so the older attempt's token stops passing
+    # the tool server's door; a closed row keeps its own.
+    assert ("bearer_sha256 = CASE WHEN turns.completed_at IS NULL THEN NULL ELSE turns.bearer_sha256 END "
+            "FROM sessions") in sql
     assert sql.endswith("RETURNING turns.message, turns.claim_epoch")
     assert params == (3, "queued", "turn-1", "sess-1", "proj-1")
     assert conn.commits == 1
@@ -325,7 +331,8 @@ def test_only_a_stub_under_dev_paths_upserts_its_rows(monkeypatch, dev):
         # U6: a fresh stub row starts at epoch 1, and a re-claim of it mints like a real one.
         assert "claim_epoch) VALUES" in sqls[1] and "session_entries), 1) ON CONFLICT" in sqls[1]
         assert ("claim_epoch = CASE WHEN turns.completed_at IS NULL THEN turns.claim_epoch + 1 "
-                "ELSE turns.claim_epoch END RETURNING claim_epoch") in sqls[1]
+                "ELSE turns.claim_epoch END, bearer_sha256 = CASE WHEN turns.completed_at IS NULL THEN NULL "
+                "ELSE turns.bearer_sha256 END RETURNING claim_epoch") in sqls[1]
         assert conn.executed[1][1][-2:] == (3, "queued")
     else:
         assert [s.split(" ", 2)[:2] for s in sqls] == [["UPDATE", "turns"]]
@@ -629,6 +636,82 @@ def test_the_tool_results_spill_under_the_config_root_is_allowed(tmp_path):
     kw = dict(cwd=str(root), project_root=str(root), config_root=str(cfg))
     assert deny.project_read_denied("Read", {"file_path": str(spill)}, **kw) is None
     assert deny.project_read_denied("Read", {"file_path": str(cfg / "projects" / "-project" / "sess.jsonl")}, **kw) is None, "outside the anchor anyway"
+
+
+# The turn's config dir holds mcp.json, whose Authorization header is the owner's FamilySearch
+# token. Matched by the worker-cfg-* name: on a resumed turn config_root is the SDK's
+# claude-resume-* dir, and mcp.json stays in the original.
+
+
+def _cfg_kw(tmp_path, monkeypatch, *, resumed: bool = False):
+    monkeypatch.setattr(tempfile, "tempdir", str(tmp_path))
+    root = tmp_path / "project"
+    root.mkdir()
+    cfg = tmp_path / "worker-cfg-abc123"
+    (cfg / "projects" / "-project" / "sess" / "tool-results").mkdir(parents=True)
+    (cfg / "mcp.json").write_text('{"mcpServers": {}}', encoding="utf-8")
+    resume = tmp_path / "claude-resume-xyz"
+    (resume / "projects" / "-project" / "sess" / "tool-results").mkdir(parents=True)
+    kw = dict(cwd=str(root), project_root=str(root), config_root=str(resume if resumed else cfg))
+    return kw, cfg, resume
+
+
+@pytest.mark.parametrize("resumed", [False, True], ids=["fresh", "resumed"])
+@pytest.mark.parametrize("tool_name,tool_input", [
+    ("Read", {"file_path": "{cfg}/mcp.json"}),
+    ("Read", {"file_path": "{cfg}"}),
+    ("Read", {"file_path": "{cfg}/projects/-project/sess.jsonl"}),
+    ("Read", {"file_path": "{cfg}/projects/-project/sess/tool-results/../../../../mcp.json"}),
+    ("Grep", {"pattern": "Bearer", "path": "{cfg}"}),
+    ("Grep", {"pattern": "Bearer", "path": "{parent}"}),
+    ("Grep", {"pattern": "Bearer", "path": "/"}),
+    ("Glob", {"pattern": "{parent}/**/mcp.json"}),
+    ("Glob", {"pattern": "**/mcp.json", "path": "{parent}"}),
+    ("Glob", {"pattern": "*", "path": "{cfg}"}),
+    ("Glob", {"pattern": "../../../../mcp.json", "path": "{cfg}/projects/-project/sess/tool-results"}),
+    ("Glob", {"pattern": "../../../../*", "path": "{cfg}/projects/-project/sess/tool-results"}),
+], ids=lambda v: v if isinstance(v, str) else None)
+def test_the_turns_config_dir_is_denied(tmp_path, monkeypatch, resumed, tool_name, tool_input):
+    kw, cfg, _ = _cfg_kw(tmp_path, monkeypatch, resumed=resumed)
+    tool_input = {k: v.format(cfg=cfg, parent=tmp_path) for k, v in tool_input.items()}
+    reason = deny.project_read_denied(tool_name, tool_input, **kw)
+    assert reason and "config directory is off limits" in reason, (tool_name, tool_input)
+
+
+def test_a_symlink_into_the_config_dir_is_judged_by_its_target(tmp_path, monkeypatch):
+    kw, cfg, _ = _cfg_kw(tmp_path, monkeypatch)
+    other = tmp_path / "elsewhere"
+    other.mkdir()
+    (other / "x").symlink_to(cfg / "mcp.json")
+    assert deny.project_read_denied("Read", {"file_path": str(other / "x")}, **kw)
+
+
+@pytest.mark.parametrize("resumed", [False, True], ids=["fresh", "resumed"])
+@pytest.mark.parametrize("tool_name,tool_input", [
+    ("Read", {"file_path": "{cfg}/projects/-project/sess/tool-results/r1.txt"}),
+    ("Read", {"file_path": "{resume}/projects/-project/sess/tool-results/r1.txt"}),
+    ("Grep", {"pattern": "x", "path": "{cfg}/projects/-project/sess/tool-results"}),
+    ("Glob", {"pattern": "*.txt", "path": "{resume}/projects/-project/sess/tool-results"}),
+    ("Read", {"file_path": "{parent}/elsewhere.txt"}),
+    ("Grep", {"pattern": "x", "path": "{parent}/project/.claude"}),
+    ("Grep", {"pattern": "x", "path": "/etc"}),
+    ("Read", {"file_path": "{parent}/my-worker-cfg-notes.txt"}),
+], ids=lambda v: v if isinstance(v, str) else None)
+def test_the_spill_and_unrelated_paths_stay_readable(tmp_path, monkeypatch, resumed, tool_name, tool_input):
+    kw, cfg, resume = _cfg_kw(tmp_path, monkeypatch, resumed=resumed)
+    tool_input = {k: v.format(cfg=cfg, resume=resume, parent=tmp_path) for k, v in tool_input.items()}
+    assert deny.project_read_denied(tool_name, tool_input, **kw) is None, (tool_name, tool_input)
+
+
+def test_the_hook_denies_the_config_dir_and_allows_the_resumed_spill(tmp_path, monkeypatch):
+    kw, cfg, resume = _cfg_kw(tmp_path, monkeypatch, resumed=True)
+    rows: list[dict] = []
+    hook = options.make_pretool_hook(turn_id="t", session_id="s", cwd=kw["cwd"],
+                                     config_root=lambda: kw["config_root"], record=rows.append)
+    out = _call(hook, {"tool_name": "Read", "tool_input": {"file_path": str(cfg / "mcp.json")}})
+    assert out["hookSpecificOutput"]["permissionDecision"] == "deny"
+    spill = resume / "projects" / "-project" / "sess" / "tool-results" / "r1.txt"
+    assert _call(hook, {"tool_name": "Read", "tool_input": {"file_path": str(spill)}}) == {}
 
 
 # U3: each turn's CLI runs as its own slot user, so the kernel keeps it out of other turns'
@@ -1355,6 +1438,9 @@ class FakeSessionStore:
         return self._entries
 
 
+_UNSET = object()  # ToolCall's "no agent_id key given" marker (distinct from None/"")
+
+
 class ToolCall:
     """A sentinel in a canned stream: the fake client fires the turn's REAL PreToolUse
     hook for it instead of yielding it. That is what moves ``counters["tool_calls"]``,
@@ -1362,8 +1448,12 @@ class ToolCall:
     that writes a tool_calls row, so a stream with model turns and no ToolCall is
     faithfully an attempt that changed nothing."""
 
-    def __init__(self, tool_name: str = "mcp__genealogy__research_append") -> None:
+    def __init__(self, tool_name: str = "mcp__genealogy__research_append",
+                 agent_id: Any = _UNSET) -> None:
         self.tool_name = tool_name
+        # _UNSET means the main thread (no `agent_id` key at all); any value given --
+        # including None or "" -- makes this a subagent call (#3376).
+        self.agent_id = agent_id
 
 
 class StopDispatch:
@@ -1391,8 +1481,11 @@ class FakeClient:
         hook = ((self.env or {}).get("options") or {}).get("pretool_hook")
         assert hook is not None, "the option set must be captured before the stream runs"
         self.tool_uses += 1
+        data: dict[str, Any] = {"tool_name": call.tool_name, "tool_input": {}}
+        if call.agent_id is not _UNSET:  # absent key = main thread (#3376)
+            data["agent_id"] = call.agent_id
         self.pretool_replies.append(
-            await hook({"tool_name": call.tool_name, "tool_input": {}}, f"toolu_{self.tool_uses}", None))
+            await hook(data, f"toolu_{self.tool_uses}", None))
 
     async def _fire_stop(self) -> None:
         hook = ((self.env or {}).get("options") or {}).get("stop_hook")
@@ -2150,7 +2243,7 @@ def test_the_halt_returns_the_sdks_stop_fields_and_denies_the_call(tmp_path):
     rows: list[dict] = []
     hook = options.make_pretool_hook(
         turn_id="t", session_id="s", cwd=str(tmp_path), config_root=str(tmp_path),
-        record=rows.append, halt=lambda: "Stopped by the researcher.",
+        record=rows.append, halt=lambda *, subagent: "Stopped by the researcher.",
     )
     out = _call(hook, {"tool_name": "mcp__genealogy__record_search", "tool_input": {}})
     assert out["continue_"] is False and out["stopReason"] == "Stopped by the researcher."
@@ -2170,7 +2263,7 @@ def test_the_halt_is_checked_before_every_other_decision(tmp_path):
                              ("Read", {"file_path": str(tmp_path / "x")})):
         hook = options.make_pretool_hook(
             turn_id="t", session_id="s", cwd=str(tmp_path), config_root=str(tmp_path),
-            record=lambda r: None, blocked=frozenset({"person_read"}), halt=lambda: "stop",
+            record=lambda r: None, blocked=frozenset({"person_read"}), halt=lambda *, subagent: "stop",
         )
         assert _call(hook, {"tool_name": tool, "tool_input": tool_input})["continue_"] is False
 
@@ -2185,7 +2278,7 @@ def test_a_halt_predicate_that_raises_halts_the_call(tmp_path):
     hook = options.make_pretool_hook(
         turn_id="t", session_id="s", cwd=str(tmp_path), config_root=str(tmp_path),
         record=rows.append, log=lambda **f: logged.append(f),
-        halt=lambda: (_ for _ in ()).throw(RuntimeError("pg is down")),
+        halt=lambda *, subagent: (_ for _ in ()).throw(RuntimeError("pg is down")),
         on_halt_failed=lambda: failed.append("x"),
     )
     out = _call(hook, {"tool_name": "mcp__genealogy__record_search", "tool_input": {}})
@@ -2200,7 +2293,7 @@ def test_a_halt_predicate_that_raises_halts_the_call(tmp_path):
 def test_a_halt_failure_callback_that_raises_still_halts(tmp_path):
     hook = options.make_pretool_hook(
         turn_id="t", session_id="s", cwd=str(tmp_path), config_root=str(tmp_path),
-        record=lambda r: None, halt=lambda: 1 / 0, on_halt_failed=lambda: 1 / 0,
+        record=lambda r: None, halt=lambda *, subagent: 1 / 0, on_halt_failed=lambda: 1 / 0,
     )
     assert _call(hook, {"tool_name": "Read", "tool_input": {}})["continue_"] is False
 
@@ -2882,6 +2975,45 @@ def test_a_message_typed_mid_turn_ends_the_turn_at_the_next_tool_call(turn_env, 
     assert [f["ev"] for f in logged if f.get("ev") == "handover"] == ["handover"]
     halts = [f for f in logged if f.get("ev") == "halt"]
     assert halts and halts[0]["reason"] == options.HANDOVER_REASON
+
+
+def test_a_waiting_message_does_not_cut_off_a_subagent_mid_task(turn_env, monkeypatch):
+    """#3376: the handover must not fire INSIDE a subagent. A message typed while a subagent
+    runs is taken at the orchestrator's next MAIN-THREAD tool call -- cutting the subagent
+    off loses its work, which the orchestrator then re-does from scratch. The outcome is
+    `queued` either way, so the discriminator is WHICH call halted: the subagent call must
+    be allowed (`{}`), the following main-thread call hands over."""
+    monkeypatch.setattr(worker, "pending_user_message", lambda conn, sid: True)
+    monkeypatch.setattr(worker, "stop_requested", lambda conn, sid: False)
+    logged: list[dict] = []
+    monkeypatch.setattr(worker, "log", lambda **f: logged.append(f))
+    # Call 1 (main thread) engages the message -- the one-call guard. Calls 2-3 are subagent
+    # calls, which must NOT hand over -- including one with a falsy `agent_id`, since the gate
+    # is membership not truthiness. Call 4 (main thread) is where the handover fires.
+    summary = _run(turn_env, [
+        _init(), ToolCall(), ToolCall(agent_id="ag_1"), ToolCall(agent_id=None),
+        ToolCall(), _text("x"), _result(num_turns=2),
+    ])
+    replies = turn_env["client"].pretool_replies
+    assert replies[1] == {}, "the subagent call must run; the handover cannot fire inside it"
+    assert replies[2] == {}, "agent_id present but falsy is STILL a subagent (membership)"
+    assert replies[3].get("continue_") is False, "the next main-thread call hands over"
+    assert summary["outcome"] == "queued"
+    assert [f["ev"] for f in logged if f.get("ev") == "handover"] == ["handover"]
+
+
+def test_the_subagent_gate_is_the_handover_clause_alone_a_stop_still_halts(turn_env, monkeypatch):
+    """Stop means stop everywhere (#3376). Only the handover clause reads `subagent`; a
+    patron Stop pressed while a subagent call is in flight still ends the turn `stopped` --
+    even with a message ALSO pending, so this reds both if Stop were wrongly gated and if
+    the gated handover were allowed to outrank it."""
+    _mid_run(monkeypatch)
+    monkeypatch.setattr(worker, "pending_user_message", lambda conn, sid: True)
+    monkeypatch.setattr(worker, "stop_requested", lambda conn, sid: True)
+    summary = _run(turn_env, [_init(), ToolCall(agent_id="ag_1"), _text("x"), _result(num_turns=2)])
+    assert turn_env["client"].pretool_replies[0].get("continue_") is False, (
+        "the subagent call itself must halt on Stop")
+    assert summary["outcome"] == "stopped", "a subagent call is not exempt from Stop"
 
 
 def test_a_turn_released_for_a_held_message_does_some_work_before_handing_over(turn_env, monkeypatch):
@@ -3746,6 +3878,47 @@ def test_sweep_is_off_unless_configured():
         assert thread is not None and thread.daemon
         thread.join(2)
         assert not thread.is_alive(), "the sweep stops on SHUTDOWN"
+
+
+@pytest.mark.parametrize(("raw", "value", "refused"), [
+    (None, 0, False), ("", 0, False), ("  ", 0, False), ("ninety", 0, False), ("-1", 0, False),
+    ("90", 0, True), ("604799", 0, True), ("7776000", 7776000, False), (" 604800 ", 604800, False),
+])
+def test_a_retention_period_under_the_floor_is_refused_never_clamped(monkeypatch, raw, value, refused):
+    """U19: "90" meant as days would purge every session idle 90 s; env_int's floor= would
+    instead make it a week without a word. Refused, it is off and the log says so."""
+    logged = []
+    monkeypatch.setattr(worker, "log", lambda **f: logged.append(f))
+    if raw is None:
+        monkeypatch.delenv("RETENTION_SESSION_IDLE_S", raising=False)
+    else:
+        monkeypatch.setenv("RETENTION_SESSION_IDLE_S", raw)
+    assert worker._retention_period("RETENTION_SESSION_IDLE_S") == value
+    bad = [f for f in logged if f.get("ev") == "bad_env" and f.get("name") == "RETENTION_SESSION_IDLE_S"]
+    assert bool([f for f in bad if f.get("floor") == worker.RETENTION_MIN_S]) is refused, logged
+
+
+def test_retention_is_off_unless_configured():
+    assert worker.start_retention(interval=0, idle_s=7776000) is None, "RETENTION_INTERVAL_S=0"
+    assert worker.start_retention(interval=3600, idle_s=0) is None, "no period on"
+    worker.SHUTDOWN.set()  # the thread's loop exits at once
+    try:
+        thread = worker.start_retention(interval=3600, idle_s=7776000)
+        assert thread is not None and thread.daemon
+        thread.join(2)
+        assert not thread.is_alive(), "retention stops on SHUTDOWN"
+    finally:
+        worker.SHUTDOWN.clear()
+
+
+def test_retention_keys_entries_and_events_on_the_session_never_their_own_age():
+    """session_entries and session_events are purged only through the session predicate,
+    which reads sessions.updated_at and the turns -- no per-row ts of either."""
+    for sql in (worker.RETENTION_CANDIDATE_SQL, worker.RETENTION_RECHECK_SQL):
+        assert "session_entries" not in sql and "session_events" not in sql and ".ts" not in sql
+        assert "t.completed_at IS NULL OR t.completed_at >=" in sql, "an open turn, running or held, keeps it"
+    assert "turns" not in worker.RETENTION_PURGE_TABLES
+    assert set(worker.RETENTION_PURGE_TABLES) == set(worker.grants.SESSION_TABLES) - {"turns"}
 
 
 def test_each_sweep_pass_asks_for_this_processs_long_running_delegations(monkeypatch):
@@ -4769,7 +4942,7 @@ def test_a_stop_outranks_a_delivery():
     """The researcher's own stop wins: the halt check runs before the delivered arm."""
     hook = options.make_pretool_hook(
         turn_id="t1", session_id="s1", cwd="/project", config_root="/cfg",
-        record=lambda row: None, halt=lambda: "stopped",
+        record=lambda row: None, halt=lambda *, subagent: "stopped",
     )
     out = asyncio.run(hook({"tool_name": options.DELIVERED_TOOL, "tool_input": {}}, "u1", None))
     assert out.get("stopReason") == "stopped", "a halt must outrank the delivery arm"
@@ -5783,7 +5956,13 @@ def test_a_superseded_attempt_halts_at_its_next_tool_call_and_never_completes(tu
     logged: list[dict] = []
     monkeypatch.setattr(worker, "log", lambda **f: logged.append(f))
     conn = turn_env["conn"]
-    conn.superseded = True
+
+    def build(**kwargs):
+        conn.superseded = True  # the newer claim lands after this attempt's bearer stamp (U4)
+        turn_env["options"] = kwargs
+        return object()
+
+    monkeypatch.setattr(worker, "build_worker_options", build)
     turn_env["lock_held"] = False
     client = FakeClient([_init(), ToolCall(), _text("x"), _result()], _info(AGENTS, worker.EXPECTED_SKILLS),
                         turn_env)
@@ -5827,6 +6006,50 @@ def test_a_mirror_error_on_a_superseded_store_raises_superseded(turn_env, monkey
     with pytest.raises(error):
         _run(turn_env, [_init(), mirror, _result()])
     assert not _turn_done_payloads(turn_env["conn"]) and turn_env["client"].disconnected
+
+
+def test_the_attempt_stamps_the_sha256_of_its_bearer_before_the_cli(turn_env, monkeypatch):
+    """U4: the tool server admits only the bearer stamped on the open turn, so the stamp is
+    the sha256 of the very token the CLI is handed, at this attempt's epoch, written before
+    the options that carry it are built. The token itself never reaches the row."""
+    import hashlib
+
+    order: list[str] = []
+    conn = turn_env["conn"]
+    turn_env["grant"] = lambda: FakeHeld(turn_env, token="token-u4")
+
+    def build(**kwargs):
+        order.append("build")
+        turn_env["options"] = kwargs
+        return object()
+
+    monkeypatch.setattr(worker, "build_worker_options", build)
+    _run(turn_env, _good())
+    stamps = [(i, params) for i, (sql, params) in enumerate(conn.executed) if sql == worker.STAMP_BEARER_SQL]
+    [(index, params)] = stamps
+    assert params == (hashlib.sha256(b"token-u4").hexdigest(), "turn-1", 1)
+    assert turn_env["options"]["bearer"] == "token-u4" and order == ["build"]
+    assert not any(s.startswith("UPDATE turns SET completed_at") for s, _ in conn.executed[:index]), \
+        "stamped while the turn is still open"
+    assert worker.STAMP_BEARER_SQL.endswith("AND claim_epoch = %s AND completed_at IS NULL RETURNING 1")
+
+
+def test_a_stamp_that_matches_no_row_is_superseded_and_spawns_no_cli(turn_env, monkeypatch):
+    """U4: no open row at this epoch -- a newer claim cleared the stamp and holds the turn --
+    so the attempt raises Superseded before any CLI is configured, closes nothing and still
+    releases the grant lock; served, it is the 200 ``superseded`` of the halt path."""
+    conn = turn_env["conn"]
+    conn.superseded = True
+    with pytest.raises(worker.Superseded, match="before the bearer stamp"):
+        _run(turn_env, _good())
+    assert turn_env["options"] is None, "no CLI was configured"
+    assert any(s == worker.STAMP_BEARER_SQL for s, _ in conn.executed)
+    assert not _turn_done_payloads(conn) and not any(
+        s.startswith("UPDATE turns SET completed_at") for s, _ in conn.executed)
+    assert turn_env["events"] == ["held.close"]
+    turn_env["events"].clear()
+    status, body = _serve(turn_env, monkeypatch)
+    assert (status, body["superseded"]) == (200, True) and turn_env["options"] is None
 
 
 def test_the_attempt_s_store_and_options_carry_its_claim_epoch(turn_env, monkeypatch):

@@ -431,7 +431,7 @@ const COUNTRY_ALIASES: Record<string, string> = {
   frankrike: "france",
 };
 
-const UK_CONSTITUENTS = new Set(["england", "scotland", "wales", "northern ireland"]);
+export const UK_CONSTITUENTS: ReadonlySet<string> = new Set(["england", "scotland", "wales", "northern ireland"]);
 
 export function canonicalCountry(segment: string): string | null {
   // Fold diacritics before the lookup: "México" and "Mexico" are the same
@@ -670,16 +670,21 @@ function firstWord(key: string): string {
 
 const ADMIN_PREFIX_RE = /^(?:borough|town|city|township|village|parish|county|district|municipality|hundred) of /;
 
-/** A FamilySearch place type names a jurisdiction. The live API qualifies some
- *  types ("County (Top level)"), so the bracketed qualifier is dropped. */
+/** A FamilySearch place type as a lookup key: lower-cased, with the bracketed
+ *  qualifier the live API adds to some types ("County (Top level)") dropped. */
+export function placeTypeKey(type: string | undefined): string {
+  return normalizeKey((type ?? "").replace(/\s*\(.*\)\s*$/, ""));
+}
+
+/** A FamilySearch place type names a jurisdiction. */
 function isJurisdiction(type: string | undefined): boolean {
-  return JURISDICTION_TYPES.has(normalizeKey((type ?? "").replace(/\s*\(.*\)\s*$/, "")));
+  return JURISDICTION_TYPES.has(placeTypeKey(type));
 }
 
 /** A place type at the top of the hierarchy: a name that is one of these is
  *  already as specific as a bare name can be. */
 function isTopLevel(type: string | undefined): boolean {
-  return TOP_LEVEL_TYPES.has(normalizeKey((type ?? "").replace(/\s*\(.*\)\s*$/, "")));
+  return TOP_LEVEL_TYPES.has(placeTypeKey(type));
 }
 
 const TOP_LEVEL_TYPES = new Set(["continent", "country", "state", "province"]);
@@ -919,6 +924,14 @@ export async function placeIdToRepIds(placeId: string): Promise<string[]> {
   return reps;
 }
 
+/** A place's coordinates, with the Places type of the entry they came from
+ *  ("City", "State", "Country", ...) when known. */
+export interface PlaceCoords {
+  latitude: number;
+  longitude: number;
+  type?: string;
+}
+
 /**
  * A `standardPlace` name -> its coordinates, or null. Coords come straight
  * from the search entry when present (no second fetch); otherwise falls back
@@ -927,7 +940,7 @@ export async function placeIdToRepIds(placeId: string): Promise<string[]> {
 export async function standardPlaceToCoords(
   standardPlace: string,
   opts: ResolveOpts = {},
-): Promise<{ latitude: number; longitude: number } | null> {
+): Promise<PlaceCoords | null> {
   let entries: SearchEntry[];
   try {
     entries = await getSearchEntries(standardPlace, opts.contextName);
@@ -939,12 +952,12 @@ export async function standardPlaceToCoords(
   if (!match) return null;
 
   if (match.latitude != null && match.longitude != null) {
-    return { latitude: match.latitude, longitude: match.longitude };
+    return { latitude: match.latitude, longitude: match.longitude, type: match.type };
   }
 
   const info = await getRepInfo(match.placeRepId);
   if (info && info.latitude != null && info.longitude != null) {
-    return { latitude: info.latitude, longitude: info.longitude };
+    return { latitude: info.latitude, longitude: info.longitude, type: match.type };
   }
   return null;
 }
