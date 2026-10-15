@@ -269,18 +269,46 @@ fact. She is a sourced name because that is all there is, not because
 something was lost.
 
 **Enriching an existing person needs a link.** When `personId` names a person
-already in the tree, the persona arm refuses unless a live `probable` or
-`confident` `person_evidence` entry links one of the persona's assertions
-(`record_id` + `record_role`) to that person. A `speculative` link is a
-candidate, not an identity, so it does not qualify. Minting needs no link (the
-link to a new person is written after it exists), and neither does re-running a
-record onto the stub it minted (`mintedFromThisRecord`). Persons are checked as
-the tree stands at each op, so a batch that mints a person from one record cannot
-copy a second record onto them without a link. The named-party arm (§4.6) writes
-a name, not facts, and is not gated. Replayed over the committed e2e run logs
-(2026-10-12), 52 writes onto existing persons lacked such a link; about 30 came
-from links `research_append` had wrongly capped on a birthplace written without
-its country, which no longer happens.
+already in the tree, both arms refuse unless a live `probable` or `confident`
+`person_evidence` entry links that person through an assertion that is about
+them. A `speculative` link is a candidate, not an identity, so it does not
+qualify.
+
+- **Persona arm:** one of the persona's own one-party assertions (`record_id` +
+  `record_role`). A `marriage`, `relationship`, `parentage` or `parentchild`
+  assertion names two parties, and the person-evidence agent links it to both,
+  so its link to the other party says nothing about this persona: counting it
+  let the groom's name and birth be copied onto the bride. A persona with no
+  one-party assertion writes nothing person-level and is not checked.
+- **Named-party arm (§4.6):** the assertion naming the party, or one of the
+  related role's own one-party assertions on the record. The check runs on the
+  tree as it stood before the op, because the op's own name write attaches this
+  record's ref, after which any person reads as the record's stub.
+
+Minting needs no link (the link to a new person is written after it exists),
+and neither does re-running a record onto the stub it minted
+(`mintedFromThisRecord`), judged against the write-once starting tree so that a
+person the project began with is never taken for a stub, even when their only
+refs reach this record. Persons are checked as the tree stands at each op, so a
+batch that mints a person from one record cannot copy a second record onto them
+without a link. One decision, `existingPersonLinkRefusal`, serves both arms. The
+persona arm's refusal reads: "'<id>' was already in the tree, and no 'probable'
+or 'confident' person_evidence link ties one of record '<record>' role
+'<role>''s own assertions (not a marriage or relationship assertion, whose link
+may be about the other party) to them. Write that link with research_append
+first; a 'speculative' link does not qualify. If this persona is someone else,
+omit personId to materialize it onto a new person." The named-party arm's names
+"assertion '<id>' or the '<role>' persona of record '<record>'" instead, and ends
+"If this party is someone else, omit personId to mint a new person."
+
+Replayed over the committed e2e run logs (2026-10-12), 52 writes onto existing
+persons lacked such a link; about 30 came from links `research_append` had
+wrongly capped on a birthplace written without its country, which no longer
+happens. The one-party rule, the named-party gate and the starting-tree baseline
+refuse 0 of the 509 successful persona ops onto a `personId` in 208 replayed
+runs, and no successful named-party op in the corpus carries a `personId`, so
+that gate has no executed population (measured at 529f81341 by
+`packages/engine/mcp-server/dev/replay-materialize-link.ts`).
 
 > Reading assertions to *instantiate* a person is still an evidence-driven
 > act (it reads assertions, not nodes), so it stays on the correct side of
@@ -820,11 +848,9 @@ rate, carries the argument below.
   refuses the write instead.
 
 **What this deliberately does not enforce.** The tool cannot know the name the
-record gives, so it does not pretend to check it. Nor does it check the write
-target: `personId` names whatever person the caller says, exactly as it does on
-the persona arm, so pointing this arm at the wrong existing person adds a
-sourced name to that person. That is the `personId` contract both arms share,
-not something this arm weakens. In particular it does **not**
+record gives, so it does not pretend to check it. The write target it does check,
+exactly as on the persona arm: a `personId` already in the tree needs a
+`probable` or `confident` link first (§4.3). It does **not**
 refuse a name matching the persona's own: a same-named father and son is
 ordinary genealogy, and refusing there would block correct mints far more often
 than it would catch a duplicate. The guarantee this arm makes is about
@@ -854,7 +880,7 @@ fact the record does not support.
 
 | Tool | Role | Status |
 |---|---|---|
-| **`materialize_facts`** | Assertion-driven: create-or-enrich a person with **sourced** facts/names; auto-carries refs; mandatory non-null ref on every fact/name it authors; never sets `primary`. Its named-party arm (§4.6) additionally mints the party a relationship/marriage assertion names but cannot name from a persona — a sourced **name**, plus that persona's facts where the record gives her one, under the same mandatory ref. | **NEW — the record→tree workhorse** |
+| **`materialize_facts`** | Assertion-driven: create-or-enrich a person with **sourced** facts/names; auto-carries refs; mandatory non-null ref on every fact/name it authors; never sets `primary`. Its named-party arm (§4.6) additionally mints the party a relationship/marriage assertion names but cannot name from a persona — a sourced **name**, plus that persona's facts where the record gives her one, under the same mandatory ref. Either arm writes onto an existing person only on a `probable` or `confident` link (§4.3). | **NEW — the record→tree workhorse** |
 | **`merge_tree_persons`** | Collapse two duplicate **tree nodes**; union their facts, carrying each fact's existing refs through untouched. Legacy ref-less facts are **tolerated** — the Mode-2 fold neither requires nor fabricates a ref (Cluster B / §6). | **Keep** (needs a trigger — e.g. cruz's unmerged grandparents — but the tool is right) |
 | **`merge_record_into_tree`** | Fold a candidate GedcomX *document*. | **Retire** (§9) — 0 live calls; its hand-assembled-candidate input is the re-serialize anti-pattern that dropped cruz's refs; its niche does not occur in the assertion pipeline |
 | `tree_edit` / `tree_correct` | Structure (`add_person`, `add_relationship`) / corrections + `primary`. `add_household_children` **retires** (§9) — superseded by `materialize_facts` create-or-enrich (stubs, now with facts) + `add_relationship` (edges). | Keep; refs mandatory on **newly-authored** facts/names/edges only (add-ops); `tree_correct` may not null an existing ref (§6, §8) |
