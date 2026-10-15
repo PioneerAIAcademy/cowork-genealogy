@@ -14,7 +14,7 @@ must plan has no `localities` entry (its Step 2), and `mid-research-flynn`
 carries none. A test that requires a plan on that scenario contradicts the
 agent's own rule; every logged run of `ut_research_plan_010` planned past the
 missing entry anyway, but a cold-started agent may not. This twin makes the
-plan legitimate without touching `mid-research-flynn`, which 110 unit tests
+plan legitimate without touching `mid-research-flynn`, which 111 unit tests
 across 22 suites share.
 
 ## Used by

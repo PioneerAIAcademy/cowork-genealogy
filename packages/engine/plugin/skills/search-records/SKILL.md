@@ -109,7 +109,7 @@ search*, not whether a plan exists.
 |---|---|
 | A plan item | Execute. Full GPS, including the Step 8 escalation |
 | No plan item, but the **user named this search** | Execute as ad-hoc: log `plan_item_id: null`, note it was user-requested, and stop when done — no escalation, no plan edits |
-| No plan item, and **you** thought of the search | Spawn `@plugin:research-plan` and stop. It comes back as a plan item — not as ad-hoc |
+| No plan item, and **you** thought of the search | Spawn `@plugin:research-plan` with `projectPath` and the question id, and stop. It comes back as a plan item — not as ad-hoc |
 
 Refusing a researcher's own request is obstruction, not rigour; inventing a search
 nobody asked for is how a session drifts off its question. The third row applies
@@ -660,7 +660,7 @@ Call `research_append` with `section: "plan_items"`, `op: "update"`, `planId`, `
    old "no wildcards" rule was measured and withdrawn. Order matters: explicit variants
    first (they are checkable and you can say which letter changed), then a wildcard to
    catch the shape you could not guess.
-   **If a boundary may have changed and a search nils, use the successor jurisdiction the plan gives you.** A record can be filed under the jurisdiction in force at the event *or* the place's present-day one. A plan item may carry a fallback jurisdiction in its `rationale` — use it. If the plan offers none and the nil persists, **bounce back to `@plugin:research-plan`**: deciding what jurisdiction to search (and consulting `locality-guide`) is its job, not this skill's. Do not look up place history or hardcode per-country rules here. See `references/search-strategy-levers.md`.
+   **If a boundary may have changed and a search nils, use the successor jurisdiction the plan gives you.** A record can be filed under the jurisdiction in force at the event *or* the place's present-day one. A plan item may carry a fallback jurisdiction in its `rationale` — use it. If the plan offers none and the nil persists, **bounce back to `@plugin:research-plan`** with `projectPath`, the question id and the plan item that nilled: deciding what jurisdiction to search is its job, not this skill's. Do not look up place history or hardcode per-country rules here. See `references/search-strategy-levers.md`.
 3. **Stop retrying when:** you have tried all levers in the zero-hit escalation priority list, OR the database clearly does not cover the target time/place, OR you have exhausted 5+ variations. **That figure is a floor for a well-covered collection, not a ceiling.** A high-coverage collection (a well-indexed census, a large civil-registration index) earns more persistence than a thin one — the mirror of item 5's low-coverage pivot below. Reaching 5 variations on a collection you know covers the place and period well is a reason to try the levers you have not yet tried, not a reason to stop, when the likelier explanation is still an untried spelling or lever rather than genuine absence.
 4. **Assess whether absence is meaningful.** After exhausting variants and levers, explicitly evaluate three conditions:
    (a) the record type existed in this jurisdiction at this time,

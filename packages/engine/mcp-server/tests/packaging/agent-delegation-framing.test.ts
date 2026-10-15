@@ -621,11 +621,6 @@ const PROSE_MENTIONS = new Map<string, string>([
   // FamilySearch-wiki request, not a delegation, and does not spell
   // `@plugin:search-familysearch-wiki`. (A locality-guide row left when issue
   // #2117 deleted that skill.)
-  // locality-guide entered agentOnly when issue #2117 deleted its skill. Both
-  // mentions below are bare-name routing-boundary prose ("use
-  // locality-guide", "locality-guide is the right skill") — none spell
-  // `@plugin:locality-guide`.
-  ["search-records -> locality-guide", ""],
   // person-evidence gained a skills/<name>/ directory before the agent
   // conversion; when the skill was deleted the name entered agentOnly and
   // every SKILL.md that references it now needs a registration. All are
@@ -659,10 +654,6 @@ const PROSE_MENTIONS = new Map<string, string>([
   // registered edge above.
   ["forget-and-rederive -> question-selection", ""],
   ["timeline -> question-selection", ""],
-  // locality-guide (issue #2117): every one is a bare-name boundary or
-  // provenance mention ("use locality-guide", "comes from `locality-guide`"),
-  // left worded as-is because each rewording buys that skill a paid run.
-  ["search-records -> locality-guide", ""],
   // hypothesis-tracking entered agentOnly when issue #2792 deleted its skill
   // directory. Both are bare-name mentions — "(use hypothesis-tracking)",
   // "suggest `hypothesis-tracking`" — and neither spells
