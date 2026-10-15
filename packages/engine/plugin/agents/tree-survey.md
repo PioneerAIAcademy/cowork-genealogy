@@ -8,7 +8,8 @@ description: >-
   start?", "what's missing in my tree?", or has a FamilySearch tree and no
   question yet. Takes an optional FamilySearch person ID; omit it to survey the
   logged-in user's own tree. Never creates a project and writes nothing. Do NOT
-  use when a project already exists (use question-selection), to search for one
+  use when the user wants the next question in a project they name
+  (use question-selection), to search for one
   named person's records (use search-records), to plan searches for a chosen
   question (use research-plan), or to start a project for a person the user has
   already chosen (use init-project).
@@ -78,8 +79,8 @@ read. Name no person, count or field in that sentence. Do not invent suggestions
 Take the strongest ~10 holes. `gaps` is already ordered nearest the root first,
 and each carries a `coverage` count (collections that exist for that place and
 period, a floor, not evidence about this person) and `pendingHints`
-(`fitting` of `total` pending record hints whose record type fits the hole;
-`null` when unread). Do not look up hints yourself. For each hole, gather what
+(`fitting` of `total` pending record hints that are about the event the hole is
+missing; `null` when unread). Do not look up hints yourself. For each hole, gather what
 applies:
 
 - **Missing census.** `person_quality({ personId })`; note an issue saying an

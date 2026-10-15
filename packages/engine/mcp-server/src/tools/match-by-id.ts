@@ -32,6 +32,12 @@ const PID_RE = /^[A-Z0-9]{3,5}-[A-Z0-9]{3,5}$/;
 const ARK_RE = /^ark:\/61903\/(\d:\d):([A-Z0-9-]+)$/;
 const ENTRY_ARK_RE = /ark:\/61903\/(\d:\d):([A-Z0-9-]+)/;
 
+// An optional time limit for the one request: its timeout and its retry budget.
+export interface ReadWindow {
+  timeoutMs: number;
+  budgetMs: number;
+}
+
 interface MatchByIdConfig {
   toolName: string;
   collection: "records" | "tree";
@@ -43,6 +49,7 @@ async function matchById(
   input: MatchByIdInput,
   cfg: MatchByIdConfig,
   principal: Principal,
+  window?: ReadWindow,
 ): Promise<MatchByIdResult> {
   const queryArk = normalizeId(input.id, cfg);
   const { minConfidence, status, includeSummary, count } = validateOptions(input);
@@ -71,12 +78,18 @@ async function matchById(
 
   let response: Response;
   try {
-    response = await fsFetch(principal, url.toString(), {
-      headers: {
-        Accept: "application/json",
-        "User-Agent": BROWSER_USER_AGENT,
+    response = await fsFetch(
+      principal,
+      url.toString(),
+      {
+        headers: {
+          Accept: "application/json",
+          "User-Agent": BROWSER_USER_AGENT,
+        },
       },
-    });
+      window?.timeoutMs,
+      window ? { budgetMs: window.budgetMs } : undefined,
+    );
   } catch (err) {
     throw new Error(
       `Could not reach FamilySearch match API: ${describeFetchError(err)}.`,
@@ -245,25 +258,8 @@ function simplifyEntry(entry: MatchApiEntry): MatchByIdMatch | null {
     collection: matchInfo.collection ?? "",
   };
   if (entry.published) m.published = entry.published;
-  if (entry.content?.gedcomx) {
-    m.summary = entry.content.gedcomx;
-    const collectionId = collectionIdOf(entry.content.gedcomx);
-    if (collectionId) m.collectionId = collectionId;
-  }
+  if (entry.content?.gedcomx) m.summary = entry.content.gedcomx;
   return m;
-}
-
-// The summary's Collection source description carries the catalog id as its
-// Primary identifier (measured live 2026-10-14: "2221801" for Find a Grave Index).
-function collectionIdOf(gedcomx: unknown): string | null {
-  const sds = (gedcomx as { sourceDescriptions?: unknown })?.sourceDescriptions;
-  if (!Array.isArray(sds)) return null;
-  for (const sd of sds) {
-    if (sd?.resourceType !== "http://gedcomx.org/Collection") continue;
-    const id = sd.identifiers?.["http://gedcomx.org/Primary"]?.[0];
-    if (typeof id === "string" && id !== "") return id;
-  }
-  return null;
 }
 
 async function throwForBadStatus(
@@ -311,8 +307,8 @@ const CFG_RR: MatchByIdConfig = {
   siblingTool: "person_record_matches",
 };
 
-export function personRecordMatches(input: MatchByIdInput, principal: Principal): Promise<MatchByIdResult> {
-  return matchById(input, CFG_PR, principal);
+export function personRecordMatches(input: MatchByIdInput, principal: Principal, window?: ReadWindow): Promise<MatchByIdResult> {
+  return matchById(input, CFG_PR, principal, window);
 }
 export function recordPersonMatches(input: MatchByIdInput, principal: Principal): Promise<MatchByIdResult> {
   return matchById(input, CFG_RP, principal);

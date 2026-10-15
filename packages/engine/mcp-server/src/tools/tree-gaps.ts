@@ -3,7 +3,7 @@ import { fsFetch } from "../utils/fs-fetch.js";
 import { getValidToken } from "../auth/refresh.js";
 import { parseUpstreamErrorBody } from "../utils/search-helpers.js";
 import { mapWithConcurrency } from "../utils/place-resolver.js";
-import { collectionCoverage, fetchAllCollections, unwrapEntry } from "./collections-search.js";
+import { collectionCoverage, fetchAllCollections } from "./collections-search.js";
 import { personRecordMatches } from "./match-by-id.js";
 import {
   addAncestry,
@@ -80,7 +80,7 @@ export const treeGapsToolSchema = {
     "`coverage`: catalog collections that could hold the record, census " +
     "years inside the window, and how specific the place is, and " +
     "`pendingHints`: how many of FamilySearch's pending record hints for " +
-    "the person fit the hole's record type. Living " +
+    "the person are about the event the hole is missing. Living " +
     "people never carry a " +
     "hole. If personId is omitted it uses the logged-in user; for anyone " +
     "else, call person_search first. Reads only; writes nothing. Requires " +
@@ -244,71 +244,93 @@ function score(gaps: TreeGap[], catalog: FSCollectionEntry[]): void {
   }
 }
 
-// Pending hints per hole. A match fits when its collection (by catalog id, from
-// the match summary) carries one of the hole type's record-type facets. Each
-// person is read once however many holes name them. A person whose matches
-// cannot be read, or who is not read before the deadline, leaves their holes
-// uncounted: if any person on a hole is unread the hole's count is null, never a
-// partial number the agent would rank on.
-async function scoreHints(
-  gaps: TreeGap[],
-  catalog: FSCollectionEntry[],
-  principal: Principal,
-  started: number,
-): Promise<number> {
-  const facetById = new Map<string, string>();
-  for (const entry of catalog) {
-    const data = unwrapEntry(entry);
-    const facet = data?.searchMetadata?.[0]?.typeFacet;
-    if (data && facet) facetById.set(data.id, facet);
-  }
+// What a pending hint must be about to count for a hole: the event the hole is
+// missing. A broad record-type facet cannot say it (VITAL covers births,
+// marriages and deaths alike), so the event is read from the match's collection
+// title ("Pennsylvania, Births and Christenings, 1700-1900"). A title that names
+// no event ("Vital Records") counts toward `total` only. A census names the whole
+// household, so it is the only record a hint on a spouse can bring to a hole about
+// the couple's children.
+export type HintEvent = "birth" | "marriage" | "death" | "census";
+
+const HINT_EVENTS: Record<TreeGapType, readonly HintEvent[]> = {
+  missing_parents: ["birth"],
+  no_birth_info: ["birth"],
+  no_spouse: ["marriage"],
+  missing_surname: ["marriage"],
+  no_death_date: ["death"],
+  no_children: ["census"],
+  child_gap: ["census"],
+  early_last_child: ["census"],
+};
+
+const EVENT_WORDS: [HintEvent, RegExp][] = [
+  ["birth", /birth|christening|baptis/i],
+  ["marriage", /marriage|wedding|banns/i],
+  ["death", /death|burial|grave|cemeter|obituar|funeral|mortuar/i],
+  ["census", /census/i],
+];
+
+export function hintEvents(title: string): HintEvent[] {
+  return EVENT_WORDS.filter(([, re]) => re.test(title)).map(([event]) => event);
+}
+
+type PersonHints = { ark: string; events: HintEvent[] }[];
+
+// People on the selected holes, each read once however many holes name them.
+function hintPeople(gaps: TreeGap[]): string[] {
   const people = new Set<string>();
   for (const g of gaps) {
     for (const id of [g.personId, g.spouseId]) if (id && id !== "UNKNOWN") people.add(id);
   }
-  const hints = new Map<string, { ark: string; facet: string | undefined }[]>();
-  const reads = mapWithConcurrency([...people], CONCURRENCY, async (id) => {
-    if (Date.now() - started > TIME_BUDGET_MS) return;
+  return [...people];
+}
+
+// Pending matches per person, six at a time. Each read gets what is left of the
+// deadline as its own timeout and retry budget, so none outlives the response; a
+// person not started by the time budget, or with under 2 s left, is not in the map.
+async function readHints(
+  people: string[],
+  principal: Principal,
+  started: number,
+): Promise<Map<string, PersonHints>> {
+  const hints = new Map<string, PersonHints>();
+  await mapWithConcurrency(people, CONCURRENCY, async (id) => {
+    const elapsed = Date.now() - started;
+    const window = elapsed > TIME_BUDGET_MS ? null : readWindow(elapsed);
+    if (!window) return;
     try {
       const res = await personRecordMatches(
-        { id, status: ["pending"], includeSummary: true, count: MAX_HINTS_PER_PERSON },
+        { id, status: ["pending"], count: MAX_HINTS_PER_PERSON },
         principal,
+        window,
       );
-      hints.set(
-        id,
-        res.matches.map((m) => ({
-          ark: m.ark,
-          facet: m.collectionId ? facetById.get(m.collectionId) : undefined,
-        })),
-      );
+      hints.set(id, res.matches.map((m) => ({ ark: m.ark, events: hintEvents(m.title) })));
     } catch {
-      // Unread: counted below with the people skipped or cut off by the deadline.
+      // Unread: counted with the people skipped for time by scoreHints.
     }
   });
-  // A match read has no per-call window, so the whole phase is raced against the
-  // deadline; whatever has not answered by then leaves its holes null.
-  let timer: ReturnType<typeof setTimeout> | undefined;
-  await Promise.race([
-    reads.catch(() => undefined),
-    new Promise<void>((r) => {
-      timer = setTimeout(r, Math.max(0, DEADLINE_MS - (Date.now() - started)));
-    }),
-  ]);
-  clearTimeout(timer);
+  return hints;
+}
+
+// A hole's count pools its person and, on a couple-level hole, the spouse, each
+// match once. If any person on the hole is unread the count is null, never a
+// partial number the agent would rank on. Returns how many people were unread.
+function scoreHints(gaps: TreeGap[], people: string[], hints: Map<string, PersonHints>): number {
   for (const g of gaps) {
-    const ids = [g.personId, g.spouseId].filter(
-      (id): id is string => !!id && id !== "UNKNOWN",
-    );
+    const ids = [g.personId, g.spouseId].filter((id): id is string => !!id && id !== "UNKNOWN");
     const reads = ids.map((id) => hints.get(id));
     if (reads.length === 0 || reads.some((r) => !r)) continue;
-    const seen = new Map<string, string | undefined>();
-    for (const r of reads) for (const h of r!) seen.set(h.ark, h.facet);
+    const seen = new Map<string, HintEvent[]>();
+    for (const r of reads) for (const h of r!) seen.set(h.ark, h.events);
     g.pendingHints = {
-      fitting: [...seen.values()].filter((f) => f && TYPE_FACETS[g.type].includes(f)).length,
+      fitting: [...seen.values()].filter((events) =>
+        events.some((e) => HINT_EVENTS[g.type].includes(e)),
+      ).length,
       total: seen.size,
     };
   }
-  return [...people].filter((id) => !hints.has(id)).length;
+  return people.filter((id) => !hints.has(id)).length;
 }
 
 export async function treeGapsTool(
@@ -418,6 +440,10 @@ export async function treeGapsTool(
   }
 
   const gaps = selectGaps(detectGaps(model), maxHoles);
+  // Started now, not after the catalog wait: the people are known and the reads
+  // do not need the catalog.
+  const people = hintPeople(gaps);
+  const hintReads = readHints(people, principal, started);
 
   let waitTimer: ReturnType<typeof setTimeout> | undefined;
   const catalog = await Promise.race([
@@ -429,17 +455,14 @@ export async function treeGapsTool(
   clearTimeout(waitTimer);
   if (catalog) {
     score(gaps, catalog);
-    const unreadHints = await scoreHints(gaps, catalog, principal, started);
-    if (unreadHints > 0) {
-      notes.push(
-        `Pending hints were not read for ${unreadHints} person${unreadHints === 1 ? "" : "s"} ` +
-          "(a read failed, or time ran out); " +
-          "`pendingHints` is null on their holes.",
-      );
-    }
   } else {
+    notes.push("Collection coverage was unavailable; `coverage` is null on every hole.");
+  }
+  const unreadHints = scoreHints(gaps, people, await hintReads);
+  if (unreadHints > 0) {
     notes.push(
-      "Collection coverage was unavailable; `coverage` and `pendingHints` are null on every hole.",
+      `Pending hints were not read for ${unreadHints} person${unreadHints === 1 ? "" : "s"} ` +
+        "(a read failed, or time ran out); `pendingHints` is null on their holes.",
     );
   }
   if (failedReads > 0) {

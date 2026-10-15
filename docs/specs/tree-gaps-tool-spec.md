@@ -83,8 +83,8 @@ raising the timeout:
   cannot run past it, and a read with under 2 s left is not started. The catalog
   wait is the lesser of 15 s and the time left.
 - The catalog is fetched in parallel from the start and waited on for at most
-  15 s; if it is late the holes are returned with `coverage: null` and a note. Without the catalog there is no
-  `pendingHints` either.
+  15 s; if it is late the holes are returned with `coverage: null` and a note.
+  `pendingHints` does not need it.
 - **Early exit.** Waves run nearest the root first. The **near tier** — the root's
   descendants and every couple within 4 generations — always runs: its holes
   outrank anything farther out, and a pedigree edge alone can hold `maxHoles`
@@ -194,25 +194,38 @@ person. The agent confirms with per-person checks (hints, `record_search`).
 
 ## Pending hints
 
-After the catalog arrives, `pendingHints` counts, per hole, FamilySearch's
-**pending** record matches (`person_record_matches`, `includeSummary: true`) for
-the hole's person and, on a couple-level hole, the spouse, each match counted
-once. `total` is all of them; `fitting` is those whose collection carries one of
-the hole type's facets in the table above. A match's own `collection` field is
-the same generic URL on every match (measured 2026-10-14), so the collection is
-identified by the catalog id in the match summary
-(`sourceDescriptions[Collection].identifiers["http://gedcomx.org/Primary"]`,
-returned as `collectionId`) and looked up in the catalog. A match whose
-collection is not in the catalog counts toward `total` only.
+Right after the holes are selected, `pendingHints` counts, per hole,
+FamilySearch's **pending** record matches (`person_record_matches`,
+`status: ["pending"]`) for the hole's person and, on a couple-level hole, the
+spouse, each match counted once. `total` is all of them; `fitting` is those about
+the event the hole is missing.
 
-`pendingHints` is `null` when the catalog was unavailable, when any person on
-the hole could not be read (the match service answers "no tree person" for some
-valid ids, and a read fails or is not started in time), or when the hole has no
-person to read. A partial count is never returned. Each person is read once
-however many holes name them, six at a time, started only before the 40 s time
-budget, and the whole phase is cut at the 50 s deadline. People not read, whether the read failed, was never started or was cut off at the
-deadline, are counted in `notes`. Each read asks for the API maximum of 50 matches,
-so `total` stops at 50 per person.
+The event is read from the match's `title`, the collection name. A record type
+cannot say it: `VITAL` covers births, marriages and deaths alike, so a birth hint
+would fit a missing death date. A match's own `collection` field is the same
+generic URL on every match (measured 2026-10-14), so it says nothing.
+
+| Hole | Title must name |
+|---|---|
+| `missing_parents`, `no_birth_info` | a birth, christening or baptism (`birth`, `christening`, `baptis…`) |
+| `no_spouse`, `missing_surname` | a marriage (`marriage`, `wedding`, `banns`) |
+| `no_death_date` | a death or burial (`death`, `burial`, `grave`, `cemeter…`, `obituar…`, `funeral`, `mortuar…`) |
+| `no_children`, `child_gap`, `early_last_child` | a census (`census`) |
+
+A hole about a couple's children takes only a census, which names the household.
+A spouse's own baptism or death record says nothing about a child. A title that
+names no event ("Vital Records", "Church Registers") counts toward `total` only,
+so `fitting` is a floor.
+
+`pendingHints` is `null` when any person on the hole could not be read: the match
+service answers "no tree person" for some valid ids, a read can fail, and a read
+is not started once the 40 s time budget has passed or under 2 s remain. A
+partial count is never returned. Each person is read once however many holes
+name them, six at a time. Every read gets what is left of the 50 s deadline as
+its own timeout and retry budget, so none outlives the response. The reads start
+as soon as the holes are selected and do not wait for the catalog. Unread people
+are counted in `notes`. Each read asks for the API maximum of 50 matches, so
+`total` stops at 50 per person.
 
 The agent ranks on `fitting`; it does not call `person_record_matches` itself.
 
@@ -241,6 +254,6 @@ holes); a failed read of the root's own descendancy fails the call.
 
 `src/tools/tree-gaps.ts` (fetch, budget, coverage), `src/utils/tree-gap-detect.ts`
 (pure detection), `src/types/tree-gaps.ts`, `src/tools/collections-search.ts`
-(`collectionCoverage`), `src/tools/match-by-id.ts` (`collectionId`), `dev/probe-descendancy.ts`, `dev/try-tree-gaps.ts`,
+(`collectionCoverage`), `src/tools/match-by-id.ts` (the per-read window), `dev/probe-descendancy.ts`, `dev/try-tree-gaps.ts`,
 `tests/utils/tree-gap-detect.test.ts`, `tests/tools/tree-gaps.test.ts`,
 `eval/fixtures/mcp/tree-gaps-*.json`.

@@ -5,6 +5,12 @@ vi.mock("../../src/auth/refresh.js", () => ({
   getValidToken: vi.fn(),
 }));
 
+// Spy on the real fsFetch so a test can read the timeout and retry budget it was given.
+vi.mock("../../src/utils/fs-fetch.js", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("../../src/utils/fs-fetch.js")>();
+  return { ...actual, fsFetch: vi.fn(actual.fsFetch) };
+});
+
 import {
   personRecordMatches,
   recordPersonMatches,
@@ -12,6 +18,7 @@ import {
   recordRecordMatches,
 } from "../../src/tools/match-by-id.js";
 import { getValidToken } from "../../src/auth/refresh.js";
+import { fsFetch } from "../../src/utils/fs-fetch.js";
 import { socketFetchFailure } from "../helpers/fetch-failed.js";
 
 const mockedGetValidToken = vi.mocked(getValidToken);
@@ -341,27 +348,12 @@ describe("Response parsing", () => {
     expect(m.summary).toBeDefined();
   });
 
-  it("reads collectionId from the summary's Collection source description", async () => {
-    const body = JSON.parse(JSON.stringify(KNDX_RESPONSE));
-    body.entries[0].content = {
-      gedcomx: {
-        sourceDescriptions: [
-          { resourceType: "http://gedcomx.org/Person" },
-          { resourceType: "http://gedcomx.org/Collection", identifiers: { "http://gedcomx.org/Primary": ["2026973"] } },
-        ],
-      },
-    };
-    mockJson(body);
-    const result = await personRecordMatches({ id: "KNDX-MKG", includeSummary: true }, LOCAL);
-    expect(result.matches[0].collectionId).toBe("2026973");
-  });
-
-  it("omits collectionId when the summary names no collection", async () => {
-    const body = JSON.parse(JSON.stringify(KNDX_RESPONSE));
-    body.entries[0].content = { gedcomx: { sourceDescriptions: [] } };
-    mockJson(body);
-    const result = await personRecordMatches({ id: "KNDX-MKG", includeSummary: true }, LOCAL);
-    expect(result.matches[0].collectionId).toBeUndefined();
+  it("passes a per-read time window to the request", async () => {
+    mockJson(KNDX_RESPONSE);
+    await personRecordMatches({ id: "KNDX-MKG" }, LOCAL, { timeoutMs: 12_345, budgetMs: 6_000 });
+    const call = vi.mocked(fsFetch).mock.calls.at(-1)!;
+    expect(call[3]).toBe(12_345);
+    expect(call[4]).toEqual({ budgetMs: 6_000 });
   });
 
   it("omits summary when content.gedcomx is missing", async () => {

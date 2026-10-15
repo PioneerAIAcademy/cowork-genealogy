@@ -33,7 +33,7 @@ let cache: {
  * Extract the FSCollectionData from a GEDCOMX-wrapped entry.
  * Returns null if the entry structure is unexpected.
  */
-export function unwrapEntry(entry: FSCollectionEntry): FSCollectionData | null {
+function unwrapEntry(entry: FSCollectionEntry): FSCollectionData | null {
   const collections = entry.content?.gedcomx?.collections;
   if (!collections || collections.length === 0) return null;
   return collections[0];

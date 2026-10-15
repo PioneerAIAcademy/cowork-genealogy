@@ -12,7 +12,7 @@ vi.mock("../../src/auth/refresh.js", () => ({
 }));
 
 import { fsFetch } from "../../src/utils/fs-fetch.js";
-import { catalogWaitMs, readWindow, treeGapsTool } from "../../src/tools/tree-gaps.js";
+import { catalogWaitMs, hintEvents, readWindow, treeGapsTool } from "../../src/tools/tree-gaps.js";
 import { clearCollectionsCache } from "../../src/tools/collections-search.js";
 
 const mockFetch = vi.fn();
@@ -235,26 +235,16 @@ describe("treeGapsTool", () => {
   });
 
   describe("pending hints", () => {
-    const catalogEntry = (id: string, title: string, typeFacet: string) => ({
-      content: {
-        gedcomx: { collections: [{ id, title, searchMetadata: [{ startYear: 1850, endYear: 1950, typeFacet }] }] },
-      },
-    });
-    const hint = (pid: string, collectionId: string) => ({
+    const hint = (pid: string, title: string) => ({
       id: `https://familysearch.org/ark:/61903/1:1:${pid}`,
       confidence: 4,
       score: 0.9,
-      title: "x",
+      title,
       matchInfo: [{ status: "http://familysearch.org/v1/Pending", collection: "https://familysearch.org/platform/collections/records" }],
-      content: {
-        gedcomx: {
-          sourceDescriptions: [
-            { resourceType: "http://gedcomx.org/Collection", identifiers: { "http://gedcomx.org/Primary": [collectionId] } },
-          ],
-        },
-      },
     });
-    const survey = (matches: () => unknown) =>
+    const MATCHES = "/match/resolutions/match/matches";
+    // One root, deceased with no death date: a `no_death_date` hole.
+    const survey = (matches: () => unknown, catalog: () => unknown = () => json({ entries: [] })) =>
       route({
         "/tree/ancestry": () =>
           json({
@@ -263,23 +253,77 @@ describe("treeGapsTool", () => {
             ],
           }),
         "/tree/descendancy": () => json({ persons: [] }),
-        "/service/search/hr/v2/collections": () =>
-          json({ entries: [catalogEntry("11", "Births", "VITAL"), catalogEntry("12", "Military Rolls", "MILITARY")] }),
-        "/match/resolutions/match/matches": matches,
+        "/service/search/hr/v2/collections": catalog,
+        [MATCHES]: matches,
       });
 
-    it("counts only the hints whose collection type fits the hole", async () => {
-      survey(() => json({ entries: [hint("AAAA-111", "11"), hint("BBBB-222", "12"), hint("CCCC-333", "999")] }));
+    it("counts a hint only when its title names the event the hole is missing", async () => {
+      survey(() =>
+        json({
+          entries: [
+            hint("AAAA-111", "Ohio, Deaths and Burials, 1850-1950"),
+            hint("BBBB-222", "Ohio, Births and Christenings, 1800-1900"),
+            hint("CCCC-333", "Ohio, Marriages, 1800-1900"),
+            hint("DDDD-444", "Ohio, Vital Records, 1800-1950"),
+          ],
+        }),
+      );
       const r = await treeGapsTool({ personId: "KNDX-MKG", ancestorGenerations: 1 }, LOCAL);
-      const hole = r.gaps.find((g) => g.type === "no_death_date")!;
-      // A VITAL hint fits a missing death date; MILITARY does not; an id the catalog lacks cannot be judged.
+      // Only the death record is about a missing death date: a birth or a marriage
+      // hint shares the VITAL type but not the event, and a title naming none cannot be judged.
+      expect(r.gaps.find((g) => g.type === "no_death_date")!.pendingHints).toEqual({ fitting: 1, total: 4 });
+    });
+
+    it("counts zero fitting when every hint is about another event", async () => {
+      survey(() => json({ entries: [hint("BBBB-222", "Ohio, Births and Christenings, 1800-1900")] }));
+      const r = await treeGapsTool({ personId: "KNDX-MKG", ancestorGenerations: 1 }, LOCAL);
+      expect(r.gaps.find((g) => g.type === "no_death_date")!.pendingHints).toEqual({ fitting: 0, total: 1 });
+    });
+
+    it("on a couple hole about children, only a census fits; a spouse's own baptism or death does not", async () => {
+      const root = { name: "Root", gender: "Male", birthDate: "1 May 1900", deathDate: "1 May 1970", lifespan: "1900-1970" };
+      route({
+        "/tree/ancestry": () => json({ persons: [person("KNDX-MKG", { ascendancyNumber: "1", ...root })] }),
+        "/tree/descendancy": () =>
+          json({
+            persons: [
+              person("KNDX-MKG", { descendancyNumber: "1", ...root, marriageDate: "1 May 1925" }),
+              person("WIFE-111", {
+                descendancyNumber: "1-S1",
+                name: "Wife",
+                gender: "Female",
+                birthDate: "1 May 1902",
+                deathDate: "1 May 1980",
+                lifespan: "1902-1980",
+              }),
+            ],
+          }),
+        "/service/search/hr/v2/collections": () => json({ entries: [] }),
+        [MATCHES]: () =>
+          json({
+            entries: [
+              hint("AAAA-111", "Ohio, Baptisms, 1800-1950"),
+              hint("BBBB-222", "Ohio, Deaths and Burials, 1850-1950"),
+              hint("CCCC-333", "United States Census, 1930"),
+            ],
+          }),
+      });
+      const r = await treeGapsTool({ personId: "KNDX-MKG", ancestorGenerations: 1 }, LOCAL);
+      const hole = r.gaps.find((g) => g.type === "no_children")!;
+      expect(hole.spouseId).toBe("WIFE-111");
+      // Both spouses return the same three matches; each is counted once.
       expect(hole.pendingHints).toEqual({ fitting: 1, total: 3 });
     });
 
-    it("counts zero fitting when every hint is the wrong type", async () => {
-      survey(() => json({ entries: [hint("BBBB-222", "12")] }));
-      const r = await treeGapsTool({ personId: "KNDX-MKG", ancestorGenerations: 1 }, LOCAL);
-      expect(r.gaps.find((g) => g.type === "no_death_date")!.pendingHints).toEqual({ fitting: 0, total: 1 });
+    it("reads event words from a collection title", () => {
+      expect(hintEvents("Pennsylvania, Births and Christenings, 1700-1900")).toEqual(["birth"]);
+      expect(hintEvents("Ohio, County Marriages, 1789-2013")).toEqual(["marriage"]);
+      expect(hintEvents("Find a Grave Index")).toEqual(["death"]);
+      expect(hintEvents("BillionGraves Index")).toEqual(["death"]);
+      expect(hintEvents("United States, Social Security Death Index")).toEqual(["death"]);
+      expect(hintEvents("United States Census, 1900")).toEqual(["census"]);
+      expect(hintEvents("Vermont, Vital Records, 1760-2008")).toEqual([]);
+      expect(hintEvents("Ghana, Church Registers")).toEqual([]);
     });
 
     it("leaves pendingHints null, with a note, when the hints cannot be read", async () => {
@@ -289,17 +333,22 @@ describe("treeGapsTool", () => {
       expect(r.notes.join(" ")).toMatch(/Pending hints were not read for 1 person/);
     });
 
-    it("asks for pending matches with their summaries, at the API's maximum count", async () => {
+    it("asks for pending matches at the API maximum count, with its own time window", async () => {
       survey(() => json({ entries: [] }));
       await treeGapsTool({ personId: "KNDX-MKG", ancestorGenerations: 1 }, LOCAL);
-      const url = mockFetch.mock.calls.map((c) => String(c[0])).find((u) => u.includes("/match/resolutions/match/matches"))!;
+      const call = vi.mocked(fsFetch).mock.calls.find((c) => String(c[1]).includes(MATCHES))!;
+      const url = String(call[1]);
       expect(url).toContain("status=pending");
-      expect(url).toContain("includeSummary=true");
       expect(url).toContain("count=50");
+      expect(url).not.toContain("includeSummary=true");
+      // The read ends inside the 50 s deadline on its own: a timeout and a retry budget.
+      expect(call[3]).toBeGreaterThan(0);
+      expect(call[3]).toBeLessThanOrEqual(25_000);
+      expect(call[4]).toEqual({ budgetMs: expect.any(Number) });
     });
 
-    it("leaves pendingHints null, with a note, for people not read before the deadline", async () => {
-      survey(() => json({ entries: [hint("AAAA-111", "11")] }));
+    it("leaves pendingHints null, with a note, for people not read before the time budget", async () => {
+      survey(() => json({ entries: [hint("AAAA-111", "Ohio, Deaths, 1850-1950")] }));
       // First Date.now() is the tool's start stamp; every later one reads 41 s.
       let calls = 0;
       const now = vi.spyOn(Date, "now").mockImplementation(() => (calls++ === 0 ? 0 : 41_000));
@@ -308,22 +357,18 @@ describe("treeGapsTool", () => {
         expect(r.gaps.length).toBeGreaterThan(0);
         expect(r.gaps.every((g) => g.pendingHints === null)).toBe(true);
         expect(r.notes.join(" ")).toMatch(/Pending hints were not read for 1 person/);
-        expect(mockFetch.mock.calls.some((c) => String(c[0]).includes("/match/resolutions/match/matches"))).toBe(false);
+        expect(mockFetch.mock.calls.some((c) => String(c[0]).includes(MATCHES))).toBe(false);
       } finally {
         now.mockRestore();
       }
     });
 
-    it("leaves pendingHints null when the catalog is unavailable", async () => {
-      survey(() => json({ entries: [hint("AAAA-111", "11")] }));
-      route({
-        "/tree/ancestry": () =>
-          json({ persons: [person("KNDX-MKG", { ascendancyNumber: "1", name: "R", gender: "Male", birthDate: "1 May 1900", lifespan: "1900-1990" })] }),
-        "/tree/descendancy": () => json({ persons: [] }),
-        "/service/search/hr/v2/collections": () => json({}, 500),
-      });
+    it("still counts hints when the catalog is unavailable", async () => {
+      survey(() => json({ entries: [hint("AAAA-111", "Ohio, Deaths and Burials, 1850-1950")] }), () => json({}, 500));
       const r = await treeGapsTool({ personId: "KNDX-MKG", ancestorGenerations: 1 }, LOCAL);
-      expect(r.gaps.every((g) => g.pendingHints === null)).toBe(true);
+      const hole = r.gaps.find((g) => g.type === "no_death_date")!;
+      expect(hole.coverage).toBeNull();
+      expect(hole.pendingHints).toEqual({ fitting: 1, total: 1 });
     });
   });
 
