@@ -1604,6 +1604,110 @@ describe("research_log_append — census check on the staged payload (#2735)", (
   });
 });
 
+describe("research_log_append — a British payload supplies the census jurisdiction (#3409)", () => {
+  let dir: string;
+  beforeEach(async () => {
+    dir = await mkdtemp(join(tmpdir(), "log-append-3409-"));
+    await writeFile(join(dir, "research.json"), JSON.stringify(baseResearch(), null, 2));
+    await writeFile(join(dir, "tree.gedcomx.json"), JSON.stringify(minimalTree, null, 2));
+  });
+  afterEach(async () => {
+    await rm(dir, { recursive: true, force: true });
+  });
+
+  const JOB = "1851 census, Trowbridge: Job Purnell head of household, wife Ann.";
+  const BRIERLEY = "Abel Brierley, b. 1858 Cheshire (1861 census, Abel's household). Father James Brierley, mother Mary.";
+  const PURNELL_1841 =
+    "1841 census: Household of Samuell Purnell, Thomas Street, Trowbridge. Members: Elizabeth Purnell (wife), Job Purnell (son).";
+  const US_1860 = "1860 US census, Ohio: John Smith with wife Mary.";
+  const CENSUS_REFUSAL = /relationship-to-head/;
+
+  const stageSearch = async (titles: string[]) =>
+    (await stageSearchResults({
+      projectPath: dir,
+      tool: "record_search",
+      response: { results: titles.map((t, i) => ({ recordId: `ark:/61903/1:1:R${i}`, collectionTitle: t })) },
+    }))!.resultsRef;
+  const stageRead = async (collection: string) =>
+    (await stageSearchResults({
+      projectPath: dir,
+      tool: "record_read",
+      response: {
+        query: { recordId: "ark:/61903/1:1:JOB1" },
+        results: [
+          {
+            recordId: "ark:/61903/1:1:JOB1",
+            gedcomx: {
+              persons: [],
+              sources: [
+                { id: "sd_c_1493745", title: collection },
+                { id: "sd_p_1", title: `Job Purnell, "${collection}"` },
+              ],
+            },
+          },
+        ],
+      },
+    }))!.resultsRef;
+  const append = (notes: string, stagedResultsRef: string | null, tool = "record_search") =>
+    researchLogAppend({
+      projectPath: dir,
+      tool,
+      query: tool === "record_read" ? { recordId: "ark:/61903/1:1:JOB1" } : { surname: "Purnell" },
+      outcome: "positive",
+      resultsExamined: 1,
+      planItemId: null,
+      notes,
+      stagedResultsRef,
+    });
+  const errorsOf = (r: any) => (r.ok ? "" : r.errors.join(" "));
+
+  it("accepts an unqualified 1851 note on England 1851 rows", async () => {
+    const r = await append(JOB, await stageSearch(["England and Wales, Census, 1851"]));
+    expect(errorsOf(r)).toBe("");
+  });
+
+  it("accepts the Brierley note on England 1871 census + Cheshire school records rows", async () => {
+    const r = await append(
+      BRIERLEY,
+      await stageSearch(["England and Wales, Census, 1871", "England, Cheshire, School Records, 1796-1950"]),
+    );
+    expect(errorsOf(r)).toBe("");
+  });
+
+  it("accepts the 1851 note on a staged record_read whose sd_c_ source is England 1851", async () => {
+    const r = await append(JOB, await stageRead("England and Wales, Census, 1851"), "record_read");
+    expect(errorsOf(r)).toBe("");
+  });
+
+  it("still refuses the 1851 note on a staged record_read whose sd_c_ source is US", async () => {
+    const r = await append(JOB, await stageRead("United States Census, 1850"), "record_read");
+    expect(errorsOf(r)).toMatch(CENSUS_REFUSAL);
+  });
+
+  it("still refuses the 1851 note with no payload", async () => {
+    const r = await append(JOB, null);
+    expect(errorsOf(r)).toMatch(CENSUS_REFUSAL);
+  });
+
+  it.each([
+    ["US 1850 rows", ["United States Census, 1850"]],
+    ["mixed England + US rows", ["England and Wales, Census, 1851", "United States Census, 1850"]],
+  ])("still refuses the 1851 note on %s", async (_l, titles) => {
+    const r = await append(JOB, await stageSearch(titles));
+    expect(errorsOf(r)).toMatch(CENSUS_REFUSAL);
+  });
+
+  it("still refuses the 1841 note on England 1841 rows, in British words", async () => {
+    const r = await append(PURNELL_1841, await stageSearch(["England and Wales, Census, 1841"]));
+    expect(errorsOf(r)).toMatch(/pre-1851 British census.*relationship-to-head/);
+  });
+
+  it("still refuses an explicitly US 1860 note on England rows", async () => {
+    const r = await append(US_1860, await stageSearch(["England and Wales, Census, 1851"]));
+    expect(errorsOf(r)).toMatch(/pre-1880 US census.*relationship-to-head/);
+  });
+});
+
 async function fileExists(dir: string, rel: string) {
   return access(join(dir, rel)).then(() => true, () => false);
 }
