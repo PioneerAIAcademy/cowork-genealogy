@@ -32,7 +32,7 @@
       "dimension_name": "Correctness",
       "llm_score": 3,
       "corrected_score": 1,
-      "comment": "Routing is correct: competingParentSets sends q_001 to hypothesis-tracking. But the reply's table is headed \"Origin in tree\" and lists James Tarrant Sr. and Jane Burch (I4/I5) as \"Set B — New York line\", when the tree has both born in Virginia; New York is the patron's framing, not the tree's. It then argues one set down before any hypothesis exists: \"All three records favor Set A (Samuel & Elizabeth)\" and \"The early evidence points firmly toward Samuel Tarrant & Elizabeth as James's actual parents\". It also says the 1810 census \"contradicts the tree's implied death year for I2\", but I2 has no death fact in the tree, and it plans New York searches for I4/I5. Favouring a set and inventing a conflict override the correct routing; the judge's \"did not ... argue for one over the other\" is wrong."
+      "comment": "Routing is correct: competingParentSets sends q_001 to hypothesis-tracking. But the reply's table is headed \"Origin in tree\" and lists James Tarrant Sr. and Jane Burch (I4/I5) as \"Set B — New York line\", when the tree has both born in Virginia; New York is the patron's framing, not the tree's. It then argues one set down before any hypothesis exists: \"All three records favor Set A (Samuel & Elizabeth)\" and \"The early evidence points firmly toward Samuel Tarrant & Elizabeth as James's actual parents\". It also plans New York searches for I4/I5. Its 1802 death-year aside relays log_006's own note, a carve leftover, so it is not counted. Favouring a set overrides the correct routing; the judge's \"did not ... argue for one over the other\" is wrong."
     },
     {
       "test_id": "ut_research_012",
