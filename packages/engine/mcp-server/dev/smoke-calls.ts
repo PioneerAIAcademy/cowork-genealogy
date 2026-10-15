@@ -47,8 +47,8 @@ export interface SmokeCtx {
   hostProjectDir: string | null;
   /** A path under projectPath that holds no project. */
   missingProjectPath: string;
-  /** Whether the server's base config carries `openRouterApiKey`. */
-  openRouterKeyConfigured: boolean;
+  /** Whether the server holds an OpenRouter key; null when this host cannot tell (a remote server). */
+  openRouterKeyConfigured: boolean | null;
   /** Values read back from earlier steps (e.g. the evaluations sidecar `file_path`). */
   values: Record<string, unknown>;
 }
@@ -488,7 +488,11 @@ export const CALL_PLAN: readonly SmokeStep[] = [
     tool: "image_transcribe",
     args: () => ({ imageId: REAL_IMAGE_ID }),
     expect: (res, ctx) => {
-      if (!ctx.openRouterKeyConfigured) return keyMissing(res);
+      if (ctx.openRouterKeyConfigured === false) return keyMissing(res);
+      if (ctx.openRouterKeyConfigured === null) {
+        const missing = keyMissing(res);
+        return missing.ok ? missing : reauth(res, ctx);
+      }
       return reauth(res, ctx);
     },
   },
@@ -710,12 +714,13 @@ export async function detectBearer(explicit?: string): Promise<string | null> {
 }
 
 /**
- * Whether the server's base config carries an OpenRouter key. `hostConfig` says
- * the server reads THIS host's ~/.familysearch-mcp/config.json; otherwise
- * (the compose service, whose config.json is `{"hosted": true}`) false.
+ * Whether the server holds an OpenRouter key. `hostConfig` says the server reads
+ * THIS host's ~/.familysearch-mcp/config.json; otherwise (the compose service)
+ * null: its config.json is `{"hosted": true}`, but compose passes
+ * OPENROUTER_API_KEY from env.sh when eval/.env has one, and this host cannot see it.
  */
-export async function hostOpenRouterKeyConfigured(hostConfig: boolean): Promise<boolean> {
-  if (!hostConfig) return false;
+export async function hostOpenRouterKeyConfigured(hostConfig: boolean): Promise<boolean | null> {
+  if (!hostConfig) return null;
   const config = await readHostJson("config.json");
   return typeof config?.openRouterApiKey === "string" && config.openRouterApiKey.length > 0;
 }
