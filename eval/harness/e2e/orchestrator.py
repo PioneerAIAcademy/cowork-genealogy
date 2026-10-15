@@ -38,7 +38,6 @@ from claude_agent_sdk import (
     ToolResultBlock,
     ToolUseBlock,
     UserMessage,
-    query,
 )
 
 from e2e.mcp_stderr import read_mcp_stderr_lines
@@ -57,6 +56,7 @@ from harness.context_policy import (
 )
 from harness.judge import _summarize_response
 from harness.redact import redact_secrets
+from harness.sdk_query import close_query, open_query
 import harness.workspace as _workspace
 from harness.skill_invocation import (
     check_guardrail_compliance,  # re-exported (#1484): moved to skill_invocation, kept a module global here
@@ -2124,6 +2124,10 @@ async def _run_agent(
     # discrepancy can be checked against a version delta (the local CLI the SDK
     # spawns may differ from Cowork's bundled one).
     cli_version: dict[str, str | None] = {"v": None}
+    # The current session's stream, so the close after the wall-clock block
+    # reaches it however `_consume` ended (None once closed), and a close still
+    # running when the wall-clock cap cancelled the resume path.
+    live: dict[str, Any] = {"it": None, "closing": None}
     # Whether the FIRST init's `tools` list offered ToolSearch; None when that
     # init carried no list. Listed at init; blind to the per-model gate (see
     # env_for_sdk) — `False` proves tool search was off, `True` does not prove
@@ -2776,6 +2780,19 @@ async def _run_agent(
             and resumes["n"] < MAX_RESUME
         )
 
+    async def _shutdown(it) -> None:
+        """Close a session's stream and wait for its CLI subprocess to exit.
+
+        The close runs on its own task, shielded: the resume path calls this
+        inside `_consume`, under the wall-clock cap, and a cap cancel that cut
+        the SDK's teardown short would leave the CLI running and drop it from
+        the SDK's atexit kill. A cancelled caller leaves the task in
+        `live["closing"]` for the close after the wall-clock block to finish.
+        """
+        live["closing"] = asyncio.ensure_future(close_query(it))
+        await asyncio.shield(live["closing"])
+        live["closing"] = None
+
     async def _consume():
         nonlocal usage, error, aborted_reason
 
@@ -2832,27 +2849,12 @@ async def _run_agent(
             )
             _emit("[abort] genealogy MCP server unavailable — this run never happened")
 
-        async def _shutdown(it) -> None:
-            """Close the query stream so the CLI subprocess exits before we go.
-
-            This abort fires seconds into a run, while every other stop reason
-            takes minutes and then spends ~30s in the judge. That difference
-            matters on Windows: a live CLI child still holds handles inside the
-            workspace, so `TemporaryDirectory.__exit__` raises
-            `PermissionError [WinError 32]` — and because `__exit__` runs before
-            our exception propagates, that error *replaces* McpUnavailableError,
-            burying the operator message and returning the wrong exit code
-            (observed 2026-08-04). Mirrors the resume path's teardown below.
-            """
-            try:
-                await asyncio.wait_for(it.aclose(), timeout=15)
-            except Exception:  # noqa: BLE001 — teardown is best-effort
-                pass
-
         current_options = options
         current_prompt = user_message
         while True:  # session (re)start loop — re-entered only to resume a stall
-            iterator = query(prompt=current_prompt, options=current_options).__aiter__()
+            iterator = live["it"] = open_query(
+                prompt=current_prompt, options=current_options
+            ).__aiter__()
             _emit("agent started" if resumes["n"] == 0
                   else f"resumed session (attempt {resumes['n']}) after stall")
             restart = False
@@ -3046,7 +3048,6 @@ async def _run_agent(
                                             backstop=True,
                                             queries=mcp_state["queries"],
                                         )
-                                        await _shutdown(iterator)
                                         return
                                 progressed = True
                     timeline.append(
@@ -3176,7 +3177,6 @@ async def _run_agent(
                         )
                         if abort_now:
                             _abort_mcp_unavailable(find_server_entry(servers))
-                            await _shutdown(iterator)
                             return
                 elif isinstance(message, ResultMessage):
                     timeline.append(
@@ -3237,7 +3237,6 @@ async def _run_agent(
                 ):
                     aborted_reason = "max_tool_calls"
                     error = f"tool_calls cap ({fixture.caps.tool_calls}) exceeded"
-                    await _shutdown(iterator)
                     return
 
                 # Progress watchdog: a stall is "stream alive, no progress". The
@@ -3282,10 +3281,10 @@ async def _run_agent(
             if not restart:
                 return
             resumes["n"] += 1
-            try:
-                await asyncio.wait_for(iterator.aclose(), timeout=15)
-            except Exception:  # noqa: BLE001 — best-effort teardown of a hung subprocess
-                pass
+            # Wait for the stalled CLI to exit before the resumed one starts on
+            # the same session, so the two never run at once.
+            await _shutdown(iterator)
+            live["it"] = None
             _emit(f"stall — resuming session {session_id['id']!r} (attempt {resumes['n']})")
             current_options = replace(options, resume=session_id["id"], fork_session=False)
             current_prompt = (
@@ -3311,6 +3310,20 @@ async def _run_agent(
         # way the ResultMessage branch does, so it isn't mislabeled `error`.
         aborted_reason = "max_turns" if is_turn_cap_error(detail) else "error"
         error = detail
+    finally:
+        consume_ended = time.monotonic()
+        # The one close for every way `_consume` ends: each early `return`, an
+        # exception, a cap, and a resume close the cap interrupted. Here rather
+        # than inside `_consume` so the wall-clock cap cannot interrupt it or
+        # relabel a reason `_consume` already decided. A live CLI child also
+        # holds handles inside the workspace, so on Windows the temp-dir
+        # cleanup would raise `PermissionError [WinError 32]` and replace the
+        # run's own error (observed 2026-08-04 on the MCP-unavailable abort).
+        if live["closing"] is not None:
+            await live["closing"]
+        elif live["it"] is not None:
+            await _shutdown(live["it"])
+        live["it"] = live["closing"] = None
 
     if aborted_reason is None and tool_call_count["n"] > fixture.caps.tool_calls:
         aborted_reason = "max_tool_calls"
@@ -3347,8 +3360,10 @@ async def _run_agent(
     # `total_cost_usd`.
     result_message_seen = "num_turns" in usage
     if not result_message_seen:
+        # To the start of the teardown, not to now: waiting for the CLI to
+        # exit (about 10s at most) is not time the run spent, as in skill_runner.
         usage = _fallback_usage(
-            streamed, int((time.monotonic() - run_started) * 1000)
+            streamed, int((consume_ended - run_started) * 1000)
         )
 
     # Both new fields are written HERE, after the fallback branch above, so they

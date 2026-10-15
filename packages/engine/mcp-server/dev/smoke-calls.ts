@@ -251,9 +251,11 @@ export const CALL_PLAN: readonly SmokeStep[] = [
   {
     tool: "materialize_facts",
     offline: true,
+    // A person not yet in the tree: onto an existing one it needs a probable
+    // person_evidence link, which needs a same_person score behind it.
     args: (ctx) => ({
       projectPath: ctx.projectPath,
-      personId: "P1",
+      personId: "P9",
       recordId: "capture:smoke-obituary",
       recordRole: "deceased",
     }),

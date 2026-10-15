@@ -600,12 +600,12 @@ interface Classification {
 }
 
 /**
- * The classification table: record type × role family × fact class.
+ * The classification table: record type × role family × fact class, and on a
+ * marriage record the fact type too.
  *
- * Measured against the 255 `expected_classifications` cells in the 19 unit
- * fixtures that pin them: 249/255 agree. **That figure is IN-SAMPLE** — the
- * table was built by reading the same cells the eval checks, so it states
- * internal consistency, not predictive accuracy.
+ * The table was built by reading the unit fixtures' `expected_classifications`
+ * cells, so agreement with them is IN-SAMPLE: it states internal consistency,
+ * not predictive accuracy.
  *
  * A record type with no row defaults to `unknown` / `indeterminate`, and every
  * assertion that takes the default is NAMED in the result. That visibility is
@@ -644,6 +644,8 @@ function classify(
   role: string,
   factClass: FactClass,
   collection?: string,
+  factType?: string,
+  relationshipType?: string,
 ): Classification {
   const family = roleFamily(role);
 
@@ -671,20 +673,28 @@ function classify(
   }
 
   if (recordType === "marriage") {
+    // The parties speak for themselves, but nobody witnessed their own birth or
+    // parentage: a party's birth date, birthplace, age and christening, their
+    // "child of" relationship, and every fact of a parent role are `secondary`
+    // (lead rulings 2026-10-14 and 2026-10-15, issue #3410). A party may have
+    // been an infant when the parent they name died.
     if (family === "principal" || family === "spouse") {
-      // The parties speak for themselves — including for their own parents'
-      // names, which they have firsthand ongoing knowledge of.
+      const ownOrigin =
+        /^(birth|birth_?(date|year|place)|birthplace|age|christening|baptism)$/.test(factType ?? "") ||
+        relationshipType === "child";
       return {
         informant: "the party",
         informant_proximity: "self",
-        information_quality: "primary",
+        information_quality: ownOrigin ? "secondary" : "primary",
       };
     }
-    if (family === "parent") {
+    // A document's stated "father" with no parent_child edge is numbered
+    // `father_1`, not `father_of_groom`.
+    if (family === "parent" || /(father|mother)_\d+$/.test(role)) {
       return {
         informant: "the party",
         informant_proximity: "self",
-        information_quality: "primary",
+        information_quality: "secondary",
         bias: "the parent's name as stated by their own child",
       };
     }
@@ -1089,7 +1099,14 @@ export function extractRecord(
       clsOverride ??
       (DOCUMENT_ONLY_TYPES.has(recordType)
         ? classifyDocumentRow(recordType, role, factType, extra, mode, mode?.statedRelations.get(party.id))
-        : classify(recordType, role, factClass ?? factClassOf(factType, recordType), collection));
+        : classify(
+            recordType,
+            role,
+            factClass ?? factClassOf(factType, recordType),
+            collection,
+            factType,
+            String(extra.structured_value?.relationship_type ?? ""),
+          ));
     if (
       mode?.informantName &&
       (cls.informant_proximity === "household_member" || cls.informant_proximity === "family_not_present")

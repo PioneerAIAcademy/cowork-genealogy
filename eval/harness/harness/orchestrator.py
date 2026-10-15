@@ -333,7 +333,8 @@ async def _run_one_test_async(
         if n_runs > 1:
             _elapsed = time.perf_counter() - _run_start
             _skill_s = single.duration_ms / 1000.0
-            # Remainder is judge + validators + diffing (all post-skill work).
+            # Remainder is the CLI teardown, judge, validators and diffing (all
+            # post-skill work; duration_ms stops before the teardown).
             _post_s = max(0.0, _elapsed - _skill_s)
             _tag = single.aborted_reason or single.outcome
             print(

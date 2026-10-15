@@ -1,0 +1,20 @@
+{
+ "log_id": "log_006",
+ "tool": "image_search",
+ "retrieved": "2026-10-06T14:05:00Z",
+ "returned_count": 2,
+ "payload": {
+  "results": [
+   {
+    "imageId": "004185989_00264",
+    "url": "https://familysearch.org/das/v2/dgs:004185989_00264/dist.jpg",
+    "transcription": "1810 U.S. census, Warren Co., Ky., stamped p. 267 (image 004185989_00264), upper half. Row: 'Saml Tarrant' | FWM <10: . | 10-15: . | 16-25: 2 | 26-44: . | 45+: 1 || FWF <10: . | 10-15: . | 16-25: . | 26-44: . | 45+: 2 | other free: . | slaves: . Neighbors above: Wm Lowrey, Jesse Williamson, Solomon White; below: John Hudspeth, Joseph Duff, Wm Jackson."
+   },
+   {
+    "imageId": "004185989_00261",
+    "url": "https://familysearch.org/das/v2/dgs:004185989_00261/dist.jpg",
+    "transcription": "Terry Tarrant: FWM 1,1,0,1,0 | FWF 2,0,1,0,0 | other free 0 | slaves 0. Neighbors: Lewis Vanlandenham, John Patricks, Wm Mitchel (above); Henry Fox, Danl Stone, Jonathan Rossel (below)."
+   }
+  ]
+ }
+}

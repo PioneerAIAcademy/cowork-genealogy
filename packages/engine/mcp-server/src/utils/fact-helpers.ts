@@ -183,6 +183,44 @@ export function latestDayOfSelfFacts(
   return latest;
 }
 
+/** Earliest possible year across all matching facts in `facts`, or null.
+ *  Split out of `earliestYearOfSelfFacts` so a caller can pass a fact list the
+ *  anchor's own `facts[]` does not hold — a Marriage on its Couple edge. */
+export function earliestYearOfFacts(
+  facts: readonly SimplifiedFact[],
+  factTypes: ReadonlySet<string> | null,
+  antiFactTypes: ReadonlySet<string> | null = null,
+): number | null {
+  let earliest: number | null = null;
+  for (const f of facts) {
+    if (!matchesFactSelection(f, factTypes, antiFactTypes)) continue;
+    const std = getStandardDate(f);
+    if (std === null) continue;
+    const y = earliestYear(std);
+    if (y === null) continue;
+    if (earliest === null || y < earliest) earliest = y;
+  }
+  return earliest;
+}
+
+/** Latest possible year across all matching facts in `facts`, or null. */
+export function latestYearOfFacts(
+  facts: readonly SimplifiedFact[],
+  factTypes: ReadonlySet<string> | null,
+  antiFactTypes: ReadonlySet<string> | null = null,
+): number | null {
+  let latest: number | null = null;
+  for (const f of facts) {
+    if (!matchesFactSelection(f, factTypes, antiFactTypes)) continue;
+    const std = getStandardDate(f);
+    if (std === null) continue;
+    const y = latestYear(std);
+    if (y === null) continue;
+    if (latest === null || y > latest) latest = y;
+  }
+  return latest;
+}
+
 /** Earliest possible year across all matching facts on the anchor, or null. */
 export function earliestYearOfSelfFacts(
   mob: Mob,
