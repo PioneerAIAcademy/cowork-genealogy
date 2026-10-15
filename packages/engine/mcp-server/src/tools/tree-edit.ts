@@ -205,14 +205,18 @@ export interface WarningGateRefusal {
 /** What the gate hands back when the write may proceed. */
 export interface WarningGatePass {
   justificationsPersisted: boolean;
-  /** Competing parentage the write creates while passing the gate — justified,
-   *  or the warning already stood — for the writer to echo on success. */
-  conflicts_surfaced?: ConflictSurfaced[];
 }
 
 const ROUTE_PARENTAGE =
-  " A competing parent is not a warning to justify: send each conflicts_surfaced entry " +
-  "to conflict-resolution as an identity question, and do not write this edge until it is resolved.";
+  "This write gives a child a second biological parent of one sex. That is not a warning to " +
+  "justify, and warningJustifications cannot pass it. If one of these parents is a step, " +
+  "adoptive, foster or guardian parent, add that edge with its subtype instead. Otherwise send " +
+  "each conflicts_surfaced entry to conflict-resolution as an identity question, and do not " +
+  "write this edge until it is resolved.";
+
+const JUSTIFY_OTHERS =
+  " Justify every other warningId: re-call with warningJustifications listing each warningId " +
+  "and a justification string.";
 
 class TreeEditError extends Error {}
 
@@ -1021,8 +1025,6 @@ export async function checkWarningGate(
   const found = findCompetingParentage(beforeTree, afterTree, research, proposedAssertionIds, collapseMap);
   if (touchedIds.length === 0 && found.length === 0) return null;
   const parentage = found.map((c) => c.entry);
-  const surfaced = parentage.length > 0 ? { conflicts_surfaced: parentage } : {};
-  const route = parentage.length > 0 ? ROUTE_PARENTAGE : "";
 
   const result = introducedWarnings(
     beforeTree,
@@ -1038,11 +1040,6 @@ export async function checkWarningGate(
     found.map((c) => `${c.sex === "Male" ? "tooManyFathers2" : "tooManyMothers2"}|${c.entry.personId}`),
   );
   const keep = (w: { issueType: string; personId: string }) => !covered.has(`${w.issueType}|${w.personId}`);
-  const justified = new Set(
-    (warningJustifications ?? [])
-      .filter((j) => typeof j.justification === "string" && j.justification.trim() !== "")
-      .map((j) => j.warningId),
-  );
   const nameOf = (id: string) => {
     const p = (afterTree.persons ?? []).find((x) => x.id === id);
     return p ? getPersonName(p) : "";
@@ -1059,21 +1056,22 @@ export async function checkWarningGate(
     facts: undefined,
     relatedPersonId: undefined,
   }));
-  const allIntroduced = [...result.allIntroduced.filter(keep), ...parentageWarnings];
-  const unjustified = [
-    ...result.unjustified.filter(keep),
-    ...parentageWarnings.filter((w) => !justified.has(w.warningId)),
-  ];
+  const allIntroduced = result.allIntroduced.filter(keep);
+  const others = result.unjustified.filter(keep);
+  // Competing parentage refuses whatever is justified: it is routed, not justified.
+  const unjustified = [...parentageWarnings, ...others];
 
   if (unjustified.length > 0) {
-    const message = "This write introduces genealogical warnings that must be justified. " +
-      "Re-call with warningJustifications listing each warningId and a justification string." + route;
+    const message = parentage.length > 0
+      ? ROUTE_PARENTAGE + (others.length > 0 ? JUSTIFY_OTHERS : "")
+      : "This write introduces genealogical warnings that must be justified. " +
+        "Re-call with warningJustifications listing each warningId and a justification string.";
     return {
       ok: false,
       reason: "unjustified_warnings",
       errors: [message],
       message,
-      ...surfaced,
+      ...(parentage.length > 0 ? { conflicts_surfaced: parentage } : {}),
       warnings: unjustified.map((w) => ({
         warningId: w.warningId,
         issueType: w.issueType,
@@ -1092,13 +1090,12 @@ export async function checkWarningGate(
     const stale = staleJustifications(allIntroduced, warningJustifications);
     if (stale.length > 0) {
       const message = `Stale warningId(s) not matching any introduced warning: ${stale.join(", ")}. ` +
-        "Re-call without warningJustifications to get the current warning ids." + route;
+        "Re-call without warningJustifications to get the current warning ids.";
       return {
         ok: false,
         reason: "unjustified_warnings",
         errors: [message],
         message,
-        ...surfaced,
         warnings: [{ message }],
       };
     }
@@ -1121,11 +1118,11 @@ export async function checkWarningGate(
         recorded_at: now,
       }));
       research.warning_justifications = [...existing, ...newEntries];
-      return { justificationsPersisted: true, ...surfaced };
+      return { justificationsPersisted: true };
     }
   }
 
-  return parentage.length > 0 ? { justificationsPersisted: false, ...surfaced } : null;
+  return null;
 }
 
 /** Each proposed ParentChild edge's `sourceAssertionId`, keyed parent|child,
@@ -1235,7 +1232,6 @@ export async function executeTreeOps(input: TreeEditInput, gate: OpGate, toolNam
           valid: true,
           warnings: [...sanitized.warnings, ...formatIssues(validation.warnings), ...opWarnings],
         },
-        ...(warningGateResult?.conflicts_surfaced ? { conflicts_surfaced: warningGateResult.conflicts_surfaced } : {}),
       };
     }
 
@@ -1284,7 +1280,6 @@ export async function executeTreeOps(input: TreeEditInput, gate: OpGate, toolNam
       },
     };
     if (Object.keys(assignedIds).length > 0) result.assignedIds = assignedIds;
-    if (singleGateResult?.conflicts_surfaced) result.conflicts_surfaced = singleGateResult.conflicts_surfaced;
     return result;
   } catch (e) {
     if (e instanceof NoProjectError) return noProjectResult();

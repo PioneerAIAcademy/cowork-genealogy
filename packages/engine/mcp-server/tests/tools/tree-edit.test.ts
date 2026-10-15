@@ -2275,10 +2275,11 @@ describe("tree_edit — warning gate integration (issue #2840)", () => {
     expect(await readTree()).toEqual(treeBefore);
   });
 
-  it("lands the same second father when every introduced warning is justified", async () => {
-    // The accept direction: the gate narrows, it does not forbid. A genuine
-    // second father -- an adoption, or a correction -- goes through on a
-    // justified re-call.
+  it("lands an adoptive second father by its subtype, never by a justified re-call", async () => {
+    // The accept direction: the gate narrows, it does not forbid. An adoptive
+    // second father goes in with its subtype, which no biological count reads.
+    // A second biological father is routed to conflict-resolution instead, so a
+    // justified re-call is refused (#2525).
     await writeProject(twoFathersTree());
     const refused = await treeEdit({
       projectPath: dir,
@@ -2296,7 +2297,15 @@ describe("tree_edit — warning gate integration (issue #2840)", () => {
         justification: "Adoptive father, recorded on the 1940 decree.",
       })),
     } as any);
-    expect(ok.ok).toBe(true);
+    expect(ok.ok).toBe(false);
+    expect((ok as any).conflicts_surfaced?.map((c: any) => c.personId)).toEqual(["I3"]);
+
+    const adoptive = await treeEdit({
+      projectPath: dir,
+      operation: "add_relationship",
+      relationship: { type: "ParentChild", parent: "I2", child: "I3", subtype: "Adoptive", sources: [{ ref: "S1" }] },
+    } as any);
+    expect(adoptive.ok).toBe(true);
     const rels = (await readTree()).relationships.filter((r: any) => r.type === "ParentChild");
     expect(rels).toHaveLength(2);
   });
@@ -2543,12 +2552,17 @@ describe("tree_edit — warning gate integration (issue #2840)", () => {
         values: ["I2 Thomas Flynn (a_001)", "I3 John Flynn (a_002)"],
       },
     ]);
+    expect(r.message).toMatch(/^This write gives a child a second biological parent of one sex\./);
+    expect(r.message).toContain("warningJustifications cannot pass it");
+    expect(r.message).toContain("add that edge with its subtype");
     expect(r.message).toContain("send each conflicts_surfaced entry to conflict-resolution");
+    expect(r.message).not.toContain("Justify every other warningId");
     expect(r.errors).toEqual([r.message]);
   });
 
-  it("echoes conflicts_surfaced when the second father is written with a justification", async () => {
+  it("refuses a competing parent even when its warning is justified, and writes nothing", async () => {
     await writeProject(parentage(), parentageResearch);
+    const treeBefore = await readTree();
     const refused = await addParentFrom("I3", "a_002");
     const warningId = (refused as any).warnings[0].warningId;
 
@@ -2556,8 +2570,28 @@ describe("tree_edit — warning gate integration (issue #2840)", () => {
       warningJustifications: [{ warningId, justification: "conflict c_001 recorded" }],
     });
 
-    expect(r.ok).toBe(true);
-    expect((r as any).conflicts_surfaced?.[0]?.personId).toBe("I1");
+    expect(r.ok).toBe(false);
+    if (r.ok) return;
+    expect(r.reason).toBe("unjustified_warnings");
+    expect(r.conflicts_surfaced?.map((c) => c.personId)).toEqual(["I1"]);
+    expect(r.message).toContain("warningJustifications cannot pass it");
+    expect(await readTree()).toEqual(treeBefore);
+  });
+
+  it("asks to justify the other warnings only when the refusal carries some", async () => {
+    const t = parentage();
+    t.persons[2].facts[0].date = "1840";
+    await writeProject(t, parentageResearch);
+
+    const r = await addParentFrom("I3", "a_002");
+
+    expect(r.ok).toBe(false);
+    if (r.ok) return;
+    const ids = (r.warnings ?? []).map((w) => w.warningId ?? "");
+    expect(ids.some((id) => id.startsWith("competingParentage|"))).toBe(true);
+    expect(ids.some((id) => !id.startsWith("competingParentage|"))).toBe(true);
+    expect(r.message).toMatch(/^This write gives a child a second biological parent of one sex\./);
+    expect(r.message).toContain("Justify every other warningId");
   });
 
   it("refuses a new biological father even when tooManyFathers2 already stood", async () => {
@@ -2615,7 +2649,7 @@ describe("tree_edit — warning gate integration (issue #2840)", () => {
     expect((r as any).conflicts_surfaced?.map((c: any) => c.personId)).toEqual(["I1"]);
   });
 
-  it("a stale justification on a competing parent keeps the entry and the route", async () => {
+  it("a justification of any id, stale or real, leaves a competing parent refused with the route", async () => {
     await writeProject(parentage(), parentageResearch);
     const refused = await addParentFrom("I3", "a_002");
     const ids = (refused as any).warnings.map((w: any) => w.warningId);
@@ -2629,7 +2663,7 @@ describe("tree_edit — warning gate integration (issue #2840)", () => {
 
     expect(r.ok).toBe(false);
     if (r.ok) return;
-    expect(r.errors[0]).toContain("Stale warningId");
+    expect(r.errors[0]).not.toContain("Stale warningId");
     expect(r.errors[0]).toContain("send each conflicts_surfaced entry to conflict-resolution");
     expect(r.conflicts_surfaced?.map((c) => c.personId)).toEqual(["I1"]);
   });

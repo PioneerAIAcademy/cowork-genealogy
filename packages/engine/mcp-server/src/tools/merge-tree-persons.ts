@@ -111,7 +111,6 @@ export async function mergeTreePersons(
         valid: true,
         warnings: [...treeSanitized.warnings, ...formatIssues(validation.warnings)],
       },
-      ...(mergeGateResult?.conflicts_surfaced ? { conflicts_surfaced: mergeGateResult.conflicts_surfaced } : {}),
     };
   } catch (e) {
     if (e instanceof NoProjectError) return noProjectResult();

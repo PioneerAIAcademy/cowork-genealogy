@@ -387,7 +387,6 @@ committed e2e corpus set one of those fields.
   },
   filesWritten: ["tree.gedcomx.json"],
   validation: { valid: true, warnings: string[] },
-  conflicts_surfaced?: [{ personId, factType: "ParentChild", values: string[] }],
 }
 // on failure: { ok: false, errors: string[] } — nothing written
 ```
@@ -396,9 +395,11 @@ A write that gives a child two or more **biological** parents of one sex,
 where that set grew, is refused (§7) with a `competingParentage` warning and a
 `conflicts_surfaced` entry. It is refused whether or not
 `tooManyFathers2`/`tooManyMothers2` is new to the child, and whether the second
-parent arrives by a new edge, a merge, or a parent's gender being set. Only a
-re-call that justifies that warning's id lands, and its success response
-echoes the entry. Each value names one parent as
+parent arrives by a new edge, a merge, or a parent's gender being set. No
+`warningJustifications` entry passes it: the refusal leads with the route, and
+asks for justifications only for any other warnings the same write introduces.
+An adoptive, step, foster or guardian parent is written with that subtype and is
+never counted. Each value names one parent as
 `"<personId> <name> (<evidence>)"`. The evidence is the call's
 `sourceAssertionId` for the proposed edge; else the parentage assertions
 `person_evidence` links to that parent on the edge's sources, plus
@@ -572,10 +573,15 @@ Sequence (validate-before-persist, tree-only):
   `conflict-resolution` as an identity question, not to justify it, and not to
   write the edge until it is resolved. The disputed edge stays out of the tree
   meanwhile; the entry names each parent's assertion so the conflict can be
-  recorded without it. *Rejected:* surfacing only on a successful write (it
-  would fire only after the conflict had been justified away); making the
-  warning unjustifiable (it would block an adoptive or step parent outright);
-  routing in agent prose alone (a rule the model reads, not one the tool binds,
+  recorded without it. **It cannot be justified**: a re-call that justifies
+  the warning is refused like the first call. Only a biological parent is
+  counted, so the one edge this refuses is a second biological parent, which
+  is exactly what conflict-resolution must see. *Rejected:* surfacing only on a
+  successful write (it would fire only after the conflict had been justified
+  away); keeping the warning justifiable (the writer agents are told to re-call
+  with a justification for each warning id, so the route was advisory, and the
+  reason once given, that it would block an adoptive or step parent, does not
+  hold because those subtypes are never counted); routing in agent prose alone (a rule the model reads, not one the tool binds,
   ADR-0011). **Only biological parents count** (any subtype except Adoptive, Step, Foster or
   Guardian, in any case — `isNonBiologicalSubtype`), as `tooManyFathers2` / `tooManyMothers2` themselves count, so
   an adoptive or step father beside a biological one lands without a refusal. The finding is computed from the before and

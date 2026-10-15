@@ -898,7 +898,6 @@ export async function materializeFacts(
           valid: true,
           warnings: [...sanitized.warnings, ...formatIssues(validation.warnings)],
         },
-        ...(batchGateResult?.conflicts_surfaced ? { conflicts_surfaced: batchGateResult.conflicts_surfaced } : {}),
       };
     }
 
@@ -960,7 +959,6 @@ export async function materializeFacts(
     return {
       ok: true,
       ...result,
-      conflicts_surfaced: [...result.conflicts_surfaced, ...(singleGateResult?.conflicts_surfaced ?? [])],
       filesWritten: singleFilesWritten,
       validation: {
         valid: true,
