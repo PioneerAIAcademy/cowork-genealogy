@@ -191,6 +191,8 @@ export const VALIDATOR_ENUMS = {
 // deliberately not enumerated — that list went stale (named 8, applied at 10)
 // and the enumeration is what created the staleness.
 export const ISO_DATE_PATTERN = /^\d{4}-\d{2}-\d{2}$/;
+/** `enums.schema.json#/$defs/iso_datetime`, the colon or dash-separated form. */
+export const ISO_DATETIME_PATTERN = /^\d{4}-\d{2}-\d{2}T\d{2}[:-]\d{2}[:-]\d{2}([.-]\d+)?(Z|[+-]\d{2}:?\d{2})$/;
 
 // Hand-copied from each section's `properties.id.pattern` in research.schema.json.
 // validator.test.ts diffs this against the schema (key-set both ways + prefix)
@@ -642,7 +644,7 @@ export const RESEARCH_SHAPES = {
     "id", "question_id", "tier", "vehicle", "shortfall",
     "supporting_assertion_ids",
     "resolved_conflict_ids", "exhaustive_search_summary",
-    "narrative_markdown", "claims",
+    "narrative_markdown", "updated", "claims",
   ]),
   proof_claim: new Set([
     "claim", "proof_tier", "shortfall", "supporting_assertion_ids",
@@ -1478,6 +1480,9 @@ function validateResearch(data: any, report: ValidationReport): ResearchIds {
     }
     if ("question_id" in ps) {
       checkRefExists(ps.question_id, ids.questions, "question", psp, report);
+    }
+    if ("updated" in ps && (typeof ps.updated !== "string" || !ISO_DATETIME_PATTERN.test(ps.updated))) {
+      addError(report, psp, `'updated' must be an ISO 8601 date-time with a timezone, got '${ps.updated}'`);
     }
 
     // resolved_conflict_ids -> conflicts[].id, and that conflict must be

@@ -421,7 +421,7 @@ export function exampleFor(
   op: "update",
   entryId: "<existing-ps_-id>",
   fields: {
-    /* only the fields you are changing, but these two always together: */
+    /* only the fields you are changing; after a later search, these two together: */
     narrative_markdown: "## Parents of Patrick Flynn\\n\\n... **What could resolve it:** the 1885 county estate file.",
     exhaustive_search_summary: "Searched ... and the 1850-1880 censuses. Not yet examined: the 1885 county estate file."
   }
