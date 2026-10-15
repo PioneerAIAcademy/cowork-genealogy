@@ -103,6 +103,85 @@ describe("research_append refuses a rejected pair", () => {
     expect(text).toMatch(/different birth year/);
   });
 
+  it("refuses an append even when the new entry is already superseded", async () => {
+    // Pins the `op.op === "append"` arm independently of the re-raise clause. A create
+    // is a create whatever its fields say, and an entry arriving already-superseded is
+    // the one shape where the re-raise clause alone would let a rejected pair through.
+    const dir = project({
+      rejected_links: [{ id: "rj_001", assertion_id: "a_001", person_id: "I1",
+                         reason: "different birth year", created: "2026-09-30" }]
+    });
+    const out = await researchAppend({
+      projectPath: dir, section: "person_evidence", op: "append",
+      entry: { assertion_id: "a_001", person_id: "I1", confidence: "probable",
+               rationale: "x", superseded_by: "pe_999" }
+    } as never, undefined as never).catch((e: Error) => e);
+    const text = out instanceof Error ? out.message : JSON.stringify(out);
+    expect(text).toMatch(/rejected as not a match/);
+  });
+
+  // ── Retiring a link that was rejected AFTER it was made ──────────────────
+  // The normal sequence: a link exists, the researcher then rejects the pair. The
+  // invariant fired on every person_evidence op, updates included, so that wrong link
+  // could never afterwards be annotated, downgraded or superseded — it and the facts it
+  // materialized stayed live for good. The refusal even said to "remove the rejection",
+  // which this tool cannot do: there is no delete and the spec says never delete.
+
+  const withLiveLink = () => project({
+    person_evidence: [{ id: "pe_001", assertion_id: "a_001", person_id: "I1",
+                        confidence: "probable", rationale: "made before the rejection" }],
+    rejected_links: [{ id: "rj_001", assertion_id: "a_001", person_id: "I1",
+                       reason: "different birth year", created: "2026-09-30" }],
+  });
+
+  /** Returns the response text, having first proved the call was actually accepted —
+   *  an update rejected for an unrelated reason (a wrong parameter name, say) also fails
+   *  to match /rejected as not a match/, so without this the three tests below pass
+   *  without ever reaching the invariant they exist to exercise. */
+  const update = async (fields: Record<string, unknown>) => {
+    const out = await researchAppend({
+      projectPath: withLiveLink(), section: "person_evidence", op: "update",
+      entryId: "pe_001", fields,
+    } as never, undefined as never).catch((e: Error) => e);
+    const text = out instanceof Error ? out.message : JSON.stringify(out);
+    expect(text, `the update itself failed, so the invariant was never reached: ${text}`)
+      .not.toMatch(/requires an .entryId.|unknown section|no such entry/);
+    return text;
+  };
+
+  it("lets a rejected link be given a rationale", async () => {
+    expect(await update({ rationale: "superseded by the 1880 census" }))
+      .not.toMatch(/rejected as not a match/);
+  });
+
+  it("lets a rejected link be downgraded to speculative", async () => {
+    expect(await update({ confidence: "speculative" })).not.toMatch(/rejected as not a match/);
+  });
+
+  it("lets a rejected link be superseded", async () => {
+    // The one route that actually retires it, and the one the refusal blocked.
+    expect(await update({ superseded_by: "pe_002" })).not.toMatch(/rejected as not a match/);
+  });
+
+  it("still refuses an update that brings a superseded link back", async () => {
+    // The other direction: clearing `superseded_by` re-raises the link, which IS a
+    // re-link of a rejected pair and must stay refused. Without this the narrowing
+    // would be a hole rather than a fix.
+    const dir = project({
+      person_evidence: [{ id: "pe_001", assertion_id: "a_001", person_id: "I1",
+                          confidence: "probable", rationale: "retired",
+                          superseded_by: "pe_002" }],
+      rejected_links: [{ id: "rj_001", assertion_id: "a_001", person_id: "I1",
+                         reason: "different birth year", created: "2026-09-30" }],
+    });
+    const out = await researchAppend({
+      projectPath: dir, section: "person_evidence", op: "update",
+      entryId: "pe_001", fields: { superseded_by: null },
+    } as never, undefined as never).catch((e: Error) => e);
+    const text = out instanceof Error ? out.message : JSON.stringify(out);
+    expect(text).toMatch(/rejected as not a match/);
+  });
+
   it("allows the same assertion against a different person", async () => {
     const dir = project({
       rejected_links: [{ id: "rj_001", assertion_id: "a_001", person_id: "I2",

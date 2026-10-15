@@ -4945,6 +4945,88 @@ def test_a_subagent_cannot_end_the_main_turn_with_a_delivery():
     assert halted == [], "and must not fire the delivered exit"
 
 
+def test_a_subagent_cannot_end_the_main_turn_with_a_question():
+    """The decision arm had no caller check while the delivered arm right below it did.
+
+    A subagent holds the session's whole tool set, so an `AskUserQuestion` from, say,
+    init-project ended the researcher's turn as `decision` — a question nobody could
+    see, halting a job. Found in the self-review of #3262; the delivered arm's own
+    tests are the shape this mirrors.
+    """
+    halted: list[str] = []
+    rows: list[dict] = []
+    hook = options.make_pretool_hook(
+        turn_id="t1", session_id="s1", cwd="/project", config_root="/cfg",
+        record=rows.append, on_decision=lambda: halted.append("x"),
+    )
+    out = asyncio.run(hook(
+        {"tool_name": options.DECISION_TOOL, "tool_input": {"questions": [{"q": "?"}]},
+         "agent_id": "ag_1", "agent_type": "init-project"},
+        "u1", None,
+    ))
+    assert out.get("continue_") is not False, "a subagent's question must not halt the turn"
+    assert halted == [], "and must not fire the decision exit"
+    assert not [r for r in rows if r.get("decision") == "decision"], \
+        "nor record the turn as ending in a decision"
+
+
+def test_the_main_thread_still_asks_with_agent_type_present():
+    """The other direction: a session started with `--agent` carries `agent_type` on its
+    MAIN thread, so keying on that instead of `agent_id` would silently stop the decision
+    exit working for those sessions."""
+    halted: list[str] = []
+    hook = options.make_pretool_hook(
+        turn_id="t1", session_id="s1", cwd="/project", config_root="/cfg",
+        record=lambda row: None, on_decision=lambda: halted.append("x"),
+    )
+    out = asyncio.run(hook(
+        {"tool_name": options.DECISION_TOOL, "tool_input": {"questions": [{"q": "?"}]},
+         "agent_type": "research"},
+        "u1", None,
+    ))
+    assert halted == ["x"], "the main thread's question must still end the turn"
+    assert out.get("continue_") is False
+
+
+def test_a_subagent_with_an_empty_agent_id_is_still_a_subagent():
+    """MEMBERSHIP, not truthiness — the contract the delivered arm's tests already state.
+
+    `agent_id` is absent as a KEY on the main thread; a subagent always carries it, and a
+    falsy-but-present value is still a subagent. `not data.get("agent_id")` passes every
+    other test in this file and hands an empty id the main thread's power to end the turn.
+    """
+    halted: list[str] = []
+    hook = options.make_pretool_hook(
+        turn_id="t1", session_id="s1", cwd="/project", config_root="/cfg",
+        record=lambda row: None, on_decision=lambda: halted.append("x"),
+    )
+    out = asyncio.run(hook(
+        {"tool_name": options.DECISION_TOOL, "tool_input": {"questions": [{"q": "?"}]},
+         "agent_id": "", "agent_type": "init-project"},
+        "u1", None,
+    ))
+    assert halted == [], "an empty agent_id is still a subagent, and must not end the turn"
+    assert out.get("continue_") is not False
+
+
+def test_a_decision_row_records_which_caller_asked():
+    """`agent_id`/`agent_type` were absent from the decision row while the delivered row
+    carried both, so a decision could not be attributed after the fact."""
+    rows: list[dict] = []
+    hook = options.make_pretool_hook(
+        turn_id="t1", session_id="s1", cwd="/project", config_root="/cfg",
+        record=rows.append, on_decision=lambda: None,
+    )
+    asyncio.run(hook(
+        {"tool_name": options.DECISION_TOOL, "tool_input": {"questions": [{"q": "?"}]},
+         "agent_type": "research"},
+        "u1", None,
+    ))
+    decision = [r for r in rows if r.get("decision") == "decision"]
+    assert decision, "the main thread's question records a decision row"
+    assert "agent_id" in decision[0] and "agent_type" in decision[0]
+
+
 def test_the_main_thread_still_delivers_with_agent_type_present():
     """The other direction, and the reason `agent_type` alone cannot be the test: a
     session started with `--agent` carries agent_type on its MAIN thread. Keying on it

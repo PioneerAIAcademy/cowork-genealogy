@@ -4320,7 +4320,27 @@ function applyOne(
     // a writer precondition. The reported failure is exactly this -- a researcher
     // challenged an assumption and the agent reverted to it, because nothing recorded
     // the rivals.
-    invariantErrors.push(...rejectedLinkInvariants(resultEntry, research));
+    // ...on a CREATE, or on an update that brings a retired link back. NOT on every
+    // edit to a link that already exists: the normal sequence is to reject a pair whose
+    // link is already there, and firing on updates too meant that wrong link could never
+    // afterwards be given a rationale, lowered to `speculative`, or superseded — so the
+    // bad link and the facts it materialized stayed live for good. The refusal even told
+    // the caller to "remove the rejection", which `research_append` cannot do (no delete,
+    // and the spec says never delete). Found in the self-review of #3262.
+    const linkFields = op.fields ?? {};
+    // The two arms are deliberately DISJOINT (`op.op === "update"` on the second), so
+    // each is individually load-bearing and a mutation of either is caught. Written as
+    // an un-guarded `||` first, the append case passed through the second clause by
+    // accident — appends end up with `superseded_by` present and null — which left the
+    // create path resting on an incidental property instead of a stated rule.
+    const reRaising =
+      op.op === "append" ||
+      (op.op === "update" &&
+        Object.prototype.hasOwnProperty.call(linkFields, "superseded_by") &&
+        resultEntry.superseded_by == null);
+    if (reRaising) {
+      invariantErrors.push(...rejectedLinkInvariants(resultEntry, research));
+    }
     invariantErrors.push(...personEvidenceInvariants(resultEntry, research));
     invariantErrors.push(...coreIdentifierConflictInvariants(resultEntry));
     // A REFUSAL, not a warning. The lead's standing ruling on issue #2272 is
@@ -5889,6 +5909,7 @@ export const RESEARCH_APPEND_SECTIONS = [
   "sources",
   "assertions",
   "person_evidence",
+  "rejected_links",
   "questions",
   "plans",
   "plan_items",

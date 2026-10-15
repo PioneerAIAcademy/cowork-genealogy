@@ -521,10 +521,20 @@ def make_pretool_hook(
         # the researcher's own instruction and an ask cannot overrule it. Decisions are
         # ASYNCHRONOUS -- a person answers hours later and an attempt is capped -- so the
         # turn ENDS here and the answer arrives as the next message.
-        if tool_name == DECISION_TOOL:
+        # Main thread only, exactly as the delivered arm below: a SUBAGENT that asks a
+        # question must not end the whole turn. `agent_id` is present only on a subagent's
+        # call -- the same discriminator the shipped plugin hook uses (`owner_denied`,
+        # hooks/guard_project_files.py) -- so its absence IS the main thread. Without this
+        # a sub-agent's ask halted the run and recorded `decision`, which is how a question
+        # nobody could see ended a job (found in self-review of #3262).
+        if tool_name == DECISION_TOOL and "agent_id" not in data:
             try:
                 record({
-                    "turn_id": turn_id, "session_id": session_id, "tool_name": tool_name,
+                    "turn_id": turn_id, "session_id": session_id,
+                    # Recorded for the same reason the delivered arm records them: a
+                    # decision row with no caller cannot be told from a subagent's.
+                    "agent_id": data.get("agent_id"), "agent_type": data.get("agent_type"),
+                    "tool_name": tool_name,
                     "input_path": input_path(tool_name, tool_input, cwd=cwd),
                     # The shape of what this call wrote, for change review (None for a read).
                     "wrote": writer_record(tool_name, tool_input),
