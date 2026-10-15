@@ -93,6 +93,74 @@ def turn(dsn: str, sid: str, pid: str, text: str, *, completed: bool = False, ou
     return turn_id
 
 
+# A session's transcript paths as the worker writes them: the main thread, a subagent, and
+# a workflow's nested agent (claude_agent_sdk's file_path_to_session_key).
+SUBPATHS = ("", "subagents/agent-x", "subagents/workflows/r1/agent-y")
+
+
+def assistant(tokens: int) -> dict:
+    """An assistant transcript entry carrying usage, so the spend meter prices it."""
+    return {"type": "assistant", "uuid": uuid.uuid4().hex,
+            "message": {"id": "msg_" + uuid.uuid4().hex,
+                        "usage": {"input_tokens": tokens, "output_tokens": tokens}}}
+
+
+async def populated(dsn: str, *, project_id: str | None = None):
+    """``session()`` plus everything a purge must reach: an SDK session id and a transcript
+    at every SUBPATH, written through the worker's own PgSessionStore; an event, the seq
+    and activity rows and a tool call; and the project's document, blob, staging and
+    projects rows. On ``project_id`` when given, else a fresh project. ``(row, sdk_id)``."""
+    from proto.worker.session_store import PgSessionStore
+    from web.app import SessionRow
+
+    row = session(dsn)
+    if project_id is not None:
+        sql(dsn, "UPDATE sessions SET project_id = %s WHERE session_id = %s", (project_id, row.session_id))
+        sql(dsn, "UPDATE turns SET project_id = %s WHERE session_id = %s", (project_id, row.session_id))
+        row = SessionRow(row.session_id, project_id, row.title, row.model, row.created_at, row.updated_at)
+    sdk = str(uuid.uuid4())
+    sql(dsn, "UPDATE sessions SET sdk_session_id = %s WHERE session_id = %s", (sdk, row.session_id))
+    store = PgSessionStore(dsn, row.project_id)
+    for subpath in SUBPATHS:
+        key = {"project_key": "-project", "session_id": sdk, **({"subpath": subpath} if subpath else {})}
+        await store.append(key, [assistant(1000)])
+    for statement in (
+        "INSERT INTO session_events (session_id, seq, kind) VALUES (%s, 1, 'turn_done')",
+        "INSERT INTO session_seq (session_id, last) VALUES (%s, 1)",
+        "INSERT INTO session_activity (session_id, payload) VALUES (%s, '{}')",
+        "INSERT INTO tool_calls (turn_id, session_id, tool_name, decision) VALUES ('t', %s, 'Read', 'allow')",
+    ):
+        sql(dsn, statement, (row.session_id,))
+    for statement in (
+        "INSERT INTO documents (project_id, name, doc) VALUES (%s, 'research.json', '{}') ON CONFLICT DO NOTHING",
+        "INSERT INTO blobs (project_id, key, s3_key, bytes, sha256) VALUES (%s, 'images/a', 'k', 1, 'h') "
+        "ON CONFLICT DO NOTHING",
+        "INSERT INTO staging (project_id, staging_id, s3_key) VALUES (%s, 's1', 'k') ON CONFLICT DO NOTHING",
+        "INSERT INTO projects (project_id) VALUES (%s) ON CONFLICT DO NOTHING",
+    ):
+        sql(dsn, statement, (row.project_id,))
+    return row, sdk
+
+
+def transcript(dsn: str, sdk: str) -> list[str]:
+    """The subpaths holding a transcript row for SDK session ``sdk``, sorted."""
+    return [r[0] for r in sql(dsn, "SELECT subpath FROM session_entries WHERE session_id = %s ORDER BY subpath",
+                              (sdk,))]
+
+
+def session_rows(dsn: str, session_id: str) -> dict[str, int]:
+    """Row counts per table keyed by the web session id (proto.grants.SESSION_TABLES + sessions)."""
+    from proto import grants
+
+    return {t: sql(dsn, f"SELECT count(*) FROM {t} WHERE session_id = %s", (session_id,))[0][0]  # noqa: S608
+            for t in (*grants.SESSION_TABLES, "sessions")}
+
+
+def project_rows(dsn: str, project_id: str) -> dict[str, int]:
+    return {t: sql(dsn, f"SELECT count(*) FROM {t} WHERE project_id = %s", (project_id,))[0][0]  # noqa: S608
+            for t in ("documents", "blobs", "staging", "projects")}
+
+
 async def ungranted_advisory(dsn: str, classid: int | None = None, timeout_s: float = 10.0) -> None:
     """Return once some backend is WAITING on an advisory lock -- one in namespace
     ``classid`` (a two-int4 key's first half) when given; fail at the deadline."""
