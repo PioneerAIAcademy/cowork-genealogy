@@ -2,12 +2,8 @@ import { describe, it, expect, beforeEach, afterEach } from "vitest";
 import { mkdtemp, writeFile, rm } from "fs/promises";
 import { join } from "path";
 import { tmpdir } from "os";
-import {
-  lookupPlaceCoords,
-  personWarningsTool,
-  PLACE_LOOKUP_BUDGET_MS,
-  type PlaceCoordsResolver,
-} from "../../src/tools/person-warnings.js";
+import { personWarningsTool, PLACE_LOOKUP_BUDGET_MS } from "../../src/tools/person-warnings.js";
+import { lookupPlaceCoords, type PlaceCoordsResolver } from "../../src/utils/place-coords.js";
 
 // hasBirthFarFromParentsResidence (issue #1962 item 3). Places sit on the
 // equator, so `miles` east of the birthplace is miles / MILES_PER_DEGREE degrees
