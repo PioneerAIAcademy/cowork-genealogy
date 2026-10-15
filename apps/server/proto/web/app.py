@@ -16,6 +16,9 @@ reused verbatim with ``VITE_SESSION_TRANSPORT=sse``:
   GET  /callback   (patron sign-in, web/auth.py; every /api/sessions route needs the cookie)
   GET  .../sidecar/{log_id} -> 404;  .../image, .../logs, .../files -> 501
   POST /api/sessions/{id}/interrupt                Stop: raise the flag        -> 202
+  GET  /api/feedback/context?sessionId=         the files and transcript size a report would carry
+  POST /api/feedback {sessionId, ...}           bundle the project + transcript to S3 (U20,
+                                                web/feedback.py); stored, sent nowhere
 
 The turn message body is ``{turn_id, session_id, project_id, text, enqueued_at,
 max_nudges}``. The ``turn_id`` is a UUID minted here and travels IN THE BODY -- never the
@@ -57,6 +60,10 @@ table an earlier boot left. ``GET /api/health`` is readiness: 200 or 503, the sa
 either way, plus ``checks`` (``postgres``, ``schema``, ``allowlist``) whose ``error`` is a
 label, never a message.
 
+GENEALOGY_S3_BUCKET / _ENDPOINT / _ACCESS_KEY / _SECRET_KEY / _REGION (web/blobstore.py,
+the engine's semantics): the feedback bucket. Unset bucket: POST /api/feedback answers 503;
+a half key pair refuses to start, as a half SQS pair does.
+
 WEB_DIST_DIR (unset: no SPA) names the ``apps/web`` SSE build to serve at ``/``; a
 relative value resolves against the tier root, and a missing dist refuses to start
 (``web/spa.py``).
@@ -74,6 +81,7 @@ from __future__ import annotations
 
 import asyncio
 import contextlib
+import functools
 import html
 import json
 import logging
@@ -92,8 +100,9 @@ from typing import Any, Protocol
 from urllib.parse import urlparse
 
 from fastapi import Depends, FastAPI, HTTPException, Request
+from fastapi.exceptions import RequestValidationError
 from fastapi.responses import HTMLResponse, JSONResponse, RedirectResponse, Response, StreamingResponse
-from pydantic import BaseModel, Field, field_validator
+from pydantic import BaseModel, Field, ValidationError, field_validator
 
 HERE = Path(__file__).resolve().parent
 PROTO_DIR = HERE.parent
@@ -108,6 +117,8 @@ import enqueue  # noqa: E402  (the SQS query-API client; signs SigV4)
 import grants  # noqa: E402  (U3: grant custody, shared with the worker)
 import migrate  # noqa: E402  (U9: the ledger and the verdict; this tier runs no DDL)
 from web import auth  # noqa: E402  (patron sign-in, vendored from the alpha)
+from web import blobstore  # noqa: E402  (U20: the S3 client, the engine's GENEALOGY_S3_* semantics)
+from web import feedback  # noqa: E402  (U20: the feedback bundle)
 from web import spa  # noqa: E402  (the SPA build, mounted last; U12)
 
 log = logging.getLogger("proto.web")
@@ -199,6 +210,23 @@ FAIL_TURN_SQL = (
     "UPDATE turns SET outcome = %s, completed_at = now(), claim_epoch = claim_epoch + 1 "
     "WHERE turn_id = %s AND completed_at IS NULL"
 )
+# U20 feedback. The transcript is keyed project_key = project_id (the worker's
+# PgSessionStore), so a project's rows are one prefix of session_entries_key_idx. The group
+# sizes are computed in SQL so /api/feedback/context never loads a row; +1 per row is the
+# JSONL newline, which keeps the sum an upper bound on the bytes a POST zips.
+BLOB_INDEX_SQL = "SELECT key, s3_key, bytes FROM blobs WHERE project_id = %s ORDER BY key"
+SDK_SESSION_SQL = "SELECT sdk_session_id FROM sessions WHERE session_id = %s"
+TRANSCRIPT_GROUPS_SQL = (
+    "SELECT session_id, subpath, max(seq) AS max_seq, "
+    "sum(octet_length(entry::text) + 1) AS bytes "
+    "FROM session_entries WHERE project_key = %s GROUP BY session_id, subpath "
+    "ORDER BY max(seq) DESC, session_id, subpath"
+)
+TRANSCRIPT_ROWS_SQL = (
+    "SELECT seq, entry FROM session_entries WHERE project_key = %s AND session_id = %s "
+    "AND subpath = %s AND seq > %s ORDER BY seq LIMIT %s"
+)
+GRANT_CIPHERTEXTS_SQL = "SELECT access_token_enc, refresh_token_enc FROM familysearch_tokens WHERE user_id = %s"
 
 
 # ── rows ─────────────────────────────────────────────────────────────────────────
@@ -305,6 +333,14 @@ class Store(Protocol):
     async def store_grant(
         self, user_id: str, access_token_enc: str, refresh_token_enc: str | None, expires_at: datetime
     ) -> None: ...
+    # U20 feedback: what a bundle reads. transcript_rows is one keyset batch (seq > after).
+    async def blob_index(self, project_id: str) -> list[tuple[str, str, int]]: ...
+    async def sdk_session_id(self, session_id: str) -> str | None: ...
+    async def transcript_groups(self, project_id: str) -> list[feedback.TranscriptGroup]: ...
+    async def transcript_rows(
+        self, project_id: str, session_id: str, subpath: str, after: int, limit: int
+    ) -> list[tuple[int, Any]]: ...
+    async def grant_ciphertexts(self, user_id: str) -> tuple[str | None, str | None]: ...
 
 
 class Queue(Protocol):
@@ -367,7 +403,7 @@ def queue_body(turn_id: str, session: SessionRow, text: str, enqueued_at: str, n
 
 
 def session_out(row: SessionRow) -> dict[str, Any]:
-    """Every key of api.ts's SessionSummary; SessionList dereferences model/last_active."""
+    """Every required key of api.ts's SessionSummary (`continuable` is optional and omitted, which reads as not ended); SessionList dereferences model/last_active."""
     return {
         "id": row.session_id,
         "title": row.title,
@@ -743,6 +779,38 @@ class PgStore:
         async with await self._connect() as conn:
             cur = await conn.execute("SELECT name, version, doc FROM documents WHERE project_id = %s", (project_id,))
             return {r["name"]: (r["version"], r["doc"]) for r in await cur.fetchall()}
+
+    # -- U20 feedback reads ------------------------------------------------------------
+
+    async def blob_index(self, project_id: str) -> list[tuple[str, str, int]]:
+        async with await self._connect() as conn:
+            cur = await conn.execute(BLOB_INDEX_SQL, (project_id,))
+            return [(r["key"], r["s3_key"], int(r["bytes"])) for r in await cur.fetchall()]
+
+    async def sdk_session_id(self, session_id: str) -> str | None:
+        async with await self._connect() as conn:
+            cur = await conn.execute(SDK_SESSION_SQL, (session_id,))
+            row = await cur.fetchone()
+        return row["sdk_session_id"] if row else None
+
+    async def transcript_groups(self, project_id: str) -> list[feedback.TranscriptGroup]:
+        async with await self._connect() as conn:
+            cur = await conn.execute(TRANSCRIPT_GROUPS_SQL, (project_id,))
+            return [feedback.TranscriptGroup(r["session_id"], r["subpath"], int(r["max_seq"]), int(r["bytes"]))
+                    for r in await cur.fetchall()]
+
+    async def transcript_rows(
+        self, project_id: str, session_id: str, subpath: str, after: int, limit: int
+    ) -> list[tuple[int, Any]]:
+        async with await self._connect() as conn:
+            cur = await conn.execute(TRANSCRIPT_ROWS_SQL, (project_id, session_id, subpath, after, limit))
+            return [(int(r["seq"]), r["entry"]) for r in await cur.fetchall()]
+
+    async def grant_ciphertexts(self, user_id: str) -> tuple[str | None, str | None]:
+        async with await self._connect() as conn:
+            cur = await conn.execute(GRANT_CIPHERTEXTS_SQL, (user_id,))
+            row = await cur.fetchone()
+        return (row["access_token_enc"], row["refresh_token_enc"]) if row else (None, None)
 
     async def admit_message(self, session: SessionRow, text: str) -> tuple[Turn, bool, dict[str, Any] | None]:
         """Record the patron's message and decide whether it goes out now (1b): ``(turn,
@@ -1296,9 +1364,12 @@ def create_app(
     poll_s: float | None = None,
     ping_s: float | None = None,
     stream_max_polls: int | None = None,
+    blobs: Any = None,
 ) -> FastAPI:
     """Factory. With no arguments the lifespan builds PgStore(PG_DSN) + SqsQueue(QUEUE_URL)
-    from env, refusing to start without a QUEUE_URL; tests pass fakes and shrink the timings."""
+    from env, refusing to start without a QUEUE_URL; tests pass fakes and shrink the timings.
+    ``blobs`` (U20) is the feedback bucket (``blobstore.S3Blobs``); None with no store
+    passed means the lifespan builds it from GENEALOGY_S3_*."""
 
     @asynccontextmanager
     async def lifespan(app: FastAPI):
@@ -1319,6 +1390,14 @@ def create_app(
             if sqs_auth.method is None:
                 log.warning("no AWS credentials found yet: SendMessage retries the chain "
                             "and fails until it resolves")
+        # U20: the feedback bucket. A half key pair refuses here, as a half SQS pair does; no
+        # bucket leaves the tier up and POST /api/feedback answering 503.
+        if app.state.blobs is None and app.state.store is None:
+            try:
+                app.state.blobs = await asyncio.to_thread(blobstore.from_env, os.environ)
+            except blobstore.S3ConfigError as exc:
+                raise RuntimeError(str(exc)) from exc
+            log.info("%s", blobstore.describe(os.environ))
         # U10 D8: the store goes on app.state before either step, so every route and
         # /api/health see it while Postgres is down; neither step can stop the tier listening.
         steps: dict[str, Callable[[], Awaitable[Any]]] = {}
@@ -1368,6 +1447,7 @@ def create_app(
                   docs_url=None, redoc_url=None, openapi_url=None)
     app.state.store = store
     app.state.queue = queue
+    app.state.blobs = blobs
     # U10: what the lifespan's startup steps reached (`ok`, `pending` or a label). None
     # when no lifespan ran (a test's ASGITransport), which leaves the allowlist ungated.
     app.state.startup = None
@@ -1761,6 +1841,103 @@ def create_app(
             frames, media_type="text/event-stream",
             headers={"Cache-Control": "no-cache", "X-Accel-Buffering": "no"},
         )
+
+    # -- feedback (U20) -------------------------------------------------------------
+    # The alpha's two routes over the prototype's stores: the project from documents +
+    # blobs (bytes in S3), the transcript from session_entries, the zip to our own bucket
+    # under feedback/ and sent nowhere (feedback.forward_stored_feedback). The owner check
+    # runs before the body is validated: a foreign session is 404, never 422.
+
+    # One build at a time per process: a build holds up to 35 MiB of project files, the
+    # transcript budget and the zip, on the tier that also serves every patron's SSE.
+    feedback_gate = asyncio.Semaphore(1)
+
+    async def _owned_for_feedback(request: Request, session_id: Any, user: User) -> SessionRow:
+        if not isinstance(session_id, str) or not session_id:
+            raise HTTPException(status_code=404, detail="Session not found")
+        return await _session(request, session_id, user)
+
+    async def _owner_tokens(store: Store, user_id: str) -> list[str]:
+        """The owner's current FamilySearch access and refresh tokens, for the literal
+        redaction pass. Best effort: none is a bundle with the bearer pass alone."""
+        try:
+            access_enc, refresh_enc = await store.grant_ciphertexts(user_id)
+            plain = [auth.decrypt(access_enc), auth.decrypt(refresh_enc)]
+        except Exception as exc:  # noqa: BLE001 - redaction input, never a reason to fail the report
+            log.warning("ev=feedback grant tokens unavailable: %s", type(exc).__name__)
+            return []
+        return [t for t in plain if t]
+
+    @app.get("/api/feedback/context")
+    async def feedback_context(
+        request: Request, sessionId: str | None = None, user: User = Depends(current_user)
+    ) -> dict:
+        row = await _owned_for_feedback(request, sessionId, user)
+        store = _store(request)
+        files, _stale = feedback.project_files(await store.documents(row.project_id),
+                                               await store.blob_index(row.project_id))
+        size = feedback.session_log_size(await store.transcript_groups(row.project_id))
+        return {"files": feedback.context_files(files), "sessionLogSize": size, "hasSessionLog": size > 0}
+
+    @app.post("/api/feedback")
+    async def submit_feedback(request: Request, user: User = Depends(current_user)) -> dict:
+        try:
+            payload = await request.json()
+        except ValueError:
+            payload = None
+        session_id = payload.get("sessionId") if isinstance(payload, dict) else None
+        row = await _owned_for_feedback(request, session_id, user)
+        try:
+            body = feedback.FeedbackBody.model_validate(payload)
+        except ValidationError as exc:
+            raise RequestValidationError(exc.errors(include_url=False, include_context=False)) from None
+        store = _store(request)
+        tokens = await _owner_tokens(store, user.id)
+        fields = feedback.feedback_fields(body, tokens)
+        blobs = request.app.state.blobs
+        if blobs is None:
+            raise HTTPException(status_code=503, detail="feedback storage is not configured")
+        submitted_at = datetime.now(timezone.utc).isoformat().replace("+00:00", "Z")
+        async with feedback_gate:
+            files, stale = feedback.project_files(await store.documents(row.project_id),
+                                                  await store.blob_index(row.project_id))
+            kept, dropped = feedback.select_project_files(files, body.includeMedia)
+            fetched, unreadable = await asyncio.to_thread(feedback.fetch_project_files, kept, blobs.get)
+            fetched = await asyncio.to_thread(feedback.redact_project_files, fetched, tokens)
+            dropped = dropped + unreadable + [f"{rel} (stale copy)" for rel in stale]
+            session_log: list[tuple[str, bytes]] = []
+            dropped_transcripts: list[str] = []
+            if body.includeSessionLog:
+                active = await store.sdk_session_id(row.session_id) or row.session_id
+                session_log, dropped_transcripts = await feedback.transcript_set(
+                    await store.transcript_groups(row.project_id), store.transcript_rows,
+                    row.project_id, active, tokens,
+                )
+            built_at, git_sha = feedback.build_info(PROTO_DIR)
+            build = functools.partial(
+                feedback.build_bundle,
+                fields=fields, body=body, submitted_at=submitted_at, project_label=row.title,
+                built_at=built_at, git_sha=git_sha, files=fetched, dropped_files=dropped,
+                session_log=session_log, dropped_transcripts=dropped_transcripts,
+            )
+            data, _redacted = await asyncio.to_thread(build)
+            n_files, n_transcripts = len(fetched), len(session_log)
+            # The zip holds what is needed now; free the inputs before the upload.
+            del build, fetched, session_log
+            # row.owner_id == user.id past _session: the internal usr_ id, never NULL here.
+            key = feedback.bundle_key(user.id, row.project_id, submitted_at)
+            try:
+                await asyncio.to_thread(blobs.put, key, data, "application/zip")
+            except Exception as exc:  # noqa: BLE001 - any S3 refusal; its text names the account
+                log.error("ev=feedback result=error reason=put_failed session=%s project=%s key=%s error=%s",
+                          row.session_id, row.project_id, key, type(exc).__name__)
+                raise HTTPException(status_code=502, detail="Feedback upload failed") from None
+        meta = {"session": row.session_id, "project": row.project_id, "bytes": len(data), "files": n_files,
+                "transcripts": n_transcripts, "dropped": len(dropped) + len(dropped_transcripts)}
+        feedback.forward_stored_feedback(key, meta)
+        log.info("ev=feedback result=stored session=%s project=%s key=%s bytes=%d files=%d transcripts=%d dropped=%d",
+                 row.session_id, row.project_id, key, meta["bytes"], n_files, n_transcripts, meta["dropped"])
+        return {"ok": True, "filename": key.rsplit("/", 1)[-1]}
 
     # Last, so it sees every API route it must not shadow (web/spa.py).
     spa.mount_spa(app, tier_root=PROTO_DIR)

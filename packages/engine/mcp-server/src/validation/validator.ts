@@ -54,10 +54,25 @@ const CLOSED_ENUMS = {
   record_basis: new Set(["stated", "inferred", "absent"]),
   conflict_type: new Set(["fact", "identity"]),
   conflict_status: new Set(["unresolved", "resolved", "moot"]),
+  resolution_kind: new Set(["competitor", "tree", "synthesis"]),
   hypothesis_status: new Set(["active", "supported", "ruled_out"]),
   proof_tier: new Set(["proved", "probable", "possible", "not_proved", "disproved"]),
   proof_vehicle: new Set(["statement", "summary", "argument"]),
   proof_shortfall: new Set(["ceiling", "gap", "conflict", "none"]),
+  stopped_because: new Set([
+    "question_answered", "record_exhausted", "nothing_further_reachable",
+    "resources_spent", "blocked_by_conflict",
+  ]),
+  stopped_because_gate: new Set([
+    "question_answered", "record_exhausted", "nothing_further_reachable",
+  ]),
+  stopped_because_non_gate: new Set([
+    "resources_spent", "blocked_by_conflict",
+  ]),
+  not_reached_kind: new Set([
+    "nil_search", "browse_only", "over_transport_cap", "paywalled",
+    "handed_to_user", "privacy_sealed", "skipped_plan_item", "wiki_named_untouched",
+  ]),
   person_evidence_confidence: new Set(["confident", "probable", "speculative"]),
   project_status: new Set(["active", "paused", "completed"]),
   priority: new Set(["high", "medium", "low"]),
@@ -510,6 +525,8 @@ const NULLABLE_FIELDS = new Set([
   "structured_value", "fallback_for", "capture_filename", "record_persona_id",
   "results_ref", "results_available", "standard_place", "distance_from_previous_km",
   "conflict_ids", "conflict_note", "justification",
+  // search_stop fields
+  "stopped_because", "wiki_title",
 ]);
 
 // Allowed properties per simplified-GedcomX object live in tree-shape.ts —
@@ -550,10 +567,13 @@ export const RESEARCH_SHAPES = {
   question: new Set([
     "id", "question", "rationale", "selection_basis", "priority", "status",
     "depends_on", "unblocks", "created", "resolved",
-    "resolution_assertion_ids", "exhaustive_declaration",
+    "resolution_assertion_ids", "search_stop",
   ]),
-  exhaustive_declaration: new Set([
-    "declared", "log_entry_ids", "stop_criteria", "justification",
+  search_stop: new Set([
+    "stopped_because", "log_entry_ids", "stop_criteria", "justification", "not_reached",
+  ]),
+  not_reached_entry: new Set([
+    "kind", "description", "log_entry_id", "wiki_title",
   ]),
   stop_criteria: new Set([
     "goal_alignment", "repository_breadth", "original_substitution",
@@ -599,6 +619,7 @@ export const RESEARCH_SHAPES = {
     "identity_question", "competing_assertion_ids", "status",
     "preferred_assertion_id", "resolution_rationale",
     "independence_analysis", "weighing_analysis", "blocks_question_ids",
+    "resolution_kind", "resolved_value",
   ]),
   hypothesis: new Set([
     "id", "claim", "status", "supporting_assertion_ids",
@@ -780,7 +801,7 @@ function validateResearch(data: any, report: ValidationReport): ResearchIds {
     checkRequired(q, [
       "id", "question", "rationale", "selection_basis", "priority",
       "status", "depends_on", "unblocks", "created", "resolved",
-      "resolution_assertion_ids", "exhaustive_declaration",
+      "resolution_assertion_ids", "search_stop",
     ], qp, report, NULLABLE_FIELDS);
     checkAllowedKeys(q, RESEARCH_SHAPES.question, "questions", qp, report);
 
@@ -795,65 +816,93 @@ function validateResearch(data: any, report: ValidationReport): ResearchIds {
       checkEnum(q.priority, "priority", qp, report);
     }
     if ("selection_basis" in q && !SELECTION_BASIS_VALUES.has(q.selection_basis)) {
-      addError(report, qp, `'${q.selection_basis}' is not a valid selection_basis`);
+      const sorted = Array.from(SELECTION_BASIS_VALUES).sort();
+      addError(report, qp, `'${q.selection_basis}' is not a valid selection_basis (expected one of: ${sorted.join(", ")})`);
     }
     checkIsoDate(q, "created", qp, report);
     checkIsoDate(q, "resolved", qp, report); // nullable — null skipped above
 
-    // Exhaustive declaration
-    const ed = q.exhaustive_declaration;
-    checkObjectField(ed, `${qp}/exhaustive_declaration`, "exhaustive_declaration", report);
-    if (isObject(ed) && !Array.isArray(ed)) {
-      checkRequired(ed, ["declared", "log_entry_ids"], `${qp}/exhaustive_declaration`, report, NULLABLE_FIELDS);
-      checkAllowedKeys(ed, RESEARCH_SHAPES.exhaustive_declaration, "exhaustive_declaration objects", `${qp}/exhaustive_declaration`, report);
-      if (ed.declared && (!ed.log_entry_ids || ed.log_entry_ids.length === 0)) {
-        addError(report, `${qp}/exhaustive_declaration`, "declared is true but log_entry_ids is empty");
+    // search_stop (replaces exhaustive_declaration — issue #2539, 2026-10-07)
+    const ss = q.search_stop;
+    checkObjectField(ss, `${qp}/search_stop`, "search_stop", report);
+    if (isObject(ss) && !Array.isArray(ss)) {
+      checkRequired(ss, ["stopped_because", "log_entry_ids", "stop_criteria", "not_reached"],
+        `${qp}/search_stop`, report, NULLABLE_FIELDS);
+      checkAllowedKeys(ss, RESEARCH_SHAPES.search_stop, "search_stop objects", `${qp}/search_stop`, report);
+
+      // stopped_because: null (new question) or one of the five enum values
+      if (ss.stopped_because !== null && ss.stopped_because !== undefined) {
+        checkEnum(ss.stopped_because, "stopped_because", `${qp}/search_stop`, report);
       }
-      if (ed.declared && ed.stop_criteria === null) {
-        addError(report, `${qp}/exhaustive_declaration`, "declared is true but stop_criteria is null");
+
+      const isStopGate = typeof ss.stopped_because === "string" &&
+        (ss.stopped_because === "question_answered" ||
+         ss.stopped_because === "record_exhausted" ||
+         ss.stopped_because === "nothing_further_reachable");
+
+      if (isStopGate && (!ss.log_entry_ids || ss.log_entry_ids.length === 0)) {
+        addError(report, `${qp}/search_stop`, "stopped_because is a stop-gate value but log_entry_ids is empty");
       }
+      if (isStopGate && ss.stop_criteria === null) {
+        addError(report, `${qp}/search_stop`, "stopped_because is a stop-gate value but stop_criteria is null");
+      }
+
+      const isNonGate = typeof ss.stopped_because === "string" && !isStopGate;
+      if (isNonGate && ss.stop_criteria !== null && ss.stop_criteria !== undefined) {
+        addError(
+          report, `${qp}/search_stop`,
+          "stopped_because is a non-gate value — stop_criteria must be null (resources_spent and blocked_by_conflict carry no per-criterion analysis)",
+        );
+      }
+
       // `stop_criteria` is an object or null, never anything else. Without this
       // arm a flat STRING cleared every check below it: `=== null` is false, so
       // the arm above misses it; `typeof === "object"` is false, so the
       // seven-field loop and the allowed-keys check are both skipped; and
       // `stop_criteria` is itself an allowed KEY, so the enclosing
       // checkAllowedKeys passes. The write then lands.
-      //
-      // Measured over the 157 committed e2e runs: 48 write ops put a string here
-      // (47 of them declaring), and 39 of the 154 persisted declared questions
-      // carry one — 25% of the corpus persisting a shape
-      // `research.schema.json` has always forbidden, with nothing checking.
-      // `typeof [] === "object"`, so an array needs its own arm — but only for
-      // the `declared: false` case, and the narrower claim is the true one. On
-      // `declared: true` the seven-field loop below already fires (its test is
-      // `!(field in sc)`, false for every key on an array) and a non-empty
-      // array's numeric indices are already rejected by `checkAllowedKeys`. An
-      // EMPTY array on an undeclared question is what slipped all three, which
-      // is exactly the vector that failed while this guard was written.
-      if (ed.stop_criteria !== undefined && ed.stop_criteria !== null
-          && (typeof ed.stop_criteria !== "object" || Array.isArray(ed.stop_criteria))) {
+      if (ss.stop_criteria !== undefined && ss.stop_criteria !== null
+          && (typeof ss.stop_criteria !== "object" || Array.isArray(ss.stop_criteria))) {
         addError(
           report,
-          `${qp}/exhaustive_declaration/stop_criteria`,
-          `must be an object with the seven stop criteria, or null — got ${Array.isArray(ed.stop_criteria) ? "array" : typeof ed.stop_criteria}. ` +
+          `${qp}/search_stop/stop_criteria`,
+          `must be an object with the seven stop criteria, or null — got ${Array.isArray(ss.stop_criteria) ? "array" : typeof ss.stop_criteria}. ` +
             "A prose summary of the criteria does not satisfy GPS Component 1's per-criterion " +
             "assessment: write the seven keys (goal_alignment, repository_breadth, " +
             "original_substitution, independent_verification, evidence_class, conflict_resolution, " +
             "overturn_risk), each with its own 1-2 sentence assessment.",
         );
       }
-      if (ed.declared && typeof ed.stop_criteria === "object" && ed.stop_criteria !== null) {
-        const sc = ed.stop_criteria;
+      if (isStopGate && typeof ss.stop_criteria === "object" && ss.stop_criteria !== null) {
+        const sc = ss.stop_criteria;
         for (const field of ["goal_alignment", "repository_breadth", "original_substitution",
                              "independent_verification", "evidence_class", "conflict_resolution",
                              "overturn_risk"]) {
           if (!(field in sc)) {
-            addError(report, `${qp}/exhaustive_declaration/stop_criteria`, `missing '${field}'`);
+            addError(report, `${qp}/search_stop/stop_criteria`, `missing '${field}'`);
           }
         }
       }
-      if (typeof ed.stop_criteria === "object" && ed.stop_criteria !== null) {
-        checkAllowedKeys(ed.stop_criteria, RESEARCH_SHAPES.stop_criteria, "stop_criteria objects", `${qp}/exhaustive_declaration/stop_criteria`, report);
+      if (typeof ss.stop_criteria === "object" && ss.stop_criteria !== null) {
+        checkAllowedKeys(ss.stop_criteria, RESEARCH_SHAPES.stop_criteria, "stop_criteria objects", `${qp}/search_stop/stop_criteria`, report);
+      }
+
+      // not_reached: required array, may be empty; each entry validated
+      if (Array.isArray(ss.not_reached)) {
+        for (let j = 0; j < ss.not_reached.length; j++) {
+          const nr = ss.not_reached[j];
+          const nrp = `${qp}/search_stop/not_reached[${j}]`;
+          if (!isObjectEntry(nr, nrp, report)) continue;
+          checkRequired(nr, ["kind", "description", "log_entry_id", "wiki_title"],
+            nrp, report, NULLABLE_FIELDS);
+          checkAllowedKeys(nr, RESEARCH_SHAPES.not_reached_entry, "not_reached entries", nrp, report);
+          if ("kind" in nr) {
+            checkEnum(nr.kind, "not_reached_kind", nrp, report);
+          }
+          if (nr.kind === "wiki_named_untouched" && (nr.wiki_title === null || nr.wiki_title === undefined)) {
+            addError(report, nrp, "wiki_title is required (non-null) when kind is 'wiki_named_untouched'");
+          }
+        }
       }
     }
   }
@@ -1181,6 +1230,46 @@ function validateResearch(data: any, report: ValidationReport): ResearchIds {
         );
       }
     }
+    // Precondition 2 at the document tier (issue #2937). An unidentified
+    // informant cannot be shown to have witnessed the fact OR to have not
+    // witnessed it, so the Layer-2 decision tree terminates at question 1 and
+    // never reaches the primary/secondary split. `research_append` refuses this
+    // on the way in (`validateInformantQualityFloor`); this tier catches a
+    // document assembled any other way — the same gap that let
+    // `flynn-parentage-not-proved` a_012 carry a negative-evidence violation.
+    //
+    // FORWARD ONLY, for the same reason the arm above is: `indeterminate` does
+    // not imply `unknown`. A NAMED informant whose relationship to the specific
+    // fact cannot be established is `indeterminate` at a known proximity — the
+    // decision tree's "CANNOT TELL" branch, reachable only once question 1 has
+    // answered YES. Checking the converse would refuse the ordinary census
+    // shape.
+    //
+    // Fires ONLY for the two in-enum values that claim a determination was
+    // made. A missing `information_quality` reports as `checkRequired`'s error
+    // alone, and an OUT-OF-ENUM one as `checkEnum`'s alone — in both cases this
+    // rule would name the wrong fix on top of the right one. The out-of-enum
+    // case is not hypothetical: `eval/fixtures/scenarios/mid-research-flynn-bad-enum`
+    // a_001 is `unknown` + `tertiary`, and `ut_validate_schema_004` states that
+    // the validator emits exactly ONE error for it. A blanket `!== "indeterminate"`
+    // made that two and would have silently changed another skill's eval fixture.
+    if (
+      a.informant_proximity === "unknown" &&
+      (a.information_quality === "primary" || a.information_quality === "secondary")
+    ) {
+      addError(
+        report,
+        ap,
+        `informant_proximity 'unknown' requires information_quality ` +
+          `'indeterminate' (got ${JSON.stringify(a.information_quality)}) — if the ` +
+          `informant cannot be identified, neither firsthand knowledge nor its ` +
+          `absence has been established, so the classification stops at ` +
+          `'indeterminate'. If you can name who supplied the fact, set ` +
+          `informant_proximity to what they were instead. Being an index or a ` +
+          `transcript is not a reason to write 'unknown': the original informant ` +
+          `carries through a derivative unchanged`
+      );
+    }
     if ("date_certainty" in a && a.date_certainty !== null) {
       if (!DATE_CERTAINTY_VALUES.has(a.date_certainty)) {
         addError(report, ap, `'${a.date_certainty}' is not a valid date_certainty`);
@@ -1249,6 +1338,15 @@ function validateResearch(data: any, report: ValidationReport): ResearchIds {
     }
     if ("conflict_type" in c) {
       checkEnum(c.conflict_type, "conflict_type", cp, report);
+    }
+    // Both optional and nullable: a conflict resolved before these fields
+    // existed carries neither, and only a resolve op is required to name its
+    // kind (research_append's resolution-kind precondition).
+    if (c.resolution_kind != null) {
+      checkEnum(c.resolution_kind, "resolution_kind", cp, report);
+    }
+    if (c.resolved_value != null && typeof c.resolved_value !== "string") {
+      addError(report, cp, `resolved_value must be a string or null, got ${typeof c.resolved_value}`);
     }
     if ("status" in c) {
       checkEnum(c.status, "conflict_status", cp, report);

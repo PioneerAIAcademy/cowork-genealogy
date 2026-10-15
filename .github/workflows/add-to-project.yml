@@ -68,8 +68,10 @@ name: add-to-project
 # which logs the third). A silent no-op here is worse than a red X, because the
 # symptom — issues quietly missing from the board — is exactly the condition
 # this workflow exists to prevent, and it would take another manual sweep to
-# notice. So: no try/catch around the write, an explicit read-back to confirm
-# the card landed, and a hard failure when the secret is absent.
+# notice. So: no catch that swallows a write (a transient GitHub error is
+# retried twice by `gql()`, and the third failure still fails the job), an
+# explicit read-back to confirm the card landed, and a hard failure when the
+# secret is absent.
 
 on:
   issues:
@@ -133,11 +135,35 @@ jobs:
             const dryRun = process.env.DRY_RUN === 'true';
             const { owner, repo } = context.repo;
 
+            // Every board call goes through gql(), which retries twice. About
+            // 1 run in 300 hits a transient GitHub error: a 502/503, or
+            // "Something went wrong while executing your query", which arrives
+            // as HTTP 200 and so escapes github-script's own `retries:`. The
+            // costly one is the Status write: when it fails, the built-in
+            // "Item added to project" automation fills the empty Status with
+            // Ready (issue #3442, run 38588244440). Every call here is safe to
+            // repeat: reads, an idempotent add, and a write of the same value.
+            // But a retry waits long enough for that automation to land, so
+            // `retried` tells act() not to trust a status it reads after one.
+            let retried = false;
+            async function gql(query, variables) {
+              for (let attempt = 1; ; attempt++) {
+                try {
+                  return await github.graphql(query, variables);
+                } catch (e) {
+                  if (attempt === 3) throw e;
+                  retried = true;
+                  core.warning(`GitHub API error, retrying in ${2 * attempt}s: ${e.message}`);
+                  await new Promise(r => setTimeout(r, 2000 * attempt));
+                }
+              }
+            }
+
             // ---- board metadata ---------------------------------------------
             // Looked up by name rather than hardcoded as node IDs, so renaming
             // the board or the Status field fails here with a clear message
             // instead of silently writing to the wrong field.
-            const meta = await github.graphql(`
+            const meta = await gql(`
               query($org: String!, $number: Int!) {
                 organization(login: $org) {
                   projectV2(number: $number) {
@@ -209,7 +235,7 @@ jobs:
             // Where this issue already sits on OUR board, or null. An issue can
             // belong to several projects, hence the filter on project id.
             async function existingCard(issue) {
-              const q = await github.graphql(`
+              const q = await gql(`
                 query($content: ID!) {
                   node(id: $content) {
                     ... on Issue {
@@ -256,7 +282,8 @@ jobs:
                 return [`#${issue.number}`, `WOULD add to ${status}`, issue.title.slice(0, 60)];
               }
 
-              const added = await github.graphql(`
+              retried = false;
+              const added = await gql(`
                 mutation($project: ID!, $content: ID!) {
                   addProjectV2ItemById(input: { projectId: $project, contentId: $content }) {
                     item { id }
@@ -273,13 +300,17 @@ jobs:
 
               // Re-read rather than trusting step 1: the add closes a race
               // window, and an item that acquired a status in between was set
-              // by a human or by Claude. Do not touch it.
+              // by a human or by Claude. Do not touch it, unless a call since
+              // the add was retried: that wait outlasts the built-in
+              // automation, so the status read here may be its Ready.
               const after = await existingCard(issue);
-              if (after?.status) {
+              if (after?.status && !retried) {
                 return [`#${issue.number}`, `left in ${after.status}`, issue.title.slice(0, 60)];
               }
 
-              await github.graphql(`
+              // gql() repeats this write as is, without re-reading: once it has
+              // failed, the built-in automation may already have set Ready.
+              await gql(`
                 mutation($project: ID!, $item: ID!, $field: ID!, $option: String!) {
                   updateProjectV2ItemFieldValue(input: {
                     projectId: $project, itemId: $item, fieldId: $field,

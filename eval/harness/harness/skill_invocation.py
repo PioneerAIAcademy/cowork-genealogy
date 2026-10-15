@@ -172,8 +172,13 @@ def owning_skills(tool: str, args: dict[str, Any] | None) -> list[str]:
                 owners.append("conflict-resolution")
             elif section == "questions":
                 fields = op.get("fields") if isinstance(op.get("fields"), dict) else op.get("entry")
+                ss = (fields or {}).get("search_stop") if isinstance(fields, dict) else None
+                _GATE = {"question_answered", "record_exhausted", "nothing_further_reachable"}
+                new_gate = isinstance(ss, dict) and ss.get("stopped_because") in _GATE
+                # Legacy shape: exhaustive_declaration.declared = true (pre-#2539 runs)
                 ed = (fields or {}).get("exhaustive_declaration") if isinstance(fields, dict) else None
-                if isinstance(ed, dict) and ed.get("declared") is True:
+                legacy_gate = isinstance(ed, dict) and ed.get("declared") is True
+                if new_gate or legacy_gate:
                     owners.append("research-exhaustiveness")
     elif bare == "materialize_facts":
         for op in _iter_ops(args):
@@ -386,7 +391,7 @@ def find_unguarded_protected_writes(
     return violations
 
 
-# The four optional `conflict` fields that are conflict-resolution's analytical
+# The six optional `conflict` fields that are conflict-resolution's analytical
 # PRODUCT rather than the mere record that a conflict exists. Several skills
 # legitimately open a conflicts entry — person-evidence (#738's mandatory entry
 # when identity rests on one uncorroborated read), proof-conclusion,
@@ -394,14 +399,17 @@ def find_unguarded_protected_writes(
 # the schema's required fields (id / conflict_type / description /
 # competing_assertion_ids / status / blocks_question_ids). These four are
 # optional in `research.schema.json` and, across the whole plugin, are written
-# ONLY by `conflict-resolution/SKILL.md` and by `research/SKILL.md` — i.e. the
-# orchestrator that is supposed to *delegate* to it. So their presence is the
-# effect, and their absence is why "a conflict was recorded" alone must not fire.
+# ONLY by the `conflict-resolution` agent — the plugin hook denies them to every
+# other caller (`OWNED_CLAIMS` in guard_project_files.py). So their presence is
+# the effect, and their absence is why "a conflict was recorded" alone must not
+# fire. `resolution_kind` and `resolved_value` joined with the kind gate.
 CONFLICT_ANALYSIS_FIELDS = (
     "independence_analysis",
     "weighing_analysis",
     "preferred_assertion_id",
     "resolution_rationale",
+    "resolution_kind",
+    "resolved_value",
 )
 
 
@@ -554,12 +562,18 @@ def find_effects_without_invocation(
             invoked.add(name)
 
     questions = research.get("questions") if isinstance(research.get("questions"), list) else []
-    if any(
-        isinstance(q, dict) and (q.get("exhaustive_declaration") or {}).get("declared") is True
-        for q in questions
-    ) and "research-exhaustiveness" not in invoked:
+    _STOP_GATE = {"question_answered", "record_exhausted", "nothing_further_reachable"}
+    def _has_stop_gate(q: dict) -> bool:
+        # New shape (search_stop.stopped_because is a gate string).
+        if (q.get("search_stop") or {}).get("stopped_because") in _STOP_GATE:
+            return True
+        # Legacy shape (exhaustive_declaration.declared is True) for pre-#2539 run logs.
+        if (q.get("exhaustive_declaration") or {}).get("declared") is True:
+            return True
+        return False
+    if any(isinstance(q, dict) and _has_stop_gate(q) for q in questions) and "research-exhaustiveness" not in invoked:
         violations.append(
-            "research.json has a question with exhaustive_declaration.declared=true "
+            "research.json has a question with a stop-gate search_stop.stopped_because "
             "but 'research-exhaustiveness' was never successfully invoked in this run"
             " (no Skill call and no typed Agent/Task spawn of that name)"
         )
@@ -1124,9 +1138,15 @@ def check_guardrail_compliance(
 # The count is derivable — `ls packages/engine/plugin/agents/*.md` — so this
 # comment does not state one. It said "four" over a set of five for the four
 # days after proof-conclusion was added.
+#: The agents whose `extraction_append` is legitimate. `record-structurer`
+#: ships; `record-extractor` was retired, and stays so that committed runs,
+#: which replay through this detector, keep the verdict they were graded under.
+#: No new run can carry it, because no plugin file declares it.
+EXTRACTION_AGENT_NAMES = frozenset({"record-structurer", "record-extractor"})
+
 DEDICATED_AGENT_NAMES = frozenset(
     {
-        "record-extractor",
+        "record-structurer",
         "image-reader",
         "gps-mentor",
         # Added when proof_summaries moved behind the hook's caller check: the
@@ -1136,7 +1156,7 @@ DEDICATED_AGENT_NAMES = frozenset(
         # exactly the runs that did the right thing.
         "proof-conclusion",
         # Same shape, for the exhaustiveness claim (issue #1335, Phase 4): the
-        # hook routes `exhaustive_declaration.declared: true` to this agent, so
+        # hook routes a stop-gate search_stop.stopped_because to this agent, so
         # every legitimate declaration now arrives from it.
         "research-exhaustiveness",
         # Same shape again, section-scoped, for identity links (issue #1853):
@@ -1164,9 +1184,9 @@ DEDICATED_AGENT_NAMES = frozenset(
         # folded body stops occupying the orchestrator's context on every run
         # that touches question selection, and a cheaper model can be pinned per
         # agent. No hook routes anything to this agent. It writes `questions`,
-        # which does carry a routed claim -- `exhaustive_declaration.declared:
-        # true` belongs to research-exhaustiveness -- but creating a question
-        # writes `declared: false`, which the guard explicitly permits, so no
+        # which does carry a routed claim -- a stop-gate `search_stop.stopped_because`
+        # belongs to research-exhaustiveness -- but creating a question
+        # writes `stopped_because: null`, which the guard explicitly permits, so no
         # route was added and none is needed. It is listed because the set is
         # asserted equal to the shipped agent files, and so a legitimate
         # `research_append` of a new question from this agent does not read as
@@ -1185,10 +1205,12 @@ DEDICATED_AGENT_NAMES = frozenset(
         # set is asserted equal to the shipped agent files.
         "check-warnings",
         # Same shape as `search-images` and `citation` (issue #2795): a
-        # cost-motivated conversion, no hook route, and it writes no project
-        # state at all -- one standalone markdown file in the working folder. It
-        # is listed because the set is asserted equal to the shipped agent
-        # files. Do not read its presence here as evidence of a hook route.
+        # cost-motivated conversion, no hook route. It writes only one `log`
+        # entry per lookup through `research_log_append` (#3244 option L), the
+        # article summary in `notes`. It is listed because the set is asserted
+        # equal to the shipped agent files, and so a log entry arriving from it
+        # is not read as an unnamed-delegate bypass. Do not read its presence
+        # here as evidence of a hook route.
         "search-wikipedia",
         # Same shape as search-images, and for the same reason (issue #2790):
         # a converted skill, not a hook-routed pair. It writes nothing at all,
@@ -1196,10 +1218,12 @@ DEDICATED_AGENT_NAMES = frozenset(
         # row. Listed because the set is asserted equal to the shipped agent
         # files.
         "convert-dates",
-        # Same shape again (issue #2794): a converted skill with no hook route
-        # that writes no project state -- one markdown file in the working
-        # folder. Listed because the set is asserted equal to the shipped agent
-        # files.
+        # Same shape again (issue #2794): a converted skill with no hook route.
+        # It writes only one `log` entry per search through
+        # `research_log_append` (#3244 option L), the guidance in `notes`.
+        # Listed because the set is asserted equal to the shipped agent files,
+        # and so a log entry arriving from it is not read as an
+        # unnamed-delegate bypass.
         "search-familysearch-wiki",
         # A new agent, not a conversion (issue #2029), and no hook route: it
         # writes only `log` entries, one per researcher verdict on a hint. Listed
@@ -1249,6 +1273,11 @@ DEDICATED_AGENT_NAMES = frozenset(
         # narrative to the user -- so `ownership.json` names it on no row. Listed
         # because the set is asserted equal to the shipped agent files.
         "historical-context",
+        # The proof-conclusion shape, claim-scoped (issue #1852): the hook
+        # routes a conflict's analytical product -- a resolve, or any of
+        # CONFLICT_ANALYSIS_FIELDS -- to this agent, so every legitimate
+        # resolution now arrives from it.
+        "conflict-resolution",
         # Same shape as search-images (issue #2065): a new agent, not a
         # converted skill. It writes `log` entries via `research_log_append`
         # and one standalone markdown file via `Write`. No hook routes anything
@@ -1325,36 +1354,22 @@ def find_protected_writes_by_unnamed_delegate(tool_calls: list[dict[str, Any]]) 
     e.g. `find_effects_without_invocation`), and `extraction_append` is not
     one of the four guardrail skills' writes at all — it's hard-restricted at
     the TypeScript layer to exactly `sources`/`assertions`
-    (`extraction-append.ts`), and `record-extractor.md` is the only agent
-    file that even declares the tool. So its legitimate caller is narrower
-    than "any dedicated agent": only `agent_type == "record-extractor"`
-    exactly — a wrong dedicated agent (e.g. `gps-mentor`) holding this tool
-    is not a case any agent's own `tools:`/`disallowedTools` declaration is
-    set up to permit, and is itself worth flagging.
+    (`extraction-append.ts`), and `record-structurer.md` is the only agent
+    file that declares the tool. So its legitimate delegate is narrower than
+    "any dedicated agent": only `agent_type == "record-structurer"` exactly —
+    a wrong dedicated agent (e.g. `gps-mentor`) holding this tool is not a
+    case any agent's own `tools:` declaration is set up to permit, and is
+    itself worth flagging.
 
-    The "or main thread" clause above is, for `extraction_append`, a
-    classification statement (a main-thread call is not an *unnamed-delegate*
-    bypass) — NOT a claim that the record-extraction router may do the
-    extraction itself. It may not: a main-thread `extraction_append` is
-    hard-denied upstream at PreToolUse by the #942 guard
-    (`e2e/orchestrator.py::is_main_thread_subagent_only_tool` in e2e,
-    `context_policy.subagent_only_violation` in the unit harness; e2e-test-spec
-    §6.1.1), so it never executes. The attempt still reaches this function —
-    `tool_calls` is appended before the PreToolUse decision — but it exits at
-    the `agent_id is None` branch on the classification above: a main-thread
-    call (denied or not) is not an *unnamed-delegate* bypass, full stop. It is
-    not counted, and that classification stands on its own regardless of
-    whether the denied call also carries `is_error: true` — this detector
-    reads `is_error` nowhere (issue #1569): the rule here is about who called,
-    not whether the call succeeded, so a caller that should not have made this
-    decision is a violation whether the write landed, was rejected by
-    validation, or was denied outright.
+    The "or main thread" clause is, for `extraction_append`, legitimate work:
+    the research router and search-records call it directly with `recordIds`.
+    This detector reads `is_error` nowhere (issue #1569): the rule is about
+    who called, not whether the call succeeded.
 
-    Note what the two layers do and do not compose to. The main-thread half is
-    DENIED; this delegate half is only LOGGED — it is shadow-mode, deliberately
-    not read by `E2eResult.__post_init__` until its false-positive rate is
-    calibrated. So a `general-purpose` delegate's `extraction_append`
-    still succeeds today; what this detector buys is that it is recorded.
+    It is shadow-mode, deliberately not read by `E2eResult.__post_init__`
+    until its false-positive rate is calibrated. So a `general-purpose`
+    delegate's `extraction_append` still succeeds today; what this detector
+    buys is that it is recorded.
 
     Confirmed live in `ogletree-children/run-2026-07-21_13-24-05.json` (a
     committed, judge-`pass` run): `tool_calls[266]`, an `Agent` call with no
@@ -1378,10 +1393,10 @@ def find_protected_writes_by_unnamed_delegate(tool_calls: list[dict[str, Any]]) 
     calls earlier in the same span (275-277) attach facts to already-known
     `personId`s and are correctly NOT owned by any guardrail skill under
     `owning_skills`'s "no personId == mint" rule; they are not part of this
-    violation. The run's `subagents[12]` (`agent_type: "record-extractor"`,
-    extracting the same death certificate) makes several `extraction_append`
-    calls in the preceding span — a legitimate, correctly-attributed control
-    case this function must NOT flag.
+    violation. The run's `subagents[12]` (the since-retired
+    `record-extractor`, extracting the same death certificate) makes several
+    `extraction_append` calls in the preceding span — a control case that its
+    successor, `record-structurer`, now occupies.
 
     `gps-mentor` legitimately declares `research_append` and uses it in
     dozens of committed runs, but only to append to `evaluations[]` — a
@@ -1396,7 +1411,7 @@ def find_protected_writes_by_unnamed_delegate(tool_calls: list[dict[str, Any]]) 
     This treats ANY of `DEDICATED_AGENT_NAMES` as sufficient for a
     `GUARDRAIL_SKILLS`-owned write, unlike `extraction_append`'s tighter
     single-name check. It was a no-op while the set held only agents that
-    could not reach such a section: `record-extractor` disallows
+    could not reach such a section: `record-structurer` holds no
     `research_append` and never declares `materialize_facts`/`tree_edit`, the
     two image readers hold no writer tool at all, and `gps-mentor`'s only
     writer tool is structurally exempted via the `evaluations[]` carve-out
@@ -1428,36 +1443,37 @@ def find_protected_writes_by_unnamed_delegate(tool_calls: list[dict[str, Any]]) 
         args = entry.get("args") or {}
         agent_id = entry.get("agent_id")
         agent_type = entry.get("agent_type")
-        # Compare on the namespace-stripped name (Cowork logs "<plugin>:record-extractor";
+        # Compare on the namespace-stripped name (Cowork logs "<plugin>:record-structurer";
         # the harness logs bare) but keep the RAW agent_type in the messages below. See
         # strip_agent_namespace for the #650/#698/#939 rationale and the over-flag safety.
         bare_agent_type = strip_agent_namespace(agent_type)
 
         if bare_tool_name(tool) == "extraction_append":
-            if agent_id is None or bare_agent_type == "record-extractor":
+            if agent_id is None or bare_agent_type in EXTRACTION_AGENT_NAMES:
                 continue
             violations.append(
                 f"tool_calls[{i}] extraction_append was made by agent_type="
                 f"{agent_type!r} (agent_id={agent_id!r}) — only the dedicated "
-                "'record-extractor' agent may hold this tool"
+                "'record-structurer' agent may hold this tool"
             )
             continue
 
         if bare_tool_name(tool) == "research_append":
             # #1273 Item 4: research_append to `sources`/`assertions` is the same
-            # protected write extraction_append is denied for. record-extraction
-            # creates these and citation refines `sources` (ownership.json); because
+            # protected write extraction_append makes. extraction_append creates
+            # these and citation refines `sources` (ownership.json); because
             # owning_skills does not attribute those sections, without this branch an
             # unnamed delegate writes them through the broad tool unflagged. The
             # legitimate callers are exactly the sibling extraction_append arm's: the
             # main thread (agent_id None; citation refines `sources` there, exempt for
-            # free) and the `record-extractor` agent alone — NOT every dedicated
-            # agent, because sources/assertions are not owning_skills sections, so a
+            # free) and the citation agent alone — NOT every dedicated agent,
+            # because sources/assertions are not owning_skills sections, so a
             # gps-mentor/proof-conclusion/research-exhaustiveness delegate writing
-            # them is out of lane exactly as it is for extraction_append (which uses
-            # the same tight `== record-extractor`). Uses `bare_agent_type` (the
-            # shared namespace strip #1856 added) so the namespaced spelling of
-            # record-extractor is exempt too. Shadow only. No `continue`: a batch may
+            # them is out of lane. The retired record-extractor is exempt for the
+            # same replay reason as in EXTRACTION_AGENT_NAMES; record-structurer
+            # holds no research_append. Uses `bare_agent_type` (the shared
+            # namespace strip #1856 added) so a namespaced spelling is matched
+            # too. Shadow only. No `continue`: a batch may
             # ALSO touch an owning_skills section, still checked below. One violation
             # per offending CALL (not per op), matching the sibling arms' granularity
             # so a batch does not inflate the shadow signal.
@@ -1478,9 +1494,8 @@ def find_protected_writes_by_unnamed_delegate(tool_calls: list[dict[str, Any]]) 
                     violations.append(
                         f"tool_calls[{i}] research_append to {'/'.join(sections)} was "
                         f"made by agent_type={agent_type!r} (agent_id={agent_id!r}) — "
-                        "this is record-extraction/citation's protected write, made "
-                        "by neither the main thread nor the record-extractor or "
-                        "citation agent"
+                        "this is extraction's and citation's protected write, made "
+                        "by neither the main thread nor the citation agent"
                     )
 
         owners = owning_skills(tool, args)
@@ -1803,7 +1818,7 @@ _NO_CONFLICT_SUBSTRINGS = (
 _NO_CONFLICT_EXACT = {"", "none", "n/a", "na", "not applicable"}
 
 # `stop_criteria.conflict_resolution` is a REQUIRED field on every declared
-# exhaustive_declaration (research.schema.json), so it is always populated —
+# search_stop (research.schema.json), so it is always populated when stop-gate —
 # "doesn't match the negative list" therefore defaults to FIRE, which over-fires
 # badly on the real corpus (senior review of PR #1438: 18 of 38 firing strings
 # explicitly negated a resolution — "UNRESOLVED.", "Not met —", …). So the check
@@ -1849,7 +1864,7 @@ def find_unpersisted_conflict_resolutions(
 
     THE EVIDENCED FAILURE (issue #1317, john-applegarth-family): a research.json
     with 25 assertions and 2 ``proof_summaries`` whose narrative carried a full
-    "Conflict Discussion" and whose ``exhaustive_declaration.stop_criteria.
+    "Conflict Discussion" and whose ``search_stop.stop_criteria.
     conflict_resolution`` read "Ella Chase marriage conflict resolved …" — yet
     ``conflicts`` was ``[]`` and every ``resolved_conflict_ids`` was ``[]``. The
     conflict was reasoned through by ``proof-conclusion`` / ``research-exhaustiveness``
@@ -1860,7 +1875,7 @@ def find_unpersisted_conflict_resolutions(
     exists — a run that legitimately stops before concluding has an empty
     ``conflicts[]`` by design and must not fire. For each concluded question, the
     reliance signal is a non-trivial ``conflict_resolution`` stop-criterion on that
-    question's ``exhaustive_declaration`` (a *structured* field with bounded
+    question's ``search_stop`` (a *structured* field with bounded
     vocabulary — deliberately NOT the free ``narrative_markdown``, which cannot be
     parsed reliably). A ``conflict_resolution`` that says there was no conflict
     (``_NO_CONFLICT_SUBSTRINGS`` / ``_NO_CONFLICT_EXACT``) is skipped.
@@ -1946,9 +1961,12 @@ def find_unpersisted_conflict_resolutions(
 
     def _resolution_claimed(question: dict[str, Any]) -> str | None:
         """The stop-criterion text if it asserts a resolution, else None."""
-        decl = question.get("exhaustive_declaration")
+        decl = question.get("search_stop")
         if not isinstance(decl, dict):
-            return None
+            # Legacy shape: exhaustive_declaration.stop_criteria (pre-#2539 run logs).
+            decl = question.get("exhaustive_declaration")
+            if not isinstance(decl, dict):
+                return None
         crit = decl.get("stop_criteria")
         if not isinstance(crit, dict):
             return None
@@ -2013,7 +2031,7 @@ def find_unpersisted_conflict_resolutions(
                 "kind": CONFLICT_UNPERSISTED_KIND,
                 "detail": (
                     f"proof_summary {ps_id} (question {qid}) relies on a resolved "
-                    "conflict per its exhaustive_declaration.stop_criteria."
+                    "conflict per its search_stop.stop_criteria."
                     "conflict_resolution, but conflicts[] holds no record of it "
                     "(empty, or not holding the c_ id the stop-criterion names)"
                 ),

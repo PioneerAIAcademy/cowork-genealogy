@@ -109,7 +109,7 @@ PLUGIN_DIR = SERVER.parents[1] / "packages" / "engine" / "plugin"
 ORCHESTRATOR = SERVER.parents[1] / "eval" / "harness" / "e2e" / "orchestrator.py"
 
 TRANSIENT = frozenset({"text_delta", "thinking_delta", "task_progress"})
-AGENTS = {"check-warnings", "citation", "convert-dates", "gps-mentor", "historical-context", "hypothesis-tracking", "image-reader", "init-project", "locality-guide", "person-evidence", "project-status", "proof-conclusion", "question-selection", "record-extractor", "research-exhaustiveness", "search-external-sites", "search-familysearch-wiki", "search-full-text", "search-hints", "search-images", "search-wikipedia", "source-evaluation", "survey-surname", "translation", "tree-edit", "tree-survey", "validate-schema"}
+AGENTS = {"check-warnings", "citation", "conflict-resolution", "convert-dates", "gps-mentor", "historical-context", "hypothesis-tracking", "image-reader", "init-project", "locality-guide", "person-evidence", "project-status", "proof-conclusion", "question-selection", "record-structurer", "research-exhaustiveness", "search-external-sites", "search-familysearch-wiki", "search-full-text", "search-hints", "search-images", "search-wikipedia", "source-evaluation", "survey-surname", "translation", "tree-edit", "tree-survey", "validate-schema"}
 
 
 # ── fakes ─────────────────────────────────────────────────────────────────────────
@@ -631,6 +631,82 @@ def test_the_tool_results_spill_under_the_config_root_is_allowed(tmp_path):
     assert deny.project_read_denied("Read", {"file_path": str(cfg / "projects" / "-project" / "sess.jsonl")}, **kw) is None, "outside the anchor anyway"
 
 
+# The turn's config dir holds mcp.json, whose Authorization header is the owner's FamilySearch
+# token. Matched by the worker-cfg-* name: on a resumed turn config_root is the SDK's
+# claude-resume-* dir, and mcp.json stays in the original.
+
+
+def _cfg_kw(tmp_path, monkeypatch, *, resumed: bool = False):
+    monkeypatch.setattr(tempfile, "tempdir", str(tmp_path))
+    root = tmp_path / "project"
+    root.mkdir()
+    cfg = tmp_path / "worker-cfg-abc123"
+    (cfg / "projects" / "-project" / "sess" / "tool-results").mkdir(parents=True)
+    (cfg / "mcp.json").write_text('{"mcpServers": {}}', encoding="utf-8")
+    resume = tmp_path / "claude-resume-xyz"
+    (resume / "projects" / "-project" / "sess" / "tool-results").mkdir(parents=True)
+    kw = dict(cwd=str(root), project_root=str(root), config_root=str(resume if resumed else cfg))
+    return kw, cfg, resume
+
+
+@pytest.mark.parametrize("resumed", [False, True], ids=["fresh", "resumed"])
+@pytest.mark.parametrize("tool_name,tool_input", [
+    ("Read", {"file_path": "{cfg}/mcp.json"}),
+    ("Read", {"file_path": "{cfg}"}),
+    ("Read", {"file_path": "{cfg}/projects/-project/sess.jsonl"}),
+    ("Read", {"file_path": "{cfg}/projects/-project/sess/tool-results/../../../../mcp.json"}),
+    ("Grep", {"pattern": "Bearer", "path": "{cfg}"}),
+    ("Grep", {"pattern": "Bearer", "path": "{parent}"}),
+    ("Grep", {"pattern": "Bearer", "path": "/"}),
+    ("Glob", {"pattern": "{parent}/**/mcp.json"}),
+    ("Glob", {"pattern": "**/mcp.json", "path": "{parent}"}),
+    ("Glob", {"pattern": "*", "path": "{cfg}"}),
+    ("Glob", {"pattern": "../../../../mcp.json", "path": "{cfg}/projects/-project/sess/tool-results"}),
+    ("Glob", {"pattern": "../../../../*", "path": "{cfg}/projects/-project/sess/tool-results"}),
+], ids=lambda v: v if isinstance(v, str) else None)
+def test_the_turns_config_dir_is_denied(tmp_path, monkeypatch, resumed, tool_name, tool_input):
+    kw, cfg, _ = _cfg_kw(tmp_path, monkeypatch, resumed=resumed)
+    tool_input = {k: v.format(cfg=cfg, parent=tmp_path) for k, v in tool_input.items()}
+    reason = deny.project_read_denied(tool_name, tool_input, **kw)
+    assert reason and "config directory is off limits" in reason, (tool_name, tool_input)
+
+
+def test_a_symlink_into_the_config_dir_is_judged_by_its_target(tmp_path, monkeypatch):
+    kw, cfg, _ = _cfg_kw(tmp_path, monkeypatch)
+    other = tmp_path / "elsewhere"
+    other.mkdir()
+    (other / "x").symlink_to(cfg / "mcp.json")
+    assert deny.project_read_denied("Read", {"file_path": str(other / "x")}, **kw)
+
+
+@pytest.mark.parametrize("resumed", [False, True], ids=["fresh", "resumed"])
+@pytest.mark.parametrize("tool_name,tool_input", [
+    ("Read", {"file_path": "{cfg}/projects/-project/sess/tool-results/r1.txt"}),
+    ("Read", {"file_path": "{resume}/projects/-project/sess/tool-results/r1.txt"}),
+    ("Grep", {"pattern": "x", "path": "{cfg}/projects/-project/sess/tool-results"}),
+    ("Glob", {"pattern": "*.txt", "path": "{resume}/projects/-project/sess/tool-results"}),
+    ("Read", {"file_path": "{parent}/elsewhere.txt"}),
+    ("Grep", {"pattern": "x", "path": "{parent}/project/.claude"}),
+    ("Grep", {"pattern": "x", "path": "/etc"}),
+    ("Read", {"file_path": "{parent}/my-worker-cfg-notes.txt"}),
+], ids=lambda v: v if isinstance(v, str) else None)
+def test_the_spill_and_unrelated_paths_stay_readable(tmp_path, monkeypatch, resumed, tool_name, tool_input):
+    kw, cfg, resume = _cfg_kw(tmp_path, monkeypatch, resumed=resumed)
+    tool_input = {k: v.format(cfg=cfg, resume=resume, parent=tmp_path) for k, v in tool_input.items()}
+    assert deny.project_read_denied(tool_name, tool_input, **kw) is None, (tool_name, tool_input)
+
+
+def test_the_hook_denies_the_config_dir_and_allows_the_resumed_spill(tmp_path, monkeypatch):
+    kw, cfg, resume = _cfg_kw(tmp_path, monkeypatch, resumed=True)
+    rows: list[dict] = []
+    hook = options.make_pretool_hook(turn_id="t", session_id="s", cwd=kw["cwd"],
+                                     config_root=lambda: kw["config_root"], record=rows.append)
+    out = _call(hook, {"tool_name": "Read", "tool_input": {"file_path": str(cfg / "mcp.json")}})
+    assert out["hookSpecificOutput"]["permissionDecision"] == "deny"
+    spill = resume / "projects" / "-project" / "sess" / "tool-results" / "r1.txt"
+    assert _call(hook, {"tool_name": "Read", "tool_input": {"file_path": str(spill)}}) == {}
+
+
 # U3: each turn's CLI runs as its own slot user, so the kernel keeps it out of other turns'
 # files and the worker's /proc/<pid>. It cannot keep a process from itself: /proc/self holds
 # the model key the CLI needs, and /dev/fd leads back to any open file -- the hook's job.
@@ -920,27 +996,27 @@ def _info(agents: set[str], skills: int, extra_agents: tuple[str, ...] = ()) -> 
 
 
 def test_registration_passes_with_every_bare_agent_and_every_skill():
-    assert options.check_registration(_info(AGENTS, 7, ("general-purpose", "genealogy-research:gps-mentor")),
-                                      expected_agents=AGENTS, expected_skills=7) == []
+    assert options.check_registration(_info(AGENTS, 6, ("general-purpose", "genealogy-research:gps-mentor")),
+                                      expected_agents=AGENTS, expected_skills=6) == []
 
 
 def test_registration_fails_on_a_missing_bare_agent_or_a_missing_skill():
-    problems = options.check_registration(_info(AGENTS - {"gps-mentor"}, 7, ("genealogy-research:gps-mentor",)),
-                                          expected_agents=AGENTS, expected_skills=7)
+    problems = options.check_registration(_info(AGENTS - {"gps-mentor"}, 6, ("genealogy-research:gps-mentor",)),
+                                          expected_agents=AGENTS, expected_skills=6)
     assert problems and "gps-mentor" in problems[0] and "bare" in problems[0]
-    problems = options.check_registration(_info(AGENTS, 6), expected_agents=AGENTS, expected_skills=7)
-    assert problems == ["6 genealogy-research:* commands registered, expected 7"]
-    assert options.check_registration(None, expected_agents=AGENTS, expected_skills=7)
+    problems = options.check_registration(_info(AGENTS, 5), expected_agents=AGENTS, expected_skills=6)
+    assert problems == ["5 genealogy-research:* commands registered, expected 6"]
+    assert options.check_registration(None, expected_agents=AGENTS, expected_skills=6)
 
 
-def test_the_plugin_ships_twenty_seven_agents_and_seven_skills():
+def test_the_plugin_ships_twenty_eight_agents_and_five_skills():
     from proto.worker.plugin_agents import load_agent_definitions
 
     assert set(load_agent_definitions(PLUGIN_DIR)) == AGENTS
-    assert worker.count_skills(str(PLUGIN_DIR)) == worker.EXPECTED_SKILLS == 7
+    assert worker.count_skills(str(PLUGIN_DIR)) == worker.EXPECTED_SKILLS == 5
     # A literal in the source, not an expression over the plugin dir (the mutation the
     # review named: both sides of the check shrinking together).
-    assert "\nEXPECTED_SKILLS = 7\n" in Path(worker.__file__).read_text(encoding="utf-8")
+    assert "\nEXPECTED_SKILLS = 5\n" in Path(worker.__file__).read_text(encoding="utf-8")
 
 
 def test_expected_agents_is_the_shipped_set():
@@ -963,7 +1039,7 @@ def test_a_plugin_missing_an_agent_is_refused_at_load_not_narrowed_to_what_loade
     loaded = set(load_agent_definitions(copy))
     assert loaded == AGENTS - {"gps-mentor"} and loaded != worker.EXPECTED_AGENTS
     agents, error = worker.load_plugin_agents(str(copy))
-    assert agents is None, "twenty-five agents must not become the expectation"
+    assert agents is None, "twenty-seven agents must not become the expectation"
     assert error == f"plugin agents ['gps-mentor'] missing under {copy}/agents"
     # An agent the plugin does not ship is named too (the name is the frontmatter's,
     # not the file's), so a mis-typed `name:` shows both halves.
@@ -975,24 +1051,24 @@ def test_a_plugin_missing_an_agent_is_refused_at_load_not_narrowed_to_what_loade
 
 
 def test_registration_problems_compares_against_the_constants_not_the_loaded_set(tmp_path):
-    # Twenty-seven agents and 7 skills registered: clean. Twenty-six, or 6: the miss, whatever loaded --
+    # Twenty-eight agents and 5 skills registered: clean. Twenty-seven, or 4: the miss, whatever loaded --
     # the helper takes neither an agents argument nor a skill count, so neither figure
     # from the image can reach it.
-    assert worker.registration_problems(_info(AGENTS, 7)) == []
-    problems = worker.registration_problems(_info(AGENTS - {"gps-mentor"}, 7, ("genealogy-research:gps-mentor",)))
+    assert worker.registration_problems(_info(AGENTS, 5)) == []
+    problems = worker.registration_problems(_info(AGENTS - {"gps-mentor"}, 5, ("genealogy-research:gps-mentor",)))
     assert problems == ["agents not registered under their bare names: ['gps-mentor']"]
-    assert worker.registration_problems(_info(AGENTS, 6)) == ["6 genealogy-research:* commands registered, expected 7"]
+    assert worker.registration_problems(_info(AGENTS, 4)) == ["4 genealogy-research:* commands registered, expected 5"]
     import inspect
 
     assert list(inspect.signature(worker.registration_problems).parameters) == ["info"]
     # The mutation the first build let through: a plugin copy short one skill folder
-    # registers 6, and a count of that same copy would have expected 6.
+    # registers 4, and a count of that same copy would have expected 4.
     copy = tmp_path / "plugin"
     shutil.copytree(PLUGIN_DIR / "skills", copy / "skills")
     shutil.rmtree(next(d for d in sorted((copy / "skills").iterdir()) if (d / "SKILL.md").is_file()))
-    assert worker.count_skills(str(copy)) == 6
+    assert worker.count_skills(str(copy)) == 4
     assert worker.registration_problems(_info(AGENTS, worker.count_skills(str(copy)))) == [
-        "6 genealogy-research:* commands registered, expected 7"
+        "4 genealogy-research:* commands registered, expected 5"
     ]
 
 
@@ -1355,6 +1431,9 @@ class FakeSessionStore:
         return self._entries
 
 
+_UNSET = object()  # ToolCall's "no agent_id key given" marker (distinct from None/"")
+
+
 class ToolCall:
     """A sentinel in a canned stream: the fake client fires the turn's REAL PreToolUse
     hook for it instead of yielding it. That is what moves ``counters["tool_calls"]``,
@@ -1362,8 +1441,12 @@ class ToolCall:
     that writes a tool_calls row, so a stream with model turns and no ToolCall is
     faithfully an attempt that changed nothing."""
 
-    def __init__(self, tool_name: str = "mcp__genealogy__research_append") -> None:
+    def __init__(self, tool_name: str = "mcp__genealogy__research_append",
+                 agent_id: Any = _UNSET) -> None:
         self.tool_name = tool_name
+        # _UNSET means the main thread (no `agent_id` key at all); any value given --
+        # including None or "" -- makes this a subagent call (#3376).
+        self.agent_id = agent_id
 
 
 class StopDispatch:
@@ -1391,8 +1474,11 @@ class FakeClient:
         hook = ((self.env or {}).get("options") or {}).get("pretool_hook")
         assert hook is not None, "the option set must be captured before the stream runs"
         self.tool_uses += 1
+        data: dict[str, Any] = {"tool_name": call.tool_name, "tool_input": {}}
+        if call.agent_id is not _UNSET:  # absent key = main thread (#3376)
+            data["agent_id"] = call.agent_id
         self.pretool_replies.append(
-            await hook({"tool_name": call.tool_name, "tool_input": {}}, f"toolu_{self.tool_uses}", None))
+            await hook(data, f"toolu_{self.tool_uses}", None))
 
     async def _fire_stop(self) -> None:
         hook = ((self.env or {}).get("options") or {}).get("stop_hook")
@@ -2082,7 +2168,12 @@ def test_options_bind_the_post_hook_on_success_and_on_failure(tmp_path):
 
 # ── 1b / 1c: Stop, the held message, and what a turn's ending is called ───────────
 
-_STOP_KW = dict(research=None, nudges_used=0, max_nudges=5, tool_count=0, tool_count_at_last_nudge=-1)
+# An INCOMPLETE project, not None. With no research.json the policy allows every stop
+# (issue #3274), so None cannot be the baseline a flag is tested against: the flag would
+# be unable to change the answer. A literal because `_INCOMPLETE` is defined further down
+# and this line runs at import.
+_STOP_KW = dict(research={"project": {"status": "in_progress"}}, nudges_used=0, max_nudges=5,
+                tool_count=0, tool_count_at_last_nudge=-1)
 
 
 @pytest.mark.parametrize("flag, reason", [
@@ -2093,6 +2184,8 @@ _STOP_KW = dict(research=None, nudges_used=0, max_nudges=5, tool_count=0, tool_c
 ])
 def test_each_new_clause_allows_the_stop_and_names_itself(flag, reason):
     assert options.should_continue_run(**{**_STOP_KW, flag: True}) is False
+    # research=None on purpose: every flag outranks the no-research.json clause, so a
+    # project-less session that ended for one of these reasons still names it, not `ok`.
     assert options.terminal_reason(
         research=None, nudges_used=0, max_nudges=5, **{flag: True}
     ) == reason
@@ -2118,8 +2211,11 @@ def test_terminal_reason_and_should_continue_run_walk_in_lockstep():
     import itertools
 
     flags = ("stopped", "mcp_unavailable", "pending_user_message", "pending_decision")
+    # None (no research.json: a terminal reason of its own), an unfinished project (the
+    # only one that can keep going) and a finished one.
     for bits in itertools.product((False, True), repeat=len(flags)):
-        for research in (None, {"project": {"status": "completed"}}):
+        for research in (None, {"project": {"status": "in_progress"}},
+                         {"project": {"status": "completed"}}):
             for nudges, cap in ((0, 5), (5, 5)):
                 kw = dict(zip(flags, bits))
                 cont = options.should_continue_run(
@@ -2129,8 +2225,7 @@ def test_terminal_reason_and_should_continue_run_walk_in_lockstep():
                     research=research, nudges_used=nudges, max_nudges=cap, **kw)
                 # continue == True happens only when NOTHING is terminal, and the only
                 # reason left is the fall-through.
-                assert cont is (reason == "no_progress" and not any(bits)
-                                and research is None and nudges < cap), (kw, research, nudges, cap, cont, reason)
+                assert cont is (reason == "no_progress"), (kw, research, nudges, cap, cont, reason)
 
 
 def test_the_halt_returns_the_sdks_stop_fields_and_denies_the_call(tmp_path):
@@ -2141,7 +2236,7 @@ def test_the_halt_returns_the_sdks_stop_fields_and_denies_the_call(tmp_path):
     rows: list[dict] = []
     hook = options.make_pretool_hook(
         turn_id="t", session_id="s", cwd=str(tmp_path), config_root=str(tmp_path),
-        record=rows.append, halt=lambda: "Stopped by the researcher.",
+        record=rows.append, halt=lambda *, subagent: "Stopped by the researcher.",
     )
     out = _call(hook, {"tool_name": "mcp__genealogy__record_search", "tool_input": {}})
     assert out["continue_"] is False and out["stopReason"] == "Stopped by the researcher."
@@ -2161,7 +2256,7 @@ def test_the_halt_is_checked_before_every_other_decision(tmp_path):
                              ("Read", {"file_path": str(tmp_path / "x")})):
         hook = options.make_pretool_hook(
             turn_id="t", session_id="s", cwd=str(tmp_path), config_root=str(tmp_path),
-            record=lambda r: None, blocked=frozenset({"person_read"}), halt=lambda: "stop",
+            record=lambda r: None, blocked=frozenset({"person_read"}), halt=lambda *, subagent: "stop",
         )
         assert _call(hook, {"tool_name": tool, "tool_input": tool_input})["continue_"] is False
 
@@ -2176,7 +2271,7 @@ def test_a_halt_predicate_that_raises_halts_the_call(tmp_path):
     hook = options.make_pretool_hook(
         turn_id="t", session_id="s", cwd=str(tmp_path), config_root=str(tmp_path),
         record=rows.append, log=lambda **f: logged.append(f),
-        halt=lambda: (_ for _ in ()).throw(RuntimeError("pg is down")),
+        halt=lambda *, subagent: (_ for _ in ()).throw(RuntimeError("pg is down")),
         on_halt_failed=lambda: failed.append("x"),
     )
     out = _call(hook, {"tool_name": "mcp__genealogy__record_search", "tool_input": {}})
@@ -2191,7 +2286,7 @@ def test_a_halt_predicate_that_raises_halts_the_call(tmp_path):
 def test_a_halt_failure_callback_that_raises_still_halts(tmp_path):
     hook = options.make_pretool_hook(
         turn_id="t", session_id="s", cwd=str(tmp_path), config_root=str(tmp_path),
-        record=lambda r: None, halt=lambda: 1 / 0, on_halt_failed=lambda: 1 / 0,
+        record=lambda r: None, halt=lambda *, subagent: 1 / 0, on_halt_failed=lambda: 1 / 0,
     )
     assert _call(hook, {"tool_name": "Read", "tool_input": {}})["continue_"] is False
 
@@ -2219,14 +2314,16 @@ def test_the_stop_hook_seeds_its_counter_from_the_row_on_a_redelivery():
     TURN, and 0b made resume the normal path -- median two attempts, longest six. An
     unseeded cap of 60 is 60 per attempt."""
     seen: list[str] = []
+    # An unfinished project: with no research.json neither hook below would veto anything,
+    # and `budget` would read `ok` (issue #3274).
     spent = options.make_stop_hook(
-        turn_id="t", max_nudges=5, research=lambda: None, tool_count=lambda: 3,
+        turn_id="t", max_nudges=5, research=lambda: _INCOMPLETE, tool_count=lambda: 3,
         on_nudge=lambda n: None, on_allow=seen.append, nudges_used=5,
     )
     assert asyncio.run(spent({}, None, None)) == {}, "the budget was already spent on an earlier attempt"
     assert seen == ["budget"]
     fresh = options.make_stop_hook(
-        turn_id="t", max_nudges=5, research=lambda: None, tool_count=lambda: 3,
+        turn_id="t", max_nudges=5, research=lambda: _INCOMPLETE, tool_count=lambda: 3,
         on_nudge=lambda n: None, on_allow=seen.append,
     )
     assert asyncio.run(fresh({}, None, None))["decision"] == "block", "an unseeded hook has its whole budget"
@@ -2234,8 +2331,9 @@ def test_the_stop_hook_seeds_its_counter_from_the_row_on_a_redelivery():
 
 def test_a_held_message_allows_the_stop_so_the_patron_is_not_made_to_wait_out_the_job():
     seen: list[str] = []
+    # An unfinished project, so the held message is the only reason the stop is allowed.
     hook = options.make_stop_hook(
-        turn_id="t", max_nudges=5, research=lambda: None, tool_count=lambda: 3,
+        turn_id="t", max_nudges=5, research=lambda: _INCOMPLETE, tool_count=lambda: 3,
         on_nudge=lambda n: None, on_allow=seen.append, pending_user_message=lambda: True,
     )
     assert asyncio.run(hook({}, None, None)) == {}
@@ -2784,6 +2882,30 @@ def test_the_two_price_tables_share_three_rates_and_differ_by_cache_ttl():
     )))
     assert worker.price_usd(tokens) == pytest.approx(theirs - tokens[1] / 1_000_000 * 0.75 * base)
 
+    # The per-model table the alpha's credential proxy prices by: the same models at the
+    # same input and output rates, with the harness's cache read and 1-hour write at the
+    # ratios `rates_for` derives the rest from.
+    from app.agent import spend
+
+    assert set(spend.MODEL_RATES) == set(pricing.MODEL_RATES), \
+        "the two per-model tables price different models"
+    for model, (input_rate, output_rate) in spend.MODEL_RATES.items():
+        theirs = pricing.MODEL_RATES[model]
+        assert (input_rate, output_rate) == (theirs["input_tokens"], theirs["output_tokens"]), model
+        assert theirs["cache_read_input_tokens"] == pytest.approx(0.1 * input_rate), model
+        assert theirs["cache_creation_input_tokens"] == pytest.approx(2 * input_rate), model
+
+
+def test_a_call_is_priced_at_its_own_models_rates():
+    from app.agent import spend
+
+    one_m_each = (1_000_000,) * 4
+    assert spend.price_usd(one_m_each, "claude-sonnet-5") == pytest.approx(2 + 2.5 + 0.2 + 10)
+    assert spend.price_usd(one_m_each, "claude-haiku-4-5-20251001") == pytest.approx(1 + 1.25 + 0.1 + 5)
+    assert spend.price_usd(one_m_each, "claude-sonnet-4-6") == pytest.approx(spend.price_usd(one_m_each))
+    assert spend.rates_for("claude-unknown-9") is spend.PRICE_PER_MTOK
+    assert spend.rates_for(None) is spend.PRICE_PER_MTOK
+
 
 def test_price_usd_is_linear_and_reads_the_four_token_classes_in_order():
     one_m = (1_000_000, 0, 0, 0)
@@ -2848,6 +2970,45 @@ def test_a_message_typed_mid_turn_ends_the_turn_at_the_next_tool_call(turn_env, 
     assert halts and halts[0]["reason"] == options.HANDOVER_REASON
 
 
+def test_a_waiting_message_does_not_cut_off_a_subagent_mid_task(turn_env, monkeypatch):
+    """#3376: the handover must not fire INSIDE a subagent. A message typed while a subagent
+    runs is taken at the orchestrator's next MAIN-THREAD tool call -- cutting the subagent
+    off loses its work, which the orchestrator then re-does from scratch. The outcome is
+    `queued` either way, so the discriminator is WHICH call halted: the subagent call must
+    be allowed (`{}`), the following main-thread call hands over."""
+    monkeypatch.setattr(worker, "pending_user_message", lambda conn, sid: True)
+    monkeypatch.setattr(worker, "stop_requested", lambda conn, sid: False)
+    logged: list[dict] = []
+    monkeypatch.setattr(worker, "log", lambda **f: logged.append(f))
+    # Call 1 (main thread) engages the message -- the one-call guard. Calls 2-3 are subagent
+    # calls, which must NOT hand over -- including one with a falsy `agent_id`, since the gate
+    # is membership not truthiness. Call 4 (main thread) is where the handover fires.
+    summary = _run(turn_env, [
+        _init(), ToolCall(), ToolCall(agent_id="ag_1"), ToolCall(agent_id=None),
+        ToolCall(), _text("x"), _result(num_turns=2),
+    ])
+    replies = turn_env["client"].pretool_replies
+    assert replies[1] == {}, "the subagent call must run; the handover cannot fire inside it"
+    assert replies[2] == {}, "agent_id present but falsy is STILL a subagent (membership)"
+    assert replies[3].get("continue_") is False, "the next main-thread call hands over"
+    assert summary["outcome"] == "queued"
+    assert [f["ev"] for f in logged if f.get("ev") == "handover"] == ["handover"]
+
+
+def test_the_subagent_gate_is_the_handover_clause_alone_a_stop_still_halts(turn_env, monkeypatch):
+    """Stop means stop everywhere (#3376). Only the handover clause reads `subagent`; a
+    patron Stop pressed while a subagent call is in flight still ends the turn `stopped` --
+    even with a message ALSO pending, so this reds both if Stop were wrongly gated and if
+    the gated handover were allowed to outrank it."""
+    _mid_run(monkeypatch)
+    monkeypatch.setattr(worker, "pending_user_message", lambda conn, sid: True)
+    monkeypatch.setattr(worker, "stop_requested", lambda conn, sid: True)
+    summary = _run(turn_env, [_init(), ToolCall(agent_id="ag_1"), _text("x"), _result(num_turns=2)])
+    assert turn_env["client"].pretool_replies[0].get("continue_") is False, (
+        "the subagent call itself must halt on Stop")
+    assert summary["outcome"] == "stopped", "a subagent call is not exempt from Stop"
+
+
 def test_a_turn_released_for_a_held_message_does_some_work_before_handing_over(turn_env, monkeypatch):
     """Two messages typed in quick succession are held together. Without the one-call
     guard, the turn released for the FIRST would halt at its own first tool call with the
@@ -2884,6 +3045,8 @@ def test_the_nudge_count_is_persisted_as_it_happens_not_only_at_the_close(turn_e
     NOT close. `complete()`'s write alone would leave every attempt reading NULL and
     starting a fresh budget: the per-attempt cap 1c exists to remove, six times over on
     the longest run in the corpus."""
+    # A project exists, so the Stop is vetoed; with no research.json it is allowed (issue #3274).
+    turn_env["conn"].research = _INCOMPLETE
     monkeypatch.setattr(worker, "_AUTONOMOUS_MAX_NUDGES", 40)
     monkeypatch.setattr(worker, "SPEND_CAP_USD", 0.0)
     _run(turn_env, [_init(), ToolCall(), StopDispatch(), _text("x"), _result(num_turns=2)])
@@ -3068,7 +3231,7 @@ def test_a_stop_dispatch_after_a_halt_cannot_veto_the_halt(turn_env, monkeypatch
     assert captured["stopped"]() is True, \
         "a Stop dispatched after a spend-cap halt would be vetoed and the run would continue"
     assert options.should_continue_run(
-        research=None, nudges_used=0, max_nudges=40, tool_count=1,
+        research=_INCOMPLETE, nudges_used=0, max_nudges=40, tool_count=1,
         tool_count_at_last_nudge=-1, stopped=captured["stopped"]()) is False
 
     assert captured["on_allow"] is not None
@@ -3081,6 +3244,9 @@ def test_a_stop_dispatched_after_a_spend_halt_does_not_relabel_the_turn(turn_env
     overwrote the reason, a turn that hit the patron's spend cap would be recorded and
     rendered as "you pressed Stop", and the sentence telling them to start a new session
     would never appear."""
+    # An unfinished project, the one the control below vetoes on. With no research.json the
+    # Stop is allowed anyway (issue #3274), so the halt flag would no longer be what this proves.
+    turn_env["conn"].research = _INCOMPLETE
     _mid_run(monkeypatch)
     monkeypatch.setattr(worker, "SPEND_CAP_USD", 35.0)
     monkeypatch.setattr(worker, "session_spend_usd", lambda conn, sid: 100.0)
@@ -3096,6 +3262,7 @@ def test_a_stop_dispatched_after_a_spend_halt_does_not_relabel_the_turn(turn_env
 def test_a_stop_dispatch_with_nothing_wrong_vetoes_and_keeps_the_run_going(turn_env, monkeypatch):
     """The control: the same dispatch, no halt. The hook must BLOCK -- otherwise the two
     tests above would pass with a Stop hook that simply never vetoes anything."""
+    turn_env["conn"].research = _INCOMPLETE  # the same project the halt tests above run on
     monkeypatch.setattr(worker, "SPEND_CAP_USD", 0.0)
     monkeypatch.setattr(worker, "stop_requested", lambda conn, sid: False)
     monkeypatch.setattr(worker, "_AUTONOMOUS_MAX_NUDGES", 40)
@@ -3189,8 +3356,9 @@ _DONE = {"project": {"status": "completed"}}
           mcp_unavailable=True), False),
     (dict(research=_INCOMPLETE, nudges_used=1, max_nudges=5, tool_count=12, tool_count_at_last_nudge=8,
           mcp_unavailable=False), True),
-    # The worker's own edge: no research.json at all is not "completed".
-    (dict(research=None, nudges_used=0, max_nudges=1, tool_count=0, tool_count_at_last_nudge=-1), True),
+    # The worker's own edge: no research.json at all is not nudged, since there is no
+    # project to resume (issue #3274).
+    (dict(research=None, nudges_used=0, max_nudges=1, tool_count=0, tool_count_at_last_nudge=-1), False),
 ], ids=["progressing", "completed", "budget-spent", "no-progress", "first-nudge-equal-counts",
         "mcp-unavailable", "mcp-available-default", "no-research"])
 def test_should_continue_run_mirrors_the_harness_truth_table(kw, expected):
@@ -4767,7 +4935,7 @@ def test_a_stop_outranks_a_delivery():
     """The researcher's own stop wins: the halt check runs before the delivered arm."""
     hook = options.make_pretool_hook(
         turn_id="t1", session_id="s1", cwd="/project", config_root="/cfg",
-        record=lambda row: None, halt=lambda: "stopped",
+        record=lambda row: None, halt=lambda *, subagent: "stopped",
     )
     out = asyncio.run(hook({"tool_name": options.DELIVERED_TOOL, "tool_input": {}}, "u1", None))
     assert out.get("stopReason") == "stopped", "a halt must outrank the delivery arm"
@@ -4814,18 +4982,27 @@ def test_the_main_thread_still_delivers_with_agent_type_present():
     assert halted == ["x"]
 
 
-def test_the_guidance_says_to_search_for_the_deferred_schema():
-    """ENABLE_TOOL_SEARCH is on and `research_delivered` is not in ALWAYS_LOAD, so its
-    schema is deferred. The one tool the system prompt names has to be findable, and
-    the short bounded turns this feature exists for are the ones holding the fewest
-    schemas."""
+def test_the_guidance_tells_the_model_how_to_find_the_schema_without_claiming_it_is_deferred():
+    """The one tool the system prompt names has to be findable, and the short bounded
+    turns this feature exists for are the ones holding the fewest schemas -- so the
+    find-it clause stays.
+
+    What changed: `research_delivered` IS in ALWAYS_LOAD now, so on a hosted turn the
+    schema is already held and "its schema is deferred" is simply false. The clause is
+    conditional instead. It is not deleted, because ALWAYS_LOAD is a `_meta` hint the
+    CLIENT honours -- the unit harness's mock drops `_meta` entirely, so the schema is
+    still deferred there, and a model that has to search must still be told how."""
     # NOT `"search" in lowered`: "re-SEARCH" contains it, and the guidance says
     # "researcher" and "research_delivered", so that assertion can never fail. This is
     # the field-name-collision shape CLAUDE.md names as a silent pass; it was caught by
     # break-testing this very test, which stayed green with the clause deleted.
     lowered = options.DELIVERY_GUIDANCE.lower()
-    assert "deferred" in lowered, "the guidance must say the schema is deferred"
-    assert "search for it" in lowered, "and must tell the model to search for it"
+    assert "search for it by name" in lowered, "must tell the model how to find it"
+    assert "if you do not already hold" in lowered, "and must make that conditional"
+    assert "schema is deferred" not in lowered, (
+        "the schema is in ALWAYS_LOAD now, so stating it is deferred is false on every "
+        "hosted turn -- the plane this guidance is written for"
+    )
 
 
 def test_the_delivery_summary_reaches_a_human():
@@ -5169,6 +5346,9 @@ def test_a_stop_dispatched_after_a_delivery_does_not_relabel_the_turn(turn_env, 
 
     Same trap as the spend-cap version above: if `on_allow` overwrote the reason, a turn
     that delivered would be recorded and rendered as "you pressed Stop"."""
+    # An unfinished project. With no research.json the Stop is allowed anyway (issue #3274),
+    # so without this the deleted line above would leave the test green.
+    turn_env["conn"].research = _INCOMPLETE
     monkeypatch.setattr(worker, "stop_requested", lambda conn, sid: False)
     monkeypatch.setattr(worker, "_AUTONOMOUS_MAX_NUDGES", 40)
     summary = _run(turn_env, [

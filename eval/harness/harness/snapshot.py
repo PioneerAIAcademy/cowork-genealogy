@@ -163,7 +163,9 @@ def build_snapshot(
     dependency of a run and tracking it produced churn with no eval signal
     — a `src/` edit flipped every skill's run log inactive even though the
     run never executed that code. Tool-code correctness is Vitest's job
-    (`packages/engine/mcp-server/tests/`), not this framework's.
+    (`packages/engine/mcp-server/tests/`), not this framework's. What the
+    model is *advertised* is tracked separately, in the envelope's
+    `instrument` field (`harness.instrument`, check_runlogs rule 2c).
 
     When `test_ids` is given, only those tests' scenarios + fixtures are
     embedded. When None, every test in the skill contributes.
@@ -171,6 +173,10 @@ def build_snapshot(
     snapshot: dict[str, str] = {}
 
     skill_dir = repo_root / "packages" / "engine" / "plugin" / "skills" / skill
+    if not skill_dir.is_dir() and (repo_root / "eval" / "skills" / skill).is_dir():
+        # A test-only skill (lead, 2026-09-30): its body is what the suite runs,
+        # so editing it must flip the run log inactive, as for a plugin skill.
+        skill_dir = repo_root / "eval" / "skills" / skill
     _embed_tree(snapshot, skill_dir, repo_root)
 
     # Plugin-agent files the skill delegates to via `@plugin:<name>`.
