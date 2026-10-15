@@ -227,7 +227,7 @@ refreshed when a sandbox is created and never fetched on the request path.
 | Neutral op | Daytona (`AsyncDaytona`) | E2B (`AsyncSandbox`, SDK v2.5.0) |
 |---|---|---|
 | `create(spec)` | `daytona.create(CreateSandboxFromImageParams(image, env_vars, labels, ephemeral, auto_stop_interval=secs//60, resources=Resources(cpu,memory,disk)))` | `AsyncSandbox.create(template, envs, metadata, timeout, allow_internet_access=True)` |
-| `get` / `resume` | `daytona.get(id)` → `sandbox.start()` | `AsyncSandbox.connect(id)` (auto-resumes if paused) |
+| `get` / `resume` | `daytona.get(id)` → `sandbox.start()` | `AsyncSandbox.connect(id)` on a handle-cache miss (auto-resumes if paused); a cached handle's first request auto-resumes (`auto_resume`) |
 | `suspend` | `sandbox.stop()` (or `.archive()` for cheap long idle) | `sandbox.pause()` |
 | `delete` | `sandbox.delete()` | `sandbox.kill()` |
 | `list(labels)` | `daytona.list(ListSandboxesQuery(labels=…))` | `AsyncSandbox.list(SandboxQuery(metadata=…))` |
@@ -414,7 +414,9 @@ async def _pump(a, b):
 - **`Resources` is advisory on E2B** — CPU/RAM come from the template; bake sizes
   into the template. Honored on Daytona's image path.
 - **`auto_suspend` units differ** — Daytona wants minutes (`auto_stop_interval`);
-  adapter converts. E2B uses `timeout` seconds + `set_timeout` to extend.
+  adapter converts. E2B uses `timeout` seconds + `set_timeout` to extend, but on
+  Hobby never past an hour after the sandbox started (measured 2026-10-15 by
+  `apps/server/dev/probe_e2b_heartbeat.py`); a resume starts a fresh hour.
 - **No env mutation on a running sandbox** on either platform → secrets are
   file-based (decision #2), not an interface method.
 - **No native whole-directory sync** on either → object-store sync runs inside

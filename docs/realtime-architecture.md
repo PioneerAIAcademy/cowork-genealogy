@@ -98,8 +98,10 @@ to survive a pause, or to detect liveness.
    └──────────────────────────────────────────────────────────────┘
 ```
 
-- **Control plane** is run-state-stateless: it always `provider.connect(sandbox_id)`
-  (idempotent auto-resume) before returning a URL. It holds **no** `Process`,
+- **Control plane** is run-state-stateless: it calls `provider.resume(sandbox_id)`
+  before returning a URL, and a paused sandbox wakes either way — `connect()`
+  auto-resumes it on a handle-cache miss, and on a cached handle the first inbound
+  request does (`auto_resume`). It holds **no** `Process`,
   watch, or per-session connection. Any instance serves any request; killing an
   instance mid-session never touches the browser↔sandbox link, because the control
   plane is not in the data path. That is the affinity fix — affinity removed, not
@@ -146,9 +148,10 @@ today); reconnect re-syncs via `GET /state`.
   delete a session a user is in. `retention_days` default 30. It runs daily-ish,
   not per-session, so it is **not** the per-session reaper we removed — and for
   alpha it can be a manual or in-process job.
-- The control plane is run-state-stateless: it always `connect(sandbox_id)`
-  (idempotent auto-resume) before handing out a URL, so it never needs to track
-  running-vs-paused.
+- The control plane is run-state-stateless: a paused sandbox wakes whether or not
+  `provider.resume()` finds its handle cached (`connect()` auto-resumes on a miss;
+  otherwise the first inbound request does, through `auto_resume`), so it never
+  needs to track running-vs-paused.
 
 ---
 
@@ -251,15 +254,15 @@ but did not say:
 
 - *Optional, alpha-skippable:* the sandbox server pauses proactively **between
   turns** near ~55 min so the forced pause never lands mid-turn. Resume restores
-  processes but — *this part is asserted, never measured* — possibly **not** their
-  open sockets, in which case a mid-turn pause drops the agent's Anthropic-API and
-  MCP connections and breaks that turn.
+  processes, but a mid-turn pause can break that turn: *measured in #3305*, where
+  an alpha session froze four times mid-turn and three of the four calls in flight
+  failed on resume (`image_transcribe` aborted after 15,061 s; `API Error: Failed
+  to parse JSON`, twice).
 
-  **Measure this before acting on it.** It is the only thing that sets the real
-  cost of staying on Hobby: if a forced pause does not break the turn, the cap is
-  a non-event; if it does, proactive between-turn pausing is worth building — and
-  that is the same work as pausing idle sandboxes, which is wanted anyway on cost
-  grounds. Nothing in the tier upgrade fixes it either way.
+  That settles the question that sets the real cost of staying on Hobby: a forced
+  pause can break the turn, so the cap is not a non-event. Proactive between-turn
+  pausing is the same work as pausing idle sandboxes, which is wanted anyway on
+  cost grounds. Nothing in the tier upgrade changes what a pause does to a turn.
 - **Hobby → Pro later = a plan upgrade + a one-line timeout bump (1h → 24h), zero
   rework.** Auto-pause-on-idle and reconnect-on-resume are wanted on Pro too; only
   the cap number changes.
