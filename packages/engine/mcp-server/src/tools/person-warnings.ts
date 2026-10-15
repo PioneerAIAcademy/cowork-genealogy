@@ -1657,9 +1657,9 @@ function checkHasLateMarriage90(mob: Mob): PersonWarning | null {
     personName: getPersonName(mob.getPerson()),
     // The marriage that fired this is on the Couple edge, so cite it too.
     // These tags refuse writes, and a refusal hands the agent this list: being
-    // told "married before age 14" while shown only a birth leaves nothing to
-    // check. Citing it changes the warning id, which is built from the fact
-    // ids — the same way a person-level marriage already behaves.
+    // told "married more than 90 years after birth" while shown only a birth
+    // leaves nothing to check. Citing it changes the warning id, which is built
+    // from the fact ids — the same way a person-level marriage already behaves.
     facts: unionFactIds(
       selfFactIds(mob, BIRTHLIKE_FACT_TYPES, MARRIAGELIKE_FACT_TYPES),
       warningFactsOfPerson({ facts: mob.coupleFacts() }, MARRIAGELIKE_FACT_TYPES),

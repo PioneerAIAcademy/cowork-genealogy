@@ -1034,6 +1034,20 @@ describe("marriage warnings read the Couple edge, not only the person", () => {
     expect(ids).toContain("F1"); // and the Birth it is measured against
   });
 
+  it("the fired late-marriage warning cites the Couple-edge marriage, not just the birth", () => {
+    const warnings = calculateWarnings(
+      new Mob(coupleTree("1750", "1850"), "I1"),
+      new Mob(coupleTree("1750", "1850"), "I1"),
+      new Mob(coupleTree("1750", "1850"), "I1"),
+      true,
+    );
+    const late = warnings.find((w) => w.issueType === "hasLateMarriage90");
+    expect(late).toBeDefined();
+    const ids = (late?.facts ?? []).map((f) => f.id);
+    expect(ids).toContain("F2"); // the Marriage on the Couple edge
+    expect(ids).toContain("F1"); // and the Birth it is measured against
+  });
+
   it("reads only the anchor's own Couple edges, not another couple's", () => {
     const tree: SimplifiedGedcomX = {
       persons: [
