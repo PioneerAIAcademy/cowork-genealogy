@@ -465,20 +465,23 @@ Scope, and why it is this narrow:
   are birthplaces on a US schedule ("1850 US Census, Schuylkill County ... born
   Ireland"), which stays refused.
   **An unqualified mention takes its jurisdiction from the staged payload**
-  (decided at review-ready 2026-10-14). An unqualified census reads
-  as US, so "1851 census, Trowbridge: Job Purnell head of household, wife Ann."
-  logged against an English search was refused as a US census. When the entry's
-  staged payload (`record_search` rows' `collectionTitle`, or a `record_read`
-  record's `sd_c_` collection description) has at least one titled row and every
-  titled row's leading segment is British, an unqualified mention takes the 1851
-  threshold. A mention that names its own jurisdiction, US included, keeps it.
-  Anything else — a US row, a mixed payload, an undocumented jurisdiction, no
-  titles — changes nothing. This supplies the jurisdiction; it does not skip the
-  check, so an 1841 mention against English rows stays refused ("still refuses
-  an 1841 England census" in `pre1880-census-hedge.test.ts`), now in British
-  words. The rejected option skipped the note-only path whenever no staged row
-  was a US federal census: it accepts "1841 England census … wife" and frees
-  none of the church-records notes, whose payload names no census.
+  (decided at review-ready 2026-10-14). An unqualified census reads as US, so
+  "1851 census, Trowbridge: Job Purnell head of household, wife Ann." logged
+  against an English search was refused as a US census. When the entry's staged
+  payload (`record_search` rows' `collectionTitle`, or a `record_read` record's
+  `sd_c_` collection description) has at least one titled row and every titled
+  row starts with a British name (England, Wales, Scotland, Great Britain, United
+  Kingdom — so not "New England" or "British Columbia"), an unqualified mention
+  takes the 1851 threshold. A mention that names its own jurisdiction keeps it,
+  and "US", "U.S.", "United States", "federal", "census of the U.S." and
+  "pre-1880 census" all name the US. Anything else — a US row, a mixed payload,
+  another jurisdiction, no titles — changes nothing. This supplies the
+  jurisdiction; it does not skip the check, so an 1841 mention against English
+  rows stays refused ("still refuses an 1841 England census" in
+  `pre1880-census-hedge.test.ts`), now in British words. The rejected option
+  skipped the note-only path whenever no staged row was a US federal census: it
+  accepts "1841 England census … wife" and frees none of the church-records
+  notes, whose payload names no census.
 - **Undecidable inputs skip** rather than guessing: when no year binds to a
   census at all, the note-only gate does not fire — the same behaviour as an
   undocumented jurisdiction. What this gives up: an unhedged pre-1880 US census

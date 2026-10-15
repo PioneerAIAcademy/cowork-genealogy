@@ -376,10 +376,10 @@ function supersededPlanItemRefusal(research: any, planItemId: string): string | 
  * in pre1880-census-hedge.test.ts holds. The rejected option was to skip the
  * note-only path whenever no staged row is a US federal census: that accepts
  * "1841 England census ... wife" and frees none of the church-records notes,
- * whose payload names no census at all. Two misreads accepted as too rare to
- * code against: the `of|for` capture stops at a period, so "census of the U.S."
- * reads unqualified; and a "New England ..." or "British Columbia ..." collection
- * title would read as British. Neither appears in the fixtures or run logs.
+ * whose payload names no census at all. "pre-1880 census" and "census of the
+ * U.S." count as US-qualified, and a collection title is British only when it
+ * STARTS with a British name, so "New England ..." and "British Columbia ..."
+ * are not.
  */
 type CensusMention = { year: number; columnFrom: number };
 /** A mention, plus whether it named its own jurisdiction (US included). */
@@ -441,12 +441,12 @@ export function censusMentions(notes: string): CensusMention[] {
 
 function qualifiedMentions(notes: string): QualifiedMention[] {
   const out: QualifiedMention[] = [];
-  const push = (years: string, qualifier: string, post: string, before = false) => {
+  const push = (years: string, qualifier: string, post: string, before = false, usAfter = false) => {
     const from = relationshipColumnFrom(`${qualifier} ${post}`);
     if (from === null || Number.isNaN(from)) return;
     // `population`, `state` and the other non-place words leave a mention
-    // unqualified; a NaN jurisdiction was dropped above.
-    const qualified = from === 1851 || US_QUALIFIER.test(`${qualifier} ${post}`);
+    // unqualified; a NaN jurisdiction was dropped above. "pre-1880" is US wording.
+    const qualified = before || usAfter || US_QUALIFIER.test(`${qualifier} ${post}`);
     // The prefix qualifies the year it touches, not the run: "before 1880 and
     // 1880 census" is a pre-1880 census and the 1880 one.
     for (const [i, y] of (years.match(new RegExp(CENSUS_YEAR, "g")) ?? []).entries()) {
@@ -459,7 +459,9 @@ function qualifiedMentions(notes: string): QualifiedMention[] {
     // 1880 it skipped the whole note: a ut_search_records_027 roster saying
     // "(pre-1880 census)" passed whatever else it asserted.
     const before = /\b(?:pre[-\s]?|before\s+)$/i.test(notes.slice(Math.max(0, m.index - 7), m.index));
-    push(m[1], m[2] ?? "", /^\s*(?:of|for)\s+([A-Za-z&\s]{0,20})/.exec(post)?.[1] ?? "", before);
+    // The `of|for` capture stops at a period, so "census of the U.S." is read here.
+    const usAfter = /^\s*(?:of|for)\s+(?:the\s+)?(?:u\.?\s?s\b|united\s+states\b)/i.test(post);
+    push(m[1], m[2] ?? "", /^\s*(?:of|for)\s+([A-Za-z&\s]{0,20})/.exec(post)?.[1] ?? "", before, usAfter);
   }
   for (const m of notes.matchAll(CENSUS_AFTER)) push(m[2], m[1] ?? "", "");
   return out;
@@ -1135,14 +1137,17 @@ export function stagedPre1880UsCensusYears(rows: readonly unknown[]): number[] {
  * The relationship-column threshold the staged payload's JURISDICTION implies,
  * for an unqualified census mention in the note to take (issue #3409). Only
  * British collections answer: 1851 when at least one row is titled and EVERY
- * titled row's leading comma segment ("England and Wales, Census, 1851" ->
- * "England and Wales"; "England, Wiltshire, Church Records, 1518-1990" ->
- * "England") reads as British. A US row, an undocumented jurisdiction (NaN), a
- * mixed payload or no titles returns undefined and changes nothing: this clause
+ * titled row is a `BRITISH_TITLE`. A US row, any other jurisdiction, a mixed
+ * payload or no titles returns undefined and changes nothing: this clause
  * cancels a deny, so it fails closed. Titles come from each `record_search`
  * row's `collectionTitle`, or from a `record_read` row's `sd_c_` source (the
  * collection description); any other tool returns undefined.
  */
+/** A British collection title: "England and Wales Census, 1851", "England,
+ *  Wiltshire, Church Records, 1518-1990", "Scotland Census, 1861". Anchored at
+ *  the start, so "New England, ..." and "British Columbia, ..." are not. */
+const BRITISH_TITLE = /^(?:england|wales|scotland|great\s+britain|united\s+kingdom)\b/i;
+
 export function stagedPayloadColumnFrom(tool: string, rows: readonly unknown[]): number | undefined {
   if (tool !== "record_search" && tool !== "record_read") return undefined;
   let titled = 0;
@@ -1157,7 +1162,7 @@ export function stagedPayloadColumnFrom(tool: string, rows: readonly unknown[]):
           : undefined;
     if (typeof title !== "string") continue;
     titled++;
-    if (relationshipColumnFrom(title.split(",")[0]) !== 1851) return undefined;
+    if (!BRITISH_TITLE.test(title.trim())) return undefined;
   }
   return titled > 0 ? 1851 : undefined;
 }
@@ -1185,9 +1190,7 @@ async function preflightCensusHedge(op: ResearchLogAppendOp, projectPath: string
         columnFrom = stagedPayloadColumnFrom(op.tool, rows);
       }
     } catch {
-      // a bad ref is finalize's error to report, not this check's
-      years = undefined;
-      columnFrom = undefined;
+      years = undefined; // a bad ref is finalize's error to report, not this check's
     }
   }
   requirePre1880CensusHedge(op.notes, years, columnFrom);

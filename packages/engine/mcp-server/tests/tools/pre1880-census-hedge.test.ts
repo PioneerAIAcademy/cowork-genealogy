@@ -858,5 +858,40 @@ describe("the staged payload supplies an unqualified mention's jurisdiction (#34
 
   it("any other tool gives nothing", () => {
     expect(stagedPayloadColumnFrom("fulltext_search", rows("England and Wales, Census, 1851"))).toBe(undefined);
+    expect(
+      stagedPayloadColumnFrom("fulltext_search", read({ id: "sd_c_1", title: "England and Wales, Census, 1851" })),
+    ).toBe(undefined);
+  });
+
+  it.each([
+    "1860 United States census, Ohio: John Smith with wife Mary.",
+    "1860 U.S. census, Ohio: John Smith with wife Mary.",
+    "1860 census of the United States, Ohio: John Smith with wife Mary.",
+    "1860 census of the U.S. John Smith with wife Mary.",
+    "Pre-1880 census: John Smith with wife Mary.",
+  ])("keeps a US-worded mention US against a British payload (%#)", (n) => {
+    expect(gate(n, 1851)).toThrow(/pre-1880 US census/);
+  });
+
+  it("uses the US wording when US payload rows alone fire", () => {
+    expect(() => requirePre1880CensusHedge("Household: John Smith head, wife Mary, son Tom.", [1860])).toThrow(
+      /pre-1880 US census/,
+    );
+  });
+
+  it.each([
+    ["the real title shape, no comma after Wales", "England and Wales Census, 1851", 1851],
+    ["Scotland", "Scotland Census, 1861", 1851],
+    ["a British word only after the first comma", "United States, Records of British Subjects, 1850", undefined],
+    ["New England", "New England, Births and Deaths, 1650-1880", undefined],
+    ["British Columbia", "British Columbia, Census, 1871", undefined],
+  ])("record_search title: %s", (_l, title, want) =>
+    expect(stagedPayloadColumnFrom("record_search", rows(title))).toBe(want),
+  );
+
+  it("record_read: an id-less source does not hide the sd_c_ one", () => {
+    expect(
+      stagedPayloadColumnFrom("record_read", read({ title: "x" } as never, { id: "sd_c_1", title: "England and Wales, Census, 1851" })),
+    ).toBe(1851);
   });
 });
