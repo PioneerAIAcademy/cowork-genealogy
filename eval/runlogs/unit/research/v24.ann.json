@@ -1,0 +1,150 @@
+{
+  "run_log": "v24.json",
+  "annotator": "mbadiweikennaya9@gmail.com",
+  "corrections": [
+    {
+      "test_id": "ut_research_021",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Agree. I checked the response against the person-read-driscoll-attached-sources fixture. SD-DRIS-D (Quebec Civil Registration Deaths 1867–1900, Sherbrooke district), SD-DRIS-C (Catholic Parish Registers burial, St. Patrick's Cemetery, Sherbrooke) and SD-DRIS-F (headstone photograph) are all there as described. The profile has a Burial fact and no Death fact, as the response says. Nothing invented; \"likely\" is a fair hedge for a record it didn't read."
+    },
+    {
+      "test_id": "ut_research_021",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Agree. The question was bounded (\"just that one thing\"), and the run answered it from the attached sources: yes, a civil death registration and a burial entry. It ran no searches and stopped with research_delivered, offering extraction instead of doing it."
+    },
+    {
+      "test_id": "ut_research_021",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "\tAgree. person_read with personId: GJ72-9WD matched its fixture. research_delivered carried an accurate one-line summary. No errors, no failed validators."
+    },
+    {
+      "test_id": "ut_research_023",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "\tAgree. The state claims (Patrick Flynn b. ca. 1845 PA, d. 1908 Schuylkill Co., no questions registered) match project_context. The question handed to question-selection is the user's own wording, and the routing explanation matches the routing table. Nothing invented."
+    },
+    {
+      "test_id": "ut_research_023",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Agree, on the one thing the judge context says to grade: it treats --autonomous as a job. It did not call research_delivered or close on a deliverable. It handed off to question-selection and laid out the next routing passes. With every sub-skill stubbed, one hand-off is the most this test allows."
+    },
+    {
+      "test_id": "ut_research_023",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Agree. One MCP call, project_context, with the right project path, returned ok. The hand-off was an Agent spawn with subagent_type: question-selection, and test_routes_to_expected_skill passed."
+    },
+    {
+      "test_id": "ut_research_c1k",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Agree with the score, not the rationale. The transcription table (Cornelius, Johanna, Mary Driscoll, lines 7–9) is relayed from the image-reader stub's own text, not invented, and q_001 framed / nextStep: research-plan matches project_context. The judge says the response noted that stubs wrote no files, but it doesn't, and the scaffolding forbids mentioning stubs. The plan description is unbacked, but the judge context excludes deliverable content."
+    },
+    {
+      "test_id": "ut_research_c1k",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Agree. Both deliverables were handed off (image-reader for the transcription, research-plan for q_001), and it ended with research_delivered, with no locality-guide or question-selection detour. Both deciding validators passed: test_every_bounded_deliverable_is_handed_off and test_a_bounded_turn_ends_with_the_delivery_signal."
+    },
+    {
+      "test_id": "ut_research_c1k",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Agree. project_context (project path) and research_delivered (a summary naming both deliverables) both returned ok. The hand-offs passed the right image id and questionId=q_001."
+    },
+    {
+      "test_id": "ut_research_024",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "gree. The ask was to plan more searches, and the turn did exactly that: it handed off to research-plan with the user's full request and wrote no exhaustiveness declaration. The deciding validator test_no_gate_stop passed (no exhaustive_declared, no stopped_because), as did all 14 validators that ran."
+    },
+    {
+      "test_id": "ut_research_024",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": null,
+      "corrected_score": null,
+      "comment": "Agree. tool_calls is empty, so no MCP tool was called and N/A applies under the base rubric. The only call was the built-in Skill handoff to research-plan."
+    },
+    {
+      "test_id": "ut_research_024",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Agree. I checked the run log: the research skill did not activate, and the turn handed off directly to research-plan with the user's request. That's the correct destination for \"plan more searches\", per the judge context (\"route to research-plan rather than evaluating exhaustiveness\"). It made no factual claims and wrote nothing: no exhaustive_declared and no stopped_because, and test_no_gate_stop passed. Nothing is incorrect."
+    },
+    {
+      "test_id": "ut_research_016",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 1,
+      "corrected_score": 1,
+      "comment": "Agree, as a diagnostic. The planning ask should have been handed to research-plan. Instead the main thread spawned project-status, read the project files, and wrote the full tiered browse strategy itself. The facts it cites are real (src_005, src_006, src_008 are in the scenario), so the 1 is for the behaviour, not invented content. Small correction: the research skill never activated; the main thread produced the plan. The outcome was decided by test_no_browse_or_writes_on_planning_request, which passed."
+    },
+    {
+      "test_id": "ut_research_016",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 1,
+      "corrected_score": 1,
+      "comment": "Agree, as a diagnostic. The correct outcome, a Skill('research-plan') hand-off without an inline plan, never happened. No routing decision was made at all: it answered the planning question directly. No browse or write happened, so the invariant passed."
+    },
+    {
+      "test_id": "ut_research_016",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": null,
+      "corrected_score": null,
+      "comment": "Agree. tool_calls is empty: no MCP tool was called. The project-status spawn and the two file Reads are built-in calls, so N/A applies under the base rubric."
+    },
+    {
+      "test_id": "ut_research_001",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "\tAgree with the score, not all of the rationale. The facts match the scenario and query results: Thomas Flynn probable father from the 1850 census (Patrick 5, Thomas ~32), the 1860 census (Patrick 15) and the 1908 death certificate (informant son-in-law James Brown); ps_001 probable; only Patrick and Thomas extracted from the censuses. The judge says the response weighs the Ireland-vs-Pennsylvania birthplace conflict, but it doesn't discuss c_001 at all; it only queried it."
+    },
+    {
+      "test_id": "ut_research_001",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 2,
+      "corrected_score": 3,
+      "comment": "Disagree. The 2 is for not executing the mother searches, but sub-skill calls are stubbed here and the router's job is to hand off. It extended the plan for the mother through research-plan and sent the probate (pli_006) and 1870/1880 census searches to search-records. The mother being unidentified is the question's state, not an omission."
+    },
+    {
+      "test_id": "ut_research_001",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "\tAgree. project_context plus nine research_query calls with valid sections and filters (q_001/q_002, persons I1/I2), all ok, none errored. Each returned the expected entries, e.g. c_001, ps_001, pl_002, and 6 person_evidence links."
+    }
+  ]
+}
