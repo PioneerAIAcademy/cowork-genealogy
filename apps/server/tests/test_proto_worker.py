@@ -2236,7 +2236,7 @@ def test_the_halt_returns_the_sdks_stop_fields_and_denies_the_call(tmp_path):
     rows: list[dict] = []
     hook = options.make_pretool_hook(
         turn_id="t", session_id="s", cwd=str(tmp_path), config_root=str(tmp_path),
-        record=rows.append, halt=lambda **_: "Stopped by the researcher.",
+        record=rows.append, halt=lambda *, subagent: "Stopped by the researcher.",
     )
     out = _call(hook, {"tool_name": "mcp__genealogy__record_search", "tool_input": {}})
     assert out["continue_"] is False and out["stopReason"] == "Stopped by the researcher."
@@ -2256,7 +2256,7 @@ def test_the_halt_is_checked_before_every_other_decision(tmp_path):
                              ("Read", {"file_path": str(tmp_path / "x")})):
         hook = options.make_pretool_hook(
             turn_id="t", session_id="s", cwd=str(tmp_path), config_root=str(tmp_path),
-            record=lambda r: None, blocked=frozenset({"person_read"}), halt=lambda **_: "stop",
+            record=lambda r: None, blocked=frozenset({"person_read"}), halt=lambda *, subagent: "stop",
         )
         assert _call(hook, {"tool_name": tool, "tool_input": tool_input})["continue_"] is False
 
@@ -2271,7 +2271,7 @@ def test_a_halt_predicate_that_raises_halts_the_call(tmp_path):
     hook = options.make_pretool_hook(
         turn_id="t", session_id="s", cwd=str(tmp_path), config_root=str(tmp_path),
         record=rows.append, log=lambda **f: logged.append(f),
-        halt=lambda **_: (_ for _ in ()).throw(RuntimeError("pg is down")),
+        halt=lambda *, subagent: (_ for _ in ()).throw(RuntimeError("pg is down")),
         on_halt_failed=lambda: failed.append("x"),
     )
     out = _call(hook, {"tool_name": "mcp__genealogy__record_search", "tool_input": {}})
@@ -2286,7 +2286,7 @@ def test_a_halt_predicate_that_raises_halts_the_call(tmp_path):
 def test_a_halt_failure_callback_that_raises_still_halts(tmp_path):
     hook = options.make_pretool_hook(
         turn_id="t", session_id="s", cwd=str(tmp_path), config_root=str(tmp_path),
-        record=lambda r: None, halt=lambda **_: 1 / 0, on_halt_failed=lambda: 1 / 0,
+        record=lambda r: None, halt=lambda *, subagent: 1 / 0, on_halt_failed=lambda: 1 / 0,
     )
     assert _call(hook, {"tool_name": "Read", "tool_input": {}})["continue_"] is False
 
@@ -4894,7 +4894,7 @@ def test_a_stop_outranks_a_delivery():
     """The researcher's own stop wins: the halt check runs before the delivered arm."""
     hook = options.make_pretool_hook(
         turn_id="t1", session_id="s1", cwd="/project", config_root="/cfg",
-        record=lambda row: None, halt=lambda **_: "stopped",
+        record=lambda row: None, halt=lambda *, subagent: "stopped",
     )
     out = asyncio.run(hook({"tool_name": options.DELIVERED_TOOL, "tool_input": {}}, "u1", None))
     assert out.get("stopReason") == "stopped", "a halt must outrank the delivery arm"
