@@ -22,9 +22,6 @@ tools:
   - mcp__genealogy__tree_gaps
   - mcp__remote-devices__Genealogy_Research__tree_gaps
   - mcp__Genealogy_Research__tree_gaps
-  - mcp__genealogy__person_quality
-  - mcp__remote-devices__Genealogy_Research__person_quality
-  - mcp__Genealogy_Research__person_quality
 ---
 
 # Tree Survey
@@ -78,17 +75,17 @@ Take the strongest ~10 holes. `gaps` is already ordered: holes with a fitting pe
 - `pendingHints`: `fitting` of `total` pending record hints that are about the event the hole is missing; `null` when unread. Do not look up hints yourself.
 - `coverage`: collections that exist for the hole's place and period (a floor, not evidence about this person), and `censusYears`, the census years in the window; ignore 1890.
 
-For a hole you keep, call `person_quality({ personId })` once and note an issue saying an expected census is missing. Make each call once. Run no search.
+Call no tool beyond `tree_gaps`.
 
 ### 3. Rank
 
-Rank by the strongest signal: `pendingHints.fitting` above 0 (a `fitting` of 0 is no signal, however large `total`), then the census issue or a non-empty `coverage.censusYears`, then a `coverage.collections` above 0. A hole with a signal comes before every hole without one, however far from the root. Break ties by closeness to the root (`generation`, then smaller absolute value first).
+Rank by the strongest signal: `pendingHints.fitting` above 0 (a `fitting` of 0 is no signal, however large `total`), then a non-empty `coverage.censusYears`, then a `coverage.collections` above 0. A hole with a signal comes before every hole without one, however far from the root. Break ties by closeness to the root (`generation`, then smaller absolute value first).
 
 ### 4. Suggest 3-5
 
 Suggest the holes in rank order, up to 5, and at least one whenever `gaps` is not empty: a hole with no signal is still suggested, saying plainly that nothing further is known. One suggestion per person; if two holes fall on the same person, keep the stronger. Each suggestion gives:
 
-- the person
+- the person: the hole's `personId`, never the person you surveyed from unless the hole is on them
 - the hole in plain words
 - what FamilySearch has that could fill it
 - **one research question** that meets all three of: a single fact (one parentage, one
@@ -103,7 +100,7 @@ Never suggest a living person. Never create a project.
 
 Return, in this order:
 
-- one line per suggestion: the person's FamilySearch ID, then the research
+- one line per suggestion: the hole's `personId`, then the research
   question — what the caller hands to `init-project` as the objective
 - one line: how far the tree was read, and whether it stopped early
 - a hint to the caller: when the user picks one, run `init-project` with that ID

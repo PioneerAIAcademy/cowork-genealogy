@@ -2,7 +2,7 @@
 
 Grading dimensions for tree-survey unit tests. Evaluated by the LLM judge alongside the base rubric (correctness, completeness, tool arguments).
 
-tree-survey runs before any project exists. It calls `tree_gaps` once, checks what FamilySearch holds for the strongest holes (`person_quality`, and the `pendingHints` and `coverage` on each hole), and returns 3-5 suggestions, each a person and one research question. It holds no writer tool, creates nothing, and has no project to read.
+tree-survey runs before any project exists. It calls `tree_gaps` once, checks what FamilySearch holds for the strongest holes (the `pendingHints` and `coverage` on each hole), and returns 3-5 suggestions, each a person and one research question. It holds no writer tool, creates nothing, and has no project to read.
 
 ## Survey
 
@@ -16,9 +16,9 @@ Did the agent survey the tree with `tree_gaps` and report only what it returned?
 
 Did the agent check what FamilySearch holds for the holes it kept, without retrying empty results?
 
-- **pass:** For each hole it kept, the agent used at least one of the hole's `pendingHints`, `person_quality` or the hole's `coverage`, and treated an empty result as a result. With no holes, it made none of these calls.
-- **partial:** The agent checked only some holes it then suggested, or called a tool twice with the same arguments.
-- **fail:** The agent suggested a person with no check at all, or checked people no hole named.
+- **pass:** For each hole it kept, the agent used at least one of the hole's `pendingHints` or `coverage`, and made no other tool call. With no holes, it made no call beyond `tree_gaps`.
+- **partial:** The agent checked only some holes it then suggested, or called a tool other than `tree_gaps`.
+- **fail:** The agent suggested a person no hole named, or dropped the only hole.
 
 ## Suggestions
 

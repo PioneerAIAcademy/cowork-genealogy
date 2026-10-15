@@ -15,8 +15,7 @@
     "delegation": "What should I research in my tree?\n\npersonId: TGAP-ROT"
   },
   "mcp_fixtures": [
-    "tree-gaps-many-holes",
-    "person-quality-any"
+    "tree-gaps-many-holes"
   ],
   "execution": {
     "max_wall_clock_seconds": 300
