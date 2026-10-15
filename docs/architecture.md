@@ -803,7 +803,7 @@ There **is** an orchestrator, and it is a skill:
    reads `research.json` through `research_query` and derives where the project
    is: which questions have plans, which log entries lack assertions, which
    conflicts are open, which proofs lack verdicts.
-2. **A 20-row routing table maps state → next sub-skill** — in
+2. **A 21-row routing table maps state → next sub-skill** — in
    `research/SKILL.md` under `## What to do`, the table whose header row reads
    `| If research.json has... | Invoke |`. The table is the source of truth and
    is not duplicated here. Its `Invoke` column is a **literal tool call, by the

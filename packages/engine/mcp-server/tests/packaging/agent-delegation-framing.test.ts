@@ -409,6 +409,16 @@ const DELEGATION_EDGES: Record<string, Edge> = {
         excerpt:
           "A delegation that tells you which mode to take — \"create the next plan\", \"the current plan is finished\", \"write pl_003\" — does not settle it.",
       },
+      // Dispose mode is entered only on a named `planItemIds` line, so both
+      // sides of that key are pinned.
+      {
+        side: "caller",
+        excerpt: "a `planItemIds:` line with the `pli_` ids research-exhaustiveness named",
+      },
+      {
+        side: "agent",
+        excerpt: "research-exhaustiveness refused a declaration and names `planItemIds`, take",
+      },
     ],
   },
   // search-records spawns it when the user asks whether research on a question

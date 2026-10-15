@@ -116,7 +116,7 @@ matches, call no tool, write nothing, and return one caller-facing line,
 | Run a search, with no plan to make or review ("go search the 1880 census", "execute pli_003"). A plan request that also authorizes execution is yours: Step 7 | search-records for FamilySearch, search-external-sites for any other site |
 | A record already in hand, to extract ("here is the death certificate — add its facts") | extraction: `extraction_append` for a FamilySearch record, the record-structurer agent for any other source |
 | Which question to research next | question-selection |
-| Whether research on a question is done ("are we done?"). Disposing of named items after research-exhaustiveness refused a declaration is yours: Dispose mode | research-exhaustiveness |
+| Whether research on a question is done ("are we done?", or "what's the next step?" after a search came back empty). Disposing of named items after research-exhaustiveness refused a declaration is yours: Dispose mode | research-exhaustiveness |
 
 Never spawn another agent; name it and return.
 
