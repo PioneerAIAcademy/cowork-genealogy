@@ -97,14 +97,14 @@ def stage_plugin_agents(project_dir: Path) -> list[str]:
     ``packages/engine/plugin/agents/*.md`` — but it registers each one under the
     plugin-NAMESPACED name ``genealogy-research:<agent>``, and nothing under the
     bare name. Every SKILL.md delegates by the bare name
-    (``@plugin:record-extractor``), so on the plugin path the Task call
-    hard-errors — "Agent type 'record-extractor' not found" — and the model then
+    (``@plugin:record-structurer``), so on the plugin path the Task call
+    hard-errors — "Agent type 'record-structurer' not found" — and the model then
     improvises: guess the namespaced spelling, fall back to ``general-purpose``,
     or do the work inline. The fallback is the dangerous one, because a
     general-purpose stand-in holds the session's whole tool set instead of the
-    agent's ``tools:`` allow-list and binds none of its ``disallowedTools:``
-    denies — the deny being the only thing keeping ``record-extractor`` off the
-    broad ``research_append`` under ``bypassPermissions`` (issue #695).
+    agent's ``tools:`` allow-list — the allow-list being the only thing keeping
+    an agent such as ``record-structurer`` off the broad ``research_append``
+    under ``bypassPermissions`` (issue #695).
 
     Staging into ``.claude/agents/`` is exactly what both eval harnesses do
     (``eval/harness/harness/workspace.py``, ``eval/harness/e2e/orchestrator.py``)
@@ -594,10 +594,18 @@ def _sdk_env(api_key: str | None = None) -> dict[str, str]:
     return env
 
 
-# PR #2870 item 1d. The alpha's veto cap per turn. Sized like the prototype's on STEP
-# count rather than on the nudge histogram: over the 189 committed e2e runs, Skill/Task/
-# Agent steps per run are median 15, p90 25, p99 51, max 76. 0 turns the hook off.
-_DEFAULT_MAX_NUDGES = 60
+# PR #2870 item 1d. The alpha's veto cap, per SESSION -- `nudges_used` below is created
+# once and never reset at a turn boundary. This said "per turn" until 2026-10-13 and was
+# wrong; the full consequence is written up on `Settings.autonomous_max_nudges`.
+#
+# Sized like the prototype's on STEP count rather than on the nudge histogram. Re-derived
+# 2026-10-13 by `test_proto_config._steps_per_run`'s method over the committed e2e corpus
+# (203 runs that day): median 15, p90 26, p99 48, max 76. 0 turns the hook off.
+#
+#: Matches `Settings.autonomous_max_nudges`, and a test pins them equal. This is the
+#: in-sandbox fallback used when the control plane sets no env var, so leaving it at 60
+#: while the setting moved to 30 would make the two disagree exactly where nobody looks.
+_DEFAULT_MAX_NUDGES = 30
 
 
 def _max_nudges(env=None) -> int:
@@ -668,7 +676,7 @@ def _build_hooks(HookMatcher, project_dir: Path, agent=None) -> dict:
     sandboxes in one process cannot read each other's progress. It is what
     ``should_continue_run``'s no-progress arm compares between two stops: without it the
     second nudge always looks like no progress and the run stops after one."""
-    counter = {"tool_calls": 0, "delivered": False, "continuations": 0}
+    counter = {"tool_calls": 0, "turn_tool_calls": 0, "delivered": False, "continuations": 0}
     # Published so `handle_turn` can clear the per-TURN half at the turn boundary.
     # `tool_calls` is deliberately session-scoped (the no-progress arm compares it
     # across two stops); `delivered` is not, and the dict outlives the turn because
@@ -696,24 +704,39 @@ def _build_hooks(HookMatcher, project_dir: Path, agent=None) -> dict:
         prototype's ``PreToolUse`` halt. Both reads are in-memory, so the no-I/O promise
         above still holds."""
         counter["tool_calls"] += 1
+        counter["turn_tool_calls"] += 1
+        data = _input_data or {}
+        # Both arms below are gated on the MAIN thread -- membership, not truthiness: the
+        # key is absent on the main thread, and a subagent whose `agent_id` is None or ""
+        # is still a subagent. Delivered: a subagent calling it means only its own leg is
+        # done. Pending message (#3376): halting a subagent mid-task strands the
+        # orchestrator, which takes its last in-progress note as the final report and
+        # re-does the work in a fresh subagent.
+        main_thread = "agent_id" not in data
         # A bounded request was met and the model is stopping on purpose (#2813 item 1).
-        # Gated on the MAIN thread: a subagent calling it means its own leg is done, and
-        # halting the session there would strand the orchestrator mid-job.
-        if (_input_data or {}).get("tool_name") == DELIVERED_TOOL and "agent_id" not in (
-            _input_data or {}
-        ):
+        if data.get("tool_name") == DELIVERED_TOOL and main_thread:
             counter["delivered"] = True
             _log("[agent] delivered — allowing the stop")
             # Prepend the model's own one-sentence summary, as the prototype does
             # (`options.py`). It is the whole reason the tool takes a `summary`:
             # without it the researcher is told a delivery happened but not what
             # was delivered, and the two planes claim a parity they do not have.
-            delivered_input = (_input_data or {}).get("tool_input") or {}
+            delivered_input = data.get("tool_input") or {}
             return {
                 "continue": False,
                 "stopReason": delivered_stop_reason(delivered_input.get("summary")),
             }
-        if agent is not None:
+        # The researcher typed mid-turn. Main-thread only (#3376): a subagent runs to the
+        # end of its task and the message is taken at the orchestrator's next tool call.
+        # The count guard is the prototype's one-call rule (worker.py, handover_clause):
+        # two messages typed in quick succession are held together by runner.serve, and
+        # the turn released for the first must do some work on it before handing over to
+        # the second -- without the guard it halts at its own first tool call and the
+        # first message gets no work at all. Counted per TURN (`turn_tool_calls`, reset in
+        # `_begin_turn_hook_state`): the hooks dict lives for the session, so the
+        # session-wide `tool_calls` would pass the guard on every turn after the first.
+        # This hook counts BEFORE deciding, so the turn's first call sees 1.
+        if agent is not None and main_thread and counter["turn_tool_calls"] >= 2:
             try:
                 if agent.pending_user_message():
                     return {"continue": False,
@@ -804,7 +827,7 @@ def build_options(project_dir: Path, resume: str | None = None, api_key: str | N
         # explicit timeout — see _PRETOOL_MATCHER and _PRETOOL_TIMEOUT_S.
         hooks=_build_hooks(HookMatcher, project_dir, agent),
         # Stream partial assistant content. Without it a block reaches the UI only
-        # when its whole message completes, so a long turn — a record-extraction
+        # when its whole message completes, so a long turn — an extraction
         # subagent reasoning before its next tool call — shows nothing at all for
         # minutes. The deltas are also what keeps the socket's data frames flowing
         # through the sandbox's edge proxy during that stretch.
@@ -845,7 +868,7 @@ def map_message(
 
     **Subagent turns arrive on this same stream**, tagged with
     ``parent_tool_use_id`` rather than nested. Without reading it, a
-    record-extractor's text/thinking/tool calls are indistinguishable from the
+    record-structurer's text/thinking/tool calls are indistinguishable from the
     main agent's — they land in the same chat bubble and read as if the
     orchestrator did the work itself. Every event carries an ``agent`` label when
     it came from a subagent, resolved through ``tasks`` (tool_use_id → the Task's
@@ -1317,11 +1340,13 @@ class RealAgent:
         that yields without calling any tool never cleared it, and the clearing was
         not main-thread gated, so a straggler subagent call could clear a
         main-thread delivery. `continuations` counts THIS turn's overridden stops for
-        the cost report. `tool_calls` is deliberately NOT reset -- the
-        no-progress arm compares it across two stops.
+        the cost report. `turn_tool_calls` is the pending-message halt's one-call guard.
+        `tool_calls` is deliberately NOT reset -- the no-progress arm compares it across
+        two stops.
         """
         counter = getattr(self, "_hook_counter", None)
         if counter is not None:
+            counter["turn_tool_calls"] = 0
             counter["delivered"] = False
             counter["continuations"] = 0
 

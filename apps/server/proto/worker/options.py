@@ -48,6 +48,7 @@ from __future__ import annotations
 import dataclasses
 import json
 import os
+import re
 import sys
 from collections.abc import Callable, Mapping
 from typing import Any
@@ -226,7 +227,8 @@ def provider_env(worker_env: Mapping[str, str]) -> tuple[str | None, dict[str, s
         "ANTHROPIC_MODEL": GATEWAY_MODEL,
         "ANTHROPIC_DEFAULT_HAIKU_MODEL": GATEWAY_SMALL_MODEL,
         # agentgateway < 1.6 cannot parse tool_reference, so tool search fails on
-        # its second turn (plan P3f); tap-agentgateway pins 1.5.0.
+        # its second turn (plan P3f). TAP's Fargate stack pins 1.5.0; its EKS stack
+        # (tap-gateway) runs 1.6.0, where tool search is unverified (handoff U14).
         "ENABLE_TOOL_SEARCH": (worker_env.get("GATEWAY_TOOL_SEARCH") or "false").strip().lower(),
     }
 
@@ -396,7 +398,10 @@ def make_pretool_hook(
     record: Callable[[dict[str, Any]], None],
     log: Callable[..., None] | None = None,
     blocked: frozenset[str] = frozenset(),
-    halt: Callable[[], str | None] | None = None,
+    # `Callable[..., ...]`, not `Callable[[bool], ...]`: the hook calls it by KEYWORD
+    # (`halt(subagent=...)`), a contract a positional-only annotation would misstate --
+    # and a conforming positional-only halt would TypeError into STORE_UNAVAILABLE.
+    halt: Callable[..., str | None] | None = None,
     on_delivered: Callable[[], None] | None = None,
     on_halt_failed: Callable[[], None] | None = None,
 ):
@@ -405,7 +410,10 @@ def make_pretool_hook(
     resumed turn; ``record`` writes one ``tool_calls`` row and may raise.
 
     ``halt()`` is 1c's and 1e's carrier: it returns a reason to END THE TURN NOW, or
-    None. It is checked HERE, before anything else, because this hook is bound with
+    None. It takes ``subagent`` -- true when this call carries an ``agent_id`` -- so the
+    handover clause alone can learn the caller's thread and decline to end a subagent
+    mid-task (#3376); every other clause ignores it. It is checked HERE, before anything
+    else, because this hook is bound with
     ``matcher=None`` and therefore fires on every tool call -- a median of 2.6 s apart --
     where the Stop hook fires at a voluntary yield, a median of ONCE per run. A Stop
     button wired to the Stop hook would take 53 minutes to answer.
@@ -427,7 +435,7 @@ def make_pretool_hook(
         stop_now: str | None = None
         try:
             if halt is not None:
-                stop_now = halt()
+                stop_now = halt(subagent="agent_id" in data)
         except Exception as exc:  # noqa: BLE001 - halts: the call may be one Stop or the cap forbids
             stop_now = STORE_UNAVAILABLE_REASON
             if log is not None:
@@ -555,6 +563,29 @@ def make_pretool_hook(
     return _pretool
 
 
+# U19's reauth alarm: a FamilySearch tool's result carrying the engine's sign-in
+# instruction (auth/refresh.ts's "Call the login tool", the hosted "Reconnect FamilySearch").
+# The same pattern as turn.py's REAUTH_ENTRY, which this image does not ship (a test pins
+# the two). Only tools whose code reaches the token (a test derives the set from the
+# engine's imports), so a research_query or Read result quoting the text is no reauth.
+REAUTH_ENTRY = re.compile(r"call the login tool|Reconnect FamilySearch", re.I)
+FS_TOOLS = frozenset({
+    "build_external_search_url", "catalog_search", "collections_search", "extraction_append", "fulltext_search",
+    "image_read", "image_search", "image_transcribe", "person_ancestors", "person_quality", "person_read",
+    "person_person_matches", "person_record_matches", "person_search", "rank_search_matches", "record_read",
+    "record_person_matches", "record_record_matches", "record_search", "same_person", "source_attachments",
+    "tree_gaps", "volume_bisect", "volume_search",
+})
+
+
+def reauth_text(data: dict[str, Any]) -> bool:
+    """Whether a PostToolUse(Failure) payload is a FamilySearch tool asking for a sign-in."""
+    if str(data.get("tool_name") or "").rsplit("__", 1)[-1] not in FS_TOOLS:
+        return False
+    text = json.dumps(data.get("tool_response"), default=str) + " " + str(data.get("error") or "")
+    return REAUTH_ENTRY.search(text) is not None
+
+
 def make_posttool_hook(
     *,
     turn_id: str,
@@ -564,7 +595,8 @@ def make_posttool_hook(
     """The worker's ``PostToolUse`` / ``PostToolUseFailure`` callback: ``finish(tool_use_id)``
     stamps the row the PreToolUse hook wrote with the call's duration (acceptance
     criterion 4). Never raises and never changes what the model sees; a failed stamp is
-    one log line. A call in flight when its worker is killed keeps a NULL duration."""
+    one log line. A call in flight when its worker is killed keeps a NULL duration.
+    U19: a FamilySearch tool answering with the sign-in instruction logs ``ev=reauth_hit``."""
 
     async def _posttool(input_data: Any, tool_use_id: str | None, _context: Any) -> dict[str, Any]:
         data = input_data if isinstance(input_data, dict) else {}
@@ -576,6 +608,12 @@ def make_posttool_hook(
             if log is not None:
                 log(ev="tool_call_finish_failed", turn_id=turn_id, tool_name=str(data.get("tool_name") or ""),
                     error=f"{type(exc).__name__}: {exc}")
+        try:
+            if log is not None and reauth_text(data):
+                log(ev="reauth_hit", turn_id=turn_id, tool_name=str(data.get("tool_name") or ""),
+                    agent_id=data.get("agent_id"))
+        except Exception:  # noqa: BLE001, S110 - an alarm signal must not fail the call
+            pass
         return {}
 
     return _posttool

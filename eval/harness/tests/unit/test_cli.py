@@ -538,7 +538,11 @@ def test_suite_cost_cap_stops_after_threshold(tmp_path, monkeypatch, capsys):
     assert counter["n"] == 2
     captured = capsys.readouterr()
     assert "cap" in captured.err.lower()
-    assert rc == 0  # all tests that ran were pass
+    # Every test that ran passed, but three never ran: an execution stop, and
+    # the log is scratch rather than a releasable candidate.
+    assert rc == 3
+    assert list((runlogs / "unit" / "skill-a").glob("scratch_*.json"))
+    assert not list((runlogs / "unit" / "skill-a").glob("v*.json"))
 
 
 def test_suite_cost_cap_resists_early_outlier(tmp_path, monkeypatch):
@@ -717,6 +721,19 @@ def test_unknown_test_id_returns_empty(tmp_path):
     args = run_tests._build_parser().parse_args(["--test", "ut_nope"])
     specs = run_tests._select_tests(args, root)
     assert specs == []
+
+
+def test_select_several_ids_in_order(tmp_path):
+    root = _make_tests_dir(tmp_path)
+    args = run_tests._build_parser().parse_args(["--test", "ut_b_001", "ut_a_002", "ut_b_001"])
+    assert [s.id for s in run_tests._select_tests(args, root)] == ["ut_b_001", "ut_a_002"]
+
+
+def test_one_unknown_id_among_several_selects_nothing(tmp_path, capsys):
+    root = _make_tests_dir(tmp_path)
+    args = run_tests._build_parser().parse_args(["--test", "ut_b_001", "ut_typo"])
+    assert run_tests._select_tests(args, root) == []
+    assert "ut_typo" in capsys.readouterr().err
 
 
 # --- concurrency -----------------------------------------------------------

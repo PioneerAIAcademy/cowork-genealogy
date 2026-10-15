@@ -264,6 +264,7 @@ describe("project_create", () => {
   // ── A project cannot nest inside another (issue #1869) ──────────────────
 
   it("refuses when an ancestor directory already holds a project, naming it, and writes NEITHER file", async () => {
+    fileStoreOnly("projects do not nest in Postgres: findNestingAncestor is always null there");
     // The viewer watches one folder; a project created one level down inside
     // an existing project reads to a tester as lost files between sessions
     // (issue #1317 bug 2). This is the durable fix: refuse at create time.
@@ -284,6 +285,7 @@ describe("project_create", () => {
   });
 
   it("refuses several levels down too, naming the nearest ancestor", async () => {
+    fileStoreOnly("projects do not nest in Postgres: findNestingAncestor is always null there");
     await writeFile(join(dir, "research.json"), '{"project":{"objective":"existing"}}');
     await writeFile(join(dir, "tree.gedcomx.json"), '{"persons":[],"relationships":[],"sources":[]}');
     const deep = join(dir, "a", "b", "c");
@@ -411,6 +413,7 @@ describe("project_create", () => {
 
 import { readFileSync } from "node:fs";
 import { stagePersonRead } from "../../src/tools/person-read.js";
+import { fileStoreOnly } from "../helpers/store-backend.js";
 
 const FAMILY = JSON.parse(
   readFileSync(
@@ -631,6 +634,36 @@ describe("project_create — personReadRef (#2944 Stage B)", () => {
     expect(result.errors.join(" ")).toMatch(message);
     expect(await exists("tree.gedcomx.json")).toBe(false);
     expect(await exists("research.json")).toBe(false);
+  });
+
+  it("accepts a Step parent beside a staged Biological one on the same pair", async () => {
+    // The repeat refusal above asks "is this relationship already here", which
+    // `relationshipMatches` answers: an untyped edge restating a staged
+    // Biological one IS a repeat, a Step edge beside it is a second
+    // relationship. Before the shared predicate replaced this file's private
+    // type-and-endpoints key, the two collided and this threw "repeats a
+    // relationship already in the tree".
+    const ref = await stageFamily();
+    const result: any = await projectCreate({
+      projectPath: dir,
+      objective: "x",
+      personReadRef: ref,
+      tree: {
+        relationships: [
+          { type: "ParentChild", parent: "LZNY-BRF", child: "LZNY-P7Q", subtype: "Step" },
+        ],
+      } as any,
+    });
+    expect(result.ok).toBe(true);
+    const tree: any = await readJson("tree.gedcomx.json");
+    // Endpoints are remapped to tree-local ids during the build, so find the
+    // Step edge and check its own pair, rather than naming FamilySearch PIDs.
+    const step = tree.relationships.find((r: any) => r.subtype === "Step");
+    expect(step).toBeDefined();
+    const onThePair = tree.relationships.filter(
+      (r: any) => r.type === "ParentChild" && r.parent === step.parent && r.child === step.child,
+    );
+    expect(onThePair.map((r: any) => r.subtype).sort()).toEqual(["Biological", "Step"]);
   });
 
   it.each([
@@ -866,6 +899,7 @@ describe("project_create — personReadRef (#2944 Stage B)", () => {
   });
 
   it("names a read fault on a ref that exists, rather than calling it pruned", async () => {
+    fileStoreOnly("a directory where a staged file belongs has no Postgres meaning");
     await mkdir(join(dir, "results", ".staging", "adir.json"), { recursive: true });
     const result: any = await projectCreate({ projectPath: dir, objective: "x", personReadRef: "results/.staging/adir.json" });
     expect(result.ok).toBe(false);

@@ -211,7 +211,7 @@ async function samePersonFromProject(
         "Score against a person that exists, or create it first.",
     );
   }
-  const { gedcomx: gedcomx2 } = mob.matchSubset();
+  const gedcomx2 = withoutRecordSourced(mob.matchSubset().gedcomx, research, recordId);
 
   // ── the record side: fetch first, derive second ──
   const resolved = await resolveRecordSide(input, research, assertion, recordId, role, principal);
@@ -262,6 +262,63 @@ async function samePersonFromProject(
   }
 
   return { ...result, recordSource, recorded };
+}
+
+/** The tree S-entry ids whose research sources reach `recordId` and no other
+ *  record: tree ref -> research `sources[].gedcomx_source_description_id` ->
+ *  research source id -> `assertions[].record_id`, the walk
+ *  `mintedFromThisRecord` (research-append.ts) documents. */
+function refsFromRecordOnly(research: any, recordId: string): Set<string> {
+  const recordsBySource = new Map<string, Set<string>>();
+  for (const a of (research?.assertions ?? []) as any[]) {
+    const sid = a?.source_id;
+    const rec = a?.record_id;
+    if (typeof sid !== "string" || typeof rec !== "string" || rec === "") continue;
+    if (!recordsBySource.has(sid)) recordsBySource.set(sid, new Set());
+    recordsBySource.get(sid)!.add(rec);
+  }
+  const recordsByRef = new Map<string, Set<string>>();
+  for (const src of (research?.sources ?? []) as any[]) {
+    const ref = src?.gedcomx_source_description_id;
+    if (typeof ref !== "string" || ref === "" || typeof src.id !== "string") continue;
+    if (!recordsByRef.has(ref)) recordsByRef.set(ref, new Set());
+    for (const rec of recordsBySource.get(src.id) ?? []) recordsByRef.get(ref)!.add(rec);
+  }
+  const refs = new Set<string>();
+  for (const [ref, recs] of recordsByRef) {
+    if (recs.size > 0 && [...recs].every((r) => r === recordId)) refs.add(ref);
+  }
+  return refs;
+}
+
+/** The tree side minus every fact and name sourced only from the record being
+ *  scored. `materialize_facts` copies a record's facts onto the person it is
+ *  linked to, so scoring that record again afterwards compares it with itself:
+ *  Gaetjen's 1875 register persona scored 0.43 against I1 as the tree held him
+ *  and 0.985 once its own facts were on I1 (live, 2026-10-12). A fact or name
+ *  that also cites another source stays, and a person keeps at least one name. */
+export function withoutRecordSourced(
+  gedcomx: SimplifiedGedcomX,
+  research: any,
+  recordId: string,
+): SimplifiedGedcomX {
+  const refs = refsFromRecordOnly(research, recordId);
+  if (refs.size === 0) return gedcomx;
+  const onlyFromRecord = (item: { sources?: Array<{ ref?: string }> }): boolean => {
+    const cited = (item.sources ?? [])
+      .map((s) => (typeof s?.ref === "string" ? s.ref.replace(/^#/, "") : ""))
+      .filter((r) => r !== "");
+    return cited.length > 0 && cited.every((r) => refs.has(r));
+  };
+  const persons = (gedcomx.persons ?? []).map((p) => {
+    const names = p.names?.filter((n) => !onlyFromRecord(n));
+    return {
+      ...p,
+      names: names && names.length > 0 ? names : p.names,
+      facts: p.facts?.filter((f) => !onlyFromRecord(f)),
+    };
+  });
+  return { ...gedcomx, persons };
 }
 
 interface ResolvedRecordSide {
@@ -364,10 +421,10 @@ async function resolveRecordSide(
   // rest. It writes nothing, stages nothing and logs nothing, so calling it
   // here is safe.
   //
-  // Only a record_search sidecar carries a persona. A fulltext_search or
-  // external_links_search entry also has a results_ref, but its results hold no
-  // gedcomx and key on `id` rather than `recordId`
-  // (PERSONA_BEARING_PRODUCERS) — passing one would look up nothing.
+  // Only a persona-bearing producer's sidecar (record_search, record_read) carries
+  // a persona. A fulltext_search or external_links_search entry also has a
+  // results_ref, but its results hold no gedcomx and key on `id` rather than
+  // `recordId` (PERSONA_BEARING_PRODUCERS) — passing one would look up nothing.
   const log: any[] = Array.isArray(research?.log) ? research.log : [];
   const logEntry = log.find((l) => l?.id === assertion?.log_entry_id);
   const resultsRef =
@@ -637,7 +694,7 @@ export const samePersonSchema = {
     "`gedcomx2`/`primaryId2`. Do NOT hand-build the gedcomx from the flat " +
     "summary fields — that drops the record ARK and the comparison fails.\n" +
     "\n" +
-    "Returns a match decision with confidence (integer 1-10, omitted on " +
+    "Returns a match decision with confidence (integer 1-5, omitted on " +
     "no-match) and score (float 0-1). Returns `matched: false` when the API " +
     "doesn't recognize a real match (confidence omitted, score near zero).\n" +
     "\n" +

@@ -44,6 +44,20 @@ export type RecordReadResult = SimplifiedGedcomX & {
   stagingError?: string;
 };
 
+/** One staged `record_read` result element. Declared here rather than inline so
+ *  the staging shape the spec pins has a name — `readFromSidecar` reads it back
+ *  and `research_log_append` finalizes it.
+ *
+ *  `indexFields` is the per-persona index data the RAW body carries in
+ *  `fields[]` and `toSimplified` drops, keyed by `gedcomx.persons[].id`. It is
+ *  `record_read`-only: a `record_search` response has `fields[]` for the
+ *  searched persona alone, so its staged elements never carry this. */
+export interface StagedRecordReadElement {
+  recordId: string;
+  gedcomx: SimplifiedGedcomX;
+  indexFields?: Record<string, import("../utils/record-index-fields.js").PersonaIndexFields>;
+}
+
 // ─── FS recapi response (raw API) ─────────────────────────────────────────
 //
 // The recapi endpoint returns a GedcomX document. We reuse the shared

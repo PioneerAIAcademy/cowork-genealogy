@@ -224,7 +224,7 @@ export default function SourcesSection(): React.JSX.Element {
       {sources.length === 0 && uncoveredTreeSources.length === 0 ? (
         <p className={styles.empty}>
           No sources captured yet. Sources are the records examined during
-          research — each is captured during the record-extraction step and
+          research — each is captured during the extraction step and
           formally cited during the citation step.
         </p>
       ) : (

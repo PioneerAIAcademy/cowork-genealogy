@@ -295,7 +295,7 @@ class Hub:
         """Emit a frame every _HEARTBEAT_INTERVAL so an idle-looking socket stays
         open through the edge proxy the browser reaches this server through.
 
-        A turn can be silent for minutes — a record-extraction subagent runs long
+        A turn can be silent for minutes — an extraction subagent runs long
         and, because `include_partial_messages` is off, its blocks only reach the
         pump when each assistant message completes. Protocol-level pings are not
         reliably counted as activity by the proxy, so without an application frame

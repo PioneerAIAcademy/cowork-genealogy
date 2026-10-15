@@ -4,7 +4,7 @@
 // guard research-log-editor-spec.md §8 and search-result-staging-spec.md §6 both
 // describe.
 
-import { isAbsolute, posix, relative, resolve } from "node:path";
+import { isAbsolute, posix, relative, resolve, sep } from "node:path";
 
 /**
  * True if `ref` (relative or absolute) resolves to a path inside `projectPath`.
@@ -42,6 +42,18 @@ export function assertInsideProject(projectPath: string, ref: string): string {
     throw new ProjectEscapeError(`path '${ref}' escapes the project directory`);
   }
   return resolve(projectPath, ref);
+}
+
+/**
+ * `assertInsideProject`, returning the ref as the store keys it: project-relative
+ * and POSIX-separated, whichever spelling the caller used (`./results/x.json`, or
+ * an absolute path under `projectPath`). A model-supplied ref passes through this
+ * before it reaches the store: the Postgres backend refuses an absolute ref that
+ * the file backend would resolve.
+ */
+export function projectRelativeRef(projectPath: string, ref: string): string {
+  const abs = assertInsideProject(projectPath, ref);
+  return relative(resolve(projectPath), abs).split(sep).join("/");
 }
 
 /**

@@ -46,6 +46,7 @@ from harness.auth import env_for_sdk, resolve_auth
 from harness.context_policy import (
     OWNED_DECLARATIONS as OWNED_DECLARATION_OWNERS,  # the SHIPPED hook's map, not a copy
     OWNED_FIELDS as OWNED_FIELD_OWNERS,  # the SHIPPED hook's map, not a copy
+    OWNED_CLAIMS as OWNED_CLAIM_ROUTES,  # the SHIPPED hook's map, not a copy
     OWNED_SECTIONS as OWNED_SECTION_OWNERS,  # the SHIPPED hook's map, not a copy
     bare_tool_name as _bare_tool_name,  # re-exported: callers + tests import it from here
     is_subagent_call,
@@ -248,14 +249,21 @@ def is_blocked_tree_tool(
 def is_main_thread_subagent_only_tool(input_data: dict[str, Any]) -> bool:
     """Whether this is a main-thread call to a `SUBAGENT_ONLY_TOOLS` member.
 
-    Both members are declared by NO skill's `allowed-tools`: `extraction_append`
-    lives only on `agents/record-extractor.md` (the #942 case), and `image_read`
-    is declared by no agent at all since `image-reader-opus` was retired (issue
-    #2013) — the deny is kept regardless, because it is what keeps inline base64
-    off the main thread. A call on the main thread (no `agent_id`) is the router
-    substituting for a failed spawn and doing the work itself.
+    The set has ONE member today: `image_read`, declared by no skill and by no
+    agent since `image-reader-opus` was retired (issue #2013) — the deny is kept
+    regardless, because it is what keeps inline base64 off the main thread. A
+    call on the main thread (no `agent_id`) is the router substituting for a
+    failed spawn and doing the work itself.
 
-    The policy binds in e2e for both because `agent_id` presence alone is a
+    `extraction_append` was the other member (the #942 case) and LEFT the set in
+    issue #2937, which routes indexed-record extraction through code called from
+    the main thread. See `harness.context_policy`'s set comment for what that
+    retires — in particular that this predicate is exactly the arm that cannot
+    express the declared-tools exemption, so the unindexed-path substitution #942
+    guarded is now unchecked in e2e, which is filed on the `nothing-checks`
+    register.
+
+    The policy binds in e2e because `agent_id` presence alone is a
     sufficient discriminator — which is all e2e can see, since its sub-skills run
     in the same session via the `Skill` tool with no `agent_id` to attribute them
     (see `harness.context_policy` docstring). We deny the bare tool directly
@@ -1110,9 +1118,11 @@ def build_workspace(
     # NOT (it's output-only — verified). This is *a* working effort lever, not
     # the only one: `ClaudeAgentOptions.effort` also works and always has —
     # the SDK's subprocess transport emits `--effort` unconditionally when the
-    # option is set, at every version this repo has pinned. The settings-file
-    # route is kept because it is the one that provably reaches subagents; the
-    # SDK option's subagent propagation is unverified. Do not restate this as
+    # option is set, at every version this repo has pinned. Both reach
+    # subagents: `apps/server/dev/probe_effort_capture.py` read a person-evidence
+    # subagent's request body carrying `medium` under either lever (CLI 2.1.215 and
+    # 2.1.220, 2026-10-12, issue #3263). This harness runs CLI 2.1.139, where subagent
+    # reach is unprobed for either lever. Do not restate this as
     # "the only lever" — that claim shaped a spend decision before it was
     # checked. Session-wide (parent + every subagent that does not pin its own
     # `effort:` — agent frontmatter overrides this, verified live in Cowork and
@@ -1232,6 +1242,34 @@ _RUNLOG_STRING_MAX = 500
 # reintroduces the un-reasonable-about bound this function otherwise rejects —
 # acceptable at 0.7%, but that is the trade, not an absence of one.
 _RUNLOG_MAX_CHARS = 4000
+
+# An `Agent` result is the one payload whose VALUE is the thing being measured:
+# issue #3188 compares what a subagent returned against what the main thread
+# relayed, and a raw side cut at 500 chars reports "the relay dropped content"
+# for content the LOG dropped. Measured over the 203 committed e2e logs: 834
+# truncated strings inside `Agent` summaries, full lengths median 2,274 / p90
+# 5,684 / p95 7,092 / max 21,578, ~2.06 MB dropped corpus-wide. 8,000 covers
+# 97% of them and recovers ~1.97 MB of that; 25,000 would be needed for the
+# last 3%, which is the tail this bound deliberately keeps out of a committed
+# artifact. The whole-response companion is sized for two text blocks (the
+# return, then the `agentId:/<usage>` announcement) plus the JSON envelope.
+#
+# NOT done through `_RUNLOG_EXEMPT_KEYS`: that path saves ONE value per key,
+# last wins — safe for `image_transcribe` (always one text block) and wrong
+# here, where 807 of 845 corpus summaries carry two text blocks and the
+# announcement is last in all 845. Exempting `text` would save the
+# announcement and overwrite the return with it.
+_RUNLOG_AGENT_STRING_MAX = 8000
+_RUNLOG_AGENT_MAX_CHARS = 12000
+
+
+def _is_agent_tool(tool_name: str | None) -> bool:
+    """Suffix match, as `_exempt_keys_for` does, so every server spelling
+    resolves (CLAUDE.md "Dual-spelled tool names"). The corpus spells it
+    `Agent` in all 1,738 calls; `Task` is accepted for the same reason."""
+    return bool(tool_name) and (
+        tool_name.endswith("Agent") or tool_name.endswith("Task")
+    )
 
 # Per-key exemptions from the string and backstop caps above. Each entry is
 # (bare_tool_suffix, response_key): a tool matched by suffix (so every server
@@ -1369,7 +1407,11 @@ def _summarize_tool_response(
                     if key in doc:
                         saved[key] = doc[key]
 
-    summary = _summarize_response(unwrapped, string_max=_RUNLOG_STRING_MAX)
+    agentish = _is_agent_tool(tool_name)
+    summary = _summarize_response(
+        unwrapped,
+        string_max=_RUNLOG_AGENT_STRING_MAX if agentish else _RUNLOG_STRING_MAX,
+    )
 
     # Re-insert full values of exempt keys, replacing truncated copies.
     if saved:
@@ -1392,8 +1434,9 @@ def _summarize_tool_response(
     # is to preserve the full value (issue #2561 item 2: the largest
     # transcriptions run past the 4000-char backstop, so it would truncate them
     # without this bypass).
-    if not saved and len(text) > _RUNLOG_MAX_CHARS:
-        text = text[: _RUNLOG_MAX_CHARS - 3] + "..."
+    max_chars = _RUNLOG_AGENT_MAX_CHARS if agentish else _RUNLOG_MAX_CHARS
+    if not saved and len(text) > max_chars:
+        text = text[: max_chars - 3] + "..."
 
     # Never emit a SHORTER capture than the old head-truncation would have. A
     # key-preserving summary can come out shorter on a long list of small items —
@@ -2025,8 +2068,8 @@ async def _run_agent(
     # in the result so a reviewer can audit the run. See spec §6.1.
     blocked_tree_reads: list[dict[str, Any]] = []
     # Every call the per-context policy denied — BOTH arms, not just the one this
-    # comment used to name: a main-thread `extraction_append`/`image_read` (the
-    # router doing a subagent's job after a failed spawn, #942), and an
+    # comment used to name: a main-thread `image_read` (the
+    # router doing a subagent's job after a failed spawn, #942/#1273), and an
     # owned-section `research_append` (#1273), which fires for a named subagent
     # too. The attempt itself is in `tool_calls` (streamed from the ToolUseBlock
     # before the PreToolUse deny); this list is the record that it did not run.
@@ -2211,8 +2254,9 @@ async def _run_agent(
 
         # The per-context tool policy (harness/context_policy.py): a main-thread
         # call to any SUBAGENT_ONLY_TOOLS member is the router substituting for a
-        # failed subagent spawn. Both members are enforced here — `extraction_append`
-        # (#942) and `image_read` — since neither is declared by any skill and
+        # failed subagent spawn. Every member is enforced here — today just
+        # `image_read`, since `extraction_append` (#942) left the set in issue
+        # #2937 — because no remaining member is declared by any skill and
         # `agent_id` presence alone discriminates, which is all e2e can see (its
         # sub-skills run in this same session via the Skill tool with no `agent_id`).
         # We deny the bare tool directly rather than through `subagent_only_violation`,
@@ -2232,9 +2276,8 @@ async def _run_agent(
             # this line alone. For image_read the recovery is the transcription
             # plugin @plugin:image-reader, which is now also the only image reader
             # (image-reader-opus retired, issue #2013).
-            # The fallback covers a future third guarded tool.
+            # The fallback covers a future second guarded tool.
             recovery = {
-                "extraction_append": "@plugin:record-extractor",
                 "image_read": "@plugin:image-reader",
             }.get(bare, "the owning subagent")
             narration.append(
@@ -2252,7 +2295,7 @@ async def _run_agent(
 
         # An owned SECTION, not an owned tool — a separate arm on purpose. The
         # block above says the whole tool is reserved for a subagent, which is
-        # true of extraction_append and false of research_append: that one is
+        # true of image_read and false of research_append: that one is
         # the general writer, called from the main thread constantly for plans,
         # questions, conflicts and the log. Sharing the branch handed the agent
         # a deny telling it the tool was off-limits, and a narration naming the
@@ -2283,10 +2326,12 @@ async def _run_agent(
                 owned_section, _, field = owned.partition(".")
                 agent = OWNED_DECLARATION_OWNERS[(owned_section, field)]
                 text = (
-                    f"`{bare}` denied on `{owned_section}` — declaring a question "
-                    f"exhaustive is routed to the {agent} agent. Creating a question "
-                    "and recording an honest `declared: false` termination are both "
-                    "unaffected; delegate the claim rather than making it here."
+                    f"`{bare}` denied on `{owned_section}` — writing a stop-gate "
+                    f"`stopped_because` value is routed to the {agent} agent. "
+                    "Writing `stopped_because: null` (new question) and non-gate "
+                    "values (`resources_spent`, `blocked_by_conflict`) are both "
+                    "unaffected; delegate the stop-gate claim rather than making "
+                    "it here."
                 )
             elif rule == "owned_field":
                 owned_section, _, field = owned.partition(".")
@@ -2296,6 +2341,15 @@ async def _run_agent(
                     f"routed to the {agent} agent. Every other write to "
                     f"`{owned_section}` is unaffected; delegate this field rather "
                     "than setting it here."
+                )
+            elif rule == "claim":
+                agent = OWNED_CLAIM_ROUTES[owned][0]
+                text = (
+                    f"`{bare}` denied on `{owned}` — recording a conflict's analysis "
+                    f"or resolution is routed to the {agent} agent. Opening a "
+                    "conflict with its required fields, and re-opening one as "
+                    "`unresolved`, are both unaffected; delegate the analysis "
+                    "rather than writing it here."
                 )
             else:
                 text = (
@@ -2565,9 +2619,10 @@ async def _run_agent(
             mcp_unavailable=mcp_state["unavailable"],
         ):
             # Terminal. Count the class only where the stop is a defect — `completed`
-            # is the successful path (134 of 181 committed runs) and `mcp_unavailable`
-            # is infrastructure (#941); attributing either to the agent's hand-back
-            # would make the rate dominated by runs that did the right thing.
+            # is the successful path (134 of 181 committed runs), `mcp_unavailable`
+            # is infrastructure (#941) and `ok` has no project (#3274); attributing any
+            # of them to the agent's hand-back would make the rate dominated by runs
+            # that did the right thing.
             reason = terminal_reason(
                 research=research,
                 nudges_used=continue_nudges["n"],
@@ -2853,6 +2908,22 @@ async def _run_agent(
                                     "tool_calls_before": len(tool_calls),
                                     "kind": "assistant",
                                     "text": block.text,
+                                    # Which thread said it. A subagent's own
+                                    # AssistantMessages stream through this same
+                                    # branch -- `usage.thread_windows.sub` is
+                                    # non-zero in 28 of the 28 committed logs
+                                    # carrying it, reaching 223 messages in one
+                                    # run -- so without this a relay-fidelity
+                                    # reader cannot tell the main thread's words
+                                    # from the subagent's it is supposed to be
+                                    # compared against (#3188). Same test the
+                                    # usage tagger below already uses.
+                                    "thread": (
+                                        "main"
+                                        if getattr(message, "parent_tool_use_id", None)
+                                        is None
+                                        else "sub"
+                                    ),
                                 }
                             )
                             one_line = " ".join(block.text.split())

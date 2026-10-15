@@ -18,7 +18,7 @@ schema-valid. The log is append-only by GPS rule, so the tool deliberately offer
 
 Every search produces a log entry (`research-log-protocol.md` Rule 1), so this is
 the highest-volume write in the system, performed today by hand across four skills
-(`search-records`, `search-external-sites`, `search-full-text`, `record-extraction`).
+(`search-records`, `search-external-sites`, `search-full-text`, `record-extraction` — the last since retired).
 The hand-write is the worst-case version of the problems the read/write direction
 exists to kill:
 
@@ -409,7 +409,10 @@ are two that do block, and the distinction is what makes them legitimate.
   sources-without-assertions warning (which fires once ≥3 sources exist); it
   self-silences the instant any source or assertion lands, and fires on every
   qualifying `research_log_append` call while the two-empty state holds.
-  Tool-neutral message.
+  Tool-neutral message. Reference lookups (`REFERENCE_LOOKUP_TOOLS`: `wiki_search`,
+  `wiki_read`, `wikipedia_search`, `historical_context`) are not counted: their
+  `positive` entries carry a looked-up article or overview in `notes`, not a
+  record to persist. The pre-1880 census hedge is unaffected.
   It cannot reach a session that logs nothing at all (bundle 3) — that shape has
   no tool-boundary trigger.
 
@@ -512,8 +515,56 @@ Scope, and why it is this narrow:
   to read, and "no Stribling appeared as a household head on any readable page"
   is a negative result. The relational phrases (`co-resident`, `enumerated
   with`, `living with`) are exempt, because they predicate co-residence on their
-  own. A role labelling a named person — `Amos (head), Nancy (wife)` — counts on
-  the kinship side.
+  own. The plural `co-residents` counts only with the people named after it
+  (`sidecar co-residents are Henry and Margaret Ackerman only`, which walked
+  through when only the singular was read), so "no co-residents listed",
+  "co-residents not checked" and "Co-residents: None listed" stay notes about
+  the search.
+
+  On the kinship side: a role labelling a named person (`Amos (head), Nancy
+  (wife)`); a role stated with `as` (`Mary Flynn listed as wife`, `Thomas Flynn
+  as head`), but only in a sentence that names no other record type and does not
+  mention the tree, since "the death records naming Sarah A. Bagley as mother" is
+  what those records state and "recorded in the tree as wife of Thomas" is what
+  the tree states;
+  and `Household head ⟨Name⟩`, which wants the name, so "no Stribling appeared
+  as a household head" stays a negative result. Against a staged pre-1880
+  payload only: a plural role parted from its names by punctuation (`plus sons,
+  Thos T McElwee and Stephen McElwee`) and a possessive (`are Amos's children`).
+  In a note alone those two refused a search plan ("Searched 1850 census for
+  children, Mary and John: nil") and a christening aside (`JPW's children were
+  christened`). The singular roles keep needing a space (`Groom's father:
+  Christopher Jespersen` is a marriage record's field label). `spouse` is not a
+  role word at all: adding it newly refused 6 notes and 3 payload ops, every one
+  a search anchor ("with spouse Unna", "added spouse anchor Juana Flores"). Every
+  one of these narrowings comes from the corpus re-measure or review, where the
+  wider form refused exactly the note quoted.
+
+  **A household phrase followed by a roster is a claim too**, because it places
+  people in the household exactly as `household includes ⟨X⟩` does: `Household
+  shows George, Henry, and Margaret Ackerman`, `household members George, Henry
+  Ackerman, and Margaret`, `Household per sidecar: George, Henry, Margaret`,
+  `Household indexed as George, Henry, and Margaret Ackerman`. All four are real
+  `ut_search_records_027` notes that passed this gate unhedged. Up to three
+  lower-case words of any kind may sit between the noun and the list: a list of
+  linking verbs was tried first, and each round of runs found a wording it
+  lacked, while the list's own shape is what carries the claim. A pasted
+  transcription with no household phrase in front of it is not affected, so the
+  transcription paragraph below still holds. The roster arm reads case under the
+  compound arm's terms — one of three conditions: the household phrase, two or
+  more capitalised runs joined by a comma or `and`, and at least two of them
+  naming no place — no place marker (`Household shows Bucks Co., PA …`), no
+  plural place noun after the list (`household search of Fayette, Greene and
+  Washington counties`), and not
+  a state or common emigrant-country name (`Household search covered Ohio,
+  Indiana and Kentucky`). The states that are also given names (`Virginia`,
+  `Georgia`, `Florida`, `Nevada`) are left off that list on purpose: a missing
+  place refuses a note the caller can rewrite, a person wrongly listed would
+  cancel the deny silently. A list introduced as spellings, variants, surnames
+  or forms (`Household spellings tried: Flynn, Flinn and Flynne`) is a list of
+  names searched, not of people; `names` is not among those words, because
+  `Household names: George, Henry and Margaret` is a roster. A roster written in
+  lower case is missed.
 
   **Capitalisation is never the test.** The first version asked whether a
   capital sat within 24 characters of the noun, which is not a test for a name
@@ -530,7 +581,7 @@ Scope, and why it is this narrow:
 
   **Every clause and guard goes red when it alone is removed**, which is
   checked by `dev/mutate-census-hedge.ts` rather than asserted. Run it rather
-  than trusting this sentence: it takes each of the eighteen out in turn and
+  than trusting this sentence: it takes each of the forty-one out in turn and
   exits non-zero on any the suite does not notice. Two rounds of this card
   shipped a mechanism no test exercised, each time because a note written for
   one clause incidentally satisfied a neighbour, so reading the tests does not
@@ -564,12 +615,29 @@ Scope, and why it is this narrow:
   be confirmed" the `in` belongs to the first sentence and the noun to the
   second. The split is on a terminator followed by a space, so `Bucks Co., PA`
   and `Sarah A. Mullen` are not cut at their abbreviating periods.
-- **"Indexed" beside a role word is a hedge** ("Role indexed as 'Head'"), as it
-  is in the eval-plane validator. Flagging a *name* as indexed is not.
+- **"Indexed" beside a role word is a hedge** ("Role indexed as 'Head'").
+  Flagging a *name* as indexed is not.
 - **The hedge is accepted however it is hyphenated.** The refusal message spells
   it "relationship-to-head column"; the hedge patterns accepted only spaces, so
   a caller who hedged in the exact words they were handed was refused a second
   time with no wording in the message that would clear it.
+- **"No relationships stated" and "does not record … relationship" are hedges.**
+  A `ut_search_records_027` note saying both was graded compliant on every
+  dimension.
+- **"pre-1880 census" binds as a census before 1880.** Read as 1880, which has
+  the column, it skipped the whole note whatever else the note asserted. The
+  prefix takes a year off the year it touches only: "before 1880 and 1880
+  census" is a pre-1880 census and the 1880 one.
+- **This function is the only copy of the rule.** `search-records`'
+  `test_pre1880_census_structure_marked_inferred` used to grade notes with wider
+  word lists of its own, so a note this gate accepted could still fail grading,
+  with nothing at write time to tell the model — `ut_search_records_027` flapped
+  on exactly that. A replay of this function in its place could not fail, since
+  a refused note is never logged. The validator now checks only what the model
+  can still get wrong: that every search whose note this gate refused is logged
+  again afterwards. `test_mock_mcp` proves the eval's write path runs this check
+  on a staged 1850 search, and widening what counts as a claim is done here,
+  measured and mutation-tested.
 
 Measured over the 4,322 distinct `notes` arguments in the committed run logs
 (2026-10-04; re-derive with
@@ -588,6 +656,15 @@ payload axis, every one of the 11 already among the 41, so they are repeats of
 the same strings rather than a separate population. All three newly refused are
 flat "in household of ⟨Name⟩" claims logged against an 1850 payload, the shape
 the rule exists for.
+
+The roster arm, the named plural `co-residents`, the `as`-role and `Household
+head ⟨Name⟩` shapes, the payload-only punctuated plural and possessive, the two
+"no relationship" hedges and the `pre-1880` binding, measured together against
+`main` at 7f482e579 (2026-10-12), newly refuse **0** and newly free **0** notes
+or paired payload ops in the committed corpus. Each closes a wording seen in uncommitted
+`ut_search_records_027` scratch runs, or one the eval validator caught before it
+became a replay of this check; the corpus measures that none of them reaches a
+note it did not already judge the same way.
 
 Every one of the 41 freed was read, and the right summary is that **none is an
 unhedged claim** — not that none names anyone. Most are search plans, nil
@@ -725,8 +802,8 @@ recorded for different arguments.
   staging search tool reports `resultsAvailable > 0` with no `stagedResultsRef`
   and stays silent for a nil search; the logging-without-persistence nudge fires
   once ≥3 positive searches are logged with zero sources and zero assertions,
-  stays silent below the threshold, and stays silent once any source or assertion
-  exists. Both keep `ok: true` and leave the log entry written.
+  stays silent below the threshold, stays silent once any source or assertion
+  exists, and does not count reference-lookup entries. Both keep `ok: true` and leave the log entry written.
 - **Nil escalation (§8.1)** — `escalationDue` appears on the third nil against a
   census plan item with an open question, single or batched; stays absent at two,
   for a probate plan item, once the plan item has a positive or partial entry or
@@ -771,9 +848,9 @@ recorded for different arguments.
   hand-written log + sidecar step with a `research_log_append` call. Their
   `research-log-protocol.md` references shrink to "call the tool" + the analytical
   rules (when to log negative, what to put in `query`/`notes`).
-- `record-extraction` — uses it for the `user_provided` log entry it writes when no
-  search skill logged the record (`research-log-protocol.md` §"When record-extraction
-  writes log entries").
+- `extraction_append` — calls it in code: a `record_read` entry for each
+  `recordIds` record it reads, and an `image_transcribe` or `user_provided` entry
+  for each `documents` source.
 - Downstream skills are unaffected: they still link to a log entry via
   `log_entry_id` on sources/assertions (the reverse-lookup provenance model is
   unchanged).

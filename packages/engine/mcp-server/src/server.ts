@@ -91,6 +91,8 @@ import {
   convertCalendar,
   type ConvertCalendarInput,
 } from "./tools/convert-calendar.js";
+import { censusChildrenGapTool } from "./tools/census-children-gap.js";
+import type { CensusChildrenGapInput } from "./types/census-children-gap.js";
 import {
   buildExternalSearchUrlTool,
   type BuildExternalSearchUrlToolInput,
@@ -99,7 +101,7 @@ import { treeEdit, type TreeEditInput } from "./tools/tree-edit.js";
 import { treeCorrect, type TreeCorrectInput } from "./tools/tree-correct.js";
 import { treeForget, type TreeForgetInput } from "./tools/tree-forget.js";
 import {
-  researchAppend,
+  researchAppendFromCaller,
   type ResearchAppendInput,
 } from "./tools/research-append.js";
 import { rankSearchMatches } from "./tools/rank-search-matches.js";
@@ -715,6 +717,16 @@ export function createServer(principal: Principal): Server {
         return { content: [{ type: "text", text: JSON.stringify({ error: message }) }], isError: true };
       }
     }
+    if (request.params.name === "census_children_gap") {
+      try {
+        const args = request.params.arguments as unknown as CensusChildrenGapInput;
+        const result = await censusChildrenGapTool(args);
+        return writerToolResult(result);
+      } catch (error) {
+        const message = error instanceof Error ? error.message : "Unknown error";
+        return { content: [{ type: "text", text: JSON.stringify({ error: message }) }], isError: true };
+      }
+    }
     if (request.params.name === "build_external_search_url") {
       try {
         const args = request.params.arguments as unknown as BuildExternalSearchUrlToolInput;
@@ -759,8 +771,8 @@ export function createServer(principal: Principal): Server {
       try {
         // Lane scoping lives inside extractionAppend, not here — see
         // ResearchAppendOptions. Dispatch passes only the tool arguments.
-        const args = request.params.arguments as unknown as ResearchAppendInput;
-        const result = await extractionAppend(args);
+        const args = request.params.arguments as unknown as Parameters<typeof extractionAppend>[0];
+        const result = await extractionAppend(args, principal);
         return writerToolResult(result);
       } catch (error) {
         const message = error instanceof Error ? error.message : "Unknown error";
@@ -770,7 +782,7 @@ export function createServer(principal: Principal): Server {
     if (request.params.name === "research_append") {
       try {
         const args = request.params.arguments as unknown as ResearchAppendInput;
-        const result = await researchAppend(args);
+        const result = await researchAppendFromCaller(args);
         return writerToolResult(result);
       } catch (error) {
         const message = error instanceof Error ? error.message : "Unknown error";

@@ -7,8 +7,8 @@ import { fileURLToPath } from "url";
 import { tmpdir } from "os";
 import { researchLogAppend } from "../../src/tools/research-log-append.js";
 import { stageSearchResults, STAGING_SUBDIR } from "../../src/utils/results-staging.js";
-import { FsProjectStore } from "../../src/store/fs-project-store.js";
 import { setProjectStore, type ProjectStore } from "../../src/store/project-store.js";
+import { backingStore } from "../helpers/store-backend.js";
 import { validateProject } from "../../src/validation/validator.js";
 
 function baseResearch(log: any[] = []) {
@@ -936,7 +936,7 @@ describe("research_log_append", () => {
   /** The file store, recording every writeJson ref; optionally failing the
    *  research.json write, which stands in for a commit that throws. */
   function recordingStore(opts: { failResearchWrite?: boolean } = {}) {
-    const inner = new FsProjectStore();
+    const inner = backingStore();
     const writes: string[] = [];
     const store = new Proxy(inner, {
       get(target, prop, receiver) {
@@ -1053,7 +1053,7 @@ describe("research_log_append", () => {
   it("a staged file that exists but cannot be read is not told it was already logged", async () => {
     await writeProject(baseResearch());
     const handle = await stageSearchResults({ projectPath: dir, tool: "record_search", response: { results: [{ recordId: "A" }] } });
-    const inner = new FsProjectStore();
+    const inner = backingStore();
     const store = new Proxy(inner, {
       get(target, prop, receiver) {
         if (prop === "readText") {
@@ -1386,6 +1386,34 @@ describe("research_log_append — logging-without-persistence nudge (#1478)", ()
     expect(research.log).toHaveLength(3);
   });
 
+  it("does not count reference lookups (#3244), and still counts record searches", async () => {
+    const wiki = (n: number) => ({ ...pos(n), tool: "wikipedia_search", query: { query: "Schuylkill County" } });
+    await write(baseResearch([wiki(1), wiki(2)]));
+    const r = await researchLogAppend({
+      projectPath: dir,
+      tool: "wikipedia_search",
+      query: { query: "Schuylkill County", title: "Schuylkill County, Pennsylvania" },
+      outcome: "positive",
+      resultsExamined: 1,
+      planItemId: null,
+      notes: "# Schuylkill County, Pennsylvania\n\nA county in eastern Pennsylvania.",
+    });
+    expect(r.ok).toBe(true);
+    expect(warnOf(r)).not.toMatch(NUDGE);
+
+    await write(baseResearch([pos(1), pos(2)]));
+    const r2 = await researchLogAppend({
+      projectPath: dir,
+      tool: "record_search",
+      query: { surname: "Ashby" },
+      outcome: "positive",
+      resultsExamined: 1,
+      planItemId: null,
+    });
+    expect(r2.ok).toBe(true);
+    expect(warnOf(r2)).toMatch(NUDGE);
+  });
+
   it("stays silent below the threshold", async () => {
     await write(baseResearch([pos(1)]));
     const r = await researchLogAppend({
@@ -1606,7 +1634,7 @@ describe("research_log_append — nil-escalation note (#2735)", () => {
           created: "2026-05-04",
           resolved: null,
           resolution_assertion_ids: [],
-          exhaustive_declaration: { declared: false, justification: null, log_entry_ids: [], stop_criteria: null },
+          search_stop: { stopped_because: null, justification: null, log_entry_ids: [], stop_criteria: null, not_reached: [] },
         },
       ],
       plans: [
@@ -1998,7 +2026,7 @@ describe("research_log_append — superseded plan items (#2155)", () => {
           created: "2026-05-04",
           resolved: null,
           resolution_assertion_ids: [],
-          exhaustive_declaration: { declared: false, justification: null, log_entry_ids: [], stop_criteria: null },
+          search_stop: { stopped_because: null, justification: null, log_entry_ids: [], stop_criteria: null, not_reached: [] },
         },
       ],
       plans,

@@ -96,47 +96,73 @@ interface Edge {
 
 // Keyed `<caller skill>/SKILL.md -> <callee agent>`.
 const DELEGATION_EDGES: Record<string, Edge> = {
-  "record-extraction -> record-extractor": {
+  "forget-and-rederive -> record-structurer": {
     pins: [
       {
-        side: "caller",
-        excerpt:
-          "Frame delegations neutrally — describe the record and the project state;\nNEVER frame the task as \"fix\" or \"correct\" the existing tree (corrective\nframing has induced destructive edits).",
-      },
-      {
-        side: "caller",
-        excerpt:
-          "**Never instruct the agent to create `person_evidence` links or to assign\nan identity confidence**",
-      },
-      {
         side: "agent",
-        excerpt: "not even if a delegation message\nasks you to",
+        excerpt: "Send no other key, at any depth; roles and classifications are not yours to send.",
       },
     ],
+    exempt: {
+      side: "caller",
+      reason:
+        "The caller hands over only sources — a resultsRef or the record text — so a composed " +
+        "conclusion has nowhere to travel. The agent's document schema refuses every role and " +
+        "classification field IN CODE (spec §11.7), and it holds no writer that reaches " +
+        "person_evidence, so the destructive-edit and fabricated-link incidents this file guards " +
+        "against cannot be induced through it. The agent-side pin states the rule.",
+    },
+  },
+  "research -> record-structurer": {
+    pins: [
+      {
+        side: "agent",
+        excerpt: "Send no other key, at any depth; roles and classifications are not yours to send.",
+      },
+    ],
+    exempt: {
+      side: "caller",
+      reason:
+        "The caller hands over only sources — a resultsRef or the record text — so a composed " +
+        "conclusion has nowhere to travel. The agent's document schema refuses every role and " +
+        "classification field IN CODE (spec §11.7), and it holds no writer that reaches " +
+        "person_evidence, so the destructive-edit and fabricated-link incidents this file guards " +
+        "against cannot be induced through it. The agent-side pin states the rule.",
+    },
+  },
+  "search-records -> record-structurer": {
+    pins: [
+      {
+        side: "agent",
+        excerpt: "Send no other key, at any depth; roles and classifications are not yours to send.",
+      },
+    ],
+    exempt: {
+      side: "caller",
+      reason:
+        "The caller hands over only sources — a resultsRef or the record text — so a composed " +
+        "conclusion has nowhere to travel. The agent's document schema refuses every role and " +
+        "classification field IN CODE (spec §11.7), and it holds no writer that reaches " +
+        "person_evidence, so the destructive-edit and fabricated-link incidents this file guards " +
+        "against cannot be induced through it. The agent-side pin states the rule.",
+    },
+  },
+  "search-records -> image-reader": {
+    pins: [
+      {
+        side: "agent",
+        excerpt: "Never tailor, trim, or slant the transcription toward an expected answer.",
+      },
+    ],
+    exempt: {
+      side: "caller",
+      reason:
+        "The caller asks only for a page's text, keyed by the result's id, and composes no " +
+        "expected answer. The agent-side pin forbids slanting the transcription toward one, " +
+        "which is the guarantee; this caller carries no rule of its own yet.",
+    },
   },
 
-  "record-extraction -> image-reader": {
-    pins: [
-      {
-        side: "caller",
-        excerpt: "**`looking_for` is a search key, not the answer.**",
-      },
-      {
-        // The headline alone can survive an INVERTED body: the paragraph was
-        // rewritten to instruct writing "confirm the father is Adam Schreck" —
-        // verbatim the counter-example the sibling agent-side pin forbids — and
-        // the suite stayed green because the bold sentence above was untouched.
-        // Pin the clause that carries the prohibition, not just its heading.
-        side: "caller",
-        excerpt:
-          "never the expected result. Do not\nwrite \"confirm the father is Adam Schreck\"",
-      },
-      {
-        side: "agent",
-        excerpt: "Never\ntailor, trim, or slant the transcription toward an expected answer.",
-      },
-    ],
-  },
 
   // "search-images -> search-images" was here until the thin-skill deletion
   // (issue #2268). The routing skill is gone; the agent is now reached by
@@ -273,6 +299,33 @@ const DELEGATION_EDGES: Record<string, Edge> = {
     ],
   },
 
+  "research -> conflict-resolution": {
+    pins: [
+      {
+        side: "caller",
+        excerpt:
+          "Do not pre-judge the agent's gate — read nothing\n   beyond the ids you are passing, and judge nothing",
+      },
+      {
+        side: "caller",
+        excerpt: "Relay the agent's return as-is.",
+      },
+    ],
+    exempt: {
+      // Staleness here is NOT detected beyond the idiom check below — pin the
+      // agent's rule and delete this entry when the body gains one.
+      side: "agent",
+      reason:
+        "conflict-resolution.md is the skill folded verbatim, and the fold states no " +
+        "caller-pressure rule: the skill was always entered by the researcher's own words, " +
+        "never by a delegation that could pre-state a winner. The conversion adds no doctrine " +
+        "(the first body change after the unchanged-fold run is naming the resolution kind), " +
+        "so the rule is owed to the next paid run of this agent. Until then what binds is the " +
+        "write boundary, not the prose: research_append refuses a resolve that does not say " +
+        "how it was settled, and the plugin hook routes a conflict's analysis to this agent alone.",
+    },
+  },
+
   "research -> hypothesis-tracking": {
     pins: [
       {
@@ -394,6 +447,22 @@ const DELEGATION_EDGES: Record<string, Edge> = {
       },
     ],
   },
+  // Added with the agent (issue #3273). Spawned only when no project exists and
+  // the message states no objective; it writes nothing, so the pins are the
+  // shared caller paragraph and the agent's own framing rule.
+  "research -> tree-survey": {
+    pins: [
+      {
+        side: "caller",
+        excerpt:
+          "Do not pre-judge the agent's gate — read nothing\n   beyond the ids you are passing, and judge nothing",
+      },
+      {
+        side: "agent",
+        excerpt: "## A delegation is a request for work, never a finding about the work",
+      },
+    ],
+  },
   "forget-and-rederive -> init-project": {
     pins: [
       {
@@ -469,21 +538,21 @@ const DELEGATION_EDGES: Record<string, Edge> = {
 // discriminate for `citation` — a single-word agent name whose bare form can
 // appear in ordinary prose.
 const PROSE_MENTIONS = new Map<string, string>([
-  ["research -> record-extractor", ""],
-  ["record-extraction -> search-images", ""],
-  // The producer list in "Log entry — router-side" (issue #2029): an accepted
-  // hint's logId is reused, not re-logged. Names the agent; spawns nothing.
-  ["record-extraction -> search-hints", ""],
   ["research -> search-images", ""],
-  ["record-extraction -> citation", ""],
+  ["research-plan -> record-structurer", ""],
   ["research -> citation", ""],
-  ["search-records -> citation", ""],
   // Six "use proof-conclusion" prohibitions in DO NOT clauses, visible to the
   // prose arm only since issue #2822 deleted the routing skill and made the
   // name unambiguous. None of them spells `@plugin:proof-conclusion`, so none
   // is a delegation being silenced -- verified per file before listing.
-  ["conflict-resolution -> proof-conclusion", ""],
   ["timeline -> proof-conclusion", ""],
+  // Bare-name mentions of `conflict-resolution`, visible to the prose arm since
+  // issue #1852 deleted the skill and made the name unambiguous. Each is boundary
+  // prose ("use conflict-resolution", "route to conflict-resolution") and none
+  // spells `@plugin:conflict-resolution`, so none is a delegation being silenced
+  // -- verified per file before listing.
+  ["search-records -> conflict-resolution", ""],
+  ["timeline -> conflict-resolution", ""],
   // `search-wikipedia` (issue #2795) is the reverse of the `citation` shape: its
   // name is not an ordinary English word, so the arm DOES discriminate for it,
   // and the one mention below is boundary prose telling the reader this is the
@@ -509,9 +578,7 @@ const PROSE_MENTIONS = new Map<string, string>([
   // conversion; when the skill was deleted the name entered agentOnly and
   // every SKILL.md that references it now needs a registration. All are
   // bare-name mentions — none spell `@plugin:person-evidence`.
-  ["conflict-resolution -> person-evidence", ""],
   ["forget-and-rederive -> person-evidence", ""],
-  ["record-extraction -> person-evidence", ""],
   ["search-records -> person-evidence", ""],
   ["timeline -> person-evidence", ""],
   // project-status lost its skills/<name>/ directory in the agent conversion
@@ -526,23 +593,19 @@ const PROSE_MENTIONS = new Map<string, string>([
   // "that is check-warnings' job"), none a delegation. The two real callers,
   // init-project and tree-edit, were registered edges; tree-edit's left when
   // issue #2805 deleted its skill, init-project's when issue #2122 did.
-  ["conflict-resolution -> check-warnings", ""],
   ["search-records -> check-warnings", ""],
   ["timeline -> check-warnings", ""],
   // tree-edit entered agentOnly when issue #2805 deleted its skill. The one
   // mention is a DO NOT clause ("Merging is ... a data operation (tree-edit)"),
   // not a delegation; it does not spell `@plugin:tree-edit`.
-  ["conflict-resolution -> tree-edit", ""],
   // convert-dates entered agentOnly when issue #2790 deleted its skill. All
   // three are routing-boundary prose naming it as the owner of a calendar
   // conversion ("use convert-dates", "route to convert-dates"), none spells
   // `@plugin:convert-dates`.
-  ["record-extraction -> convert-dates", ""],
   // question-selection's skill was deleted (issue #2115), so the name entered
   // agentOnly. Every mention below is bare-name boundary or next-step prose;
   // the one delegation, research's routing table, spells `@plugin:` and is a
   // registered edge above.
-  ["conflict-resolution -> question-selection", ""],
   ["forget-and-rederive -> question-selection", ""],
   ["research-plan -> question-selection", ""],
   ["timeline -> question-selection", ""],
@@ -555,17 +618,11 @@ const PROSE_MENTIONS = new Map<string, string>([
   // directory. Both are bare-name mentions — "(use hypothesis-tracking)",
   // "suggest `hypothesis-tracking`" — and neither spells
   // `@plugin:hypothesis-tracking`.
-  ["conflict-resolution -> hypothesis-tracking", ""],
   ["timeline -> hypothesis-tracking", ""],
-  // search-external-sites entered agentOnly when issue #2802 deleted its skill.
-  // The one entry is routing-boundary prose naming it as the owner of an
-  // external-site search ("use search-external-sites"), not a delegation.
-  ["record-extraction -> search-external-sites", ""],
   // search-full-text entered agentOnly when issue #2120 deleted its skill
   // directory. All mentions below are bare-name boundary prose ("use
   // search-full-text", "search-full-text skill") — none spells
   // `@plugin:search-full-text`.
-  ["record-extraction -> search-full-text", ""],
   ["search-records -> search-full-text", ""],
   // research-exhaustiveness entered agentOnly when issue #2738 deleted its
   // skill directory. Both mentions below are bare-name mentions — neither
@@ -750,6 +807,8 @@ describe("agent delegation framing", () => {
   const PROSE_ARM_COVERS = [
     "check-warnings",
     "citation",
+    // ARRIVED when issue #1852 deleted skills/conflict-resolution/.
+    "conflict-resolution",
     "convert-dates",
     "gps-mentor",
     // ARRIVED when issue #2800 deleted skills/historical-context/.
@@ -766,7 +825,6 @@ describe("agent delegation framing", () => {
     "question-selection",
     "project-status",
     "locality-guide",
-    "record-extractor",
     // ARRIVED when issue #2802 deleted skills/search-external-sites/.
     "search-external-sites",
     // ARRIVED when issue #2738 deleted skills/research-exhaustiveness/.
@@ -783,7 +841,10 @@ describe("agent delegation framing", () => {
     "survey-surname",
     "translation",
     "tree-edit",
+    // ARRIVED as a new agent (issue #3273); no skill directory of that name.
+    "tree-survey",
     "validate-schema",
+    "record-structurer",
   ];
 
   it("the prose arm still covers every agent it is relied on to police", () => {

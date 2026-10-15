@@ -38,7 +38,7 @@ they run against a fake `aws`.
 
 - **Account guard.** `sts get-caller-identity` must match the expected account before any
   other call. The region is pinned to us-east-1, and `--region` anything else is refused.
-  `up`, `probe` and `down` need `--billed`.
+  `up`, `probe`, `alarm-trip` and `down` need `--billed`.
 - **Names and tags.** Everything is named `genealogy-u13-*`, IAM sits under `/genealogy-u13/`,
   and every create is tagged `genealogy:rehearsal=u13` and `genealogy:run=<run id>`. The
   run id is fixed by the first `up` and kept in the inventory.
@@ -68,6 +68,9 @@ they run against a fake `aws`.
 | `status` | Prints yesterday's and today's daily cost (always), the budget's actual spend, each environment's status and health, and the RDS forward command. It exits 1 on drift between an environment and the option-settings file `up` wrote, or when a dev-only or `U13_PROBE_*` variable is live, or when the worker's `WORKER_TURN_USERS` is set and differs from `02-worker.config`'s (a slot case not restored; absent counts as the template's). |
 | `probe --case <c>` | Applies cases (repeatable), holds, then restores in reverse order in `finally`. Enter, Ctrl-C, an exception or `--hold-s N` all lead to the restore, which first waits for the environment to leave `Launching` or `Updating`. |
 | `cpu [--start <iso>] [--end <iso>] [--worker-instance <id>]` | Read-only and unbilled. CloudWatch's 5-minute `CPUUtilization`, `CPUCreditBalance`, `CPUCreditUsage`, `CPUSurplusCreditBalance` and `CPUSurplusCreditsCharged` (period 300, Average and Maximum) for the worker and tools instances and for RDS, plus each instance's credit mode (`describe-instance-credit-specifications`), as `k=v` lines; a metric with no point prints `<scope>.<metric>=no_data` (the surplus pair, or a non-burstable RDS class, may never publish). The window defaults to the last hour. Basic-monitoring points are stamped :00, :05, … and each covers the 5 minutes after, so it reads only the whole grid buckets inside the window, printed as `grid_start` and `grid_end`: up to 299 s at each end of the window is not in the figures, and a window holding no whole bucket is refused. With `--end`, it exits 1 until the bucket ending at `grid_end` has a worker `CPUUtilization` point, so a run made too soon is not taken for the result; a worker released before `grid_end` never publishes it, so end the window at the release. `--worker-instance` reads a released instance (CloudWatch keeps a terminated instance's metrics). |
+| `alarms --states` | Read-only. For each `genealogy-u13-*` alarm, recorded or listed: `<name>.state` (`StateValue`), `<name>.actions_enabled`, and its last `StateUpdate` from `describe-alarm-history` (`<name>.history.timestamp`, `.type`, `.summary`, or `<name>.history=none`), as `k=v` lines. |
+| `alarms --test-filters` | Free, and needs no stack. Runs `logs test-metric-filter` for every filter of every log alarm over that alarm's `samples`: each `match` sample must be matched by at least one of the alarm's filters, and each `no_match` sample by none. Prints each disagreement as `DISAGREE <alarm>: …` and exits 1 on any. The samples go through a `--cli-input-json` file, never argv: the CLI's shorthand would split a list value on its commas. |
+| `alarm-trip --alarm <name> [--timeout <s>]` | Billed. Does what the alarm's `trip` makes mechanical, then polls `describe-alarms` every 30 s until `StateValue` is `ALARM` (exit 0) or `--timeout` passes (default 900 s; exit 1). See "Alarms" below. |
 | `down` | Tears everything down in order. It is idempotent. |
 | `pause` | Between sessions: the three tiers to ASG 0/0, then RDS and the bastion stopped, and `paused` recorded so `status` does not report the ASG sizes as drift. AWS restarts a stopped RDS instance after seven days. |
 | `resume` | Undoes `pause`: RDS (waits for `available`), the bastion, then the tiers back to 1/1. |
@@ -79,9 +82,9 @@ they run against a fake `aws`.
 | Phase | Creates |
 |---|---|
 | `guard` | The `DAILY` cost budget `genealogy-u13`. Its limit is the trailing 30-day maximum daily `UnblendedCost` plus $15, with ACTUAL alerts at max + $5 and at the limit. Every run recomputes it and prints the trailing min and max. |
-| `iam` | The service role and four instance roles and profiles (web, worker, tools, bastion), each with `AmazonSSMManagedInstanceCore`. Web gets `sqs:SendMessage`. Tools gets the data bucket's object actions and `s3:ListBucket`. Each tier can read its own secrets. |
+| `iam` | The service role and four instance roles and profiles (web, worker, tools, bastion), each with `AmazonSSMManagedInstanceCore`. Web gets `sqs:SendMessage`, `s3:GetObject` on the data bucket and `s3:PutObject` on its `feedback/` prefix only (U20). Tools gets the data bucket's object actions and `s3:ListBucket`. Each tier can read its own secrets. |
 | `net` | Security groups `web`, `worker`, `tools`, `tools-alb` (80 from `worker`) and `rds` (5432 from the three tier groups), in the default VPC. |
-| `stores` | RDS PostgreSQL 16.13 `db.t4g.micro` (`--rds-class` picks another when AWS reports `InsufficientDBInstanceCapacity`, as us-east-1 did for gp3 on 2026-10-07): private, encrypted, with an RDS-managed master secret, a subnet group and a parameter group. Also the data bucket, with the public-access block and SSE. |
+| `stores` | RDS PostgreSQL 16.13 `db.t4g.micro` (`--rds-class` picks another when AWS reports `InsufficientDBInstanceCapacity`, as us-east-1 did for gp3 on 2026-10-07): private, encrypted, with an RDS-managed master secret, a subnet group and a parameter group. Also the data bucket, with the public-access block, SSE and one lifecycle rule expiring `feedback/` at 90 days (U20; the whole lifecycle document, so no other prefix expires). |
 | `secrets` | The six secrets, created from 0600 files. |
 | `bastion` | A t3.micro AL2023 instance in the `worker` group, reachable only over SSM. |
 | `versions` | The storage location, recording whether this run created the bucket. Then the application, and the three application versions (`--process`). |
@@ -92,6 +95,7 @@ they run against a fake `aws`.
 | `migrate` | Over SSM on the web instance, under a transient policy whose `Resource` is exactly the master secret and web's DSN secret, removed in `finally`. Runs `migrate.py`, creates or updates the DML role and its grants, then runs `migrate.py --status`. |
 | `signin --mode loopback` (optional) | `PUBLIC_URL=http://127.0.0.1:1837`, `FAMILYSEARCH_WEB_ENABLED=true` and `ALLOWED_EMAILS` (space-separated) on web. `--mode off` removes them. |
 | `signin --mode https` (optional) | A self-signed certificate for the web environment's CNAME, made with `openssl` in the work dir and imported into ACM, tagged. Then on web: the 443 listener (`aws:elbv2:listener:443`, `Protocol=HTTPS`, `SSLCertificateArns`), the port-80 listener off, `PUBLIC_URL=https://<web-cname>`, and the same sign-in settings. A re-run reuses the certificate. Leaving `https` turns 443 off and port 80 back on. See "https" below. |
+| `alarms` (optional) | U19's alarms, from `apps/server/proto/alarms.json`, after `web` and `worker` (it refuses before either exists). See "Alarms" below. |
 | `resolver` (optional) | A Route 53 Resolver query log on the default VPC, written to `/genealogy-u13/resolver`, to record which hosts the tiers resolve. |
 
 Every tier gets its security group and instance profile through
@@ -136,6 +140,38 @@ aws ssm start-session --target <bastion id> \
 psycopg takes `host=<rds endpoint> hostaddr=127.0.0.1 port=15432`, with `PGSSLMODE=verify-full`
 and the RDS CA. node-postgres needs a `127.0.0.1 <rds endpoint>` line in `/etc/hosts`.
 `status` prints the forward. The tool never edits `/etc/hosts`.
+
+## Alarms
+
+`apps/server/proto/alarms.json` is the one definition of U19's alarms, and it is FamilySearch's
+to port to their own platform (F14, F17: Blueprint, Dynatrace). `page` there says which
+alarms would page; on the rehearsal none does. `up --phase alarms` applies the file:
+
+- It reads the worker queue from the worker environment's `describe-environment-resources`
+  and the DLQ from the same list (a queue whose name holds `dead`). Beanstalk lists it there
+  as `WorkerDeadLetterQueue` (U19, 2026-10-13, n=1). If it ever does not, the DLQ is the
+  `deadLetterTargetArn` of the worker queue's `RedrivePolicy` (`sqs get-queue-attributes`).
+  The line `# worker queue …; DLQ …, from …` says which.
+- Each `kind: log` alarm gets one `logs put-metric-filter` per entry of its `filters`, on its
+  tier's `/aws/elasticbeanstalk/genealogy-u13-<tier>/var/log/web.stdout.log`, named
+  `genealogy-u13-<alarm>-<n>`, publishing 1 to the alarm's metric in `Genealogy/SearchAgent`
+  per matching line (no default value, no dimensions).
+- Every alarm is a `cloudwatch put-metric-alarm` named `genealogy-u13-<alarm>`, with the
+  file's statistic, period, evaluation periods, threshold, comparison and missing-data
+  treatment, tagged like every other create, and created with `--no-actions-enabled`: there
+  is no SNS topic, and "fired" means `StateValue` `ALARM`. The two `kind: sqs` alarms carry
+  the dimension `QueueName=<the resolved queue>`.
+
+`alarm-trip` per alarm:
+
+| Alarm | What `alarm-trip` does |
+|---|---|
+| `dlq_depth` | Sends the worker queue a message naming no turn row. The worker answers it 400 and sqsd dead-letters it after `MaxRetries` receives, so hold `probe --case maxretries_1` (and `fast_errors`) to make that one. |
+| `message_age` | Puts the alarm back with threshold 60 s, polls, then puts the file's threshold back in `finally` (on success, timeout or Ctrl-C). A turn must run longer than 60 s meanwhile: an in-flight message counts (U19, 2026-10-13, n=1). |
+| `reauth`, `spend_cap`, `long_agent`, `no_progress` | Prints the file's `trip` recipe and only polls. The operator does the rest: `reauth`, the refresh token made undecryptable and the session backdated on the database, then a message; `spend_cap`, `probe --case cap_1usd` and a research turn; `long_agent`, `up --phase worker --env worker:LONG_AGENT_CALL_S=60` and a delegating turn (a later `up` without the `--env` removes it); `no_progress`, a turn asked to reply without tools. |
+
+The custom metrics' data cannot be deleted. It ages out of CloudWatch on its own, at no cost
+once nothing publishes, so `down` deletes the filters and alarms and leaves the metrics.
 
 ## Probe cases
 
@@ -203,31 +239,39 @@ On the stack already up, with the Part A worker bundle deployed:
 `down` runs these steps in order. Each step waits, and each tolerates a resource that is
 already gone:
 
-1. Terminate every environment Beanstalk still lists in the application, throwaways
+1. Delete the `genealogy-u13-*` alarms (recorded, plus `describe-alarms --alarm-name-prefix`),
+   then each metric filter, recorded or found by metric (one whose log group is gone already
+   counts as deleted).
+2. Terminate every environment Beanstalk still lists in the application, throwaways
    included, then wait on those and every recorded one.
-2. Terminate the bastion.
-3. Delete RDS with no final snapshot (an instance already deleting is waited on), then its
+3. Terminate the bastion.
+4. Delete RDS with no final snapshot (an instance already deleting is waited on), then its
    subnet group and parameter group.
-4. Delete the application. If this run created the Beanstalk storage bucket, empty all of
+5. Delete the application. If this run created the Beanstalk storage bucket, empty all of
    it (object versions too), delete its policy, then delete the bucket. Otherwise delete
    only `genealogy-u13/` and the keys that name a recorded environment id.
-5. Force-delete the secrets.
-6. Empty and delete the data bucket.
-7. Delete the imported certificates, retrying for up to 15 minutes while ACM still reports
+6. Force-delete the secrets.
+7. Empty and delete the data bucket.
+8. Delete the imported certificates, retrying for up to 15 minutes while ACM still reports
    one in use.
-8. Delete the security groups `rds`, then `tools-alb`, `web`, `worker` and `tools`, retrying
+9. Delete the security groups `rds`, then `tools-alb`, `web`, `worker` and `tools`, retrying
    on DependencyViolation for up to 10 minutes.
-9. Delete the instance profiles, then the roles. Service-linked roles are left in place.
-10. Delete the budget.
-11. Remove the Resolver query log (disassociate, delete) and its log group.
-12. Delete the `/aws/elasticbeanstalk/genealogy-u13-*` log groups.
+10. Delete the instance profiles, then the roles. Service-linked roles are left in place.
+11. Delete the budget.
+12. Remove the Resolver query log (disassociate, delete) and its log group.
+13. Delete the `/aws/elasticbeanstalk/genealogy-u13-*` log groups.
 
 Then remove the `/etc/hosts` line and delete the work dir. `prove-empty` checks the tag
 index (re-polled after `--repoll-s`, since it lags deletes), the application and
 environments, the recorded stacks, load balancers and queues, Elastic IPs, instances,
 security groups, the RDS trio, the secrets, the data bucket, the storage bucket (`head-bucket`
 must answer 404 when this run created it; anything else counts as not empty), the IAM path,
-the budget, the recorded certificates, the Resolver config and both log-group prefixes. A tag
+the budget, the recorded certificates, the Resolver config, the alarms named `genealogy-u13-*`,
+the metric filters, and both log-group prefixes. `--filter-name-prefix` binds only with
+`--log-group-name`, so the filters are asked for by each metric of `alarms.json`
+(`describe-metric-filters --metric-namespace … --metric-name …`) and named `genealogy-u13-*`
+here, and each recorded filter is asked for in its own group; another team's filter on the
+same metric is not ours and does not count. A tag
 index entry for an EC2 instance or volume, or a certificate, passes when EC2 or ACM itself
 reports it gone.
 

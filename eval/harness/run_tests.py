@@ -19,7 +19,9 @@ Exit codes:
   3  any test was aborted for an execution reason
      (max_turns / wall clock / tool calls / tokens / error).
      Also returned when the abort-storm breaker trips (--no-abort-breaker
-     to override).
+     to override), and when a suite cap (--max-cost-usd,
+     --max-wall-clock-seconds) left a skill's tests unrun: that skill's log
+     is a `scratch_<ts>.json`, never a releasable candidate.
   130  the run was interrupted with Ctrl-C (SIGINT). Completed tests are
      saved as a partial `scratch_<ts>.json` run log per skill; in-flight tests
      are NOT cancelled — the pool joins them (#1016 measured ~2 min) — and
@@ -42,7 +44,9 @@ import argparse
 import json
 import os
 import sys
+import tempfile
 import time
+import uuid
 from collections import Counter
 from concurrent.futures import FIRST_COMPLETED, ThreadPoolExecutor, wait
 from pathlib import Path
@@ -63,6 +67,7 @@ from harness.runlog import (
     unexpected_pass,
     write_partial_runlog,
     write_run_log,
+    unit_dir_name,
 )
 from harness.skill_runner import DEFAULT_MODEL, QUOTA_ABORT_REASON
 from harness.snapshot import build_snapshot, hash_file
@@ -176,7 +181,11 @@ def _build_parser() -> argparse.ArgumentParser:
     )
     selection = parser.add_mutually_exclusive_group()
     selection.add_argument(
-        "--test", help="Run the single test with this ut_ id."
+        "--test",
+        nargs="+",
+        metavar="TEST",
+        help="Run the test(s) with these ut_ ids, in one pool (one run log per "
+        "skill). Every id must exist: one unknown id selects nothing.",
     )
     selection.add_argument(
         "--skill",
@@ -213,6 +222,18 @@ def _build_parser() -> argparse.ArgumentParser:
         "scratch_<ts>.json) and the run log records `tool_search: false`.",
     )
     parser.add_argument(
+        "--store",
+        choices=("fs", "pg"),
+        default="fs",
+        help="The project store the live tools run on. fs (default) is the "
+        "workspace directory. pg (U15) puts every live tool call on "
+        "PgS3ProjectStore against the compose Postgres + MinIO (`make "
+        "proto-up-store`; needs PROTO_PG_DSN, PROTO_S3_ENDPOINT, "
+        "PROTO_S3_ACCESS_KEY, PROTO_S3_SECRET_KEY): the invocation is "
+        "non-releasable and its log goes to eval/runlogs/unit-pg/<skill>/ "
+        "with `store: \"pg\"`.",
+    )
+    parser.add_argument(
         "--allow-missing-judge",
         action="store_true",
         help="Run even without ANTHROPIC_API_KEY. Positive tests will all "
@@ -244,9 +265,9 @@ def _build_parser() -> argparse.ArgumentParser:
     parser.add_argument(
         "--max-cost-usd",
         type=float,
-        default=50.0,
+        default=None,
         help="Suite-level budget cap in USD. Remaining tests are skipped when "
-        "cumulative cost exceeds this. Default: 50.",
+        "cumulative cost exceeds this. Default: 50 per selected skill.",
     )
     parser.add_argument(
         "--max-wall-clock-seconds",
@@ -347,6 +368,10 @@ _BREAKER_RATIO = 0.20
 # bug. Promote it to module scope and import it if a third consumer appears.
 _TRANSIENT_ABORT_REASONS = frozenset({"error", "sdk_stream_silence"})
 
+# The default --max-cost-usd, per selected skill. A flat $50 for one invocation
+# of nine skills (154 tests, ~$59) skipped 22 tests on 2026-10-14.
+_DEFAULT_COST_CAP_PER_SKILL_USD = 50.0
+
 
 def _est_test_seconds(spec, actuals: dict[str, float] | None = None) -> float:
     """Estimated weight of a test for longest-first scheduling.
@@ -415,7 +440,7 @@ def _resolve_concurrency(requested: int | None) -> tuple[int, str, str | None]:
 def _select_tests(args, tests_dir: Path) -> list[TestSpec]:
     """Translate CLI flags into a list of TestSpecs."""
     if args.test:
-        return _find_by_id(args.test, tests_dir)
+        return _find_by_ids(args.test, tests_dir)
 
     if args.skill:
         # args.skill is a list (nargs="+"). Concatenate each skill's specs;
@@ -466,15 +491,23 @@ def _collect_specs(root: Path, *, tags: list[str]) -> list[TestSpec]:
     return out
 
 
-def _find_by_id(test_id: str, root: Path) -> list[TestSpec]:
+def _find_by_ids(test_ids: list[str], root: Path) -> list[TestSpec]:
+    """The specs for `test_ids`, in the order given — or [] when any id is
+    unknown, naming it, so a typo never quietly runs fewer tests."""
+    wanted = set(test_ids)
+    found: dict[str, TestSpec] = {}
     for path in _iter_test_files(root):
         try:
             spec = load_test(path)
         except InvalidTestError:
             continue
-        if spec.id == test_id:
-            return [spec]
-    return []
+        if spec.id in wanted:
+            found[spec.id] = spec
+    unknown = [t for t in test_ids if t not in found]
+    if unknown:
+        print(f"Unknown test id(s): {', '.join(unknown)}", file=sys.stderr)
+        return []
+    return [found[t] for t in dict.fromkeys(test_ids)]
 
 
 def _format_path(path: Path) -> str:
@@ -559,6 +592,7 @@ def _print_summary(rows: list[dict]) -> None:
     print()
     _print_outcome_counts(rows)
     _print_judge_warnings(rows)
+    _print_readme_fallbacks(rows)
 
 
 # Every outcome the harness can record, per unit-test-spec.md §7 and
@@ -619,6 +653,25 @@ def _print_judge_warnings(rows: list[dict]) -> None:
         more = len(tests) - 6
         print(f"  {kind}: {len(tests)} — {shown}{f' (+{more} more)' if more > 0 else ''}")
     print("  Full advisories are in each run log's output.warnings.")
+    print()
+
+
+def _print_readme_fallbacks(rows: list[dict]) -> None:
+    """Say how many tests the judge graded without a scenario judge brief.
+
+    The README fallback exists until every referenced scenario has a
+    judge-brief.md (#2478); a scenario with neither file is counted with it. A
+    fallback nobody can see becomes permanent, so every run names the tests and
+    scenarios still on it.
+    """
+    tests = [r for r in rows if r.get("readme_fallback_scenarios")]
+    if not tests:
+        return
+    scenarios = sorted({s for r in tests for s in r["readme_fallback_scenarios"]})
+    print(
+        f"{len(tests)} test(s) graded without a judge brief, on a README or "
+        f"nothing ({len(scenarios)} scenario(s)): {', '.join(scenarios)}"
+    )
     print()
 
 
@@ -684,6 +737,30 @@ def main(argv: list[str] | None = None) -> int:
     args = parser.parse_args(argv)
 
     tests_dir = args.tests_dir or (REPO_ROOT / "eval/tests/unit")
+
+    store = "pg" if args.store == "pg" else None
+    if store == "pg":
+        missing = [
+            v
+            for v in ("PROTO_PG_DSN", "PROTO_S3_ENDPOINT", "PROTO_S3_ACCESS_KEY", "PROTO_S3_SECRET_KEY")
+            if not os.environ.get(v)
+        ]
+        if missing:
+            print(
+                f"--store pg needs {', '.join(missing)} (start the stack with "
+                "`make proto-up-store`; `make eval-skill STORE=pg` sets them).",
+                file=sys.stderr,
+            )
+            return 2
+        # Read by mock_mcp._run_node_eval (adds the --import) and by every node
+        # subprocess's prelude (the per-run project-id nonce).
+        os.environ["PROTO_STORE"] = "pg"
+        os.environ["HARNESS_PG_RUN"] = uuid.uuid4().hex
+        # Where the prelude records a store fault from any node process
+        # (mock_mcp.pg_store_faults reads it back per workspace).
+        os.environ["HARNESS_PG_FAULT_LOG"] = str(
+            Path(tempfile.gettempdir()) / f"harness-pg-faults-{os.environ['HARNESS_PG_RUN']}.jsonl"
+        )
 
     if args.list_skills:
         skills = _list_skills(tests_dir)
@@ -839,6 +916,7 @@ def main(argv: list[str] | None = None) -> int:
         has_tag_filter=has_tag_filter,
         runs_per_test=resolved_runs_per_test,
         tool_search=args.tool_search,
+        store=store,
     )
     invocation_timestamp = now_utc_filename_timestamp()
     print(
@@ -848,6 +926,8 @@ def main(argv: list[str] | None = None) -> int:
     )
     if not args.tool_search:
         print("tool search: OFF (scratch log)")
+    if store == "pg":
+        print(f"store: pg (run {os.environ['HARNESS_PG_RUN']}; logs to eval/runlogs/unit-pg/)")
     print(f"Running {len(specs)} test(s)...")
     print()
 
@@ -862,6 +942,12 @@ def main(argv: list[str] | None = None) -> int:
     _SEED_AVG_COST_USD = 0.10
     _COST_WINDOW = 5
     recent_costs: list[float] = []
+
+    max_cost_usd = (
+        args.max_cost_usd
+        if args.max_cost_usd is not None
+        else _DEFAULT_COST_CAP_PER_SKILL_USD * len({s.skill for s in specs})
+    )
 
     concurrency, conc_source, conc_detail = _resolve_concurrency(args.concurrency)
     concurrency = min(concurrency, len(specs))
@@ -984,6 +1070,7 @@ def main(argv: list[str] | None = None) -> int:
                     snapshot=_snapshot_for(skill),
                     tests=entries,
                     tool_search=args.tool_search,
+                    store=store,
                 )
                 partial_paths[skill] = write_partial_runlog(
                     log,
@@ -1035,9 +1122,9 @@ def main(argv: list[str] | None = None) -> int:
             saw_budget_skip = True
             return True
         projected = cumulative_cost + (spec.runs_per_test * _avg_cost())
-        if projected > args.max_cost_usd:
+        if projected > max_cost_usd:
             print(
-                f"  ! suite cost cap ${args.max_cost_usd:.2f} would be "
+                f"  ! suite cost cap ${max_cost_usd:.2f} would be "
                 f"exceeded by {spec.id} (projected ${projected:.4f}); "
                 f"not starting more tests",
                 file=sys.stderr,
@@ -1276,6 +1363,14 @@ def main(argv: list[str] | None = None) -> int:
                     for w in iter_run_warnings(entry)
                     if w.get("kind") in _JUDGE_WARNING_KINDS
                 ],
+                # Scenarios with no judge-brief.md yet, graded on a whole
+                # README or on nothing (#2478). Its own line, not the judge
+                # tally: a fixture advisory, not a grading rule.
+                "readme_fallback_scenarios": sorted({
+                    w.get("scenario") or ""
+                    for w in iter_run_warnings(entry)
+                    if w.get("kind") in ("scenario_readme_fallback", "scenario_brief_missing")
+                }),
             }
         )
 
@@ -1335,12 +1430,26 @@ def main(argv: list[str] | None = None) -> int:
         return 130  # interrupted
 
     # --- Write one run log per skill --------------------------------------
+    # A suite cap leaves specs unsubmitted, and a releasable log must cover its
+    # whole suite, so a skill missing any test writes scratch.
+    cut_short = Counter(
+        spec.skill for idx, spec in enumerate(specs) if idx not in results_by_index
+    )
+    if cut_short:
+        saw_exec_abort = True
     written_paths: list[Path] = []
     for skill, entries in per_skill_entries.items():
-        skill_runlog_dir = paths.runlogs_root / "unit" / skill
+        skill_releasable = releasable and skill not in cut_short
+        if releasable and not skill_releasable:
+            print(
+                f"  ! {skill}: {cut_short[skill]} test(s) not run under the suite "
+                f"cap, so its log is scratch; re-run it with a higher "
+                f"--max-cost-usd"
+            )
+        skill_runlog_dir = paths.runlogs_root / unit_dir_name(store) / skill
         filename, version = next_filename_for(
             skill_runlog_dir=skill_runlog_dir,
-            releasable=releasable,
+            releasable=skill_releasable,
             timestamp=invocation_timestamp,
         )
         # Only a releasable run carries a review sample. A scratch run is
@@ -1350,14 +1459,14 @@ def main(argv: list[str] | None = None) -> int:
             _review_sample_for(
                 skill, entries, skill_runlog_dir, invocation_timestamp
             )
-            if releasable
+            if skill_releasable
             else None
         )
         log = build_run_log(
             skill=skill,
             version=version,
             released=False,
-            releasable=releasable,
+            releasable=skill_releasable,
             invocation=mode,
             timestamp=invocation_timestamp,
             harness_version=HARNESS_VERSION,
@@ -1368,6 +1477,7 @@ def main(argv: list[str] | None = None) -> int:
             tests=entries,
             review_sample=sample,
             tool_search=args.tool_search,
+            store=store,
         )
         path = write_run_log(
             log,

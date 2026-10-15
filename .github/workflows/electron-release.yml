@@ -1,50 +1,73 @@
-# Electron desktop app (Research Viewer) — alpha release pipeline.
+# Builds the Research Viewer (apps/electron) for macOS and Windows and, on every
+# push to main, publishes the two installers to the `cowork-latest` release that
+# cowork-release.yml fills with the MCP server and plugin. README.md links to
+# them by fixed name, so the links never change and always serve main.
 #
-# UNSIGNED alpha: mac/win builds are not code-signed or notarized (see the
-# "Adding code signing later" runbook in apps/electron/README.md). Testers must
-# clear Gatekeeper/SmartScreen by hand — the README documents the exact steps.
+# A separate workflow, not a job in cowork-release.yml, so a broken viewer build
+# never holds back the MCP server and plugin. Pull requests that touch the viewer
+# build both installers without publishing, so a packaging break shows on the PR
+# rather than as a download that silently stops updating. Run it by hand
+# (workflow_dispatch) on any branch for the same dry run; the installers are
+# attached to the run as artifacts.
 #
-# Two ways in:
-#   - push a tag `electron-v1.2.3`  → builds + PUBLISHES a GitHub Release.
-#   - run manually (workflow_dispatch) → builds the full matrix with
-#     `--publish never` and uploads the artifacts. This is the DRY RUN: use it
-#     to prove the pipeline before cutting a real tag.
+# UNSIGNED: the installers are not code-signed or notarized, so testers clear
+# Gatekeeper/SmartScreen by hand (README.md, "Install"). Adding signing:
+# apps/electron/README.md. CSC_IDENTITY_AUTO_DISCOVERY=false forces the unsigned
+# build instead of picking up a stray certificate.
 #
-# Trigger is namespaced `electron-v*` (NOT the generic `v*.*.*`) so a future
-# .mcpb/plugin release tag in this monorepo never accidentally fires an
-# electron build.
+# No Linux build: the viewer runs beside Claude Desktop, which has none.
+# `pnpm build:linux` still packages one locally.
 
 name: Electron release
 
 on:
   push:
-    tags:
-      - 'electron-v*'
+    branches: [main]
+  pull_request:
+    paths:
+      - 'apps/electron/**'
+      - 'packages/viewer-ui/**'
+      - 'packages/schema/**'
+      - 'package.json'
+      - 'pnpm-lock.yaml'
+      - 'pnpm-workspace.yaml'
+      - '.github/workflows/electron-release.yml'
   workflow_dispatch: {}
 
 permissions:
-  contents: write   # create the GitHub Release + upload assets on a tag push
+  contents: write   # replace the release's files
+
+# One publish at a time on main, in push order; a newer PR push cancels the older.
+concurrency:
+  group: electron-release-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+env:
+  TAG: cowork-latest
+  ASSETS: research-viewer-mac.dmg research-viewer-windows-setup.exe
 
 jobs:
-  release:
+  build:
     strategy:
       fail-fast: false
       matrix:
         include:
           - os: macos-14
             target: mac
+            asset: research-viewer-mac.dmg
           - os: windows-latest
             target: win
-          - os: ubuntu-latest
-            target: linux
+            asset: research-viewer-windows-setup.exe
 
     runs-on: ${{ matrix.os }}
     timeout-minutes: 60
+    env:
+      CSC_IDENTITY_AUTO_DISCOVERY: false
 
     steps:
       - uses: actions/checkout@v7
 
-      # pnpm BEFORE setup-node so the npm-cache step can find it. Version is read
+      # pnpm BEFORE setup-node so the cache step can find it. Version is read
       # from the root package.json `packageManager` field.
       - uses: pnpm/action-setup@v6
 
@@ -58,76 +81,44 @@ jobs:
       - name: Install workspace
         run: pnpm install --frozen-lockfile
 
-      # Build stamp (#2126): `pnpm build` runs electron-vite, whose config reads
-      # `git rev-parse` / `git status` from this checkout and bakes
-      # `<version>+<date>.<sha>` into the main process (src/main/build-info.ts),
-      # so the feedback bundle's viewer_version names the commit. Nothing to
-      # pass here — a shallow actions/checkout still answers rev-parse.
-      #
-      # `--publish always` only on a real tag push; the manual dry run builds the
-      # same artifacts but publishes nothing. CSC_IDENTITY_AUTO_DISCOVERY=false
-      # forces a clean unsigned (ad-hoc) build instead of picking up a stray cert.
-      - name: Build & package (mac, unsigned)
-        if: matrix.target == 'mac'
+      # `pnpm build` bakes `<version>+<date>.<sha>` from this checkout into the
+      # main process (src/main/build-info.ts), so a feedback bundle's
+      # viewer_version names the commit (#2126).
+      - name: Build & package
         working-directory: apps/electron
-        run: pnpm build && pnpm exec electron-builder --mac --arm64 --x64 --publish ${{ github.event_name == 'push' && 'always' || 'never' }}
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          CSC_IDENTITY_AUTO_DISCOVERY: false
+        run: pnpm build && pnpm exec electron-builder --${{ matrix.target }} --publish never
 
-      - name: Build & package (win, unsigned)
-        if: matrix.target == 'win'
-        working-directory: apps/electron
-        run: pnpm build && pnpm exec electron-builder --win --x64 --publish ${{ github.event_name == 'push' && 'always' || 'never' }}
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Build & package (linux)
-        if: matrix.target == 'linux'
-        working-directory: apps/electron
-        run: pnpm build && pnpm exec electron-builder --linux AppImage --x64 --publish ${{ github.event_name == 'push' && 'always' || 'never' }}
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
-      # The gate this workflow was missing (#1070). electron-builder logs a
-      # dependency it could not resolve at WARN, so a packaged app carrying none
-      # of its declared dependencies is a GREEN build that opens no window and
-      # prints nothing.
-      #
-      # No per-OS asar path: the script finds every app.asar under dist/ itself,
-      # which also covers mac emitting one per architecture, and hard-fails when
-      # it finds none rather than passing on an empty search.
-      #
-      # **What this does and does not stop on a tag push.** The packaging steps
-      # above carry `--publish always`, so assets are uploaded BEFORE this runs
-      # and this step cannot prevent the upload. electron-publish creates a
-      # **draft** release by default (`gitHubPublisher.js`), so nothing becomes
-      # public on its own: a red leg here is the signal not to publish that
-      # draft, and with `fail-fast: false` the other OS legs still upload theirs.
-      # Splitting packaging from publishing would make this a true gate; that is
-      # a change to a release path nothing has ever exercised end to end, so it
-      # is deliberately not bundled with this fix.
+      # electron-builder logs a dependency it could not resolve at WARN, so a
+      # packaged app carrying none of its dependencies is a green build that
+      # opens no window (#1070). Publishing needs this job, so this blocks it.
       - name: Verify the packaged app has its dependencies
         working-directory: apps/electron
         run: npm run check-packaged
 
-      # Keep the dry-run output so you can download + smoke-test installers
-      # straight off the Actions run (only on manual dispatch; tag pushes publish
-      # to the Release instead).
-      # `!cancelled()` so a FAILED verify still uploads: a broken artifact is
-      # exactly the one worth downloading and inspecting, and the default
-      # `success()` would withhold it precisely then. Not `always()` — that fires
-      # on cancellation too, and with `if-no-files-found: error` a cancelled run
-      # would report a spurious upload failure on top of the cancellation.
-      - name: Upload dry-run artifacts
-        if: ${{ !cancelled() && github.event_name == 'workflow_dispatch' }}
+      # `!cancelled()` so a failed verify still hands you the installer to
+      # inspect; `warn` so a build that never produced one reports the build
+      # error, not a second error about the missing file.
+      - name: Upload the installer
+        if: ${{ !cancelled() }}
         uses: actions/upload-artifact@v7
         with:
-          name: ${{ matrix.target }}-dist
-          path: apps/electron/dist/**
-          # `warn`, not `error`. This step now runs on failure too (so a failed
-          # verify still hands you the artifact to inspect), and the common
-          # failure is the BUILD failing before dist/ exists at all — where
-          # `error` would add a second red step blaming a missing artifact
-          # instead of the typecheck error that actually broke it.
+          name: ${{ matrix.target }}
+          path: apps/electron/dist/${{ matrix.asset }}
           if-no-files-found: warn
+
+  publish:
+    needs: build
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/download-artifact@v8
+        with:
+          path: dist
+          merge-multiple: true
+
+      - name: Publish to the cowork-latest release
+        working-directory: dist
+        env:
+          GH_TOKEN: ${{ github.token }}
+        # $ASSETS unquoted on purpose: it is two paths.
+        run: gh release upload "$TAG" $ASSETS --clobber --repo "$GITHUB_REPOSITORY"

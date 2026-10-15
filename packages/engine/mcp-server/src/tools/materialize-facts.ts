@@ -55,6 +55,7 @@ import type {
 } from "../types/materialize-facts.js";
 import { validateIntroduced } from "../validation/introduced-errors.js";
 import { checkWarningGate } from "./tree-edit.js";
+import { mintedFromThisRecord } from "./research-append.js";
 import { sanitizeTree } from "../validation/tree-sanitize.js";
 import {
   atomicWriteJson,
@@ -81,6 +82,7 @@ import {
   GENDER_TYPES,
   NAME_TYPES,
   SKIP_TYPES,
+  isCoupleEventFactType,
   assertionFactAttr,
   assertionTreeFactType,
   candAsFact,
@@ -299,7 +301,11 @@ function applyMaterializeOp(
       continue;
     }
 
-    if (SKIP_TYPES.has(rawType)) continue;
+    // SKIP_TYPES matches the raw lowercased string; the couple-event check
+    // folds separators too, because one event arrives spelled several ways and
+    // only `marriage` was ever listed. A couple event belongs on the Couple
+    // relationship via tree_edit, never on a person.
+    if (SKIP_TYPES.has(rawType) || isCoupleEventFactType(rawType)) continue;
 
     // A value-bearing / event fact. Resolve provenance first (§4.2 step 2:
     // error, never null), then upsert by fact identity.
@@ -759,7 +765,46 @@ function applyOp(
         "field(s) if you meant the persona form",
     );
   }
+  requireLinkToExistingPerson(tree, research, persona);
   return applyMaterializeOp(tree, research, persona);
+}
+
+/** Refuse to copy a persona's facts onto a person already in the tree unless a live `probable` or `confident` person_evidence link ties one of the
+ *  persona's assertions to that person. A `speculative` link is a candidate,
+ *  not an identity, and an unlinked one is not even that. Minting a new person
+ *  (no personId, or one not yet in the tree) needs no link: the link to it is
+ *  written afterwards. Nor does re-materializing a record onto the stub it
+ *  minted (`mintedFromThisRecord`), which repeats a copy rather than claiming
+ *  an identity. */
+function requireLinkToExistingPerson(
+  tree: SimplifiedGedcomX,
+  research: any,
+  op: MaterializeFactsOp,
+): void {
+  const personId = str(op.personId);
+  if (personId === undefined || !(tree.persons ?? []).some((p) => p?.id === personId)) return;
+  if (mintedFromThisRecord(personId, String(op.recordId), research, tree)) return;
+  const persona = new Set<string>();
+  for (const a of (Array.isArray(research.assertions) ? research.assertions : []) as any[]) {
+    if (a && a.record_id === op.recordId && a.record_role === op.recordRole && typeof a.id === "string") {
+      persona.add(a.id);
+    }
+  }
+  const linked = ((research.person_evidence ?? []) as any[]).some(
+    (e) =>
+      e &&
+      !e.superseded_by &&
+      e.person_id === personId &&
+      (e.confidence === "confident" || e.confidence === "probable") &&
+      persona.has(e.assertion_id),
+  );
+  if (linked) return;
+  throw new MaterializeFactsError(
+    `'${personId}' was already in the tree, and no 'probable' or 'confident' person_evidence link ` +
+      `ties record '${op.recordId}' role '${op.recordRole}' to them. Write that link with ` +
+      "research_append first; a 'speculative' link does not qualify. If this persona is someone " +
+      "else, omit personId to materialize it onto a new person.",
+  );
 }
 
 // ─── the tool ─────────────────────────────────────────────────────────────────
@@ -946,7 +991,10 @@ export const materializeFactsSchema = {
     "\n" +
     "Create-or-enrich: if personId names a person that does not exist yet, the tool " +
     "mints it from the persona's name/gender assertions, so the person is never " +
-    "fact-less. Idempotent: re-running the same persona duplicates neither facts nor " +
+    "fact-less. A personId already in the tree needs a live 'probable' or 'confident' " +
+    "person_evidence link from this persona to that person, written first with " +
+    "research_append; 'speculative' does not qualify. " +
+    "Idempotent: re-running the same persona duplicates neither facts nor " +
     "refs. Agreeing values (compatible date/place, equal value) union their refs onto " +
     "one fact; an incompatible date/place OR a different value coexists as a separate " +
     "sourced fact. A competing value of a single-valued/vital type (Birth, Death, " +

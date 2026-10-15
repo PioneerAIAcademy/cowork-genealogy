@@ -4,12 +4,12 @@
  * `packaging.test.ts` asserts the guard is *wired up* — that each `build:*`
  * script calls it and the release workflow still runs it. It never asserts the
  * guard *works*. Nothing else does either: `check-packaged` runs only from the
- * four `build:*` scripts and from `electron-release.yml`, which fires on a tag
- * or a manual dispatch, so no pull-request check ever executes the script.
+ * four `build:*` scripts and from `electron-release.yml`, which no branch rule
+ * requires, so no required check ever executes the script.
  *
  * That is the same window the wiring test exists to close, one level down: break
  * the package-name regex, or the backslash handling the Windows release leg
- * proved load-bearing, and every check stays green until someone cuts a release.
+ * proved load-bearing, and every required check stays green.
  *
  * These tests build real asar archives with `@electron/asar` in a temp
  * directory, so they need no build, no network and no Electron. They run under

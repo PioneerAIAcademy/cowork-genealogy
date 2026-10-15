@@ -130,6 +130,22 @@ describe("renderIssueSentence", () => {
     ).toBe("This person died before their parent, Mary Jane, was born.");
   });
 
+  it("names the known start year when a place's end year is unknown (DATE_PLACE_MISMATCH_UNKNOWN_TO_YEAR)", () => {
+    expect(
+      renderIssueSentence({
+        issueType: "DATE_PLACE_MISMATCH_UNKNOWN_TO_YEAR",
+        conclusionType: "BIRTH",
+        placeNormalized: "Kentucky, United States",
+        placeRepId: "351",
+        placeNormalizedFromYear: 1792,
+        conclusionNormalizedDate: "1780",
+      }),
+    ).toBe(
+      'The standard "Kentucky, United States" (ID: 351) is used for dates from 1792 onward. ' +
+        "This conflicts with the birth date of 1780.",
+    );
+  });
+
   it("falls back for an unknown issueType without throwing", () => {
     const s = renderIssueSentence({
       issueType: "SOME_NEW_ISSUE",

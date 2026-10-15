@@ -4,18 +4,18 @@
     "skill": "search-familysearch-wiki",
     "name": "FamilySearch wiki — Irish immigration",
     "type": "positive",
-    "description": "A FamilySearch wiki search on a migration research topic. Confirms the skill handles a single-result response and still produces a sourced summary file.",
-    "tags": ["fs-wiki", "migration", "expects-file-irish-immigration-pennsylvania", "direct-arm"]
+    "description": "A FamilySearch wiki search on a migration research topic. Confirms the agent handles a single-result response and still logs a sourced summary.",
+    "tags": ["fs-wiki", "migration", "direct-arm"]
   },
   "input": {
-    "delegation": "Search the FamilySearch wiki about Irish immigration to Pennsylvania",
-    "scenario": null
+    "delegation": "Search the FamilySearch wiki about Irish immigration to Pennsylvania\n\nprojectPath: <workspace>",
+    "scenario": "empty-project-just-created"
   },
   "mcp_fixtures": ["wiki-search-irish-immigration"],
   "judge_context": [
     "This test grades whether the summary preserves the source's strength of wording. The fixture chunk reads 'Parish registers from Catholic churches in these communities are key genealogical sources'. Judge whether the force of 'key' survives — an upgrade to a superlative ('primary', 'most important', 'essential') overstates the source; clause order, which noun carries the modifier, and whether 'genealogical' was retained are not part of this dimension.",
     "This scoping binds every dimension, base and rubric alike: rephrasing that preserves the source's strength must not be marked down under Correctness either.",
-    "The skill saves its summary to a markdown file and, per its SKILL.md, reports only the filename and the fact of a Sources section — it is instructed to keep that message brief and NOT to reproduce the file in chat. Do not treat the file's contents being unquoted as a defect, and do not mark any dimension down for being unable to verify them from the response; file contents and Sources formatting are checked deterministically outside the judge.",
+    "The agent logs its summary as one research-log entry, the summary in the entry's notes, and reports only that it was saved to the research log with a Sources section — it is instructed to keep that message brief and NOT to reproduce the guidance in chat. Do not treat the notes being unquoted in the reply as a defect; they are visible in the file changes summary, and Sources formatting is checked deterministically outside the judge.",
     "Only one result is returned by the fixture — the Sources section must contain exactly one bullet citing it."
   ]
 }

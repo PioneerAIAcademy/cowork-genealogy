@@ -344,11 +344,11 @@ def test_first_question_depends_on_empty(before_state, after_state, test):
     )
 
 
-# --- Tag-gated: new question's exhaustive_declaration is unstarted ----
+# --- Tag-gated: new question's search_stop is unstarted ----
 
 def test_new_question_exhaustive_declaration_unstarted(before_state, after_state, test):
-    """Tag-gated: a freshly added question's exhaustive_declaration must
-    be unstarted — declared=False, log_entry_ids=[], stop_criteria=None.
+    """Tag-gated: a freshly added question's search_stop must
+    be unstarted — stopped_because=null, log_entry_ids=[], stop_criteria=None.
     Declaring exhaustiveness at creation time is structurally wrong:
     the question hasn't been researched yet."""
     if "new-question-exhaustive-declaration-unstarted" not in test.get("tags", []):
@@ -359,25 +359,26 @@ def test_new_question_exhaustive_declaration_unstarted(before_state, after_state
         pytest.skip("missing research.json for diff")
     new = _new_questions(before, after)
     assert new, "expected a new question; none was added"
+    _STOP_GATE_VALUES = frozenset({"question_answered", "record_exhausted", "nothing_further_reachable"})
     errors: list[str] = []
     for q in new:
-        ed = q.get("exhaustive_declaration") or {}
-        if ed.get("declared") is not False:
+        ss = q.get("search_stop") or {}
+        if ss.get("stopped_because") in _STOP_GATE_VALUES:
             errors.append(
-                f"question {q.get('id')}.exhaustive_declaration.declared="
-                f"{ed.get('declared')}; expected False"
+                f"question {q.get('id')}.search_stop.stopped_because="
+                f"{ss.get('stopped_because')!r}; expected null (not a stop-gate value)"
             )
-        if ed.get("log_entry_ids") not in (None, []):
+        if ss.get("log_entry_ids") not in (None, []):
             errors.append(
-                f"question {q.get('id')}.exhaustive_declaration.log_entry_ids="
-                f"{ed.get('log_entry_ids')}; expected []"
+                f"question {q.get('id')}.search_stop.log_entry_ids="
+                f"{ss.get('log_entry_ids')}; expected []"
             )
-        if ed.get("stop_criteria") is not None:
+        if ss.get("stop_criteria") is not None:
             errors.append(
-                f"question {q.get('id')}.exhaustive_declaration.stop_criteria="
-                f"{ed.get('stop_criteria')}; expected None"
+                f"question {q.get('id')}.search_stop.stop_criteria="
+                f"{ss.get('stop_criteria')}; expected None"
             )
-    assert not errors, "Unstarted-exhaustive-declaration violations:\n  - " + "\n  - ".join(errors)
+    assert not errors, "Unstarted-search-stop violations:\n  - " + "\n  - ".join(errors)
 
 
 # --- Tag-gated: disputed assignment is tested, not confirmed (#1471) ---
@@ -651,6 +652,60 @@ def test_premise_question_names_fact(before_state, after_state, test):
         "tree may be tested directly (confirm-or-refute, #1471); a property test "
         "of a name or date may not stand in for the fact. "
         f"Offending question(s): {offenders!r}"
+    )
+
+
+# --- Tag-gated: a motivation objective is decomposed, not asked (#2003). ---
+#
+# A "why" objective is answered narratively from historical context, so the
+# question written must be a relationship or event question its answer rests
+# on. These match a question whose answer would be a reason: a bare "why", a
+# "what led/prompted/caused" form, and a yes/no hypothesis about the cause of a
+# move ("Did he move to Schuylkill County for coal work?").
+_MOTIVATION_PATTERNS = (
+    r"\bwhy\b",
+    r"\bfor what (?:reason|purpose)\b",
+    r"\breasons?\b",
+    r"\bmotivat",
+    r"\bwhat (?:led|prompted|caused|drove|induced|motivated|brought|drew)\b",
+    r"\bbecause\b",
+    r"\b(?:move|moved|relocate|relocated|migrate|migrated|settle|settled|leave|left|emigrate|emigrated)\b[^?]*\b(?:for|to (?:find|seek|join|escape|take up))\b[^?]{0,40}?\b(?:work|employment|jobs?|land|wages|mining|mines|opportunit\w*|relatives|kin|family)\b",
+)
+
+
+def _asks_motivation(text: str) -> str | None:
+    for pattern in _MOTIVATION_PATTERNS:
+        if re.search(pattern, text, re.IGNORECASE):
+            return pattern
+    return None
+
+
+def test_motivation_objective_decomposed(before_state, after_state, test):
+    """Tag-gated: on a "why" objective, a question must be written and none of
+    the written questions may ask for the reason itself (#2003). The reply's
+    narrative-treatment sentence is prose, so the judge grades it."""
+    if "motivation-objective-decomposed" not in test.get("tags", []):
+        pytest.skip("not a motivation-objective scenario")
+    before = before_state.get("research_json")
+    after = after_state.get("research_json")
+    if before is None or after is None:
+        pytest.skip("missing research.json for diff")
+    new = _new_questions(before, after)
+    assert new, (
+        "expected a relationship or event question decomposed from the "
+        "motivation objective; none was written"
+    )
+    offenders = []
+    for q in new:
+        text = q.get("question") or ""
+        hit = _asks_motivation(text)
+        if hit:
+            offenders.append(f"{q.get('id')}: {text!r} (matched /{hit}/)")
+    assert not offenders, (
+        "a motivation objective must be decomposed into the relationship or "
+        "event facts its answer rests on, not asked as a question -- the reason "
+        "is explained from historical context, not researched:\n  - "
+        + "\n  - ".join(offenders)
     )
 
 
