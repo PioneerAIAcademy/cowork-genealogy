@@ -1167,4 +1167,32 @@ describe("research_query — plural ids", () => {
     const r = await ok({ section: "log", planItemId: "[pli_001]" });
     expect(r.count).toBe(0);
   });
+
+  it("rejects a JSON-array string on a key that takes one value", async () => {
+    expect(await rejected({ section: "conflicts", questionId: '["q_1","q_2"]' })).toMatch(
+      /'questionId' must be a string; only personId, assertionId, sourceId, recordId take a list/,
+    );
+  });
+
+  it("conflicts × questionId ANDs with an assertionId list", async () => {
+    const research = {
+      ...fixture,
+      assertions: [
+        { id: "a_1", extracted_for_question_ids: ["q_1"] },
+        { id: "a_2", extracted_for_question_ids: ["q_2"] },
+        { id: "a_4", extracted_for_question_ids: ["q_2"] },
+      ],
+      person_evidence: [],
+      conflicts: [
+        { id: "c_1", status: "unresolved", blocks_question_ids: [], competing_assertion_ids: ["a_1", "a_2"] },
+        { id: "c_2", status: "unresolved", blocks_question_ids: ["q_1"], competing_assertion_ids: ["a_2", "a_4"] },
+        { id: "c_3", status: "resolved", blocks_question_ids: [], competing_assertion_ids: ["a_2", "a_4"] },
+      ],
+    };
+    const r = await ok({ section: "conflicts", questionId: "q_1", assertionId: ["a_1", "a_4", "a_9"] }, research);
+    expect(r.items.map((i: any) => i.id)).toEqual(["c_1", "c_2"]);
+    expect(r.countById).toEqual({ a_1: 1, a_4: 1, a_9: 0 });
+    const single = await ok({ section: "conflicts", questionId: "q_1", assertionId: "a_4" }, research);
+    expect(single.count).toBe(r.countById?.a_4);
+  });
 });

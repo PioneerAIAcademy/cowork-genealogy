@@ -316,12 +316,13 @@ function filterValues(key: FilterKey, value: unknown): { values: string[]; isLis
   const plural = PLURAL_KEYS.includes(key);
   let list: unknown = value;
   if (typeof value === "string") {
-    if (!plural || !value.trim().startsWith("[")) return { values: [value], isList: false };
+    if (!value.trim().startsWith("[")) return { values: [value], isList: false };
     try {
       list = JSON.parse(value);
     } catch {
       list = undefined;
     }
+    if (!Array.isArray(list) && !plural) return { values: [value], isList: false };
     if (!Array.isArray(list)) {
       throw new ResearchQueryError(
         `'${key}' starts with '[' but is not a JSON array (got ${JSON.stringify(value)}). ` +

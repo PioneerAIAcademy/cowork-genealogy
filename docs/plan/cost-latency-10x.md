@@ -2,7 +2,7 @@
 
 **Status:** In progress — T1.3 (PR #3194), T1.4 (PR #3195), T1.11 (PR #3256) and
 T2.1 (PR #3230) landed; T2.3's tool half (`research_query` takes a list of ids,
-`make replay-collapse RULE=plural-id`) is in review. Owner: **Promise Igbojionu**, shepherding from 2026-09-27.
+`make replay-collapse RULE=plural-id`, PR #3428) landed; agents adopting it is PR 2. Owner: **Promise Igbojionu**, shepherding from 2026-09-27.
 **No lead gates** — every ruling this plan once waited on has been
 made. Update this line as waves land; delete this file when the work ships.
 

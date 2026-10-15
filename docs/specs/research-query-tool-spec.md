@@ -134,7 +134,7 @@ the principal personas of both records.
 - A string whose trimmed form starts with `[` is parsed as JSON and used as the
   list — every recorded plural attempt arrived stringified. It must parse to an
   array of non-empty strings, or the call is rejected. No recorded id starts
-  with `[`. Every other key keeps such a string as one value.
+  with `[`. On every other key such a string stays one value unless it parses as a JSON array, which is rejected like a list.
 - A list must hold 1–50 distinct non-empty strings (duplicates collapse
   silently); only one filter per call may be a list. Every rejection is in §4.
 - Items come back in document order, each once even when it matches several
