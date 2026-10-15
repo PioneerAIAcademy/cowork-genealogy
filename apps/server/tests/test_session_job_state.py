@@ -25,7 +25,13 @@ def test_a_decision_is_waiting_on_the_researcher():
 
 
 def test_a_queued_message_is_also_waiting():
-    assert job_state(latest_outcome="queued", turn_in_flight=False, project_completed=False) == "needs you"
+    """A held message still reads "needs you" — but via its own signal, not as an
+    outcome. This test used to pass `latest_outcome="queued"`, an input production can
+    never produce: `latest_outcome` is read from turns with `completed_at IS NOT NULL`,
+    and a held message is precisely a turn that has not completed. So it pinned a branch
+    nothing could reach, which is why the branch stayed dead and unnoticed."""
+    assert job_state(latest_outcome=None, turn_in_flight=False,
+                     project_completed=False, has_queued=True) == "needs you"
 
 
 def test_a_completed_project_is_done():
@@ -56,3 +62,38 @@ def test_a_session_that_never_ran_is_not_reported_as_stopped():
 def test_an_unknown_outcome_does_not_crash_or_claim_done():
     assert job_state(latest_outcome="some_future_outcome", turn_in_flight=False,
                      project_completed=False) == "stopped"
+
+
+# ── A held message (should-fix 10 of the #3262 self-review) ───────────────────
+# Two bugs with one root: a held turn has `completed_at IS NULL`, so it counted as
+# in-flight AND could never appear as `latest_outcome`.
+
+def test_a_held_message_is_not_running_even_after_a_completed_turn():
+    """The session list's `turn_in_flight` counted held turns, so the first message a
+    reader sent mid-turn latched "running" on and the session read as working forever --
+    the exclusion `TURN_ACTIVE_SQL` already makes, missing from the list's own query."""
+    assert job_state(latest_outcome="completed", turn_in_flight=False,
+                     project_completed=False, has_queued=True) == "needs you"
+
+
+def test_a_live_turn_outranks_a_held_message():
+    """Both can be true at once. A turn actually working is the more useful thing to
+    say, so `running` stays on top."""
+    assert job_state(latest_outcome=None, turn_in_flight=True,
+                     project_completed=False, has_queued=True) == "running"
+
+
+def test_a_held_message_outranks_what_the_last_turn_concluded():
+    """Ranked above `done` too: a reader with a message waiting is not finished, however
+    the previous turn ended."""
+    assert job_state(latest_outcome="completed", turn_in_flight=False,
+                     project_completed=True, has_queued=True) == "needs you"
+
+
+def test_queued_is_no_longer_read_as_an_outcome():
+    """`"queued"` sat in the needs-you set and was unreachable: `latest_outcome` is read
+    from turns with `completed_at IS NOT NULL`, and a held message is precisely a turn
+    that has not completed. Were one ever to arrive by another route it is not a
+    judgement about the reader, so it falls through with everything else."""
+    assert job_state(latest_outcome="queued", turn_in_flight=False,
+                     project_completed=False, has_queued=False) == "stopped"

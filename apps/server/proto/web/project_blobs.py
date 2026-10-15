@@ -102,9 +102,14 @@ def put_blob(conn: Any, blobs: Any, project_id: str, key: str, body: bytes,
     s3_key = f"{project_id}/{key}/{uuid.uuid4()}"
     blobs.put(s3_key, body, content_type)
     conn.execute(
+        # `created_at` is refreshed, matching the engine's own upsert on this table
+        # (`indexObject`, pg-s3-project-store.ts: "created_at = EXCLUDED.created_at").
+        # It is the only timestamp `blobs` has, and `fetch_sidecar` hands it to the
+        # viewer AS the mtime -- so leaving it would show a re-uploaded sidecar with
+        # the time of the write it replaced.
         "INSERT INTO blobs (project_id, key, s3_key, bytes, sha256) VALUES (%s, %s, %s, %s, %s) "
         "ON CONFLICT (project_id, key) DO UPDATE SET s3_key = EXCLUDED.s3_key, "
-        "bytes = EXCLUDED.bytes, sha256 = EXCLUDED.sha256",
+        "bytes = EXCLUDED.bytes, sha256 = EXCLUDED.sha256, created_at = now()",
         (project_id, key, s3_key, len(body), hashlib.sha256(body).hexdigest()),
     )
     return len(body)

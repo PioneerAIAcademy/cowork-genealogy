@@ -10,8 +10,12 @@ Pure on purpose: no database, so the mapping is testable and has one definition.
 
 from __future__ import annotations
 
-# Waiting on a person: the agent asked, or the reader's own message is held.
-_NEEDS_YOU = {"decision", "queued"}
+# Waiting on a person: the agent asked something and the turn ended on it.
+#
+# "queued" used to be in here and could NEVER be reached: `latest_outcome` is read from
+# turns with `completed_at IS NOT NULL`, and a held message is precisely a turn that has
+# not completed. A held message is now its own parameter instead.
+_NEEDS_YOU = {"decision"}
 
 
 def job_state(
@@ -19,6 +23,7 @@ def job_state(
     latest_outcome: str | None,
     turn_in_flight: bool,
     project_completed: bool,
+    has_queued: bool = False,
 ) -> str:
     """One of: ``running``, ``needs you``, ``done``, ``stopped``, ``new``.
 
@@ -32,6 +37,12 @@ def job_state(
     """
     if turn_in_flight:
         return "running"
+    if has_queued:
+        # A message the reader sent mid-turn, held until the turn ends. It is not
+        # running -- nothing is working on it -- and it is not whatever the last turn
+        # concluded either. Ranked below `turn_in_flight` because a live turn is the
+        # more useful thing to say when both are true.
+        return "needs you"
     if latest_outcome is None:
         # No turn has ever run. "stopped" would read as a failure on a new session.
         return "new"

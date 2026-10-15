@@ -259,10 +259,11 @@ class SessionRow:
     # projects.owner_id (008). None -- a project the engine created and nobody has
     # claimed -- is visible to nobody: the route's owner check never matches it.
     owner_id: str | None = None
-    # The three facts the session list's job state is derived from.
+    # The four facts the session list's job state is derived from.
     latest_outcome: str | None = None
     turn_in_flight: bool = False
     project_completed: bool = False
+    has_queued: bool = False
 
 
 @dataclass(frozen=True)
@@ -449,6 +450,7 @@ def session_out(row: SessionRow) -> dict[str, Any]:
             latest_outcome=row.latest_outcome,
             turn_in_flight=row.turn_in_flight,
             project_completed=row.project_completed,
+            has_queued=row.has_queued,
         ),
         "sandbox_id": "",
         "agent_session_id": None,
@@ -684,6 +686,7 @@ class PgStore:
             owner_id=r["owner_id"],
             latest_outcome=r.get("latest_outcome"),
             turn_in_flight=bool(r.get("turn_in_flight")),
+            has_queued=bool(r.get("has_queued")),
             project_completed=bool(r.get("project_completed")),
         )
 
@@ -706,8 +709,15 @@ class PgStore:
         "(SELECT t.outcome FROM turns t "
         " WHERE t.session_id = s.session_id AND t.completed_at IS NOT NULL "
         " ORDER BY t.completed_at DESC LIMIT 1) AS latest_outcome, "
+        # A HELD message has `completed_at IS NULL` too, so it must be excluded here or
+        # the first one latches "running" on and the session reads as working forever --
+        # the same exclusion `TURN_ACTIVE_SQL` makes, and for the same reason.
         "EXISTS (SELECT 1 FROM turns t "
-        "        WHERE t.session_id = s.session_id AND t.completed_at IS NULL) AS turn_in_flight, "
+        "        WHERE t.session_id = s.session_id AND t.completed_at IS NULL "
+        "          AND t.outcome IS DISTINCT FROM 'queued') AS turn_in_flight, "
+        "EXISTS (SELECT 1 FROM turns t "
+        "        WHERE t.session_id = s.session_id AND t.completed_at IS NULL "
+        "          AND t.outcome = 'queued') AS has_queued, "
         "COALESCE((SELECT d.doc->'project'->>'status' = 'completed' FROM documents d "
         "          WHERE d.project_id = s.project_id AND d.name = 'research.json' "
         "          ORDER BY d.version DESC LIMIT 1), false) AS project_completed "

@@ -48,6 +48,10 @@ def _state(dsn: str, owner: str) -> str:
     return asyncio.run(go())
 
 
+def _owner_of(dsn: str, pid: str) -> str:
+    return sql(dsn, "SELECT owner_id FROM projects WHERE project_id = %s", (pid,))[0][0]
+
+
 def _own(dsn: str, pid: str) -> str:
     """Give the session's project an owner.
 
@@ -92,11 +96,17 @@ def test_every_state_is_reachable_through_the_real_query(pg_dsn):
     turn(pg_dsn, row.session_id, row.project_id, "go again")
     seen["running"] = _state(pg_dsn, owner)
 
-    # `needs you`: both outcomes that mean a person is being waited on.
+    # `needs you`: the two ways a person is being waited on. They are NOT both
+    # outcomes -- this loop used to set `outcome = 'queued'` on a COMPLETED turn, a row
+    # production cannot produce, because a held message is by definition uncompleted.
+    # That is why the held-message path stayed broken while this test passed.
     sql(pg_dsn, "DELETE FROM turns WHERE completed_at IS NULL AND session_id = %s", (row.session_id,))
-    for outcome in ("decision", "queued"):
-        sql(pg_dsn, "UPDATE turns SET outcome = %s WHERE session_id = %s", (outcome, row.session_id))
-        assert _state(pg_dsn, owner) == "needs you", f"outcome {outcome!r} must mean needs you"
+    sql(pg_dsn, "UPDATE turns SET outcome = 'decision' WHERE session_id = %s", (row.session_id,))
+    assert _state(pg_dsn, owner) == "needs you", "a decision outcome must mean needs you"
+    held = turn(pg_dsn, row.session_id, row.project_id, "sent mid-turn")
+    sql(pg_dsn, "UPDATE turns SET completed_at = NULL, outcome = 'queued' WHERE turn_id = %s", (held,))
+    assert _state(pg_dsn, owner) == "needs you", "a HELD message must mean needs you"
+    sql(pg_dsn, "DELETE FROM turns WHERE turn_id = %s", (held,))
     seen["needs you"] = "needs you"
 
     # `done`: the project itself says completed.
@@ -138,4 +148,32 @@ def test_latest_outcome_is_the_newest_COMPLETED_turn(pg_dsn):
     assert _state(pg_dsn, owner) == "stopped", (
         "the newest COMPLETED turn is the one enqueued first (delivered -> stopped); "
         "reading 'needs you' means the query ordered by enqueue time instead"
+    )
+
+
+def test_a_held_message_does_not_latch_running_through_the_real_query(pg_dsn):
+    """should-fix 10 of the #3262 self-review, against the real SQL.
+
+    The list's `turn_in_flight` subquery was `completed_at IS NULL` with no outcome
+    clause. A HELD message is exactly that — a turns row with no completion and
+    `outcome = 'queued'` — so the first one a reader sent mid-turn latched "running" on
+    and the session read as working forever, with nothing working on it.
+    `TURN_ACTIVE_SQL` already excluded held turns for this reason; the list's own query
+    did not.
+
+    Only visible against real Postgres: the pure `job_state` unit tests take
+    `turn_in_flight` as a given, so they cannot see which rows the query counts.
+    """
+    row = session(pg_dsn)
+    _own(pg_dsn, row.project_id)
+    # One completed turn, then a held message behind it.
+    t1 = turn(pg_dsn, row.session_id, row.project_id, "first")
+    sql(pg_dsn, "UPDATE turns SET completed_at = now(), outcome = 'completed' WHERE turn_id = %s", (t1,))
+    held = turn(pg_dsn, row.session_id, row.project_id, "sent mid-turn")
+    sql(pg_dsn, "UPDATE turns SET completed_at = NULL, outcome = 'queued' WHERE turn_id = %s", (held,))
+
+    state = _state(pg_dsn, _owner_of(pg_dsn, row.project_id))
+    assert state == "needs you", (
+        f"a held message read as {state!r}; 'running' means the subquery is counting "
+        "held turns as in-flight again"
     )
