@@ -40,9 +40,13 @@ from test_locality_guide import (  # noqa: E402
     test_persisted_localities_entry_shape as check_shape,
     test_survey_run_calls_both_collections_and_volume_search as check_both_searches,
     test_catalog_search_called_and_broadened as check_catalog_broadening,
+    test_persisted_guide_is_the_guide as check_guide,
+    test_in_project_return_follows_the_contract as check_return_contract,
+    test_no_project_return_carries_guide as check_no_project_guide,
 )
 
 from harness.mock_mcp import create_mock_server  # noqa: E402
+from tests.unit.skip_blind import expect_fires, expect_passes  # noqa: E402
 
 _EVAL_DIR = Path(__file__).resolve().parents[3]
 _FIXTURES_DIR = _EVAL_DIR / "fixtures" / "mcp"
@@ -333,3 +337,449 @@ def test_catalog_broadening_skips_for_other_tests():
             [_call("catalog_search", standardPlace="Pennsylvania, United States")],
             {"id": "ut_locality_guide_004"},
         )
+
+
+# --- The guide is written once: (a) persisted, (b) in-project return, (c) no-project
+# return (issue #3442). Every break goes through `expect_fires`, every legitimate
+# variant through `expect_passes`, so a skip gate that over-matches fails here
+# instead of reading green.
+
+_REQUIRED_HEADINGS = ("Jurisdiction overview", "Available record types", "Research tips")
+_ALL_HEADINGS = (
+    "## Jurisdiction overview",
+    "## Boundary changes",
+    "## Available record types",
+    "## Repository guide",
+    "## Research tips",
+)
+
+
+def _guide(*headings, nl="\n"):
+    lines = ["# Locality Guide: Schuylkill County, Pennsylvania (1840-1880)", ""]
+    for heading in headings:
+        lines += [heading, "", "- Body text for this section.", ""]
+    return nl.join(lines)
+
+
+_GUIDE = _guide(*_ALL_HEADINGS)
+
+
+def _guide_entry(guide=_GUIDE, *, lid="loc_001"):
+    entry = _entry(lid=lid)
+    entry["guide_markdown"] = guide
+    return entry
+
+
+def _no_project_state():
+    state = _state(None)
+    state["research_json"] = None
+    return state
+
+
+def _returns(*texts, agent="locality-guide"):
+    return [{"subagent_type": agent, "text": text} for text in texts]
+
+
+_NO_RESPONSE = object()
+_REFUSED = {"ok": False, "errors": ["localities: write refused"]}
+_LOC_OP = {"section": "localities", "op": "append", "entry": {"place": "Schuylkill"}}
+
+
+def _append(response=_NO_RESPONSE, *, prefix="mcp__genealogy__", **args):
+    call = {"tool": f"{prefix}research_append", "args": args}
+    if response is not _NO_RESPONSE:
+        call["response"] = response
+    return call
+
+
+# --- (a) test_persisted_guide_is_the_guide -------------------------------
+
+
+def _check_guide(*after, before=()):
+    return lambda: check_guide(_state(list(before)), _state(list(after)))
+
+
+@pytest.mark.parametrize("dropped", _REQUIRED_HEADINGS)
+def test_guide_fires_when_a_required_heading_is_missing(dropped):
+    headings = [h for h in _ALL_HEADINGS if h != f"## {dropped}"]
+    expect_fires(
+        _check_guide(_guide_entry(_guide(*headings))),
+        rf"localities\[loc_001\].*{dropped}",
+    )
+
+
+def test_guide_fires_when_the_headings_are_demoted_to_level_three():
+    demoted = _guide(*(f"#{h}" for h in _ALL_HEADINGS))
+    expect_fires(
+        _check_guide(_guide_entry(demoted)),
+        r"loc_001.*Jurisdiction overview.*Available record types.*Research tips",
+    )
+
+
+@pytest.mark.parametrize(
+    "pointer",
+    [
+        "See full guide in research session output.",
+        "see the full guide above",
+        "SEE FULL GUIDE",
+        "Full guide text as presented to user.",
+        "Full guide presented to user in session.",
+        "See research log for full locality guide text.",
+        "see  the full\tguide in the session",
+    ],
+)
+def test_guide_fires_on_a_pointer_to_the_guide_even_with_every_heading(pointer):
+    expect_fires(
+        _check_guide(_guide_entry(_GUIDE + "\n" + pointer + "\n")),
+        r"loc_001.*points elsewhere",
+    )
+
+
+@pytest.mark.parametrize(
+    "prose",
+    [
+        "This is the full guide for the county.",
+        "Records presented to the user below are indexed.",
+        "The deeds are represented to the user as abstracts.",
+        "Oversee full guidebook editions at the archive.",
+    ],
+)
+def test_guide_passes_ordinary_prose_near_the_pointer_words(prose):
+    expect_passes(_check_guide(_guide_entry(_GUIDE + "\n" + prose + "\n")))
+
+
+def test_guide_fires_on_a_pointer_under_every_heading():
+    lines = ["# Locality Guide: Schuylkill County, Pennsylvania (1840-1880)", ""]
+    for heading in _ALL_HEADINGS:
+        lines += [heading, "", "Full guide text as presented to user.", ""]
+    expect_fires(
+        _check_guide(_guide_entry("\n".join(lines))),
+        r"loc_001.*points elsewhere",
+    )
+
+
+@pytest.mark.parametrize("value", [None, "", "  \n\t", 42, ["## Research tips"]])
+def test_guide_fires_when_guide_markdown_is_not_a_non_empty_string(value):
+    expect_fires(_check_guide(_guide_entry(value)), r"loc_001.*guide_markdown")
+
+
+def test_guide_fires_when_guide_markdown_is_absent():
+    expect_fires(_check_guide(_entry()), r"loc_001.*guide_markdown")
+
+
+def test_guide_fires_on_an_in_place_update_that_stubs_the_guide():
+    """`include_modified`: an entry rewritten in place with a pointer instead of
+    the guide is this run's write and must be checked, not skipped."""
+    stub = _guide_entry("See full guide in research session output.")
+    expect_fires(
+        lambda: check_guide(_state([_guide_entry()]), _state([stub])),
+        r"loc_001",
+    )
+
+
+def test_guide_checks_every_written_entry():
+    expect_fires(
+        _check_guide(_guide_entry(lid="loc_a"), _guide_entry("", lid="loc_b")),
+        r"loc_b",
+    )
+
+
+@pytest.mark.parametrize(
+    "guide",
+    [
+        _guide(*reversed(_ALL_HEADINGS)),
+        _guide(*_ALL_HEADINGS, "## Local newspapers", "## Maps"),
+        _guide(*(h.replace("overview", "overview (1840s)") for h in _ALL_HEADINGS)),
+        _guide(*_ALL_HEADINGS, nl="\r\n"),
+        _GUIDE + "\nThis is the full guide for the county.\n",
+        _guide(*(h.upper() for h in _ALL_HEADINGS)),
+    ],
+    ids=["reordered", "extra-sections", "suffixed", "crlf", "full-guide-without-see", "upper-case"],
+)
+def test_guide_passes_on_a_legitimate_guide(guide):
+    expect_passes(_check_guide(_guide_entry(guide)))
+
+
+def test_guide_stands_down_when_nothing_was_written():
+    with pytest.raises(pytest.skip.Exception):
+        check_guide(_state([]), _state([]))
+    stub = _guide_entry("See full guide in research session output.")
+    with pytest.raises(pytest.skip.Exception):
+        check_guide(_state([stub]), _state([deepcopy(stub)]))
+
+
+# --- (b) test_in_project_return_follows_the_contract ---------------------
+
+
+def _check_contract(returns, *, before=(), after=(), calls=()):
+    return lambda: check_return_contract(
+        _state(list(before)), _state(list(after)), list(calls), returns
+    )
+
+
+_SHORT = "The guide is saved as `loc_001` in `research.json`.\n\n---\n\nSchuylkill survey done."
+
+
+def _padded(n, head="Saved `loc_001`.\n"):
+    return head + "x" * (n - len(head))
+
+
+def test_contract_fires_on_a_return_over_3000_characters():
+    expect_fires(
+        _check_contract(_returns(_padded(3001)), after=[_guide_entry()]),
+        r"3000.*3001",
+    )
+
+
+def test_contract_counts_every_return_the_agent_made():
+    returns = _returns(_padded(1600), _padded(1600))
+    expect_fires(_check_contract(returns, after=[_guide_entry()]), r"3000")
+
+
+def test_contract_passes_at_exactly_3000_characters():
+    expect_passes(_check_contract(_returns(_padded(3000)), after=[_guide_entry()]))
+
+
+def test_contract_fires_when_the_return_names_no_id():
+    expect_fires(
+        _check_contract(_returns("Saved the guide.\n\n---\n\nSummary."), after=[_guide_entry()]),
+        r"loc_001",
+    )
+
+
+def test_contract_fires_when_the_return_names_the_wrong_id():
+    expect_fires(
+        _check_contract(_returns(_SHORT), after=[_guide_entry(lid="loc_002")]),
+        r"loc_002",
+    )
+
+
+def test_contract_does_not_accept_an_id_inside_a_longer_id():
+    expect_fires(
+        _check_contract(_returns("Saved as loc_0012."), after=[_guide_entry()]),
+        r"loc_001",
+    )
+
+
+@pytest.mark.parametrize(
+    "returns",
+    [None, [], _returns(_SHORT, agent="record-extractor"), _returns("")],
+    ids=["none", "empty-list", "other-agent-only", "empty-text"],
+)
+def test_contract_fires_on_an_empty_return_after_a_write(returns):
+    expect_fires(_check_contract(returns, after=[_guide_entry()]), r"empty")
+
+
+def test_contract_passes_on_the_id_in_backticks():
+    expect_passes(_check_contract(_returns(_SHORT), after=[_guide_entry()]))
+
+
+def test_contract_passes_on_a_modified_entry_named_by_its_id():
+    before = [_guide_entry(lid="loc_003")]
+    after = [_guide_entry(_GUIDE + "\n## Maps\n", lid="loc_003")]
+    expect_passes(
+        _check_contract(_returns("Updated `loc_003`.\n\n---\n\nDone."), before=before, after=after)
+    )
+
+
+def test_contract_requires_every_written_id():
+    after = [_guide_entry(lid="loc_001"), _guide_entry(lid="loc_002")]
+    expect_fires(_check_contract(_returns(_SHORT), after=after), r"loc_002")
+    expect_passes(
+        _check_contract(_returns("Saved `loc_001` and `loc_002`.\n\n---\n\nDone."), after=after)
+    )
+
+
+_NOTHING_WRITTEN = "in a research project, nothing persisted and no localities write was refused"
+
+
+def test_contract_fires_when_nothing_was_written_and_the_return_is_a_summary():
+    expect_fires(
+        _check_contract(_returns("Survey done.\n\n---\n\nSummary."), calls=[_call("wiki_place_page")]),
+        _NOTHING_WRITTEN,
+    )
+
+
+@pytest.mark.parametrize(
+    "calls",
+    [
+        [_call("wiki_place_page")],
+        [_append({"ok": True, "id": "loc_001"}, **_LOC_OP)],
+        [_append(**_LOC_OP)],
+        [_append(None, **_LOC_OP)],
+        [_append("not json", **_LOC_OP)],
+        [_append({"errors": ["no ok key"]}, **_LOC_OP)],
+        [_append(_REFUSED, section="log", op="append", entry={})],
+        [_append(_REFUSED, ops="not json [")],
+        [_append(_REFUSED, ops=[{"section": "log", "op": "append", "entry": {}}])],
+        [{"tool": "mcp__genealogy__research_log_append", "args": _LOC_OP, "response": _REFUSED}],
+    ],
+    ids=[
+        "no-localities-write",
+        "ok-true",
+        "no-response-key",
+        "response-none",
+        "response-unparseable",
+        "ok-absent",
+        "refused-other-section",
+        "ops-unparseable",
+        "batch-other-section",
+        "other-tool",
+    ],
+)
+def test_contract_fires_when_nothing_was_written_and_no_localities_write_was_refused(calls):
+    expect_fires(_check_contract(_returns(_GUIDE), calls=calls), _NOTHING_WRITTEN)
+
+
+def test_contract_fires_when_a_refused_write_leaves_the_guide_out_of_the_return():
+    expect_fires(
+        _check_contract(
+            _returns("The write failed.\n\n---\n\nSummary."), calls=[_append(_REFUSED, **_LOC_OP)]
+        ),
+        r"Available record types",
+    )
+
+
+@pytest.mark.parametrize(
+    "call",
+    [
+        _append(_REFUSED, **_LOC_OP),
+        _append(_REFUSED, ops=[{"section": "log", "op": "append", "entry": {}}, _LOC_OP]),
+        _append(_REFUSED, ops=json.dumps([_LOC_OP])),
+        _append({"content": [{"type": "text", "text": json.dumps(_REFUSED)}]}, **_LOC_OP),
+        _append(json.dumps(_REFUSED), **_LOC_OP),
+        _append(_REFUSED, prefix="mcp__remote-devices__Genealogy_Research__", **_LOC_OP),
+        _append(_REFUSED, prefix="mcp__Genealogy_Research__", **_LOC_OP),
+        _append(_REFUSED, ops=[], **_LOC_OP),
+    ],
+    ids=[
+        "single-op",
+        "batch-ops",
+        "ops-json-string",
+        "mcp-text-content",
+        "response-json-string",
+        "bridged-spelling",
+        "bare-display-spelling",
+        "top-level-op-with-empty-ops",
+    ],
+)
+def test_contract_passes_when_a_refused_localities_write_falls_back_to_the_guide(call):
+    expect_passes(_check_contract(_returns(_GUIDE), calls=[call]))
+
+
+def test_contract_stands_down_outside_a_project():
+    with pytest.raises(pytest.skip.Exception):
+        check_return_contract(_no_project_state(), _no_project_state(), [], _returns(_GUIDE))
+
+
+def test_contract_grades_a_project_whose_research_json_is_empty():
+    """The gate is `research_json is None` (no file), not falsiness: an empty
+    research.json is still a project."""
+    expect_fires(
+        lambda: check_return_contract(_state(None), _state(None), [], _returns("Survey done.")),
+        _NOTHING_WRITTEN,
+    )
+
+
+# --- (c) test_no_project_return_carries_guide ----------------------------
+
+
+_NO_PROJECT_TEST = {"id": "ut_locality_guide_001", "tags": ["locality", "no-project", "direct-arm"]}
+_NO_GUIDE = r"no `## Available record types` heading in the return"
+
+
+def _check_no_project(returns, test=_NO_PROJECT_TEST):
+    return lambda: check_no_project_guide(test, returns)
+
+
+@pytest.mark.parametrize(
+    "returns",
+    [
+        _returns(_guide("## Jurisdiction overview", "## Research tips")),
+        None,
+        [],
+        _returns(""),
+        _returns(_GUIDE, agent="record-extractor"),
+        _returns(_guide("### Available record types")),
+        _returns("The guide is saved as `loc_001`."),
+        _returns("See the section ## Available record types below."),
+    ],
+    ids=[
+        "heading-missing",
+        "returns-none",
+        "returns-empty",
+        "empty-text",
+        "other-agent-only",
+        "level-three",
+        "loc-line-only",
+        "mid-line",
+    ],
+)
+def test_no_project_fires_when_the_return_carries_no_guide(returns):
+    expect_fires(_check_no_project(returns), _NO_GUIDE)
+
+
+@pytest.mark.parametrize(
+    "text",
+    [
+        _guide("## Available record types (1840-1880)"),
+        _GUIDE,
+        "No research project present.\n\n---\n\n" + _GUIDE + "\n---\n\nSurvey of Schuylkill done.",
+        _guide("## Jurisdiction overview") + "\n---\n\n" + _guide("## Available record types"),
+        _guide(*_ALL_HEADINGS, nl="\r\n"),
+        _guide("## AVAILABLE RECORD TYPES"),
+    ],
+    ids=[
+        "suffixed",
+        "after-other-sections",
+        "preamble-and-separators",
+        "internal-rules",
+        "crlf",
+        "upper-case",
+    ],
+)
+def test_no_project_passes_on_a_return_carrying_the_guide(text):
+    expect_passes(_check_no_project(_returns(text)))
+
+
+def test_no_project_stands_down_on_an_untagged_test():
+    with pytest.raises(pytest.skip.Exception):
+        check_no_project_guide({"id": "ut_locality_guide_004", "tags": ["locality"]}, [])
+
+
+# --- Tag coverage: exactly the four no-project tests carry `no-project` ----
+
+_NO_PROJECT_TEST_IDS = {
+    "ut_locality_guide_001",
+    "ut_locality_guide_002",
+    "ut_locality_guide_026",
+    "ut_locality_guide_027",
+}
+
+
+def test_exactly_the_no_project_tests_carry_the_no_project_tag():
+    """`test_tag_gate_coverage.py` fails only when NO test carries a gate tag, so a
+    single test dropping `no-project` would silently stop (c) grading it. This pins
+    the population by id, and that each tagged test really runs with no project."""
+    tagged = {}
+    for path in sorted(_LOCALITY_TESTS.glob("*.json")):
+        data = json.loads(path.read_text(encoding="utf-8"))
+        test = data.get("test") or {}
+        if "no-project" in (test.get("tags") or []):
+            tagged[test.get("id")] = (data.get("input") or {}).get("scenario")
+    assert set(tagged) == _NO_PROJECT_TEST_IDS, (
+        f"`no-project` must be carried by exactly {sorted(_NO_PROJECT_TEST_IDS)}; "
+        f"carried by {sorted(tagged)}"
+    )
+    assert all(scenario is None for scenario in tagged.values()), (
+        f"a `no-project` test must run with no scenario: {tagged}"
+    )
+
+
+def test_no_project_gate_is_recognized_by_the_runnability_scan():
+    """(c) only runs if the harness sees its gate: `tag_gated_validator_tags` reads
+    the literal `"<tag>" not in tags -> pytest.skip` shape, and the tag-coverage
+    lint above it reads the same scan."""
+    from harness.runnability import DEFAULT_VALIDATORS_DIR, tag_gated_validator_tags
+
+    assert "no-project" in tag_gated_validator_tags(DEFAULT_VALIDATORS_DIR, "locality-guide")
