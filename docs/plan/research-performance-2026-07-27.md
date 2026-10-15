@@ -734,8 +734,7 @@ saw with an **FS-resident** subject (`KNS4-P6W`).
 
 **So the dominant variable is `ark: null`, not subject richness.** The matcher is
 deterministic (verified: five identical calls on one pair returned 0.00409 every
-time), so this is a real property of scoring an ark-less document, not noise. A
-local `I*` person appears to score in a degenerate band whatever it contains.
+time), so this is a real property of scoring an ark-less document, not noise.
 
 Consequences for the plan:
 

@@ -28,6 +28,7 @@ import {
   sharedJurisdiction,
   __clearPlaceResolverCachesForTests,
   __usePlaceTableForTests,
+  isNonPlacePhrase,
 } from "../../src/utils/place-resolver.js";
 
 const mockSearchPlace = vi.mocked(searchPlace);
@@ -427,6 +428,27 @@ describe("empty / whitespace input short-circuits without a network search", () 
 
   it("resolveStandardPlace returns null and never searches", async () => {
     expect(await resolveStandardPlace("  ")).toBeNull();
+    expect(mockSearchPlace).not.toHaveBeenCalled();
+  });
+});
+
+describe("non-place phrases are never standardized (#1962)", () => {
+  it("recognizes the whole-text phrase, ignoring case, spacing and periods", () => {
+    for (const p of ["Same House", "  same   PLACE ", "R.F.D.", "Do.", "Ditto", "N/A"]) {
+      expect(isNonPlacePhrase(p), p).toBe(true);
+    }
+  });
+
+  it("accepts a real place, including one that contains a phrase word", () => {
+    for (const p of ["Same Place, Wayne, Ohio", "Same, Manufahi, Timor-Leste", "Homer", "Rural Retreat", "Dover", "Home, Clermont, Ohio"]) {
+      expect(isNonPlacePhrase(p), p).toBe(false);
+    }
+  });
+
+  it("resolveStandardPlace returns null without searching, with or without record context", async () => {
+    mockSearchPlace.mockResolvedValue([entry({ placeRepId: "1", fullName: "Same, Manufahi, Timor-Leste", type: "Town" })]);
+    expect(await resolveStandardPlace("Same House")).toBeNull();
+    expect(await resolveStandardPlace("Do", { contextPlaces: ["Wayne, Ohio, United States"] })).toBeNull();
     expect(mockSearchPlace).not.toHaveBeenCalled();
   });
 });

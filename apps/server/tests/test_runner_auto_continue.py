@@ -51,14 +51,20 @@ class SlowScriptedAgent(ScriptedAgent):
 
 
 async def _drive(agent, messages, *, auto, settle=0.15):
-    """Send `messages` (dicts, or floats meaning 'sleep this long'), let the
-    loop settle, return every emitted event."""
+    """Send `messages` (dicts; floats meaning 'sleep this long'; callables
+    meaning 'wait until this holds over the events so far'), let the loop
+    settle, return every emitted event."""
     incoming: asyncio.Queue = asyncio.Queue()
     events: list[dict] = []
     task = asyncio.create_task(serve(agent, incoming, events.append, auto_continue=auto))
     for m in messages:
         if isinstance(m, (int, float)):
             await asyncio.sleep(m)
+        elif callable(m):
+            async def _until(pred=m):
+                while not pred(events):
+                    await asyncio.sleep(0.01)
+            await asyncio.wait_for(_until(), 2)
         else:
             await incoming.put(m)
     await asyncio.sleep(settle)
@@ -134,7 +140,12 @@ async def test_the_budget_resets_after_a_real_user_message():
     agent = ScriptedAgent([LITERAL])
     events = await _drive(
         agent,
-        [{"type": "user_msg", "text": "go"}, 0.15, {"type": "user_msg", "text": "carry on"}],
+        [
+            {"type": "user_msg", "text": "go"},
+            lambda ev: len(_kinds(ev, "auto_continue_paused")) == 1,
+            {"type": "user_msg", "text": "carry on"},
+            lambda ev: len(_kinds(ev, "auto_continue_paused")) == 2,
+        ],
         auto=AutoContinue(enabled=True, max_steps=1),
     )
     # First chain: go → Yes. → paused. Second chain: carry on → Yes. → paused.

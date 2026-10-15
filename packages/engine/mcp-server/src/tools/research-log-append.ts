@@ -65,13 +65,16 @@ const LOG_WITHOUT_PERSISTENCE_WARN_THRESHOLD = 3;
  *  BOTH being empty so it owns a distinct shape from the source-append warning
  *  (which fires once ≥3 sources exist); self-silences the instant any source or
  *  assertion lands. Fires per qualifying call while the two-empty state holds.
- *  Tool-name neutral, and a warning — never a failure. */
+ *  Reference lookups (`REFERENCE_LOOKUP_TOOLS`) are not counted. A warning —
+ *  never a failure. */
 function logWithoutPersistenceWarning(research: any): string | null {
   const sources = Array.isArray(research.sources) ? research.sources : [];
   const assertions = Array.isArray(research.assertions) ? research.assertions : [];
   if (sources.length > 0 || assertions.length > 0) return null;
   const log = Array.isArray(research.log) ? research.log : [];
-  const positives = log.filter((e: any) => e?.outcome === "positive").length;
+  const positives = log.filter(
+    (e: any) => e?.outcome === "positive" && !REFERENCE_LOOKUP_TOOLS.has(e?.tool),
+  ).length;
   if (positives < LOG_WITHOUT_PERSISTENCE_WARN_THRESHOLD) return null;
   return (
     `${positives} search(es) logged with a positive outcome but no sources or ` +
@@ -88,6 +91,11 @@ const NIL_ESCALATION_THRESHOLD = 3;
 
 /** The FamilySearch index searches whose nils count toward the threshold. */
 const FS_INDEX_SEARCH_TOOLS = new Set(["record_search", "fulltext_search"]);
+
+/** Reference lookups log a looked-up article or overview, not a record search, so
+ *  their `positive` entries carry no evidence to persist and are left out of the
+ *  logging-without-persistence count (#3244). The census hedge still applies. */
+const REFERENCE_LOOKUP_TOOLS = new Set(["wiki_search", "wiki_read", "wikipedia_search", "historical_context"]);
 
 /** Question statuses under which the question is still open: every status but
  *  the two that close it. */
