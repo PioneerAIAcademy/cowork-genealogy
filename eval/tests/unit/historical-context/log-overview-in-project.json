@@ -1,0 +1,43 @@
+{
+  "test": {
+    "id": "ut_historical_context_k7p",
+    "skill": "historical-context",
+    "name": "Log the overview to the research log and hand back its search implications",
+    "type": "positive",
+    "description": "Issue #3244 option L + D+: inside a project, with projectPath given, the overview is saved as one historical_context research-log entry (full overview in notes, beside one entry per wiki/Wikipedia lookup), and the return carries a Search implications block naming hypothesis-tracking for candidate explanations and research-plan for where/when facts.",
+    "tags": [
+      "logs-overview",
+      "search-implications",
+      "scenario-aware",
+      "issue-3244",
+      "direct-arm"
+    ]
+  },
+  "input": {
+    "delegation": "Patrick Flynn's 1908 death record says he was born in Pennsylvania about 1845, but his family was Irish. Give me a historical overview of why a record might say that, and what it means for where I search next.\n\nprojectPath: <workspace>",
+    "scenario": "mid-research-flynn"
+  },
+  "mcp_fixtures": [
+    "wiki-search-irish-immigration",
+    "wiki-search-great-famine-emigration",
+    "wiki-search-irish-catholic-records",
+    "wiki-search-schuylkill-coal-mining",
+    "wiki-search-pennsylvania-coal-mining-vital-records",
+    "wiki-search-pennsylvania-naturalization",
+    "wiki-search-philadelphia-passenger-lists",
+    "wiki-search-irish-county-origin-tracing",
+    "wiki-search-any",
+    "wiki-read-united-states-emigration-and-immigration",
+    "wiki-read-any",
+    "wikipedia-search-great-famine",
+    "wikipedia-search-schuylkill-county",
+    "wikipedia-search-philadelphia-immigration",
+    "wikipedia-search-any"
+  ],
+  "judge_context": [
+    "The return ends its narrative with a `### Search implications` block, above the `---` line, with a `hypothesis-tracking:` label and a `research-plan:` label (either may read `none`).",
+    "At least one competing explanation for the Pennsylvania birthplace (e.g. immigrated as a young child and reported the first state of residence; informant error by a later-life informant) is handed back to hypothesis-tracking by name, not tested or resolved in the reply.",
+    "Facts that change where or when to search (e.g. passenger lists or naturalization records for an arrival before 1850) are handed back to research-plan by name. The agent spawns neither agent itself.",
+    "The overview is logged as one `historical_context` entry in the file changes summary, its notes holding the full overview; the per-lookup entries carry null notes. Their count and shape are checked by validators, not by you."
+  ]
+}
