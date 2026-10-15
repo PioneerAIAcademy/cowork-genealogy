@@ -826,9 +826,10 @@ function uncertainPreferenceInvariants(entry: any, research: any): string[] {
   return [
     `preferred_assertion_id '${entry.preferred_assertion_id}' carries an uncertain reading ` +
       `([?]) and no assertion from a different record corroborates it. To settle the conflict: ` +
-      `find a second record whose reading agrees, or — once the user confirms the reading — hand ` +
-      `the correction of assertion '${entry.preferred_assertion_id}' back to record-extraction, ` +
-      `which owns \`assertions\`; a conflict write cannot change an assertion. Leaving ` +
+      `find a second record whose reading agrees. A reading the user confirms is one more reading ` +
+      `to weigh in this conflict's rationale, not a correction: assertion ` +
+      `'${entry.preferred_assertion_id}' was written by extraction and is final, and a conflict ` +
+      `write cannot change an assertion. Leaving ` +
       `preferred_assertion_id null — a deferral is a finding, not an omission — stays legal: leave ` +
       `the conflict unresolved, or resolve it with resolution_kind 'tree' when the tree's existing ` +
       `conclusion stands.`,
@@ -889,11 +890,13 @@ function planActiveInvariants(entry: any, research: any): string[] {
  *  when the precondition must be satisfied by someone else. Read live when it is
  *  the same author's own prior step." Neither half is this author's own step —
  *  `ownership.json` gives `hypotheses.callers` as `["agent:hypothesis-tracking"]`
- *  while `conflicts` belongs to `skill:conflict-resolution` and `assertions` to
- *  `skill:record-extraction`. Both of those sections are `enforceableAt:
- *  ["unit"]` only (no hook arm, no tool arm), so under a live read nothing would
- *  stop a session from writing the satisfying conflict or assertion in the same
- *  batch as the promote and clearing this gate from inside the call it gates.
+ *  while `conflicts` belongs to `skill:conflict-resolution` and `assertions` is
+ *  written only by `extraction_append`. `conflicts` is `enforceableAt: ["unit"]`
+ *  only (no hook arm, no tool arm), so under a live read nothing would stop a
+ *  session from writing the satisfying conflict in the same batch as the promote
+ *  and clearing this gate from inside the call it gates. (`assertions` gained a
+ *  tool arm on 2026-10-05: a caller's assertions write is refused before this
+ *  runs, so only `extraction_append`'s own batches can carry one.)
  *
  *  Measured cost of the snapshot read: **0 refusals** across the calibration
  *  corpus — no batch appends an assertion ahead of the promote, and neither of
@@ -1895,6 +1898,46 @@ function sourcesWithoutAssertionsWarning(research: any, applied: AppliedOp[]): s
   );
 }
 
+/** ADVISORY ONLY (issue #2256, folded into #2937): a `sources` entry that lands
+ *  a non-empty `transcription` with no `image_filename` is worth a line saying
+ *  where that text came from — a transcription is a claim about a page, and the
+ *  page it came from is normally nameable.
+ *
+ *  **Never a refusal, and the reason matters.** Two legitimate shapes reach here
+ *  with no filename: a PDF capture, and an `image_transcribe` run with no
+ *  `projectPath` (nothing was staged, so there is no file to name). Refusing
+ *  either would block correct work to catch a documentation gap, which is the
+ *  wrong trade for a provenance nudge — `guardrail-enforcement-spec.md` marks it
+ *  advisory in the instrument table for exactly that reason.
+ *
+ *  Returns one warning per offending entry, so a batch sourcing several records
+ *  names each rather than collapsing to a count the caller cannot act on. Fires
+ *  on `update` as well as `append`: a transcription added to an existing source
+ *  by a later op is the same gap. Reads the persisted entry rather than the op's
+ *  `fields`, so an update that sets only `transcription` is judged against the
+ *  `image_filename` already on disk instead of re-warning about one that is
+ *  there. */
+function transcriptionWithoutImageWarnings(research: any, applied: AppliedOp[]): string[] {
+  const sources = Array.isArray(research.sources) ? research.sources : [];
+  const out: string[] = [];
+  for (const a of applied) {
+    if (a.section !== "sources" || a.noop) continue;
+    const entry = sources.find((s: any) => s && s.id === a.entryId);
+    if (!entry) continue;
+    if (factText(entry.transcription) === undefined) continue;
+    if (factText(entry.image_filename) !== undefined) continue;
+    out.push(
+      `source '${a.entryId}' records a transcription but no image_filename — name the ` +
+        `page the text was read from, so a later reader can check it. The value is the ` +
+        `stored image's filename, which image_read/image_transcribe return as ` +
+        `\`imageRef\` when called with a projectPath. Leave it null only when there is ` +
+        `genuinely no stored page (a PDF capture, or a transcribe run without a ` +
+        `projectPath); this is advisory and nothing is blocked either way.`,
+    );
+  }
+  return out;
+}
+
 /** Tier/exhaustiveness cross-field guardrail (docs/specs/guardrail-enforcement-spec.md
  *  §4.2). `proved`/`disproved` claim the research is reasonably exhaustive by
  *  definition, so either tier requires the referenced question's
@@ -2795,6 +2838,25 @@ interface BatchSuccess {
   resolvedPlaces?: ResolvedPlaceEcho[];
   filesWritten: string[];
   validation: { valid: true; warnings: string[] };
+  /** Set only by `extraction_append`'s EXTRACTOR MODE, which builds its own ops
+   *  from a record's sidecar. The caller never sees that record, so `results[]`
+   *  alone would tell it how many entries landed without saying what they say —
+   *  and reporting the extraction is the caller's job. `research_append` never
+   *  sets this. */
+  extraction?: ExtractionEcho;
+}
+
+/** What extractor mode extracted, for the caller to report. */
+export interface ExtractionEcho {
+  recordType: string;
+  /** Present only for a census: whether the schedule stated relationships,
+   *  decided by the hard-coded year table rather than by reading the field. */
+  censusStatesRelationships?: boolean;
+  assertionCount: number;
+  /** Distinct roles assigned, so a reader can see the household shape without
+   *  the assertions. */
+  roles: string[];
+  notes: string[];
 }
 export type ResearchAppendResult =
   | SingleSuccess
@@ -3630,6 +3692,61 @@ function validateNegativeEvidenceRole(entry: Record<string, unknown>): void {
   if (errors.length) throw new ResearchAppendError(errors);
 }
 
+/** PRECONDITION 2 — `informant_proximity: "unknown"` implies
+ *  `information_quality: "indeterminate"`.
+ *
+ *  If you cannot identify the informant, you cannot have established that they
+ *  witnessed the fact, nor that they did not: the Layer-2 decision tree's
+ *  question 1 ("do we know the informant?") answers NO and terminates at
+ *  `indeterminate` without ever reaching question 2. So `unknown` paired with
+ *  `primary` or `secondary` is not a judgment call this tool is second-guessing
+ *  — it is a claim that contradicts its own premise.
+ *
+ *  **Why a writer precondition and not SKILL.md prose.** ADR-0011's first
+ *  question — can this be decided by reading the project documents alone? —
+ *  answers yes: both fields are on the entry in hand, so nothing needs a record
+ *  re-read. It lived as prose (the burial-index paragraph in
+ *  `agents/record-extractor.md`) from the finding in issue #2173, now carried by
+ *  issue #2484, and prose did not hold: across the committed e2e corpus the
+ *  model broke the rule on **248 of 982** `unknown` assertions. That is the
+ *  measurement behind moving it into code (issue #2937).
+ *
+ *  **FORWARD ONLY, and deliberately not a biconditional.** `indeterminate` does
+ *  NOT imply `unknown`: a NAMED informant whose relationship to the specific
+ *  fact cannot be established is `indeterminate` at a known proximity — the
+ *  decision tree's "CANNOT TELL" branch at question 2, which is reached only
+ *  when question 1 answered YES. Tightening this into "iff" would refuse that
+ *  whole branch, which is the ordinary shape of a census record read through
+ *  the table in `research-append-tool-spec.md`.
+ *
+ *  Fires ONLY for the two in-enum values that claim a determination was made.
+ *  A missing `information_quality` is already the schema's `required` error and
+ *  an out-of-enum one is its enum error; reporting this on top of either would
+ *  name the wrong fix. That is not hypothetical — `mid-research-flynn-bad-enum`
+ *  a_001 is `unknown` + `tertiary`, and `ut_validate_schema_004` pins the
+ *  validator at exactly ONE error for it. */
+function validateInformantQualityFloor(entry: Record<string, unknown>): void {
+  if (entry.informant_proximity !== "unknown") return;
+  if (
+    entry.information_quality !== "primary" &&
+    entry.information_quality !== "secondary"
+  ) {
+    return;
+  }
+  throw new ResearchAppendError(
+    `assertion has informant_proximity "unknown" but information_quality ` +
+      `'${entry.information_quality}' — an unidentified informant cannot be shown to ` +
+      `have witnessed the fact OR to have not witnessed it, so the classification ` +
+      `terminates at "indeterminate". Either set information_quality to ` +
+      `"indeterminate", or — if you can in fact name who supplied this fact — set ` +
+      `informant_proximity to what they were (self, witness, household_member, ` +
+      `family_not_present, official_duty) and keep the quality you chose. Do NOT ` +
+      `reach for "unknown" because the SOURCE is an index or a transcript: an index ` +
+      `of a marriage register still carries the register's informant, and indexing ` +
+      `changed who stated the fact not at all.`,
+  );
+}
+
 /** `structured_value.relationship_type` names the record subject's OWN role;
  *  `related_person_role` names the other party's (research-schema-spec.md
  *  §5.6.1). Nothing stated that until issue #2535, and the corpus wrote both
@@ -3955,6 +4072,7 @@ function applyOne(
     normalizeAccessDate(newEntry);
     canonicalizeAssertionLabels(newEntry);
     validateNegativeEvidenceRole(newEntry);
+    validateInformantQualityFloor(newEntry);
     validateRelationshipDirection(newEntry);
     const stamp = config.stampTimestamp;
     if (stamp && newEntry[stamp.field] === undefined) {
@@ -4023,6 +4141,12 @@ function applyOne(
     normalizeAccessDate(existing);
     canonicalizeAssertionLabels(existing);
     validateNegativeEvidenceRole(existing);
+    // The update arm validates the MERGED entry, so an op that sets only one of
+    // the pair is checked against the value already on disk — which is the case
+    // the rule exists for: flipping `informant_proximity` to "unknown" while
+    // leaving a stale `secondary` behind is exactly how the 248 corpus
+    // violations were reached.
+    validateInformantQualityFloor(existing);
     // Scoped to ops that set one of the three inputs it compares.
     // `fact_type` is one of them because it decides whether the guard
     // applies at all, so a retype INTO `relationship` would otherwise move
@@ -4844,17 +4968,7 @@ async function prepareOps(
       detectionEngaged = true;
       // Existing sources covering any of the batch's record ids, in
       // research.sources array order (deterministic "first match").
-      const sourceIdsForRecords = new Set<string>();
-      for (const a of Array.isArray(research.assertions) ? research.assertions : []) {
-        if (
-          a &&
-          typeof a.record_id === "string" &&
-          typeof a.source_id === "string" &&
-          batchRecordKeys.has(arkToBareId(a.record_id))
-        ) {
-          sourceIdsForRecords.add(a.source_id);
-        }
-      }
+      const sourceIdsForRecords = sourceIdsForRecordIds(research, batchRecordKeys);
       const matched = (Array.isArray(research.sources) ? research.sources : []).filter(
         (s: any) => s && typeof s === "object" && sourceIdsForRecords.has(s.id),
       );
@@ -5427,6 +5541,66 @@ export interface ResearchAppendOptions {
   toolName?: string;
 }
 
+/**
+ * The ids of the existing sources that already cover any of `bareRecordIds`,
+ * read off the assertions that cite them (§3.4.1). The one derivation of
+ * "is this record already extracted", shared by source-reuse detection here and
+ * by `extraction_append`'s resend skip, so the two cannot disagree.
+ */
+export function sourceIdsForRecordIds(research: any, bareRecordIds: ReadonlySet<string>): Set<string> {
+  const out = new Set<string>();
+  for (const a of Array.isArray(research?.assertions) ? research.assertions : []) {
+    if (
+      a &&
+      typeof a.record_id === "string" &&
+      typeof a.source_id === "string" &&
+      bareRecordIds.has(arkToBareId(a.record_id))
+    ) {
+      out.add(a.source_id);
+    }
+  }
+  return out;
+}
+
+/** The one field a direct `research_append` call may change on an assertion. */
+const CALLER_ASSERTION_FIELDS = new Set(["informant_bias_notes"]);
+
+/** `research_append` as an MCP caller reaches it. Assertions are written only by
+ *  `extraction_append`, which calls `researchAppend` directly and so never meets
+ *  this check. A caller may update one existing assertion's
+ *  `informant_bias_notes`, to record a re-reading or a doubt; any other
+ *  `assertions` write is refused, whole call, before anything is read
+ *  (genealogist ruling 2026-10-05, option B). */
+export async function researchAppendFromCaller(
+  input: ResearchAppendInput,
+): Promise<ResearchAppendResult> {
+  input.ops = coerceJsonArg(input.ops) as ResearchAppendOp[] | undefined;
+  input.fields = coerceJsonArg(input.fields) as Record<string, unknown> | undefined;
+  const isBatch = input.ops !== undefined;
+  const ops = isBatch
+    ? (Array.isArray(input.ops) ? input.ops : [])
+    : [{ section: input.section, op: input.op, fields: input.fields } as ResearchAppendOp];
+  const errors: string[] = [];
+  ops.forEach((op, i) => {
+    if (!op || (op as { section?: unknown }).section !== "assertions") return;
+    const fields = (op as { fields?: unknown }).fields;
+    const keys = fields && typeof fields === "object" && !Array.isArray(fields) ? Object.keys(fields) : [];
+    const notesOnly =
+      (op as { op?: unknown }).op === "update" && keys.length > 0 && keys.every((k) => CALLER_ASSERTION_FIELDS.has(k));
+    if (notesOnly) return;
+    const msg =
+      "research_append does not write assertions: extraction_append writes them (a FamilySearch " +
+      "record by recordIds; any other source through the record-structurer agent). The one change " +
+      "allowed here is an update that sets only informant_bias_notes on an existing assertion, to " +
+      "record a re-reading or a doubt. A disputed reading belongs in a conflict, not in the assertion's value.";
+    errors.push(isBatch ? `ops[${i}]: ${msg}` : msg);
+  });
+  if (errors.length > 0) {
+    return isBatch ? { ok: false, errors, opsReceived: ops.length } : { ok: false, errors };
+  }
+  return researchAppend(input);
+}
+
 export async function researchAppend(
   input: ResearchAppendInput,
   options: ResearchAppendOptions = {},
@@ -5725,9 +5899,14 @@ export async function researchAppend(
     // Persistence nudge (#1478): sources landing with no assertions drawn.
     // Non-blocking — rides validation.warnings, never touches `ok`.
     const persistenceWarning = anyMutation ? sourcesWithoutAssertionsWarning(research, applied) : null;
+    // Provenance nudge (#2256): a transcription with no page named. Advisory,
+    // like the one above — it rides validation.warnings and never touches `ok`.
+    const transcriptionWarnings = anyMutation
+      ? transcriptionWithoutImageWarnings(research, applied)
+      : [];
     const validationBlock = {
       valid: true as const,
-      warnings: [...validationWarnings, ...opWarnings, ...rewriteWarnings, ...treeEncodingWarnings, ...(persistenceWarning ? [persistenceWarning] : [])],
+      warnings: [...validationWarnings, ...opWarnings, ...rewriteWarnings, ...treeEncodingWarnings, ...(persistenceWarning ? [persistenceWarning] : []), ...transcriptionWarnings],
     };
     const extras: Pick<BatchSuccess, "sourceDescriptionId" | "sourceReuse" | "resolvedPlaces"> = {};
     if (prep.sourceDescriptionId) extras.sourceDescriptionId = prep.sourceDescriptionId;
@@ -5826,23 +6005,13 @@ export const researchAppendSchema = {
     "whole project, and writes atomically. Returns a compact summary; on any failure " +
     "nothing is written.\n" +
     "\n" +
-    "To persist a whole record in ONE call, pass an `ops` array (each op is " +
-    "`{ section, op, entry?/entryId?/fields?, planId? }`): one sources append plus one " +
-    "assertions append per fact, with the top-level `sourceDescription: { title, " +
-    "author?, url? }`. The tool then creates the tree.gedcomx.json source description " +
-    "(assigning the S id), stamps the source op's `gedcomx_source_description_id` and " +
-    "every assertion's `source_id`, auto-fills/verifies `record_persona_id` and " +
-    "canonicalizes `record_id` against the log entry's results sidecar, resolves " +
-    "`standard_place` for assertion places (copying the sidecar's resolution when " +
-    "present; resolved values are echoed in `resolvedPlaces`), validates ONCE, and " +
-    "writes tree.gedcomx.json + research.json together. Source reuse is " +
-    "auto-detected: when the batch's assertions cite a record_id an existing source " +
-    "already covers, the tool updates that source in place (same repository) or " +
-    "reuses its S entry (different repository) instead of duplicating — always " +
-    "supply `sourceDescription` and relay the echoed `sourceReuse` " +
-    "({ action: created | updated_existing | new_source_reused_s, srcId, sId }). " +
-    "To cite a specific known S entry explicitly, omit `sourceDescription` and set " +
-    "the sources op's `gedcomx_source_description_id` to that S id. Batches are " +
+    "Assertions are written by extraction_append, never here: the one assertions " +
+    "change accepted is an update that sets only `informant_bias_notes` on an existing " +
+    "assertion, to record a re-reading or a doubt. Any other assertions write is " +
+    "refused, and a disputed reading belongs in a conflict.\n" +
+    "\n" +
+    "To apply several mutations in one call, pass an `ops` array (each op is " +
+    "`{ section, op, entry?/entryId?/fields?, planId? }`). Batches are " +
     "all-or-nothing: on failure nothing is written and errors name the failing ops " +
     "(`ops[i]: <msg>`) plus `opsReceived` so you can confirm no op was dropped.",
   inputSchema: {
@@ -5864,9 +6033,7 @@ export const researchAppendSchema = {
         type: "string",
         enum: ["append", "update"],
         description:
-          "append a new entry (tool assigns the id) or update an existing one by id. " +
-          "Correcting an assertion's place/standard_place/date/value also updates the " +
-          "tree fact materialized from it — no separate tree_correct call.",
+          "append a new entry (tool assigns the id) or update an existing one by id.",
       },
       entry: {
         type: "object",
@@ -5902,8 +6069,7 @@ export const researchAppendSchema = {
               type: "string",
               enum: ["append", "update"],
               description:
-                "append (tool assigns id) or update by id. An assertions update also " +
-                "updates the tree fact materialized from that assertion.",
+                "append (tool assigns id) or update by id.",
             },
             entry: { type: "object", description: "append: the new entry in snake_case, WITHOUT an id." },
             entryId: { type: "string", description: "update: the id of the existing entry to modify." },

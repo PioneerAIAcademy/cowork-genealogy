@@ -24,7 +24,7 @@ always gives the same answer. It writes nothing.
   available.
 - `question-selection` — turns a result into a research question.
 
-`record-extractor` is deliberately not a caller (lead, 2026-10-08:
+`record-extractor` (since retired) was deliberately not a caller (lead, 2026-10-08:
 check-warnings owns errors, question-selection owns gaps).
 
 ## 3. Inputs

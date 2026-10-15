@@ -19,10 +19,10 @@ const canonicalPath = join(repoRoot, "plugin", "references", "places-guidance.md
 // places. `timeline` left when issue #2797 converted it to an agent (moved to
 // AGENTS_WITH_PLACES_GUIDANCE below); `conflict-resolution` left when issue
 // #3036 did the same, but its new agent body does not inline this guidance at
-// all, so it is not in either list.
-const SKILLS_WITH_PLACES_GUIDANCE = [
-  "record-extraction",
-];
+// all, so it is not in either list. `record-extraction` left when issue #3312
+// deleted the skill entirely (its agent, `record-structurer`, does not inline
+// this guidance either) -- no skill carries this guidance any more.
+const SKILLS_WITH_PLACES_GUIDANCE: string[] = [];
 
 // Agents that inline the canonical places guidance verbatim in their body
 // (CLAUDE.md "No playbook/reference files for agents": an agent carries its own

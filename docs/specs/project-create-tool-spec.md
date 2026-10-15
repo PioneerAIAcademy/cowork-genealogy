@@ -180,7 +180,7 @@ researcher which places it standardized without being asked.
 `personReadRef` is trimmed before it is resolved, and a near-copy of a staged ref is mapped onto the one staged file it names, reported in `validation.warnings` (`search-result-staging-spec.md` §6.0). In ref mode a refusal raised
 after the build (a forged `assertion_id`, a validation error) names which minted
 id and `persons[i]` index each addition label became, since no `idMap` comes
-back with a refusal. A relationship is described by its type and endpoints. A later
+back with a refusal. A relationship is described by its type, endpoints and subtype. A later
 step that writes `research.json` names tree ids from it.
 
 The staged file is not consumed; the 24h TTL prune removes it.
@@ -215,7 +215,7 @@ from a real one, while an absent one has a working fallback in every skill.
 | A `tree` collection, or an addition's `names`, `facts` or `sources`, that is present but not an array of objects | Read as empty it would be dropped, and a dropped citation would silently re-cite the fact to the researcher's statement. Applies without `personReadRef` too, for the three top-level collections. Without a ref, a non-object entry and a citation in the wrong shape are left in place for validation to refuse at their own index; only an absent or empty `sources` is cited to the researcher's statement |
 | `research.json` or `tree.gedcomx.json` appears while the place fill runs | Checked again after the fill, which can take seconds: another create finished first, and create never overwrites |
 | Two additions whose `ark` names the same person | The same person twice |
-| An addition relationship repeating one the build already holds (same type and endpoints, a Couple in either order) | The read's relationships are imported already; no validator rejects the duplicate |
+| An addition relationship repeating one the build already holds — `relationshipMatches`: same type and endpoints (a Couple in either order) with subtypes that agree or either absent, so an untyped edge restating a staged Biological one IS a repeat while a Step edge beside it is a second relationship | The read's relationships are imported already; no validator rejects the duplicate |
 | An `assertion_id` on any fact, staged or added | Stamped only by `materialize_facts`; a seeding tree has no assertions to point at |
 
 **Ordering.** The pair is validated **before** either file is written, so a

@@ -1,4 +1,5 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
+import { LOCAL } from "../../src/auth/principal.js";
 import { singleOk, failure, errorsOf } from "../helpers/narrow.js";
 import { mkdtemp, writeFile, readFile, rm, mkdir, access } from "fs/promises";
 import { join } from "path";
@@ -398,7 +399,7 @@ describe("research_append (Phase 1)", () => {
       expect(r.filesWritten).not.toContain("tree.gedcomx.json");
     });
 
-    it("(8) fires through extraction_append too, not just research_append", async () => {
+    it("(8) is research_append's alone: extraction_append refuses a correction", async () => {
       await writeProject(withAssertion(backlinkAssertion()), treeWithBacklink());
 
       const r = await extractionAppend({
@@ -407,10 +408,10 @@ describe("research_append (Phase 1)", () => {
         op: "update",
         entryId: "a_011",
         fields: { standard_place: "Odessa, Francis No. 127, Saskatchewan, Canada" },
-      });
-      expect(r.ok).toBe(true);
-      if (!r.ok) return;
-      expect((await factF4()).standard_place).toBe("Odessa, Francis No. 127, Saskatchewan, Canada");
+      } as any, LOCAL);
+      expect(r.ok).toBe(false);
+      expect((r.errors ?? []).join(" ")).toMatch(/Correcting an existing assertion is not an extraction/);
+      expect((await factF4()).standard_place).not.toBe("Odessa, Francis No. 127, Saskatchewan, Canada");
     });
 
     it("(9) rewrites every fact carrying the id, and no fact carrying another", async () => {
@@ -1791,9 +1792,11 @@ describe("research_append (Phase 2)", () => {
     // The only caller that can write a conflict's winner is the conflict-resolution
     // agent, and the hook holds it off `assertions`. A refusal telling it to update
     // the assertion sends it into a denied write (ut_conflict_resolution_016,
-    // 2026-10-05); the confirmed reading goes back to the section's owner.
+    // 2026-10-05). Extraction writes assertions and they are final, so a confirmed
+    // reading is weighed in the conflict, never written back.
     const uncertain = r.errors.find((e) => e.includes("uncertain reading")) ?? "";
-    expect(uncertain).toMatch(/back to record-extraction, which owns `assertions`/);
+    expect(uncertain).toMatch(/not a correction/);
+    expect(uncertain).not.toMatch(/record-extraction/);
     expect(uncertain).not.toMatch(/op: "update"/);
   });
 
@@ -8645,32 +8648,33 @@ describe("research_append — relationship direction and the sibling value (#253
     }
   });
 
-  it("binds extraction_append too, which is the path record-extractor uses", async () => {
-    // `extractionAppend` delegates to `researchAppend`, so one precondition
-    // covers both writers — but nothing tested the delegated path, and it is
-    // the one the agent this card edits actually calls.
+  it("binds extraction_append too: the sibling a document states passes it", async () => {
+    // `extractionAppend` writes through `researchAppend`, so the precondition
+    // binds it as well. It builds relationship assertions in code, so what is
+    // checked is that the assertion it builds for a stated sibling is one the
+    // precondition accepts.
     await writeProject();
     const r = await extractionAppend({
       projectPath: dir,
-      ops: [
-        {
-          section: "assertions",
-          op: "append",
-          entry: {
-            ...noId(validAssertion("x", "src_001")),
-            fact_type: "relationship",
-            value: "sibling of Grace (Whitaker) Tolman",
-            structured_value: {
-              relationship_type: "child",
-              related_person_role: "sibling_1",
-            },
-          },
+      documents: [{
+        recordId: "capture:tolman-obituary-1990",
+        document: {
+          recordType: "obituary",
+          documentForm: "verbatim_transcript",
+          source: { title: "Obituary of Grace (Whitaker) Tolman", repository: "Herald Journal" },
+          persons: [
+            { id: "p1", principal: true, gender: "female", names: [{ given: "Grace", surname: "Tolman" }], facts: [{ type: "death", date: "2 May 1990", place: "Logan, Cache, Utah" }] },
+            { id: "p2", gender: "male", statedRelation: "brother", names: [{ given: "Harold", surname: "Whitaker" }], facts: [] },
+          ],
+          relationships: [{ type: "sibling", person1: "p1", person2: "p2" }],
         },
-      ],
-    });
-    expect(r.ok).toBe(false);
-    if (r.ok) return;
-    expect(failure(r).errors?.join(" ")).toMatch(/states the subject is a sibling/);
+      }],
+    } as any, LOCAL);
+    expect(r.ok, JSON.stringify(r)).toBe(true);
+    const research = JSON.parse(await readFile(join(dir, "research.json"), "utf-8"));
+    const rels = research.assertions.filter((a: any) => a.fact_type === "relationship");
+    expect(rels.map((a: any) => a.structured_value?.relationship_type)).toContain("sibling");
+    expect(rels.some((a: any) => a.structured_value?.relationship_type === "child")).toBe(false);
   });
 
   it("refuses a capitalised value — the case-insensitive flag is load-bearing", async () => {
@@ -9248,14 +9252,13 @@ describe("research_append — sources-without-assertions nudge (#1478)", () => {
     expect(warned(r.validation.warnings)).toBe(false);
   });
 
-  it("fires through extraction_append with a tool-neutral message", async () => {
+  it("names no tool, so it reads right to a caller that does not hold research_append", async () => {
     await write(researchWith(3, 0));
-    const r = await extractionAppend({ projectPath: dir, section: "sources", op: "append", entry: noId(validSource("x")) });
+    const r = await researchAppend({ projectPath: dir, section: "sources", op: "append", entry: noId(validSource("x")) });
     expect(r.ok).toBe(true);
     if (!r.ok) return;
     const warn = r.validation.warnings.find((w) => WARN.test(w));
     expect(warn).toBeTruthy();
-    // record-extractor is denied research_append — the nudge must not name it
     expect(warn).not.toContain("research_append");
   });
 });
@@ -10686,6 +10689,302 @@ describe("supported evidence floor (#2086)", () => {
     expect(promote.ok).toBe(true);
   });
 
+});
+
+// ─── Precondition 2: informant_proximity "unknown" ⟹ information_quality
+//     "indeterminate" (issue #2937) ────────────────────────────────────────
+//
+// Prose in `agents/record-extractor.md` from issue #2173's finding (now carried
+// by issue #2484). Prose did not hold: across the committed e2e corpus the model
+// broke the rule on 248 of 982 `unknown` assertions, which is what moved it into
+// code. The document tier mirrors this in `validator.test.ts`.
+
+describe("research_append — informant_proximity 'unknown' requires indeterminate quality", () => {
+  let dir: string;
+  beforeEach(async () => {
+    dir = await mkdtemp(join(tmpdir(), "research-append-prox-floor-"));
+    await writeFile(join(dir, "research.json"), JSON.stringify(baseResearch(), null, 2));
+    await writeFile(join(dir, "tree.gedcomx.json"), JSON.stringify(baseTree, null, 2));
+  });
+  afterEach(async () => {
+    await rm(dir, { recursive: true, force: true });
+  });
+
+  const FLOOR = /informant_proximity "unknown" but information_quality/;
+  const appendAssertion = (overrides: Record<string, unknown>) =>
+    researchAppend({
+      projectPath: dir,
+      section: "assertions",
+      op: "append",
+      entry: noId({ ...validAssertion("ignored"), ...overrides }),
+    });
+
+  // ── APPEND, broken three ways.
+
+  it("refuses unknown + secondary on append", async () => {
+    const r = await appendAssertion({
+      informant: "unknown",
+      informant_proximity: "unknown",
+      information_quality: "secondary",
+    });
+    expect(r.ok).toBe(false);
+    if (r.ok) return;
+    expect(r.errors.some((e) => FLOOR.test(e))).toBe(true);
+  });
+
+  it("refuses unknown + primary on append", async () => {
+    const r = await appendAssertion({
+      informant: "unknown",
+      informant_proximity: "unknown",
+      information_quality: "primary",
+    });
+    expect(r.ok).toBe(false);
+    if (r.ok) return;
+    expect(r.errors.some((e) => FLOOR.test(e))).toBe(true);
+  });
+
+  it("writes NOTHING when it refuses", async () => {
+    // A refusal that half-persisted would be worse than no guard.
+    const before = await readFile(join(dir, "research.json"), "utf-8");
+    const r = await appendAssertion({
+      informant: "unknown",
+      informant_proximity: "unknown",
+      information_quality: "secondary",
+    });
+    expect(r.ok).toBe(false);
+    expect(await readFile(join(dir, "research.json"), "utf-8")).toBe(before);
+  });
+
+  // ── UPDATE. The arm the issue calls out separately, and the one that
+  //    actually produced the corpus violations: flipping proximity to
+  //    "unknown" and leaving a stale `secondary` behind.
+
+  it("refuses an update that flips proximity to unknown, leaving a stale secondary", async () => {
+    const seed = baseResearch();
+    seed.assertions = [
+      {
+        ...validAssertion("a_001"),
+        informant_proximity: "family_not_present",
+        information_quality: "secondary",
+      },
+    ];
+    await writeFile(join(dir, "research.json"), JSON.stringify(seed, null, 2));
+    const r = await researchAppend({
+      projectPath: dir,
+      section: "assertions",
+      op: "update",
+      entryId: "a_001",
+      fields: { informant_proximity: "unknown" },
+    });
+    expect(r.ok).toBe(false);
+    if (r.ok) return;
+    expect(r.errors.some((e) => FLOOR.test(e))).toBe(true);
+  });
+
+  it("refuses an update that flips quality away from indeterminate under an unknown proximity", async () => {
+    const seed = baseResearch();
+    seed.assertions = [
+      {
+        ...validAssertion("a_001"),
+        informant: "unknown",
+        informant_proximity: "unknown",
+        information_quality: "indeterminate",
+      },
+    ];
+    await writeFile(join(dir, "research.json"), JSON.stringify(seed, null, 2));
+    const r = await researchAppend({
+      projectPath: dir,
+      section: "assertions",
+      op: "update",
+      entryId: "a_001",
+      fields: { information_quality: "primary" },
+    });
+    expect(r.ok).toBe(false);
+    if (r.ok) return;
+    expect(r.errors.some((e) => FLOOR.test(e))).toBe(true);
+  });
+
+  // ── The other direction. A guard fails two ways; breaking it tests one.
+
+  it("accepts unknown + indeterminate", async () => {
+    const r = await appendAssertion({
+      informant: "unknown",
+      informant_proximity: "unknown",
+      information_quality: "indeterminate",
+    });
+    expect(r.ok).toBe(true);
+  });
+
+  it("accepts indeterminate at a KNOWN proximity — not a biconditional", async () => {
+    // The decision tree's "CANNOT TELL" branch, reachable only once question 1
+    // answered YES. The ordinary census shape; an `iff` reading refuses it.
+    const r = await appendAssertion({
+      informant: "unknown household member (likely self or spouse)",
+      informant_proximity: "household_member",
+      information_quality: "indeterminate",
+    });
+    expect(r.ok).toBe(true);
+  });
+
+  it("accepts a stated 1880+ relationship", async () => {
+    // Named by the issue's Done-means as an explicit must-still-accept.
+    const r = await appendAssertion({
+      fact_type: "relationship",
+      value: "child of Thomas Doyle",
+      informant: "unknown household member",
+      informant_proximity: "household_member",
+      information_quality: "indeterminate",
+      record_basis: "stated",
+      structured_value: { relationship_type: "child", related_person_role: "head_of_household" },
+    });
+    expect(r.ok).toBe(true);
+  });
+
+  it("accepts a computed birth date at record_basis 'inferred'", async () => {
+    // The other Done-means must-still-accept: a birth YEAR derived from a
+    // stated age is `inferred`, and that is orthogonal to this rule.
+    const r = await appendAssertion({
+      fact_type: "birth",
+      value: "about 1818",
+      date: "~1818",
+      date_certainty: "approximate",
+      informant: "unknown",
+      informant_proximity: "unknown",
+      information_quality: "indeterminate",
+      record_basis: "inferred",
+    });
+    expect(r.ok).toBe(true);
+  });
+
+  it("leaves an out-of-enum quality to the enum error alone", async () => {
+    // Mirrors the validator-tier guard: `mid-research-flynn-bad-enum` a_001 is
+    // unknown + "tertiary", and ut_validate_schema_004 pins ONE error for it.
+    const r = await appendAssertion({
+      informant: "unknown",
+      informant_proximity: "unknown",
+      information_quality: "tertiary",
+    });
+    expect(r.ok).toBe(false);
+    if (r.ok) return;
+    expect(r.errors.some((e) => FLOOR.test(e))).toBe(false);
+  });
+});
+
+// ─── Advisory: a transcription with no image_filename (issue #2256 → #2937) ──
+
+describe("research_append — transcription without image_filename is advisory", () => {
+  let dir: string;
+  beforeEach(async () => {
+    dir = await mkdtemp(join(tmpdir(), "research-append-transcription-"));
+    await writeFile(join(dir, "research.json"), JSON.stringify(baseResearch(), null, 2));
+    await writeFile(join(dir, "tree.gedcomx.json"), JSON.stringify(baseTree, null, 2));
+  });
+  afterEach(async () => {
+    await rm(dir, { recursive: true, force: true });
+  });
+
+  const WARN = /records a transcription but no image_filename/;
+  const warned = (ws: string[]) => ws.some((w) => WARN.test(w));
+  const appendSource = (extra: Record<string, unknown>) =>
+    researchAppend({
+      projectPath: dir,
+      section: "sources",
+      op: "append",
+      entry: noId({ ...validSource("x"), ...extra }),
+    });
+
+  it("warns — and never blocks — for a transcription with a null image_filename", async () => {
+    const r = await appendSource({
+      transcription: "Thomas Doyle, aged 32, born Ireland.",
+      image_filename: null,
+    });
+    expect(r.ok).toBe(true);
+    if (!r.ok) return;
+    expect(warned(r.validation.warnings)).toBe(true);
+    // Advisory: the source still persisted.
+    expect(r.filesWritten).toContain("research.json");
+    const research = JSON.parse(await readFile(join(dir, "research.json"), "utf-8"));
+    expect(research.sources).toHaveLength(2);
+  });
+
+  it("warns when image_filename is omitted entirely", async () => {
+    const r = await appendSource({ transcription: "Thomas Doyle, aged 32." });
+    expect(r.ok).toBe(true);
+    if (!r.ok) return;
+    expect(warned(r.validation.warnings)).toBe(true);
+  });
+
+  it("names the offending source id, so a batch is actionable", async () => {
+    const r = await appendSource({ transcription: "text", image_filename: null });
+    expect(r.ok).toBe(true);
+    if (!r.ok) return;
+    const w = r.validation.warnings.find((x) => WARN.test(x))!;
+    expect(w).toMatch(/source 'src_\d+'/);
+  });
+
+  // ── The other direction, both shapes the absorbed text names explicitly.
+
+  it("stays silent for a source with no transcription", async () => {
+    const r = await appendSource({ transcription: null, image_filename: null });
+    expect(r.ok).toBe(true);
+    if (!r.ok) return;
+    expect(warned(r.validation.warnings)).toBe(false);
+  });
+
+  it("stays silent for a source that cites a ref", async () => {
+    const r = await appendSource({
+      transcription: "Thomas Doyle, aged 32.",
+      image_filename: "004022578_00190.jpg",
+    });
+    expect(r.ok).toBe(true);
+    if (!r.ok) return;
+    expect(warned(r.validation.warnings)).toBe(false);
+  });
+
+  it("stays silent for a whitespace-only transcription", async () => {
+    // Blank is not a transcription; warning here would nag a no-op field.
+    const r = await appendSource({ transcription: "   ", image_filename: null });
+    expect(r.ok).toBe(true);
+    if (!r.ok) return;
+    expect(warned(r.validation.warnings)).toBe(false);
+  });
+
+  it("does not nag a write that touches no source", async () => {
+    const r = await researchAppend({
+      projectPath: dir,
+      section: "assertions",
+      op: "append",
+      entry: noId(validAssertion("ignored")),
+    });
+    expect(r.ok).toBe(true);
+    if (!r.ok) return;
+    expect(warned(r.validation.warnings)).toBe(false);
+  });
+});
+
+describe("mintedFromThisRecord counts person-level refs (#2696)", () => {
+  const research = {
+    sources: [
+      { id: "src_1", gedcomx_source_description_id: "S1" },
+      { id: "src_2", gedcomx_source_description_id: "S2" },
+    ],
+    assertions: [
+      { source_id: "src_1", record_id: "REC-A" },
+      { source_id: "src_2", record_id: "REC-B" },
+    ],
+  };
+  const tree = (sources: unknown) => ({
+    persons: [{ id: "I9", gender: "Male", names: [{ id: "N1", given: "A", surname: "B" }], sources }],
+    sources: [{ id: "S1", title: "A" }, { id: "S2", title: "B" }],
+  });
+
+  it("a person whose only refs are person-level, all to this record, was minted from it", () => {
+    expect(mintedFromThisRecord("I9", "REC-A", research, tree([{ ref: "S1" }]))).toBe(true);
+  });
+
+  it("a person-level ref to another record means it was not minted from this one", () => {
+    expect(mintedFromThisRecord("I9", "REC-A", research, tree([{ ref: "S1" }, { ref: "S2" }]))).toBe(false);
+  });
 });
 
 describe("research_append — a resolve names how it was settled (resolution_kind, #1852)", () => {

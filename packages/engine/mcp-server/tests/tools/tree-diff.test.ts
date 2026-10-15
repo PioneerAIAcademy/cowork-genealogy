@@ -20,6 +20,22 @@ describe("tree_diff", () => {
   });
   const birth = (date: string) => ({ id: "f1", type: "Birth", date });
 
+  it("a Step edge added beside a Biological edge reads as added", () => {
+    // tree-diff maps relationships by `relationshipKey`. Before the subtype
+    // joined that key the two edges collided, so adding a Step parent beside a
+    // Biological one read as no change at all.
+    const bio = { id: "R1", type: "ParentChild", parent: "I1", child: "I2", subtype: "Biological" };
+    const step = { id: "R2", type: "ParentChild", parent: "I1", child: "I2", subtype: "Step" };
+    const before = { persons: [person("I1"), person("I2")], relationships: [bio] };
+    const after = { persons: [person("I1"), person("I2")], relationships: [bio, step] };
+    const d = treeDiff({ before, after } as any);
+    expect(d.relationshipsAdded).toHaveLength(1);
+    expect(d.relationshipsAdded[0].relationship).toMatchObject({ id: "R2", subtype: "Step" });
+    // Both endpoints count as newly structured, which is what the tree-encoding
+    // gate reads.
+    expect(d.personsWithNewStructure).toEqual(expect.arrayContaining(["I1", "I2"]));
+  });
+
   it("reports a wholly added person", () => {
     const before = { persons: [person("I1")], relationships: [] };
     const after = { persons: [person("I1"), person("I2")], relationships: [] };

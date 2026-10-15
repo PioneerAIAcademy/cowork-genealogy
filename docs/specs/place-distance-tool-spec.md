@@ -86,11 +86,11 @@ resolve," not "is not a standard place."
 
 - **Skills:** none — the last two skill consumers (`conflict-resolution`, `timeline`) have both since converted to agents.
 - **Agents:** `conflict-resolution.md`, `gps-mentor.md`, `person-evidence.md`, `timeline.md`.
-- **Shared reference:** `references/places-guidance.md` is now carried by 1
-  skill (`record-extraction`) — every other former carrier converted to an
-  agent, and an agent body is self-contained (no `references/` folder; the
-  same guidance is folded inline into `timeline.md` and `historical-context.md`
-  directly).
+- **Shared reference:** `references/places-guidance.md` is now carried by 0
+  skills — `record-extraction`, the last carrier, was deleted entirely when
+  issue #3312 converted it to the `record-structurer` agent, and an agent body
+  is self-contained (no `references/` folder; the same guidance is folded
+  inline into `timeline.md` and `historical-context.md` directly).
 - **Persisted field:** `distance_from_previous_km` in timeline events
   (`research-schema-spec.md`): great-circle distance in km from the
   previous event's place, via `place_distance` on the two
