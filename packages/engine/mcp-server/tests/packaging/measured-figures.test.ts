@@ -313,6 +313,27 @@ const EXEMPT = new Map<number, { reason: string; scope?: readonly string[] }>([
     },
   ],
   [
+    1490,
+    {
+      reason: "the calls not replayable (response stripped): the e2e research_log_append replay for the superseded-plan precondition, derived from eval/runlogs by eval/harness/scripts/measure_superseded_log_items.py rather than the qualifier probe, and date-stamped in the spec (2026-10-12 at 08e7ba018). Keyed by EXACT value: re-key 1490, 1283 and 1239 together whenever the corpus is re-derived",
+      scope: ["docs/specs/research-log-editor-spec.md"],
+    },
+  ],
+  [
+    1283,
+    {
+      reason: "the replayable ops naming a plan item: the e2e research_log_append replay for the superseded-plan precondition, derived from eval/runlogs by eval/harness/scripts/measure_superseded_log_items.py rather than the qualifier probe, and date-stamped in the spec (2026-10-12 at 08e7ba018). Keyed by EXACT value: re-key 1490, 1283 and 1239 together whenever the corpus is re-derived",
+      scope: ["docs/specs/research-log-editor-spec.md"],
+    },
+  ],
+  [
+    1239,
+    {
+      reason: "of those, the ops on an active plan: the e2e research_log_append replay for the superseded-plan precondition, derived from eval/runlogs by eval/harness/scripts/measure_superseded_log_items.py rather than the qualifier probe, and date-stamped in the spec (2026-10-12 at 08e7ba018). Keyed by EXACT value: re-key 1490, 1283 and 1239 together whenever the corpus is re-derived",
+      scope: ["docs/specs/research-log-editor-spec.md"],
+    },
+  ],
+  [
     1998,
     {
       reason: "the staged record_search log entries carrying a note, from the same dev/measure-census-hedge-refusals.ts run and stamp as the 4322 notes corpus above; re-key both together. Re-derived 2026-10-03 (was 1867)",

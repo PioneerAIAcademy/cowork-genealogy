@@ -129,7 +129,7 @@ def test_a_baseline_run_backfills_session_start_from_granted_at():
     with database(apply=False, prefix="u3_") as dsn:
         files = migrate.load()
         names = [m.name for m in files]
-        assert names[-1] == "014_turn_bearer.sql"
+        assert names[-1] == "012_turn_bearer.sql"
         with psycopg.connect(dsn, autocommit=True) as conn:
             for m in files[:names.index("009_grant_session.sql")]:
                 conn.execute(m.text)

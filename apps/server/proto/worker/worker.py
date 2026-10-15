@@ -31,8 +31,8 @@ The real turn: the SDK session id is CHOSEN by the worker at claim time --
 first transcript append can never land under an id no row names -- and passed as
 ``session_id=`` on a fresh session or ``resume=`` when the session store already holds
 entries for it (a mid-turn kill on either path resumes on redelivery); the options from
-``options.py``; ``get_server_info()`` checked for the twenty-seven bare agent names
-(``EXPECTED_AGENTS``, a constant -- never the set that happened to load) and the 7
+``options.py``; ``get_server_info()`` checked for the twenty-eight bare agent names
+(``EXPECTED_AGENTS``, a constant -- never the set that happened to load) and the 5
 ``genealogy-research:<skill>`` commands (``EXPECTED_SKILLS``, a literal -- never a count
 of the directory the SDK loads from) BEFORE the query bills a token (D15) -- a miss
 is a 500; the CLI's ``system/init`` must arrive and declare the chosen id, or the
@@ -161,7 +161,7 @@ epoch before every tool call. A superseded attempt answers 200 ``superseded`` an
 and releases nothing; the sweep's epoch-less close bumps the epoch, which is its expiry.
 
 Tool-server ownership (U4): the claim also clears ``turns.bearer_sha256``
-(``014_turn_bearer.sql``), and the attempt stamps the sha256 of its grant token there
+(``012_turn_bearer.sql``), and the attempt stamps the sha256 of its grant token there
 (``stamp_bearer``) after ``acquire_grant`` and before the CLI exists; a stamp that matches
 no open row at this epoch raises ``Superseded``. The tool server admits a project request
 only when its bearer hashes to the stamp on that open turn of that project, else 403.
@@ -277,6 +277,7 @@ SCHEMA_BACKOFF_MAX_S = 30.0
 EXPECTED_AGENTS = frozenset({
     "check-warnings",
     "citation",
+    "conflict-resolution",
     "convert-dates",
     "gps-mentor",
     "historical-context",
@@ -288,7 +289,7 @@ EXPECTED_AGENTS = frozenset({
     "project-status",
     "proof-conclusion",
     "question-selection",
-    "record-extractor",
+    "record-structurer",
     "research-exhaustiveness",
     "search-external-sites",
     "search-familysearch-wiki",
@@ -304,9 +305,9 @@ EXPECTED_AGENTS = frozenset({
     "validate-schema",
 })
 # The other half of the same precondition, a literal for the same reason: a count of
-# the directory the SDK loads the plugin from shrinks with it -- an image shipping 7
-# skills registers 7 and passes. test_proto_worker pins this against the repo.
-EXPECTED_SKILLS = 7
+# the directory the SDK loads the plugin from shrinks with it -- an image shipping 5
+# skills registers 5 and passes. test_proto_worker pins this against the repo.
+EXPECTED_SKILLS = 5
 
 _stdout_lock = threading.Lock()
 
@@ -2270,9 +2271,15 @@ async def _run_turn(
                 return STOP_REASON
             return None
 
-        def handover_clause() -> str | None:
+        def handover_clause(subagent: bool = False) -> str | None:
             # 1b: a message the patron typed mid-turn.
             #
+            # Main-thread only (#3376): a subagent call returns before it touches `terminal`
+            # or logs `ev=handover`. The subagent finishes its leg; the orchestrator's next
+            # tool call takes the message. Every other clause halts a subagent as it would
+            # the main thread -- stop means stop.
+            if subagent:
+                return None
             # DEVIATION from the plan, stated here because it is one: the plan wires
             # `pending_user_message()` into the STOP hook only. But its own measurement
             # says the model yields a median of ONCE per run and 31% of runs never yield
@@ -2329,17 +2336,23 @@ async def _run_turn(
         halt_clauses = (("epoch", epoch_clause), ("lock", lock_clause), ("stop", stop_clause),
                         ("handover", handover_clause), ("transcript", transcript_clause), ("spend", spend_clause))
 
-        def halt() -> str | None:
+        def halt(subagent: bool = False) -> str | None:
             """U23: fail closed on a store outage. A clause that cannot reach Postgres
             (OperationalError, InterfaceError, or a broken connection) halts the attempt
             STORE_UNAVAILABLE, and every later call halts without asking Postgres. Any other
             error is logged and the next clause still runs, so one bug cannot skip the spend
-            clause as the Decimal one did (price_usd)."""
+            clause as the Decimal one did (price_usd).
+
+            ``subagent`` (true when the calling tool carries an ``agent_id``) is passed ONLY
+            to the handover clause (#3376), so a message typed mid-turn does not cut a
+            subagent off mid-task. Every other clause ignores it -- stop means stop."""
             if attempt["store_down"]:
                 return STORE_UNAVAILABLE_REASON
             for clause, check in halt_clauses:
                 try:
-                    reason = check()
+                    # Dispatch by IDENTITY, not by the tuple label: a renamed label would
+                    # silently stop passing the flag and revert #3376.
+                    reason = check(subagent) if check is handover_clause else check()
                 except Exception as exc:  # noqa: BLE001 - classified: down halts, else next clause
                     down = (isinstance(exc, (psycopg.OperationalError, psycopg.InterfaceError))
                             or bool(getattr(conn, "broken", False)))

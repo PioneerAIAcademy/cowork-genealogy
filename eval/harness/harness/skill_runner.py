@@ -22,7 +22,6 @@ Honors the execution caps from unit-test-spec.md §15:
 from __future__ import annotations
 
 import asyncio
-import contextlib
 import re
 import sys
 import time
@@ -41,7 +40,6 @@ from claude_agent_sdk import (
     ToolResultBlock,
     ToolUseBlock,
     UserMessage,
-    query,
 )
 
 from harness.auth import AuthConfig, env_for_sdk
@@ -53,6 +51,7 @@ from harness.context_policy import (
     subagent_only_violation,
 )
 from harness.mock_mcp import create_mock_server
+from harness.sdk_query import close_query, open_query
 from harness.skill_stubs import stub_denial
 
 
@@ -699,7 +698,7 @@ QUOTA_ABORT_REASON = "quota_exhausted"
 # Subscription prose only. `"rate limit"` is deliberately NOT here: it matches
 # Anthropic's own 429 body text, which in `api_key` mode is a per-minute org
 # limit that clears in under a minute — see the predicate note below.
-_QUOTA_TEXT_MARKERS = ("hit your limit", "usage limit")
+_QUOTA_TEXT_MARKERS = ("hit your limit", "usage limit", "out of extra usage")
 
 
 def _looks_like_quota(
@@ -1135,8 +1134,11 @@ async def run_skill(
         elif (denial := spawn_stub_denial(tool_name, input_data, _stub_agents)):
             return denial
         # Per-context tool policy: deny a subagent-only tool (see
-        # context_policy.SUBAGENT_ONLY_TOOLS — image_read, extraction_append) on
-        # the main thread UNLESS this skill declared it itself. Checked BEFORE
+        # context_policy.SUBAGENT_ONLY_TOOLS — image_read; `extraction_append`
+        # left the set in issue #2937) on
+        # the main thread UNLESS this skill declared it itself. That exemption is
+        # now REACHED rather than theoretical: record-extraction declares
+        # `extraction_append` and calls it from the main thread. Checked BEFORE
         # the max_tool_calls counter — a denied call never executes, so it
         # shouldn't consume the budget (same ordering rationale as the e2e
         # tree-read block).
@@ -1335,8 +1337,8 @@ async def run_skill(
     }
     aborted_reason: str | None = None
     error: str | None = None
-    # The query() async generator, hoisted so the finally below can close it
-    # deterministically on every exit path (see that finally for why).
+    # The open_query() async generator, hoisted so the finally below can close
+    # it deterministically on every exit path (see that finally for why).
     iterator: Any = None
 
     async def _consume_messages():
@@ -1349,7 +1351,7 @@ async def run_skill(
         # budget before aborting. This watchdog fires faster and emits
         # a distinguishable `sdk_stream_silence` reason that the
         # orchestrator retries.
-        iterator = query(prompt=user_message, options=options).__aiter__()
+        iterator = open_query(prompt=user_message, options=options).__aiter__()
         while True:
             try:
                 message = await asyncio.wait_for(
@@ -1749,23 +1751,21 @@ async def run_skill(
         error = f"{type(e).__name__}: {e}"
         aborted_reason = _classify_exception_abort_reason(e)
     finally:
-        # Close the query() generator while this event loop is still running.
-        # The SDK's process_query tears down its subprocess transport only
-        # inside the generator's own `finally`, and its own comment warns that
-        # manual iteration / early `return` does NOT trigger it (PEP 533). On
-        # the routing short-circuit, _LimitExceeded, and wall-clock-cancel
-        # paths we abandon the generator mid-stream, so that teardown is left
-        # to GC during asyncio.run()'s loop shutdown — which races
-        # shutdown_asyncgens and prints "aclose(): asynchronous generator is
-        # already running" plus a dangling "Loop ... is closed" from the
-        # subprocess transport. (The subscription-auth flip changed subprocess
-        # timing enough to surface this latent leak.) asyncio.wait_for has
-        # fully settled _consume_messages by now, so no __anext__ is in flight
-        # and this aclose can't race; the bounded wait_for guards a stuck
-        # close from hanging the worker thread.
+        teardown_started = time.perf_counter()
+        # Close the stream while this event loop is still running. The SDK
+        # stops the CLI subprocess only inside process_query's own `finally`;
+        # on the routing short-circuit and _LimitExceeded paths we stop
+        # between messages, so without this the CLI would be left to a
+        # garbage-collection close that the synchronous judge and then
+        # asyncio.run()'s shutdown cancel, orphaning it until the harness
+        # exits. open_query hands back process_query itself, so close_query
+        # reaches that `finally` and waits for the CLI to exit (about 10s at
+        # most; harness/sdk_query.py). asyncio.wait_for has fully settled
+        # _consume_messages by now, so no __anext__ is in flight and the close
+        # can't race; close_query's bound keeps a stuck close from hanging the
+        # worker thread.
         if iterator is not None:
-            with contextlib.suppress(Exception):
-                await asyncio.wait_for(iterator.aclose(), timeout=15)
+            await close_query(iterator)
 
     # If the hook denied an MCP call past the limit, surface that as the abort.
     if aborted_reason is None and tool_call_count["n"] > max_tool_calls:
@@ -1796,7 +1796,11 @@ async def run_skill(
         aborted_reason = None
         error = None
 
-    duration_ms = (time.perf_counter() - start) * 1000.0
+    # Measured to the start of the teardown, not to now: the close above waits
+    # for the CLI to exit (about 10s at most), which is not time the skill ran, and
+    # stopping here keeps the figure comparable with run logs from before the
+    # close reached the CLI.
+    duration_ms = (teardown_started - start) * 1000.0
 
     # A `stop_at_stub` run keeps a denied hand-off only if its call appeared in
     # a message of the hand-off's own turn. The hook records before it decides,

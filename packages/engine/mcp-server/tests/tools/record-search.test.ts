@@ -405,15 +405,25 @@ describe("buildSearchUrl param mapping", () => {
     expect(url).toContain("q.birthLikePlace.exact=on");
   });
 
-  it("18. recordSubdivision composes into q.recordSubcountry=country,subdivision", () => {
+  it("18. recordSubdivision composes into f.recordSubcountry=country,subdivision", () => {
     const url = buildSearchUrl({
       surname: "Smith",
       recordCountry: "United States",
       recordSubdivision: "Alabama",
     });
     expect(url).toContain(
-      "q.recordSubcountry=United%20States%2CAlabama"
+      "f.recordSubcountry=United%20States%2CAlabama"
     );
+    expect(url).not.toContain("q.recordSubcountry");
+  });
+
+  it("18b. a hyphenated recordSubdivision is sent as the f. facet filter", () => {
+    const url = buildSearchUrl({
+      surname: "Olsen",
+      recordCountry: "Norway",
+      recordSubdivision: "Aust-Agder",
+    });
+    expect(url).toContain("f.recordSubcountry=Norway%2CAust-Agder");
   });
 
   it("19. recordType=marriage maps to f.recordType=1", () => {

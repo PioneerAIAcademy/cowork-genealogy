@@ -404,6 +404,13 @@ export interface RunLogFile {
   judge_prompt_hash: string;
   /** Judge model used for this run log. Optional — absent in logs pre-dating the field (issue #2479 PR 1). */
   judge_model?: string;
+  /** What produced and graded the run (issue #2479 PR 3), read by check_runlogs rule 2c.
+   *  Optional — absent in logs pre-dating the field. The app does not recompute it. */
+  instrument?: {
+    validators: { suite: string; shared: string };
+    tools: { fixture: string; live: string };
+    live_modules?: Record<string, string>;
+  };
   /** {repo-relative-path: sha256-of-normalized-content}. Digests, not bytes. */
   snapshot: Record<string, string>;
   tests: TestEntry[];
@@ -462,6 +469,8 @@ export interface McpFixtureFile {
    */
   args: Record<string, string | number | boolean | null>;
   input_schema?: unknown;
+  /** A thrown-error fixture: answered with `is_error`, as production sets `isError`. */
+  is_error?: boolean;
   response: unknown;
   [key: string]: unknown;
 }

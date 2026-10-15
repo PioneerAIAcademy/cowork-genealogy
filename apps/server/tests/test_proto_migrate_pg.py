@@ -40,7 +40,7 @@ from web.app import PgStore, ReadyCheckError, create_app  # noqa: E402
 
 FILES = migrate.load()
 NAMES = [m.name for m in FILES]
-LATEST = "014_turn_bearer.sql"
+LATEST = "012_turn_bearer.sql"
 # Synthetic files numbered past LATEST, so they stay newer than every shipped one.
 NEXT = f"{int(LATEST[:3]) + 1:03d}"
 AFTER = f"{int(LATEST[:3]) + 2:03d}"

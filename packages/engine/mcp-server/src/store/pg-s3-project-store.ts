@@ -104,7 +104,7 @@ export const READY_TIMEOUT_MS = 1_500;
 /** The tables every store method queries; a missing one fails readiness.
  *  `turns` is the claim fence's (U6): a fenced store cannot commit without it. */
 export const STORE_TABLES = ["documents", "blobs", "staging", "projects", "turns"] as const;
-/** The `turns` column the tool server's door reads (U4, migration 014); a
+/** The `turns` column the tool server's door reads (U4, migration 012); a
  *  database without it fails readiness. */
 const STAMP_COLUMN = "bearer_sha256";
 

@@ -235,7 +235,7 @@ if (!DSN || !ENDPOINT) {
       } catch (e: any) {
         if (e?.name !== "BucketAlreadyOwnedByYou" && e?.name !== "BucketAlreadyExists") throw e;
       }
-      // Migration 014's column, so the suite does not depend on migration order.
+      // Migration 012's column, so the suite does not depend on migration order.
       await backend.pool.query("ALTER TABLE turns ADD COLUMN IF NOT EXISTS bearer_sha256 text");
       server = await startHttpServer({
         host: "127.0.0.1",

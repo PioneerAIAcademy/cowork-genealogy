@@ -1386,6 +1386,34 @@ describe("research_log_append — logging-without-persistence nudge (#1478)", ()
     expect(research.log).toHaveLength(3);
   });
 
+  it("does not count reference lookups (#3244), and still counts record searches", async () => {
+    const wiki = (n: number) => ({ ...pos(n), tool: "wikipedia_search", query: { query: "Schuylkill County" } });
+    await write(baseResearch([wiki(1), wiki(2)]));
+    const r = await researchLogAppend({
+      projectPath: dir,
+      tool: "wikipedia_search",
+      query: { query: "Schuylkill County", title: "Schuylkill County, Pennsylvania" },
+      outcome: "positive",
+      resultsExamined: 1,
+      planItemId: null,
+      notes: "# Schuylkill County, Pennsylvania\n\nA county in eastern Pennsylvania.",
+    });
+    expect(r.ok).toBe(true);
+    expect(warnOf(r)).not.toMatch(NUDGE);
+
+    await write(baseResearch([pos(1), pos(2)]));
+    const r2 = await researchLogAppend({
+      projectPath: dir,
+      tool: "record_search",
+      query: { surname: "Ashby" },
+      outcome: "positive",
+      resultsExamined: 1,
+      planItemId: null,
+    });
+    expect(r2.ok).toBe(true);
+    expect(warnOf(r2)).toMatch(NUDGE);
+  });
+
   it("stays silent below the threshold", async () => {
     await write(baseResearch([pos(1)]));
     const r = await researchLogAppend({
@@ -1573,6 +1601,110 @@ describe("research_log_append — census check on the staged payload (#2735)", (
     expect(await fileExists(dir, ok0)).toBe(true);
     expect(await fileExists(dir, bad1)).toBe(true);
     expect(await sidecars()).toEqual([]);
+  });
+});
+
+describe("research_log_append — a British payload supplies the census jurisdiction (#3409)", () => {
+  let dir: string;
+  beforeEach(async () => {
+    dir = await mkdtemp(join(tmpdir(), "log-append-3409-"));
+    await writeFile(join(dir, "research.json"), JSON.stringify(baseResearch(), null, 2));
+    await writeFile(join(dir, "tree.gedcomx.json"), JSON.stringify(minimalTree, null, 2));
+  });
+  afterEach(async () => {
+    await rm(dir, { recursive: true, force: true });
+  });
+
+  const JOB = "1851 census, Trowbridge: Job Purnell head of household, wife Ann.";
+  const BRIERLEY = "Abel Brierley, b. 1858 Cheshire (1861 census, Abel's household). Father James Brierley, mother Mary.";
+  const PURNELL_1841 =
+    "1841 census: Household of Samuell Purnell, Thomas Street, Trowbridge. Members: Elizabeth Purnell (wife), Job Purnell (son).";
+  const US_1860 = "1860 US census, Ohio: John Smith with wife Mary.";
+  const CENSUS_REFUSAL = /relationship-to-head/;
+
+  const stageSearch = async (titles: string[]) =>
+    (await stageSearchResults({
+      projectPath: dir,
+      tool: "record_search",
+      response: { results: titles.map((t, i) => ({ recordId: `ark:/61903/1:1:R${i}`, collectionTitle: t })) },
+    }))!.resultsRef;
+  const stageRead = async (collection: string) =>
+    (await stageSearchResults({
+      projectPath: dir,
+      tool: "record_read",
+      response: {
+        query: { recordId: "ark:/61903/1:1:JOB1" },
+        results: [
+          {
+            recordId: "ark:/61903/1:1:JOB1",
+            gedcomx: {
+              persons: [],
+              sources: [
+                { id: "sd_c_1493745", title: collection },
+                { id: "sd_p_1", title: `Job Purnell, "${collection}"` },
+              ],
+            },
+          },
+        ],
+      },
+    }))!.resultsRef;
+  const append = (notes: string, stagedResultsRef: string | null, tool = "record_search") =>
+    researchLogAppend({
+      projectPath: dir,
+      tool,
+      query: tool === "record_read" ? { recordId: "ark:/61903/1:1:JOB1" } : { surname: "Purnell" },
+      outcome: "positive",
+      resultsExamined: 1,
+      planItemId: null,
+      notes,
+      stagedResultsRef,
+    });
+  const errorsOf = (r: any) => (r.ok ? "" : r.errors.join(" "));
+
+  it("accepts an unqualified 1851 note on England 1851 rows", async () => {
+    const r = await append(JOB, await stageSearch(["England and Wales, Census, 1851"]));
+    expect(errorsOf(r)).toBe("");
+  });
+
+  it("accepts the Brierley note on England 1871 census + Cheshire school records rows", async () => {
+    const r = await append(
+      BRIERLEY,
+      await stageSearch(["England and Wales, Census, 1871", "England, Cheshire, School Records, 1796-1950"]),
+    );
+    expect(errorsOf(r)).toBe("");
+  });
+
+  it("accepts the 1851 note on a staged record_read whose sd_c_ source is England 1851", async () => {
+    const r = await append(JOB, await stageRead("England and Wales, Census, 1851"), "record_read");
+    expect(errorsOf(r)).toBe("");
+  });
+
+  it("still refuses the 1851 note on a staged record_read whose sd_c_ source is US", async () => {
+    const r = await append(JOB, await stageRead("United States Census, 1850"), "record_read");
+    expect(errorsOf(r)).toMatch(CENSUS_REFUSAL);
+  });
+
+  it("still refuses the 1851 note with no payload", async () => {
+    const r = await append(JOB, null);
+    expect(errorsOf(r)).toMatch(CENSUS_REFUSAL);
+  });
+
+  it.each([
+    ["US 1850 rows", ["United States Census, 1850"]],
+    ["mixed England + US rows", ["England and Wales, Census, 1851", "United States Census, 1850"]],
+  ])("still refuses the 1851 note on %s", async (_l, titles) => {
+    const r = await append(JOB, await stageSearch(titles));
+    expect(errorsOf(r)).toMatch(CENSUS_REFUSAL);
+  });
+
+  it("still refuses the 1841 note on England 1841 rows, in British words", async () => {
+    const r = await append(PURNELL_1841, await stageSearch(["England and Wales, Census, 1841"]));
+    expect(errorsOf(r)).toMatch(/pre-1851 British census.*relationship-to-head/);
+  });
+
+  it("still refuses an explicitly US 1860 note on England rows", async () => {
+    const r = await append(US_1860, await stageSearch(["England and Wales, Census, 1851"]));
+    expect(errorsOf(r)).toMatch(/pre-1880 US census.*relationship-to-head/);
   });
 });
 
@@ -1951,5 +2083,140 @@ describe("research_log_append — a mis-copied stagedResultsRef (resolveStagedRe
     } as any);
     expect(result.ok).toBe(false);
     expect(await exists(good)).toBe(true);
+  });
+});
+
+/** A log entry against a superseded plan's item is refused (issue #2155). */
+describe("research_log_append — superseded plan items (#2155)", () => {
+  let dir: string;
+  beforeEach(async () => {
+    dir = await mkdtemp(join(tmpdir(), "log-append-superseded-"));
+  });
+  afterEach(async () => {
+    await rm(dir, { recursive: true, force: true });
+  });
+
+  const item = (id: string, sequence: number, status: string, record_type = "census") => ({
+    id,
+    sequence,
+    record_type,
+    jurisdiction: "Schuylkill County, Pennsylvania",
+    date_range: "1850-1880",
+    repository: "FamilySearch",
+    rationale: "Places Patrick in a household.",
+    fallback_for: null,
+    status,
+  });
+  const plan = (id: string, status: string, items: any[], question_id = "q_001") => ({
+    id,
+    question_id,
+    status,
+    created: "2026-05-04",
+    items,
+  });
+  function project(plans: any[]) {
+    return {
+      ...baseResearch(),
+      questions: [
+        {
+          id: "q_001",
+          question: "Who were the parents of Patrick Flynn (b. ~1845)?",
+          rationale: "Primary research objective.",
+          selection_basis: "objective_decomposition",
+          priority: "high",
+          status: "in_progress",
+          depends_on: [],
+          unblocks: [],
+          created: "2026-05-04",
+          resolved: null,
+          resolution_assertion_ids: [],
+          search_stop: { stopped_because: null, justification: null, log_entry_ids: [], stop_criteria: null, not_reached: [] },
+        },
+      ],
+      plans,
+    };
+  }
+  const replanned = () =>
+    project([
+      plan("pl_001", "superseded", [item("pli_001", 1, "planned")]),
+      plan("pl_002", "active", [
+        item("pli_002", 1, "completed"),
+        item("pli_003", 2, "planned", "probate"),
+      ]),
+    ]);
+  async function write(research: any) {
+    await writeFile(join(dir, "research.json"), JSON.stringify(research, null, 2));
+    await writeFile(join(dir, "tree.gedcomx.json"), JSON.stringify(minimalTree, null, 2));
+  }
+  const op = (planItemId: string | null) => ({
+    tool: "record_search",
+    query: { surname: "Flynn", givenName: "Patrick" },
+    outcome: "negative",
+    resultsExamined: 0,
+    planItemId,
+  });
+  const logged = async () => JSON.parse(await readFile(join(dir, "research.json"), "utf-8")).log;
+
+  it("refuses an item on a superseded plan and names the active plan's next item", async () => {
+    await write(replanned());
+    const r: any = await researchLogAppend({ projectPath: dir, ...op("pli_001") } as any);
+    expect(r.ok).toBe(false);
+    const msg = r.errors.join("\n");
+    expect(msg).toContain("planItemId 'pli_001' belongs to plan pl_001, which is superseded");
+    expect(msg).toContain("The active plan for question q_001 is pl_002");
+    expect(msg).toContain("its next open item is 'pli_003' (probate)");
+    expect(await logged()).toEqual([]);
+  });
+
+  it("still accepts the active plan's own item", async () => {
+    await write(replanned());
+    const r: any = await researchLogAppend({ projectPath: dir, ...op("pli_003") } as any);
+    expect(r.ok).toBe(true);
+    expect((await logged()).map((e: any) => e.plan_item_id)).toEqual(["pli_003"]);
+  });
+
+  it("accepts a completed plan's item, the case the corpus replay found with no active plan", async () => {
+    await write(project([plan("pl_001", "completed", [item("pli_001", 1, "completed")])]));
+    const r: any = await researchLogAppend({ projectPath: dir, ...op("pli_001") } as any);
+    expect(r.ok).toBe(true);
+  });
+
+  it("accepts a null planItemId on a replanned project", async () => {
+    await write(replanned());
+    const r: any = await researchLogAppend({ projectPath: dir, ...op(null) } as any);
+    expect(r.ok).toBe(true);
+  });
+
+  it("names an in-progress item ahead of a planned one", async () => {
+    const research = replanned();
+    research.plans[1].items.push(item("pli_004", 3, "in_progress", "land"));
+    await write(research);
+    const r: any = await researchLogAppend({ projectPath: dir, ...op("pli_001") } as any);
+    expect(r.ok).toBe(false);
+    expect(r.errors.join("\n")).toContain("its next open item is 'pli_004' (land)");
+  });
+
+  it("says so when the question has no active plan", async () => {
+    await write(project([plan("pl_001", "superseded", [item("pli_001", 1, "planned")])]));
+    const r: any = await researchLogAppend({ projectPath: dir, ...op("pli_001") } as any);
+    expect(r.ok).toBe(false);
+    expect(r.errors.join("\n")).toContain("Question q_001 has no active plan");
+  });
+
+  it("says so when the active plan has no open item", async () => {
+    const research = replanned();
+    research.plans[1].items[1].status = "completed";
+    await write(research);
+    const r: any = await researchLogAppend({ projectPath: dir, ...op("pli_001") } as any);
+    expect(r.ok).toBe(false);
+    expect(r.errors.join("\n")).toContain("none of its items is planned or in progress");
+  });
+
+  it("refuses the whole batch when one op targets a superseded item", async () => {
+    await write(replanned());
+    const r: any = await researchLogAppend({ projectPath: dir, ops: [op("pli_003"), op("pli_001")] } as any);
+    expect(r.ok).toBe(false);
+    expect(r.errors.join("\n")).toMatch(/ops\[1\].*pli_001.*superseded/s);
+    expect(await logged()).toEqual([]);
   });
 });

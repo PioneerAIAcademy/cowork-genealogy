@@ -315,7 +315,7 @@ def test_run_agent_wraps_consume_in_the_heartbeat_and_returns_its_count(
             self.counted_sleep_seconds += 7.0
 
     steps = [(0.0, _sys())] + [(0.02, _sys()) for _ in range(4)] + [(0.0, _result())]
-    monkeypatch.setattr(orchestrator, "query", lambda **kw: _FakeAgen(steps))
+    monkeypatch.setattr(orchestrator, "open_query", lambda **kw: _FakeAgen(steps))
     monkeypatch.setattr(orchestrator, "SleepDetector", CountingDetector)
     fx = _fixture(tmp_path, inactivity_seconds=5, wall_clock_seconds=30)
     usage = _run(fx, tmp_path)[2]

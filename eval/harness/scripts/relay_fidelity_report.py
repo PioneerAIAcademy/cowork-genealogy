@@ -67,6 +67,7 @@ the two drift.
 
 from __future__ import annotations
 
+import argparse
 import json
 import re
 import sys
@@ -85,16 +86,35 @@ from check_runlogs import latest_full_skill_runlog  # noqa: E402
 from harness.loader import InvalidTestError, load_test  # noqa: E402
 from harness.skill_runner import strip_agent_return_trailer  # noqa: E402
 from harness.snapshot import hash_file  # noqa: E402
+from harness.since_window import (  # noqa: E402
+    add_since_arg,
+    describe_window,
+    filter_since,
+)
+from e2e.runlog_selection import is_result_json  # noqa: E402
 
 # Module constants so the unit test can point all three at a fixture tree.
 RUNLOGS_ROOT = REPO / "eval" / "runlogs" / "unit"
 TESTS_ROOT = REPO / "eval" / "tests" / "unit"
 AGENTS_ROOT = REPO / "packages" / "engine" / "plugin" / "agents"
+E2E_RUNLOGS_ROOT = REPO / "eval" / "runlogs" / "e2e"
+
+# A run log older than this records an `Agent` return cut at 500 chars, and a
+# narration with no `thread` key. Both are un-attributable rather than clean:
+# scoring them would read the LOG's truncation, and the subagent's own
+# messages, as the main thread's relay. See e2e/result.py entry 8.
+MIN_PRODUCTION_SCHEMA_VERSION = 8
+PRODUCTION_LABEL = "production arm — real routes, e2e corpus"
 
 # Ported from agent-return-contract.test.ts. Levels 2-4 because that test
 # accepts any of them, though every shipped agent uses `###`.
 HEADING = re.compile(r"^#{2,4}\s+`summary_for_user`\s*$", re.M)
 _FENCE = re.compile(r"(?s)```.*?```")
+
+# Emitted by `_summarize_response` when it cuts a string. Its presence means
+# the LOG truncated the return, so a comparison would measure the log.
+TRUNCATION_MARKER = "[truncated by harness for prompt size;"
+
 
 DIRECT_LABEL = "direct arm — DISPATCHER fidelity, not production"
 ROUTED_LABEL = "routed arm — by calling skill"
@@ -320,6 +340,198 @@ def compute_counts(
     return suites
 
 
+def compute_production_counts(
+    e2e_root: Path,
+    *,
+    cutoff: Any = None,
+    agents_root: Path | None = None,
+    test_slug: str | None = None,
+) -> dict[str, Any]:
+    """Relay fidelity on a REAL route: a subagent's return against what the
+    main thread said afterwards.
+
+    Reports its own denominators. Every way this can come back empty also
+    produces a cheerful zero -- no logs, no `Agent` calls, every log below
+    `MIN_PRODUCTION_SCHEMA_VERSION` -- and a silent zero here reads as "every
+    relay was faithful", which is this report's own failure mode pointed
+    backwards. `eligible` is the number the percentages are OF; when it is 0
+    the caller must say so rather than print 0%.
+    """
+    if not e2e_root.exists():
+        raise FileNotFoundError(f"e2e runlog root not found: {e2e_root}")
+
+    conforming = conforming_agents(agents_root or AGENTS_ROOT)
+    out: dict[str, Any] = {
+        "logs_seen": 0,
+        "logs_excluded_by_window": 0,
+        "excluded_is_error": 0,
+        "excluded_no_agent_type": 0,
+        "excluded_non_conforming": 0,
+        "no_usable_return": 0,
+        "no_tail": 0,
+        "no_main_narration_for_call": 0,
+        "logs_too_old_schema": 0,
+        "logs_no_narration": 0,
+        "agent_calls": 0,
+        "returns_truncated": 0,
+        "eligible": 0,
+        "exact": 0,
+        "normalized": 0,
+        "dropped": 0,
+    }
+    # `is_result_json` is the repo's own predicate for this (e2e/runlog_selection),
+    # used by every other e2e reader. Re-deriving it is how the first cut of this
+    # arm counted 611 logs against the real 203: `run-*.json` also matches
+    # `run-<ts>.ann.json` and both `run-<ts>.final-*.json` siblings.
+    dirs = [d for d in sorted(e2e_root.iterdir()) if d.is_dir()]
+    if test_slug:
+        dirs = [d for d in dirs if d.name == test_slug]
+    paths = sorted(p for d in dirs for p in sorted(d.iterdir()) if is_result_json(p))
+    total_before_window = len(paths)
+    paths = filter_since(paths, cutoff)
+    out["logs_excluded_by_window"] = total_before_window - len(paths)
+    # Carries the branch-scope caveat too — the window and "the runs may be on
+    # another branch" are two different reasons a corpus read is not what it
+    # looks like, so the house helper states them together.
+    out["window"] = describe_window(
+        cutoff, n_runs=len(paths), n_total=total_before_window
+    )
+
+    for path in paths:
+        try:
+            data = json.loads(path.read_text(encoding="utf-8"))
+        except (OSError, json.JSONDecodeError, UnicodeDecodeError):
+            # A log that cannot be read is skipped, not fatal: this is a
+            # report over a corpus, and one bad file must not cost the rest.
+            # `logs_seen` is incremented only below, so an unreadable log
+            # never pads a denominator either.
+            continue
+        out["logs_seen"] += 1
+
+        # Untrusted field: a non-numeric value must not cost the other 202 logs,
+        # one line after the parse guard above states exactly that policy.
+        version = data.get("harness_schema_version")
+        if not isinstance(version, int) or version < MIN_PRODUCTION_SCHEMA_VERSION:
+            out["logs_too_old_schema"] += 1
+            continue
+
+        # Main-thread prose only. Selected on `kind` AND `thread`, never on the
+        # ABSENCE of `thread`: the nine harness/blocked append sites carry no
+        # message and so no tag, and treating untagged as main would fold a
+        # subagent's own words into the relay it is being compared against.
+        narration = [
+            n
+            for n in (data.get("narration") or [])
+            if n.get("kind") == "assistant" and n.get("thread") == "main"
+        ]
+        if not any((n.get("text") or "").strip() for n in narration):
+            out["logs_no_narration"] += 1
+
+        # Positioned, not pooled. Only prose emitted AFTER this Agent call and
+        # before the next one can be a relay OF it. `tool_calls_before` is a
+        # COUNT: N means the entry sits between tool_calls[N-1] and
+        # tool_calls[N] (e2e-test-spec.md). Pooling the whole run's narration
+        # credits call #7 with words said before call #1, and credits a dropped
+        # second return whenever an earlier call of the same agent type was
+        # relayed faithfully — measured at 100% verbatim on a two-call log whose
+        # true rate is 50%. That is over-credit in the same direction as
+        # crediting a subagent's own words, which the `thread` tag exists to stop.
+        calls = data.get("tool_calls") or []
+        agent_idx = [i for i, c in enumerate(calls) if _is_agent_call(c.get("tool"))]
+        for nth, idx in enumerate(agent_idx):
+            call = calls[idx]
+            out["agent_calls"] += 1
+            nxt = agent_idx[nth + 1] if nth + 1 < len(agent_idx) else len(calls)
+            relay = " ".join(
+                n.get("text") or ""
+                for n in narration
+                if idx < (n.get("tool_calls_before") or 0) <= nxt
+            )
+
+            # FIRST, as the unit arm does: an errored spawn's text is the
+            # harness's own denial, not the agent's. Charging the relay for a
+            # spawn that produced no return measures nothing.
+            if call.get("is_error"):
+                out["excluded_is_error"] += 1
+                continue
+
+            # The verbatim-relay contract belongs to agents that declare a
+            # `summary_for_user` section. Read it off the AGENT BODY, never off
+            # the return text — the same rule `tail_after_final_rule`'s own
+            # docstring states. 807 of the corpus's Agent calls go to agents
+            # with no such section (image-reader, gps-mentor,
+            # research-exhaustiveness); scoring a transcription for verbatim
+            # presence in narration measures contract coverage, not fidelity.
+            agent = ((call.get("args") or {}).get("subagent_type") or "").split(":")[-1]
+            if not agent:
+                out["excluded_no_agent_type"] += 1
+                continue
+            if agent not in conforming:
+                out["excluded_non_conforming"] += 1
+                continue
+
+            raw = _agent_return_text(call.get("response_summary"))
+            if raw is None:
+                # Stripped past 14 days, an error string, a `_summary_truncated`
+                # dict from a >3-block result, or the head floor's passthrough.
+                # Counted: 893 of today's 1,738 Agent calls land here, and an
+                # unexplained residual is what this report exists to prevent.
+                out["no_usable_return"] += 1
+                continue
+            if TRUNCATION_MARKER in raw:
+                # The log cut it; comparing would measure the log, not the relay.
+                out["returns_truncated"] += 1
+                continue
+            tail = tail_after_final_rule(raw)
+            if not tail.strip():
+                # No final rule: the unit arm counts this `conforming` but NOT
+                # `with_tail` and never scores it. Scoring `raw` instead would
+                # make a multi-KB return the string that must appear verbatim,
+                # which no relay does — a guaranteed false `dropped`.
+                out["no_tail"] += 1
+                continue
+            if not relay.strip():
+                out["no_main_narration_for_call"] += 1
+                continue
+            out["eligible"] += 1
+            if tail.strip() in relay:
+                out["exact"] += 1
+                out["normalized"] += 1
+            elif normalize(tail) in normalize(relay):
+                out["normalized"] += 1
+            else:
+                out["dropped"] += 1
+    return out
+
+
+def _is_agent_call(tool: Any) -> bool:
+    """Suffix match, as the orchestrator does, so every server spelling resolves."""
+    return isinstance(tool, str) and (tool.endswith("Agent") or tool.endswith("Task"))
+
+
+def _agent_return_text(summary: Any) -> str | None:
+    """The agent's own return out of a recorded `response_summary`.
+
+    An `Agent` result is two text blocks -- the return, then an
+    `agentId:/<usage>` announcement, last in all 845 corpus cases -- so take
+    the FIRST text block, not the last, and strip the runtime trailer the unit
+    side strips too.
+    """
+    if not isinstance(summary, str):
+        return None
+    try:
+        parsed = json.loads(summary)
+    except json.JSONDecodeError:
+        return None
+    blocks = parsed if isinstance(parsed, list) else None
+    if not blocks:
+        return None
+    for block in blocks:
+        if isinstance(block, dict) and block.get("type") == "text":
+            return strip_agent_return_trailer(block.get("text") or "")
+    return None
+
+
 def format_report(suites: dict[str, Any]) -> str:
     """Human-readable rendering. Timestamps live here, never in the counts."""
     out: list[str] = []
@@ -369,6 +581,65 @@ def format_report(suites: dict[str, Any]) -> str:
     return "\n".join(out)
 
 
+def format_production_report(c: dict[str, Any]) -> str:
+    """Denominators first. Every way this comes back empty also produces a
+    clean-looking zero, so the counts that explain an empty run are printed
+    whether or not anything was scored."""
+    lines = [
+        PRODUCTION_LABEL,
+        "=" * len(PRODUCTION_LABEL),
+    ]
+    if c.get("window"):
+        lines.append(f"  {c['window']}")
+    lines += [
+        f"  e2e run logs read             {c['logs_seen']}",
+        f"    below schema v{MIN_PRODUCTION_SCHEMA_VERSION} (unscorable)    {c['logs_too_old_schema']}",
+        f"    no main-thread narration    {c['logs_no_narration']}",
+        f"  Agent calls                   {c['agent_calls']}",
+        f"    errored spawn               {c['excluded_is_error']}",
+        f"    agent declares no summary   {c['excluded_non_conforming']}",
+        f"    no subagent_type recorded   {c['excluded_no_agent_type']}",
+        f"    no usable return captured   {c['no_usable_return']}",
+        f"    return truncated by the log {c['returns_truncated']}",
+        f"    return carries no tail      {c['no_tail']}",
+        f"    no main narration to match  {c['no_main_narration_for_call']}",
+        f"  SCORED (eligible)             {c['eligible']}",
+    ]
+    accounted = (
+        c["excluded_is_error"] + c["excluded_non_conforming"]
+        + c["excluded_no_agent_type"] + c["no_usable_return"]
+        + c["returns_truncated"] + c["no_tail"]
+        + c["no_main_narration_for_call"] + c["eligible"]
+    )
+    if accounted != c["agent_calls"]:
+        # Every Agent call lands in exactly one line above. If that stops being
+        # true the residual is unexplained, which is the defect this report was
+        # written to avoid — say so rather than let it hide in the arithmetic.
+        lines.append(
+            f"  UNACCOUNTED                   {c['agent_calls'] - accounted}"
+            "  <- a bug in this report"
+        )
+    if not c["eligible"]:
+        lines += [
+            "",
+            "  Nothing scored. That is NOT a clean result — read the lines above",
+            f"  for which reason. A log below v{MIN_PRODUCTION_SCHEMA_VERSION} records an Agent return cut at",
+            "  500 chars and a narration with no `thread` tag; scoring either would",
+            "  measure this harness rather than the relay.",
+        ]
+        return "\n".join(lines)
+    pct = lambda n: f"{100 * n / c['eligible']:.0f}%"  # noqa: E731
+    lines += [
+        "",
+        "  Of the scored calls (`normalized` INCLUDES `exact`, so these are not",
+        "  a partition and do not sum to 100%):",
+        f"    relayed verbatim            {c['exact']} ({pct(c['exact'])})",
+        f"    survives normalization      {c['normalized']} ({pct(c['normalized'])})",
+        f"    dropped by the relay        {c['dropped']} ({pct(c['dropped'])})",
+    ]
+    return "\n".join(lines)
+
+
 def main() -> int:
     # The labels carry an em dash, and the genealogist team runs Windows where
     # the console is cp1252 -- without this the report dies with
@@ -378,6 +649,47 @@ def main() -> int:
     if hasattr(sys.stdout, "reconfigure"):
         sys.stdout.reconfigure(encoding="utf-8")
         sys.stderr.reconfigure(encoding="utf-8")
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument(
+        "--production",
+        action="store_true",
+        help="relay fidelity on real e2e routes instead of the unit dispatcher",
+    )
+    # `add_since_arg`, not a hand-rolled `--since`: its default is a STRING, so
+    # argparse runs it through `parse_since` too. A `default=None` silently
+    # skips the converter and reads the whole corpus while the Makefile and
+    # eval/CLAUDE.md both promise a 14-day window.
+    parser.add_argument(
+        "--test", metavar="SLUG", help="one e2e fixture slug instead of the corpus"
+    )
+    add_since_arg(parser)
+    args = parser.parse_args()
+    # Detect SUPPLY, not a value change. Comparing `args.since` against the
+    # converted default misses `--since 14` and `--since=14` — 14 IS the
+    # default, so the two compare equal and the flag is silently ignored at
+    # exactly the value the Makefile help lists first. Comparing against the
+    # RAW default is worse: `add_since_arg` runs its string default through
+    # `parse_since`, so a date never equals "14" and every bare invocation
+    # errors. argv is the only thing that distinguishes supplied-and-equal
+    # from not-supplied.
+    since_supplied = any(
+        a == "--since" or a.startswith("--since=") for a in sys.argv[1:]
+    )
+    if (args.test or since_supplied) and not args.production:
+        # Accepting a flag and ignoring it is the "exit 0 having done nothing"
+        # shape this PR exists to remove, not to add.
+        parser.error("--test and --since apply to --production only")
+
+    if args.production:
+        counts = compute_production_counts(
+            E2E_RUNLOGS_ROOT, cutoff=args.since, test_slug=args.test
+        )
+        print(format_production_report(counts))
+        # Exit 2 on an empty denominator. A prose warning beside a success exit
+        # relocates the silent zero to the exit code — the house pattern is the
+        # opposite (`conflict_verdict_report`'s unknown skill, `replay-collapse`
+        # when every walk is unverifiable): fail loudly, never falsely.
+        return 0 if counts["eligible"] else 2
     print(format_report(compute_counts()))
     return 0
 

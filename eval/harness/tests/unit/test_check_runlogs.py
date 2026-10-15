@@ -710,7 +710,9 @@ def test_touched_fixture_active_runlog_no_warning(monkeypatch, capsys, tmp_path)
     rc = check_runlogs.main()
     out = capsys.readouterr().out
     assert rc == 0
-    assert "uses-fixture" not in out
+    # Rule 2f's own message. Rule 2c also grades a fixture-touched suite now, and
+    # on this log (no `instrument`) it rightly warns "no instrument recorded".
+    assert "a shared fixture this PR changed" not in out
     assert "All runlog rules satisfied" in out
 
 
@@ -2689,3 +2691,278 @@ def test_main_fires_rule2b_only_when_prompt_in_diff(monkeypatch, capsys, tmp_pat
     out = capsys.readouterr().out
     assert "`make judge-regrade`" in out
     assert rc == 1
+
+
+# --- Rule 2c (instrument fingerprint) — issue #2479 PR 3 ---------------------
+#
+# Blocks on the suite-specific halves (`validators.suite`, `tools.fixture`),
+# warns on the corpus-wide ones (`validators.shared`, `tools.live`,
+# `live_modules`) so no change ever owes a re-run of every suite.
+
+_H = {c: c * 64 for c in "abcdef0123456789"}
+
+
+def _instr(**over):
+    base = {
+        "validators": {"suite": _H["a"], "shared": _H["b"]},
+        "tools": {"fixture": _H["c"], "live": _H["d"]},
+        "live_modules": {"research_append": _H["e"]},
+    }
+    for path, value in over.items():
+        group, key = path.split("__")
+        base[group][key] = value
+    return base
+
+
+def _stub_current_instrument(monkeypatch, current):
+    monkeypatch.setattr(check_runlogs, "_tool_catalog", lambda: {"x": {}})
+    monkeypatch.setattr(check_runlogs, "instrument_for", lambda *a, **k: current)
+
+
+def test_rule2c_passes_silently_when_nothing_moved(monkeypatch, capsys):
+    _stub_current_instrument(monkeypatch, _instr())
+    rc = check_runlogs.rule2c_instrument("demo", {"snapshot": {}, "instrument": _instr()}, "v1.json")
+    assert rc == 0
+    assert capsys.readouterr().out == ""
+
+
+@pytest.mark.parametrize(
+    "moved, names",
+    [
+        ({"validators__suite": _H["0"]}, "validators.suite"),
+        ({"tools__fixture": _H["0"]}, "tools.fixture"),
+    ],
+    ids=["suite-validator", "fixture-tool"],
+)
+def test_rule2c_blocks_on_a_suite_specific_change(monkeypatch, capsys, moved, names):
+    _stub_current_instrument(monkeypatch, _instr(**moved))
+    rc = check_runlogs.rule2c_instrument("demo", {"snapshot": {}, "instrument": _instr()}, "v1.json")
+    assert rc == 1
+    out = capsys.readouterr().out
+    assert "::error" in out and names in out and "skill `demo`" in out
+    assert "make eval-skill SKILL=demo" in out
+
+
+@pytest.mark.parametrize(
+    "moved, names",
+    [
+        ({"validators__shared": _H["0"]}, "validators.shared"),
+        ({"tools__live": _H["0"]}, "tools.live"),
+        ({"live_modules__research_append": _H["0"]}, "live_modules (research_append)"),
+    ],
+    ids=["shared-validators", "live-tool-schema", "live-module"],
+)
+def test_rule2c_only_warns_on_a_corpus_wide_change(monkeypatch, capsys, moved, names):
+    _stub_current_instrument(monkeypatch, _instr(**moved))
+    rc = check_runlogs.rule2c_instrument("demo", {"snapshot": {}, "instrument": _instr()}, "v1.json")
+    assert rc == 0
+    out = capsys.readouterr().out
+    assert "::warning" in out and names in out
+    assert "::error" not in out
+
+
+def test_rule2c_warns_and_passes_on_a_log_with_no_instrument(monkeypatch, capsys):
+    monkeypatch.setattr(check_runlogs, "_tool_catalog", lambda: pytest.fail("catalog read for nothing"))
+    rc = check_runlogs.rule2c_instrument("demo", {"snapshot": {}}, "v1.json")
+    assert rc == 0
+    out = capsys.readouterr().out
+    assert "::warning" in out and "no instrument recorded" in out
+
+
+def test_rule2c_downgrades_only_when_rule2_itself_blocked_the_log(monkeypatch, capsys):
+    _stub_current_instrument(monkeypatch, _instr(validators__suite=_H["0"]))
+    rc = check_runlogs.rule2c_instrument(
+        "demo", {"snapshot": {}, "instrument": _instr()}, "v1.json", rule2_blocked=True
+    )
+    assert rc == 0
+    out = capsys.readouterr().out
+    assert "::warning" in out and "::error" not in out and "Rule 2 already blocks" in out
+
+
+def test_rule2c_still_blocks_a_merely_stale_log_rule2_did_not_block(monkeypatch, capsys):
+    """Review finding: 20 of 32 suites are already skill-side stale on main, and
+    rule 2 never runs on an instrument-arm suite. Downgrading on staleness alone
+    turned the suite-specific block into a warning for most of the corpus."""
+    _stub_current_instrument(monkeypatch, _instr(validators__suite=_H["0"]))
+    stale = {"snapshot": {"eval/__no_such_cosmetic_test__/x.md": "expected\n"}, "instrument": _instr()}
+    rc = check_runlogs.rule2c_instrument("demo", stale, "v1.json")
+    assert rc == 1
+    assert "::error" in capsys.readouterr().out
+
+
+def test_rule2c_blocks_when_the_catalog_cannot_be_read(monkeypatch, capsys):
+    def _boom():
+        raise check_runlogs.CatalogUnavailable("build/tool-schemas.js does not exist")
+
+    monkeypatch.setattr(check_runlogs, "_tool_catalog", _boom)
+    rc = check_runlogs.rule2c_instrument("demo", {"snapshot": {}, "instrument": _instr()}, "v1.json")
+    assert rc == 1
+    out = capsys.readouterr().out
+    assert "::error" in out and "tool-schemas.js" in out
+
+
+@pytest.mark.parametrize(
+    "paths, expected",
+    [
+        (["eval/harness/validators/test_universal.py"], {"demo", "convert-dates"}),
+        (["eval/harness/validators/validators_lib.py"], {"demo", "convert-dates"}),
+        (["eval/harness/harness/instrument.py"], {"demo", "convert-dates"}),
+        (["eval/harness/harness/mock_mcp.py"], {"demo", "convert-dates"}),
+        (["packages/engine/mcp-server/src/tool-schemas.ts"], {"demo", "convert-dates"}),
+        (["packages/engine/mcp-server/package-lock.json"], {"demo", "convert-dates"}),
+        (["eval/harness/validators/test_convert_dates.py"], {"convert-dates"}),
+        (["eval/harness/validators/test_no_such_suite.py"], set()),
+        (["eval/harness/e2e/orchestrator.py"], set()),
+        (["packages/engine/mcp-server/tests/tools/x.test.ts"], set()),
+        (["docs/specs/unit-test-spec.md"], set()),
+    ],
+    ids=[
+        "shared-universal", "shared-lib", "instrument-module", "mock-mcp", "engine-src",
+        "engine-lockfile", "suite-validator", "unknown-suite", "e2e", "engine-tests", "docs",
+    ],
+)
+def test_instrument_touched_suites(paths, expected):
+    """Both directions: the fingerprint's own inputs mark every suite (so a change
+    to them is graded on the PR that makes it, not the next unrelated one), and
+    paths no unit run reads (must-pass 3: `eval/harness/e2e/`) mark none."""
+    assert check_runlogs.instrument_touched_suites(set(paths), {"demo", "convert-dates"}) == expected
+
+
+def _seed_instrument_suite(tmp_path, monkeypatch, stored):
+    skill_dir = tmp_path / "convert-dates"
+    skill_dir.mkdir()
+    log = {"schema_version": 3, "skill": "convert-dates", "snapshot": {}, "tests": [], "instrument": stored}
+    (skill_dir / "v1_2026-10-14_00-00-00.json").write_text(json.dumps(log), encoding="utf-8")
+    monkeypatch.setattr(check_runlogs, "RUNLOGS_DIR", tmp_path)
+    monkeypatch.setattr(check_runlogs, "git_diff_changes", lambda: [])
+    monkeypatch.setattr(check_runlogs, "git_diff_deleted_paths", lambda: [])
+
+
+def test_main_grades_a_validator_only_pr_through_rule2c(monkeypatch, capsys, tmp_path):
+    """The gate used not to open at all on an instrument-only PR. A validator-only
+    diff now grades that suite's log; an e2e-only diff still grades nothing."""
+    _seed_instrument_suite(tmp_path, monkeypatch, _instr())
+    _stub_current_instrument(monkeypatch, _instr(validators__suite=_H["0"]))
+
+    monkeypatch.setattr(check_runlogs, "git_diff_touched_paths", lambda: ["eval/harness/e2e/orchestrator.py"])
+    assert check_runlogs.main() == 0
+    assert "validators.suite" not in capsys.readouterr().out
+
+    monkeypatch.setattr(
+        check_runlogs, "git_diff_touched_paths", lambda: ["eval/harness/validators/test_convert_dates.py"]
+    )
+    assert check_runlogs.main() == 1
+    out = capsys.readouterr().out
+    assert "skill `convert-dates`" in out and "validators.suite" in out
+
+
+def test_main_rule2c_recomputes_for_real_and_a_moved_validator_blocks(monkeypatch, capsys, tmp_path):
+    """End to end, nothing stubbed but the catalog: stamp the real fingerprint, then
+    invert an assertion in a copy of the real validator and run main()."""
+    from harness import instrument as instr_mod
+
+    repo = tmp_path / "repo"
+    (repo / "eval" / "harness" / "validators").mkdir(parents=True)
+    real = check_runlogs.REPO_ROOT
+    for name in ("test_universal.py", "validators_lib.py", "test_convert_dates.py"):
+        src = real / "eval" / "harness" / "validators" / name
+        (repo / "eval" / "harness" / "validators" / name).write_text(
+            src.read_text(encoding="utf-8"), encoding="utf-8"
+        )
+    catalog = {n: {"description": n, "inputSchema": {}} for n in instr_mod.LIVE_TOOLS}
+    stored = instr_mod.instrument_for("convert-dates", repo, catalog=catalog, live_called=[])
+    runlogs = tmp_path / "runlogs"
+    runlogs.mkdir()
+    _seed_instrument_suite(runlogs, monkeypatch, stored)
+    monkeypatch.setattr(check_runlogs, "REPO_ROOT", repo)
+    monkeypatch.setattr(check_runlogs, "_tool_catalog", lambda: catalog)
+    monkeypatch.setattr(
+        check_runlogs, "git_diff_touched_paths", lambda: ["eval/harness/validators/test_convert_dates.py"]
+    )
+
+    assert check_runlogs.main() == 0, capsys.readouterr().out
+    capsys.readouterr()
+
+    target = repo / "eval" / "harness" / "validators" / "test_convert_dates.py"
+    target.write_text(
+        target.read_text(encoding="utf-8").replace("assert not accepted", "assert accepted", 1),
+        encoding="utf-8",
+    )
+    assert check_runlogs.main() == 1
+    out = capsys.readouterr().out
+    assert "skill `convert-dates`" in out and "validators.suite" in out
+
+
+@pytest.mark.parametrize(
+    "labels, expect_rc",
+    [
+        ("eval-cosmetic-skip:demo", 0),
+        ("eval-cosmetic-skip:other-skill", 1),
+        ("eval-cosmetic-skip", 1),
+        ("", 1),
+    ],
+    ids=["this-skill", "another-skill", "bare-label", "no-label"],
+)
+def test_the_cosmetic_skip_label_waives_rule2c_for_its_skill_only(
+    monkeypatch, capsys, tmp_path, labels, expect_rc
+):
+    """A senior's `eval-cosmetic-skip:<skill>` waives rule 2c for that skill, as it
+    does rule 2, so a typo fix in an advertised description owes no paid re-run.
+    The label for another skill, the bare label, or none, still blocks -- and a
+    merely stale snapshot is not a waiver (that was the round-1 review bug)."""
+    stale = {}  # rule 2 stays quiet, so rule 2c alone decides
+    skill_dir = tmp_path / "demo"
+    skill_dir.mkdir()
+    log = {"schema_version": 3, "skill": "demo", "snapshot": stale, "tests": [], "instrument": _instr()}
+    (skill_dir / "v1_2026-10-14_00-00-00.json").write_text(json.dumps(log), encoding="utf-8")
+    monkeypatch.setattr(check_runlogs, "RUNLOGS_DIR", tmp_path)
+    monkeypatch.setattr(check_runlogs, "PLUGIN_SKILLS_DIR", tmp_path / "skills")
+    monkeypatch.setattr(check_runlogs, "TESTS_UNIT_DIR", tmp_path / "tests")
+    (tmp_path / "skills" / "demo").mkdir(parents=True)
+    (tmp_path / "tests" / "demo").mkdir(parents=True)
+    monkeypatch.setenv("COSMETIC_SKIP_LABELS", labels)
+    monkeypatch.setattr(check_runlogs, "rule3_completeness", lambda *a, **k: 0)
+    _patch_diffs(monkeypatch, ["packages/engine/plugin/skills/demo/SKILL.md", "eval/harness/validators/test_demo.py"])
+    _stub_current_instrument(monkeypatch, _instr(validators__suite=_H["0"]))
+    rc = check_runlogs.main()
+    out = capsys.readouterr().out
+    assert rc == expect_rc, out
+    assert "validators.suite" in out
+    if expect_rc == 0:
+        assert "waives rule 2c" in out
+    else:
+        assert "::error" in out
+
+
+
+def test_a_non_test_validator_module_marks_every_suite():
+    """A suite file can import a sibling module (`extraction_validators.py`), so an
+    edit there is graded on every suite; rule 2c's recompute decides which moved."""
+    for path in (
+        "eval/harness/validators/extraction_validators.py",
+        "eval/harness/validators/conftest.py",
+    ):
+        assert check_runlogs.instrument_touched_suites({path}, {"demo", "convert-dates"}) == {"demo", "convert-dates"}
+    assert check_runlogs.instrument_touched_suites(
+        {"eval/harness/validators/test_convert_dates.py"}, {"demo", "convert-dates"}
+    ) == {"convert-dates"}
+
+
+def test_a_changed_shared_fixture_opens_rule2c_on_the_suites_that_use_it(monkeypatch, capsys, tmp_path):
+    """A shared MCP fixture's `tool` field feeds `tools.fixture`; changing it is
+    graded on the PR that makes it, not left for the next author of those suites."""
+    runlogs = tmp_path / "runlogs"
+    runlogs.mkdir()
+    _seed_instrument_suite(runlogs, monkeypatch, _instr())
+    tests = tmp_path / "tests"
+    (tests / "convert-dates").mkdir(parents=True)
+    (tests / "convert-dates" / "t.json").write_text(
+        json.dumps({"test": {"id": "ut_convert_dates_900"}, "mcp_fixtures": ["shared-fix"]}), encoding="utf-8"
+    )
+    monkeypatch.setattr(check_runlogs, "TESTS_UNIT_DIR", tests)
+    _stub_current_instrument(monkeypatch, _instr(tools__fixture=_H["0"]))
+    monkeypatch.setattr(check_runlogs, "git_diff_touched_paths", lambda: ["eval/fixtures/mcp/shared-fix.json"])
+    rc = check_runlogs.main()
+    out = capsys.readouterr().out
+    assert rc == 1, out
+    assert "skill `convert-dates`" in out and "tools.fixture" in out
