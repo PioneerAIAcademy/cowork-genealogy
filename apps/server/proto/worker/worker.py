@@ -159,6 +159,12 @@ zero-progress counter, the transcript mirror, and the tool server's commit (the 
 ``X-Genealogy-Turn-Id``/``X-Genealogy-Claim-Epoch`` headers). A halt clause checks the
 epoch before every tool call. A superseded attempt answers 200 ``superseded`` and closes
 and releases nothing; the sweep's epoch-less close bumps the epoch, which is its expiry.
+
+Tool-server ownership (U4): the claim also clears ``turns.bearer_sha256``
+(``012_turn_bearer.sql``), and the attempt stamps the sha256 of its grant token there
+(``stamp_bearer``) after ``acquire_grant`` and before the CLI exists; a stamp that matches
+no open row at this epoch raises ``Superseded``. The tool server admits a project request
+only when its bearer hashes to the stamp on that open turn of that project, else 403.
 """
 
 from __future__ import annotations
@@ -167,6 +173,7 @@ import asyncio
 import contextlib
 import dataclasses
 import errno
+import hashlib
 import json
 import math
 import os
@@ -532,13 +539,20 @@ CLAIM_TURN_SQL = (
     "outcome = CASE WHEN turns.outcome = %s AND turns.completed_at IS NULL THEN NULL "
     "ELSE turns.outcome END, "
     "claim_epoch = CASE WHEN turns.completed_at IS NULL THEN turns.claim_epoch + 1 "
-    "ELSE turns.claim_epoch END "
+    "ELSE turns.claim_epoch END, "
+    "bearer_sha256 = CASE WHEN turns.completed_at IS NULL THEN NULL ELSE turns.bearer_sha256 END "
     "FROM sessions WHERE turns.turn_id = %s AND turns.session_id = %s AND turns.project_id = %s "
     "AND sessions.session_id = turns.session_id AND sessions.project_id = turns.project_id "
     "RETURNING turns.message, turns.claim_epoch"
 )
 # U6: whether this attempt's epoch is still the turn's claim -- the halt clause's check.
 CLAIM_CURRENT_SQL = "SELECT 1 FROM turns WHERE turn_id = %s AND claim_epoch = %s"
+# U4: the sha256 of the bearer this attempt hands the CLI, on the open turn it still holds --
+# what the tool server's door matches. No row: a newer claim (or a close) moved the turn.
+STAMP_BEARER_SQL = (
+    "UPDATE turns SET bearer_sha256 = %s "
+    "WHERE turn_id = %s AND claim_epoch = %s AND completed_at IS NULL RETURNING 1"
+)
 UNKNOWN_TURN_ERROR = "no turn row matches this turn_id, session_id and project_id"
 
 
@@ -566,7 +580,11 @@ def claim(conn: psycopg.Connection, turn: dict, receive_count: int) -> Claim | N
     claim wins; the earlier attempt is fenced. A claim of an OPEN row mints the next
     ``claim_epoch`` (the row lock serialises racing claims, so epochs are distinct and
     increase); a claim of a closed row keeps the closer's, so the closer's trailing
-    transcript flush is not fenced out by a late duplicate."""
+    transcript flush is not fenced out by a late duplicate.
+
+    U4: the same UPDATE clears an open row's ``bearer_sha256``, so the older attempt's
+    token stops passing the tool server's door; this attempt passes once ``stamp_bearer``
+    has stamped its own grant."""
     if is_real_turn(turn["message"]) or not dev_paths(os.environ):
         with conn.cursor() as cur:
             cur.execute(CLAIM_TURN_SQL, (receive_count, QUEUED_OUTCOME, turn["turn_id"],
@@ -591,7 +609,9 @@ def claim(conn: psycopg.Connection, turn: dict, receive_count: int) -> Claim | N
             "outcome = CASE WHEN turns.outcome = %s AND turns.completed_at IS NULL THEN NULL "
             "ELSE turns.outcome END, "
             "claim_epoch = CASE WHEN turns.completed_at IS NULL THEN turns.claim_epoch + 1 "
-            "ELSE turns.claim_epoch END "
+            "ELSE turns.claim_epoch END, "
+            "bearer_sha256 = CASE WHEN turns.completed_at IS NULL THEN NULL "
+            "ELSE turns.bearer_sha256 END "
             "RETURNING claim_epoch",
             (
                 turn["turn_id"],
@@ -613,6 +633,14 @@ def claim_current(conn: psycopg.Connection, turn_id: str, epoch: int) -> bool:
     sweep's close, has moved it."""
     with conn.cursor() as cur:
         cur.execute(CLAIM_CURRENT_SQL, (turn_id, epoch))
+        return cur.fetchone() is not None
+
+
+def stamp_bearer(conn: psycopg.Connection, turn_id: str, epoch: int, token: str) -> bool:
+    """Stamp the sha256 of ``token`` -- the bearer this attempt hands the CLI -- on the turn
+    (U4), the tool server's door key. False when ``epoch`` no longer holds the open turn."""
+    with conn.cursor() as cur:
+        cur.execute(STAMP_BEARER_SQL, (hashlib.sha256(token.encode()).hexdigest(), turn_id, epoch))
         return cur.fetchone() is not None
 
 
@@ -2173,6 +2201,11 @@ async def _run_turn(
             released = release_next_held(conn, session_id) if seq is not None else None
             return {"seq": seq, "outcome": SIGNIN_REQUIRED_OUTCOME, "cause": held.cause,
                     "released_turn": released, "resumed": False}
+
+        # U4: the tool server admits only the bearer stamped on this open turn, so stamp the
+        # grant before any CLI bears it. No row: a newer claim holds the turn.
+        if not stamp_bearer(conn, turn_id, turn["claim_epoch"], held.token):
+            raise Superseded(f"turn {turn_id}: claim epoch {turn['claim_epoch']} superseded before the bearer stamp")
 
         # The id was chosen at claim time (serve_real_turn); the store decides which of
         # the two mutually exclusive CLI flags carries it.

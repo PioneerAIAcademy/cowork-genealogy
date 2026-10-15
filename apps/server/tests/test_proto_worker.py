@@ -154,6 +154,8 @@ class FakeCursor:
             return (self.conn.completed_at, self.conn.claim_epoch)
         if sql == worker.CLAIM_CURRENT_SQL:  # the epoch halt clause (U6)
             return None if self.conn.superseded else (1,)
+        if sql == worker.STAMP_BEARER_SQL:  # the bearer stamp (U4): no row once superseded
+            return None if self.conn.superseded else (1,)
         if "SELECT outcome FROM turns" in sql:
             return (self.conn.outcome,)
         if "RETURNING sdk_session_id" in sql:
@@ -290,6 +292,10 @@ def test_a_real_claim_stamps_the_web_tier_s_row_and_inserts_nothing():
     # U6: a claim of an open row mints the next epoch; a closed row keeps the closer's.
     assert ("claim_epoch = CASE WHEN turns.completed_at IS NULL THEN turns.claim_epoch + 1 "
             "ELSE turns.claim_epoch END") in sql
+    # U4: and clears an open row's bearer stamp, so the older attempt's token stops passing
+    # the tool server's door; a closed row keeps its own.
+    assert ("bearer_sha256 = CASE WHEN turns.completed_at IS NULL THEN NULL ELSE turns.bearer_sha256 END "
+            "FROM sessions") in sql
     assert sql.endswith("RETURNING turns.message, turns.claim_epoch")
     assert params == (3, "queued", "turn-1", "sess-1", "proj-1")
     assert conn.commits == 1
@@ -325,7 +331,8 @@ def test_only_a_stub_under_dev_paths_upserts_its_rows(monkeypatch, dev):
         # U6: a fresh stub row starts at epoch 1, and a re-claim of it mints like a real one.
         assert "claim_epoch) VALUES" in sqls[1] and "session_entries), 1) ON CONFLICT" in sqls[1]
         assert ("claim_epoch = CASE WHEN turns.completed_at IS NULL THEN turns.claim_epoch + 1 "
-                "ELSE turns.claim_epoch END RETURNING claim_epoch") in sqls[1]
+                "ELSE turns.claim_epoch END, bearer_sha256 = CASE WHEN turns.completed_at IS NULL THEN NULL "
+                "ELSE turns.bearer_sha256 END RETURNING claim_epoch") in sqls[1]
         assert conn.executed[1][1][-2:] == (3, "queued")
     else:
         assert [s.split(" ", 2)[:2] for s in sqls] == [["UPDATE", "turns"]]
@@ -5908,7 +5915,13 @@ def test_a_superseded_attempt_halts_at_its_next_tool_call_and_never_completes(tu
     logged: list[dict] = []
     monkeypatch.setattr(worker, "log", lambda **f: logged.append(f))
     conn = turn_env["conn"]
-    conn.superseded = True
+
+    def build(**kwargs):
+        conn.superseded = True  # the newer claim lands after this attempt's bearer stamp (U4)
+        turn_env["options"] = kwargs
+        return object()
+
+    monkeypatch.setattr(worker, "build_worker_options", build)
     turn_env["lock_held"] = False
     client = FakeClient([_init(), ToolCall(), _text("x"), _result()], _info(AGENTS, worker.EXPECTED_SKILLS),
                         turn_env)
@@ -5952,6 +5965,50 @@ def test_a_mirror_error_on_a_superseded_store_raises_superseded(turn_env, monkey
     with pytest.raises(error):
         _run(turn_env, [_init(), mirror, _result()])
     assert not _turn_done_payloads(turn_env["conn"]) and turn_env["client"].disconnected
+
+
+def test_the_attempt_stamps_the_sha256_of_its_bearer_before_the_cli(turn_env, monkeypatch):
+    """U4: the tool server admits only the bearer stamped on the open turn, so the stamp is
+    the sha256 of the very token the CLI is handed, at this attempt's epoch, written before
+    the options that carry it are built. The token itself never reaches the row."""
+    import hashlib
+
+    order: list[str] = []
+    conn = turn_env["conn"]
+    turn_env["grant"] = lambda: FakeHeld(turn_env, token="token-u4")
+
+    def build(**kwargs):
+        order.append("build")
+        turn_env["options"] = kwargs
+        return object()
+
+    monkeypatch.setattr(worker, "build_worker_options", build)
+    _run(turn_env, _good())
+    stamps = [(i, params) for i, (sql, params) in enumerate(conn.executed) if sql == worker.STAMP_BEARER_SQL]
+    [(index, params)] = stamps
+    assert params == (hashlib.sha256(b"token-u4").hexdigest(), "turn-1", 1)
+    assert turn_env["options"]["bearer"] == "token-u4" and order == ["build"]
+    assert not any(s.startswith("UPDATE turns SET completed_at") for s, _ in conn.executed[:index]), \
+        "stamped while the turn is still open"
+    assert worker.STAMP_BEARER_SQL.endswith("AND claim_epoch = %s AND completed_at IS NULL RETURNING 1")
+
+
+def test_a_stamp_that_matches_no_row_is_superseded_and_spawns_no_cli(turn_env, monkeypatch):
+    """U4: no open row at this epoch -- a newer claim cleared the stamp and holds the turn --
+    so the attempt raises Superseded before any CLI is configured, closes nothing and still
+    releases the grant lock; served, it is the 200 ``superseded`` of the halt path."""
+    conn = turn_env["conn"]
+    conn.superseded = True
+    with pytest.raises(worker.Superseded, match="before the bearer stamp"):
+        _run(turn_env, _good())
+    assert turn_env["options"] is None, "no CLI was configured"
+    assert any(s == worker.STAMP_BEARER_SQL for s, _ in conn.executed)
+    assert not _turn_done_payloads(conn) and not any(
+        s.startswith("UPDATE turns SET completed_at") for s, _ in conn.executed)
+    assert turn_env["events"] == ["held.close"]
+    turn_env["events"].clear()
+    status, body = _serve(turn_env, monkeypatch)
+    assert (status, body["superseded"]) == (200, True) and turn_env["options"] is None
 
 
 def test_the_attempt_s_store_and_options_carry_its_claim_epoch(turn_env, monkeypatch):
