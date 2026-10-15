@@ -28,6 +28,29 @@ export type { FulltextSearchInput } from "../types/fulltext-search.js";
 const FS_FULLTEXT_URL =
   "https://www.familysearch.org/service/search/fulltext/search";
 
+const RECORD_PLACE_EXAMPLES: Record<string, string> = {
+  recordPlace0: '"10"',
+  recordPlace1: '"10,Alabama"',
+  recordPlace2: '"10,Alabama,Autauga"',
+  recordPlace3: '"10,Alabama,Autauga,Booth"',
+};
+
+function validateRecordPlace(field: string, value: string, level: number): void {
+  // Pattern: a leading numeric segment followed by exactly `level` non-empty
+  // comma-separated segments.  e.g. level 0 → /^\d+$/, level 1 → /^\d+,[^,]+$/
+  const pattern = level === 0
+    ? /^\d+$/
+    : new RegExp(`^\\d+${`(?:,[^,]+)`.repeat(level)}$`);
+  if (!pattern.test(value)) {
+    throw new Error(
+      `${field} value "${value}" is not in the required facet form ` +
+      `(e.g. ${RECORD_PLACE_EXAMPLES[field]}). ` +
+      `Call fulltext_search with includeFacets: true to get Place facet items, ` +
+      `then pass the filterParam value from the facet response.`
+    );
+  }
+}
+
 function validateInput(input: FulltextSearchInput): void {
   if (!input.keywords && !input.name && !input.place && !input.nlQuery && !input.imageGroupNumber) {
     throw new Error(
@@ -55,6 +78,13 @@ function validateInput(input: FulltextSearchInput): void {
     input.yearFrom > input.yearTo
   ) {
     throw new Error("yearFrom must be <= yearTo.");
+  }
+  for (let n = 0; n <= 3; n++) {
+    const field = `recordPlace${n}` as keyof FulltextSearchInput;
+    const value = input[field];
+    if (value !== undefined) {
+      validateRecordPlace(field, value as string, n);
+    }
   }
 }
 
@@ -140,8 +170,22 @@ function mapEntry(entry: FSFulltextEntry): FulltextResult | null {
 }
 
 function parseFilterParam(raw: string): string {
-  const m = raw.match(/^f\.collectionId=(.+)$/);
-  return m ? m[1] : raw;
+  // Upstream facet `params` are compound: "c.recordPlace1=on&f.recordPlace0=10"
+  // or "c.collectionId=on&f.collectionId=M9J1-97G". Extract the value of the
+  // last f.<key>=<value> segment. Observed upstream responses carry exactly one
+  // f. segment; taking the last is a defensive fallback for an unobserved
+  // multi-f. case.
+  const segments = raw.split("&");
+  let lastFilterValue: string | null = null;
+  for (const seg of segments) {
+    if (seg.startsWith("f.")) {
+      const eqIdx = seg.indexOf("=");
+      if (eqIdx !== -1) {
+        lastFilterValue = decodeURIComponent(seg.slice(eqIdx + 1));
+      }
+    }
+  }
+  return lastFilterValue ?? raw;
 }
 
 function mapFacets(raw: FSFulltextFacetItem[]): FulltextFacet[] {
@@ -390,20 +434,27 @@ export const fulltextSearchToolSchema = {
       },
       recordPlace0: {
         type: "string",
-        description: "Filter by region.",
+        description:
+          "Filter by region. Must be the numeric filterParam from a Place facet " +
+          '(e.g. "10" for United States). Call with includeFacets: true first.',
       },
       recordPlace1: {
         type: "string",
         description:
-          "Filter by country (or state within US/Mexico/Canada/UK).",
+          "Filter by country/state. Must be the filterParam from a Place facet " +
+          '(e.g. "10,Alabama"). Drill down: send recordPlace0 with includeFacets: true.',
       },
       recordPlace2: {
         type: "string",
-        description: "Filter by county.",
+        description:
+          "Filter by county. Must be the filterParam from a Place facet " +
+          '(e.g. "10,Alabama,Autauga"). Drill down from recordPlace1.',
       },
       recordPlace3: {
         type: "string",
-        description: "Filter by city.",
+        description:
+          "Filter by city. Must be the filterParam from a Place facet " +
+          '(e.g. "10,Alabama,Autauga,Booth"). Drill down from recordPlace2.',
       },
       count: {
         type: "number",

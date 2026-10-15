@@ -389,7 +389,10 @@ are two that do block, and the distinction is what makes them legitimate.
   sources-without-assertions warning (which fires once ≥3 sources exist); it
   self-silences the instant any source or assertion lands, and fires on every
   qualifying `research_log_append` call while the two-empty state holds.
-  Tool-neutral message.
+  Tool-neutral message. Reference lookups (`REFERENCE_LOOKUP_TOOLS`: `wiki_search`,
+  `wiki_read`, `wikipedia_search`, `historical_context`) are not counted: their
+  `positive` entries carry a looked-up article or overview in `notes`, not a
+  record to persist. The pre-1880 census hedge is unaffected.
   It cannot reach a session that logs nothing at all (bundle 3) — that shape has
   no tool-boundary trigger.
 
@@ -779,8 +782,8 @@ recorded for different arguments.
   staging search tool reports `resultsAvailable > 0` with no `stagedResultsRef`
   and stays silent for a nil search; the logging-without-persistence nudge fires
   once ≥3 positive searches are logged with zero sources and zero assertions,
-  stays silent below the threshold, and stays silent once any source or assertion
-  exists. Both keep `ok: true` and leave the log entry written.
+  stays silent below the threshold, stays silent once any source or assertion
+  exists, and does not count reference-lookup entries. Both keep `ok: true` and leave the log entry written.
 - **Nil escalation (§8.1)** — `escalationDue` appears on the third nil against a
   census plan item with an open question, single or batched; stays absent at two,
   for a probate plan item, once the plan item has a positive or partial entry or

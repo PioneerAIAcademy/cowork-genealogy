@@ -5,6 +5,8 @@ import {
   projectRecordPersonas,
   projectedRecordDocument,
   projectsToRecordPersonaFact,
+  factTypeKey,
+  isCoupleEventFactType,
 } from "../../src/utils/record-persona.js";
 
 /**
@@ -70,6 +72,53 @@ describe("projectsToRecordPersonaFact vs materializesToPersonFact", () => {
     const assertion = a({ fact_type: "birth" });
     expect(projectsToRecordPersonaFact(assertion)).toBe(true);
     expect(materializesToPersonFact(assertion)).toBe(true);
+  });
+});
+
+describe("couple events never materialize onto a person", () => {
+  // The point of folding rather than listing raw spellings: `fact_type` is an
+  // open enum, so one event arrives spelled several ways. Each live spelling
+  // below came out of a real e2e run.
+  it.each([
+    "marriage",
+    "marriage_intention",
+    "marriage_bann",
+    "marriage_date",
+    "Marriage Banns",
+    "MarriageBanns",
+    "marriage-licence",
+    "MARRIAGE_LICENSE",
+    "divorce",
+    "Annulment",
+  ])("%s is a couple event, so it is not a person fact", (factType) => {
+    expect(isCoupleEventFactType(factType)).toBe(true);
+    expect(materializesToPersonFact({ fact_type: factType })).toBe(false);
+  });
+
+  // The other direction: folding must not swallow an ordinary person fact that
+  // merely looks adjacent. A guard that over-reaches here would silently stop
+  // materializing real evidence.
+  it.each([
+    "birth",
+    "death",
+    "residence",
+    "marriage_record_number",
+    "remarriage_of_mother",
+    "marital_status",
+  ])("%s is NOT a couple event and still materializes", (factType) => {
+    expect(isCoupleEventFactType(factType)).toBe(false);
+    expect(materializesToPersonFact({ fact_type: factType })).toBe(true);
+  });
+
+  it("factTypeKey folds case and every separator to one key", () => {
+    const key = factTypeKey("marriage_banns");
+    for (const spelling of ["Marriage Banns", "MarriageBanns", "marriage-banns", "MARRIAGE__BANNS"]) {
+      expect(factTypeKey(spelling)).toBe(key);
+    }
+    // Non-strings are folded, not thrown on: fact_type reaches this from JSON.
+    expect(factTypeKey(undefined)).toBe("");
+    expect(factTypeKey(null)).toBe("");
+    expect(factTypeKey(42)).toBe("42");
   });
 });
 
