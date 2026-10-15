@@ -32,6 +32,7 @@ PINNED = {
     "009_grant_session.sql": "fdab812023f0abc3ec2e58041f643e370ffabe14f345e105a6eb42aa22565fc8",
     "010_claim_epoch.sql": "a9ee9f17ca640192089d42999445e6acb9cbce1071dd64fcc61cede221c8c9c3",
     "011_session_entries_uuid_index.sql": "ca31d8c245493b9b020ffe014d874ce098895f8b34053e37ac53039a5d281493",
+    "012_turn_bearer.sql": "06d60ca9d298cf661e6260ec4dd89efed9b821cffa9b017d4881a48f31a529b0",
 }
 
 
@@ -103,25 +104,29 @@ def test_load_refuses_an_empty_dir(tmp_path):
 # ── the verdict ──────────────────────────────────────────────────────────────────
 
 ALL = sorted(PINNED)
+# Synthetic files the verdict cases add: numbered past the real last file, so they stay
+# newer than every shipped one whatever lands next.
+NEXT = f"{int(ALL[-1][:3]) + 1:03d}"
+AFTER = f"{int(ALL[-1][:3]) + 2:03d}"
 
 
 @pytest.mark.parametrize("shipped, ledger, label, pending, ahead", [
     (ALL, None, "schema: unmigrated", ALL, []),
     (ALL, {}, "schema: behind 001_schema.sql", ALL, []),
-    (ALL, {n: PINNED[n] for n in ALL[:-1]}, "schema: behind 011_session_entries_uuid_index.sql", ALL[-1:], []),
+    (ALL, {n: PINNED[n] for n in ALL[:-1]}, f"schema: behind {ALL[-1]}", ALL[-1:], []),
     (ALL, _ledger(), None, [], []),
-    (ALL, _ledger(**{"012_future.sql": "f"}), None, [], ["012_future.sql"]),
+    (ALL, _ledger(**{f"{NEXT}_future.sql": "f"}), None, [], [f"{NEXT}_future.sql"]),
     (ALL, _ledger(**{"004_worker.sql": "edited"}), "schema: drift 004_worker.sql", [], []),
     (["000_early.sql", *ALL], _ledger(), "schema: out_of_order 000_early.sql", ["000_early.sql"], []),
-    ([*ALL, "012_late.sql"], _ledger(**{"013_future.sql": "f"}), "schema: out_of_order 012_late.sql",
-     ["012_late.sql"], ["013_future.sql"]),
+    ([*ALL, f"{NEXT}_late.sql"], _ledger(**{f"{AFTER}_future.sql": "f"}), f"schema: out_of_order {NEXT}_late.sql",
+     [f"{NEXT}_late.sql"], [f"{AFTER}_future.sql"]),
     # The order: drift beats out_of_order beats behind.
     (["000_early.sql", *ALL], _ledger(**{"009_grant_session.sql": "edited"}), "schema: drift 009_grant_session.sql",
      ["000_early.sql"], []),
-    (["000_early.sql", *ALL, "012_new.sql"], _ledger(), "schema: out_of_order 000_early.sql",
-     ["000_early.sql", "012_new.sql"], []),
-    ([*ALL, "012_new.sql"], {n: PINNED[n] for n in ALL[:-1]}, "schema: behind 011_session_entries_uuid_index.sql",
-     ["011_session_entries_uuid_index.sql", "012_new.sql"], []),
+    (["000_early.sql", *ALL, f"{NEXT}_new.sql"], _ledger(), "schema: out_of_order 000_early.sql",
+     ["000_early.sql", f"{NEXT}_new.sql"], []),
+    ([*ALL, f"{NEXT}_new.sql"], {n: PINNED[n] for n in ALL[:-1]}, f"schema: behind {ALL[-1]}",
+     [ALL[-1], f"{NEXT}_new.sql"], []),
     (ALL, {n: PINNED[n] for n in ALL if n != "005_resume_guard.sql"}, "schema: out_of_order 005_resume_guard.sql",
      ["005_resume_guard.sql"], []),
 ], ids=["unmigrated", "empty-ledger", "behind", "ok", "ahead", "drift", "out-of-order-low", "out-of-order-high",
@@ -190,7 +195,7 @@ class _StubConn:
 
 @pytest.mark.parametrize("ledger, label", [
     (_ledger(**{"004_worker.sql": "drifted"}), "schema: drift 004_worker.sql"),
-    ({**_ledger(**{"004_worker.sql": "drifted"}), "012_future.sql": "f"}, "schema: drift 004_worker.sql"),
+    ({**_ledger(**{"004_worker.sql": "drifted"}), f"{NEXT}_future.sql": "f"}, "schema: drift 004_worker.sql"),
     ({n: PINNED[n] for n in ALL if n != "005_resume_guard.sql"}, "schema: out_of_order 005_resume_guard.sql"),
 ], ids=["drift", "drift-and-ahead", "out-of-order"])
 def test_drift_is_refused_before_the_lock(ledger, label):
