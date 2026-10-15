@@ -315,6 +315,30 @@ describe("treeGapsTool", () => {
       expect(hole.pendingHints).toEqual({ fitting: 1, total: 3 });
     });
 
+    it("puts a hole with a fitting hint first and keeps the nearest-first order within each group", async () => {
+      const asc = (id: string, n: string, d: Record<string, string>) =>
+        person(id, { ascendancyNumber: n, name: id, gender: Number(n) % 2 ? "Female" : "Male", birthDate: "1 May 1850", ...d });
+      route({
+        "/tree/ancestry": () =>
+          json({
+            persons: [
+              asc("KNDX-MKG", "1", { lifespan: "1880-1950" }),
+              asc("FATH-111", "2", { lifespan: "1850-1920" }),
+              asc("MOTH-111", "3", { lifespan: "1855-1925" }),
+            ],
+          }),
+        "/tree/descendancy": () => json({ persons: [] }),
+        "/service/search/hr/v2/collections": () => json({ entries: [] }),
+        // The mother, the farthest hole, is the only one with a fitting (death) hint.
+        "4%3A1%3AMOTH-111": () => json({ entries: [hint("AAAA-111", "Ohio, Deaths and Burials, 1850-1950")] }),
+        [MATCHES]: () => json({ entries: [] }),
+      });
+      const r = await treeGapsTool({ personId: "KNDX-MKG", ancestorGenerations: 2 }, LOCAL);
+      const ids = r.gaps.filter((g) => g.type === "no_death_date").map((g) => g.personId);
+      // The mother, the farthest hole, moves first; the root and the father keep their order.
+      expect(ids).toEqual(["MOTH-111", "KNDX-MKG", "FATH-111"]);
+    });
+
     it("reads event words from a collection title", () => {
       expect(hintEvents("Pennsylvania, Births and Christenings, 1700-1900")).toEqual(["birth"]);
       expect(hintEvents("Ohio, County Marriages, 1789-2013")).toEqual(["marriage"]);

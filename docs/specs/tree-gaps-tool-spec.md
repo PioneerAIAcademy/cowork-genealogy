@@ -159,7 +159,9 @@ the root's sibling is `0`, the root's child is `−1`.
 
 **Selection.** A couple-level hole (`no_children`, `child_gap`, `early_last_child`) found from both spouses, or from a mother's own read, is reported once, keyed on the mother. Holes are sorted nearest the root first, then picked
 **round-robin across types** so one common type (`no_spouse`) cannot fill the
-answer; `maxHoles` of them are returned, nearest first.
+answer; `maxHoles` of them are returned, nearest first. After the pending hints are counted, a hole whose
+`pendingHints.fitting` is above 0 moves ahead of the rest, and the order within each group is
+unchanged (a stable sort). A hole with `pendingHints: null` stays in the second group.
 
 ## Coverage
 

@@ -76,7 +76,7 @@ read. Name no person, count or field in that sentence. Do not invent suggestions
 
 ### 2. Check what FamilySearch has
 
-Take the strongest ~10 holes. `gaps` is already ordered nearest the root first,
+Take the strongest ~10 holes. `gaps` is already ordered: holes with a fitting pending hint first, then nearest the root,
 and each carries a `coverage` count (collections that exist for that place and
 period, a floor, not evidence about this person) and `pendingHints`
 (`fitting` of `total` pending record hints that are about the event the hole is

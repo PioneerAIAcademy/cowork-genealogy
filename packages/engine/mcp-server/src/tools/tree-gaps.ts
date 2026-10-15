@@ -80,7 +80,8 @@ export const treeGapsToolSchema = {
     "`coverage`: catalog collections that could hold the record, census " +
     "years inside the window, and how specific the place is, and " +
     "`pendingHints`: how many of FamilySearch's pending record hints for " +
-    "the person are about the event the hole is missing. Living " +
+    "the person are about the event the hole is missing; holes with such a " +
+    "hint come first, then the rest nearest the root first. Living " +
     "people never carry a " +
     "hole. If personId is omitted it uses the logged-in user; for anyone " +
     "else, call person_search first. Reads only; writes nothing. Requires " +
@@ -313,6 +314,10 @@ async function readHints(
   return hints;
 }
 
+function hasFittingHint(g: TreeGap): boolean {
+  return (g.pendingHints?.fitting ?? 0) > 0;
+}
+
 // A hole's count pools its person and, on a couple-level hole, the spouse, each
 // match once. If any person on the hole is unread the count is null, never a
 // partial number the agent would rank on. Returns how many people were unread.
@@ -459,6 +464,9 @@ export async function treeGapsTool(
     notes.push("Collection coverage was unavailable; `coverage` is null on every hole.");
   }
   const unreadHints = scoreHints(gaps, people, await hintReads);
+  // A hole with a fitting pending hint comes first; the order within each group,
+  // nearest the root first, is kept (Array.prototype.sort is stable).
+  gaps.sort((a, b) => Number(hasFittingHint(b)) - Number(hasFittingHint(a)));
   if (unreadHints > 0) {
     notes.push(
       `Pending hints were not read for ${unreadHints} person${unreadHints === 1 ? "" : "s"} ` +
