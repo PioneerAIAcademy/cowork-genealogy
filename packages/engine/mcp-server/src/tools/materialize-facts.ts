@@ -243,7 +243,7 @@ function applyMaterializeOp(
   }
 
   // ── Create-or-enrich: find the target person, or mint it (§4.3) ──
-  const targetId = str(op.personId) ?? nextId(tree, "I");
+  const targetId = str(op.personId) ?? findExistingPersonForPersona(tree, research, op) ?? nextId(tree, "I");
   let person = (tree.persons ?? []).find((p) => p && p.id === targetId);
   let created = false;
   if (!person) {
@@ -769,10 +769,98 @@ function applyOp(
   return applyMaterializeOp(tree, research, persona);
 }
 
-/** Refuse to copy a persona's facts onto a person already in the tree unless a live `probable` or `confident` person_evidence link ties one of the
- *  persona's assertions to that person. A `speculative` link is a candidate,
- *  not an identity, and an unlinked one is not even that. Minting a new person
- *  (no personId, or one not yet in the tree) needs no link: the link to it is
+/** True when `personId` is an eligible target for persona `(recordId, recordRole)`:
+ *  either the person was minted from this record (`mintedFromThisRecord`), or a
+ *  live `probable`/`confident` `person_evidence` entry ties one of the persona's
+ *  assertion ids to the person. Shared by `requireLinkToExistingPerson` (the
+ *  explicit-personId gate) and `findExistingPersonForPersona` (the implicit
+ *  reuse lookup). */
+function isEligibleTarget(
+  personId: string,
+  recordId: string,
+  recordRole: string,
+  research: any,
+  tree: SimplifiedGedcomX,
+): boolean {
+  if (mintedFromThisRecord(personId, recordId, research, tree)) return true;
+  const persona = new Set<string>();
+  for (const a of (Array.isArray(research.assertions) ? research.assertions : []) as any[]) {
+    if (a && a.record_id === recordId && a.record_role === recordRole && typeof a.id === "string") {
+      persona.add(a.id);
+    }
+  }
+  return ((research.person_evidence ?? []) as any[]).some(
+    (e: any) =>
+      e &&
+      !e.superseded_by &&
+      e.person_id === personId &&
+      (e.confidence === "confident" || e.confidence === "probable") &&
+      persona.has(e.assertion_id),
+  );
+}
+
+/** When `personId` is omitted, scan tree persons for any person whose facts
+ *  carry an `assertion_id` matching one of this persona's assertions. Among
+ *  eligible candidates (those passing `isEligibleTarget`), prefer one with a
+ *  live `person_evidence` link; break remaining ties by lowest numeric id.
+ *  Returns the person's id, or undefined when no eligible candidate exists. */
+function findExistingPersonForPersona(
+  tree: SimplifiedGedcomX,
+  research: any,
+  op: MaterializeFactsOp,
+): string | undefined {
+  const personaAssertionIds = new Set<string>();
+  for (const a of (Array.isArray(research.assertions) ? research.assertions : []) as any[]) {
+    if (a && a.record_id === op.recordId && a.record_role === op.recordRole && typeof a.id === "string") {
+      personaAssertionIds.add(a.id);
+    }
+  }
+  if (personaAssertionIds.size === 0) return undefined;
+
+  // Candidates: tree persons with a fact whose assertion_id belongs to this persona.
+  const candidates: string[] = [];
+  for (const person of tree.persons ?? []) {
+    if (!person?.id) continue;
+    const hasBacklink = (person.facts ?? []).some(
+      (f) => typeof f.assertion_id === "string" && personaAssertionIds.has(f.assertion_id),
+    );
+    if (hasBacklink) candidates.push(person.id);
+  }
+  if (candidates.length === 0) return undefined;
+
+  const eligible = candidates.filter((pid) =>
+    isEligibleTarget(pid, String(op.recordId), String(op.recordRole), research, tree),
+  );
+  if (eligible.length === 0) return undefined;
+
+  // Tie-break: prefer a candidate with a live person_evidence link to this persona.
+  const linked = new Set<string>();
+  for (const e of (research.person_evidence ?? []) as any[]) {
+    if (
+      e &&
+      !e.superseded_by &&
+      (e.confidence === "confident" || e.confidence === "probable") &&
+      personaAssertionIds.has(e.assertion_id)
+    ) {
+      linked.add(e.person_id);
+    }
+  }
+  const withLink = eligible.filter((pid) => linked.has(pid));
+  const pool = withLink.length > 0 ? withLink : eligible;
+
+  // Break ties by lowest numeric id.
+  pool.sort((a, b) => {
+    const na = parseInt(a.replace(/^[A-Za-z]+/, ""), 10);
+    const nb = parseInt(b.replace(/^[A-Za-z]+/, ""), 10);
+    return (isNaN(na) ? Infinity : na) - (isNaN(nb) ? Infinity : nb);
+  });
+  return pool[0];
+}
+
+/** Refuse to copy a persona's facts onto a person already in the tree unless
+ *  `isEligibleTarget` passes. A `speculative` link is a candidate, not an
+ *  identity, and an unlinked one is not even that. Minting a new person (no
+ *  personId, or one not yet in the tree) needs no link: the link to it is
  *  written afterwards. Nor does re-materializing a record onto the stub it
  *  minted (`mintedFromThisRecord`), which repeats a copy rather than claiming
  *  an identity. */
@@ -783,22 +871,7 @@ function requireLinkToExistingPerson(
 ): void {
   const personId = str(op.personId);
   if (personId === undefined || !(tree.persons ?? []).some((p) => p?.id === personId)) return;
-  if (mintedFromThisRecord(personId, String(op.recordId), research, tree)) return;
-  const persona = new Set<string>();
-  for (const a of (Array.isArray(research.assertions) ? research.assertions : []) as any[]) {
-    if (a && a.record_id === op.recordId && a.record_role === op.recordRole && typeof a.id === "string") {
-      persona.add(a.id);
-    }
-  }
-  const linked = ((research.person_evidence ?? []) as any[]).some(
-    (e) =>
-      e &&
-      !e.superseded_by &&
-      e.person_id === personId &&
-      (e.confidence === "confident" || e.confidence === "probable") &&
-      persona.has(e.assertion_id),
-  );
-  if (linked) return;
+  if (isEligibleTarget(personId, String(op.recordId), String(op.recordRole), research, tree)) return;
   throw new MaterializeFactsError(
     `'${personId}' was already in the tree, and no 'probable' or 'confident' person_evidence link ` +
       `ties record '${op.recordId}' role '${op.recordRole}' to them. Write that link with ` +
@@ -993,9 +1066,13 @@ export const materializeFactsSchema = {
     "mints it from the persona's name/gender assertions, so the person is never " +
     "fact-less. A personId already in the tree needs a live 'probable' or 'confident' " +
     "person_evidence link from this persona to that person, written first with " +
-    "research_append; 'speculative' does not qualify. " +
-    "Idempotent: re-running the same persona duplicates neither facts nor " +
-    "refs. Agreeing values (compatible date/place, equal value) union their refs onto " +
+    "research_append; 'speculative' does not qualify. When personId is omitted and " +
+    "this persona was already materialized onto a tree person (detected by " +
+    "assertion_id backlinks on that person's facts), the existing person is reused " +
+    "rather than a duplicate being minted; the returned personId may therefore be an " +
+    "existing person. " +
+    "Idempotent: re-running the same persona duplicates neither facts, refs, nor " +
+    "persons. Agreeing values (compatible date/place, equal value) union their refs onto " +
     "one fact; an incompatible date/place OR a different value coexists as a separate " +
     "sourced fact. A competing value of a single-valued/vital type (Birth, Death, " +
     "Christening, Burial) is reported in conflicts_surfaced for conflict-resolution; " +
@@ -1069,8 +1146,10 @@ export const materializeFactsSchema = {
         type: "string",
         description:
           "Target tree person id. May name a person that does not exist yet — the tool mints it " +
-          "from the persona's name/gender assertions (create-or-enrich). Omit to mint a brand-new " +
-          "person with the next allocated I id. Ignored when `ops` is present.",
+          "from the persona's name/gender assertions (create-or-enrich). Omit to reuse an " +
+          "existing person this persona was already materialized onto (by assertion_id " +
+          "backlinks), or if none exists, mint a brand-new person with the next allocated I " +
+          "id. Ignored when `ops` is present.",
       },
       recordId: {
         type: "string",
