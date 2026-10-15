@@ -40,6 +40,8 @@ import {
   PROJECT_ID_HEADER,
   startHttpServer,
   TURN_ID_HEADER,
+  type AuthorizeRequest,
+  type AuthorizeResult,
   type ReadyReport,
 } from "../../src/http-server.js";
 import { allToolSchemas } from "../../src/tool-schemas.js";
@@ -59,6 +61,9 @@ const bindStore = vi.fn(
   (projectId: string, _signal: AbortSignal, _fence?: ClaimFence): ProjectStore =>
     new ScopedFsStore(root, projectId),
 );
+// Allow-all unless a case says otherwise: the project check itself is U4's
+// section below and tests/http/http-server-pg.test.ts.
+const authorize = vi.fn(async (_req: AuthorizeRequest): Promise<AuthorizeResult> => ({ ok: true }));
 const clients: Client[] = [];
 // Every HTTP exchange the SDK client made, so item 1 can show the 405 arrived.
 const exchanges: Array<{ method: string; path: string; status: number }> = [];
@@ -91,7 +96,7 @@ function textOf(result: Awaited<ReturnType<Client["callTool"]>>): string {
 
 beforeAll(async () => {
   root = await mkdtemp(join(tmpdir(), "http-server-test-"));
-  server = await startHttpServer({ host: "127.0.0.1", port: 0, baseConfig: {}, bindStore });
+  server = await startHttpServer({ host: "127.0.0.1", port: 0, baseConfig: {}, bindStore, authorize });
   const address = server.address();
   if (!address || typeof address !== "object") throw new Error("server did not bind a port");
   base = `http://127.0.0.1:${address.port}`;
@@ -191,6 +196,7 @@ describe("tool server over Streamable HTTP", () => {
 
   it("2b. a request with no project header gets an error naming the header from project_create, and convert_calendar still answers", async () => {
     bindStore.mockClear();
+    authorize.mockClear();
     const client = await connect();
     const created = await client.callTool({ name: "project_create", arguments: createArgs("Nobody") });
     expect(created.isError).toBe(true);
@@ -204,6 +210,7 @@ describe("tool server over Streamable HTTP", () => {
     expect(JSON.parse(textOf(converted))).toMatchObject({ ok: true, converted: { year: 1751 } });
 
     expect(bindStore).not.toHaveBeenCalled();
+    expect(authorize).not.toHaveBeenCalled();
     // Nothing reached the file backend either: the root holds only the
     // directories item 2 wrote.
     const dirs = (await readdir(root)).filter((d) => d !== "__missing__");
@@ -343,6 +350,143 @@ describe("tool server over Streamable HTTP", () => {
     });
   });
 
+  describe("2e. the project check (U4): authorize runs before any store, for project requests only", () => {
+    const FORBIDDEN_ATTEMPT = {
+      jsonrpc: "2.0",
+      error: { code: -32600, message: "This bearer is not the grant of an open attempt on this project." },
+      id: null,
+    };
+    const BEARER = "secret-bearer-sentinel";
+
+    const post = (headers: Array<[string, string]>) =>
+      fetch(`${base}/mcp`, {
+        method: "POST",
+        headers: [
+          ["Content-Type", "application/json"],
+          ["Accept", "application/json, text/event-stream"],
+          ...headers,
+        ],
+        body: JSON.stringify({
+          jsonrpc: "2.0",
+          id: 1,
+          method: "tools/call",
+          params: { name: "project_context", arguments: { projectPath: SCOPED_ANCHOR } },
+        }),
+      });
+
+    /** stderr lines written while `run` runs. */
+    async function stderrOf(run: () => Promise<void>): Promise<string> {
+      const lines: string[] = [];
+      const spy = vi.spyOn(process.stderr, "write").mockImplementation((chunk: unknown) => {
+        lines.push(String(chunk));
+        return true;
+      });
+      try {
+        await run();
+      } finally {
+        spy.mockRestore();
+      }
+      return lines.join("");
+    }
+
+    it("hands authorize the project, the fence and the bearer; admitted, the store is bound", async () => {
+      const projectId = `door-${randomUUID()}`;
+      const turnId = randomUUID();
+      authorize.mockClear();
+      bindStore.mockClear();
+      const res = await post([
+        [PROJECT_HEADER, projectId],
+        ["X-Genealogy-Turn-Id", turnId],
+        ["X-Genealogy-Claim-Epoch", "4"],
+        ["Authorization", `Bearer ${BEARER}`],
+      ]);
+      expect(res.status).toBe(200);
+      await res.text();
+      expect(authorize).toHaveBeenCalledTimes(1);
+      expect(authorize.mock.calls[0][0]).toEqual({ projectId, fence: { turnId, claimEpoch: "4" }, bearer: BEARER });
+      expect(bindStore).toHaveBeenCalledTimes(1);
+
+      // No Authorization header and no fence: still asked, with an empty bearer and no fence.
+      authorize.mockClear();
+      const bare = await post([[PROJECT_HEADER, projectId]]);
+      await bare.text();
+      expect(authorize.mock.calls[0][0]).toEqual({ projectId, fence: undefined, bearer: "" });
+    });
+
+    it.each(["no_fence", "empty_bearer", "no_match"] as const)(
+      "a refusal (%s) is a 403 before bindStore, logged with its reason and never the bearer",
+      async (reason) => {
+        const projectId = `door-${randomUUID()}`;
+        const turnId = randomUUID();
+        authorize.mockClear();
+        bindStore.mockClear();
+        authorize.mockResolvedValueOnce({ ok: false, reason });
+        let status = 0;
+        let text = "";
+        const logged = await stderrOf(async () => {
+          const res = await post([
+            [PROJECT_HEADER, projectId],
+            ["X-Genealogy-Turn-Id", turnId],
+            ["X-Genealogy-Claim-Epoch", "1"],
+            ["Authorization", `Bearer ${BEARER}`],
+          ]);
+          status = res.status;
+          text = await res.text();
+        });
+        expect(status).toBe(403);
+        expect(JSON.parse(text)).toEqual(FORBIDDEN_ATTEMPT);
+        expect(text).not.toContain(BEARER);
+        expect(bindStore).not.toHaveBeenCalled();
+        expect(logged).toContain(`ev=tool_refused reason=${reason} project_id=${projectId} turn_id=${turnId}\n`);
+        expect(logged).not.toContain(BEARER);
+      },
+    );
+
+    it("an authorize that throws is a 503, never an admission, and the error's message is not logged", async () => {
+      const projectId = `door-${randomUUID()}`;
+      authorize.mockClear();
+      bindStore.mockClear();
+      authorize.mockRejectedValueOnce(
+        Object.assign(new Error(`postgresql://u:p@db.internal/x ${BEARER}`), { code: "ECONNREFUSED" }),
+      );
+      let status = 0;
+      let body: unknown;
+      const logged = await stderrOf(async () => {
+        const res = await post([
+          [PROJECT_HEADER, projectId],
+          ["X-Genealogy-Turn-Id", "t1"],
+          ["X-Genealogy-Claim-Epoch", "1"],
+          ["Authorization", `Bearer ${BEARER}`],
+        ]);
+        status = res.status;
+        body = await res.json();
+      });
+      expect(status).toBe(503);
+      expect(body).toEqual({
+        jsonrpc: "2.0",
+        error: { code: -32603, message: "Project authorization is unavailable." },
+        id: null,
+      });
+      expect(bindStore).not.toHaveBeenCalled();
+      expect(logged).toContain("error=ECONNREFUSED");
+      expect(logged).not.toMatch(/db\.internal|secret-bearer-sentinel/);
+    });
+
+    it("a request with no project header never calls authorize; a malformed one is a 400 first", async () => {
+      authorize.mockClear();
+      const store = await post([["Authorization", `Bearer ${BEARER}`]]);
+      expect(store.status).toBe(200);
+      await store.text();
+      const malformed = await post([[PROJECT_HEADER, "p/q"]]);
+      expect(malformed.status).toBe(400);
+      await malformed.text();
+      const badFence = await post([[PROJECT_HEADER, `door-${randomUUID()}`], ["X-Genealogy-Turn-Id", "t1"]]);
+      expect(badFence.status).toBe(400);
+      await badFence.text();
+      expect(authorize).not.toHaveBeenCalled();
+    });
+  });
+
   it("3. a FamilySearch tool with no Authorization header gets the hosted reauth text, never the desktop one", async () => {
     const client = await connect();
     const result = await client.callTool({
@@ -451,6 +595,7 @@ describe("tool server over Streamable HTTP", () => {
       port: 0,
       baseConfig: {},
       bindStore,
+      authorize,
       checkReady: () => probe(),
     });
     const address = ready.address();
