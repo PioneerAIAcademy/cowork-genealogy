@@ -382,7 +382,7 @@ it searches (`applyAltNameAutoPair`), so a log naming that half is true.
 | `stagedResultsRef` does not resolve under `projectPath/results/.staging/` | input error; write nothing |
 | `stagedResultsRef` names no staged file — already logged by an earlier successful call, pruned after 24h, or never staged | input error, raised before any op is applied; write nothing. The message says each staged ref can be logged once: do not log it again if the search already has an entry, otherwise re-run the search |
 | a batch names one `stagedResultsRef` in two ops | input error `ops[j]: stagedResultsRef '…' is also ops[i]'s`, raised before any op is applied; write nothing. Compared on the resolved path, so two spellings of one file collide |
-| `notes` states the household structure of a census that carries no relationship-to-head column, without hedging it — the census the note names, or, for a `record_search` entry, the one its staged response shows | input error; write nothing, and in a batch no op's staged file is consumed. The message names the missing column and quotes a compliant rewording, so the caller can re-send. See §8.2 |
+| `notes` states the household structure of a census that carries no relationship-to-head column, without hedging it — the census the note names, or, for a `record_search` entry, the one its staged response shows; a staged `record_search` or `record_read` response whose titles are all British also supplies the jurisdiction of a census the note names without one | input error; write nothing, and in a batch no op's staged file is consumed. The message names the missing column and quotes a compliant rewording, so the caller can re-send. See §8.2 |
 | an explicit `query` on a staged `record_search` or `fulltext_search` entry names a filter key, with a value, that the staged search never sent | input error; write nothing, and in a batch no op's staged file is consumed. The message names each key and the value the call claimed, and says how to re-send: drop the key, omit `query` so the tool fills it, or re-run the search with the filter. No override. See §8.3 |
 
 ### 8.1 Non-blocking warnings (never fail the op)
@@ -473,8 +473,9 @@ Scope, and why it is this narrow:
   row starts with a British name (England, Wales, Scotland, Great Britain, United
   Kingdom — so not "New England" or "British Columbia"), an unqualified mention
   takes the 1851 threshold. A mention that names its own jurisdiction keeps it,
-  and "US", "U.S.", "United States", "federal", "census of the U.S." and
-  "pre-1880 census" all name the US. Anything else — a US row, a mixed payload,
+  and "US", "U.S.", "USA", "United States", "federal", "census of the U.S." and
+  any `pre-<year>` or `before <year>` census all name the US — so "pre-1851
+  census" against English rows still reads as US, as it does on `main`. Anything else — a US row, a mixed payload,
   another jurisdiction, no titles — changes nothing. This supplies the
   jurisdiction; it does not skip the check, so an 1841 mention against English
   rows stays refused ("still refuses an 1841 England census" in
@@ -736,7 +737,8 @@ is 3.4% of notes, and non-US censuses that carry the column are excluded. The
 staged search answers most of the third for `record_search`: the census is read
 from FamilySearch's response, not from the caller. What still stands is the
 reach: a note logged by any other tool, or with no staged response, is judged on
-its own text alone and keeps every limit above — chiefly that an unbound census
+its own text alone (a staged `record_read` only supplies the jurisdiction of an
+unqualified mention, never the census year) and keeps every limit above — chiefly that an unbound census
 year skips the rule. This narrows a common failure rather than closing a hole.
 
 The trigger word was the same hole, and more broadly. On note text alone the

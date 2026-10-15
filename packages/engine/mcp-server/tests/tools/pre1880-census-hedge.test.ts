@@ -869,6 +869,7 @@ describe("the staged payload supplies an unqualified mention's jurisdiction (#34
     "1860 census of the United States, Ohio: John Smith with wife Mary.",
     "1860 census of the U.S. John Smith with wife Mary.",
     "Pre-1880 census: John Smith with wife Mary.",
+    "1860 census for the USA: John Smith with wife Mary.",
   ])("keeps a US-worded mention US against a British payload (%#)", (n) => {
     expect(gate(n, 1851)).toThrow(/pre-1880 US census/);
   });

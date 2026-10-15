@@ -382,7 +382,10 @@ function supersededPlanItemRefusal(research: any, planItemId: string): string | 
  * are not.
  */
 type CensusMention = { year: number; columnFrom: number };
-/** A mention, plus whether it named its own jurisdiction (US included). */
+/** A mention, plus whether it is explicitly US-worded: "US", "U.S.", "USA",
+ *  "United States", "federal", "census of the U.S.", or a `pre-`/`before` year.
+ *  A British-qualified mention stays false: the payload can only supply 1851,
+ *  the threshold it already has. */
 type QualifiedMention = CensusMention & { qualified: boolean };
 
 const CENSUS_YEAR = String.raw`1[6-9]\d\d`;
@@ -459,8 +462,9 @@ function qualifiedMentions(notes: string): QualifiedMention[] {
     // 1880 it skipped the whole note: a ut_search_records_027 roster saying
     // "(pre-1880 census)" passed whatever else it asserted.
     const before = /\b(?:pre[-\s]?|before\s+)$/i.test(notes.slice(Math.max(0, m.index - 7), m.index));
-    // The `of|for` capture stops at a period, so "census of the U.S." is read here.
-    const usAfter = /^\s*(?:of|for)\s+(?:the\s+)?(?:u\.?\s?s\b|united\s+states\b)/i.test(post);
+    // The `of|for` capture stops at a period, so "census of the U.S." is read
+    // here, and so is "census for the USA".
+    const usAfter = /^\s*(?:of|for)\s+(?:the\s+)?(?:u\.?\s?s(?:\.?a)?\b|united\s+states\b)/i.test(post);
     push(m[1], m[2] ?? "", /^\s*(?:of|for)\s+([A-Za-z&\s]{0,20})/.exec(post)?.[1] ?? "", before, usAfter);
   }
   for (const m of notes.matchAll(CENSUS_AFTER)) push(m[2], m[1] ?? "", "");

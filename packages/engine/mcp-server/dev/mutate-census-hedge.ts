@@ -105,6 +105,7 @@ const MUTATIONS: readonly (readonly [string, string, string])[] = [
   ["qualified: pre-1880 is US", "const qualified = before || usAfter ||", "const qualified = usAfter ||"],
   ["qualified: census of the U.S.", "const qualified = before || usAfter ||", "const qualified = before ||"],
   ["qualified: united states", "(?:u\\.?\\s?s|united\\s+states|federal)\\b/i;", "(?:u\\.?\\s?s|federal)\\b/i;"],
+  ["qualified: USA", "(?:u\\.?\\s?s(?:\\.?a)?\\b|united", "(?:u\\.?\\s?s\\b|united"],
   ["payload: qualified kept", "!m.qualified && payloadColumnFrom !== undefined", "payloadColumnFrom !== undefined"],
   ["payload: sd_c_ only", '&& s.id.startsWith("sd_c_")', ""],
   ["payload: British wording", "fired.every((m) => m.columnFrom === 1851)", "false"],
