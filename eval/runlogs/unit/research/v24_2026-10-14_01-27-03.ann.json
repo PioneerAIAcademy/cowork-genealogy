@@ -131,20 +131,20 @@
       "comment": "The mother's identification was not found only the father."
     },
     {
-      "test_id": "ut_research_h7w",
-      "dimension_source": "base",
-      "dimension_name": "Correctness",
-      "llm_score": 3,
-      "corrected_score": 1,
-      "comment": "The agent's reply invents the label \"New York parent set\" for James Tarrant Sr. and Jane Burch (I4/I5) and recommends searching New York records for them, but nothing in the scenario places either person in New York; both were born in Virginia. Fabricated geographic characterization contradicting the source material overrides the correct routing decision. Per Edmond's review."
-    },
-    {
       "test_id": "ut_research_018",
       "dimension_source": "base",
       "dimension_name": "Correctness",
       "llm_score": 3,
       "corrected_score": 3,
       "comment": null
+    },
+    {
+      "test_id": "ut_research_h7w",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 1,
+      "comment": "The New York label itself is the patron's framing from the test message and is not the defect. The defect is that the reply states \"The New York parent set (James Tarrant Sr. & Jane Burch, I4/I5) has zero evidentiary support in the project files\" directly beside a table of evidence for Samuel (1792 deed, 1810 census, pension index). That compares the two sets and favours one before any hypothesis exists, when the router's job here is to hand both sets to hypothesis-tracking without weighing them. The judge credited this line as correct; it is the reason for the 1."
     }
   ]
 }

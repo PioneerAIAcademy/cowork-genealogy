@@ -176,7 +176,7 @@
       "dimension_name": "Correctness",
       "llm_score": 3,
       "corrected_score": 1,
-      "comment": "The agent's reply invents the label “New York line” for James Tarrant Sr. and Jane Burch (I4/I5) and recommends searching New York deed/tax records for them, but nothing in the scenario places either person in New York—both were born in Virginia. Fabricated geographic characterization contradicting the source material overrides the correct routing decision. Per Edmond’s review."
+      "comment": "The New York label for I4/I5 comes from the patron's framing in the test message and is not itself the defect. The defect is that the reply sends the researcher to \"Virginia and New York deed/tax records for each candidate parent family\", directing a search for I4/I5 in New York when the tree has both born in Virginia. That treats the patron's framing as evidence about that parent set, which the judge context says to penalize, so Correctness stays at 1."
     }
   ]
 }
