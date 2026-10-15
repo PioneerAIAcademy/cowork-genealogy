@@ -18,6 +18,18 @@ export interface KnownChild {
 export interface CensusChildrenGapInput {
   censuses: CensusChildCounts[];
   knownChildren?: KnownChild[];
+  /** Tree mode: with `motherId`, the tool reads her children from the project's tree. */
+  projectPath?: string;
+  /** A tree person id or a FamilySearch id a tree person's `ark` links to. */
+  motherId?: string;
+}
+
+/** A child the tool read from the tree, with the GEDCOM dates it used. */
+export interface TreeChildUsed {
+  personId: string;
+  name: string;
+  birth: string | null;
+  death: string | null;
 }
 
 export type CensusStatus = "dead" | "living" | "not_born" | "unknown";
@@ -66,5 +78,9 @@ export type CensusChildrenGapResult =
       conflicts: CensusConflict[];
       undetermined: UndeterminedCensus[];
       assumptions: string[];
+      /** Tree mode only. */
+      mother?: { personId: string; name: string };
+      /** Tree mode only. */
+      knownChildrenUsed?: TreeChildUsed[];
     }
-  | { ok: false; errors: string[] };
+  | { ok: false; reason?: "no_project"; errors: string[] };

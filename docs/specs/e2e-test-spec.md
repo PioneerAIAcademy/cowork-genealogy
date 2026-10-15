@@ -608,7 +608,8 @@ the production code path.
 here:
 
 - It primes the agent on the GPS workflow (question-selection →
-  research-plan → search-records → record-extraction →
+  research-plan → search-records → `extraction_append` (text sources via
+  `record-structurer`) →
   conflict-resolution → proof-conclusion, iterating as needed)
 - It instructs the agent to read `research.json` and decide the
   next sub-skill based on state
@@ -786,7 +787,7 @@ the `max_cost_usd` note in §6 step 5.
    run's effort level, repinning that agent — its model, its effort, or both —
    is the change that does not move every other step too. **When the repin below
    was made, effort was believed to be session-wide, so the model was the only
-   lever available; it is not any more.** `record-extractor` was repinned `claude-sonnet-5`
+   lever available; it is not any more.** `record-extractor` (since retired) was repinned `claude-sonnet-5`
    → `claude-sonnet-4-6` on 2026-07-18 for exactly this: sonnet-5 hangs as a
    subagent at Cowork/e2e `effortLevel: high` — adaptive-thinking runaway, not a
    model defect, and fine at default effort. Capping its output at 8k instead was
@@ -1054,38 +1055,44 @@ answer reachable only via the tree will fail and the fixture won't validate.
 
 ### 6.1.1 Main-thread subagent-only tool block
 
-The same `PreToolUse` hook enforces the per-context tool policy in e2e: neither
-member of `SUBAGENT_ONLY_TOOLS` (`extraction_append`, `image_read`) may be called
-on the main thread. Each is a Task-spawned subagent's private tool (writing
-extracted assertions and sources for `record-extractor`; returning a page scan
-for the image reader); a main-thread call is the router substituting for a
+The same `PreToolUse` hook enforces the per-context tool policy in e2e: no
+member of `SUBAGENT_ONLY_TOOLS` — today just `image_read` — may be called
+on the main thread. It is a Task-spawned subagent's private tool (returning a
+page scan as inline base64); a main-thread call is the router substituting for a
 *failed* spawn and doing the work itself — a shape observed in production.
 
-The discriminator is `agent_id` alone: **no skill declares `extraction_append`**
-in its `allowed-tools` — it lives only on `agents/record-extractor.md` — so the
-subagent is its only legitimate caller and every legitimate call carries
-`agent_id`. The unit harness's third clause (the skill declared the tool itself)
-can never fire for it. The block keys on `SUBAGENT_ONLY_TOOLS` membership
+**`extraction_append` is no longer in this set.** Extraction of a
+FamilySearch-indexed record runs as code called from the main thread, and
+`research/SKILL.md` declares the tool in its own `allowed-tools`, so a deny
+would refuse the shipped route on every e2e run. The guard that retired with it
+— catching the router substituting for a failed delegated spawn on the
+unindexed path (now `record-structurer`) — is on the `nothing-checks` register
+(`docs/architecture.md` §9.4 keeps that register as a label, not a table).
+
+The discriminator is `agent_id` alone: **no skill declares `image_read`** in its
+`allowed-tools`, so a delegated subagent is its only legitimate caller and every
+legitimate call carries `agent_id`. The unit harness's third clause (the skill
+declared the tool itself) can never fire for it. The block keys on
+`SUBAGENT_ONLY_TOOLS` membership
 (`is_main_thread_subagent_only_tool`) rather than the full per-skill
 `subagent_only_violation`, which takes a `declared_tools` argument e2e cannot
 supply. So e2e carries no declared-tools exemption: a future skill that
 legitimately declares a guarded tool would be denied here too, and closing
 that needs the predicate widened by hand.
 
-Both members are enforced. Neither `extraction_append` nor `image_read` is
-declared by any skill — `image_read` is declared by no agent at all since
-the `image-reader-opus` agent was retired
+Every member is enforced. The one member, `image_read`, is
+declared by no skill and by no agent at all since
+the `image-reader-opus` agent was retired, and
 since `search-images` moved to `@plugin:image-reader` (2026-07-17) — so `agent_id`
-presence alone discriminates for each, and a third tool added to the set is
+presence alone discriminates for it, and a second tool added to the set is
 covered here automatically.
 
 Semantics match the tree block — the denied call doesn't run, doesn't count
 toward the cap, and doesn't stop the run. Here, continuing is the **intended**
-response: the denial reason names a reachable recovery — delegate the record to
-`@plugin:record-extractor`, and if that spawn fails again on the same record, skip
-it and note it in the run summary — not an unreachable "stop" the Stop hook would
-override anyway. The router must never extract the record itself or retry another
-way (a deny that leaves the goal in place just relocates the substitution). Denied attempts are
+response: the denial reason names a reachable recovery — delegate the read to
+`@plugin:image-reader`, which returns a text transcription — not an unreachable
+"stop" the Stop hook would override anyway. The router must never read the scan
+itself or retry another way (a deny that leaves the goal in place just relocates the substitution). Denied attempts are
 recorded in a separate `blocked_context_calls` array
 (`{tool, args, blocked_by: "context"}`), kept apart from `blocked_tree_reads`
 because this is a write denied by a different guard.
@@ -1109,7 +1116,8 @@ could never satisfy.
 
 This guard covers only the *main-thread* half of the `extraction_append`
 policy. The complementary *delegate* half — a general-purpose or otherwise
-unnamed subagent (anything but `record-extractor`) making the write — is caught
+unnamed subagent (anything but `record-structurer`, or the retired
+`record-extractor` on a replayed run) making the write — is caught
 post-hoc by `find_protected_writes_by_unnamed_delegate`
 (guardrail-enforcement-spec §11). That detector lists a main-thread
 call among its "legitimate" cases, but only as an attribution class (a
@@ -1124,7 +1132,7 @@ The two halves are not enforced alike, and the difference matters when reading a
 run: the main-thread half is **denied**, the delegate half is only **logged**.
 `protected_writes_by_unnamed_delegate` is shadow-mode — deliberately not read by
 `E2eResult.__post_init__`, so it never moves the compliance axis until its
-false-positive rate is calibrated. A non-`record-extractor` delegate's
+false-positive rate is calibrated. A non-`record-structurer` delegate's
 `extraction_append` therefore still succeeds today; it is recorded, not blocked.
 The same detector now also records such a delegate's `research_append` to
 `sources` or `assertions` — the same protected write by another door
@@ -1929,7 +1937,7 @@ editing one unreadable line, and it had already accreted a duplicated clause.
 | `judge_output` | `per_finding`, `recall_required`, `recall_total`, `rationale`. Empty when the judge was skipped. |
 | `tool_calls[]` | Every tool call attempted — not just `mcp__`-prefixed. Each entry `{ tool, args, response_summary, result_chars, is_error, agent_id, agent_type }`. Main-stream entries are in chronological order; a **background** subagent's calls are appended after them from its transcript, so the array is **not** chronological across agents. See 8.1.1. |
 | `blocked_tree_reads[]` | Attempts the PreToolUse hook denied, each `{ tool, args, blocked_by }` with `blocked_by` ∈ `tree` / `fixture` / `shell` / `path`; the `shell` and `path` entries (the §6.1 opt-in filesystem denials) also carry `reason`, and `path` entries the resolved `path`. The *structured* record of a denial — read `blocked_by` from here. §6.1. |
-| `blocked_context_calls[]` | Calls the per-context policy refused: a `SUBAGENT_ONLY_TOOLS` tool (`extraction_append`, `image_read` — §6.1.1), **or** an owned-section `research_append` write (§6.1.2). `blocked_by` is `"context"` for both, so only `tool` discriminates which guard fired; every entry in the committed corpus is the latter. Same entry shape, `blocked_by: "context"`. Separate from `blocked_tree_reads[]` because it is denied by a different guard. §6.1.1, §6.1.2. |
+| `blocked_context_calls[]` | Calls the per-context policy refused: a `SUBAGENT_ONLY_TOOLS` tool (`image_read` — §6.1.1; `extraction_append` was the other, until indexed-record extraction moved to a main-thread call), **or** an owned-section `research_append` write (§6.1.2). `blocked_by` is `"context"` for both, so only `tool` discriminates which guard fired; every entry in the committed corpus is the latter. Same entry shape, `blocked_by: "context"`. Separate from `blocked_tree_reads[]` because it is denied by a different guard. §6.1.1, §6.1.2. |
 | `narration[]` | The agent's prose between tool calls, each `{ tool_calls_before, kind, text }` — plus `thread` (`main` / `sub`) on `assistant` entries from `harness_schema_version` 8, since a subagent's own messages stream through the same branch. The nine `harness` / `blocked` append sites have no message in scope and carry no `thread`, so select on `kind == "assistant"` **and** `thread == "main"`, never on the absence of the key. `kind` in `assistant` / `blocked` / `harness`. `tool_calls_before` is a **count, not an index**: N means the entry sits between `tool_calls[N-1]` and `tool_calls[N]`, and 0 means before any tool call. |
 | `usage` | Tokens, cost, duration. See 8.1.2 for the fallback shape. |
 | `usage_source` | `result_message` (the SDK's `ResultMessage` arrived — authoritative, except on a run with more than one query, where its tokens, turns and `duration_ms` cover the last query and its cost and `duration_api_ms` the last CLI process, §8.1.5) or `streamed_fallback` (it did not). |

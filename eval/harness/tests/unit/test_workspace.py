@@ -27,12 +27,11 @@ def test_stateless_workspace_has_no_research_json(tmp_path):
     assert ws == tmp_path
     assert not (ws / "research.json").exists()
     assert not (ws / "tree.gedcomx.json").exists()
-    # Skills always copied. `record-extraction` rather than `search-wikipedia`:
-    # issue #2795 deleted the latter's directory, and the lead's 2026-09-22
-    # ruling names `research` and `record-extraction` as the two skills that
-    # never convert, so this assertion cannot rot out from under the next
-    # conversion card.
-    assert (ws / ".claude/skills/record-extraction/SKILL.md").exists()
+    # Skills always copied. `research` rather than `search-wikipedia` or
+    # `record-extraction`: both directories were deleted, and `research` is the
+    # orchestrator the lead's 2026-09-22 ruling keeps as a skill, so this
+    # assertion cannot rot out from under the next conversion card.
+    assert (ws / ".claude/skills/research/SKILL.md").exists()
 
 
 def test_workspace_stages_plugin_agents(tmp_path):
@@ -217,8 +216,8 @@ def test_workspace_isolated_per_call(tmp_path):
     build_workspace(None, SCENARIOS, PLUGIN_SKILLS, target_dir=ws2)
     # Both have skills, neither has the other's state. See the note in
     # test_stateless_workspace_has_no_research_json on the skill chosen.
-    assert (ws1 / ".claude/skills/record-extraction").exists()
-    assert (ws2 / ".claude/skills/record-extraction").exists()
+    assert (ws1 / ".claude/skills/research").exists()
+    assert (ws2 / ".claude/skills/research").exists()
     (ws1 / "marker.txt").write_text("a", encoding="utf-8")
     assert not (ws2 / "marker.txt").exists()
 

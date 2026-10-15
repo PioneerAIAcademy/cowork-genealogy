@@ -168,7 +168,11 @@ type FilterKey =
  *  `extracted_for_question_ids`, a hypothesis's `supporting_assertion_ids`).
  *  `plan-question` is a cross-section filter: the item's `field` must be one of
  *  the item ids of the plans whose `question_id` is the value — it lets one
- *  `log` call replace the walk of one `planItemId` call per plan item (T2.1). */
+ *  `log` call replace the walk of one `planItemId` call per plan item (T2.1).
+ *  `question-conflict` is the other cross-section filter: a conflict matches
+ *  when its `blocks_question_ids` names the question, or when one of its
+ *  `competing_assertion_ids` is an assertion whose `extracted_for_question_ids`
+ *  names it — the link the completion gate derives (`question-state.ts`). */
 interface FilterRule {
   field?: string;
   fields?: string[];
@@ -178,7 +182,8 @@ interface FilterRule {
     | "contains-any"
     | "place-or-enclosing"
     | "contains-substring-ci"
-    | "plan-question";
+    | "plan-question"
+    | "question-conflict";
 }
 
 /** Per-section allow-list of supported filter keys — the whole point of not
@@ -230,14 +235,11 @@ export const SECTION_FILTERS: Record<ResearchQuerySection, Partial<Record<Filter
   },
   conflicts: {
     assertionId: { field: "competing_assertion_ids", mode: "contains" },
-    // Narrower than the completion gate, deliberately: the gate also derives a
-    // block from the disputed assertions, so this filter reports no blocker for
-    // a question `research_append` refuses completion on. The mapping is an
-    // advertised contract (research-query-tool-spec.md §2.1); widening it is
-    // its own card. `proof-conclusion` is the consumer this bites — it reads
-    // conflicts this way before writing a tier `conflictedSourceInvariants`
-    // will refuse.
-    questionId: { field: "blocks_question_ids", mode: "contains" },
+    // Any status. A resolved conflict has emptied `blocks_question_ids`, and a
+    // caller asking what was settled for a question needs it still:
+    // ut_search_external_sites_013 filtered by questionId, got 0, and searched
+    // on the birthplace the resolved conflict had rejected.
+    questionId: { fields: ["blocks_question_ids", "competing_assertion_ids"], mode: "question-conflict" },
     status: { field: "status", mode: "exact" },
   },
   hypotheses: {
@@ -299,11 +301,17 @@ function placeAndEnclosing(place: string): string[] {
   return parts.map((_, i) => parts.slice(i).join(", "));
 }
 
-function matches(item: any, rule: FilterRule, value: string, planItems?: Set<string>): boolean {
+function matches(item: any, rule: FilterRule, value: string, scope?: Set<string>): boolean {
   const fields = rule.fields ?? (rule.field ? [rule.field] : []);
   if (rule.mode === "plan-question") {
     const id = item?.[fields[0]];
-    return typeof id === "string" && planItems !== undefined && planItems.has(id);
+    return typeof id === "string" && scope !== undefined && scope.has(id);
+  }
+  if (rule.mode === "question-conflict") {
+    const blocks = item?.[fields[0]];
+    if (Array.isArray(blocks) && blocks.includes(value)) return true;
+    const competing = item?.[fields[1]];
+    return Array.isArray(competing) && scope !== undefined && competing.some((id) => scope.has(id));
   }
   if (rule.mode === "exact") {
     return item && item[fields[0]] === value;
@@ -484,8 +492,28 @@ export async function researchQuery(input: ResearchQueryInput): Promise<Research
       planItemsFor.set(value, ids);
     }
 
+    // A `question-conflict` filter reads `assertions` once for the question's
+    // own assertion ids. A required section, so its absence is an error too.
+    const assertionsFor = new Map<string, Set<string>>();
+    for (const { rule, value } of activeFilters) {
+      if (rule.mode !== "question-conflict" || assertionsFor.has(value)) continue;
+      const assertions = research?.assertions;
+      if (!Array.isArray(assertions)) {
+        throw new ResearchQueryError("research.json 'assertions' is missing or not an array");
+      }
+      const ids = new Set<string>();
+      for (const a of assertions) {
+        if (typeof a?.id === "string" && Array.isArray(a?.extracted_for_question_ids) && a.extracted_for_question_ids.includes(value)) {
+          ids.add(a.id);
+        }
+      }
+      assertionsFor.set(value, ids);
+    }
+
     const filtered = arr.filter((item) =>
-      activeFilters.every(({ rule, value }) => matches(item, rule, value, planItemsFor.get(value))),
+      activeFilters.every(({ rule, value }) =>
+        matches(item, rule, value, rule.mode === "question-conflict" ? assertionsFor.get(value) : planItemsFor.get(value)),
+      ),
     );
 
     const start = input.offset ?? 0;
@@ -529,7 +557,8 @@ export const researchQuerySchema = {
     "(recordId, recordRole, sourceId, questionId — matches " +
     "extracted_for_question_ids, assertionId — matches the assertion's own id), " +
     "`person_evidence` (personId, assertionId), `conflicts` (assertionId — matches " +
-    "competing_assertion_ids, questionId — matches blocks_question_ids, status), " +
+    "competing_assertion_ids, questionId — matches blocks_question_ids or a competing " +
+    "assertion of that question, at any status; status), " +
     "`hypotheses` (questionId — matches " +
     "related_question_ids, assertionId — matches supporting/contradicting_assertion_ids, " +
     "status), `timelines` (personId — matches person_ids), `proof_summaries` " +
@@ -577,7 +606,8 @@ export const researchQuerySchema = {
         description:
           "questions/plans/proof_summaries: matches question_id (or id, for questions itself). " +
           "assertions: matches extracted_for_question_ids (contains). hypotheses: matches " +
-          "related_question_ids (contains). conflicts: matches blocks_question_ids (contains). " +
+          "related_question_ids (contains). conflicts: matches blocks_question_ids (contains), or " +
+          "a competing_assertion_ids entry whose extracted_for_question_ids contains it. " +
           "log: entries whose plan_item_id is an item of a plan for this question.",
       },
       personId: {
