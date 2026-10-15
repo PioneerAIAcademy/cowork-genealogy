@@ -467,7 +467,7 @@ def test_session_grants_every_registered_mcp_tool(tmp_path, monkeypatch):
             )
         ])
 
-    monkeypatch.setattr(sr, "query", fake_query)
+    monkeypatch.setattr(sr, "open_query", fake_query)
     asyncio.run(sr.run_skill(
         user_message="go",
         workspace=tmp_path,

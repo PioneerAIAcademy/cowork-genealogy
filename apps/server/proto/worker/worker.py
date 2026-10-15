@@ -109,7 +109,8 @@ FS_GRANT_MAX_START_AGE_S (26400) and FS_GRANT_WAIT_S (300) (U3, below);
 SQSD_MAX_RETRIES (0 = no last-receive close), SQSD_VISIBILITY_TIMEOUT_S,
 SQSD_RETENTION_PERIOD_S (unset = no backstop), SWEEP_INTERVAL_S (300; 0 = off),
 SHUTDOWN_GRACE_S (20) and LONG_AGENT_CALL_S (1500; 0 = off: U19's long-Agent alarm signal,
-checked in flight by the sweep). With QUEUE_URL set (and only then): GENEALOGY_SQS_ACCESS_KEY +
+checked in flight by the sweep); RETENTION_INTERVAL_S (0 = off) and RETENTION_SESSION_IDLE_S
+(U19, below; 0 = off, and a value under RETENTION_MIN_S is refused, not clamped). With QUEUE_URL set (and only then): GENEALOGY_SQS_ACCESS_KEY +
 GENEALOGY_SQS_SECRET_KEY (both or neither; neither signs with the default AWS chain, the
 instance profile on AWS; one alone exits 2) and GENEALOGY_SQS_REGION (else the QUEUE_URL
 host's region).
@@ -159,6 +160,12 @@ zero-progress counter, the transcript mirror, and the tool server's commit (the 
 ``X-Genealogy-Turn-Id``/``X-Genealogy-Claim-Epoch`` headers). A halt clause checks the
 epoch before every tool call. A superseded attempt answers 200 ``superseded`` and closes
 and releases nothing; the sweep's epoch-less close bumps the epoch, which is its expiry.
+
+Tool-server ownership (U4): the claim also clears ``turns.bearer_sha256``
+(``012_turn_bearer.sql``), and the attempt stamps the sha256 of its grant token there
+(``stamp_bearer``) after ``acquire_grant`` and before the CLI exists; a stamp that matches
+no open row at this epoch raises ``Superseded``. The tool server admits a project request
+only when its bearer hashes to the stamp on that open turn of that project, else 403.
 """
 
 from __future__ import annotations
@@ -167,6 +174,7 @@ import asyncio
 import contextlib
 import dataclasses
 import errno
+import hashlib
 import json
 import math
 import os
@@ -469,6 +477,24 @@ SWEEP_INTERVAL_S = env_int("SWEEP_INTERVAL_S", 300)
 # U26's 1,800 s run limit. 0 = off.
 LONG_AGENT_CALL_S = env_int("LONG_AGENT_CALL_S", 1500)
 SHUTDOWN_GRACE_S = _env_float("SHUTDOWN_GRACE_S", 20.0)
+
+
+def _retention_period(name: str) -> int:
+    """A retention period, 0 (off) unless set. One under RETENTION_MIN_S is REFUSED -- logged
+    and off -- never clamped: "90" meant as days would otherwise purge every session idle
+    90 s, and env_int's ``floor=`` would turn that typo into a 7-day purge without a word."""
+    value = env_int(name, 0)
+    if 0 < value < RETENTION_MIN_S:
+        log(ev="bad_env", name=name, value=str(value), using=0, floor=RETENTION_MIN_S)
+        return 0
+    return max(value, 0)
+
+
+# U19: retention, keyed on session INACTIVITY. Periods are placeholders until F17 sets them.
+RETENTION_MIN_S = 7 * 86400
+RETENTION_INTERVAL_S = env_int("RETENTION_INTERVAL_S", 0)
+RETENTION_SESSION_IDLE_S = _retention_period("RETENTION_SESSION_IDLE_S")
+RETENTION_BATCH = 20
 # The deferred last-receive releases run after the grace, inside their own budget: a
 # release starts only if its connect, queue-lock wait and SendMessage, each capped below, can finish
 # before ``started + SHUTDOWN_GRACE_S + RELEASE_BUDGET_S``. That sum is what compose's
@@ -531,13 +557,20 @@ CLAIM_TURN_SQL = (
     "outcome = CASE WHEN turns.outcome = %s AND turns.completed_at IS NULL THEN NULL "
     "ELSE turns.outcome END, "
     "claim_epoch = CASE WHEN turns.completed_at IS NULL THEN turns.claim_epoch + 1 "
-    "ELSE turns.claim_epoch END "
+    "ELSE turns.claim_epoch END, "
+    "bearer_sha256 = CASE WHEN turns.completed_at IS NULL THEN NULL ELSE turns.bearer_sha256 END "
     "FROM sessions WHERE turns.turn_id = %s AND turns.session_id = %s AND turns.project_id = %s "
     "AND sessions.session_id = turns.session_id AND sessions.project_id = turns.project_id "
     "RETURNING turns.message, turns.claim_epoch"
 )
 # U6: whether this attempt's epoch is still the turn's claim -- the halt clause's check.
 CLAIM_CURRENT_SQL = "SELECT 1 FROM turns WHERE turn_id = %s AND claim_epoch = %s"
+# U4: the sha256 of the bearer this attempt hands the CLI, on the open turn it still holds --
+# what the tool server's door matches. No row: a newer claim (or a close) moved the turn.
+STAMP_BEARER_SQL = (
+    "UPDATE turns SET bearer_sha256 = %s "
+    "WHERE turn_id = %s AND claim_epoch = %s AND completed_at IS NULL RETURNING 1"
+)
 UNKNOWN_TURN_ERROR = "no turn row matches this turn_id, session_id and project_id"
 
 
@@ -565,7 +598,11 @@ def claim(conn: psycopg.Connection, turn: dict, receive_count: int) -> Claim | N
     claim wins; the earlier attempt is fenced. A claim of an OPEN row mints the next
     ``claim_epoch`` (the row lock serialises racing claims, so epochs are distinct and
     increase); a claim of a closed row keeps the closer's, so the closer's trailing
-    transcript flush is not fenced out by a late duplicate."""
+    transcript flush is not fenced out by a late duplicate.
+
+    U4: the same UPDATE clears an open row's ``bearer_sha256``, so the older attempt's
+    token stops passing the tool server's door; this attempt passes once ``stamp_bearer``
+    has stamped its own grant."""
     if is_real_turn(turn["message"]) or not dev_paths(os.environ):
         with conn.cursor() as cur:
             cur.execute(CLAIM_TURN_SQL, (receive_count, QUEUED_OUTCOME, turn["turn_id"],
@@ -590,7 +627,9 @@ def claim(conn: psycopg.Connection, turn: dict, receive_count: int) -> Claim | N
             "outcome = CASE WHEN turns.outcome = %s AND turns.completed_at IS NULL THEN NULL "
             "ELSE turns.outcome END, "
             "claim_epoch = CASE WHEN turns.completed_at IS NULL THEN turns.claim_epoch + 1 "
-            "ELSE turns.claim_epoch END "
+            "ELSE turns.claim_epoch END, "
+            "bearer_sha256 = CASE WHEN turns.completed_at IS NULL THEN NULL "
+            "ELSE turns.bearer_sha256 END "
             "RETURNING claim_epoch",
             (
                 turn["turn_id"],
@@ -612,6 +651,14 @@ def claim_current(conn: psycopg.Connection, turn_id: str, epoch: int) -> bool:
     sweep's close, has moved it."""
     with conn.cursor() as cur:
         cur.execute(CLAIM_CURRENT_SQL, (turn_id, epoch))
+        return cur.fetchone() is not None
+
+
+def stamp_bearer(conn: psycopg.Connection, turn_id: str, epoch: int, token: str) -> bool:
+    """Stamp the sha256 of ``token`` -- the bearer this attempt hands the CLI -- on the turn
+    (U4), the tool server's door key. False when ``epoch`` no longer holds the open turn."""
+    with conn.cursor() as cur:
+        cur.execute(STAMP_BEARER_SQL, (hashlib.sha256(token.encode()).hexdigest(), turn_id, epoch))
         return cur.fetchone() is not None
 
 
@@ -2173,6 +2220,11 @@ async def _run_turn(
             return {"seq": seq, "outcome": SIGNIN_REQUIRED_OUTCOME, "cause": held.cause,
                     "released_turn": released, "resumed": False}
 
+        # U4: the tool server admits only the bearer stamped on this open turn, so stamp the
+        # grant before any CLI bears it. No row: a newer claim holds the turn.
+        if not stamp_bearer(conn, turn_id, turn["claim_epoch"], held.token):
+            raise Superseded(f"turn {turn_id}: claim epoch {turn['claim_epoch']} superseded before the bearer stamp")
+
         # The id was chosen at claim time (serve_real_turn); the store decides which of
         # the two mutually exclusive CLI flags carries it.
         resume = sdk_session_id if await store.has_entries(sdk_session_id) else None
@@ -3039,6 +3091,106 @@ def start_sweep(
     return thread
 
 
+# -- retention (U19) -----------------------------------------------------------
+#
+# session_entries is live state, not a log: the SDK resumes from it (D17) and the spend cap
+# sums it (1e). Deleting a session's rows while it can still take a message breaks its
+# resume and restarts its cap at zero. So a session's transcript, events and tool calls go
+# only when the SESSION is idle -- no turn open (running or held) and no message, rename or
+# turn end inside the period -- never by a row's own age, and the session is marked
+# ``retired_at`` in the same transaction, so admit_message refuses it a new message (410).
+# Its sessions row, turns and project documents stay. tool_calls has no clock of its own
+# either (user ruling 2026-10-13): it is the session's change history (#3262's change
+# review reads it), so it lives exactly as long as the session.
+
+RETENTION_CANDIDATE_SQL = (
+    "SELECT s.session_id, s.sdk_session_id FROM sessions s "
+    "WHERE s.retired_at IS NULL AND s.updated_at < now() - make_interval(secs => %(idle)s) "
+    "AND NOT EXISTS (SELECT 1 FROM turns t WHERE t.session_id = s.session_id "
+    "AND (t.completed_at IS NULL OR t.completed_at >= now() - make_interval(secs => %(idle)s))) "
+    "AND NOT (s.session_id = ANY(%(skip)s::text[])) "
+    "ORDER BY s.updated_at LIMIT 1 FOR UPDATE OF s SKIP LOCKED"
+)
+# The same predicate for one session, asked again under its queue lock: a fresh statement
+# under READ COMMITTED sees a message admitted after the candidate SELECT's snapshot.
+RETENTION_RECHECK_SQL = (
+    "SELECT 1 FROM sessions s WHERE s.session_id = %(sid)s AND s.retired_at IS NULL "
+    "AND s.updated_at < now() - make_interval(secs => %(idle)s) "
+    "AND NOT EXISTS (SELECT 1 FROM turns t WHERE t.session_id = s.session_id "
+    "AND (t.completed_at IS NULL OR t.completed_at >= now() - make_interval(secs => %(idle)s)))"
+)
+RETIRE_SQL = "UPDATE sessions SET retired_at = now() WHERE session_id = %s AND retired_at IS NULL"
+# What retention purges: grants.SESSION_TABLES, which delete_session clears too, minus turns.
+RETENTION_PURGE_TABLES = tuple(t for t in grants.SESSION_TABLES if t != "turns")
+
+
+def retire_sessions(conn: psycopg.Connection, idle_s: int) -> list[str]:
+    """Retire and purge up to RETENTION_BATCH idle sessions, one per transaction."""
+    retired: list[str] = []
+    skip: list[str] = []
+    for _ in range(RETENTION_BATCH):
+        if SHUTDOWN.is_set():
+            break
+        with conn.cursor() as cur:
+            cur.execute(RETENTION_CANDIDATE_SQL, {"idle": idle_s, "skip": skip})
+            row = cur.fetchone()
+            if row is None:
+                conn.commit()
+                break
+            session_id, sdk_session_id = row
+            cur.execute(grants.QUEUE_TRY_LOCK_SQL, (grants.QUEUE_LOCK_NS, session_id))
+            locked = cur.fetchone()[0]
+            if locked:
+                cur.execute(RETENTION_RECHECK_SQL, {"sid": session_id, "idle": idle_s})
+                locked = cur.fetchone() is not None
+            if not locked:
+                # A message, a delete or a release holds the session: leave it for a later pass.
+                conn.rollback()
+                skip.append(session_id)
+                continue
+            cur.execute(RETIRE_SQL, (session_id,))
+            cur.execute(grants.TRANSCRIPT_DELETE_SQL, (grants.transcript_ids(session_id, sdk_session_id),))
+            for table in RETENTION_PURGE_TABLES:
+                cur.execute(f"DELETE FROM {table} WHERE session_id = %s", (session_id,))  # noqa: S608 - fixed names
+        conn.commit()
+        retired.append(session_id)
+    return retired
+
+
+def retention_once(*, connect=pg_connect, idle_s: int | None = None) -> dict[str, Any]:
+    """One retention pass; logs ``ev=retention`` when anything went."""
+    idle_s = RETENTION_SESSION_IDLE_S if idle_s is None else idle_s
+    result: dict[str, Any] = {"retired": []}
+    if idle_s > 0:
+        with connect(PG_DSN) as conn:
+            result["retired"] = retire_sessions(conn, idle_s)
+    if result["retired"]:
+        log(ev="retention", **result)
+    return result
+
+
+def start_retention(*, interval: float | None = None, idle_s: int | None = None) -> threading.Thread | None:
+    """The retention thread, started only when ``RETENTION_INTERVAL_S`` > 0 and a period is
+    set. Its own toggle, not the dead-letter sweep's: that one is off wherever sqsd's settings
+    are unset, and base compose keeps both off -- its database holds the transcripts the
+    acceptance tools read."""
+    interval = RETENTION_INTERVAL_S if interval is None else interval
+    idle_s = RETENTION_SESSION_IDLE_S if idle_s is None else idle_s
+    if interval <= 0 or idle_s <= 0:
+        return None
+
+    def loop() -> None:
+        while not SHUTDOWN.wait(interval):
+            try:
+                retention_once(idle_s=idle_s)
+            except Exception as exc:  # noqa: BLE001 - the next pass tries again
+                log(ev="retention_failed", error=f"{type(exc).__name__}: {exc}")
+
+    thread = threading.Thread(target=loop, daemon=True, name="retention")
+    thread.start()
+    return thread
+
+
 # -- HTTP ----------------------------------------------------------------------
 
 
@@ -3211,11 +3363,14 @@ def main() -> None:
     # `schema` pending until it lands.
     start_schema_thread()
     sweeper = start_sweep()
+    retainer = start_retention()
     log(ev="start", port=server.server_address[1], pg_dsn=PG_DSN.split("@")[-1], cwd=WORKER_CWD,
         provider=provider, dev_paths=dev_paths(os.environ),
         sqsd_max_retries=SQSD_MAX_RETRIES, sqsd_visibility_timeout_s=SQSD_VISIBILITY_TIMEOUT_S,
         sqsd_retention_period_s=SQSD_RETENTION_PERIOD_S, sweep_interval_s=SWEEP_INTERVAL_S,
-        sweep=sweeper is not None, shutdown_grace_s=SHUTDOWN_GRACE_S,
+        sweep=sweeper is not None, retention=retainer is not None,
+        retention_interval_s=RETENTION_INTERVAL_S, retention_session_idle_s=RETENTION_SESSION_IDLE_S,
+        shutdown_grace_s=SHUTDOWN_GRACE_S,
         tmpdir=tempfile.gettempdir(), tmpdir_free_mb=tmpdir_free_mb(), hook_python=hook_python,
         fs_token_key=grants.key_mode(os.environ), grant_max_start_age_s=FS_GRANT_MAX_START_AGE_S,
         grant_wait_s=FS_GRANT_WAIT_S, turn_users=pool_names,
