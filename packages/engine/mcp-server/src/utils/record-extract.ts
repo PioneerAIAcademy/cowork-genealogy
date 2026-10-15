@@ -679,14 +679,17 @@ function classify(
     // ruling 2026-10-14, issue #3410). A party may have been an infant when the
     // parent they name died.
     if (family === "principal" || family === "spouse") {
-      const ownOrigin = factType === "birth" || factType === "age" || relationshipType === "child";
+      const ownOrigin =
+        /^(birth|birth_?(date|year|place)|birthplace|age)$/.test(factType ?? "") || relationshipType === "child";
       return {
         informant: "the party",
         informant_proximity: "self",
         information_quality: ownOrigin ? "secondary" : "primary",
       };
     }
-    if (family === "parent") {
+    // A document's stated "father" with no parent_child edge is numbered
+    // `father_1`, not `father_of_groom`.
+    if (family === "parent" || /(father|mother)_\d+$/.test(role)) {
       return {
         informant: "the party",
         informant_proximity: "self",

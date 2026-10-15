@@ -323,6 +323,42 @@ describe("extraction_append: documents", () => {
     expect(await roleOf("James Gallagher")).toBe("father_of_bride");
   });
 
+  it("marriage: a party's birth facts and a parent named without an edge are self/secondary (#3410)", async () => {
+    const doc = {
+      recordType: "marriage",
+      documentForm: "verbatim_transcript",
+      source: { title: "Marriage register, St James, Trowbridge", repository: "Wiltshire Record Office" },
+      persons: [
+        {
+          id: "m1", principal: true, gender: "male", names: [{ given: "Thomas", surname: "Purnel" }],
+          facts: [
+            { type: "marriage", date: "1844", place: "Trowbridge, Wiltshire" },
+            { type: "Birth Year", value: "1825" },
+            { type: "birthplace", value: "Trowbridge" },
+            { type: "occupation", value: "labourer" },
+          ],
+        },
+        { id: "m2", principal: true, gender: "female", names: [{ given: "Ann", surname: "Cook" }], facts: [] },
+        { id: "m3", gender: "male", statedRelation: "father", names: [{ given: "Thomas", surname: "Purnel" }], facts: [] },
+        { id: "m4", gender: "male", statedRelation: "groom's father", names: [{ given: "John", surname: "Cook" }], facts: [] },
+      ],
+      relationships: [{ type: "couple", person1: "m1", person2: "m2" }],
+    };
+    const r = await run([{ recordId: "capture:marriage-purnel", document: doc }]);
+    expect(r.ok, JSON.stringify(r)).toBe(true);
+    const as = await assertionsFor("capture:marriage-purnel");
+    const q = (pred: (a: any) => boolean) => {
+      const a = as.find(pred);
+      expect(a, JSON.stringify(as.map((x: any) => [x.record_role, x.fact_type, x.value]))).toBeDefined();
+      return `${a.informant_proximity}/${a.information_quality}`;
+    };
+    expect(q((a) => a.record_role === "groom" && a.fact_type === "birth_year")).toBe("self/secondary");
+    expect(q((a) => a.record_role === "groom" && a.fact_type === "birth" && a.value === "Trowbridge")).toBe("self/secondary");
+    expect(q((a) => a.record_role === "groom" && a.fact_type === "occupation")).toBe("self/primary");
+    expect(q((a) => a.fact_type === "name" && a.value === "Thomas Purnel" && a.record_role !== "groom")).toBe("self/secondary");
+    expect(q((a) => a.fact_type === "name" && a.value === "John Cook")).toBe("self/secondary");
+  });
+
   it("accepts a person with no facts key, and still refuses a facts that is not a list", async () => {
     const doc = (facts: unknown) => ({
       recordType: "obituary",
