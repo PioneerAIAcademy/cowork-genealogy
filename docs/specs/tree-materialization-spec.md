@@ -294,6 +294,15 @@ candidate exists does the tool allocate a fresh `I` via `nextId`. This prevents
 duplicate persons when the same persona is materialized more than once without an
 explicit `personId`.
 
+Three alternatives were rejected. Matching on backlinks alone: backlinks are
+also stamped onto an existing FamilySearch person when a persona is
+materialized onto them under a confident link. Once that link is superseded, a
+no-`personId` call would put the facts straight back on that person, past the
+link gate. Plain lowest id: in an already-duplicated project it picks the
+unlinked orphan stub over the person `research.json` links to. Refusing when
+several candidates match: that costs an error round-trip on every re-run in an
+already-duplicated project, and hands the agent a choice with no rule.
+
 > Reading assertions to *instantiate* a person is still an evidence-driven
 > act (it reads assertions, not nodes), so it stays on the correct side of
 > the §3 seam. It is not a merge — nothing is collapsed.
