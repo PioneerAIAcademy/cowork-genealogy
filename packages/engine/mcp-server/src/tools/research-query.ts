@@ -22,6 +22,10 @@
 // record_search's structured-params-not-free-text-query design), validated
 // against a per-section allow-list — supplying a filter a section doesn't
 // support is a clear error, not a silent no-op.
+//
+// The four id keys in PLURAL_KEYS also take a list (T2.3): one call answers a
+// walk of one call per id. Lists of ids, never lists of sections — one section
+// per call is the 2026-10-10 ruling (research-query-tool-spec.md §3).
 
 import { readProjectJson, NoProjectError, noProjectResult } from "../utils/project-io.js";
 import { readExternalCollections } from "../utils/external-collections-store.js";
@@ -92,12 +96,13 @@ export const RESEARCH_QUERY_EXCLUDED: Readonly<Record<string, string>> = {
 export interface ResearchQueryInput {
   projectPath: string;
   section: ResearchQuerySection;
-  recordId?: string;
+  /** PLURAL_KEYS: one id, or a list of ids (a JSON-array string is accepted as one). */
+  recordId?: string | string[];
   recordRole?: string;
-  sourceId?: string;
+  sourceId?: string | string[];
   questionId?: string;
-  personId?: string;
-  assertionId?: string;
+  personId?: string | string[];
+  assertionId?: string | string[];
   planItemId?: string;
   status?: string;
   targetId?: string;
@@ -122,6 +127,11 @@ export type ResearchQueryResult =
        *  items.length`) — page with `offset` (or narrow the filter) rather than
        *  relying on this being everything. */
       truncated: boolean;
+      /** List calls only: `{id: n}` for every requested id, zeros included,
+       *  over the whole match set (identical on every page). On a contains-mode
+       *  section an item naming two ids counts under both, so the values can
+       *  sum above `count`. */
+      countById?: Record<string, number>;
       /** `conflicts` only: linked assertions that disagree with no entry naming
        *  the pair. `count` covers registered entries, so a router reading
        *  `count: 0` as "no conflicts present" skipped conflict-resolution while
@@ -294,6 +304,59 @@ const FILTER_KEYS: FilterKey[] = [
   "recordType",
 ];
 
+/** The id keys that take a list as well as one id. Each keeps its per-section
+ *  rule; a list matches an item when ANY of its ids would. */
+export const PLURAL_KEYS: readonly FilterKey[] = ["personId", "assertionId", "sourceId", "recordId"];
+
+/** One filter's value as the ids to match, and whether the caller sent a list.
+ *  Never coerces: a non-string, an empty or mixed list, or a malformed
+ *  JSON-array string is an error, because each used to answer a silent
+ *  `count: 0`. */
+function filterValues(key: FilterKey, value: unknown): { values: string[]; isList: boolean } {
+  const plural = PLURAL_KEYS.includes(key);
+  let list: unknown = value;
+  if (typeof value === "string") {
+    if (!value.trim().startsWith("[")) return { values: [value], isList: false };
+    try {
+      list = JSON.parse(value);
+    } catch {
+      list = undefined;
+    }
+    if (!Array.isArray(list) && !plural) return { values: [value], isList: false };
+    if (!Array.isArray(list)) {
+      throw new ResearchQueryError(
+        `'${key}' starts with '[' but is not a JSON array (got ${JSON.stringify(value)}). ` +
+          `Send one id as a string, or a list of ids such as ["a_001","a_002"].`,
+      );
+    }
+  }
+  if (!Array.isArray(list)) {
+    throw new ResearchQueryError(
+      `'${key}' must be a string${plural ? " or a list of strings" : ""} (got ${JSON.stringify(value)}).`,
+    );
+  }
+  if (!plural) {
+    throw new ResearchQueryError(
+      `'${key}' must be a string; only ${PLURAL_KEYS.join(", ")} take a list.`,
+    );
+  }
+  if (list.length === 0) {
+    throw new ResearchQueryError(`'${key}' is an empty list. Send at least one id.`);
+  }
+  if (!list.every((v) => typeof v === "string" && v.length > 0)) {
+    throw new ResearchQueryError(
+      `'${key}' must list non-empty id strings (got ${JSON.stringify(list)}).`,
+    );
+  }
+  const ids = [...new Set(list as string[])];
+  if (ids.length > MAX_ITEMS) {
+    throw new ResearchQueryError(
+      `'${key}' lists ${ids.length} ids; the limit is ${MAX_ITEMS} per call. Split the list.`,
+    );
+  }
+  return { values: ids, isList: true };
+}
+
 /** "Venango, Pennsylvania, United States" -> itself, "Pennsylvania, United States",
  *  "United States": a county's lookup also reaches its state's rows. */
 function placeAndEnclosing(place: string): string[] {
@@ -301,8 +364,12 @@ function placeAndEnclosing(place: string): string[] {
   return parts.map((_, i) => parts.slice(i).join(", "));
 }
 
-function matches(item: any, rule: FilterRule, value: string, scope?: Set<string>): boolean {
+/** True when `item` matches ANY of `values`. Only PLURAL_KEYS reach here with
+ *  more than one value, and they use the exact and contains modes; the other
+ *  modes are single-valued and read `values[0]`. */
+function matches(item: any, rule: FilterRule, values: string[], scope?: Set<string>): boolean {
   const fields = rule.fields ?? (rule.field ? [rule.field] : []);
+  const value = values[0];
   if (rule.mode === "plan-question") {
     const id = item?.[fields[0]];
     return typeof id === "string" && scope !== undefined && scope.has(id);
@@ -314,7 +381,7 @@ function matches(item: any, rule: FilterRule, value: string, scope?: Set<string>
     return Array.isArray(competing) && scope !== undefined && competing.some((id) => scope.has(id));
   }
   if (rule.mode === "exact") {
-    return item && item[fields[0]] === value;
+    return Boolean(item) && values.includes(item[fields[0]]);
   }
   if (rule.mode === "place-or-enclosing") {
     return typeof item?.[fields[0]] === "string" && placeAndEnclosing(value).includes(item[fields[0]]);
@@ -326,19 +393,23 @@ function matches(item: any, rule: FilterRule, value: string, scope?: Set<string>
   }
   if (rule.mode === "contains") {
     const arr = item?.[fields[0]];
-    return Array.isArray(arr) && arr.includes(value);
+    return Array.isArray(arr) && values.some((v) => arr.includes(v));
   }
   // contains-any
   return fields.some((f) => {
     const arr = item?.[f];
-    return Array.isArray(arr) && arr.includes(value);
+    return Array.isArray(arr) && values.some((v) => arr.includes(v));
   });
 }
 
 /** The unregistered disagreements a `conflicts` read is asking about: the
  *  question's own assertions under `questionId` (project_context's scope),
- *  otherwise every assertion; narrowed to those naming `assertionId`. */
-function disagreementsInScope(research: any, input: ResearchQueryInput): UnregisteredDisagreement[] {
+ *  otherwise every assertion; narrowed to those naming any of `assertionIds`. */
+function disagreementsInScope(
+  research: any,
+  input: ResearchQueryInput,
+  assertionIds: string[] | undefined,
+): UnregisteredDisagreement[] {
   const assertions = Array.isArray(research?.assertions) ? research.assertions : [];
   const scope = new Set<string>(
     assertions
@@ -352,9 +423,9 @@ function disagreementsInScope(research: any, input: ResearchQueryInput): Unregis
       .filter((id: unknown): id is string => typeof id === "string"),
   );
   const found = unregisteredDisagreements(research, scope);
-  return input.assertionId === undefined
+  return assertionIds === undefined
     ? found
-    : found.filter((d) => d.assertionIds.includes(input.assertionId as string));
+    : found.filter((d) => assertionIds.some((id) => d.assertionIds.includes(id)));
 }
 
 export async function researchQuery(input: ResearchQueryInput): Promise<ResearchQueryResult> {
@@ -399,9 +470,10 @@ export async function researchQuery(input: ResearchQueryInput): Promise<Research
     }
 
     const allowed = SECTION_FILTERS[section];
-    const activeFilters: { key: FilterKey; rule: FilterRule; value: string }[] = [];
+    const activeFilters: { key: FilterKey; rule: FilterRule; values: string[] }[] = [];
+    let listFilter: { key: FilterKey; rule: FilterRule; values: string[] } | undefined;
     for (const key of FILTER_KEYS) {
-      const value = input[key];
+      const value: unknown = input[key];
       if (value === undefined) continue;
       const rule = allowed[key];
       if (!rule) {
@@ -411,10 +483,17 @@ export async function researchQuery(input: ResearchQueryInput): Promise<Research
             (supported.length > 0 ? ` (supported: ${supported.join(", ")})` : " (this section takes no filters)"),
         );
       }
-      if ((rule.mode === "place-or-enclosing" || rule.mode === "contains-substring-ci") && typeof value !== "string") {
-        throw new ResearchQueryError(`'${key}' must be a string (got ${JSON.stringify(value)})`);
+      const { values, isList } = filterValues(key, value);
+      const filter = { key, rule, values };
+      if (isList) {
+        if (listFilter) {
+          throw new ResearchQueryError(
+            `only one filter may be a list per call (got lists on '${listFilter.key}' and '${key}').`,
+          );
+        }
+        listFilter = filter;
       }
-      activeFilters.push({ key, rule, value });
+      activeFilters.push(filter);
     }
 
     if (section === EXTERNAL_COLLECTIONS_SECTION) {
@@ -434,7 +513,7 @@ export async function researchQuery(input: ResearchQueryInput): Promise<Research
               (Array.isArray(doc.places[place]?.rows) ? [...doc.places[place].rows] : []).sort((a, b) => (a.key < b.key ? -1 : a.key > b.key ? 1 : 0)),
             )
         : [];
-      const hits = rows.filter((item) => activeFilters.every(({ rule, value }) => matches(item, rule, value)));
+      const hits = rows.filter((item) => activeFilters.every(({ rule, values }) => matches(item, rule, values)));
       const from = input.offset ?? 0;
       return {
         ok: true,
@@ -476,7 +555,8 @@ export async function researchQuery(input: ResearchQueryInput): Promise<Research
     // belong to the question. `plans` is a required section, so its absence is
     // a corrupt document — an error, never a confident empty answer.
     const planItemsFor = new Map<string, Set<string>>();
-    for (const { rule, value } of activeFilters) {
+    for (const { rule, values } of activeFilters) {
+      const value = values[0];
       if (rule.mode !== "plan-question" || planItemsFor.has(value)) continue;
       const plans = research?.plans;
       if (!Array.isArray(plans)) {
@@ -495,7 +575,8 @@ export async function researchQuery(input: ResearchQueryInput): Promise<Research
     // A `question-conflict` filter reads `assertions` once for the question's
     // own assertion ids. A required section, so its absence is an error too.
     const assertionsFor = new Map<string, Set<string>>();
-    for (const { rule, value } of activeFilters) {
+    for (const { rule, values } of activeFilters) {
+      const value = values[0];
       if (rule.mode !== "question-conflict" || assertionsFor.has(value)) continue;
       const assertions = research?.assertions;
       if (!Array.isArray(assertions)) {
@@ -511,23 +592,32 @@ export async function researchQuery(input: ResearchQueryInput): Promise<Research
     }
 
     const filtered = arr.filter((item) =>
-      activeFilters.every(({ rule, value }) =>
-        matches(item, rule, value, rule.mode === "question-conflict" ? assertionsFor.get(value) : planItemsFor.get(value)),
+      activeFilters.every(({ rule, values }) =>
+        matches(item, rule, values, rule.mode === "question-conflict" ? assertionsFor.get(values[0]) : planItemsFor.get(values[0])),
       ),
     );
 
     const start = input.offset ?? 0;
-    const page = {
+    const page: Extract<ResearchQueryResult, { ok: true }> = {
       ok: true as const,
       section,
       count: filtered.length,
       items: filtered.slice(start, start + MAX_ITEMS),
       truncated: filtered.length > start + MAX_ITEMS,
     };
+    // Per id over the whole match set, so a page answers "0 means none" for
+    // every id it was asked about, not only for the ids its items carry.
+    if (listFilter) {
+      const { rule, values } = listFilter;
+      page.countById = Object.fromEntries(
+        values.map((id) => [id, filtered.filter((item) => matches(item, rule, [id])).length]),
+      );
+    }
     if (section !== "conflicts" || (input.status !== undefined && input.status !== "unresolved")) {
       return page;
     }
-    return { ...page, unregisteredDisagreements: disagreementsInScope(research, input) };
+    const assertionIds = activeFilters.find((f) => f.key === "assertionId")?.values;
+    return { ...page, unregisteredDisagreements: disagreementsInScope(research, input, assertionIds) };
   } catch (e) {
     if (e instanceof NoProjectError) return noProjectResult("read");
     if (e instanceof ResearchQueryError) return { ok: false, errors: [e.message] };
@@ -568,6 +658,9 @@ export const researchQuerySchema = {
     "`superseded_by` — narrow with targetId/focus, then pick the entry whose " +
     "`superseded_by` is null yourself.\n" +
     "\n" +
+    "`personId`, `assertionId`, `sourceId` and `recordId` also take a list (≤50 ids): one call " +
+    "returns items matching any, plus `countById` per id.\n" +
+    "\n" +
     "Returns `{ section, count, items, truncated }` — `count` is the total match " +
     "count before the 50-item page cap and any `offset`; `truncated` is true when " +
     "matches remain beyond the returned page, so advance `offset` by items.length " +
@@ -595,10 +688,11 @@ export const researchQuerySchema = {
           "Which research.json array section to query. `external_collections`: the curated " +
           "collections external_links_search stored per place.",
       },
-      recordId: { type: "string", description: "assertions: matches record_id." },
+      recordId: { type: ["string", "array"], items: { type: "string" }, description: "assertions: matches record_id." },
       recordRole: { type: "string", description: "assertions: matches record_role." },
       sourceId: {
-        type: "string",
+        type: ["string", "array"],
+        items: { type: "string" },
         description: "sources: matches id. assertions: matches source_id.",
       },
       questionId: {
@@ -611,11 +705,13 @@ export const researchQuerySchema = {
           "log: entries whose plan_item_id is an item of a plan for this question.",
       },
       personId: {
-        type: "string",
+        type: ["string", "array"],
+        items: { type: "string" },
         description: "person_evidence: matches person_id. timelines: matches person_ids (contains).",
       },
       assertionId: {
-        type: "string",
+        type: ["string", "array"],
+        items: { type: "string" },
         description:
           "assertions: matches id. person_evidence: matches assertion_id. " +
           "proof_summaries: matches " +

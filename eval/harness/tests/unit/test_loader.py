@@ -56,7 +56,7 @@ def test_loads_real_seed_test():
     assert spec.id == "ut_search_wikipedia_001"
     assert spec.skill == "search-wikipedia"
     assert spec.type == "positive"
-    assert spec.scenario is None
+    assert spec.scenario == "empty-project-just-created"
     assert spec.mcp_fixtures == ["wikipedia-search-schuylkill-county"]
     assert spec.negative is None
 

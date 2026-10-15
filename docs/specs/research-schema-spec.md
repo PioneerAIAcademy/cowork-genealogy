@@ -638,6 +638,8 @@ Array of plan objects. When a plan fails and is re-planned for the same question
 
 Array of log entry objects. **Append-only — entries are never modified or deleted.** This is the core GPS audit trail. Every tool call that searches for records must produce a log entry, including searches that return no results.
 
+Reference-lookup entries (`tool` is `wikipedia_search`, `wiki_search` or `historical_context`) record a looked-up article, wiki guidance or overview rather than a record search: the reference text itself is carried in `notes`, and `outcome` / `results_examined` hold stand-in values (`positive` and the pages read; a `wiki_search` that returned nothing is `negative` with `results_examined: 0` and `notes` null). These entries hold no evidence to persist, so `research_log_append`'s logging-without-persistence nudge does not count them; its pre-1880 census hedge still applies to their `notes`.
+
 | Field | Type | Required | Description |
 |-------|------|----------|-------------|
 | `id` | string | yes | Log entry ID (`log_` prefix) |
@@ -805,7 +807,7 @@ because the field carries the persona's own role on 14 of 1844 assertions
 (`tree-materialization-spec.md`, the 2026-09-07 rejection). Comparing the prose
 needs no table and checks against the layer a human reads. Two further
 candidates do not reach: `record_persona_id` plus the sidecar GedcomX is null
-for full-text-, image-, PDF- and `record_read`-sourced assertions, and the tree
+for full-text-, image- and PDF-sourced assertions (and unstaged `record_read`), and the tree
 does not exist at extraction time. Revisit with a measurement of both, not with
 an assumption that one is impossible.
 
