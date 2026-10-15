@@ -455,6 +455,22 @@ def test_a_message_typed_mid_turn_is_taken_at_the_next_step_on_the_alpha():
     assert "message" in waiting["stopReason"].lower()
 
 
+def test_a_subagent_call_does_not_take_a_waiting_message_on_the_alpha():
+    """#3376: the pending-message halt is gated on the MAIN thread, like the delivered arm.
+    A subagent call -- one carrying an `agent_id` KEY, membership not truthiness so None and
+    "" count -- must run to the end of its task even with a message waiting; the message is
+    taken at the orchestrator's next main-thread call. Without the gate a mid-task halt
+    strands the orchestrator with the subagent's last in-progress note as its final report."""
+    agent = _FakeAgent(pending=True)
+    assert asyncio.run(_pretool(agent)({"agent_id": "record-extractor"}, None, None)) == {}
+    assert asyncio.run(_pretool(agent)({"agent_id": None}, None, None)) == {}, (
+        "agent_id present but falsy is STILL a subagent -- a truthiness test would halt it"
+    )
+    # The main thread (no agent_id key) still hands over at the next call.
+    main = asyncio.run(_pretool(agent)({}, None, None))
+    assert main.get("continue") is False and "message" in main["stopReason"].lower()
+
+
 def test_the_halt_never_fails_a_tool_call_the_researcher_was_entitled_to_make():
     """This hook runs on EVERY tool call and it is not the restraint -- the deny hook is.
     A raising check here would fail calls for a reason that has nothing to do with them,
