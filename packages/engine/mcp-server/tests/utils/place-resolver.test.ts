@@ -479,13 +479,14 @@ describe("standardPlaceToCoords", () => {
     expect(await standardPlaceToCoords("Rome, Italy")).toEqual({
       latitude: 41.9,
       longitude: 12.5,
+      type: "City",
     });
     expect(mockGetPlaceById).not.toHaveBeenCalled();
   });
 
   it("falls back to the description endpoint when the entry lacks coords", async () => {
     mockSearchPlace.mockResolvedValue([
-      entry({ placeRepId: "7", fullName: "Atlantis", score: 1 }),
+      entry({ placeRepId: "7", fullName: "Atlantis", type: "Town", score: 1 }),
     ]);
     mockGetPlaceById.mockResolvedValue({
       placeRepId: "7",
@@ -495,9 +496,11 @@ describe("standardPlaceToCoords", () => {
       latitude: 1.1,
       longitude: 2.2,
     } as Awaited<ReturnType<typeof getPlaceById>>);
+    // The type is the matched search entry's, not the description's.
     expect(await standardPlaceToCoords("Atlantis")).toEqual({
       latitude: 1.1,
       longitude: 2.2,
+      type: "Town",
     });
   });
 });

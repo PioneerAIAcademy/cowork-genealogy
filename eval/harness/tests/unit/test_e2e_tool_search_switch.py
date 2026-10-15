@@ -58,7 +58,7 @@ def _drive(tmp_path, monkeypatch, init_data, **kwargs):
         seen["options"] = kw["options"]
         return _Stream([SystemMessage(subtype="init", data=init_data), _result()])
 
-    monkeypatch.setattr(orchestrator, "query", fake_query)
+    monkeypatch.setattr(orchestrator, "open_query", fake_query)
     result = asyncio.run(
         _run_agent(
             fixture=_fixture(tmp_path),
