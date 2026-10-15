@@ -3880,6 +3880,47 @@ def test_sweep_is_off_unless_configured():
         assert not thread.is_alive(), "the sweep stops on SHUTDOWN"
 
 
+@pytest.mark.parametrize(("raw", "value", "refused"), [
+    (None, 0, False), ("", 0, False), ("  ", 0, False), ("ninety", 0, False), ("-1", 0, False),
+    ("90", 0, True), ("604799", 0, True), ("7776000", 7776000, False), (" 604800 ", 604800, False),
+])
+def test_a_retention_period_under_the_floor_is_refused_never_clamped(monkeypatch, raw, value, refused):
+    """U19: "90" meant as days would purge every session idle 90 s; env_int's floor= would
+    instead make it a week without a word. Refused, it is off and the log says so."""
+    logged = []
+    monkeypatch.setattr(worker, "log", lambda **f: logged.append(f))
+    if raw is None:
+        monkeypatch.delenv("RETENTION_SESSION_IDLE_S", raising=False)
+    else:
+        monkeypatch.setenv("RETENTION_SESSION_IDLE_S", raw)
+    assert worker._retention_period("RETENTION_SESSION_IDLE_S") == value
+    bad = [f for f in logged if f.get("ev") == "bad_env" and f.get("name") == "RETENTION_SESSION_IDLE_S"]
+    assert bool([f for f in bad if f.get("floor") == worker.RETENTION_MIN_S]) is refused, logged
+
+
+def test_retention_is_off_unless_configured():
+    assert worker.start_retention(interval=0, idle_s=7776000) is None, "RETENTION_INTERVAL_S=0"
+    assert worker.start_retention(interval=3600, idle_s=0) is None, "no period on"
+    worker.SHUTDOWN.set()  # the thread's loop exits at once
+    try:
+        thread = worker.start_retention(interval=3600, idle_s=7776000)
+        assert thread is not None and thread.daemon
+        thread.join(2)
+        assert not thread.is_alive(), "retention stops on SHUTDOWN"
+    finally:
+        worker.SHUTDOWN.clear()
+
+
+def test_retention_keys_entries_and_events_on_the_session_never_their_own_age():
+    """session_entries and session_events are purged only through the session predicate,
+    which reads sessions.updated_at and the turns -- no per-row ts of either."""
+    for sql in (worker.RETENTION_CANDIDATE_SQL, worker.RETENTION_RECHECK_SQL):
+        assert "session_entries" not in sql and "session_events" not in sql and ".ts" not in sql
+        assert "t.completed_at IS NULL OR t.completed_at >=" in sql, "an open turn, running or held, keeps it"
+    assert "turns" not in worker.RETENTION_PURGE_TABLES
+    assert set(worker.RETENTION_PURGE_TABLES) == set(worker.grants.SESSION_TABLES) - {"turns"}
+
+
 def test_each_sweep_pass_asks_for_this_processs_long_running_delegations(monkeypatch):
     """U19: a stuck delegation never reaches PostToolUse, so the sweep's loop asks, for the
     turns this process serves only, and an error there never stops the sweep."""

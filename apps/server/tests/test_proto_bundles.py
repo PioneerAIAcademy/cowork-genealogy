@@ -305,6 +305,17 @@ def test_worker_runtime_paths_match_the_hook_and_layout():
     assert env.get("TMPDIR") == layout.TMPDIR == "/tmp"
 
 
+def test_worker_ships_retention_off_with_periods_the_worker_accepts():
+    """U19: off until F17 rules (user ruling 2026-10-12); the placeholder period must
+    clear the worker's floor, or switching the interval on would silently retain nothing."""
+    from proto.worker import worker
+
+    env = _env("worker")
+    assert env.get("RETENTION_INTERVAL_S") == "0"
+    assert int(env["RETENTION_SESSION_IDLE_S"]) >= worker.RETENTION_MIN_S, env.get("RETENTION_SESSION_IDLE_S")
+    assert "RETENTION_TOOL_CALLS_S" not in env, "tool_calls lives as long as its session (2026-10-13)"
+
+
 def test_web_dist_dir_is_the_layout_directory():
     assert _env("web").get("WEB_DIST_DIR") == layout.WEB_DIST_DIR
 

@@ -1718,7 +1718,7 @@ it costs nothing at runtime, and **it is not a gap and no decision waits on it.*
   than kills and the next request resumes (~1s). A session therefore runs for as
   many hours as it needs. **Do not read the cap as a session-length limit** —
   both "there is a 1-hour cap" and "sessions run for hours" are true at once. The
-  control plane sets the outer limit: `/connect` refuses a session more than 24 h
+  control plane sets the outer limit: `/connect` refuses a session more than 72 h
   past `projects.created` with a 410 (`SESSION_MAX_AGE` in `app/sessions.py`),
   because its sandbox still runs the agent code it was created with. `/resume` and
   the read endpoints stay open, so an ended session's research can still be read.

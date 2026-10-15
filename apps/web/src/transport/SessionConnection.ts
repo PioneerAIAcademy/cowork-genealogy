@@ -189,7 +189,7 @@ export class WsSessionConnection implements SessionConnection {
         // The control plane is unreachable or the session is gone. Same backoff
         // as a refused socket, so this can't spin and can't hang silently.
         this.connecting = false
-        // 410: the session is more than 24 h old and the server will never accept
+        // 410: the session is more than 72 h old and the server will never accept
         // it (#3406). Terminal and never retried, checked before the `hidden`
         // return so a tab that is hidden when it lands does not ask again on
         // focus. Not `fail()`, whose "Chat unavailable" is the wrong message, and
