@@ -98,7 +98,7 @@ def test_wall_clock_cap_relabels_to_host_slept(tmp_path, monkeypatch):
     monkeypatch.setattr(orchestrator, "SleepDetector", _pinned(10_000.0))
     # The result arrives long after the 0.1s wall-clock cap, so the cap fires.
     steps = [(0.0, _sys()), (0.5, _result())]
-    monkeypatch.setattr(orchestrator, "query", lambda **kw: _FakeAgen(steps))
+    monkeypatch.setattr(orchestrator, "open_query", lambda **kw: _FakeAgen(steps))
     fx = _fixture(
         tmp_path,
         wall_clock_seconds=0.1,
@@ -115,7 +115,7 @@ def test_inactivity_silence_relabels_to_host_slept(tmp_path, monkeypatch):
     # 0.5s gap to the next message > the 0.1s inactivity timer → true silence,
     # which on a slept host must become host_slept, not sdk_stream_silence.
     steps = [(0.0, _sys()), (0.5, _result())]
-    monkeypatch.setattr(orchestrator, "query", lambda **kw: _FakeAgen(steps))
+    monkeypatch.setattr(orchestrator, "open_query", lambda **kw: _FakeAgen(steps))
     fx = _fixture(
         tmp_path,
         inactivity_seconds=0.1,
@@ -133,7 +133,7 @@ def test_progress_stall_relabels_to_host_slept(tmp_path, monkeypatch):
     # Stream alive with non-progress init messages; the 0.3s progress watchdog
     # fires while the 2s inactivity timer never does.
     steps = [(0.0, _sys())] + [(0.02, _sys()) for _ in range(60)]
-    monkeypatch.setattr(orchestrator, "query", lambda **kw: _FakeAgen(steps))
+    monkeypatch.setattr(orchestrator, "open_query", lambda **kw: _FakeAgen(steps))
     fx = _fixture(
         tmp_path,
         progress_stall_seconds=0.3,
@@ -164,7 +164,7 @@ def test_slept_stall_is_not_resumed_even_with_resume_on(tmp_path, monkeypatch):
         calls["n"] += 1
         return _FakeAgen(first)  # a resume would only stall again
 
-    monkeypatch.setattr(orchestrator, "query", fake_query)
+    monkeypatch.setattr(orchestrator, "open_query", fake_query)
     fx = _fixture(
         tmp_path,
         progress_stall_seconds=0.3,
@@ -182,7 +182,7 @@ def test_genuine_stall_below_threshold_is_not_relabeled(tmp_path, monkeypatch):
     counted sleep keeps its own reason and (with resume on) still resumes."""
     monkeypatch.setattr(orchestrator, "SleepDetector", _pinned(0.0))
     steps = [(0.0, _sys())] + [(0.02, _sys()) for _ in range(60)]
-    monkeypatch.setattr(orchestrator, "query", lambda **kw: _FakeAgen(steps))
+    monkeypatch.setattr(orchestrator, "open_query", lambda **kw: _FakeAgen(steps))
     fx = _fixture(
         tmp_path,
         progress_stall_seconds=0.3,
