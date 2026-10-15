@@ -474,4 +474,19 @@ describe('replay dedupe across reconnect (#3387)', () => {
     expect(seen.filter((m) => m.type === 'status' && m.state === 'turn_active')).toHaveLength(2)
     expect(textsOf(seen)).toEqual(['a', 'old', 'old'])
   })
+
+  it('a non-finite seq cannot poison the cursor', async () => {
+    // JSON.parse accepts 1e999 as Infinity and typeof Infinity === 'number'.
+    // If it reached the cursor, lastSeq=Infinity would drop every later frame
+    // for good. It is treated as unstamped instead: delivered, cursor untouched.
+    const seen = await openConn()
+    const sock = FakeSocket.instances[0]
+    sock.onmessage?.({
+      data: '{"type":"agent_event","seq":1e999,"epoch":"e1","event":{"kind":"text","text":"inf"}}'
+    })
+    sock.onmessage?.(frame(1, 'e1', 'a'))
+    sock.onmessage?.(frame(1, 'e1', 'a')) // the cursor must still dedupe after it
+
+    expect(textsOf(seen)).toEqual(['inf', 'a'])
+  })
 })

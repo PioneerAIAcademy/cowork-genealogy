@@ -229,6 +229,35 @@ def test_token_ttl_outlives_the_sandbox_timeout():
     assert DEFAULT_TTL_SECONDS > _RUNNING_TIMEOUT_S
 
 
+class FakeHandshakeWS:
+    """A client socket for hub.handle(): passes the (auth-disabled) handshake,
+    yields `frames` to the receive loop, and keeps every frame handle sends,
+    parsed from the serialized payload exactly as a real socket would see it."""
+
+    class _Req:
+        path = "/?token=x"
+
+    request = _Req()
+
+    def __init__(self, frames=()):
+        self.frames = list(frames)
+        self.sent: list[dict] = []
+
+    async def send(self, payload):
+        self.sent.append(json.loads(payload))
+
+    async def close(self, *a):
+        pass
+
+    def __aiter__(self):
+        return self
+
+    async def __anext__(self):
+        if self.frames:
+            return self.frames.pop(0)
+        raise StopAsyncIteration  # no more client→server messages; connection ends
+
+
 def test_reconnect_is_told_when_a_turn_is_still_running(monkeypatch):
     """The fix for the 2026-07-20 "no working indicator" report: busy is otherwise
     local to the browser that hit Send, so a reload mid-turn shows idle while the
@@ -239,45 +268,26 @@ def test_reconnect_is_told_when_a_turn_is_still_running(monkeypatch):
 
     monkeypatch.setattr(ss, "SECRET", "")  # auth disabled → handshake passes
 
-    sent: list[dict] = []
-
-    class FakeReq:
-        path = "/?token=x"
-
-    class FakeWS:
-        request = FakeReq()
-
-        async def send(self, payload):
-            sent.append(json.loads(payload))
-
-        async def close(self, *a):
-            pass
-
-        def __aiter__(self):
-            return self
-
-        async def __anext__(self):
-            raise StopAsyncIteration  # no client→server messages; connection ends
-
     async def noop(*a, **k):
         pass
 
-    def states():
-        return [m.get("state") for m in sent if m.get("type") == "status"]
+    def states(ws):
+        return [m.get("state") for m in ws.sent if m.get("type") == "status"]
 
     hub = ss.Hub()
     hub._turn_active = True
     monkeypatch.setattr(hub, "ensure_started", noop)
     monkeypatch.setattr(hub, "send_snapshot", noop)
-    asyncio.run(hub.handle(FakeWS()))
-    assert "chat_ready" in states() and "turn_active" in states()
+    ws = FakeHandshakeWS()
+    asyncio.run(hub.handle(ws))
+    assert "chat_ready" in states(ws) and "turn_active" in states(ws)
 
-    sent.clear()
     idle = ss.Hub()  # nothing running
     monkeypatch.setattr(idle, "ensure_started", noop)
     monkeypatch.setattr(idle, "send_snapshot", noop)
-    asyncio.run(idle.handle(FakeWS()))
-    assert "chat_ready" in states() and "turn_active" not in states()
+    ws2 = FakeHandshakeWS()
+    asyncio.run(idle.handle(ws2))
+    assert "chat_ready" in states(ws2) and "turn_active" not in states(ws2)
 
 
 def test_turn_active_clears_when_the_turn_finishes():
@@ -659,10 +669,13 @@ class _RecvWS:
         self.received.append(json.loads(payload))
 
 
-def test_live_frames_are_stamped_at_send_time_not_at_record_time():
-    """Every live path broadcasts first and records second, so a stamp inside
-    _record would put the live copy on the wire bare: the client's lastSeq
-    stays 0 and every reconnect still replays everything (#3387)."""
+def test_live_frames_carry_seq_and_epoch_on_the_wire():
+    """The live copy of every recorded frame must carry seq/epoch ON THE WIRE —
+    _record (which stamps) runs before the broadcast, so the wire copy and the
+    replayed copy carry the same seq (#3387). Observed through the REAL
+    broadcast()'s json.dumps at send time: the _broadcasts() helper captures
+    dicts by reference, so a stamp landing only after the broadcast would
+    still look stamped there and this is the only observer that can tell."""
     import app.sandbox_server as ss
 
     class FakeProc:
@@ -757,36 +770,12 @@ def test_history_items_carry_increasing_seq():
 
 
 def test_user_msg_record_is_stamped(monkeypatch):
-    """The user_msg record path (handle()) is recorded but never broadcast, so
-    a stamp only at the pump would leave it bare — its replayed copy would be
-    immune to the dedupe and the user's bubble would duplicate on every
-    reconnect, not just in the accepted one-second gap."""
+    """The user_msg record path (handle()) is recorded but never broadcast; an
+    unstamped record would leave its replayed copy immune to the dedupe and
+    the user's bubble would duplicate on every reconnect."""
     import app.sandbox_server as ss
 
     monkeypatch.setattr(ss, "SECRET", "")  # auth disabled → handshake passes
-
-    class FakeReq:
-        path = "/?token=x"
-
-    class FakeWS:
-        request = FakeReq()
-
-        def __init__(self):
-            self.frames = [json.dumps({"type": "user_msg", "text": "hi"})]
-
-        async def send(self, payload):
-            pass
-
-        async def close(self, *a):
-            pass
-
-        def __aiter__(self):
-            return self
-
-        async def __anext__(self):
-            if self.frames:
-                return self.frames.pop(0)
-            raise StopAsyncIteration
 
     async def noop(*a, **k):
         pass
@@ -795,11 +784,71 @@ def test_user_msg_record_is_stamped(monkeypatch):
     monkeypatch.setattr(hub, "ensure_started", noop)
     monkeypatch.setattr(hub, "send_snapshot", noop)
     monkeypatch.setattr(hub, "send_input", noop)
-    asyncio.run(hub.handle(FakeWS()))
+    asyncio.run(hub.handle(FakeHandshakeWS(frames=[json.dumps({"type": "user_msg", "text": "hi"})])))
 
     assert len(hub._history) == 1, hub._history
     rec = hub._history[0]
     assert rec["type"] == "user_msg" and rec["seq"] == 1 and rec["epoch"] == hub._epoch
+
+
+def test_any_record_call_site_is_stamped_structurally():
+    """The stamp lives INSIDE _record, so a future call site cannot produce an
+    unstamped history frame — which the client would treat as unstamped and
+    re-fold on EVERY reconnect, reintroducing #3387 for that frame type."""
+    import app.sandbox_server as ss
+
+    hub = ss.Hub()
+    hub._record({"type": "agent_event", "event": {"kind": "someday_new"}})
+    rec = hub._history[0]
+    assert rec["seq"] == 1 and rec["epoch"] == hub._epoch
+
+
+def test_replay_finishes_before_the_socket_joins_the_live_fanout(monkeypatch):
+    """A client reconnecting mid-turn must see the replay BEFORE any live
+    stamped frame: a high-seq live frame arriving first would set its lastSeq
+    cursor past every replayed frame and the whole rebuilt transcript would be
+    dropped. handle() keeps the socket out of _clients until the replay (plus
+    a catch-up pass for frames recorded while it was being sent) is done, so
+    stamped frames always arrive in seq order."""
+    import app.sandbox_server as ss
+
+    monkeypatch.setattr(ss, "SECRET", "")
+
+    async def noop(*a, **k):
+        pass
+
+    hub = ss.Hub()
+    for text in ("a", "b"):
+        hub._record({"type": "agent_event", "event": {"kind": "text", "text": text}})
+
+    class MidReplayWS(FakeHandshakeWS):
+        """On the first replayed frame, do what the pump does when a frame
+        lands mid-replay: record it and broadcast it live."""
+
+        def __init__(self, hub):
+            super().__init__()
+            self._hub = hub
+            self._fired = False
+
+        async def send(self, payload):
+            await super().send(payload)
+            if not self._fired:
+                self._fired = True
+                live = {"type": "agent_event", "event": {"kind": "text", "text": "live"}}
+                self._hub._record(live)
+                await self._hub.broadcast(live)
+
+    ws = MidReplayWS(hub)
+    monkeypatch.setattr(hub, "ensure_started", noop)
+    monkeypatch.setattr(hub, "send_snapshot", noop)
+    asyncio.run(hub.handle(ws))
+
+    # Replay (1, 2) then the catch-up (3) — in seq order, nothing skipped.
+    # With the socket in _clients during the replay, the live broadcast lands
+    # between the replayed frames ([1, 3, 2]) and a real client would drop
+    # frame 2; with no catch-up pass, frame 3 never arrives at all.
+    seqs = [m["seq"] for m in ws.sent if "seq" in m]
+    assert seqs == [1, 2, 3], ws.sent
 
 
 def test_each_hub_gets_its_own_epoch():

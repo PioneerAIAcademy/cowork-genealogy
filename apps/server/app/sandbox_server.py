@@ -110,10 +110,16 @@ class Hub:
         self._rej_last = 0.0
 
     def _stamp(self, msg: dict) -> dict:
-        """Stamp a frame that is about to be recorded, BEFORE it is broadcast.
-        Every live path broadcasts first and records second, so a stamp inside
-        _record would put the live copy on the wire bare — the client's lastSeq
-        would stay 0 and every reconnect would still replay everything (#3387).
+        """Only called by _record, which runs BEFORE the broadcast at every
+        call site — so the wire copy of a recorded frame already carries its
+        seq, and the client can drop the replayed copy it has already folded
+        (#3387). Stamping inside _record (rather than beside each call) makes
+        the invariant structural: a future _record call site cannot produce an
+        unstamped history frame, which the client would re-fold on every
+        reconnect. Record-then-broadcast with no await between also keeps
+        _history order identical to seq order; stamping before an awaited
+        broadcast let a concurrent user_msg record jump the queue, and a
+        replay out of seq order makes the client's cursor drop real frames.
 
         The epoch rides with every seq because LocalProvider.ensure_server
         starts a fresh sandbox_server when the old one has died, and a fresh
@@ -127,6 +133,7 @@ class Hub:
         return msg
 
     def _record(self, msg: dict) -> None:
+        self._stamp(msg)
         self._history.append(msg)
         if len(self._history) > _HISTORY_MAX:
             del self._history[: len(self._history) - _HISTORY_MAX]
@@ -268,14 +275,12 @@ class Hub:
                 self._turn_active = False
             # Deltas and task_progress are live-only. Recording them would evict
             # the real conversation from the capped replay buffer within a single
-            # streamed turn, so a reconnect would rebuild an empty chat. Every
-            # frame that WILL be recorded is stamped here, before the broadcast,
-            # so the live copy and the replayed copy carry the same seq.
-            if not transient:
-                self._stamp(msg)
-            await self.broadcast(msg)
+            # streamed turn, so a reconnect would rebuild an empty chat.
+            # Record (which stamps seq+epoch) before broadcasting, so the live
+            # copy carries the same seq as the replayed copy — see _stamp.
             if not transient:
                 self._record(msg)
+            await self.broadcast(msg)
         code = proc.poll()
         print(f"{_ts()} [ws] agent_runner exited (code={code})", flush=True)
         # The live agent died — surface it + unstick the UI instead of hanging on
@@ -303,9 +308,9 @@ class Hub:
             # push the frame out. `broadcast` does not touch `_record`,
             # and this is the one turn_done that does not come through the
             # runner's recorded path (runner.py:73 is the sole other source).
-            _turn_done = self._stamp({"type": "agent_event", "event": {"kind": "turn_done"}})
-            await self.broadcast(_turn_done)
+            _turn_done = {"type": "agent_event", "event": {"kind": "turn_done"}}
             self._record(_turn_done)
+            await self.broadcast(_turn_done)
             await self.broadcast({"type": "status", "state": "chat_error",
                                   "message": "the agent stopped unexpectedly"})
 
@@ -438,14 +443,33 @@ class Hub:
                 print(f"[ws] rejected connection: bad/expired token{extra}", flush=True)
             await ws.close(4401, "unauthorized")
             return
-        self._clients.add(ws)
-        print(f"{_ts()} [ws] client connected ({len(self._clients)} total)", flush=True)
+        print(f"{_ts()} [ws] client connected ({len(self._clients) + 1} total)", flush=True)
         try:
-            await self.ensure_started()
             await self.send_snapshot(ws)
             # Replay the transcript so a (re)connect rebuilds the chat history.
-            for item in list(self._history):
-                await self.send_one(ws, item)
+            # The socket joins the live fan-out only AFTER the replay: it is in
+            # neither _clients nor the loop below's past when a live stamped
+            # frame goes out, so a high-seq live frame cannot reach the client
+            # ahead of the replay and set its lastSeq cursor past every
+            # replayed frame — which would drop the whole rebuilt transcript.
+            # The loop re-reads _history until no new frames were recorded
+            # while the previous pass was being sent (seq-keyed, so a trim of
+            # the capped buffer mid-replay cannot shift what "new" means), and
+            # there is no await between the final check and _clients.add, so
+            # no frame can fall between replay and live fan-out. A frame
+            # delivered by both (recorded during the last pass, broadcast
+            # after the add) arrives twice with the same seq; the client
+            # cursor drops the second copy.
+            replayed_upto = 0
+            while True:
+                pending = [m for m in self._history if m["seq"] > replayed_upto]
+                if not pending:
+                    break
+                for item in pending:
+                    await self.send_one(ws, item)
+                replayed_upto = pending[-1]["seq"]
+            self._clients.add(ws)
+            await self.ensure_started()
             # Tell THIS client it can chat — every connection, not just the one
             # that spawned the agent. Without this a reconnect after pause/resume
             # (agent already alive → ensure_started returns early) would sit on
@@ -462,9 +486,10 @@ class Hub:
                 except json.JSONDecodeError:
                     continue
                 if msg.get("type") == "user_msg":
-                    # Recorded but never broadcast — stamped so its replayed
-                    # copy can be deduped like any other history frame.
-                    self._record(self._stamp({"type": "user_msg", "text": msg.get("text", "")}))
+                    # Recorded (which stamps it) but never broadcast — the
+                    # stamp lets its replayed copy be deduped like any other
+                    # history frame.
+                    self._record({"type": "user_msg", "text": msg.get("text", "")})
                     self._turn_active = True  # a turn is about to run (see connect note)
                     await self.send_input(raw)
                 elif msg.get("type") == "interrupt":

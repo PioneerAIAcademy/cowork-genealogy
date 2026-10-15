@@ -276,7 +276,9 @@ export class WsSessionConnection implements SessionConnection {
       // Frames without a seq pass through untouched: status, snapshot and ping
       // frames are never stamped, and a sandbox still running pre-#3387 server
       // code stamps nothing — those sessions keep the replay bug, nothing breaks.
-      if (typeof msg.seq === 'number') {
+      // isFinite, not just typeof: JSON.parse accepts 1e999 as Infinity, and one
+      // such frame would pin lastSeq at Infinity and drop every later frame.
+      if (typeof msg.seq === 'number' && Number.isFinite(msg.seq)) {
         // A fresh sandbox_server (LocalProvider.ensure_server replaces a dead
         // one) counts seq from 1 again under a new epoch; without this reset a
         // client holding a high lastSeq would silently drop every new frame.
