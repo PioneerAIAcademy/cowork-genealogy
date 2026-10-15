@@ -1533,7 +1533,7 @@ def test_agent_return_is_not_cut_at_the_500_char_bound():
     2,274 / max 21,578."""
     from e2e.orchestrator import _summarize_tool_response
 
-    ret = "R" * 3000
+    ret = "R" * 7000
     out = _summarize_tool_response(
         [
             {"type": "text", "text": ret},
@@ -1558,7 +1558,7 @@ def test_the_agent_return_is_not_overwritten_by_the_usage_announcement():
 
     from e2e.orchestrator import _summarize_tool_response
 
-    ret = "R" * 3000
+    ret = "R" * 7000
     out = _summarize_tool_response(
         [
             {"type": "text", "text": ret},

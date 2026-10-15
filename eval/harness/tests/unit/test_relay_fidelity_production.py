@@ -270,3 +270,26 @@ def test_since_and_test_are_refused_when_they_would_do_nothing():
     ):
         argv = (argv,) if isinstance(argv, str) else argv
         assert run(*argv) == 2, f"{argv} should be refused without --production"
+
+
+def test_the_writer_emits_a_version_this_report_will_score():
+    """Reverting the bump while keeping the capture leaves every new run log
+    below the floor, and an empty denominator is exactly today's expected
+    state, so nothing else notices."""
+    from e2e.result import HARNESS_SCHEMA_VERSION
+
+    assert HARNESS_SCHEMA_VERSION >= rfr.MIN_PRODUCTION_SCHEMA_VERSION
+
+
+def test_an_untagged_assistant_entry_is_not_credited_to_the_relay(tmp_path):
+    """Selection is on `thread == "main"`, never on the absence of `thread`."""
+    import json
+
+    src = FIXTURES / "alpha" / "run-2026-10-13_10-00-00.json"
+    log = json.loads(src.read_text(encoding="utf-8"))
+    for n in log["narration"]:
+        n.pop("thread")
+    (tmp_path / "beta").mkdir()
+    (tmp_path / "beta" / src.name).write_text(json.dumps(log), encoding="utf-8")
+    c = rfr.compute_production_counts(tmp_path, cutoff=None, agents_root=AGENTS)
+    assert c["exact"] == 0 and c["eligible"] == 0, c
