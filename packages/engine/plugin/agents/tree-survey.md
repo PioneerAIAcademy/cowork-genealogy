@@ -27,12 +27,6 @@ tools:
   - mcp__genealogy__record_search
   - mcp__remote-devices__Genealogy_Research__record_search
   - mcp__Genealogy_Research__record_search
-  - mcp__genealogy__collections_search
-  - mcp__remote-devices__Genealogy_Research__collections_search
-  - mcp__Genealogy_Research__collections_search
-  - mcp__genealogy__place_search
-  - mcp__remote-devices__Genealogy_Research__place_search
-  - mcp__Genealogy_Research__place_search
 ---
 
 # Tree Survey
@@ -101,10 +95,10 @@ applies:
   - `no_death_date`: the person's name, with the year range as the death range.
 
   A search is signal only when a top result fits the hole's name, place and years; the
-  number of results is not signal. If the place is ambiguous, call `place_search` first.
-- **Collections floor.** `collections_search({ standardPlace, startYear, endYear })`, once per
-  hole that has a place and a year range. A non-empty `coverage.censusYears` means a census
-  search is possible for that window; ignore 1890 in it.
+  number of results is not signal. Use the hole's `place` as given.
+
+A non-empty `coverage.censusYears` means a census search is possible for that window; ignore
+1890 in it.
 
 Make each call once. A search that returns nothing is a result, not a reason to
 retry.
@@ -113,7 +107,7 @@ retry.
 
 Rank by the strongest signal: a search whose top result fits the hole, then a hole with
 `pendingHints.fitting` above 0 (a `fitting` of 0 is no signal, however large `total`), then the census issue or a non-empty `coverage.censusYears`, then
-the collections floor. A hole with a search or hint signal comes before every hole without
+a `coverage.collections` above 0. A hole with a search or hint signal comes before every hole without
 one, however far from the root. Break ties by the hole's closeness to the root
 (`generation`, then smaller absolute value first). Drop a hole with no signal at all unless
 fewer than three remain.

@@ -16,8 +16,6 @@
   },
   "mcp_fixtures": [
     "tree-gaps-many-holes",
-    "collections-search-any",
-    "place-search-any",
     "record-search-any",
     "record-search-any-parents",
     "record-search-any-country",
