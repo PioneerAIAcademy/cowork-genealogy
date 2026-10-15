@@ -884,6 +884,17 @@ unit-relay-fidelity: ## How much of an agent's return survives the main thread's
 	# production, so nothing here gates a build or reaches the judge (#3188).
 	cd eval/harness && uv run python scripts/relay_fidelity_report.py
 
+.PHONY: e2e-relay-fidelity
+e2e-relay-fidelity: ## How much of a subagent's return survives the relay on a REAL route — offline report over committed e2e run logs: make e2e-relay-fidelity [TEST=<slug>] [SINCE=14|all|YYYY-MM-DD]
+	# The production counterpart of unit-relay-fidelity above, which measures
+	# the harness dispatcher. Windowed to 14 days like every aggregating e2e
+	# reader; SINCE=all opts out. Reports its denominators: a log below
+	# harness_schema_version 8 records an Agent return cut at 500 chars and a
+	# narration with no `thread` tag, so it is unscorable rather than clean.
+	# Exits 2 when nothing was scored: a prose warning beside a success exit
+	# just relocates the silent zero to the exit code.
+	cd eval/harness && uv run python scripts/relay_fidelity_report.py --production $(if $(SINCE),--since $(SINCE),) $(if $(TEST),--test $(TEST),)
+
 .PHONY: replay-sizes
 replay-sizes: $(ENGINE_BUILD) ## Replay committed e2e tool calls against a base and a candidate engine build and diff answer sizes — zero model calls, zero network: make replay-sizes [BASE=<ref>] [TEST=<slug>] [TOOLS=a,b] [TRACKED_ONLY=1] [JSON=<path>]
 	# T1.4 of docs/plan/cost-latency-10x.md. Re-asks every recorded call to the
