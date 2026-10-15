@@ -250,6 +250,7 @@ def good(tier: str) -> dict[str, tuple[bytes, int]]:
                 ".ebextensions/01-web.config": (_config({"PORT": "8000", "PGSSLROOTCERT": CA}), f),
                 "requirements.txt": (REQS, f), "wheels/foo-1.0-py3-none-any.whl": (b"x", f),
                 "web/app.py": (b"", f), "web/auth.py": (b"", f), "web/spa.py": (b"", f),
+                "web/feedback.py": (b"", f), "web/blobstore.py": (b"", f),
                 "enqueue.py": (b"", f), "grants.py": (b"", f), "migrate.py": (b"", f),
                 "sql/001_schema.sql": (b"", f),
                 "config/familysearch.json": (b"{}", f),

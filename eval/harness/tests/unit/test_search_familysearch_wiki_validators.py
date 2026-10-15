@@ -10,15 +10,20 @@ Every check added under issue #1755 is exercised here against BOTH a state
 that must pass and the specific state observed failing in a committed run log,
 so the assertion is known to fire before it gates anything.
 
+Since #3244 option L (U20) the deliverable is one research-log entry, not a
+`.md` file, so every planted case builds `after_state["research_json"]["log"]`
+and the summary text is that entry's `notes`. Each fires/passes pair the `.md`
+version carried is kept against the log entry; these pairs are the durable home
+of that change's break proofs.
+
 The violating states are drawn from the #1647 deep dive:
-  - `ut_search_wiki_003`, run `v1_2026-07-22_10-11-56` — wrote no file at all
+  - `ut_search_wiki_003`, run `v1_2026-07-22_10-11-56` — saved nothing at all
     while `wiki_search` returned three results.
-  - `ut_search_wiki_007`, run `v1_2026-07-01_17-14-57` — wrote
-    `death-records.md` where the settled slug rule gives
-    `death-records-1800s.md`; the judge scored "File saved correctly" 3 both
-    ways across five runs.
   - fabricated URLs in a summary: never observable before, because the saved
     file reached no grader.
+
+The `ut_search_wiki_007` slug drift (`death-records.md` vs
+`death-records-1800s.md`) went with the filename: a log entry has none.
 
 `test_census_era_boundaries_preserved` (#2693) is exercised the same way. Its
 violating state is the one `453a2f69f` reported: a summary claiming every
@@ -26,6 +31,7 @@ census lists each household member by name, age, birthplace and relationship,
 which collapses the chunk's three eras into one blanket rule.
 """
 
+import re
 import sys
 from pathlib import Path
 
@@ -39,16 +45,14 @@ sys.path.insert(0, str(_VALIDATORS_DIR))
 # collect the imported validators as tests of this module and error on their
 # harness-supplied fixtures. Same pattern as test_init_project_validator.py.
 from test_search_familysearch_wiki import (  # noqa: E402
-    report_reply_does_not_restate_the_saved_file as check_brevity,
+    report_reply_does_not_restate_the_logged_entry as check_brevity,
     test_census_era_boundaries_preserved as check_census_eras,
-    test_expected_slug as check_slug,
-    test_no_file_on_empty_results as check_no_file_on_empty,
+    test_empty_results_logs_one_negative as check_empty_logs_negative,
+    test_no_project_returns_template as check_no_project,
+    test_one_log_entry_appended as check_one_entry,
     test_sources_section_matches_wiki_results as check_sources,
-    test_wrote_exactly_one_markdown_file as check_one_md,
 )
 
-
-EMPTY = {"files": {}}
 
 _URL_A = "https://www.familysearch.org/en/wiki/United_States_Death_Records#Early"
 _URL_B = "https://www.familysearch.org/en/wiki/Pennsylvania_Vital_Records#Death"
@@ -65,8 +69,32 @@ RESULT_B = {
 }
 
 
-def _state(**files):
-    return {"files": dict(files)}
+def _entry(notes="x", n=1, tool="wiki_search", outcome="positive",
+           results_examined=1, plan_item_id=None):
+    return {
+        "id": f"log_{n:03d}",
+        "plan_item_id": plan_item_id,
+        "performed": "2026-10-13T00:00:00.000Z",
+        "tool": tool,
+        "query": {"query": "How do I find death records?"},
+        "outcome": outcome,
+        "results_examined": results_examined,
+        "external_site": None,
+        "results_ref": None,
+        "notes": notes,
+    }
+
+
+def _state(*entries, **files):
+    return {"research_json": {"log": list(entries)}, "files": dict(files)}
+
+
+def _logged(notes):
+    """A run that logged one `wiki_search` entry carrying `notes`."""
+    return _state(_entry(notes))
+
+
+EMPTY = _state()
 
 
 def _wiki_call(*results):
@@ -88,98 +116,54 @@ def _tags(*tags, type="positive"):
     return {"type": type, "tags": list(tags)}
 
 
-# --- test_wrote_exactly_one_markdown_file ------------------------------
+# --- test_one_log_entry_appended ---------------------------------------
 
 
-def test_one_md_passes_on_a_single_file():
-    check_one_md(
-        EMPTY, _state(**{"death-records-1800s.md": "x"}), _tags("fs-wiki")
-    )
+def test_one_entry_passes_on_a_single_entry():
+    check_one_entry(EMPTY, _logged(_good_file(RESULT_A)), _tags("fs-wiki"))
 
 
-def test_one_md_fires_on_the_ut_003_no_file_run():
-    """The observed violation: results returned, nothing written."""
-    with pytest.raises(AssertionError, match="exactly one new .md"):
-        check_one_md(EMPTY, EMPTY, _tags("fs-wiki"))
+def test_one_entry_ignores_entries_already_in_the_log():
+    before = _state(_entry(None, n=1, tool="record_search"))
+    after = _state(_entry(None, n=1, tool="record_search"), _entry("x", n=2))
+    check_one_entry(before, after, _tags("fs-wiki"))
 
 
-def test_one_md_fires_on_a_duplicate_write():
-    """The "Never duplicate" arm of the same rule."""
-    with pytest.raises(AssertionError, match="exactly one new .md"):
-        check_one_md(
+def test_one_entry_fires_on_the_ut_003_nothing_saved_run():
+    """The observed violation: results returned, nothing logged."""
+    with pytest.raises(AssertionError, match="exactly one new log entry"):
+        check_one_entry(EMPTY, EMPTY, _tags("fs-wiki"))
+
+
+def test_one_entry_fires_on_a_second_entry():
+    with pytest.raises(AssertionError, match="exactly one new log entry"):
+        check_one_entry(EMPTY, _state(_entry("x", n=1), _entry("x", n=2)), _tags("fs-wiki"))
+
+
+def test_one_entry_fires_on_the_wrong_tool():
+    with pytest.raises(AssertionError, match="not 'wiki_search'"):
+        check_one_entry(EMPTY, _state(_entry("x", tool="wikipedia_search")), _tags("fs-wiki"))
+
+
+def test_one_entry_fires_on_a_plan_item():
+    with pytest.raises(AssertionError, match="plan_item_id"):
+        check_one_entry(EMPTY, _state(_entry("x", plan_item_id="plan_001_01")), _tags("fs-wiki"))
+
+
+def test_one_entry_fires_on_a_md_written_alongside():
+    """The pre-U20 deliverable still written next to the entry."""
+    with pytest.raises(AssertionError, match="not a file"):
+        check_one_entry(
             EMPTY,
-            _state(**{"death-records.md": "x", "death-records-1800s.md": "x"}),
+            _state(_entry(_good_file(RESULT_A)), **{"death-records-1800s.md": "x"}),
             _tags("fs-wiki"),
         )
 
 
-def test_one_md_skips_the_empty_results_path():
+@pytest.mark.parametrize("tag", ["no-results", "no-project"])
+def test_one_entry_skips_the_empty_and_no_project_paths(tag):
     with pytest.raises(pytest.skip.Exception):
-        check_one_md(EMPTY, EMPTY, _tags("no-results"))
-
-
-# --- test_expected_slug ------------------------------------------------
-
-
-def test_slug_passes_on_the_settled_name():
-    check_slug(
-        EMPTY,
-        _state(**{"death-records-1800s.md": "x"}),
-        _tags("expects-file-death-records-1800s"),
-    )
-
-
-def test_slug_fires_on_the_ut_007_drift():
-    """`death-records.md` vs the settled `death-records-1800s.md`.
-
-    Both scored "File saved correctly" 3 across five runs, because no test
-    recorded which was expected.
-    """
-    with pytest.raises(AssertionError, match="death-records-1800s.md"):
-        check_slug(
-            EMPTY,
-            _state(**{"death-records.md": "x"}),
-            _tags("expects-file-death-records-1800s"),
-        )
-
-
-def test_slug_skips_when_untagged():
-    with pytest.raises(pytest.skip.Exception):
-        check_slug(EMPTY, _state(**{"anything.md": "x"}), _tags("fs-wiki"))
-
-
-def test_slug_ignores_a_descriptive_slug_tag():
-    """Regression for the collision found in review of PR #1762.
-
-    `census-records.json` carries `slug-normalization` — a DESCRIPTIVE tag
-    naming what the test exercises, not what it writes. The first version of
-    this helper scanned for the `slug-` prefix and so resolved the expected
-    file to `normalization.md` while the test writes `census-records.md`,
-    failing a green test and taking the judge down with it (a failing
-    validator fails the test outright). Verified against both committed run logs at the
-    time: 11 matched, this one did not.
-
-    The prefix is now `expects-file-`, which cannot collide with a
-    descriptive tag. `search-wikipedia` has four more of the same shape
-    (`slug-simple`, `slug-parens`, `slug-numbers`, `slug-single-word`).
-    """
-    check_slug(
-        EMPTY,
-        _state(**{"census-records.md": "x"}),
-        _tags("fs-wiki", "how-to", "census",
-              "slug-normalization", "expects-file-census-records"),
-    )
-
-
-def test_slug_rejects_two_expected_file_tags():
-    """Two filename declarations is an authoring error, not a precedence
-    question — fail loudly rather than silently taking the first."""
-    with pytest.raises(AssertionError, match="at most one"):
-        check_slug(
-            EMPTY,
-            _state(**{"census-records.md": "x"}),
-            _tags("expects-file-census-records", "expects-file-something-else"),
-        )
+        check_one_entry(EMPTY, EMPTY, _tags(tag))
 
 
 # --- test_census_era_boundaries_preserved ------------------------------
@@ -190,12 +174,11 @@ def test_slug_rejects_two_expected_file_tags():
 # The validator's proxy is that both INTERIOR boundary years survive into the
 # summary. The outer years 1790 and 1950 are coverage, not boundaries, which is
 # why the blanket case below still carries them and must still fire.
-_CENSUS_TAGS = ("fs-wiki", "how-to", "census",
-                "slug-normalization", "expects-file-census-records")
+_CENSUS_TAGS = ("fs-wiki", "how-to", "census", "title-normalization")
 
 
 def _census_file(body):
-    return _state(**{"census-records.md": body})
+    return _logged(body)
 
 
 @pytest.mark.parametrize(
@@ -286,6 +269,18 @@ def test_census_eras_fire_on_a_summary_naming_no_year_at_all():
         check_census_eras(EMPTY, _census_file(no_years), _tags(*_CENSUS_TAGS))
 
 
+def test_census_eras_ignore_a_md_file_with_the_eras():
+    """The eras must be in the logged notes: a faithful `.md` beside a
+    flattened entry is still the flattened deliverable."""
+    with pytest.raises(AssertionError, match=r"missing \['1850', '1880'\]"):
+        check_census_eras(
+            EMPTY,
+            _state(_entry("Census records list households."),
+                   **{"census-records.md": "1850 and 1880"}),
+            _tags(*_CENSUS_TAGS),
+        )
+
+
 def test_census_eras_skip_a_non_census_test():
     """Tag-gated. Every other positive in this suite writes a summary with no
     reason to name either year, so an ungated version would fail all of them.
@@ -293,32 +288,50 @@ def test_census_eras_skip_a_non_census_test():
     with pytest.raises(pytest.skip.Exception):
         check_census_eras(
             EMPTY,
-            _state(**{"death-records-1800s.md": "No years here."}),
-            _tags("fs-wiki", "how-to", "expects-file-death-records-1800s"),
+            _logged("No years here."),
+            _tags("fs-wiki", "how-to"),
         )
 
 
-def test_census_eras_skip_when_no_file_was_written():
-    """A run that wrote nothing is `test_wrote_exactly_one_markdown_file`'s
-    failure to report; firing here too would charge one defect twice.
+def test_census_eras_skip_when_nothing_was_logged():
+    """A run that logged nothing is `test_one_log_entry_appended`'s failure to
+    report; firing here too would charge one defect twice.
     """
     with pytest.raises(pytest.skip.Exception):
         check_census_eras(EMPTY, EMPTY, _tags(*_CENSUS_TAGS))
 
 
-# --- test_no_file_on_empty_results -------------------------------------
+# --- test_empty_results_logs_one_negative -----------------------------
+
+_NIL = _entry(None, outcome="negative", results_examined=0)
 
 
-def test_empty_results_passes_when_nothing_written():
-    check_no_file_on_empty(EMPTY, EMPTY, _tags("no-results"))
+def test_empty_results_passes_on_one_nil_entry():
+    check_empty_logs_negative(EMPTY, _state(_NIL), _tags("no-results"))
 
 
-def test_empty_results_fires_when_a_file_is_written():
-    with pytest.raises(AssertionError, match="must produce no file"):
-        check_no_file_on_empty(
-            EMPTY, _state(**{"blockchain-birth-certificates.md": "x"}),
-            _tags("no-results"),
-        )
+@pytest.mark.parametrize(
+    "after, match",
+    [
+        (EMPTY, "exactly one nil entry"),
+        (_state(_NIL, dict(_NIL, id="log_002")), "exactly one nil entry"),
+        (_state(_entry(None, outcome="positive", results_examined=0)), "outcome 'negative'"),
+        (_state(_entry(None, outcome="negative", results_examined=3)), "results_examined 0"),
+        (_state(_entry("No guidance found.", outcome="negative", results_examined=0)), "notes must be null"),
+        (_state(_NIL, **{"blockchain-birth-certificates.md": "x"}), "must produce no file"),
+        (_state(_entry(None, tool="wikipedia_search", outcome="negative", results_examined=0)), "not 'wiki_search'"),
+    ],
+    ids=["nothing-logged", "two-entries", "positive-outcome", "results-examined",
+         "notes-carried", "file-written", "wrong-tool"],
+)
+def test_empty_results_fires(after, match):
+    with pytest.raises(AssertionError, match=match):
+        check_empty_logs_negative(EMPTY, after, _tags("no-results"))
+
+
+def test_empty_results_skips_a_results_test():
+    with pytest.raises(pytest.skip.Exception):
+        check_empty_logs_negative(EMPTY, EMPTY, _tags("fs-wiki"))
 
 
 # --- test_sources_section_matches_wiki_results -------------------------
@@ -327,30 +340,29 @@ def test_empty_results_fires_when_a_file_is_written():
 def test_sources_passes_when_every_result_is_cited():
     check_sources(
         EMPTY,
-        _state(**{"death-records-1800s.md": _good_file(RESULT_A, RESULT_B)}),
+        _logged(_good_file(RESULT_A, RESULT_B)),
         _wiki_call(RESULT_A, RESULT_B),
         _tags("fs-wiki"),
     )
 
 
 def test_sources_fires_on_a_missing_citation():
-    with pytest.raises(AssertionError, match="is not cited in the saved file"):
+    with pytest.raises(AssertionError, match="is not cited in the logged notes"):
         check_sources(
             EMPTY,
-            _state(**{"death-records-1800s.md": _good_file(RESULT_A)}),
+            _logged(_good_file(RESULT_A)),
             _wiki_call(RESULT_A, RESULT_B),
             _tags("fs-wiki"),
         )
 
 
 def test_sources_fires_on_a_fabricated_url():
-    """`rubric.md` calls a fabricated URL a hard fail; nothing could see one
-    before, since the file never reached the judge."""
+    """`rubric.md` calls a fabricated URL a hard fail."""
     doctored = _good_file(RESULT_A) + "- [Archion](https://www.archion.de)\n"
     with pytest.raises(AssertionError, match="no URL the wiki response did not"):
         check_sources(
             EMPTY,
-            _state(**{"death-records-1800s.md": doctored}),
+            _logged(doctored),
             _wiki_call(RESULT_A),
             _tags("fs-wiki"),
         )
@@ -364,7 +376,7 @@ def test_sources_fires_when_the_bullet_drops_the_section_heading():
     with pytest.raises(AssertionError, match="exact page_title and"):
         check_sources(
             EMPTY,
-            _state(**{"death-records-1800s.md": bare}),
+            _logged(bare),
             _wiki_call(RESULT_A),
             _tags("fs-wiki"),
         )
@@ -379,23 +391,46 @@ def test_sources_tolerates_a_hyphen_separator():
     )
     check_sources(
         EMPTY,
-        _state(**{"death-records-1800s.md": hyphenated}),
+        _logged(hyphenated),
         _wiki_call(RESULT_A),
         _tags("fs-wiki"),
     )
 
 
+def test_sources_skips_when_two_entries_were_logged():
+    """Entry count is `test_one_log_entry_appended`'s to report."""
+    with pytest.raises(pytest.skip.Exception):
+        check_sources(
+            EMPTY,
+            _state(_entry(_good_file(RESULT_A), n=1), _entry(_good_file(RESULT_A), n=2)),
+            _wiki_call(RESULT_A),
+            _tags("fs-wiki"),
+        )
+
+
+def test_sources_reads_the_notes_not_a_md_file():
+    """A correct `.md` beside notes that cite nothing still fails."""
+    with pytest.raises(AssertionError, match="is not cited in the logged notes"):
+        check_sources(
+            EMPTY,
+            _state(_entry("# FamilySearch Wiki: Death Records\n\nProse.\n"),
+                   **{"death-records-1800s.md": _good_file(RESULT_A)}),
+            _wiki_call(RESULT_A),
+            _tags("fs-wiki"),
+        )
+
+
 def test_sources_skips_when_the_run_returned_no_results():
     with pytest.raises(pytest.skip.Exception):
         check_sources(
-            EMPTY, EMPTY, _wiki_call(), _tags("fs-wiki")
+            EMPTY, _logged(_good_file(RESULT_A)), _wiki_call(), _tags("fs-wiki")
         )
 
 
 def test_sources_ignores_the_template_comment_placeholder():
     """Regression: `templates/wiki-search-summary.md` ships a citation-format
     reminder in an HTML comment carrying a placeholder wiki URL, and the skill
-    leaves it in the filled file. On the first live run this made the
+    leaves it in the filled document. On the first live run this made the
     fabrication arm fail every positive test — the URL is the template's own
     text, invisible in rendered markdown, not an invented citation.
 
@@ -409,7 +444,7 @@ def test_sources_ignores_the_template_comment_placeholder():
     )
     check_sources(
         EMPTY,
-        _state(**{"death-records-1800s.md": with_comment}),
+        _logged(with_comment),
         _wiki_call(RESULT_A),
         _tags("fs-wiki"),
     )
@@ -425,13 +460,60 @@ def test_sources_still_fires_on_a_fabricated_url_outside_a_comment():
     with pytest.raises(AssertionError, match="no URL the wiki response did not"):
         check_sources(
             EMPTY,
-            _state(**{"death-records-1800s.md": doctored}),
+            _logged(doctored),
             _wiki_call(RESULT_A),
             _tags("fs-wiki"),
         )
 
 
-# --- report_reply_does_not_restate_the_saved_file (tier 2) -------------
+# --- test_no_project_returns_template -----------------------------------
+
+_TEMPLATE_RETURN = (
+    _good_file(RESULT_A)
+    + "\n---\nYou asked how to find death records. The wiki's guidance is shown "
+    "above with the pages it came from.\n\nNext, pick a record set to search."
+)
+
+
+def _np(after=None, text=_TEMPLATE_RETURN, results=(RESULT_A,)):
+    return dict(
+        before_state=EMPTY,
+        after_state=after if after is not None else EMPTY,
+        tool_calls=_wiki_call(*results),
+        agent_returns=[{"subagent_type": "search-familysearch-wiki", "text": text}],
+        text_response="relay",
+        test=_tags("fs-wiki", "no-project"),
+    )
+
+
+def test_no_project_passes_a_template_return():
+    check_no_project(**_np())
+
+
+def test_no_project_is_inert_without_the_tag():
+    kwargs = _np(after=_logged(_good_file(RESULT_A)))
+    kwargs["test"] = _tags("fs-wiki")
+    with pytest.raises(pytest.skip.Exception):
+        check_no_project(**kwargs)
+
+
+@pytest.mark.parametrize(
+    "kwargs, match",
+    [
+        (_np(after=_logged(_good_file(RESULT_A))), "nothing may be logged"),
+        (_np(after=_state(**{"death-records.md": "x"})), "not a file"),
+        (_np(text="Saved the guidance to the research log.\n---\nDone."), "# FamilySearch Wiki:"),
+        (_np(text="Saved.\n---\n" + _good_file(RESULT_A)), "# FamilySearch Wiki:"),
+        (_np(text=_good_file(RESULT_A).replace(_URL_A, "")), _URL_A),
+    ],
+    ids=["logged-anyway", "wrote-a-file", "claims-a-save", "template-below-separator", "dropped-source"],
+)
+def test_no_project_fires(kwargs, match):
+    with pytest.raises(AssertionError, match=re.escape(match)):
+        check_no_project(**kwargs)
+
+
+# --- report_reply_does_not_restate_the_logged_entry (tier 2) -------------
 
 # Both replies below are byte-for-byte what the model produced, copied out of
 # the committed run logs -- full length, original punctuation, nothing tidied.
@@ -446,7 +528,7 @@ def test_sources_still_fires_on_a_fabricated_url_outside_a_comment():
 # and the non-ASCII these carry -- an u-umlaut in "Kirchenbuecher", an en dash,
 # an em dash -- is exactly what a construct regex could one day care about.
 # If you ever need a shortened version, call it an excerpt.
-_SAVED = {"files": {"german-church-records.md": "x"}}
+_SAVED = _logged("# FamilySearch Wiki: German Church Records\n\nProse.\n")
 
 # ut_search_wiki_003, run v1_2026-08-19_13-00-35.
 _RECITING_REPLY = (
@@ -493,7 +575,7 @@ def test_brevity_passes_on_the_return_contract_separator():
     check_brevity(
         EMPTY,
         _SAVED,
-        "Saved the guidance to `german-church-records.md`; it includes a "
+        "Saved the guidance to the research log; it includes a "
         "Sources section citing the wiki pages used.\n---\n"
         "You asked how to find German church records. The guidance is saved "
         "with the wiki pages it came from.\n\nNext, pick a parish to search.",
@@ -515,7 +597,7 @@ def test_brevity_grades_the_agent_return_not_the_relay():
         _SAVED,
         _RECITING_REPLY,
         [{"subagent_type": "search-familysearch-wiki",
-          "text": "Saved the guidance to `german-church-records.md`."}],
+          "text": "Saved the guidance to the research log."}],
     )
 
 
@@ -542,11 +624,35 @@ def test_brevity_falls_back_to_the_reply_when_the_agent_made_no_return():
         )
 
 
-def test_brevity_skips_when_no_file_was_saved():
-    """The rule is scoped to runs that saved a file - the empty-results path
-    and a hand-back must not be reported on."""
+def test_brevity_skips_when_nothing_was_logged():
+    """The rule is scoped to runs that logged the guidance - a hand-back and
+    the no-project path must not be reported on."""
     with pytest.raises(pytest.skip.Exception):
         check_brevity(EMPTY, EMPTY, _RECITING_REPLY)
+
+
+def test_brevity_skips_the_nil_entry():
+    """The empty-results entry carries no notes, so it is not a logged
+    document the reply could recite."""
+    with pytest.raises(pytest.skip.Exception):
+        check_brevity(
+            EMPTY, _state(_entry(None, outcome="negative", results_examined=0)), _RECITING_REPLY
+        )
+
+
+def test_brevity_skips_a_md_file_with_no_entry():
+    """The gate is the logged entry, not the pre-U20 `.md`."""
+    with pytest.raises(pytest.skip.Exception):
+        check_brevity(EMPTY, _state(**{"german-church-records.md": "x"}), _RECITING_REPLY)
+
+
+def test_brevity_fires_on_a_repeat_invocation():
+    """A repeat appends a second entry beside the first; the `.md` gate this
+    replaced skipped the overwrite-in-place case entirely."""
+    before = _state(_entry("first", n=1))
+    after = _state(_entry("first", n=1), _entry("second", n=2))
+    with pytest.raises(AssertionError, match="do not restate"):
+        check_brevity(before, after, "Saved.\n\n- one\n- two\n")
 
 
 def test_brevity_reports_a_recitation_inside_a_fence():
@@ -609,10 +715,10 @@ def test_brevity_validator_is_tier_two_through_the_real_runner():
     results = run_validators(
         skill="search-familysearch-wiki",
         validators_dir=Path(__file__).resolve().parents[2] / "validators",
-        before_state={"files": {}, "research_json": None, "tree_gedcomx_json": None},
+        before_state={"files": {}, "research_json": {"log": []}, "tree_gedcomx_json": None},
         after_state={
-            "files": {"german-church-records.md": "x"},
-            "research_json": None,
+            "files": {},
+            "research_json": {"log": [_entry("# FamilySearch Wiki: German Church Records\n")]},
             "tree_gedcomx_json": None,
         },
         tool_calls=[],
@@ -622,7 +728,7 @@ def test_brevity_validator_is_tier_two_through_the_real_runner():
     )
     brevity = next(
         (r for r in results
-         if r.name == "report_reply_does_not_restate_the_saved_file"),
+         if r.name == "report_reply_does_not_restate_the_logged_entry"),
         None,
     )
     assert brevity is not None, (

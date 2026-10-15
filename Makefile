@@ -378,7 +378,8 @@ probe-agent-nesting: $(ENGINE_BUILD) ## Live probe: can a plugin agent spawn ano
 	#
 	# Answered 2026-09-23 (Claude Code 2.1.220, SDK 0.2.128): yes, at depth 2, and
 	# the tool is Agent -- a Task grant resolves to it. The SDK streams no depth-2
-	# messages. A driver spawning three real record-extractors in parallel ran
+	# messages. A driver spawning three real record-extractors (since retired; the
+	# extractor arms now spawn record-structurer) in parallel ran
 	# them concurrently: 694 s wall against ~1,419 s back to back, every write
 	# landed. Re-run when the CLI or the SDK moves.
 	cd apps/server && \
@@ -502,7 +503,7 @@ proto-smoke: proto-up-core ## D3 acceptance, no model cost: ok / fail / crash / 
 
 .PHONY: proto-test
 proto-test: ## Prototype offline tests: compose/conf/schema shape, the shim's decide(), the web tier, the worker
-	cd apps/server && uv run pytest -q tests/test_proto_config.py tests/test_proto_decide.py tests/test_proto_enqueue.py tests/test_proto_web.py tests/test_proto_worker.py tests/test_proto_worker_start.py tests/test_proto_shutdown.py tests/test_proto_d17.py tests/test_proto_demo.py tests/test_proto_kill.py tests/test_proto_d18.py tests/test_proto_auth.py tests/test_proto_bundles.py tests/test_eb_bundles.py tests/test_proto_grants.py tests/test_proto_grants_pg.py tests/test_proto_turn_users.py tests/test_proto_migrate.py tests/test_proto_migrate_pg.py tests/test_proto_bounds.py tests/test_proto_queue_pg.py tests/test_proto_fencing_pg.py tests/test_proto_session_store_pg.py tests/test_proto_delete_pg.py tests/test_proto_alarms.py tests/test_proto_alarms_pg.py tests/test_proto_rehearsal.py tests/test_proto_target.py
+	cd apps/server && uv run pytest -q tests/test_proto_config.py tests/test_proto_decide.py tests/test_proto_enqueue.py tests/test_proto_web.py tests/test_proto_feedback.py tests/test_proto_worker.py tests/test_proto_worker_start.py tests/test_proto_shutdown.py tests/test_proto_d17.py tests/test_proto_demo.py tests/test_proto_kill.py tests/test_proto_d18.py tests/test_proto_auth.py tests/test_proto_bundles.py tests/test_eb_bundles.py tests/test_proto_grants.py tests/test_proto_grants_pg.py tests/test_proto_turn_users.py tests/test_proto_migrate.py tests/test_proto_migrate_pg.py tests/test_proto_bounds.py tests/test_proto_queue_pg.py tests/test_proto_fencing_pg.py tests/test_proto_session_store_pg.py tests/test_proto_delete_pg.py tests/test_proto_alarms.py tests/test_proto_alarms_pg.py tests/test_proto_feedback_pg.py tests/test_proto_rehearsal.py tests/test_proto_target.py
 
 # U3: the grant-lock tests against real Postgres -- the lock semantics are the point, and no
 # fake can prove pg_try_advisory_lock. U9's migration runner the same way: its lock, its
@@ -517,7 +518,7 @@ proto-test: ## Prototype offline tests: compose/conf/schema shape, the shim's de
 proto-grants-test: ## U3 + U6 + U9 + U23: the grant-lock interleavings, the claim fence, the migration runner and the held-message claim against the compose postgres (real advisory locks)
 	npm --prefix packages/engine/mcp-server run build
 	$(PROTO_COMPOSE) up -d --wait postgres
-	cd apps/server && PROTO_TEST_PG_DSN=postgresql://postgres:proto@localhost:5434/postgres uv run pytest -q tests/test_proto_grants_pg.py tests/test_proto_migrate_pg.py tests/test_proto_queue_pg.py tests/test_proto_fencing_pg.py tests/test_proto_session_store_pg.py tests/test_proto_delete_pg.py tests/test_proto_alarms_pg.py
+	cd apps/server && PROTO_TEST_PG_DSN=postgresql://postgres:proto@localhost:5434/postgres uv run pytest -q tests/test_proto_grants_pg.py tests/test_proto_migrate_pg.py tests/test_proto_queue_pg.py tests/test_proto_fencing_pg.py tests/test_proto_session_store_pg.py tests/test_proto_delete_pg.py tests/test_proto_alarms_pg.py tests/test_proto_feedback_pg.py
 
 # U3: store an encrypted FamilySearch grant for the dev-login patron (EMAIL, default
 # dev@localhost, who owns every seeded project): a PKCE sign-in on the dev key through a
@@ -727,6 +728,8 @@ PROTO_PG_DSN ?= postgresql://postgres:proto@localhost:5434/proto
 .PHONY: proto-web
 proto-web: ## D11–12 web tier from the venv on :8085, against the compose postgres + elasticmq (a migrated database: make proto-migrate)
 	cd apps/server && PG_DSN=$(PROTO_PG_DSN) QUEUE_URL=http://localhost:9324/000000000000/turns DEV_LOGIN=true \
+	  GENEALOGY_S3_ENDPOINT=http://localhost:9000 GENEALOGY_S3_BUCKET=projects \
+	  GENEALOGY_S3_ACCESS_KEY=proto GENEALOGY_S3_SECRET_KEY=protoproto \
 	  $(PROTO_SQS_ENV) uv run python proto/web/app.py
 
 .PHONY: proto-drive
@@ -881,6 +884,17 @@ unit-relay-fidelity: ## How much of an agent's return survives the main thread's
 	# production, so nothing here gates a build or reaches the judge (#3188).
 	cd eval/harness && uv run python scripts/relay_fidelity_report.py
 
+.PHONY: e2e-relay-fidelity
+e2e-relay-fidelity: ## How much of a subagent's return survives the relay on a REAL route — offline report over committed e2e run logs: make e2e-relay-fidelity [TEST=<slug>] [SINCE=14|all|YYYY-MM-DD]
+	# The production counterpart of unit-relay-fidelity above, which measures
+	# the harness dispatcher. Windowed to 14 days like every aggregating e2e
+	# reader; SINCE=all opts out. Reports its denominators: a log below
+	# harness_schema_version 8 records an Agent return cut at 500 chars and a
+	# narration with no `thread` tag, so it is unscorable rather than clean.
+	# Exits 2 when nothing was scored: a prose warning beside a success exit
+	# just relocates the silent zero to the exit code.
+	cd eval/harness && uv run python scripts/relay_fidelity_report.py --production $(if $(SINCE),--since $(SINCE),) $(if $(TEST),--test $(TEST),)
+
 .PHONY: replay-sizes
 replay-sizes: $(ENGINE_BUILD) ## Replay committed e2e tool calls against a base and a candidate engine build and diff answer sizes — zero model calls, zero network: make replay-sizes [BASE=<ref>] [TEST=<slug>] [TOOLS=a,b] [TRACKED_ONLY=1] [JSON=<path>]
 	# T1.4 of docs/plan/cost-latency-10x.md. Re-asks every recorded call to the
@@ -898,14 +912,19 @@ replay-sizes: $(ENGINE_BUILD) ## Replay committed e2e tool calls against a base 
 	cd eval/harness && uv run python -m e2e.replay_sizes $(if $(BASE),--base $(BASE),) $(if $(TEST),--test $(TEST),) $(if $(TOOLS),--tools $(TOOLS),) $(if $(TRACKED_ONLY),--tracked-only,) $(if $(JSON),--json $(abspath $(JSON)),)
 
 .PHONY: replay-collapse
-replay-collapse: $(ENGINE_BUILD) ## Replay each recorded research_query plan-log walk against the one log×questionId call that replaces it (T2.1) — zero model calls: make replay-collapse [BASE=<ref>] [TEST=<slug>] [TRACKED_ONLY=1] [JSON=<path>]
-	# Proves the replacement returns EXACTLY the walk's question's entries (an
-	# oracle computed from the rebuilt notes), and that the walk it is compared
-	# against is the real one: each replayed walk call's count must equal the
-	# count the run recorded, else exit 3. Reports N walk calls -> M replacement
-	# calls. Exit 1 = the candidate lacks the filter; exit 2 = nothing comparable
-	# (e.g. every group unverifiable after a capture strip); exit 3 = integrity.
-	cd eval/harness && uv run python -m e2e.replay_collapse $(if $(BASE),--base $(BASE),) $(if $(TEST),--test $(TEST),) $(if $(TRACKED_ONLY),--tracked-only,) $(if $(JSON),--json $(abspath $(JSON)),)
+replay-collapse: $(ENGINE_BUILD) ## Replay recorded research_query walks against the one call that replaces each — rule plan-log (log×planItemId walk -> log×questionId, T2.1) and rule plural-id (one-id walks -> one call with a list of ids, T2.3) — zero model calls: make replay-collapse [RULE=plan-log|plural-id] [BASE=<ref>] [TEST=<slug>] [TRACKED_ONLY=1] [JSON=<path>]
+	# Proves the replacement returns EXACTLY what the walk read (plan-log: an
+	# oracle computed from the rebuilt notes; plural-id: the base build's own
+	# singular pages, unioned in document order, with count and countById right
+	# on every page), and that the walk it is compared against is the real one:
+	# each replayed walk call's count must equal the count the run recorded,
+	# else exit 3 (plural-id classifies a miss: source-id-unstamped is allowed,
+	# ledger-missing-writes only for its pinned groups). Reports N walk calls ->
+	# M replacement calls. Exit 1 = the candidate lacks the filter (plan-log), or
+	# answered a list wrong or past the 50,000-char spill (plural-id: wrong /
+	# spill); exit 2 = nothing comparable (e.g. every group unverifiable after a
+	# capture strip); exit 3 = integrity.
+	cd eval/harness && uv run python -m e2e.replay_collapse $(if $(RULE),--rule $(RULE),) $(if $(BASE),--base $(BASE),) $(if $(TEST),--test $(TEST),) $(if $(TRACKED_ONLY),--tracked-only,) $(if $(JSON),--json $(abspath $(JSON)),)
 
 .PHONY: eval-skill
 eval-skill: $(ENGINE_BUILD) ## Run the skill eval harness, rebuilding first: make eval-skill SKILL=tree-edit [CONCURRENCY=8] [STORE=pg]; SKILL="a b c" runs several in one pool
@@ -1022,15 +1041,6 @@ e2e-login: $(ENGINE_DEPS) ## Log in to FamilySearch (opens a browser; token last
 	# client ID, so you don't have to open a Claude session to log in.
 	# Login is host-global and ~24h-lived — a once-per-day act, not per run.
 	cd $(ENGINE_DIR) && npx tsx dev/e2e-login.ts
-
-.PHONY: e2e-thinking-probe
-e2e-thinking-probe: ## Reproduce the record-extractor runaway-thinking freeze in ~1 min (needs ANTHROPIC_API_KEY)
-	# Replays the exact delegation message that froze the frederick-munson run
-	# against sonnet-5 under three thinking configs (32k / off / 4k) with a
-	# stubbed tool loop, and reports which RAN AWAY vs ACTED. A one-turn API
-	# probe instead of a 15-min e2e run — settles the thinking-vs-model question.
-	# No MCP/FamilySearch calls; the API key comes from the shell or eval/.env.
-	cd eval/harness && uv run python -m e2e.try_record_extractor_thinking $(if $(MODEL),--model $(MODEL),)
 
 .PHONY: e2e-run
 e2e-run: $(ENGINE_BUILD) ## Run ONE e2e benchmark fixture against live FamilySearch (expensive): make e2e-run TEST=kenneth-quass-death
@@ -1694,7 +1704,7 @@ deploy-status: ## Health-check the deployed control plane (expect "db":"postgres
 	curl -s $(DEPLOY_URL)/api/health | jq
 
 # Runs on the Fly machine, which holds DATABASE_URL, so no database credential is needed
-# here. Reads turn_costs (apps/server/app/cost_report.py).
+# here. Reads api_calls and turn_costs (apps/server/app/cost_report.py).
 .PHONY: alpha-costs
-alpha-costs: ## Claude API cost of the hosted alpha: per day, per build, top sessions (DAYS=30)
+alpha-costs: ## Claude API cost of the hosted alpha: every call and every turn, per day and session (DAYS=30)
 	fly ssh console --app genealogy-workbench -C "sh -c 'cd /app/server && python -m app.cost_report --days $(or $(DAYS),30)'"

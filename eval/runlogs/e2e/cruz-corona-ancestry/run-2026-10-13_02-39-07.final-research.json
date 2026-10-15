@@ -1,0 +1,3651 @@
+{
+  "project": {
+    "id": "rp_cruz_corona_ancestry",
+    "objective": "Who were the parents of Mauro Cruz Corona, born about 1910 in or near Nueva Italia, Michoac\u00e1n, Mexico, and what were his exact birth date and place?",
+    "subject_person_ids": [
+      "PID-TODO"
+    ],
+    "status": "active",
+    "created": "2026-06-19",
+    "updated": "2026-06-19"
+  },
+  "researcher_profile": {
+    "experience_level": "intermediate",
+    "subscriptions": [],
+    "narration_guidance": "concise"
+  },
+  "questions": [
+    {
+      "id": "q_001",
+      "question": "Who were the parents of Mauro Cruz Corona, born about 1910 in or near Nueva Italia, Michoac\u00e1n, Mexico, and what was his exact birth date and place?",
+      "rationale": "This is the central objective restated as a single researchable question. A birth or baptismal record from the parish(es) serving the Nueva Italia / Par\u00e1cuaro area of Michoac\u00e1n \u2014 or from Guerrero, given that three confirmed siblings were born in Coahuayutla, Guerrero between 1913 and 1918 \u2014 would name the parents and supply the exact event details. Civil registration (registro civil) in Michoac\u00e1n was generally functional by the 1900s\u20131910s; parish registers for the area may predate civil records. The siblings' Guerrero birthplaces raise the possibility that Mauro too was born in Guerrero rather than Michoac\u00e1n, making records from both states candidates. No sources have been searched yet.",
+      "selection_basis": "objective_decomposition",
+      "priority": "high",
+      "status": "open",
+      "depends_on": [],
+      "unblocks": [],
+      "resolved": null,
+      "resolution_assertion_ids": [],
+      "exhaustive_declaration": {
+        "declared": false,
+        "justification": null,
+        "log_entry_ids": [],
+        "stop_criteria": null
+      },
+      "created": "2026-10-13"
+    }
+  ],
+  "plans": [
+    {
+      "id": "pl_001",
+      "question_id": "q_001",
+      "status": "active",
+      "created": "2026-10-13",
+      "items": [
+        {
+          "id": "pli_001",
+          "sequence": 1,
+          "record_type": "church",
+          "jurisdiction": "Coahuayutla de Jos\u00e9 Mar\u00eda Izazaga, Guerrero, Mexico",
+          "date_range": "1908-1920",
+          "repository": "FamilySearch",
+          "rationale": "The three siblings (Miguel, Liborio, Facundo Cruz) are documented as born in Coahuayutla, Guerrero, 1913\u20131918. Their Catholic baptism records in FS collection 1823323 (Mexico, Guerrero, Catholic Church Records, 1576\u20131979, name-searchable (personCount 21256598)) will name both parents. Per Mexican naming convention (Mexico_Naming_Customs wiki; loc_001; loc_002), baptism entries record the father's full two-surname name and the mother's full two-surname name \u2014 giving us both the paternal-line Cruz surname chain and the maternal Corona surname chain. Searching surname 'Cruz' filtered to Coahuayutla, 1908\u20131920, should surface all three siblings and potentially Mauro himself if born in Guerrero. This is the required FAN/sibling item for a parentage question and the highest-probability starting point. Per loc_002, the statewide collection is name-searchable and more complete than the San Agust\u00edn parish standalone catalog (1037615, browse-only). Also try variant 'Crus.'",
+          "fallback_for": null,
+          "status": "completed"
+        },
+        {
+          "id": "pli_002",
+          "sequence": 2,
+          "record_type": "vital_record",
+          "jurisdiction": "Coahuayutla de Jos\u00e9 Mar\u00eda Izazaga, Guerrero, Mexico",
+          "date_range": "1905-1920",
+          "repository": "FamilySearch",
+          "rationale": "Search FS collection 1918291 (Mexico, Guerrero, Civil Registration, 1860\u20131996, name-searchable (personCount 8406443)) for civil birth registrations of the Cruz siblings and Mauro himself in Coahuayutla, Guerrero, 1905\u20131920. Civil birth acts (actas de nacimiento) name both parents with full surnames. Per loc_002, compliance dropped sharply during the Revolution (1910\u20131920), so church records (pli_001) are sequenced first. Mauro may also appear here if born in Guerrero rather than Michoac\u00e1n. Quirk: the Coahuayutla municipal civil catalog begins only in 1921 (loc_002); use the statewide Guerrero collection 1918291, not the municipal catalog.",
+          "fallback_for": null,
+          "status": "completed"
+        },
+        {
+          "id": "pli_003",
+          "sequence": 3,
+          "record_type": "church",
+          "jurisdiction": "Guerrero, Mexico",
+          "date_range": "1895-1912",
+          "repository": "FamilySearch",
+          "rationale": "Dedicated parentage plan item: search FS collection 1823323 (Mexico, Guerrero, Catholic Church Records, name-searchable (personCount 21256598)) for the Catholic marriage of a Cruz man to a Corona woman in Guerrero, ca. 1895\u20131912. This record: (a) confirms the couple as a married unit; (b) supplies the mother's full name \u2014 given name + paternal surname 'Corona' + her own maternal surname \u2014 which census and death records almost never give; (c) by date relative to Mauro's ca. 1910 birth, corroborates a father named only by the sibling baptisms. Note: the marriage record proves the couple married but is not by itself evidence that Mauro is their child; that link requires a baptism or civil birth record placing Mauro with these parents. Date window: upper bound set by Mauro's ca. 1910 birth; lower bound ca. 1895, assuming parents born ca. 1875\u20131880 and marrying in their late teens.",
+          "fallback_for": null,
+          "status": "skipped",
+          "skip_category": "answered",
+          "skip_reason": "The civil birth registration (src_005, Acta 201, La Uni\u00f3n, 6 Dec 1910) directly states 'hijo leg\u00edtimo' confirming the parents S\u00f3stenes Cruz and Apolinar Corona were legally married at the time of Mauro's birth. The marriage record would have confirmed the couple as a unit and supplied Apolinar's full name \u2014 both are now established directly by the birth registration, which names her as 'Apolinar Corona' and establishes her origin (Coahuayutla). The search is no longer necessary to answer q_001."
+        },
+        {
+          "id": "pli_004",
+          "sequence": 4,
+          "record_type": "vital_record",
+          "jurisdiction": "Guerrero, Mexico",
+          "date_range": "1895-1912",
+          "repository": "FamilySearch",
+          "rationale": "Search FS collection 1918291 (Mexico, Guerrero, Civil Registration, name-searchable (personCount 8406443)) for the civil marriage of a Cruz man to a Corona woman in Guerrero, ca. 1895\u20131912. Civil marriage acts often name both parties' parents, supply each party's age, and record the exact date and place. Date window bounded by: parents must have married before Mauro's ca. 1910 birth (upper bound 1910); lower bound ca. 1895 assuming late-teen or early-twenties marriage. Fallback for pli_003 if the church marriage record is not found or not indexed.",
+          "fallback_for": "pli_003",
+          "status": "skipped",
+          "skip_category": "answered",
+          "skip_reason": "Fallback for pli_003. Same reason: the civil birth registration (src_005) directly answers q_001, confirming parents and their legitimacy. The civil marriage record is no longer needed to prove parentage."
+        },
+        {
+          "id": "pli_005",
+          "sequence": 5,
+          "record_type": "church",
+          "jurisdiction": "Par\u00e1cuaro, Michoacan, Mexico",
+          "date_range": "1905-1915",
+          "repository": "FamilySearch",
+          "rationale": "Search FS collection 1883388 (Mexico, Michoac\u00e1n, Catholic Church Records, 1555\u20131996) for Mauro Cruz's baptism in Par\u00e1cuaro, Michoac\u00e1n, ca. 1907\u20131913. Per loc_001, Nueva Italia (founded ca. 1909) fell under Par\u00e1cuaro jurisdiction for this period \u2014 M\u00fagica municipality was not created until 1942. Availability: collections_search returned 0 for Michoac\u00e1n (possible tool-scope limitation); loc_001 confirms this collection covers the target period with images. Search under Par\u00e1cuaro as the predecessor jurisdiction. A baptism record names both parents and confirms Mauro's exact birth date and place, directly answering both parts of q_001. Also try 'Crus.' If the indexed search underdelivers, the Par\u00e1cuaro Asunci\u00f3n parish catalog (162793, 1838\u20131967) is available for a browse-only follow-up.",
+          "fallback_for": null,
+          "status": "skipped",
+          "skip_category": "premise_invalidated",
+          "skip_reason": "Mauro Cruz's 1941 marriage investigation file (src_004) contains his sworn declaration that he was born in La Uni\u00f3n (Gro.) \u2014 La Uni\u00f3n de Isidoro Montes de Oca, Guerrero \u2014 not in Michoac\u00e1n. The premise that he was born near Nueva Italia, Michoac\u00e1n is invalidated. Replaced by pli_010."
+        },
+        {
+          "id": "pli_006",
+          "sequence": 6,
+          "record_type": "vital_record",
+          "jurisdiction": "Par\u00e1cuaro, Michoacan, Mexico",
+          "date_range": "1905-1915",
+          "repository": "FamilySearch",
+          "rationale": "Search FS collection 1916243 (Mexico, Michoac\u00e1n, Civil Registration, 1859\u20131940) for Mauro Cruz's civil birth registration in Par\u00e1cuaro, Michoac\u00e1n, ca. 1907\u20131913. Per loc_001, Nueva Italia records fall under Par\u00e1cuaro for this era. Availability: collections_search returned 0 for Michoac\u00e1n; loc_001 reports this collection as indexed with images. Civil registration compliance was reduced during the Revolution (1910\u20131920), so this item is sequenced after the church record search (pli_005). The civil birth act (acta de nacimiento) names both parents and records exact birth date and place \u2014 directly answering both parts of q_001. Fallback from pli_005 if the church baptism is not found.",
+          "fallback_for": "pli_005",
+          "status": "skipped",
+          "skip_category": "premise_invalidated",
+          "skip_reason": "Same as pli_005: Mauro's stated birthplace is La Uni\u00f3n, Guerrero, not Par\u00e1cuaro, Michoac\u00e1n."
+        },
+        {
+          "id": "pli_007",
+          "sequence": 7,
+          "record_type": "census",
+          "jurisdiction": "Mexico",
+          "date_range": "1930",
+          "repository": "Ancestry",
+          "rationale": "Search the 1930 Mexico National Census (Ancestry collection 1771) for Mauro Cruz Corona and his parents. In 1930, Mauro would be approximately 20 years old and may reside in the parental household in Coahuayutla or the Par\u00e1cuaro area, directly confirming the parent-child relationship. Even if Mauro has moved, parents may appear with younger Cruz children. The 1930 census is the only major Mexican national census publicly available for this era. Ages and birthplaces in the census help confirm identity across records. Date window is a single census year; the window's bounds are set by the census date itself.",
+          "fallback_for": null,
+          "status": "skipped",
+          "skip_category": "answered",
+          "skip_reason": "The 1930 Mexico census would have corroborated the parent-child relationship in the household, but q_001 is definitively answered by the original civil birth registration (src_005) together with four corroborating records. The census cannot add to or change what is directly established by Acta 201."
+        },
+        {
+          "id": "pli_008",
+          "sequence": 8,
+          "record_type": "church",
+          "jurisdiction": "Guerrero, Mexico",
+          "date_range": "1895-1920",
+          "repository": "FamilySearch",
+          "rationale": "Full-text co-occurrence search (execute via search-full-text skill) for 'Cruz' AND 'Corona' as separate required terms, run unscoped across FamilySearch's AI-transcribed documents for Guerrero and Michoac\u00e1n. Per Mexico Naming Customs wiki: a child's baptism entry names the father as '[given name] Cruz [paternal surname]' and the mother as '[given name] Corona [paternal surname]' \u2014 the co-occurrence of both family surnames in a paragraph-style entry is a high-precision signal for Mauro's family unit. Surfaces transcription variants and partially-indexed records that defeat name-indexed searches. Deploy as a fallback when indexed searches (pli_001 through pli_006) have been exhausted without finding Mauro's baptism or the parents' marriage.",
+          "fallback_for": "pli_005",
+          "status": "skipped",
+          "skip_category": "fallback_not_triggered",
+          "skip_reason": "Full-text co-occurrence fallback for pli_005, which was skipped as premise_invalidated (Mauro was born in Guerrero, not Michoac\u00e1n). The primary search path succeeded: civil birth registration found directly via pli_002/pli_010 searches. Full-text fallback not needed."
+        },
+        {
+          "id": "pli_009",
+          "sequence": 9,
+          "record_type": "church",
+          "jurisdiction": "Par\u00e1cuaro, Michoacan, Mexico",
+          "date_range": "1895-1915",
+          "repository": "FamilySearch",
+          "rationale": "Browse the Archdiocese of Michoac\u00e1n ecclesiastical marriage investigation records (FamilySearch Catalog item 320251, 1637\u20131915) for the parents' marriage in the Par\u00e1cuaro area. Per loc_001: 'Archdiocese of Michoac\u00e1n ecclesiastical marriage investigation records (1637\u20131915) are at FamilySearch Catalog (catalog/320251) and may document parents' or grandparents' marriages predating civil registration.' These pre-sacramental investigation files (informaciones matrimoniales) routinely name both parties' parents, making them equivalent to a birth record for establishing grandparents' names. Collection ends 1915, covering the parents' likely marriage window. Date window bounded by: parents likely born ca. 1875 and marrying in their late teens or early twenties, making 1895\u20131910 the core window; upper bound extended to 1915 (collection end). Fallback for pli_003 if the Guerrero church marriage search fails and the parents married in Michoac\u00e1n rather than Guerrero.",
+          "fallback_for": "pli_003",
+          "status": "skipped",
+          "skip_category": "fallback_not_triggered",
+          "skip_reason": "Fallback for pli_003 (Archdiocese of Michoac\u00e1n ecclesiastical marriage). pli_003 is now skipped as 'answered' because the civil birth registration establishes the parents directly. The Michoac\u00e1n ecclesiastical marriage fallback is therefore not triggered."
+        },
+        {
+          "id": "pli_010",
+          "sequence": 10,
+          "record_type": "church",
+          "jurisdiction": "La Uni\u00f3n de Isidoro Montes de Oca, Guerrero, Mexico",
+          "date_range": "1908-1916",
+          "repository": "FamilySearch",
+          "fallback_for": null,
+          "rationale": "Mauro Cruz Corona's 1941 marriage investigation file (src_004) records his sworn statement: 'originario de La Uni\u00f3n (Gro.)' \u2014 La Uni\u00f3n de Isidoro Montes de Oca, Guerrero. San Felipe de Jes\u00fas is the Catholic parish there. FamilySearch volume_search previously identified image groups covering 1910\u20131913: 004605080_019_M946-7D8 (1910\u20131911, 91% indexed + full-text searchable), 004605080_009_M946-7D9 (1911\u20131913, 89% indexed + full-text searchable), and 004605080_020_M946-7DD (1911\u20131913, 91% indexed + full-text searchable). Execute via search-full-text using fulltext_search with 'Mauro' AND 'Cruz' AND 'S\u00f3stenes' or co-occurrence 'Cruz' AND 'Corona'. A hit directly answers both sub-questions of q_001: exact birth date and parental confirmation.",
+          "status": "completed"
+        }
+      ]
+    }
+  ],
+  "log": [
+    {
+      "id": "log_001",
+      "plan_item_id": "pli_001",
+      "performed": "2026-10-13T01:27:13.774Z",
+      "tool": "record_search",
+      "query": {
+        "surname": "Cruz",
+        "birthPlace": "Coahuayutla de Jos\u00e9 Mar\u00eda Izazaga, Guerrero, Mexico",
+        "birthYearFrom": 1905,
+        "birthYearTo": 1920,
+        "collectionId": "1823323"
+      },
+      "outcome": "negative",
+      "results_examined": 50,
+      "external_site": null,
+      "results_ref": "results/log_001.json",
+      "results_available": 5498,
+      "notes": "Broad Cruz search in collection 1823323 with Coahuayutla birthPlace filter returned 5,498 statewide hits; place filter expanded upward to all Guerrero. None of the top 50 results are from Coahuayutla. All match scores below 0.001 against p-sibling-miguel. Narrowing to distinctive given names required."
+    },
+    {
+      "id": "log_002",
+      "plan_item_id": "pli_001",
+      "performed": "2026-10-13T01:27:13.787Z",
+      "tool": "record_search",
+      "query": {
+        "givenName": "Facundo",
+        "surname": "Cruz",
+        "recordCountry": "Mexico",
+        "collectionId": "1823323",
+        "birthYearFrom": 1905,
+        "birthYearTo": 1925
+      },
+      "outcome": "partial",
+      "results_examined": 50,
+      "external_site": null,
+      "results_ref": "results/log_002.json",
+      "results_available": 709,
+      "notes": "Search for Facundo Cruz in Mexico, collection 1823323. Found 'Facundo Cruz Crona' (ark:/61903/1:1:6C1S-H8QF), baptized 13 Dec 1918 at San Agust\u00edn, Tlapa de Comonfort, Guerrero. 'Crona' is very likely a transcription variant of 'Corona' (our maternal surname for the Cruz Corona family). Place is Tlapa de Comonfort rather than Coahuayutla \u2014 requires verification via record_read. Reading record now."
+    },
+    {
+      "id": "log_003",
+      "plan_item_id": "pli_001",
+      "performed": "2026-10-13T01:28:21.960Z",
+      "tool": "record_read",
+      "query": {
+        "recordId": "ark:/61903/1:1:6C1S-H8QF"
+      },
+      "outcome": "positive",
+      "results_examined": 1,
+      "external_site": null,
+      "results_ref": null,
+      "notes": "Facundo Cruz Corona, baptized 13 Dec 1918, San Agust\u00edn, Tlapa de Comonfort, Guerrero. Father: S\u00f3stenes Cruz. Mother: Apolinar/Apolina Corona (indexed as 'Crona'). Compound surname Cruz Corona confirms this is the right family line. Place is Tlapa de Comonfort (eastern Guerrero), not Coahuayutla (coastal southwestern Guerrero) as recorded in the starting tree \u2014 the starting-tree placement of siblings in Coahuayutla may be incorrect. Now using S\u00f3stenes Cruz + Apolinar Corona as parent anchors to find Mauro and other siblings."
+    },
+    {
+      "id": "log_004",
+      "plan_item_id": "pli_001",
+      "performed": "2026-10-13T01:30:39.602Z",
+      "tool": "record_search",
+      "query": {
+        "surname": "Cruz",
+        "fatherGivenName": "S\u00f3stenes",
+        "fatherSurname": "Cruz",
+        "motherSurname": "Corona",
+        "collectionId": "1823323",
+        "recordCountry": "Mexico"
+      },
+      "outcome": "partial",
+      "results_examined": 10,
+      "external_site": null,
+      "results_ref": "results/log_004.json",
+      "notes": "Parent-anchor search using S\u00f3stenes Cruz (father) and Corona (mother surname) found in Facundo baptism. Surfaced Liborio Cruz Corona (1916) and Marcelino Cruz Corona (1921) at San Agust\u00edn, Tlapa de Comonfort, Guerrero \u2014 same family unit. Mauro Cruz baptism not among results."
+    },
+    {
+      "id": "log_005",
+      "plan_item_id": "pli_001",
+      "performed": "2026-10-13T01:30:39.614Z",
+      "tool": "record_search",
+      "query": {
+        "givenName": "Mauro",
+        "surname": "Cruz",
+        "recordCountry": "Mexico",
+        "collectionId": "1823323",
+        "birthYearFrom": 1905,
+        "birthYearTo": 1915
+      },
+      "outcome": "partial",
+      "results_examined": 10,
+      "external_site": null,
+      "results_ref": "results/log_005.json",
+      "notes": "617 results. Top-ranked hit (ark:/61903/1:1:X3BC-M8HT) is a marriage record for Mauro Cr\u00faz as groom, not a baptism. No baptism record for Mauro Cruz Corona in this result set. Need to search with parent name anchors."
+    },
+    {
+      "id": "log_006",
+      "plan_item_id": "pli_001",
+      "performed": "2026-10-13T01:31:16.414Z",
+      "tool": "record_read",
+      "query": {
+        "recordId": "ark:/61903/1:1:6C1W-839Q"
+      },
+      "outcome": "positive",
+      "results_examined": 1,
+      "external_site": null,
+      "results_ref": "results/log_006.json",
+      "notes": "Liborio Cruz Corona baptism record confirmed. Baptized 27 Aug 1916 (birth 23 Jul), San Agust\u00edn, Tlapa de Comonfort, Guerrero. Father: S\u00f3stenes Cruz; Mother: Apolinar Corona. Image group sd_da1 places the physical register in San Agust\u00edn, Coahuayutla de Guerrero (Apr 1915\u2013Jan 1919) \u2014 potential indexing place discrepancy. Confirms same parents as Facundo Cruz Corona."
+    },
+    {
+      "id": "log_007",
+      "plan_item_id": "pli_001",
+      "performed": "2026-10-13T01:31:40.687Z",
+      "tool": "record_read",
+      "query": {
+        "recordId": "ark:/61903/1:1:6C19-65CN"
+      },
+      "outcome": "positive",
+      "results_examined": 1,
+      "external_site": null,
+      "results_ref": "results/log_007.json",
+      "notes": "Marcelino Cruz Corona baptism confirmed. Born 25 Apr, baptized 15 May 1921, San Agust\u00edn, Tlapa de Comonfort (image group: San Agust\u00edn, Coahuayutla de Guerrero, Feb 1919\u2013Dec 1923). Father: Sostenes Cruz; Mother: Apolinar Corona. Third sibling confirming same parental pair. No Mauro in this register."
+    },
+    {
+      "id": "log_008",
+      "plan_item_id": "pli_001",
+      "performed": "2026-10-13T01:32:26.818Z",
+      "tool": "record_search",
+      "query": {
+        "givenName": "Mauro",
+        "surname": "Cruz",
+        "fatherGivenName": "Sostenes",
+        "fatherSurname": "Cruz",
+        "motherGivenName": "Apolinar",
+        "motherSurname": "Corona",
+        "collectionId": "1823323"
+      },
+      "outcome": "negative",
+      "results_examined": 50,
+      "external_site": null,
+      "results_ref": "results/log_008.json",
+      "notes": "Parent-anchor search for Mauro Cruz son of Sostenes Cruz and Apolinar Corona in Guerrero Catholic (1823323) returned 15,214 results but no high-scoring Mauro baptism. Top hits are 'Maro. de la Cruz', 'Maurilio Cruz', etc. \u2014 not Mauro Cruz Corona. Brothers Liborio (1916) and Marcelino (1921) are in image groups starting Apr 1915. Mauro born ~1910 would be in pre-1915 registers that may not be indexed. Must look for earlier image group or search Michoac\u00e1n collections."
+    },
+    {
+      "id": "log_009",
+      "plan_item_id": "pli_001",
+      "performed": "2026-10-13T01:32:58.285Z",
+      "tool": "record_search",
+      "query": {
+        "givenName": "Mauro",
+        "surname": "Cruz",
+        "fatherGivenName": "Sostenes",
+        "fatherSurname": "Cruz",
+        "motherSurname": "Corona",
+        "collectionId": "1883388"
+      },
+      "outcome": "positive",
+      "results_examined": 50,
+      "external_site": null,
+      "results_ref": "results/log_009.json",
+      "notes": "Top hit (matchScore 0.347) is Mauro Cruz as Groom in Mexico, Michoac\u00e1n, Catholic Church Records (1883388). Father: Sostenes Cruz, Mother: Ma Apolinar Corona \u2014 exact parental match. Birth year given as 1912. Record is a marriage entry, not a baptism. Must read to get full details including place and marriage date."
+    },
+    {
+      "id": "log_010",
+      "plan_item_id": "pli_001",
+      "performed": "2026-10-13T01:33:37.727Z",
+      "tool": "record_read",
+      "query": {
+        "recordId": "ark:/61903/1:1:XSF1-89NS"
+      },
+      "outcome": "positive",
+      "results_examined": 1,
+      "external_site": null,
+      "results_ref": "results/log_010.json",
+      "notes": "Mauro Cruz marriage investigation file, Par\u00e1cuaro, Michoac\u00e1n. Married Esperanza Ramirez (b. 1913, dau. of Mateo Ramirez and Carmen Martinez), 21 Feb 1941. Father: Sostenes Cruz; Mother: Ma Apolinar Corona. Mauro birth year given as 1912 (secondary evidence in marriage record). Image group covers 1940-1941 Par\u00e1cuaro church marriage files. Multi-page file likely contains baptism certificates \u2014 transcription needed. This confirms the family was based in Par\u00e1cuaro (where Nueva Italia is located)."
+    },
+    {
+      "id": "log_011",
+      "plan_item_id": "pli_001",
+      "performed": "2026-10-13T01:36:15.941Z",
+      "tool": "record_search",
+      "query": {
+        "givenName": "Mauro",
+        "surname": "Cruz",
+        "fatherGivenName": "Sostenes",
+        "birthYearFrom": 1908,
+        "birthYearTo": 1914,
+        "collectionId": "1823323"
+      },
+      "outcome": "negative",
+      "results_examined": 50,
+      "external_site": null,
+      "results_ref": "results/log_011.json",
+      "notes": "No baptism for Mauro Cruz son of Sostenes found in indexed Guerrero Catholic (1823323) 1908-1914. Marriage file states he was 'originario de La Uni\u00f3n (Gro.)' \u2014 La Uni\u00f3n de Isidoro Montes de Oca, separate municipality from Coahuayutla where siblings were baptized. Need to check La Uni\u00f3n parish volumes specifically."
+    },
+    {
+      "id": "log_012",
+      "plan_item_id": "pli_010",
+      "performed": "2026-10-13T02:13:41.806Z",
+      "tool": "fulltext_search",
+      "query": {
+        "keywords": "+Mauro +Cruz +S\u00f3stenes",
+        "imageGroupNumber": "004605080_019_M946-7D8"
+      },
+      "outcome": "negative",
+      "results_examined": 0,
+      "external_site": null,
+      "results_ref": null,
+      "notes": "Zero hits. Accent on S\u00f3stenes may defeat full-text matching; retrying with unaccented form and alternate keyword combinations."
+    },
+    {
+      "id": "log_013",
+      "plan_item_id": "pli_010",
+      "performed": "2026-10-13T02:13:41.806Z",
+      "tool": "fulltext_search",
+      "query": {
+        "keywords": "+Mauro +Cruz +S\u00f3stenes",
+        "imageGroupNumber": "004605080_009_M946-7D9"
+      },
+      "outcome": "negative",
+      "results_examined": 0,
+      "external_site": null,
+      "results_ref": null,
+      "notes": "Zero hits. Retrying broader query."
+    },
+    {
+      "id": "log_014",
+      "plan_item_id": "pli_010",
+      "performed": "2026-10-13T02:13:41.806Z",
+      "tool": "fulltext_search",
+      "query": {
+        "keywords": "+Mauro +Cruz +S\u00f3stenes",
+        "imageGroupNumber": "004605080_020_M946-7DD"
+      },
+      "outcome": "negative",
+      "results_examined": 0,
+      "external_site": null,
+      "results_ref": null,
+      "notes": "Zero hits. Retrying broader query."
+    },
+    {
+      "id": "log_015",
+      "plan_item_id": "pli_010",
+      "performed": "2026-10-13T02:14:20.989Z",
+      "tool": "fulltext_search",
+      "query": {
+        "keywords": "+Mauro +Cruz",
+        "imageGroupNumber": "004605080_019_M946-7D8"
+      },
+      "outcome": "negative",
+      "results_examined": 0,
+      "external_site": null,
+      "results_ref": null,
+      "notes": "Zero hits in 1910-1911 La Uni\u00f3n baptism volume with unaccented query."
+    },
+    {
+      "id": "log_016",
+      "plan_item_id": "pli_010",
+      "performed": "2026-10-13T02:14:20.989Z",
+      "tool": "fulltext_search",
+      "query": {
+        "keywords": "+Mauro +Cruz",
+        "imageGroupNumber": "004605080_009_M946-7D9",
+        "count": 15
+      },
+      "outcome": "partial",
+      "results_examined": 1,
+      "external_site": null,
+      "results_ref": "results/log_016.json",
+      "notes": "One page hit in 1911-1913 volume: ark:/61903/3:1:939X-LQ97-H4. Date 1912. Names on page include 'Mauro Campos' and 'Paula Cruz'/'Sebastiana Cruz' as separate persons, so the match is page-level. Need image transcription to determine whether a Mauro Cruz baptism entry is on this page."
+    },
+    {
+      "id": "log_017",
+      "plan_item_id": "pli_010",
+      "performed": "2026-10-13T02:14:20.997Z",
+      "tool": "fulltext_search",
+      "query": {
+        "keywords": "+Mauro +Cruz",
+        "imageGroupNumber": "004605080_020_M946-7DD"
+      },
+      "outcome": "negative",
+      "results_examined": 0,
+      "external_site": null,
+      "results_ref": null,
+      "notes": "Zero hits in duplicate 1911-1913 La Uni\u00f3n baptism volume."
+    },
+    {
+      "id": "log_018",
+      "plan_item_id": "pli_010",
+      "performed": "2026-10-13T02:16:13.586Z",
+      "tool": "image_transcribe",
+      "query": {
+        "imageArk": "ark:/61903/3:1:939X-LQ97-H4"
+      },
+      "outcome": "negative",
+      "results_examined": 1,
+      "external_site": null,
+      "results_ref": null,
+      "notes": "Page contains entries 323-331 (Jul-Aug 1912). The fulltext hit was a false positive: 'Mauro' = Mauro Campos (father in entry 328), 'Cruz' = Sebastiana Cruz and Paula Cruz (unrelated women). No entry names a child Mauro with father S\u00f3stenes Cruz and mother Apolinar Corona. Image saved as images/ark_61903_3_1_939X-LQ97-H4.jpg."
+    },
+    {
+      "id": "log_019",
+      "plan_item_id": "pli_010",
+      "performed": "2026-10-13T02:17:12.786Z",
+      "tool": "record_search",
+      "query": {
+        "givenName": "Mauro",
+        "surname": "Cruz",
+        "fatherGivenName": "Sostenes",
+        "collectionId": "1823323",
+        "birthYearFrom": 1907,
+        "birthYearTo": 1916,
+        "count": 20
+      },
+      "outcome": "negative",
+      "results_examined": 20,
+      "external_site": null,
+      "results_ref": "results/log_019.json",
+      "notes": "539 total results for Mauro Cruz in collection 1823323 with father Sostenes, birth 1907-1916. Top match score 0.004 (diagnostic: no candidate above 0.01 \u2014 treat as real negative). No Mauro Cruz with father Sostenes Cruz found in the indexed Guerrero Catholic collection."
+    },
+    {
+      "id": "log_020",
+      "plan_item_id": "pli_010",
+      "performed": "2026-10-13T02:17:12.800Z",
+      "tool": "fulltext_search",
+      "query": {
+        "keywords": "+Mauro +Cruz +Corona",
+        "yearFrom": 1905,
+        "yearTo": 1918,
+        "recordPlace1": "Guerrero"
+      },
+      "outcome": "negative",
+      "results_examined": 0,
+      "external_site": null,
+      "results_ref": null,
+      "notes": "Zero hits for co-occurrence of Mauro+Cruz+Corona across Guerrero full-text corpus, 1905-1918."
+    },
+    {
+      "id": "log_021",
+      "plan_item_id": "pli_010",
+      "performed": "2026-10-13T02:17:12.800Z",
+      "tool": "fulltext_search",
+      "query": {
+        "keywords": "+Sostenes +Cruz +Corona",
+        "yearFrom": 1905,
+        "yearTo": 1920,
+        "recordPlace1": "Guerrero"
+      },
+      "outcome": "negative",
+      "results_examined": 0,
+      "external_site": null,
+      "results_ref": null,
+      "notes": "Zero hits for Sostenes+Cruz+Corona across Guerrero full-text corpus, 1905-1920. The family may not be in FamilySearch's full-text-searchable Guerrero coverage, or the baptism is in the unindexed fraction."
+    },
+    {
+      "id": "log_022",
+      "plan_item_id": "pli_002",
+      "performed": "2026-10-13T02:18:07.466Z",
+      "tool": "record_search",
+      "query": {
+        "givenName": "Mauro",
+        "surname": "Cruz",
+        "collectionId": "1918291",
+        "birthYearFrom": 1907,
+        "birthYearTo": 1916,
+        "recordCountry": "Mexico",
+        "count": 20
+      },
+      "outcome": "positive",
+      "results_examined": 20,
+      "external_site": null,
+      "results_ref": "results/log_022.json",
+      "notes": "Rank-1 result in Guerrero Civil Registration (1918291): 'Mauro Cruz Co??na', birth 22 Nov 1910, registered 6 Dec 1910, place La Uni\u00f3n de Isidoro Montes de Oca, Guerrero. Exact match to Mauro's sworn birthplace from 1941 marriage file. Reading full record to confirm parents."
+    },
+    {
+      "id": "log_023",
+      "plan_item_id": "pli_010",
+      "performed": "2026-10-13T02:18:07.480Z",
+      "tool": "fulltext_search",
+      "query": {
+        "keywords": "+Sostenes +Apolinar +Cruz",
+        "yearFrom": 1905,
+        "yearTo": 1925,
+        "recordPlace1": "Guerrero"
+      },
+      "outcome": "negative",
+      "results_examined": 0,
+      "external_site": null,
+      "results_ref": null,
+      "notes": "Zero hits for Sostenes+Apolinar+Cruz across Guerrero FTS corpus. The family is absent from full-text-searchable Guerrero coverage."
+    },
+    {
+      "id": "log_024",
+      "plan_item_id": "pli_002",
+      "performed": "2026-10-13T02:18:35.014Z",
+      "tool": "record_read",
+      "query": {
+        "recordId": "ark:/61903/1:1:QGWQ-MCFV"
+      },
+      "outcome": "positive",
+      "results_examined": 1,
+      "external_site": null,
+      "results_ref": "results/log_024.json",
+      "notes": "Civil birth registration for Mauro Cruz Corona, born 22 Nov 1910 in La Uni\u00f3n, Guerrero, registered 6 Dec 1910 at Montes de Oca, Guerrero. Father: S\u00f3stenes Cruz. Mother: Apolinar Corona (indexed as 'Co??na'). This directly answers q_001: exact birth date 22 Nov 1910, birthplace La Uni\u00f3n de Isidoro Montes de Oca, Guerrero, parents confirmed. Image ARK: ark:/61903/3:1:33S7-9T8R-68V."
+    },
+    {
+      "id": "log_025",
+      "plan_item_id": "pli_002",
+      "performed": "2026-10-13T02:22:53.065Z",
+      "tool": "image_transcribe",
+      "query": {
+        "imageArk": "ark:/61903/3:1:33S7-9T8R-68V"
+      },
+      "outcome": "positive",
+      "results_examined": 1,
+      "external_site": null,
+      "results_ref": null,
+      "notes": "Acta 201 fully transcribed. Confirms: child Mauro Cruz, born 22 Nov 1910, 10am, at father's home. Father S\u00f3stenes Cruz, age 30, jornalero, originario de Coahuayutla, vecino del Rincon de Cuchara. Mother Apolinar Corona, age 25, same origin. Paternal grandparents: Jesus Cruz (living) and Domiciana Castillo (living). Maternal grandparents: Miguel Corona (finado) and Jesus Mercado (finada). Hijo leg\u00edtimo. Registrar: Vicente E. Heredia. Witnesses: On\u00e9simo Solchaga and Alberto J Berber. Mother's surname 'Co??na' in index is OCR artifact from line-break splitting 'Cor[o-]na' \u2014 image unambiguously reads 'Apolinar Corona'. Image saved as images/ark_61903_3_1_33S7-9T8R-68V.jpg.\""
+    }
+  ],
+  "sources": [
+    {
+      "id": "src_001",
+      "citation": "\"Mexico, Guerrero, Catholic Church Records, 1576\u20131979,\" FamilySearch (https://www.familysearch.org/ark:/61903/1:1:6C1S-H8QF : accessed 2026-10-12), entry for Facundo Cruz Corona baptism, 13 Dec 1918, San Agust\u00edn, Coahuayutla de Guerrero, Guerrero, Mexico; image of parish register, San Agust\u00edn parish, Coahuayutla de Guerrero.",
+      "citation_detail": {
+        "who": "Facundo Cruz Corona (principal); S\u00f3stenes Cruz (father); Apolinar Corona (mother)",
+        "what": "Baptismal register entry, San Agust\u00edn Catholic parish, Coahuayutla de Guerrero",
+        "when_created": "13 December 1918",
+        "when_accessed": "2026-10-12",
+        "where": "FamilySearch, Mexico, Guerrero, Catholic Church Records, 1576\u20131979 (collection 1823323)",
+        "where_within": "Image group covering Apr 1915\u2013Jan 1919; ark:/61903/3:1:939X-6D9F-8K"
+      },
+      "source_classification": "original",
+      "repository": "FamilySearch",
+      "access_date": "2026-10-12",
+      "url": "https://www.familysearch.org/ark:/61903/1:1:6C1S-H8QF",
+      "notes": "Original Catholic baptismal register image. The FamilySearch index places this record under 'San Agust\u00edn, Tlapa de Comonfort' \u2014 the image group metadata correctly identifies the church as San Agust\u00edn, Coahuayutla de Guerrero, Coahuayutla de Jos\u00e9 Mar\u00eda Izazaga, Guerrero. The index spells the mother's surname as 'Crona'; this is a known transcription variant of 'Corona' confirmed by the Liborio and Marcelino baptism records in the same collection which index the same woman as 'Apolinar Corona'. Child's surname also indexed as 'Cruz Crona' in the index.",
+      "log_entry_id": "log_002",
+      "gedcomx_source_description_id": "S1"
+    },
+    {
+      "id": "src_002",
+      "citation": "\"Mexico, Guerrero, Catholic Church Records, 1576-1979,\" FamilySearch (https://www.familysearch.org/ark:/61903/1:1:6C1W-839Q : accessed 12 October 2026), entry for Liborio Cruz Corona, baptism 27 Aug 1916, San Agust\u00edn, Coahuayutla de Guerrero, Coahuayutla de Jos\u00e9 Mar\u00eda Izazaga, Guerrero, Mexico; image group sd_da1 (Apr 1915\u2013Jan 1919), San Agust\u00edn parish register.",
+      "citation_detail": {
+        "who": "Liborio Cruz Corona, son of S\u00f3stenes Cruz and Apolinar Corona",
+        "what": "Baptismal register entry, San Agust\u00edn parish, Coahuayutla de Guerrero",
+        "when_created": "27 August 1916",
+        "when_accessed": "12 October 2026",
+        "where": "FamilySearch, Mexico, Guerrero, Catholic Church Records, 1576-1979 (collection 1823323)",
+        "where_within": "Image group sd_da1, Apr 1915\u2013Jan 1919, San Agust\u00edn, Coahuayutla de Guerrero; ark:/61903/1:1:6C1W-839Q"
+      },
+      "source_classification": "original",
+      "repository": "FamilySearch",
+      "url": "https://www.familysearch.org/ark:/61903/1:1:6C1W-839Q",
+      "access_date": "2026-10-12",
+      "log_entry_id": "log_006",
+      "notes": "FamilySearch index mis-places this record as 'San Agust\u00edn, Tlapa de Comonfort'; the image group metadata (sd_da1) correctly identifies the parish as San Agust\u00edn, Coahuayutla de Guerrero, Coahuayutla de Jos\u00e9 Mar\u00eda Izazaga, Guerrero, Mexico. Image ark: ark:/61903/3:1:939X-6D9N-66.",
+      "gedcomx_source_description_id": "S2"
+    },
+    {
+      "id": "src_003",
+      "citation": "\"Mexico, Guerrero, Catholic Church Records, 1576\u20131979,\" FamilySearch (https://www.familysearch.org/ark:/61903/1:1:6C19-65CN : accessed 2026-10-12), entry for Marcelino Cruz Corona, baptism 15 May 1921, San Agust\u00edn, Coahuayutla de Guerrero, Guerrero, Mexico; image of register, San Agust\u00edn parish, Coahuayutla de Guerrero, Feb 1919\u2013Dec 1923 (image group ark:/61903/3:1:939X-6D9F-K4).",
+      "citation_detail": {
+        "who": "Marcelino Cruz Corona (principal); Sostenes Cruz (father); Apolinar Corona (mother)",
+        "what": "Baptismal register entry, San Agust\u00edn Catholic Church, Coahuayutla de Guerrero",
+        "when_created": "15 May 1921",
+        "when_accessed": "2026-10-12",
+        "where": "FamilySearch, Mexico, Guerrero, Catholic Church Records, 1576\u20131979 (collection 1823323)",
+        "where_within": "Image group Feb 1919\u2013Dec 1923, San Agust\u00edn, Coahuayutla de Guerrero; ark:/61903/3:1:939X-6D9F-K4"
+      },
+      "source_classification": "original",
+      "repository": "FamilySearch",
+      "access_date": "2026-10-12",
+      "url": "https://www.familysearch.org/ark:/61903/1:1:6C19-65CN",
+      "notes": "The FamilySearch index places this record in 'San Agust\u00edn, Tlapa de Comonfort' \u2014 the image group metadata (sd_da1, covering Feb 1919\u2013Dec 1923) correctly identifies the church as San Agust\u00edn, Coahuayutla de Guerrero, Coahuayutla de Jos\u00e9 Mar\u00eda Izazaga, Guerrero, Mexico. The indexed place is erroneous. Father's given name indexed as 'Sostenes' (without accent); the same person appears as 'S\u00f3stenes Cruz' in other records in this project.",
+      "log_entry_id": "log_007",
+      "gedcomx_source_description_id": "S3"
+    },
+    {
+      "id": "src_004",
+      "citation": "\"M\u00e9xico, Michoac\u00e1n, registros parroquiales y diocesanos, 1555-1996,\" FamilySearch (https://www.familysearch.org/ark:/61903/1:1:XSF1-89NS : accessed 12 October 2026), Expediente matrimonial for Mauro Cruz and Esperanza Ramirez, filed 20 February 1941, Parroquia de Par\u00e1cuaro, Obispado de Tac\u00e1mbaro, Michoac\u00e1n; marriage solemnized 6 February 1941, Nueva Italia, Michoac\u00e1n; image group 1940\u20131941, ChurchMarriageInvestigationFile, image ark:/61903/3:1:939L-9NX2-R.",
+      "citation_detail": {
+        "who": "Mauro Cruz (groom) and Esperanza Ramirez (bride)",
+        "what": "Expediente matrimonial (marriage investigation file) \u2014 sworn declarations by the parties identifying name, age, origin, parents, residence, and marital status; record of marriage ceremony 6 February 1941",
+        "when_created": "Filed 20 February 1941; ceremony recorded 6 February 1941",
+        "when_accessed": "12 October 2026",
+        "where": "Parroquia de Par\u00e1cuaro, Obispado de Tac\u00e1mbaro, Michoac\u00e1n, Mexico; digitized by FamilySearch, collection 1883388",
+        "where_within": "Image group 1940\u20131941, ChurchMarriageInvestigationFile; image ark:/61903/3:1:939L-9NX2-R; FamilySearch ARK ark:/61903/1:1:XSF1-89NS"
+      },
+      "source_classification": "original",
+      "repository": "FamilySearch",
+      "url": "https://www.familysearch.org/ark:/61903/1:1:XSF1-89NS",
+      "access_date": "2026-10-12",
+      "log_entry_id": "log_010",
+      "notes": "Original parish record \u2014 the expediente matrimonial is the parish's own register of the pre-nuptial investigation proceedings. Mauro Cruz gave a sworn declaration identifying himself as 'originario de La Uni\u00f3n (Gro.)' and 'hijo leg\u00edtimo de S\u00f3stenes Cruz finado y M.\u00aa Apolinar Corona que vive.' The FamilySearch index records the marriage date as 20 February 1941 (the filing date); the actual ceremony date per the verbatim record notation is 6 February 1941 at Nueva Italia. The sidecar also carries a Marriage fact dated 21 February 1941 \u2014 both index dates disagree with the image text; 6 February 1941 is used as the ceremony date per the image annotation.",
+      "gedcomx_source_description_id": "S4"
+    },
+    {
+      "id": "src_005",
+      "citation": "\"M\u00e9xico, Guerrero, Registro Civil, 1860-1996,\" FamilySearch (https://www.familysearch.org/ark:/61903/1:2:Q5JL-M8X6 : accessed 12 October 2026), entry for Mauro Cruz Corona, birth registration 6 December 1910, Montes de Oca, Guerrero, M\u00e9xico; citing Guerrero Civil Registration, FamilySearch collection 1918291.",
+      "citation_detail": {
+        "who": "Mauro Cruz Corona (child); S\u00f3stenes Cruz (father); Apolinar Corona (mother)",
+        "what": "Civil birth registration (acta de nacimiento), Guerrero, M\u00e9xico civil registration",
+        "when_created": "6 December 1910",
+        "when_accessed": "12 October 2026",
+        "where": "FamilySearch, collection 1918291 \u2014 M\u00e9xico, Guerrero, Registro Civil, 1860-1996",
+        "where_within": "Montes de Oca, Guerrero; birth of Mauro Cruz Corona registered 6 December 1910"
+      },
+      "source_classification": "original",
+      "repository": "FamilySearch",
+      "access_date": "2026-10-12",
+      "url": "https://www.familysearch.org/ark:/61903/3:1:33S7-9T8R-68V",
+      "notes": "Original civil register page examined via FamilySearch digital image (ark:/61903/3:1:33S7-9T8R-68V). Image confirms mother's surname is 'Corona' \u2014 prior index OCR rendered 'Co??na' due to a line break splitting 'Cor-' and '-na' in the original handwriting. Father S\u00f3stenes Cruz signed with a mark ('no saber'). Registrar Vicente E. Heredia attested ('Doy f\u00e9'). Previously classified as derivative (index); upgraded to original on examination of the register image.",
+      "log_entry_id": "log_024",
+      "gedcomx_source_description_id": "S5",
+      "transcription": "Acta n\u00famero doscientos uno. = En La Uni\u00f3n, cabecera del Distrito de Montes de Oca, a las diez de la ma\u00f1ana del dia seis de diciembre de mil novecientos diez, compareci\u00f3 el Se\u00f1or S\u00f3stenes Cruz de treinta a\u00f1os de edad, casado, jornalero, originario de Coahuayutla vecino del Rincon de Cuchara y dijo que el dia veintidos de noviembre como a las diez de la ma\u00f1ana y en su casa habitacion naci\u00f3 el ni\u00f1o Mauro Cruz el cual presenta vivo sin se\u00f1al particular que lo distinga y que es hijo leg\u00edtimo de \u00e9l y de su esposa Apolinar Corona, de veinte y cinco a\u00f1os de edad, casada del mismo origen que su esposo. Son abuelos paternos los Se\u00f1ores Jesus Cruz y Domiciana Castillo que viven y maternos Miguel Corona y Jesus Mercado finados. Present\u00f3 por testigos a los Se\u00f1ores On\u00e9simo Solchaga y Alberto J Berber mayores de edad, casados, empleados de esta vecindad. Leida la presente con su tenor quedaron conformes y firmaron, menos el compareciente por no saber. Doy f\u00e9. = Vicente E. Heredia. Onesimo Solchaga. = Alberto J Berber."
+    }
+  ],
+  "assertions": [
+    {
+      "id": "a_001",
+      "record_id": "ark:/61903/1:1:6C1S-H8QF",
+      "record_persona_id": "p_291577546035",
+      "record_role": "deceased",
+      "fact_type": "name",
+      "value": "Facundo Cruz Corona",
+      "structured_value": {
+        "given": "Facundo",
+        "surname": "Cruz Corona"
+      },
+      "information_quality": "primary",
+      "informant": "presenting parents",
+      "informant_proximity": "household_member",
+      "record_basis": "stated",
+      "informant_bias_notes": "The child's name was supplied by the presenting parents to the officiating priest at the baptism. The FamilySearch index renders the surname as 'Cruz Crona'; the correct form 'Cruz Corona' is confirmed by the record's own alternate name field and by sibling baptism records in the same collection.",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_002",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_002",
+      "record_id": "ark:/61903/1:1:6C1S-H8QF",
+      "record_persona_id": "p_291577546035",
+      "record_role": "deceased",
+      "fact_type": "sex",
+      "value": "Male",
+      "information_quality": "primary",
+      "informant": "presenting parents",
+      "informant_proximity": "household_member",
+      "record_basis": "stated",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_002",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_003",
+      "record_id": "ark:/61903/1:1:6C1S-H8QF",
+      "record_persona_id": "p_291577546035",
+      "record_role": "deceased",
+      "fact_type": "christening",
+      "value": "13 Dec 1918",
+      "date": "13 Dec 1918",
+      "date_certainty": "exact",
+      "place": "San Agust\u00edn, Coahuayutla de Guerrero, Coahuayutla de Jos\u00e9 Mar\u00eda Izazaga, Guerrero, Mexico",
+      "information_quality": "primary",
+      "informant": "officiating priest",
+      "informant_proximity": "witness",
+      "record_basis": "stated",
+      "informant_bias_notes": "The officiating priest of San Agust\u00edn parish witnessed and performed the baptism ceremony on this date. The FamilySearch index standard place is 'San Agust\u00edn, Tlapa de Comonfort, Guerrero' \u2014 this is an index error; the image group metadata and record content place the church in Coahuayutla de Guerrero, not Tlapa de Comonfort.",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_002",
+      "source_id": "src_001",
+      "standard_place": "San Agust\u00edn, Coahuayutla de Guerrero, Coahuayutla de Jos\u00e9 Mar\u00eda Izazaga, Guerrero, Mexico"
+    },
+    {
+      "id": "a_004",
+      "record_id": "ark:/61903/1:1:6C1S-H8QF",
+      "record_persona_id": "p_291577546036",
+      "record_role": "father_of_deceased",
+      "fact_type": "name",
+      "value": "S\u00f3stenes Cruz",
+      "structured_value": {
+        "given": "S\u00f3stenes",
+        "surname": "Cruz"
+      },
+      "information_quality": "primary",
+      "informant": "presenting parents",
+      "informant_proximity": "household_member",
+      "record_basis": "stated",
+      "informant_bias_notes": "The father's name was supplied by the presenting parents (including himself) to the priest at baptism. The father's own presence at the baptism is likely though not certain from the record alone.",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_002",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_005",
+      "record_id": "ark:/61903/1:1:6C1S-H8QF",
+      "record_persona_id": "p_291577546036",
+      "record_role": "father_of_deceased",
+      "fact_type": "sex",
+      "value": "Male",
+      "information_quality": "primary",
+      "informant": "presenting parents",
+      "informant_proximity": "household_member",
+      "record_basis": "stated",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_002",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_006",
+      "record_id": "ark:/61903/1:1:6C1S-H8QF",
+      "record_persona_id": "p_291577546035",
+      "record_role": "deceased",
+      "fact_type": "relationship",
+      "value": "child of S\u00f3stenes Cruz",
+      "structured_value": {
+        "relationship_type": "child",
+        "related_person_role": "father_of_deceased"
+      },
+      "information_quality": "primary",
+      "informant": "presenting parents",
+      "informant_proximity": "household_member",
+      "record_basis": "stated",
+      "informant_bias_notes": "The paternal relationship is explicitly stated in the baptismal register's father field. This record establishes that S\u00f3stenes Cruz was the father of Facundo Cruz Corona \u2014 providing indirect evidence that Mauro Cruz Corona, believed to be a sibling, shared the same father.",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_002",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_007",
+      "record_id": "ark:/61903/1:1:6C1S-H8QF",
+      "record_persona_id": "p_291577546037",
+      "record_role": "mother_of_deceased",
+      "fact_type": "name",
+      "value": "Apolinar Corona",
+      "structured_value": {
+        "given": "Apolinar",
+        "surname": "Corona"
+      },
+      "information_quality": "primary",
+      "informant": "presenting parents",
+      "informant_proximity": "household_member",
+      "record_basis": "stated",
+      "informant_bias_notes": "The FamilySearch index renders the surname as 'Crona' \u2014 a known transcription variant of 'Corona' documented across this collection. The record's own alternate name field gives 'Apolinar Corona' and sibling baptism records (Liborio, Marcelino) in the same collection confirm the surname as 'Corona'. The corrected form is used here; the indexed variant 'Crona' is noted for awareness.",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_002",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_008",
+      "record_id": "ark:/61903/1:1:6C1S-H8QF",
+      "record_persona_id": "p_291577546037",
+      "record_role": "mother_of_deceased",
+      "fact_type": "sex",
+      "value": "Female",
+      "information_quality": "primary",
+      "informant": "presenting parents",
+      "informant_proximity": "household_member",
+      "record_basis": "stated",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_002",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_009",
+      "record_id": "ark:/61903/1:1:6C1S-H8QF",
+      "record_persona_id": "p_291577546035",
+      "record_role": "deceased",
+      "fact_type": "relationship",
+      "value": "child of Apolinar Corona",
+      "structured_value": {
+        "relationship_type": "child",
+        "related_person_role": "mother_of_deceased"
+      },
+      "information_quality": "primary",
+      "informant": "presenting parents",
+      "informant_proximity": "household_member",
+      "record_basis": "stated",
+      "informant_bias_notes": "The maternal relationship is explicitly stated in the baptismal register's mother field. Mother's surname indexed as 'Crona' \u2014 corrected to 'Corona' per sibling baptism records and the record's alternate name field. This record provides indirect evidence that Mauro Cruz Corona shared Apolinar Corona as his mother.",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_002",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_010",
+      "record_id": "ark:/61903/1:1:6C1W-839Q",
+      "record_role": "child",
+      "fact_type": "name",
+      "value": "Liborio Cruz Corona",
+      "structured_value": {
+        "given": "Liborio",
+        "surname": "Cruz Corona"
+      },
+      "information_quality": "primary",
+      "informant": "parish priest / register officiant",
+      "informant_proximity": "official_duty",
+      "record_basis": "stated",
+      "log_entry_id": "log_006",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_011",
+      "record_id": "ark:/61903/1:1:6C1W-839Q",
+      "record_role": "child",
+      "fact_type": "sex",
+      "value": "Male",
+      "information_quality": "primary",
+      "informant": "parish priest / register officiant",
+      "informant_proximity": "official_duty",
+      "record_basis": "stated",
+      "log_entry_id": "log_006",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_012",
+      "record_id": "ark:/61903/1:1:6C1W-839Q",
+      "record_role": "child",
+      "fact_type": "christening",
+      "value": "Baptized 27 August 1916 at San Agust\u00edn, Coahuayutla de Guerrero",
+      "date": "27 Aug 1916",
+      "date_certainty": "exact",
+      "place": "San Agust\u00edn, Coahuayutla de Guerrero, Coahuayutla de Jos\u00e9 Mar\u00eda Izazaga, Guerrero, Mexico",
+      "information_quality": "primary",
+      "informant": "parish priest / register officiant",
+      "informant_proximity": "official_duty",
+      "record_basis": "stated",
+      "log_entry_id": "log_006",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "source_id": "src_002",
+      "standard_place": "San Agust\u00edn, Coahuayutla de Guerrero, Coahuayutla de Jos\u00e9 Mar\u00eda Izazaga, Guerrero, Mexico"
+    },
+    {
+      "id": "a_013",
+      "record_id": "ark:/61903/1:1:6C1W-839Q",
+      "record_role": "child",
+      "fact_type": "birth",
+      "value": "Born 23 July (day and month stated; no year given in record)",
+      "date": "23 Jul",
+      "date_certainty": "exact",
+      "information_quality": "primary",
+      "informant": "parents or godparents present at baptism",
+      "informant_proximity": "household_member",
+      "record_basis": "stated",
+      "informant_bias_notes": "Only day and month (23 Jul) are stated in the birth fact field; no year is given. Baptism was 27 Aug 1916, placing the birth five weeks earlier. Year is treated as inferred \u2014 see companion ~1916 assertion.",
+      "log_entry_id": "log_006",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_014",
+      "record_id": "ark:/61903/1:1:6C1W-839Q",
+      "record_role": "child",
+      "fact_type": "birth",
+      "value": "Birth year approximately 1916, inferred from baptism date of 27 Aug 1916",
+      "date": "~1916",
+      "date_certainty": "approximate",
+      "information_quality": "primary",
+      "informant": "parents or godparents present at baptism",
+      "informant_proximity": "household_member",
+      "record_basis": "inferred",
+      "informant_bias_notes": "No birth year stated in the record; ~1916 is inferred from the baptism date of 27 Aug 1916. Companion to the stated 23 Jul birth day/month assertion.",
+      "log_entry_id": "log_006",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_015",
+      "record_id": "ark:/61903/1:1:6C1W-839Q",
+      "record_role": "child",
+      "fact_type": "relationship",
+      "value": "child of S\u00f3stenes Cruz",
+      "structured_value": {
+        "relationship_type": "child",
+        "related_person_role": "parent"
+      },
+      "information_quality": "primary",
+      "informant": "parents or godparents present at baptism",
+      "informant_proximity": "household_member",
+      "record_basis": "stated",
+      "log_entry_id": "log_006",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_016",
+      "record_id": "ark:/61903/1:1:6C1W-839Q",
+      "record_role": "child",
+      "fact_type": "relationship",
+      "value": "child of Apolinar Corona",
+      "structured_value": {
+        "relationship_type": "child",
+        "related_person_role": "parent"
+      },
+      "information_quality": "primary",
+      "informant": "parents or godparents present at baptism",
+      "informant_proximity": "household_member",
+      "record_basis": "stated",
+      "log_entry_id": "log_006",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_017",
+      "record_id": "ark:/61903/1:1:6C1W-839Q",
+      "record_role": "father_of_child",
+      "fact_type": "name",
+      "value": "S\u00f3stenes Cruz",
+      "structured_value": {
+        "given": "S\u00f3stenes",
+        "surname": "Cruz"
+      },
+      "information_quality": "primary",
+      "informant": "parents or godparents present at baptism",
+      "informant_proximity": "household_member",
+      "record_basis": "stated",
+      "log_entry_id": "log_006",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_018",
+      "record_id": "ark:/61903/1:1:6C1W-839Q",
+      "record_role": "father_of_child",
+      "fact_type": "sex",
+      "value": "Male",
+      "information_quality": "primary",
+      "informant": "parents or godparents present at baptism",
+      "informant_proximity": "household_member",
+      "record_basis": "stated",
+      "log_entry_id": "log_006",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_019",
+      "record_id": "ark:/61903/1:1:6C1W-839Q",
+      "record_role": "mother_of_child",
+      "fact_type": "name",
+      "value": "Apolinar Corona",
+      "structured_value": {
+        "given": "Apolinar",
+        "surname": "Corona"
+      },
+      "information_quality": "primary",
+      "informant": "parents or godparents present at baptism",
+      "informant_proximity": "household_member",
+      "record_basis": "stated",
+      "log_entry_id": "log_006",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_020",
+      "record_id": "ark:/61903/1:1:6C1W-839Q",
+      "record_role": "mother_of_child",
+      "fact_type": "sex",
+      "value": "Female",
+      "information_quality": "primary",
+      "informant": "parents or godparents present at baptism",
+      "informant_proximity": "household_member",
+      "record_basis": "stated",
+      "log_entry_id": "log_006",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_021",
+      "record_id": "ark:/61903/1:1:6C19-65CN",
+      "record_role": "deceased",
+      "fact_type": "name",
+      "value": "Marcelino Cruz Corona",
+      "structured_value": {
+        "given": "Marcelino",
+        "surname": "Cruz Corona"
+      },
+      "information_quality": "primary",
+      "informant": "presenting parents",
+      "informant_proximity": "household_member",
+      "informant_bias_notes": "Parents presented the child at baptism and supplied the name; priest recorded it from their statement.",
+      "record_basis": "stated",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_007",
+      "source_id": "src_003"
+    },
+    {
+      "id": "a_022",
+      "record_id": "ark:/61903/1:1:6C19-65CN",
+      "record_role": "deceased",
+      "fact_type": "sex",
+      "value": "Male",
+      "information_quality": "primary",
+      "informant": "presenting parents",
+      "informant_proximity": "household_member",
+      "informant_bias_notes": "Sex recorded at baptism; parents or officiant supplied.",
+      "record_basis": "stated",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_007",
+      "source_id": "src_003"
+    },
+    {
+      "id": "a_023",
+      "record_id": "ark:/61903/1:1:6C19-65CN",
+      "record_role": "deceased",
+      "fact_type": "christening",
+      "value": "Baptized 15 May 1921 at San Agust\u00edn, Coahuayutla de Guerrero, Guerrero, Mexico",
+      "date": "15 May 1921",
+      "date_certainty": "exact",
+      "place": "San Agust\u00edn, Coahuayutla de Guerrero, Coahuayutla de Jos\u00e9 Mar\u00eda Izazaga, Guerrero, Mexico",
+      "information_quality": "primary",
+      "informant": "officiating priest",
+      "informant_proximity": "official_duty",
+      "informant_bias_notes": "The priest personally performed and recorded the baptism. Index gives place as 'San Agust\u00edn, Tlapa de Comonfort' \u2014 the image group metadata (ark:/61903/3:1:939X-6D9F-K4, Feb 1919\u2013Dec 1923) correctly identifies this as San Agust\u00edn, Coahuayutla de Guerrero; the corrected place is used here.",
+      "record_basis": "stated",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_007",
+      "source_id": "src_003",
+      "standard_place": "San Agust\u00edn, Coahuayutla de Guerrero, Coahuayutla de Jos\u00e9 Mar\u00eda Izazaga, Guerrero, Mexico"
+    },
+    {
+      "id": "a_024",
+      "record_id": "ark:/61903/1:1:6C19-65CN",
+      "record_role": "deceased",
+      "fact_type": "birth",
+      "value": "Born 25 Apr (year not stated in record; inferred ~1921 from baptism date of 15 May 1921)",
+      "date": "~1921",
+      "date_certainty": "approximate",
+      "information_quality": "primary",
+      "informant": "presenting parents",
+      "informant_proximity": "household_member",
+      "informant_bias_notes": "The record states birth date as '25 abr' with no year. The birth year ~1921 is inferred by the researcher from the baptism date of 15 May 1921 (20-day interval). The day and month (25 April) are stated by the parents; only the year is inferred. A companion stated assertion captures the day-month as recorded.",
+      "record_basis": "inferred",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_007",
+      "source_id": "src_003"
+    },
+    {
+      "id": "a_025",
+      "record_id": "ark:/61903/1:1:6C19-65CN",
+      "record_role": "deceased",
+      "fact_type": "birth",
+      "value": "Born 25 Apr (day and month as stated in record; no year given)",
+      "date": "25 Apr",
+      "information_quality": "primary",
+      "informant": "presenting parents",
+      "informant_proximity": "household_member",
+      "informant_bias_notes": "The record field states '25 abr' as the birth date. The day and month are taken directly from the record; no year is stated. The birth year is handled in a companion inferred assertion (~1921 from baptism context).",
+      "record_basis": "stated",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_007",
+      "source_id": "src_003"
+    },
+    {
+      "id": "a_026",
+      "record_id": "ark:/61903/1:1:6C19-65CN",
+      "record_role": "deceased",
+      "fact_type": "relationship",
+      "value": "child of Sostenes Cruz",
+      "structured_value": {
+        "relationship_type": "child",
+        "related_person_role": "father_of_deceased"
+      },
+      "information_quality": "primary",
+      "informant": "presenting parents",
+      "informant_proximity": "household_member",
+      "informant_bias_notes": "Father's name stated in the baptismal register by the presenting parents. Father indexed as 'Sostenes Cruz' (without accent); believed to be the same person as 'S\u00f3stenes Cruz' appearing in sibling baptism records in this project \u2014 confirm by image review.",
+      "record_basis": "stated",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_007",
+      "source_id": "src_003"
+    },
+    {
+      "id": "a_027",
+      "record_id": "ark:/61903/1:1:6C19-65CN",
+      "record_role": "deceased",
+      "fact_type": "relationship",
+      "value": "child of Apolinar Corona",
+      "structured_value": {
+        "relationship_type": "child",
+        "related_person_role": "mother_of_deceased"
+      },
+      "information_quality": "primary",
+      "informant": "presenting parents",
+      "informant_proximity": "household_member",
+      "informant_bias_notes": "Mother's name stated in the baptismal register by the presenting parents.",
+      "record_basis": "stated",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_007",
+      "source_id": "src_003"
+    },
+    {
+      "id": "a_028",
+      "record_id": "ark:/61903/1:1:6C19-65CN",
+      "record_role": "father_of_deceased",
+      "fact_type": "name",
+      "value": "Sostenes Cruz",
+      "structured_value": {
+        "given": "Sostenes",
+        "surname": "Cruz"
+      },
+      "information_quality": "primary",
+      "informant": "presenting parents",
+      "informant_proximity": "household_member",
+      "informant_bias_notes": "Father stated his own name (or mother stated it) at the baptism. Indexed without accent as 'Sostenes'; the same person appears as 'S\u00f3stenes Cruz' in other Cruz Corona sibling baptism records \u2014 the accent is likely a transcription omission. Image confirmation recommended to verify exact spelling in the original register.",
+      "record_basis": "stated",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_007",
+      "source_id": "src_003"
+    },
+    {
+      "id": "a_029",
+      "record_id": "ark:/61903/1:1:6C19-65CN",
+      "record_role": "father_of_deceased",
+      "fact_type": "sex",
+      "value": "Male",
+      "information_quality": "primary",
+      "informant": "presenting parents",
+      "informant_proximity": "household_member",
+      "informant_bias_notes": "Sex derived from paternal role stated in the record.",
+      "record_basis": "stated",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_007",
+      "source_id": "src_003"
+    },
+    {
+      "id": "a_030",
+      "record_id": "ark:/61903/1:1:6C19-65CN",
+      "record_role": "mother_of_deceased",
+      "fact_type": "name",
+      "value": "Apolinar Corona",
+      "structured_value": {
+        "given": "Apolinar",
+        "surname": "Corona"
+      },
+      "information_quality": "primary",
+      "informant": "presenting parents",
+      "informant_proximity": "household_member",
+      "informant_bias_notes": "Mother stated her own name (or father stated it) at the baptism. Name is consistent with Apolinar Corona appearing in other Cruz Corona sibling baptism records.",
+      "record_basis": "stated",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_007",
+      "source_id": "src_003"
+    },
+    {
+      "id": "a_031",
+      "record_id": "ark:/61903/1:1:6C19-65CN",
+      "record_role": "mother_of_deceased",
+      "fact_type": "sex",
+      "value": "Female",
+      "information_quality": "primary",
+      "informant": "presenting parents",
+      "informant_proximity": "household_member",
+      "informant_bias_notes": "Sex derived from maternal role stated in the record.",
+      "record_basis": "stated",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_007",
+      "source_id": "src_003"
+    },
+    {
+      "id": "a_032",
+      "record_id": "ark:/61903/1:1:XSF1-89NS",
+      "record_role": "groom",
+      "fact_type": "name",
+      "value": "Mauro Cruz",
+      "structured_value": {
+        "given": "Mauro",
+        "surname": "Cruz"
+      },
+      "information_quality": "primary",
+      "informant": "Mauro Cruz",
+      "informant_proximity": "self",
+      "record_basis": "stated",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_010",
+      "source_id": "src_004"
+    },
+    {
+      "id": "a_033",
+      "record_id": "ark:/61903/1:1:XSF1-89NS",
+      "record_role": "groom",
+      "fact_type": "sex",
+      "value": "Male",
+      "information_quality": "primary",
+      "informant": "Mauro Cruz",
+      "informant_proximity": "self",
+      "record_basis": "stated",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_010",
+      "source_id": "src_004"
+    },
+    {
+      "id": "a_034",
+      "record_id": "ark:/61903/1:1:XSF1-89NS",
+      "record_role": "groom",
+      "fact_type": "age",
+      "value": "29 years",
+      "information_quality": "primary",
+      "informant": "Mauro Cruz",
+      "informant_proximity": "self",
+      "record_basis": "stated",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_010",
+      "informant_bias_notes": "Mauro gave sworn testimony; stated age 29 at time of filing, February 1941. Age is self-reported \u2014 minor rounding possible but no motive to misreport.",
+      "source_id": "src_004"
+    },
+    {
+      "id": "a_035",
+      "record_id": "ark:/61903/1:1:XSF1-89NS",
+      "record_role": "groom",
+      "fact_type": "birth",
+      "value": "born approximately 1912",
+      "date": "~1912",
+      "date_certainty": "approximate",
+      "information_quality": "primary",
+      "informant": "Mauro Cruz",
+      "informant_proximity": "self",
+      "record_basis": "inferred",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_010",
+      "informant_bias_notes": "Birth year derived by subtracting stated age (29) from filing date (February 1941), yielding ~1912. The record states the age, not the birth year; this approximate year is the researcher's calculation. A stated age of 29 admits rounding \u2014 actual birth could be late 1911 or early 1913.",
+      "source_id": "src_004"
+    },
+    {
+      "id": "a_036",
+      "record_id": "ark:/61903/1:1:XSF1-89NS",
+      "record_role": "groom",
+      "fact_type": "birth",
+      "value": "La Uni\u00f3n (Gro.) \u2014 La Uni\u00f3n, Guerrero, Mexico",
+      "place": "La Uni\u00f3n, Guerrero, Mexico",
+      "information_quality": "primary",
+      "informant": "Mauro Cruz",
+      "informant_proximity": "self",
+      "record_basis": "stated",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_010",
+      "informant_bias_notes": "Verbatim text: 'originario de La Uni\u00f3n (Gro.)' \u2014 Mauro's sworn declaration in the expediente. He is the direct informant for his own birthplace; sworn testimony in a church marriage investigation carries presumptive reliability. 'La Uni\u00f3n (Gro.)' = La Uni\u00f3n de Isidoro Montes de Oca, Guerrero. Consistent with siblings known to have been born in Coahuayutla, Guerrero (family mobile across the Michoac\u00e1n-Guerrero border). Strongest direct evidence for q_001 birthplace sub-question.",
+      "source_id": "src_004",
+      "standard_place": "La Uni\u00f3n de Isidoro Montes de Oca, Guerrero, Mexico"
+    },
+    {
+      "id": "a_037",
+      "record_id": "ark:/61903/1:1:XSF1-89NS",
+      "record_role": "groom",
+      "fact_type": "marital_status",
+      "value": "Soltero (bachelor/unmarried)",
+      "information_quality": "primary",
+      "informant": "Mauro Cruz",
+      "informant_proximity": "self",
+      "record_basis": "stated",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_010",
+      "informant_bias_notes": "Verbatim: 'Soltero' \u2014 declared in his sworn statement. First marriage for Mauro; his surname 'Cruz' is his paternal surname, not a prior husband's name.",
+      "source_id": "src_004"
+    },
+    {
+      "id": "a_038",
+      "record_id": "ark:/61903/1:1:XSF1-89NS",
+      "record_role": "groom",
+      "fact_type": "residence",
+      "value": "Nueva Italia, Michoac\u00e1n \u2014 residing there approximately 14 years as of February 1941",
+      "place": "Nueva Italia, Michoac\u00e1n, Mexico",
+      "information_quality": "primary",
+      "informant": "Mauro Cruz",
+      "informant_proximity": "self",
+      "record_basis": "stated",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_010",
+      "informant_bias_notes": "Verbatim: 'Vecino de Nueva Italia hace catorce a\u00f1os' \u2014 resident of Nueva Italia for approximately 14 years as of February 1941, placing his arrival ca. 1927. Stated by Mauro himself in sworn declaration.",
+      "source_id": "src_004",
+      "standard_place": "Nueva Italia de Ruiz, M\u00fagica, Michoacan, Mexico"
+    },
+    {
+      "id": "a_039",
+      "record_id": "ark:/61903/1:1:XSF1-89NS",
+      "record_role": "groom",
+      "fact_type": "relationship",
+      "value": "legitimate son of S\u00f3stenes Cruz (hijo leg\u00edtimo de S\u00f3stenes Cruz finado)",
+      "structured_value": {
+        "relationship_type": "child",
+        "related_person_role": "parent"
+      },
+      "information_quality": "primary",
+      "informant": "Mauro Cruz",
+      "informant_proximity": "self",
+      "record_basis": "stated",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_010",
+      "informant_bias_notes": "Verbatim: 'hijo leg\u00edtimo de S\u00f3stenes Cruz finado.' Mauro has firsthand, ongoing knowledge of his own parentage. 'Leg\u00edtimo' indicates parents were married at his birth. Shared-informant note: this assertion and the mother-relationship assertion below both come from the same informant (Mauro's sworn declaration) \u2014 one evidence unit, though strong given it is sworn testimony.",
+      "source_id": "src_004"
+    },
+    {
+      "id": "a_040",
+      "record_id": "ark:/61903/1:1:XSF1-89NS",
+      "record_role": "groom",
+      "fact_type": "relationship",
+      "value": "legitimate son of Ma Apolinar Corona (hijo leg\u00edtimo de M.\u00aa Apolinar Corona que vive)",
+      "structured_value": {
+        "relationship_type": "child",
+        "related_person_role": "parent"
+      },
+      "information_quality": "primary",
+      "informant": "Mauro Cruz",
+      "informant_proximity": "self",
+      "record_basis": "stated",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_010",
+      "informant_bias_notes": "Verbatim: 'M.\u00aa Apolinar Corona que vive.' Mauro declares his mother, who was living at the 1941 filing. 'Corona' is her paternal surname; under Mexican naming convention this becomes Mauro's maternal surname, confirming the full project name 'Mauro Cruz Corona.' Shared informant with father-relationship assertion above.",
+      "source_id": "src_004"
+    },
+    {
+      "id": "a_041",
+      "record_id": "ark:/61903/1:1:XSF1-89NS",
+      "record_role": "groom",
+      "fact_type": "marriage",
+      "value": "Married Esperanza Ramirez, 6 February 1941, Nueva Italia, Michoac\u00e1n",
+      "date": "6 Feb 1941",
+      "date_certainty": "exact",
+      "place": "Nueva Italia, Michoac\u00e1n, Mexico",
+      "information_quality": "primary",
+      "informant": "Mauro Cruz",
+      "informant_proximity": "self",
+      "record_basis": "stated",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_010",
+      "informant_bias_notes": "Ceremony date from verbatim annotation: 'El d\u00eda Seis (ultimo) de Febrero de 1941 se celebr\u00f3 el matrimonio en Nueva Italia.' The FamilySearch index shows 20 February 1941 (the filing date); the sidecar also carries 21 February 1941 \u2014 both index dates disagree with the image text. The verbatim record text controls.",
+      "source_id": "src_004",
+      "standard_place": "Nueva Italia de Ruiz, M\u00fagica, Michoacan, Mexico"
+    },
+    {
+      "id": "a_042",
+      "record_id": "ark:/61903/1:1:XSF1-89NS",
+      "record_role": "father_of_groom",
+      "fact_type": "name",
+      "value": "S\u00f3stenes Cruz",
+      "structured_value": {
+        "given": "S\u00f3stenes",
+        "surname": "Cruz"
+      },
+      "information_quality": "primary",
+      "informant": "Mauro Cruz",
+      "informant_proximity": "self",
+      "record_basis": "stated",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_010",
+      "informant_bias_notes": "Named in Mauro's sworn declaration: 'hijo leg\u00edtimo de S\u00f3stenes Cruz finado.' Mauro has firsthand knowledge of his own father's name. The surname 'Cruz' is the paternal surname Mauro inherited.",
+      "source_id": "src_004"
+    },
+    {
+      "id": "a_043",
+      "record_id": "ark:/61903/1:1:XSF1-89NS",
+      "record_role": "father_of_groom",
+      "fact_type": "sex",
+      "value": "Male",
+      "information_quality": "primary",
+      "informant": "Mauro Cruz",
+      "informant_proximity": "self",
+      "record_basis": "stated",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_010",
+      "source_id": "src_004"
+    },
+    {
+      "id": "a_044",
+      "record_id": "ark:/61903/1:1:XSF1-89NS",
+      "record_role": "father_of_groom",
+      "fact_type": "death",
+      "value": "S\u00f3stenes Cruz deceased by February 1941 (finado)",
+      "date": "20 Feb 1941",
+      "date_certainty": "before",
+      "information_quality": "primary",
+      "informant": "Mauro Cruz",
+      "informant_proximity": "self",
+      "record_basis": "stated",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_010",
+      "informant_bias_notes": "Verbatim: 'S\u00f3stenes Cruz finado' \u2014 'finado' means deceased. Mauro's sworn declaration in February 1941 establishes his father was dead by that date. The date field holds the terminus ante quem (filing date); exact death date unknown. Mauro would have firsthand knowledge of his father's death.",
+      "source_id": "src_004"
+    },
+    {
+      "id": "a_045",
+      "record_id": "ark:/61903/1:1:XSF1-89NS",
+      "record_role": "mother_of_groom",
+      "fact_type": "name",
+      "value": "Ma Apolinar Corona",
+      "structured_value": {
+        "given": "Ma Apolinar",
+        "surname": "Corona"
+      },
+      "information_quality": "primary",
+      "informant": "Mauro Cruz",
+      "informant_proximity": "self",
+      "record_basis": "stated",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_010",
+      "informant_bias_notes": "Named in Mauro's sworn declaration: 'M.\u00aa Apolinar Corona que vive.' Mauro has firsthand knowledge of his own mother's name. 'Corona' is her paternal surname; under Mexican naming convention this is the maternal surname Mauro inherited, confirming 'Mauro Cruz Corona.'",
+      "source_id": "src_004"
+    },
+    {
+      "id": "a_046",
+      "record_id": "ark:/61903/1:1:XSF1-89NS",
+      "record_role": "mother_of_groom",
+      "fact_type": "sex",
+      "value": "Female",
+      "information_quality": "primary",
+      "informant": "Mauro Cruz",
+      "informant_proximity": "self",
+      "record_basis": "stated",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_010",
+      "source_id": "src_004"
+    },
+    {
+      "id": "a_047",
+      "record_id": "ark:/61903/1:1:XSF1-89NS",
+      "record_role": "mother_of_groom",
+      "fact_type": "vitality",
+      "value": "Ma Apolinar Corona living as of February 1941 (que vive)",
+      "information_quality": "primary",
+      "informant": "Mauro Cruz",
+      "informant_proximity": "self",
+      "record_basis": "stated",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_010",
+      "informant_bias_notes": "Verbatim: 'M.\u00aa Apolinar Corona que vive' \u2014 'que vive' means is living. Mauro's sworn declaration establishes his mother was alive in February 1941, providing a terminus post quem for her death.",
+      "source_id": "src_004"
+    },
+    {
+      "id": "a_048",
+      "record_id": "ark:/61903/1:1:XSF1-89NS",
+      "record_role": "bride",
+      "fact_type": "name",
+      "value": "Esperanza Ramirez",
+      "structured_value": {
+        "given": "Esperanza",
+        "surname": "Ramirez"
+      },
+      "information_quality": "primary",
+      "informant": "Esperanza Ramirez",
+      "informant_proximity": "self",
+      "record_basis": "stated",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_010",
+      "source_id": "src_004"
+    },
+    {
+      "id": "a_049",
+      "record_id": "ark:/61903/1:1:XSF1-89NS",
+      "record_role": "bride",
+      "fact_type": "sex",
+      "value": "Female",
+      "information_quality": "primary",
+      "informant": "Esperanza Ramirez",
+      "informant_proximity": "self",
+      "record_basis": "stated",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_010",
+      "source_id": "src_004"
+    },
+    {
+      "id": "a_050",
+      "record_id": "ark:/61903/1:1:XSF1-89NS",
+      "record_role": "bride",
+      "fact_type": "age",
+      "value": "28 years",
+      "information_quality": "primary",
+      "informant": "Esperanza Ramirez",
+      "informant_proximity": "self",
+      "record_basis": "stated",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_010",
+      "informant_bias_notes": "Age stated in the expediente at time of filing, February 1941.",
+      "source_id": "src_004"
+    },
+    {
+      "id": "a_051",
+      "record_id": "ark:/61903/1:1:XSF1-89NS",
+      "record_role": "bride",
+      "fact_type": "birth",
+      "value": "born approximately 1913",
+      "date": "~1913",
+      "date_certainty": "approximate",
+      "information_quality": "primary",
+      "informant": "Esperanza Ramirez",
+      "informant_proximity": "self",
+      "record_basis": "inferred",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_010",
+      "informant_bias_notes": "Birth year derived by subtracting stated age (28) from filing date (February 1941), yielding ~1913. The record states the age; the year is the researcher's calculation, hence inferred.",
+      "source_id": "src_004"
+    },
+    {
+      "id": "a_052",
+      "record_id": "ark:/61903/1:1:XSF1-89NS",
+      "record_role": "bride",
+      "fact_type": "birth",
+      "value": "Tingambato, Michoac\u00e1n, Mexico",
+      "place": "Tingambato, Michoac\u00e1n, Mexico",
+      "information_quality": "primary",
+      "informant": "Esperanza Ramirez",
+      "informant_proximity": "self",
+      "record_basis": "stated",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_010",
+      "source_id": "src_004",
+      "standard_place": "Tingambato, Michoacan, Mexico"
+    },
+    {
+      "id": "a_053",
+      "record_id": "ark:/61903/1:1:XSF1-89NS",
+      "record_role": "bride",
+      "fact_type": "marriage",
+      "value": "Married Mauro Cruz, 6 February 1941, Nueva Italia, Michoac\u00e1n",
+      "date": "6 Feb 1941",
+      "date_certainty": "exact",
+      "place": "Nueva Italia, Michoac\u00e1n, Mexico",
+      "information_quality": "primary",
+      "informant": "Esperanza Ramirez",
+      "informant_proximity": "self",
+      "record_basis": "stated",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_010",
+      "informant_bias_notes": "Same date-discrepancy note as the groom's marriage assertion: verbatim record text controls over the indexed filing date.",
+      "source_id": "src_004",
+      "standard_place": "Nueva Italia de Ruiz, M\u00fagica, Michoacan, Mexico"
+    },
+    {
+      "id": "a_054",
+      "record_id": "ark:/61903/1:1:XSF1-89NS",
+      "record_role": "bride",
+      "fact_type": "relationship",
+      "value": "daughter of Mateo Ramirez",
+      "structured_value": {
+        "relationship_type": "child",
+        "related_person_role": "parent"
+      },
+      "information_quality": "primary",
+      "informant": "Esperanza Ramirez",
+      "informant_proximity": "self",
+      "record_basis": "stated",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_010",
+      "source_id": "src_004"
+    },
+    {
+      "id": "a_055",
+      "record_id": "ark:/61903/1:1:XSF1-89NS",
+      "record_role": "bride",
+      "fact_type": "relationship",
+      "value": "daughter of Carmen Martinez",
+      "structured_value": {
+        "relationship_type": "child",
+        "related_person_role": "parent"
+      },
+      "information_quality": "primary",
+      "informant": "Esperanza Ramirez",
+      "informant_proximity": "self",
+      "record_basis": "stated",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_010",
+      "source_id": "src_004"
+    },
+    {
+      "id": "a_056",
+      "record_id": "ark:/61903/1:1:XSF1-89NS",
+      "record_role": "father_of_bride",
+      "fact_type": "name",
+      "value": "Mateo Ramirez",
+      "structured_value": {
+        "given": "Mateo",
+        "surname": "Ramirez"
+      },
+      "information_quality": "primary",
+      "informant": "Esperanza Ramirez",
+      "informant_proximity": "self",
+      "record_basis": "stated",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_010",
+      "informant_bias_notes": "Named by Esperanza in her sworn declaration. Esperanza has firsthand knowledge of her own father's name.",
+      "source_id": "src_004"
+    },
+    {
+      "id": "a_057",
+      "record_id": "ark:/61903/1:1:XSF1-89NS",
+      "record_role": "father_of_bride",
+      "fact_type": "sex",
+      "value": "Male",
+      "information_quality": "primary",
+      "informant": "Esperanza Ramirez",
+      "informant_proximity": "self",
+      "record_basis": "stated",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_010",
+      "source_id": "src_004"
+    },
+    {
+      "id": "a_058",
+      "record_id": "ark:/61903/1:1:XSF1-89NS",
+      "record_role": "mother_of_bride",
+      "fact_type": "name",
+      "value": "Carmen Martinez",
+      "structured_value": {
+        "given": "Carmen",
+        "surname": "Martinez"
+      },
+      "information_quality": "primary",
+      "informant": "Esperanza Ramirez",
+      "informant_proximity": "self",
+      "record_basis": "stated",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_010",
+      "informant_bias_notes": "Named by Esperanza in her sworn declaration. Esperanza has firsthand knowledge of her own mother's name.",
+      "source_id": "src_004"
+    },
+    {
+      "id": "a_059",
+      "record_id": "ark:/61903/1:1:XSF1-89NS",
+      "record_role": "mother_of_bride",
+      "fact_type": "sex",
+      "value": "Female",
+      "information_quality": "primary",
+      "informant": "Esperanza Ramirez",
+      "informant_proximity": "self",
+      "record_basis": "stated",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_010",
+      "source_id": "src_004"
+    },
+    {
+      "id": "a_060",
+      "record_id": "ark:/61903/1:1:QGWQ-MCFV",
+      "record_role": "child",
+      "fact_type": "name",
+      "value": "Mauro Cruz Corona",
+      "structured_value": {
+        "given": "Mauro",
+        "surname": "Cruz Corona"
+      },
+      "information_quality": "primary",
+      "informant": "S\u00f3stenes Cruz (declarant father)",
+      "informant_proximity": "household_member",
+      "record_basis": "stated",
+      "informant_bias_notes": "Index renders surname as 'Cruz Co??na'; OCR gap of two characters; corroborating records confirm 'Corona'. Father as declarant before civil registrar is the standard Mexican civil registration practice for newborn registration.",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_024",
+      "source_id": "src_005"
+    },
+    {
+      "id": "a_061",
+      "record_id": "ark:/61903/1:1:QGWQ-MCFV",
+      "record_role": "child",
+      "fact_type": "sex",
+      "value": "Male",
+      "information_quality": "primary",
+      "informant": "S\u00f3stenes Cruz (declarant father)",
+      "informant_proximity": "household_member",
+      "record_basis": "stated",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_024",
+      "source_id": "src_005"
+    },
+    {
+      "id": "a_062",
+      "record_id": "ark:/61903/1:1:QGWQ-MCFV",
+      "record_role": "child",
+      "fact_type": "birth",
+      "value": "22 de noviembre de 1910 (22 November 1910)",
+      "date": "1910-11-22",
+      "date_certainty": "exact",
+      "information_quality": "primary",
+      "informant": "S\u00f3stenes Cruz (declarant father)",
+      "informant_proximity": "household_member",
+      "record_basis": "stated",
+      "informant_bias_notes": "Father declared child's birth before civil registrar 14 days after the birth event; birth date is stated in the registration. Father was present at or near the birth as household member.",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_024",
+      "source_id": "src_005"
+    },
+    {
+      "id": "a_063",
+      "record_id": "ark:/61903/1:1:QGWQ-MCFV",
+      "record_role": "child",
+      "fact_type": "birth",
+      "value": "La Uni\u00f3n, M\u00e9xico",
+      "place": "La Uni\u00f3n, Guerrero, M\u00e9xico",
+      "information_quality": "primary",
+      "informant": "S\u00f3stenes Cruz (declarant father)",
+      "informant_proximity": "household_member",
+      "record_basis": "stated",
+      "informant_bias_notes": "Birthplace stated by father as declarant; 'La Uni\u00f3n' refers to La Uni\u00f3n de Isidoro Montes de Oca, Guerrero \u2014 consistent with the registration locale of Montes de Oca, Guerrero.",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_024",
+      "source_id": "src_005",
+      "standard_place": "La Uni\u00f3n de Isidoro Montes de Oca, Guerrero, Mexico"
+    },
+    {
+      "id": "a_064",
+      "record_id": "ark:/61903/1:1:QGWQ-MCFV",
+      "record_role": "child",
+      "fact_type": "residence",
+      "value": "Montes de Oca, Guerrero, M\u00e9xico (place of birth registration, 6 December 1910)",
+      "place": "Montes de Oca, Guerrero, M\u00e9xico",
+      "date": "1910-12-06",
+      "date_certainty": "exact",
+      "information_quality": "primary",
+      "informant": "civil registrar",
+      "informant_proximity": "official_duty",
+      "record_basis": "stated",
+      "informant_bias_notes": "Registration location recorded by civil registrar in official capacity.",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_024",
+      "source_id": "src_005",
+      "standard_place": "Montes de Oca, Guerrero, Mexico"
+    },
+    {
+      "id": "a_065",
+      "record_id": "ark:/61903/1:1:QGWQ-MCFV",
+      "record_role": "child",
+      "fact_type": "birth_registration",
+      "value": "Registered 6 December 1910, Montes de Oca, Guerrero, M\u00e9xico",
+      "date": "1910-12-06",
+      "date_certainty": "exact",
+      "place": "Montes de Oca, Guerrero, M\u00e9xico",
+      "information_quality": "primary",
+      "informant": "civil registrar",
+      "informant_proximity": "official_duty",
+      "record_basis": "stated",
+      "informant_bias_notes": "Registration date and place recorded by civil registrar in official capacity; registration was 14 days after birth (22 November to 6 December 1910).",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_024",
+      "source_id": "src_005",
+      "standard_place": "Montes de Oca, Guerrero, Mexico"
+    },
+    {
+      "id": "a_066",
+      "record_id": "ark:/61903/1:1:QGWQ-MCFV",
+      "record_role": "father_of_child",
+      "fact_type": "name",
+      "value": "S\u00f3stenes Cruz",
+      "structured_value": {
+        "given": "S\u00f3stenes",
+        "surname": "Cruz"
+      },
+      "information_quality": "primary",
+      "informant": "S\u00f3stenes Cruz (declarant father)",
+      "informant_proximity": "self",
+      "record_basis": "stated",
+      "informant_bias_notes": "Father appeared before civil registrar and declared the birth; his own name is stated in that declaration.",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_024",
+      "source_id": "src_005"
+    },
+    {
+      "id": "a_067",
+      "record_id": "ark:/61903/1:1:QGWQ-MCFV",
+      "record_role": "father_of_child",
+      "fact_type": "sex",
+      "value": "Male",
+      "information_quality": "primary",
+      "informant": "S\u00f3stenes Cruz (declarant father)",
+      "informant_proximity": "self",
+      "record_basis": "stated",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_024",
+      "source_id": "src_005"
+    },
+    {
+      "id": "a_068",
+      "record_id": "ark:/61903/1:1:QGWQ-MCFV",
+      "record_role": "father_of_child",
+      "fact_type": "relationship",
+      "value": "father of Mauro Cruz Corona",
+      "structured_value": {
+        "relationship_type": "parent",
+        "related_person_role": "child"
+      },
+      "information_quality": "primary",
+      "informant": "S\u00f3stenes Cruz (declarant father)",
+      "informant_proximity": "self",
+      "record_basis": "stated",
+      "informant_bias_notes": "Civil birth registration explicitly names S\u00f3stenes Cruz as the father; the relationship is stated in the record.",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_024",
+      "source_id": "src_005"
+    },
+    {
+      "id": "a_069",
+      "record_id": "ark:/61903/1:1:QGWQ-MCFV",
+      "record_role": "mother_of_child",
+      "fact_type": "name",
+      "value": "Apolinar Corona",
+      "structured_value": {
+        "given": "Apolinar",
+        "surname": "Corona"
+      },
+      "information_quality": "primary",
+      "informant": "S\u00f3stenes Cruz (declarant father)",
+      "informant_proximity": "household_member",
+      "record_basis": "stated",
+      "informant_bias_notes": "Mother's surname indexed as 'Co??na' \u2014 OCR gap of two characters; all four sibling civil registrations and Mauro's 1941 marriage investigation file independently corroborate 'Corona'. Recorded as 'Corona'. Father declared the mother's name; proximity is household_member (declarant is not the mother herself).",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_024",
+      "source_id": "src_005"
+    },
+    {
+      "id": "a_070",
+      "record_id": "ark:/61903/1:1:QGWQ-MCFV",
+      "record_role": "mother_of_child",
+      "fact_type": "sex",
+      "value": "Female",
+      "information_quality": "primary",
+      "informant": "S\u00f3stenes Cruz (declarant father)",
+      "informant_proximity": "household_member",
+      "record_basis": "stated",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_024",
+      "source_id": "src_005"
+    },
+    {
+      "id": "a_071",
+      "record_id": "ark:/61903/1:1:QGWQ-MCFV",
+      "record_role": "mother_of_child",
+      "fact_type": "relationship",
+      "value": "mother of Mauro Cruz Corona",
+      "structured_value": {
+        "relationship_type": "parent",
+        "related_person_role": "child"
+      },
+      "information_quality": "primary",
+      "informant": "S\u00f3stenes Cruz (declarant father)",
+      "informant_proximity": "household_member",
+      "record_basis": "stated",
+      "informant_bias_notes": "Civil birth registration explicitly names Apolinar Corona as the mother; relationship stated in the record. Declared by father as household member.",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_024",
+      "source_id": "src_005"
+    },
+    {
+      "id": "a_072",
+      "record_id": "ark:/61903/1:1:QGWQ-MCFV",
+      "record_role": "child",
+      "fact_type": "relationship",
+      "value": "child of S\u00f3stenes Cruz",
+      "structured_value": {
+        "relationship_type": "child",
+        "related_person_role": "parent"
+      },
+      "information_quality": "primary",
+      "informant": "S\u00f3stenes Cruz (declarant father)",
+      "informant_proximity": "self",
+      "record_basis": "stated",
+      "informant_bias_notes": "Civil birth registration states S\u00f3stenes Cruz is the father of Mauro Cruz Corona.",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_024",
+      "source_id": "src_005"
+    },
+    {
+      "id": "a_073",
+      "record_id": "ark:/61903/1:1:QGWQ-MCFV",
+      "record_role": "child",
+      "fact_type": "relationship",
+      "value": "child of Apolinar Corona",
+      "structured_value": {
+        "relationship_type": "child",
+        "related_person_role": "parent"
+      },
+      "information_quality": "primary",
+      "informant": "S\u00f3stenes Cruz (declarant father)",
+      "informant_proximity": "household_member",
+      "record_basis": "stated",
+      "informant_bias_notes": "Civil birth registration states Apolinar Corona is the mother of Mauro Cruz Corona.",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_024",
+      "source_id": "src_005"
+    },
+    {
+      "id": "a_074",
+      "record_id": "ark:/61903/1:1:QGWQ-MCFV",
+      "record_role": "father_of_deceased",
+      "fact_type": "age",
+      "value": "age 30",
+      "structured_value": {
+        "age": 30
+      },
+      "date": "1910-12-06",
+      "date_certainty": "exact",
+      "information_quality": "primary",
+      "informant": "S\u00f3stenes Cruz",
+      "informant_proximity": "self",
+      "record_basis": "stated",
+      "informant_bias_notes": "S\u00f3stenes Cruz appeared in person before the civil registrar and stated his own age. Self-reported ages can be approximate but he had direct knowledge.",
+      "log_entry_id": "log_025",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "source_id": "src_005"
+    },
+    {
+      "id": "a_075",
+      "record_id": "ark:/61903/1:1:QGWQ-MCFV",
+      "record_role": "father_of_deceased",
+      "fact_type": "birth",
+      "value": "originario de Coahuayutla",
+      "place": "Coahuayutla, Guerrero, Mexico",
+      "information_quality": "primary",
+      "informant": "S\u00f3stenes Cruz",
+      "informant_proximity": "self",
+      "record_basis": "stated",
+      "informant_bias_notes": "S\u00f3stenes Cruz stated his own place of origin in person. Record states 'originario de Coahuayutla'; full municipality is Coahuayutla de Jos\u00e9 Mar\u00eda Izazaga, Guerrero.",
+      "log_entry_id": "log_025",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "source_id": "src_005",
+      "standard_place": "Coahuayutla de Jos\u00e9 Mar\u00eda Izazaga, Guerrero, Mexico"
+    },
+    {
+      "id": "a_076",
+      "record_id": "ark:/61903/1:1:QGWQ-MCFV",
+      "record_role": "father_of_deceased",
+      "fact_type": "residence",
+      "value": "vecino del Rinc\u00f3n de Cuchara",
+      "place": "Rinc\u00f3n de Cuchara, Guerrero, Mexico",
+      "information_quality": "primary",
+      "informant": "S\u00f3stenes Cruz",
+      "informant_proximity": "self",
+      "record_basis": "stated",
+      "informant_bias_notes": "S\u00f3stenes Cruz stated his own place of residence ('vecino del Rincon de Cuchara') in person at registration, December 1910.",
+      "log_entry_id": "log_025",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "source_id": "src_005",
+      "standard_place": "Guerrero, Mexico"
+    },
+    {
+      "id": "a_077",
+      "record_id": "ark:/61903/1:1:QGWQ-MCFV",
+      "record_role": "mother_of_deceased",
+      "fact_type": "age",
+      "value": "age 25",
+      "structured_value": {
+        "age": 25
+      },
+      "date": "1910-12-06",
+      "date_certainty": "exact",
+      "information_quality": "primary",
+      "informant": "S\u00f3stenes Cruz",
+      "informant_proximity": "household_member",
+      "record_basis": "stated",
+      "informant_bias_notes": "S\u00f3stenes Cruz stated his wife Apolinar Corona's age at registration. He has direct firsthand knowledge of his spouse's age. Self-reported ages can be approximate.",
+      "log_entry_id": "log_025",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "source_id": "src_005"
+    },
+    {
+      "id": "a_078",
+      "record_id": "ark:/61903/1:1:QGWQ-MCFV",
+      "record_role": "mother_of_deceased",
+      "fact_type": "birth",
+      "value": "del mismo origen que su esposo (Coahuayutla)",
+      "place": "Coahuayutla, Guerrero, Mexico",
+      "information_quality": "primary",
+      "informant": "S\u00f3stenes Cruz",
+      "informant_proximity": "household_member",
+      "record_basis": "stated",
+      "informant_bias_notes": "Record states Apolinar Corona is 'del mismo origen que su esposo' \u2014 same origin as her husband, i.e. Coahuayutla. Reported by husband S\u00f3stenes Cruz who has firsthand knowledge of his wife's background.",
+      "log_entry_id": "log_025",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "source_id": "src_005",
+      "standard_place": "Coahuayutla de Jos\u00e9 Mar\u00eda Izazaga, Guerrero, Mexico"
+    },
+    {
+      "id": "a_079",
+      "record_id": "ark:/61903/1:1:QGWQ-MCFV",
+      "record_role": "paternal_grandfather",
+      "fact_type": "name",
+      "value": "Jes\u00fas Cruz",
+      "structured_value": {
+        "given": "Jes\u00fas",
+        "surname": "Cruz"
+      },
+      "information_quality": "primary",
+      "informant": "S\u00f3stenes Cruz",
+      "informant_proximity": "household_member",
+      "record_basis": "stated",
+      "informant_bias_notes": "S\u00f3stenes Cruz named his own father. A son has firsthand continuous knowledge of his own father's identity. Record states 'abuelos paternos los Se\u00f1ores Jesus Cruz y Domiciana Castillo que viven.'",
+      "log_entry_id": "log_025",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "source_id": "src_005"
+    },
+    {
+      "id": "a_080",
+      "record_id": "ark:/61903/1:1:QGWQ-MCFV",
+      "record_role": "paternal_grandfather",
+      "fact_type": "sex",
+      "value": "Male",
+      "information_quality": "primary",
+      "informant": "S\u00f3stenes Cruz",
+      "informant_proximity": "household_member",
+      "record_basis": "stated",
+      "informant_bias_notes": "Stated by masculine title 'Se\u00f1ores' and role as paternal grandfather as reported by son S\u00f3stenes Cruz.",
+      "log_entry_id": "log_025",
+      "extracted_for_question_ids": [],
+      "source_id": "src_005"
+    },
+    {
+      "id": "a_081",
+      "record_id": "ark:/61903/1:1:QGWQ-MCFV",
+      "record_role": "paternal_grandfather",
+      "fact_type": "death",
+      "value": "living as of 6 December 1910 ('que viven')",
+      "date": "1910-12-06",
+      "date_certainty": "after",
+      "information_quality": "secondary",
+      "informant": "S\u00f3stenes Cruz",
+      "informant_proximity": "household_member",
+      "record_basis": "stated",
+      "informant_bias_notes": "Record states paternal grandparents 'que viven' (are living) as of the registration date. Reported by son S\u00f3stenes Cruz; establishes a terminus post quem for the grandfather's death.",
+      "log_entry_id": "log_025",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "source_id": "src_005"
+    },
+    {
+      "id": "a_082",
+      "record_id": "ark:/61903/1:1:QGWQ-MCFV",
+      "record_role": "paternal_grandfather",
+      "fact_type": "relationship",
+      "value": "father of S\u00f3stenes Cruz",
+      "structured_value": {
+        "relationship_type": "parent",
+        "related_person_role": "child"
+      },
+      "information_quality": "primary",
+      "informant": "S\u00f3stenes Cruz",
+      "informant_proximity": "household_member",
+      "record_basis": "stated",
+      "informant_bias_notes": "S\u00f3stenes Cruz named Jes\u00fas Cruz as his own father. A person has firsthand knowledge of their own parentage.",
+      "log_entry_id": "log_025",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "source_id": "src_005"
+    },
+    {
+      "id": "a_083",
+      "record_id": "ark:/61903/1:1:QGWQ-MCFV",
+      "record_role": "paternal_grandmother",
+      "fact_type": "name",
+      "value": "Domiciana Castillo",
+      "structured_value": {
+        "given": "Domiciana",
+        "surname": "Castillo"
+      },
+      "information_quality": "primary",
+      "informant": "S\u00f3stenes Cruz",
+      "informant_proximity": "household_member",
+      "record_basis": "stated",
+      "informant_bias_notes": "S\u00f3stenes Cruz named his own mother. A son has firsthand continuous knowledge of his own mother's identity. Record states 'abuelos paternos los Se\u00f1ores Jesus Cruz y Domiciana Castillo que viven.'",
+      "log_entry_id": "log_025",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "source_id": "src_005"
+    },
+    {
+      "id": "a_084",
+      "record_id": "ark:/61903/1:1:QGWQ-MCFV",
+      "record_role": "paternal_grandmother",
+      "fact_type": "sex",
+      "value": "Female",
+      "information_quality": "primary",
+      "informant": "S\u00f3stenes Cruz",
+      "informant_proximity": "household_member",
+      "record_basis": "stated",
+      "informant_bias_notes": "Female sex confirmed by feminine given name Domiciana and role as paternal grandmother, as reported by son S\u00f3stenes Cruz.",
+      "log_entry_id": "log_025",
+      "extracted_for_question_ids": [],
+      "source_id": "src_005"
+    },
+    {
+      "id": "a_085",
+      "record_id": "ark:/61903/1:1:QGWQ-MCFV",
+      "record_role": "paternal_grandmother",
+      "fact_type": "death",
+      "value": "living as of 6 December 1910 ('que viven')",
+      "date": "1910-12-06",
+      "date_certainty": "after",
+      "information_quality": "secondary",
+      "informant": "S\u00f3stenes Cruz",
+      "informant_proximity": "household_member",
+      "record_basis": "stated",
+      "informant_bias_notes": "Record states paternal grandparents 'que viven' (are living) as of the registration date. Reported by son S\u00f3stenes Cruz; establishes a terminus post quem for the grandmother's death.",
+      "log_entry_id": "log_025",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "source_id": "src_005"
+    },
+    {
+      "id": "a_086",
+      "record_id": "ark:/61903/1:1:QGWQ-MCFV",
+      "record_role": "paternal_grandmother",
+      "fact_type": "relationship",
+      "value": "mother of S\u00f3stenes Cruz",
+      "structured_value": {
+        "relationship_type": "parent",
+        "related_person_role": "child"
+      },
+      "information_quality": "primary",
+      "informant": "S\u00f3stenes Cruz",
+      "informant_proximity": "household_member",
+      "record_basis": "stated",
+      "informant_bias_notes": "S\u00f3stenes Cruz named Domiciana Castillo as his own mother. A person has firsthand knowledge of their own parentage.",
+      "log_entry_id": "log_025",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "source_id": "src_005"
+    },
+    {
+      "id": "a_087",
+      "record_id": "ark:/61903/1:1:QGWQ-MCFV",
+      "record_role": "maternal_grandfather",
+      "fact_type": "name",
+      "value": "Miguel Corona",
+      "structured_value": {
+        "given": "Miguel",
+        "surname": "Corona"
+      },
+      "information_quality": "secondary",
+      "informant": "S\u00f3stenes Cruz",
+      "informant_proximity": "family_not_present",
+      "record_basis": "stated",
+      "informant_bias_notes": "S\u00f3stenes Cruz named his father-in-law Miguel Corona. He has secondhand but typically reliable knowledge of his wife's parents' identities. Record states 'maternos Miguel Corona y Jesus Mercado finados.'",
+      "log_entry_id": "log_025",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "source_id": "src_005"
+    },
+    {
+      "id": "a_088",
+      "record_id": "ark:/61903/1:1:QGWQ-MCFV",
+      "record_role": "maternal_grandfather",
+      "fact_type": "sex",
+      "value": "Male",
+      "information_quality": "secondary",
+      "informant": "S\u00f3stenes Cruz",
+      "informant_proximity": "family_not_present",
+      "record_basis": "stated",
+      "informant_bias_notes": "Male sex confirmed by masculine given name Miguel and role as maternal grandfather, as reported by son-in-law S\u00f3stenes Cruz.",
+      "log_entry_id": "log_025",
+      "extracted_for_question_ids": [],
+      "source_id": "src_005"
+    },
+    {
+      "id": "a_089",
+      "record_id": "ark:/61903/1:1:QGWQ-MCFV",
+      "record_role": "maternal_grandfather",
+      "fact_type": "death",
+      "value": "deceased by 6 December 1910 ('finado')",
+      "date": "1910-12-06",
+      "date_certainty": "before",
+      "information_quality": "secondary",
+      "informant": "S\u00f3stenes Cruz",
+      "informant_proximity": "family_not_present",
+      "record_basis": "stated",
+      "informant_bias_notes": "Record states maternal grandparents are 'finados' (deceased) as of registration date. Reported by son-in-law S\u00f3stenes Cruz. Establishes a terminus ante quem for Miguel Corona's death.",
+      "log_entry_id": "log_025",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "source_id": "src_005"
+    },
+    {
+      "id": "a_090",
+      "record_id": "ark:/61903/1:1:QGWQ-MCFV",
+      "record_role": "maternal_grandfather",
+      "fact_type": "relationship",
+      "value": "father of Apolinar Corona",
+      "structured_value": {
+        "relationship_type": "parent",
+        "related_person_role": "child"
+      },
+      "information_quality": "secondary",
+      "informant": "S\u00f3stenes Cruz",
+      "informant_proximity": "family_not_present",
+      "record_basis": "stated",
+      "informant_bias_notes": "S\u00f3stenes Cruz named Miguel Corona as the father of his wife Apolinar Corona. Secondhand knowledge of wife's parentage, but typically reliable family knowledge.",
+      "log_entry_id": "log_025",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "source_id": "src_005"
+    },
+    {
+      "id": "a_091",
+      "record_id": "ark:/61903/1:1:QGWQ-MCFV",
+      "record_role": "maternal_grandmother",
+      "fact_type": "name",
+      "value": "Jes\u00fas Mercado",
+      "structured_value": {
+        "given": "Jes\u00fas",
+        "surname": "Mercado"
+      },
+      "information_quality": "secondary",
+      "informant": "S\u00f3stenes Cruz",
+      "informant_proximity": "family_not_present",
+      "record_basis": "stated",
+      "informant_bias_notes": "S\u00f3stenes Cruz named his mother-in-law Jes\u00fas Mercado. Secondhand but typically reliable knowledge of his wife's parents. Record states 'maternos Miguel Corona y Jesus Mercado finados.' The plural 'finados' is used for both; the given name Jes\u00fas was common for women in 19th-century Mexico, and context (maternal grandmother role) confirms female sex.",
+      "log_entry_id": "log_025",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "source_id": "src_005"
+    },
+    {
+      "id": "a_092",
+      "record_id": "ark:/61903/1:1:QGWQ-MCFV",
+      "record_role": "maternal_grandmother",
+      "fact_type": "sex",
+      "value": "Female",
+      "information_quality": "secondary",
+      "informant": "S\u00f3stenes Cruz",
+      "informant_proximity": "family_not_present",
+      "record_basis": "stated",
+      "informant_bias_notes": "Female sex confirmed by role as maternal grandmother. Given name Jes\u00fas was used for women in 19th-century Mexico. Reported by son-in-law S\u00f3stenes Cruz.",
+      "log_entry_id": "log_025",
+      "extracted_for_question_ids": [],
+      "source_id": "src_005"
+    },
+    {
+      "id": "a_093",
+      "record_id": "ark:/61903/1:1:QGWQ-MCFV",
+      "record_role": "maternal_grandmother",
+      "fact_type": "death",
+      "value": "deceased by 6 December 1910 ('finada')",
+      "date": "1910-12-06",
+      "date_certainty": "before",
+      "information_quality": "secondary",
+      "informant": "S\u00f3stenes Cruz",
+      "informant_proximity": "family_not_present",
+      "record_basis": "stated",
+      "informant_bias_notes": "Record states maternal grandparents are 'finados' (deceased) as of registration date. Reported by son-in-law S\u00f3stenes Cruz. Establishes a terminus ante quem for Jes\u00fas Mercado's death.",
+      "log_entry_id": "log_025",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "source_id": "src_005"
+    },
+    {
+      "id": "a_094",
+      "record_id": "ark:/61903/1:1:QGWQ-MCFV",
+      "record_role": "maternal_grandmother",
+      "fact_type": "relationship",
+      "value": "mother of Apolinar Corona",
+      "structured_value": {
+        "relationship_type": "parent",
+        "related_person_role": "child"
+      },
+      "information_quality": "secondary",
+      "informant": "S\u00f3stenes Cruz",
+      "informant_proximity": "family_not_present",
+      "record_basis": "stated",
+      "informant_bias_notes": "S\u00f3stenes Cruz named Jes\u00fas Mercado as the mother of his wife Apolinar Corona. Secondhand knowledge of wife's parentage, but typically reliable family knowledge.",
+      "log_entry_id": "log_025",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "source_id": "src_005"
+    }
+  ],
+  "person_evidence": [
+    {
+      "id": "pe_001",
+      "assertion_id": "a_032",
+      "person_id": "PID-TODO",
+      "confidence": "speculative",
+      "core_identifier_conflict": "Record states birthplace La Uni\u00f3n, Guerrero (assertion a_036); tree person's attributed place is 'near Nueva Italia, Michoac\u00e1n' (the research question's unresolved starting premise, not an attested record fact). The sworn declaration is the first direct birthplace evidence and revises the premise rather than contradicting another record. La Uni\u00f3n to Nueva Italia: 120 km; Guerrero-Michoac\u00e1n family mobility documented in loc_002.",
+      "rationale": "Date check: record gives age 29 in February 1941, implying birth ~1912, vs. tree person's starting estimate ~1910: gap ~2 years, within normal rounding. Residence check: record states 'Vecino de Nueva Italia hace catorce a\u00f1os' (Nueva Italia ~14 years as of Feb 1941); same location as research question. Name: 'Mauro Cruz' is the expected abbreviated form of 'Mauro Cruz Corona' under Mexican naming convention. Parentage: S\u00f3stenes Cruz and Apolinar Corona named by Mauro in sworn declaration \u2014 same parents across three sibling baptism records. System caps at speculative because of conflict with tree person's attributed place (the research premise under investigation, not an independent attested record). Score 0.347 (moderate band; thin stub). Qualitative match on name + age + residence + parents is strong and warrants upgrading to probable once the birthplace premise is resolved by proof-conclusion.",
+      "match_score": 0.34731868,
+      "created": "2026-10-13"
+    },
+    {
+      "id": "pe_002",
+      "assertion_id": "a_033",
+      "person_id": "PID-TODO",
+      "confidence": "speculative",
+      "core_identifier_conflict": "Same as a_032: birthplace conflict.",
+      "rationale": "Sex assertion (Male) for the groom persona of src_004. Consistent with PID-TODO. Speculative per birthplace conflict cap. Score 0.347.",
+      "match_score": 0.34731868,
+      "created": "2026-10-13"
+    },
+    {
+      "id": "pe_003",
+      "assertion_id": "a_034",
+      "person_id": "PID-TODO",
+      "confidence": "speculative",
+      "core_identifier_conflict": "Same as a_032: birthplace conflict.",
+      "rationale": "Age assertion (29 years at filing, February 1941). Implies birth ~1912. Speculative per birthplace conflict cap. Score 0.347.",
+      "match_score": 0.34731868,
+      "created": "2026-10-13"
+    },
+    {
+      "id": "pe_004",
+      "assertion_id": "a_035",
+      "person_id": "PID-TODO",
+      "confidence": "speculative",
+      "core_identifier_conflict": "Same as a_032: birthplace conflict.",
+      "rationale": "Inferred birth year ~1912 from stated age 29 at February 1941 filing. Speculative per birthplace conflict cap. Score 0.347.",
+      "match_score": 0.34731868,
+      "created": "2026-10-13"
+    },
+    {
+      "id": "pe_005",
+      "assertion_id": "a_036",
+      "person_id": "PID-TODO",
+      "confidence": "speculative",
+      "core_identifier_conflict": "Record states birthplace La Uni\u00f3n, Guerrero; tree person's attributed place is 'near Nueva Italia, Michoac\u00e1n' (research question starting premise, not an attested record). This is the key evidence for q_001's birthplace sub-question; it revises the premise rather than contradicting an independent attestation. 120 km; loc_002 corridor.",
+      "rationale": "Birthplace 'La Uni\u00f3n (Gro.)' = La Uni\u00f3n de Isidoro Montes de Oca, Guerrero, Mexico, stated by Mauro in sworn declaration. Strongest direct evidence for q_001 birthplace sub-question. Research question's 'in or near Nueva Italia' is the unresolved premise; this is the first direct evidence. Score 0.347.",
+      "match_score": 0.34731868,
+      "created": "2026-10-13"
+    },
+    {
+      "id": "pe_006",
+      "assertion_id": "a_037",
+      "person_id": "PID-TODO",
+      "confidence": "speculative",
+      "core_identifier_conflict": "Same as a_032: birthplace conflict.",
+      "rationale": "Marital status 'Soltero' (bachelor). Same groom persona as a_032; speculative per birthplace conflict cap. Score 0.347.",
+      "match_score": 0.34731868,
+      "created": "2026-10-13"
+    },
+    {
+      "id": "pe_007",
+      "assertion_id": "a_038",
+      "person_id": "PID-TODO",
+      "confidence": "speculative",
+      "core_identifier_conflict": "Same as a_032: birthplace conflict.",
+      "rationale": "Residence: Nueva Italia, Michoac\u00e1n (~14 years as of Feb 1941). Directly corroborates the research question's framing. Same groom persona as a_032; speculative per birthplace conflict cap. Score 0.347.",
+      "match_score": 0.34731868,
+      "created": "2026-10-13"
+    },
+    {
+      "id": "pe_008",
+      "assertion_id": "a_039",
+      "person_id": "PID-TODO",
+      "confidence": "speculative",
+      "core_identifier_conflict": "Same as a_032: birthplace conflict.",
+      "rationale": "Relationship: Mauro declares 'hijo leg\u00edtimo de S\u00f3stenes Cruz finado.' Mauro's own sworn testimony. Father corroborated across three sibling baptism records. Same groom persona as a_032; speculative per birthplace conflict cap. Score 0.347.",
+      "match_score": 0.34731868,
+      "created": "2026-10-13"
+    },
+    {
+      "id": "pe_009",
+      "assertion_id": "a_040",
+      "person_id": "PID-TODO",
+      "confidence": "speculative",
+      "core_identifier_conflict": "Same as a_032: birthplace conflict.",
+      "rationale": "Relationship: Mauro declares son of 'M.\u00aa Apolinar Corona que vive.' Mother corroborated across three sibling baptism records. Same groom persona as a_032; speculative per birthplace conflict cap. Score 0.347.",
+      "match_score": 0.34731868,
+      "created": "2026-10-13"
+    },
+    {
+      "id": "pe_010",
+      "assertion_id": "a_041",
+      "person_id": "PID-TODO",
+      "confidence": "speculative",
+      "core_identifier_conflict": "Same as a_032: birthplace conflict.",
+      "rationale": "Marriage assertion: Mauro Cruz married Esperanza Ramirez on 6 February 1941 in Nueva Italia, Michoac\u00e1n. Same groom persona as a_032; speculative per birthplace conflict cap. Score 0.347.",
+      "match_score": 0.34731868,
+      "created": "2026-10-13"
+    },
+    {
+      "id": "pe_011",
+      "assertion_id": "a_053",
+      "person_id": "PID-TODO",
+      "confidence": "speculative",
+      "core_identifier_conflict": "Same as a_032: birthplace conflict.",
+      "rationale": "Marriage assertion (bride's side) bears on PID-TODO as the groom. Corroborates a_041. Same record, speculative per birthplace conflict cap. Score 0.347.",
+      "match_score": 0.34731868,
+      "created": "2026-10-13"
+    },
+    {
+      "id": "pe_012",
+      "assertion_id": "a_001",
+      "person_id": "p-sibling-facundo",
+      "confidence": "probable",
+      "rationale": "Date check: none stated in src_001 (christening 13 Dec 1918, no birth year); tree stub has no birth year \u2014 none stated for either side. Residence check: record Coahuayutla de Guerrero; tree stub has no attested residence \u2014 none attested. Name: 'Facundo Cruz Corona' exact match to stub 'Facundo Cruz.' Gender: Male, matches. Role: child of S\u00f3stenes Cruz and Apolinar Corona \u2014 same parents across all four project records. Score 0.001 \u2014 thin stub; score uninformative. Single record; probable is the ceiling.",
+      "match_score": 0.0012586322,
+      "created": "2026-10-13"
+    },
+    {
+      "id": "pe_013",
+      "assertion_id": "a_002",
+      "person_id": "p-sibling-facundo",
+      "confidence": "probable",
+      "rationale": "Sex assertion (Male) for Facundo Cruz Corona in src_001. Consistent with stub. Same deceased persona as a_001. Score 0.001.",
+      "match_score": 0.0012586322,
+      "created": "2026-10-13"
+    },
+    {
+      "id": "pe_014",
+      "assertion_id": "a_003",
+      "person_id": "p-sibling-facundo",
+      "confidence": "probable",
+      "rationale": "Christening fact (13 Dec 1918, San Agust\u00edn, Coahuayutla de Guerrero). Same deceased persona as a_001. Score 0.001.",
+      "match_score": 0.0012586322,
+      "created": "2026-10-13"
+    },
+    {
+      "id": "pe_015",
+      "assertion_id": "a_006",
+      "person_id": "p-sibling-facundo",
+      "confidence": "probable",
+      "rationale": "Relationship: Facundo is child of S\u00f3stenes Cruz. Also bears on I1. Same deceased persona as a_001. Score 0.001.",
+      "match_score": 0.0012586322,
+      "created": "2026-10-13"
+    },
+    {
+      "id": "pe_016",
+      "assertion_id": "a_006",
+      "person_id": "I1",
+      "confidence": "probable",
+      "rationale": "Date check: none stated for S\u00f3stenes in src_001 \u2014 none stated. Residence check: Coahuayutla de Guerrero; same locality as I1's minting record. Relationship assertion from Facundo's (child's) side naming S\u00f3stenes Cruz as father. Match_score: null \u2014 I1 was minted from src_001, so this is the same record; scoring is circular.",
+      "match_score": null,
+      "created": "2026-10-13"
+    },
+    {
+      "id": "pe_017",
+      "assertion_id": "a_009",
+      "person_id": "p-sibling-facundo",
+      "confidence": "probable",
+      "rationale": "Relationship: Facundo is child of Apolinar Corona. Also bears on I2. Same deceased persona as a_001. Score 0.001.",
+      "match_score": 0.0012586322,
+      "created": "2026-10-13"
+    },
+    {
+      "id": "pe_018",
+      "assertion_id": "a_009",
+      "person_id": "I2",
+      "confidence": "probable",
+      "rationale": "Date check: none stated for Apolinar in src_001 \u2014 none stated. Relationship assertion naming Apolinar Corona as Facundo's mother from the child's side. Match_score: null \u2014 I2 was minted from src_001; scoring is circular.",
+      "match_score": null,
+      "created": "2026-10-13"
+    },
+    {
+      "id": "pe_019",
+      "assertion_id": "a_004",
+      "person_id": "I1",
+      "confidence": "probable",
+      "rationale": "Name assertion 'S\u00f3stenes Cruz' for father_of_deceased persona in src_001. I1 minted FROM this persona \u2014 match_score null (circular). Corroborated by src_002, src_003, src_004.",
+      "match_score": null,
+      "created": "2026-10-13"
+    },
+    {
+      "id": "pe_020",
+      "assertion_id": "a_005",
+      "person_id": "I1",
+      "confidence": "probable",
+      "rationale": "Sex assertion (Male) for S\u00f3stenes Cruz in src_001. I1 minted from this persona; match_score null (circular).",
+      "match_score": null,
+      "created": "2026-10-13"
+    },
+    {
+      "id": "pe_021",
+      "assertion_id": "a_007",
+      "person_id": "I2",
+      "confidence": "probable",
+      "rationale": "Name assertion 'Apolinar Corona' for mother_of_deceased persona in src_001. I2 minted FROM this persona \u2014 match_score null (circular). Corroborated by src_002, src_003, src_004.",
+      "match_score": null,
+      "created": "2026-10-13"
+    },
+    {
+      "id": "pe_022",
+      "assertion_id": "a_008",
+      "person_id": "I2",
+      "confidence": "probable",
+      "rationale": "Sex assertion (Female) for Apolinar Corona in src_001. I2 minted from this persona; match_score null (circular).",
+      "match_score": null,
+      "created": "2026-10-13"
+    },
+    {
+      "id": "pe_023",
+      "assertion_id": "a_010",
+      "person_id": "p-sibling-liborio",
+      "confidence": "probable",
+      "rationale": "Date check: none stated in src_002 (christening 27 Aug 1916, birth 23 Jul no year); tree stub has no birth year \u2014 none stated for either side. Residence check: Coahuayutla de Guerrero; tree stub has no attested residence \u2014 none attested. Name: 'Liborio Cruz Corona' exact match to stub 'Liborio Cruz.' Gender: Male, matches. Role: child of S\u00f3stenes Cruz and Apolinar Corona. Score 0.002 \u2014 thin stub; score uninformative. Single record; probable is the ceiling.",
+      "match_score": 0.0018875613,
+      "created": "2026-10-13"
+    },
+    {
+      "id": "pe_024",
+      "assertion_id": "a_011",
+      "person_id": "p-sibling-liborio",
+      "confidence": "probable",
+      "rationale": "Sex assertion (Male) for Liborio Cruz Corona. Consistent with stub. Same child persona as a_010. Score 0.002.",
+      "match_score": 0.0018875613,
+      "created": "2026-10-13"
+    },
+    {
+      "id": "pe_025",
+      "assertion_id": "a_012",
+      "person_id": "p-sibling-liborio",
+      "confidence": "probable",
+      "rationale": "Christening fact (27 Aug 1916, San Agust\u00edn, Coahuayutla de Guerrero). Same child persona as a_010. Score 0.002.",
+      "match_score": 0.0018875613,
+      "created": "2026-10-13"
+    },
+    {
+      "id": "pe_026",
+      "assertion_id": "a_013",
+      "person_id": "p-sibling-liborio",
+      "confidence": "probable",
+      "rationale": "Birth day/month (23 Jul, no year). Same child persona as a_010. Score 0.002.",
+      "match_score": 0.0018875613,
+      "created": "2026-10-13"
+    },
+    {
+      "id": "pe_027",
+      "assertion_id": "a_014",
+      "person_id": "p-sibling-liborio",
+      "confidence": "probable",
+      "rationale": "Inferred birth year ~1916 (from baptism 27 Aug 1916). Same child persona as a_010. Score 0.002.",
+      "match_score": 0.0018875613,
+      "created": "2026-10-13"
+    },
+    {
+      "id": "pe_028",
+      "assertion_id": "a_015",
+      "person_id": "p-sibling-liborio",
+      "confidence": "probable",
+      "rationale": "Relationship: Liborio is child of S\u00f3stenes Cruz. Also bears on I1. Same child persona as a_010. Score 0.002.",
+      "match_score": 0.0018875613,
+      "created": "2026-10-13"
+    },
+    {
+      "id": "pe_029",
+      "assertion_id": "a_015",
+      "person_id": "I1",
+      "confidence": "probable",
+      "rationale": "Date check: none stated for S\u00f3stenes in src_002 \u2014 none stated. Residence check: Coahuayutla de Guerrero, same locality as I1's minting record (src_001). Name: 'S\u00f3stenes Cruz' exact match. Wife: same Apolinar Corona. Liborio (1916) and Facundo (1918) \u2014 two-year interval consistent. Score 0.00002 \u2014 thin stub; score uninformative. Strong qualitative match on name + wife + church + sibling sequence.",
+      "match_score": 2.382647e-05,
+      "created": "2026-10-13"
+    },
+    {
+      "id": "pe_030",
+      "assertion_id": "a_016",
+      "person_id": "p-sibling-liborio",
+      "confidence": "probable",
+      "rationale": "Relationship: Liborio is child of Apolinar Corona. Also bears on I2. Same child persona as a_010. Score 0.002.",
+      "match_score": 0.0018875613,
+      "created": "2026-10-13"
+    },
+    {
+      "id": "pe_031",
+      "assertion_id": "a_016",
+      "person_id": "I2",
+      "confidence": "probable",
+      "rationale": "Date check: none stated for Apolinar in src_002 \u2014 none stated. Residence check: Coahuayutla de Guerrero, same locality. Name: 'Apolinar Corona' exact match. Husband: same S\u00f3stenes Cruz. Score 0.0000097 \u2014 thin stub. Strong qualitative match.",
+      "match_score": 9.738735e-06,
+      "created": "2026-10-13"
+    },
+    {
+      "id": "pe_032",
+      "assertion_id": "a_017",
+      "person_id": "I1",
+      "confidence": "probable",
+      "rationale": "Name assertion 'S\u00f3stenes Cruz' for father_of_child persona in src_002. Score 0.00002 \u2014 thin stub. Same name, same wife Apolinar Corona, same San Agust\u00edn church in Coahuayutla, sibling interval consistent.",
+      "match_score": 2.382647e-05,
+      "created": "2026-10-13"
+    },
+    {
+      "id": "pe_033",
+      "assertion_id": "a_018",
+      "person_id": "I1",
+      "confidence": "probable",
+      "rationale": "Sex assertion (Male) for S\u00f3stenes Cruz in src_002. Consistent with I1. Same father_of_child persona as a_017. Score 0.00002.",
+      "match_score": 2.382647e-05,
+      "created": "2026-10-13"
+    },
+    {
+      "id": "pe_034",
+      "assertion_id": "a_019",
+      "person_id": "I2",
+      "confidence": "probable",
+      "rationale": "Name assertion 'Apolinar Corona' for mother_of_child persona in src_002. Score 0.0000097. Same name, husband, church, locality.",
+      "match_score": 9.738735e-06,
+      "created": "2026-10-13"
+    },
+    {
+      "id": "pe_035",
+      "assertion_id": "a_020",
+      "person_id": "I2",
+      "confidence": "probable",
+      "rationale": "Sex assertion (Female) for Apolinar Corona in src_002. Consistent with I2. Same mother_of_child persona as a_019. Score 0.0000097.",
+      "match_score": 9.738735e-06,
+      "created": "2026-10-13"
+    },
+    {
+      "id": "pe_036",
+      "assertion_id": "a_021",
+      "person_id": "I3",
+      "confidence": "probable",
+      "rationale": "I3 minted from this persona (src_003 deceased = Marcelino Cruz Corona). Match_score: null (circular). Single record; probable is the ceiling.",
+      "match_score": null,
+      "created": "2026-10-13"
+    },
+    {
+      "id": "pe_037",
+      "assertion_id": "a_022",
+      "person_id": "I3",
+      "confidence": "probable",
+      "rationale": "Sex assertion (Male) for Marcelino Cruz Corona. Consistent with I3. Same deceased persona as a_021; match_score null.",
+      "match_score": null,
+      "created": "2026-10-13"
+    },
+    {
+      "id": "pe_038",
+      "assertion_id": "a_023",
+      "person_id": "I3",
+      "confidence": "probable",
+      "rationale": "Christening fact (15 May 1921, San Agust\u00edn, Coahuayutla de Guerrero). Same deceased persona as a_021; match_score null.",
+      "match_score": null,
+      "created": "2026-10-13"
+    },
+    {
+      "id": "pe_039",
+      "assertion_id": "a_024",
+      "person_id": "I3",
+      "confidence": "probable",
+      "rationale": "Inferred birth year ~1921 (from baptism 15 May 1921). Same deceased persona as a_021; match_score null.",
+      "match_score": null,
+      "created": "2026-10-13"
+    },
+    {
+      "id": "pe_040",
+      "assertion_id": "a_025",
+      "person_id": "I3",
+      "confidence": "probable",
+      "rationale": "Birth day/month (25 Apr, no year). Same deceased persona as a_021; match_score null.",
+      "match_score": null,
+      "created": "2026-10-13"
+    },
+    {
+      "id": "pe_041",
+      "assertion_id": "a_026",
+      "person_id": "I3",
+      "confidence": "probable",
+      "rationale": "Relationship: Marcelino is child of Sostenes Cruz. Also bears on I1. Same deceased persona as a_021; match_score null.",
+      "match_score": null,
+      "created": "2026-10-13"
+    },
+    {
+      "id": "pe_042",
+      "assertion_id": "a_026",
+      "person_id": "I1",
+      "confidence": "probable",
+      "rationale": "Date check: none stated for S\u00f3stenes in src_003 \u2014 none stated. Residence check: Coahuayutla de Guerrero, same locality as src_001 and src_002. Name: 'Sostenes Cruz' (accent omission noted as transcription variant) matches 'S\u00f3stenes Cruz' (I1). Same wife Apolinar Corona, third child at same San Agust\u00edn church. Score 0.00002 \u2014 thin stub.",
+      "match_score": 2.382647e-05,
+      "created": "2026-10-13"
+    },
+    {
+      "id": "pe_043",
+      "assertion_id": "a_027",
+      "person_id": "I3",
+      "confidence": "probable",
+      "rationale": "Relationship: Marcelino is child of Apolinar Corona. Also bears on I2. Same deceased persona as a_021; match_score null.",
+      "match_score": null,
+      "created": "2026-10-13"
+    },
+    {
+      "id": "pe_044",
+      "assertion_id": "a_027",
+      "person_id": "I2",
+      "confidence": "probable",
+      "rationale": "Date check: none stated for Apolinar in src_003 \u2014 none stated. Residence check: Coahuayutla de Guerrero, same locality. Name: 'Apolinar Corona' exact match. Husband: same Sostenes Cruz. Third child, same church and family. Score 0.0000097.",
+      "match_score": 9.738735e-06,
+      "created": "2026-10-13"
+    },
+    {
+      "id": "pe_045",
+      "assertion_id": "a_028",
+      "person_id": "I1",
+      "confidence": "probable",
+      "rationale": "Name assertion 'Sostenes Cruz' for father_of_deceased persona in src_003. Accent omission noted as transcription variant. Same name, same wife, same church, same locality as src_001 and src_002. Score 0.00002.",
+      "match_score": 2.382647e-05,
+      "created": "2026-10-13"
+    },
+    {
+      "id": "pe_046",
+      "assertion_id": "a_029",
+      "person_id": "I1",
+      "confidence": "probable",
+      "rationale": "Sex assertion (Male) for Sostenes Cruz in src_003. Consistent with I1. Same father_of_deceased persona as a_028. Score 0.00002.",
+      "match_score": 2.382647e-05,
+      "created": "2026-10-13"
+    },
+    {
+      "id": "pe_047",
+      "assertion_id": "a_030",
+      "person_id": "I2",
+      "confidence": "probable",
+      "rationale": "Name assertion 'Apolinar Corona' for mother_of_deceased persona in src_003. Same name, husband, church, locality as src_001 and src_002. Score 0.0000097.",
+      "match_score": 9.738735e-06,
+      "created": "2026-10-13"
+    },
+    {
+      "id": "pe_048",
+      "assertion_id": "a_031",
+      "person_id": "I2",
+      "confidence": "probable",
+      "rationale": "Sex assertion (Female) for Apolinar Corona in src_003. Consistent with I2. Same mother_of_deceased persona as a_030. Score 0.0000097.",
+      "match_score": 9.738735e-06,
+      "created": "2026-10-13"
+    },
+    {
+      "id": "pe_049",
+      "assertion_id": "a_039",
+      "person_id": "I1",
+      "confidence": "probable",
+      "rationale": "Relationship assertion (child's side): Mauro Cruz (PID-TODO) declares 'hijo leg\u00edtimo de S\u00f3stenes Cruz finado.' Mauro's own sworn declaration \u2014 strongest informant for his own parentage. Name 'S\u00f3stenes Cruz' matches I1. 'Finado' = death terminus ante quem Feb 1941. Corroborates three sibling baptism records. Score 0.00004 \u2014 thin stub.",
+      "match_score": 4.0215273e-05,
+      "created": "2026-10-13"
+    },
+    {
+      "id": "pe_050",
+      "assertion_id": "a_040",
+      "person_id": "I2",
+      "confidence": "probable",
+      "rationale": "Relationship assertion (child's side): Mauro declares son of 'M.\u00aa Apolinar Corona que vive.' 'Ma' = standard abbreviation of 'Mar\u00eda.' Matches I2 'Apolinar Corona.' 'Que vive' = living as of Feb 1941. Corroborates three sibling baptism records. Score 0.0000016 \u2014 thin stub.",
+      "match_score": 1.5892795e-06,
+      "created": "2026-10-13"
+    },
+    {
+      "id": "pe_051",
+      "assertion_id": "a_042",
+      "person_id": "I1",
+      "confidence": "probable",
+      "rationale": "Name assertion 'S\u00f3stenes Cruz' for father_of_groom persona in src_004. Named by Mauro in sworn declaration. Consistent with I1 across all four records. Score 0.00004 \u2014 thin stub.",
+      "match_score": 4.0215273e-05,
+      "created": "2026-10-13"
+    },
+    {
+      "id": "pe_052",
+      "assertion_id": "a_043",
+      "person_id": "I1",
+      "confidence": "probable",
+      "rationale": "Sex assertion (Male) for father_of_groom in src_004. Consistent with I1. Same father_of_groom persona as a_042. Score 0.00004.",
+      "match_score": 4.0215273e-05,
+      "created": "2026-10-13"
+    },
+    {
+      "id": "pe_053",
+      "assertion_id": "a_044",
+      "person_id": "I1",
+      "confidence": "probable",
+      "rationale": "Death assertion: S\u00f3stenes Cruz declared 'finado' (deceased) by February 1941 per Mauro's sworn declaration. Death terminus ante quem of 20 February 1941 for I1. Score 0.00004.",
+      "match_score": 4.0215273e-05,
+      "created": "2026-10-13"
+    },
+    {
+      "id": "pe_054",
+      "assertion_id": "a_045",
+      "person_id": "I2",
+      "confidence": "probable",
+      "rationale": "Name assertion 'Ma Apolinar Corona' for mother_of_groom persona in src_004. 'Ma' = standard abbreviation of 'Mar\u00eda.' Matches I2 'Apolinar Corona.' Corroborated across all four project records. Score 0.0000016 \u2014 thin stub.",
+      "match_score": 1.5892795e-06,
+      "created": "2026-10-13"
+    },
+    {
+      "id": "pe_055",
+      "assertion_id": "a_046",
+      "person_id": "I2",
+      "confidence": "probable",
+      "rationale": "Sex assertion (Female) for mother_of_groom in src_004. Consistent with I2. Same mother_of_groom persona as a_045. Score 0.0000016.",
+      "match_score": 1.5892795e-06,
+      "created": "2026-10-13"
+    },
+    {
+      "id": "pe_056",
+      "assertion_id": "a_047",
+      "person_id": "I2",
+      "confidence": "probable",
+      "rationale": "Vitality assertion: Apolinar Corona declared 'que vive' (living) in Mauro's February 1941 sworn declaration. Life terminus post quem Feb 1941 for I2. Score 0.0000016.",
+      "match_score": 1.5892795e-06,
+      "created": "2026-10-13"
+    },
+    {
+      "id": "pe_057",
+      "assertion_id": "a_048",
+      "person_id": "I4",
+      "confidence": "probable",
+      "rationale": "I4 minted from the src_004 bride persona (Esperanza Ramirez). Match_score: null (circular). Single record; probable is the ceiling.",
+      "match_score": null,
+      "created": "2026-10-13"
+    },
+    {
+      "id": "pe_058",
+      "assertion_id": "a_049",
+      "person_id": "I4",
+      "confidence": "probable",
+      "rationale": "Sex assertion (Female) for Esperanza Ramirez. Consistent with I4. Same bride persona as a_048; match_score null.",
+      "match_score": null,
+      "created": "2026-10-13"
+    },
+    {
+      "id": "pe_059",
+      "assertion_id": "a_050",
+      "person_id": "I4",
+      "confidence": "probable",
+      "rationale": "Age assertion (28 years at Feb 1941). Implies birth ~1913. Same bride persona; match_score null.",
+      "match_score": null,
+      "created": "2026-10-13"
+    },
+    {
+      "id": "pe_060",
+      "assertion_id": "a_051",
+      "person_id": "I4",
+      "confidence": "probable",
+      "rationale": "Inferred birth year ~1913. Same bride persona; match_score null.",
+      "match_score": null,
+      "created": "2026-10-13"
+    },
+    {
+      "id": "pe_061",
+      "assertion_id": "a_052",
+      "person_id": "I4",
+      "confidence": "probable",
+      "rationale": "Birthplace Tingambato, Michoac\u00e1n for Esperanza Ramirez. Same bride persona; match_score null.",
+      "match_score": null,
+      "created": "2026-10-13"
+    },
+    {
+      "id": "pe_062",
+      "assertion_id": "a_053",
+      "person_id": "I4",
+      "confidence": "probable",
+      "rationale": "Marriage assertion: Esperanza Ramirez married Mauro Cruz on 6 February 1941 in Nueva Italia, Michoac\u00e1n. Same bride persona; match_score null.",
+      "match_score": null,
+      "created": "2026-10-13"
+    },
+    {
+      "id": "pe_063",
+      "assertion_id": "a_054",
+      "person_id": "I4",
+      "confidence": "probable",
+      "rationale": "Relationship: Esperanza is daughter of Mateo Ramirez. Same bride persona; match_score null.",
+      "match_score": null,
+      "created": "2026-10-13"
+    },
+    {
+      "id": "pe_064",
+      "assertion_id": "a_055",
+      "person_id": "I4",
+      "confidence": "probable",
+      "rationale": "Relationship: Esperanza is daughter of Carmen Martinez. Same bride persona; match_score null.",
+      "match_score": null,
+      "created": "2026-10-13"
+    },
+    {
+      "id": "pe_065",
+      "assertion_id": "a_041",
+      "person_id": "I4",
+      "confidence": "probable",
+      "rationale": "Marriage assertion (groom's side) also bears on I4 (Esperanza Ramirez) as the bride. I4 minted from this record's bride persona; identity as bride certain by construction. Match_score: null.",
+      "match_score": null,
+      "created": "2026-10-13"
+    },
+    {
+      "id": "pe_066",
+      "assertion_id": "a_056",
+      "person_id": "I5",
+      "confidence": "probable",
+      "rationale": "I5 minted from the src_004 father_of_bride persona (Mateo Ramirez). Match_score: null (circular). Single record; probable is the ceiling.",
+      "match_score": null,
+      "created": "2026-10-13"
+    },
+    {
+      "id": "pe_067",
+      "assertion_id": "a_057",
+      "person_id": "I5",
+      "confidence": "probable",
+      "rationale": "Sex assertion (Male) for Mateo Ramirez in src_004. Consistent with I5. Same father_of_bride persona; match_score null.",
+      "match_score": null,
+      "created": "2026-10-13"
+    },
+    {
+      "id": "pe_068",
+      "assertion_id": "a_058",
+      "person_id": "I6",
+      "confidence": "probable",
+      "rationale": "I6 minted from the src_004 mother_of_bride persona (Carmen Martinez). Match_score: null (circular). Single record; probable is the ceiling.",
+      "match_score": null,
+      "created": "2026-10-13"
+    },
+    {
+      "id": "pe_069",
+      "assertion_id": "a_059",
+      "person_id": "I6",
+      "confidence": "probable",
+      "rationale": "Sex assertion (Female) for Carmen Martinez in src_004. Consistent with I6. Same mother_of_bride persona; match_score null.",
+      "match_score": null,
+      "created": "2026-10-13"
+    },
+    {
+      "id": "pe_070",
+      "assertion_id": "a_054",
+      "person_id": "I5",
+      "confidence": "probable",
+      "rationale": "Relationship assertion: Esperanza is daughter of Mateo Ramirez. Bears on both I4 (Esperanza) and I5 (Mateo). I5 minted from the father_of_bride persona; match_score null (circular).",
+      "match_score": null,
+      "created": "2026-10-13"
+    },
+    {
+      "id": "pe_071",
+      "assertion_id": "a_055",
+      "person_id": "I6",
+      "confidence": "probable",
+      "rationale": "Relationship assertion: Esperanza is daughter of Carmen Martinez. Bears on both I4 (Esperanza) and I6 (Carmen). I6 minted from the mother_of_bride persona; match_score null (circular).",
+      "match_score": null,
+      "created": "2026-10-13"
+    },
+    {
+      "id": "pe_072",
+      "assertion_id": "a_060",
+      "person_id": "PID-TODO",
+      "confidence": "speculative",
+      "core_identifier_conflict": "Tree person carries attributed place 'near Nueva Italia, Michoac\u00e1n' (the research question's unresolved starting premise, not an independent attested primary-source record). This civil birth registration states birthplace La Uni\u00f3n, Guerrero \u2014 the same place Mauro declared in his own 1941 sworn statement. The conflict is with the unresolved research premise; proof-conclusion will formally resolve it on concluding the birthplace sub-question of q_001.",
+      "rationale": "Date check: record gives birth 22 Nov 1910 vs. tree person's estimated ~1910: gap 0 years, exact. Residence check: La Uni\u00f3n, Guerrero (1910) vs. none attested on tree prior to this run (the 'near Nueva Italia, Michoac\u00e1n' premise is unresolved). Name: 'Mauro Cruz Corona' exact match; OCR artifact 'Cruz Co??na' corroborated as 'Corona' across all project records. Mauro's own 1941 declaration (a_036, pe_005) states 'originario de La Uni\u00f3n (Gro.)' \u2014 corroborating this record's birthplace directly. Parents: S\u00f3stenes Cruz + Apolinar Corona, exact match across all five project records. Same_person score 0.938 (confidence 5 / strong). This civil birth registration is the definitional primary source for Mauro's birth facts. Capped at speculative only because the tree person's research-premise attribute has not yet been formally resolved by proof-conclusion.",
+      "match_score": 0.9377172,
+      "created": "2026-10-13"
+    },
+    {
+      "id": "pe_073",
+      "assertion_id": "a_061",
+      "person_id": "PID-TODO",
+      "confidence": "speculative",
+      "core_identifier_conflict": "Same as a_060: tree premise vs. La Uni\u00f3n, Guerrero.",
+      "rationale": "Sex assertion Male. Consistent with PID-TODO. Same child persona (p_103667048568); score 0.938. Speculative per birthplace-premise cap.",
+      "match_score": 0.9377172,
+      "created": "2026-10-13"
+    },
+    {
+      "id": "pe_074",
+      "assertion_id": "a_062",
+      "person_id": "PID-TODO",
+      "confidence": "speculative",
+      "core_identifier_conflict": "Same as a_060: tree premise vs. La Uni\u00f3n, Guerrero.",
+      "rationale": "Date check: birth 22 November 1910 stated by father before civil registrar 14 days after birth. Tree person's estimated birth ~1910: gap 0. Primary direct evidence for exact birth date. Score 0.938. Speculative per premise cap.",
+      "match_score": 0.9377172,
+      "created": "2026-10-13"
+    },
+    {
+      "id": "pe_075",
+      "assertion_id": "a_063",
+      "person_id": "PID-TODO",
+      "confidence": "speculative",
+      "core_identifier_conflict": "Record states birthplace La Uni\u00f3n, Guerrero; tree person carries attributed place 'near Nueva Italia, Michoac\u00e1n' from q_001's unresolved premise. This assertion IS the primary evidence resolving the premise \u2014 corroborated by Mauro's own 1941 declaration. Proof-conclusion must formally close the conflict to upgrade.",
+      "rationale": "Birthplace La Uni\u00f3n, Guerrero stated by father as declarant. Corroborated by Mauro's 1941 sworn declaration (a_036). Key evidence for q_001 birthplace sub-question. Score 0.938.",
+      "match_score": 0.9377172,
+      "created": "2026-10-13"
+    },
+    {
+      "id": "pe_076",
+      "assertion_id": "a_064",
+      "person_id": "PID-TODO",
+      "confidence": "speculative",
+      "core_identifier_conflict": "Same as a_060: tree premise vs. La Uni\u00f3n, Guerrero.",
+      "rationale": "Residence Montes de Oca, Guerrero, 6 December 1910 (birth registration place). Child persona; score 0.938. Speculative per premise cap.",
+      "match_score": 0.9377172,
+      "created": "2026-10-13"
+    },
+    {
+      "id": "pe_077",
+      "assertion_id": "a_065",
+      "person_id": "PID-TODO",
+      "confidence": "speculative",
+      "core_identifier_conflict": "Same as a_060: tree premise vs. La Uni\u00f3n, Guerrero.",
+      "rationale": "Birth registration 6 December 1910, Montes de Oca, Guerrero, by civil registrar Vicente E. Heredia. Score 0.938. Speculative per premise cap.",
+      "match_score": 0.9377172,
+      "created": "2026-10-13"
+    },
+    {
+      "id": "pe_078",
+      "assertion_id": "a_072",
+      "person_id": "PID-TODO",
+      "confidence": "speculative",
+      "core_identifier_conflict": "Same as a_060: tree premise vs. La Uni\u00f3n, Guerrero.",
+      "rationale": "Relationship: child of S\u00f3stenes Cruz. Civil birth registration names S\u00f3stenes Cruz as father. Score 0.938. Speculative per premise cap.",
+      "match_score": 0.9377172,
+      "created": "2026-10-13"
+    },
+    {
+      "id": "pe_079",
+      "assertion_id": "a_072",
+      "person_id": "I1",
+      "confidence": "probable",
+      "rationale": "Other-side link: relationship assertion (child of S\u00f3stenes Cruz) bears on I1 as named parent. Date check: none stated \u2014 none stated. Residence check: Rinc\u00f3n de Cuchara / La Uni\u00f3n, Guerrero (1910) vs. Coahuayutla (src_001\u2013src_003): same Guerrero state, neighbouring localities within documented family mobility range. Name 'S\u00f3stenes Cruz' exact match to I1. Corroborated across five records. Score 0.00032 (thin stub, uninformative); qualitative match strong.",
+      "match_score": 0.00031591934,
+      "created": "2026-10-13"
+    },
+    {
+      "id": "pe_080",
+      "assertion_id": "a_073",
+      "person_id": "PID-TODO",
+      "confidence": "speculative",
+      "core_identifier_conflict": "Same as a_060: tree premise vs. La Uni\u00f3n, Guerrero.",
+      "rationale": "Relationship: child of Apolinar Corona. Civil birth registration names Apolinar Corona as mother. Score 0.938. Speculative per premise cap.",
+      "match_score": 0.9377172,
+      "created": "2026-10-13"
+    },
+    {
+      "id": "pe_081",
+      "assertion_id": "a_073",
+      "person_id": "I2",
+      "confidence": "probable",
+      "rationale": "Other-side link: relationship assertion (child of Apolinar Corona) bears on I2 as named parent. Date check: none stated \u2014 none stated. Residence check: La Uni\u00f3n, Guerrero (1910) vs. Coahuayutla (prior records): same state, neighbouring. Name 'Apolinar Corona' exact match to I2. Corroborated across five records. Score 0.000125 (thin stub, uninformative); qualitative match strong.",
+      "match_score": 0.0001246662,
+      "created": "2026-10-13"
+    },
+    {
+      "id": "pe_082",
+      "assertion_id": "a_066",
+      "person_id": "I1",
+      "confidence": "probable",
+      "rationale": "Date check: none stated in name assertion \u2014 none stated (age 30 from a_074 implies birth ~1880, consistent with all prior records). Residence check: Rinc\u00f3n de Cuchara / La Uni\u00f3n, Guerrero (1910) vs. Coahuayutla (src_001\u2013src_003): same state, neighbouring localities. Name 'S\u00f3stenes Cruz' exact match to I1. Same person across all five project records. Score 0.00032 (thin stub, uninformative); qualitative match strong. Probable per thin-stub policy.",
+      "match_score": 0.00031591934,
+      "created": "2026-10-13"
+    },
+    {
+      "id": "pe_083",
+      "assertion_id": "a_067",
+      "person_id": "I1",
+      "confidence": "probable",
+      "rationale": "Sex assertion Male for father_of_child persona. Consistent with I1. Same persona (p_103667048573); score 0.00032.",
+      "match_score": 0.00031591934,
+      "created": "2026-10-13"
+    },
+    {
+      "id": "pe_084",
+      "assertion_id": "a_068",
+      "person_id": "I1",
+      "confidence": "probable",
+      "rationale": "Relationship: S\u00f3stenes Cruz is father of Mauro Cruz Corona. Civil birth registration is the primary record establishing paternity. Same father_of_child persona (p_103667048573); score 0.00032.",
+      "match_score": 0.00031591934,
+      "created": "2026-10-13"
+    },
+    {
+      "id": "pe_085",
+      "assertion_id": "a_068",
+      "person_id": "PID-TODO",
+      "confidence": "speculative",
+      "core_identifier_conflict": "Same as a_060: tree premise vs. La Uni\u00f3n, Guerrero.",
+      "rationale": "Other-side link: relationship assertion (father of Mauro Cruz Corona) names PID-TODO as child. Score 0.938 for child persona. Speculative per premise cap.",
+      "match_score": 0.9377172,
+      "created": "2026-10-13"
+    },
+    {
+      "id": "pe_086",
+      "assertion_id": "a_069",
+      "person_id": "I2",
+      "confidence": "probable",
+      "rationale": "Date check: none stated in name assertion \u2014 none stated (age 25 from a_077 implies birth ~1885, consistent). Residence check: La Uni\u00f3n, Guerrero (1910) vs. Coahuayutla (prior records): same state, neighbouring. Name 'Apolinar Corona' exact match to I2. Corroborated across five records. Score 0.000125 (thin stub, uninformative); qualitative match strong. Probable per thin-stub policy.",
+      "match_score": 0.0001246662,
+      "created": "2026-10-13"
+    },
+    {
+      "id": "pe_087",
+      "assertion_id": "a_070",
+      "person_id": "I2",
+      "confidence": "probable",
+      "rationale": "Sex assertion Female for mother_of_child persona. Consistent with I2. Same persona (p_103667048578); score 0.000125.",
+      "match_score": 0.0001246662,
+      "created": "2026-10-13"
+    },
+    {
+      "id": "pe_088",
+      "assertion_id": "a_071",
+      "person_id": "I2",
+      "confidence": "probable",
+      "rationale": "Relationship: Apolinar Corona is mother of Mauro Cruz Corona. Primary record establishing maternity. Same mother_of_child persona (p_103667048578); score 0.000125.",
+      "match_score": 0.0001246662,
+      "created": "2026-10-13"
+    },
+    {
+      "id": "pe_089",
+      "assertion_id": "a_071",
+      "person_id": "PID-TODO",
+      "confidence": "speculative",
+      "core_identifier_conflict": "Same as a_060: tree premise vs. La Uni\u00f3n, Guerrero.",
+      "rationale": "Other-side link: relationship (mother of Mauro Cruz Corona) names PID-TODO as child. Score 0.938. Speculative per premise cap.",
+      "match_score": 0.9377172,
+      "created": "2026-10-13"
+    },
+    {
+      "id": "pe_090",
+      "assertion_id": "a_074",
+      "person_id": "I1",
+      "confidence": "probable",
+      "rationale": "Date check: age 30 at 6 December 1910 implies birth ~1880 \u2014 no prior birth year attested for S\u00f3stenes; consistent across all records. Residence check: stated at Montes de Oca / Rinc\u00f3n de Cuchara, Guerrero (1910) vs. Coahuayutla, Guerrero (src_001\u2013src_003): same state, neighbouring localities. Same S\u00f3stenes Cruz confirmed across all five project records. Score: null \u2014 role 'father_of_deceased' is ambiguous across three indexed personas; qualitative match strong. Probable per thin-stub policy.",
+      "match_score": null,
+      "created": "2026-10-13"
+    },
+    {
+      "id": "pe_091",
+      "assertion_id": "a_075",
+      "person_id": "I1",
+      "confidence": "probable",
+      "rationale": "Origin Coahuayutla, Guerrero stated by S\u00f3stenes Cruz in person before civil registrar \u2014 directly matches I1's minting record locality (src_001, Coahuayutla). Corroborates identity across all project records. Score: null (no distinct indexed persona for this role).",
+      "match_score": null,
+      "created": "2026-10-13"
+    },
+    {
+      "id": "pe_092",
+      "assertion_id": "a_076",
+      "person_id": "I1",
+      "confidence": "probable",
+      "rationale": "Residence Rinc\u00f3n de Cuchara, Guerrero stated by S\u00f3stenes Cruz at registration December 1910. Within Guerrero locality range consistent with I1. Score: null (no distinct indexed persona for this role).",
+      "match_score": null,
+      "created": "2026-10-13"
+    },
+    {
+      "id": "pe_093",
+      "assertion_id": "a_077",
+      "person_id": "I2",
+      "confidence": "probable",
+      "rationale": "Date check: age 25 at 6 December 1910 implies birth ~1885 \u2014 no prior birth year attested for Apolinar; consistent. Residence check: Guerrero (1910) vs. Coahuayutla (prior records): same state. Reported by husband S\u00f3stenes Cruz (household member). Score: null (role 'mother_of_deceased' is ambiguous across indexed personas). Qualitative match strong; probable per thin-stub policy.",
+      "match_score": null,
+      "created": "2026-10-13"
+    },
+    {
+      "id": "pe_094",
+      "assertion_id": "a_078",
+      "person_id": "I2",
+      "confidence": "probable",
+      "rationale": "Origin Coahuayutla stated as 'del mismo origen que su esposo' (same as husband). Matches I2 across all project records. Score: null (no distinct indexed persona for this role).",
+      "match_score": null,
+      "created": "2026-10-13"
+    },
+    {
+      "id": "pe_095",
+      "assertion_id": "a_079",
+      "person_id": "I7",
+      "confidence": "probable",
+      "rationale": "Date check: none stated \u2014 none stated. Residence check: none attested (new person). Name 'Jes\u00fas Cruz' stated by son S\u00f3stenes Cruz before civil registrar \u2014 firsthand knowledge of own father's identity. Record confirms both paternal grandparents living ('que viven') as of December 1910. I7 minted from this persona; match_score null (circular). Single record; probable per stub policy.",
+      "match_score": null,
+      "created": "2026-10-13"
+    },
+    {
+      "id": "pe_096",
+      "assertion_id": "a_080",
+      "person_id": "I7",
+      "confidence": "probable",
+      "rationale": "Sex assertion Male for paternal_grandfather. Consistent with I7. Same persona as a_079; score null (circular stub).",
+      "match_score": null,
+      "created": "2026-10-13"
+    },
+    {
+      "id": "pe_097",
+      "assertion_id": "a_081",
+      "person_id": "I7",
+      "confidence": "probable",
+      "rationale": "Vitality: living as of 6 December 1910 ('que viven'). Terminus post quem for death of Jes\u00fas Cruz. Stated by son S\u00f3stenes Cruz. Score null (circular stub).",
+      "match_score": null,
+      "created": "2026-10-13"
+    },
+    {
+      "id": "pe_098",
+      "assertion_id": "a_082",
+      "person_id": "I7",
+      "confidence": "probable",
+      "rationale": "Relationship: father of S\u00f3stenes Cruz. Stated by S\u00f3stenes Cruz \u2014 firsthand knowledge of own parentage. Score null (circular stub).",
+      "match_score": null,
+      "created": "2026-10-13"
+    },
+    {
+      "id": "pe_099",
+      "assertion_id": "a_082",
+      "person_id": "I1",
+      "confidence": "probable",
+      "rationale": "Other-side link: relationship (father of S\u00f3stenes Cruz) bears on I1 as child. I1 confirmed as S\u00f3stenes Cruz across five project records. Date check: none stated \u2014 none stated. Grandparent assertions have no indexed persona; score null.",
+      "match_score": null,
+      "created": "2026-10-13"
+    },
+    {
+      "id": "pe_100",
+      "assertion_id": "a_083",
+      "person_id": "I8",
+      "confidence": "probable",
+      "rationale": "Date check: none stated \u2014 none stated. Residence check: none attested (new person). Name 'Domiciana Castillo' stated by son S\u00f3stenes Cruz \u2014 firsthand knowledge of own mother's identity. Living ('que viven') as of December 1910. I8 minted from this persona; match_score null (circular). Single record; probable per stub policy.",
+      "match_score": null,
+      "created": "2026-10-13"
+    },
+    {
+      "id": "pe_101",
+      "assertion_id": "a_084",
+      "person_id": "I8",
+      "confidence": "probable",
+      "rationale": "Sex assertion Female for paternal_grandmother. Consistent with I8. Same persona as a_083; score null (circular stub).",
+      "match_score": null,
+      "created": "2026-10-13"
+    },
+    {
+      "id": "pe_102",
+      "assertion_id": "a_085",
+      "person_id": "I8",
+      "confidence": "probable",
+      "rationale": "Vitality: living as of 6 December 1910. Terminus post quem for death of Domiciana Castillo. Score null (circular stub).",
+      "match_score": null,
+      "created": "2026-10-13"
+    },
+    {
+      "id": "pe_103",
+      "assertion_id": "a_086",
+      "person_id": "I8",
+      "confidence": "probable",
+      "rationale": "Relationship: mother of S\u00f3stenes Cruz. Stated by S\u00f3stenes Cruz \u2014 firsthand knowledge. Score null (circular stub).",
+      "match_score": null,
+      "created": "2026-10-13"
+    },
+    {
+      "id": "pe_104",
+      "assertion_id": "a_086",
+      "person_id": "I1",
+      "confidence": "probable",
+      "rationale": "Other-side link: relationship (mother of S\u00f3stenes Cruz) bears on I1 as child. I1 confirmed across five records. Grandparent assertions have no indexed persona; score null.",
+      "match_score": null,
+      "created": "2026-10-13"
+    },
+    {
+      "id": "pe_105",
+      "assertion_id": "a_087",
+      "person_id": "I9",
+      "confidence": "probable",
+      "rationale": "Date check: none stated \u2014 none stated (deceased before Dec 1910). Residence check: none attested (new person). Name 'Miguel Corona' stated by son-in-law S\u00f3stenes Cruz \u2014 secondhand but typically reliable family knowledge. Record states both maternal grandparents 'finados' (deceased). I9 minted from this persona; match_score null (circular). Single record; secondary informant; probable per stub policy.",
+      "match_score": null,
+      "created": "2026-10-13"
+    },
+    {
+      "id": "pe_106",
+      "assertion_id": "a_088",
+      "person_id": "I9",
+      "confidence": "probable",
+      "rationale": "Sex assertion Male for maternal_grandfather. Consistent with I9. Same persona as a_087; score null (circular stub).",
+      "match_score": null,
+      "created": "2026-10-13"
+    },
+    {
+      "id": "pe_107",
+      "assertion_id": "a_089",
+      "person_id": "I9",
+      "confidence": "probable",
+      "rationale": "Death: Miguel Corona deceased before 6 December 1910 ('finado'). Terminus ante quem for death. Stated by son-in-law. Score null (circular stub).",
+      "match_score": null,
+      "created": "2026-10-13"
+    },
+    {
+      "id": "pe_108",
+      "assertion_id": "a_090",
+      "person_id": "I9",
+      "confidence": "probable",
+      "rationale": "Relationship: father of Apolinar Corona. Stated by son-in-law S\u00f3stenes Cruz \u2014 secondhand but typically reliable. Score null (circular stub).",
+      "match_score": null,
+      "created": "2026-10-13"
+    },
+    {
+      "id": "pe_109",
+      "assertion_id": "a_090",
+      "person_id": "I2",
+      "confidence": "probable",
+      "rationale": "Other-side link: relationship (father of Apolinar Corona) bears on I2 as child. I2 confirmed across five records. Grandparent assertions have no indexed persona; score null.",
+      "match_score": null,
+      "created": "2026-10-13"
+    },
+    {
+      "id": "pe_110",
+      "assertion_id": "a_091",
+      "person_id": "I10",
+      "confidence": "probable",
+      "rationale": "Date check: none stated \u2014 none stated (deceased before Dec 1910). Residence check: none attested (new person). Name 'Jes\u00fas Mercado' stated by son-in-law S\u00f3stenes Cruz \u2014 secondhand but typically reliable. Deceased ('finados' plural). Female sex confirmed by maternal grandmother role (given name Jes\u00fas was used for women in 19th-century Mexico). I10 minted from this persona; match_score null (circular). Single record; probable per stub policy.",
+      "match_score": null,
+      "created": "2026-10-13"
+    },
+    {
+      "id": "pe_111",
+      "assertion_id": "a_092",
+      "person_id": "I10",
+      "confidence": "probable",
+      "rationale": "Sex assertion Female for maternal_grandmother. Consistent with I10. Same persona as a_091; score null (circular stub).",
+      "match_score": null,
+      "created": "2026-10-13"
+    },
+    {
+      "id": "pe_112",
+      "assertion_id": "a_093",
+      "person_id": "I10",
+      "confidence": "probable",
+      "rationale": "Death: Jes\u00fas Mercado deceased before 6 December 1910 ('finada'). Terminus ante quem. Stated by son-in-law. Score null (circular stub).",
+      "match_score": null,
+      "created": "2026-10-13"
+    },
+    {
+      "id": "pe_113",
+      "assertion_id": "a_094",
+      "person_id": "I10",
+      "confidence": "probable",
+      "rationale": "Relationship: mother of Apolinar Corona. Stated by son-in-law S\u00f3stenes Cruz. Score null (circular stub).",
+      "match_score": null,
+      "created": "2026-10-13"
+    },
+    {
+      "id": "pe_114",
+      "assertion_id": "a_094",
+      "person_id": "I2",
+      "confidence": "probable",
+      "rationale": "Other-side link: relationship (mother of Apolinar Corona) bears on I2 as child. I2 confirmed across five records. Grandparent assertions have no indexed persona; score null.",
+      "match_score": null,
+      "created": "2026-10-13"
+    }
+  ],
+  "conflicts": [],
+  "hypotheses": [],
+  "timelines": [],
+  "proof_summaries": [],
+  "evaluations": [],
+  "localities": [
+    {
+      "id": "loc_001",
+      "place": "Michoacan, Mexico",
+      "for_place": "Nueva Italia de Ruiz, M\u00fagica, Michoac\u00e1n (area ca. 1905\u20131915)",
+      "time_period": "1905-1915",
+      "jurisdictions": [
+        {
+          "name": "Michoacan, Mexico",
+          "date_range": "+1823/"
+        },
+        {
+          "name": "M\u00fagica, Michoacan, Mexico",
+          "date_range": "+1942/"
+        },
+        {
+          "name": "Nueva Italia de Ruiz, M\u00fagica, Michoacan, Mexico",
+          "date_range": "+1909/"
+        },
+        {
+          "name": "Par\u00e1cuaro, Michoacan, Mexico",
+          "date_range": "+1861/"
+        }
+      ],
+      "collections": [
+        {
+          "id": "1916243",
+          "title": "Mexico, Michoac\u00e1n, Civil Registration, 1859\u20131940",
+          "date_range": "1859-1940"
+        },
+        {
+          "id": "1883388",
+          "title": "Mexico, Michoac\u00e1n and Michoac\u00e1n, Catholic Church Records, 1555\u20131996",
+          "date_range": "1555-1996"
+        }
+      ],
+      "quirks": [
+        "The municipality of M\u00fagica was not created until February 12, 1942. For the 1905\u20131915 period, Nueva Italia (founded ca. 1909) fell under predecessor jurisdiction \u2014 most likely Par\u00e1cuaro or La Huacana. Search the statewide civil collection under Par\u00e1cuaro, not M\u00fagica.",
+        "No civil registration, church, or census records are available online for the municipality of M\u00fagica per the FamilySearch Wiki (https://www.familysearch.org/en/wiki/M%C3%BAgica,_Infiernillo,_Michoac%C3%A1n,_Mexico_Genealogy).",
+        "Par\u00e1cuaro parish (Asunci\u00f3n, 1838\u20131967) and civil registration (1881\u20131931) are available at FamilySearch Catalog and are the closest documented records to Nueva Italia for this period.",
+        "Civil registration in Mexico began nationally in 1859 but was not strictly enforced until 1867; compliance dropped sharply during the Revolution (1910\u20131920). Church records are often more complete for this window.",
+        "The family was mobile across the Michoac\u00e1n-Guerrero border. Because the siblings were born in Coahuayutla, Guerrero, search both states' collections simultaneously \u2014 Mauro may also have been born in Guerrero.",
+        "Mexican naming system: children take the father's first surname and the mother's first surname. 'Cruz' is the paternal surname; 'Corona' is the maternal surname. Index searches should prioritize 'Cruz' as the family name.",
+        "Archdiocese of Michoac\u00e1n ecclesiastical marriage investigation records (1637\u20131915) are at FamilySearch Catalog (catalog/320251) and may document parents' or grandparents' marriages predating civil registration."
+      ],
+      "guide_markdown": "# Locality Guide: Michoac\u00e1n, Mexico \u2014 Nueva Italia / M\u00fagica Area (ca. 1905\u20131915)\n\nSee research notes for full guide text. Key findings: M\u00fagica municipality did not exist before 1942; no records online for M\u00fagica; search statewide Michoac\u00e1n civil collection (FS collection 1916243) under Par\u00e1cuaro; use Par\u00e1cuaro Asunci\u00f3n parish records (catalog/162793, 1838\u20131967); also search statewide Catholic Church Records (FS collection 1883388). Civil registration at municipality level began 1859, enforcement from 1867. During the Revolution (1910\u20131920) church records are more reliable.",
+      "pages_read": [
+        {
+          "section": "home",
+          "url": "https://www.familysearch.org/en/wiki/Michoac%C3%A1n,_Mexico_Genealogy",
+          "found": true
+        },
+        {
+          "section": "getting_started",
+          "url": null,
+          "found": false
+        },
+        {
+          "section": "online_records",
+          "url": null,
+          "found": false
+        },
+        {
+          "section": "research_tips",
+          "url": null,
+          "found": false
+        }
+      ],
+      "source": "locality-guide",
+      "created": "2026-10-13"
+    },
+    {
+      "id": "loc_002",
+      "place": "Guerrero, Mexico",
+      "for_place": "Coahuayutla de Jos\u00e9 Mar\u00eda Izazaga, Guerrero",
+      "time_period": "1905-1918",
+      "jurisdictions": [
+        {
+          "name": "Guerrero, Mexico",
+          "date_range": "+1849/"
+        },
+        {
+          "name": "Coahuayutla de Jos\u00e9 Mar\u00eda Izazaga, Guerrero, Mexico",
+          "date_range": "+1868/"
+        }
+      ],
+      "collections": [
+        {
+          "id": "1918291",
+          "title": "Mexico, Guerrero, Civil Registration, 1860\u20131996",
+          "date_range": "1860-1996"
+        },
+        {
+          "id": "1823323",
+          "title": "Mexico, Guerrero, Catholic Church Records, 1576\u20131979",
+          "date_range": "1576-1979"
+        }
+      ],
+      "quirks": [
+        "The Coahuayutla municipal civil registration catalog item begins only in 1921 (FamilySearch Catalog 819525). For the 1913\u20131918 sibling births, search the statewide Guerrero civil collection (FS collection 1918291, indexed + images) and browse under Coahuayutla.",
+        "San Agust\u00edn parish, Coahuayutla, recorded baptisms, marriages, and deaths 1819\u20131930 (FamilySearch Catalog 1037615). This is the primary church source for the 1905\u20131918 window; browse-only (not name-indexed as a standalone item).",
+        "The statewide Guerrero Catholic Church Records (FS collection 1823323) IS name-indexed and may include Coahuayutla San Agust\u00edn records \u2014 search by surname 'Cruz' in Coahuayutla first.",
+        "Civil registration compliance dropped sharply during the Revolution (1910\u20131920). For sibling births 1913\u20131918 specifically, church baptismal records are likely more complete than civil records.",
+        "Guerrero borders Michoac\u00e1n to the north and west. The Cruz family was mobile across this border. Search La Uni\u00f3n de Isidoro Montes de Oca (Guerrero, adjacent coastal municipality) and Par\u00e1cuaro (Michoac\u00e1n) alongside Coahuayutla.",
+        "The FamilySearch Wiki for Guerrero Catholic Church Records notes: when a person cannot be found, 'consider looking at collections for surrounding localities \u2014 Michoac\u00e1n is to the northwest' (source: https://www.familysearch.org/en/wiki/Mexico,_Guerrero,_Catholic_Church_Records_-_FamilySearch_Historical_Records).",
+        "Guerrero population ca. 1910: approximately 594,300 (Populstat). State capital: Chilpancingo de los Bravo. Guerrero admitted as state October 27, 1849."
+      ],
+      "guide_markdown": "# Locality Guide: Guerrero, Mexico \u2014 Coahuayutla de Jos\u00e9 Mar\u00eda Izazaga (ca. 1905\u20131918)\n\nSee research notes for full guide text. Key findings: Statewide Guerrero civil collection (FS 1918291, 1.73M records indexed + images, 1860\u20131996) is primary civil source. Statewide Catholic Church Records (FS 1823323, 2.58M records indexed + images, 1576\u20131979) is primary church source. San Agust\u00edn parish Coahuayutla records specifically 1819\u20131930 at FamilySearch Catalog (1037615) \u2014 browse-only. Municipal civil catalog item begins only 1921 (catalog 819525). For sibling births 1913\u20131918, the Revolution suppressed civil registration; parish records are likely more complete. Cross-border searches in La Uni\u00f3n (Guerrero) and Par\u00e1cuaro (Michoac\u00e1n) also warranted.",
+      "pages_read": [
+        {
+          "section": "home",
+          "url": "https://www.familysearch.org/en/wiki/Guerrero,_Mexico_Genealogy",
+          "found": true
+        },
+        {
+          "section": "getting_started",
+          "url": null,
+          "found": false
+        },
+        {
+          "section": "online_records",
+          "url": null,
+          "found": false
+        },
+        {
+          "section": "research_tips",
+          "url": null,
+          "found": false
+        }
+      ],
+      "source": "locality-guide",
+      "created": "2026-10-13"
+    }
+  ]
+}

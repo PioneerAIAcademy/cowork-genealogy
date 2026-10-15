@@ -1,5 +1,6 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest'
 import { WsSessionConnection, type SessionCredentials, type WsMessage } from '../SessionConnection'
+import { ApiError } from '../../api'
 
 /**
  * `WsSessionConnection`'s connection state machine — the half of issue #1729
@@ -294,4 +295,99 @@ describe('the happy path still works', () => {
   })
 
 
+})
+
+describe('a 410 from /connect (session more than 24 h old, #3406)', () => {
+  const expiredEvents = (seen: WsMessage[]): WsMessage[] =>
+    seen.filter((m) => m.type === 'status' && m.state === 'session_expired')
+
+  function focus(conn: WsSessionConnection): void {
+    // `environment: 'node'` has no document, so onVisibility returns at its own
+    // guard unless one is stubbed -- the trap the focus-budget test documents.
+    ;(globalThis as { document?: unknown }).document = { visibilityState: 'visible' }
+    try {
+      ;(conn as unknown as { onVisibility: () => void }).onVisibility()
+    } finally {
+      delete (globalThis as { document?: unknown }).document
+    }
+  }
+
+  it('is terminal: one session_expired, no retry, no chat_error, even after focus', async () => {
+    let calls = 0
+    const conn = new WsSessionConnection(() => {
+      calls += 1
+      return Promise.reject(new ApiError(410, 'This session is more than 24 hours old'))
+    })
+    const seen = listen(conn)
+
+    conn.connect()
+    await vi.advanceTimersByTimeAsync(0)
+    for (let i = 0; i < 5; i++) await vi.advanceTimersByTimeAsync(2000)
+    focus(conn)
+    await vi.advanceTimersByTimeAsync(60_000)
+
+    expect(calls).toBe(1)
+    expect(expiredEvents(seen)).toHaveLength(1)
+    expect(String(expiredEvents(seen)[0].message)).toMatch(/more than 24 hours old/)
+    expect(errors(seen)).toHaveLength(0)
+    expect(seen.some((m) => m.type === 'conn_state' && m.state === 'reconnecting')).toBe(false)
+  })
+
+  it('a 410 that lands while the tab is hidden still ends it, so focus does not ask again', async () => {
+    let calls = 0
+    const conn = new WsSessionConnection(() => {
+      calls += 1
+      return Promise.reject(new ApiError(410, 'expired'))
+    })
+    const seen = listen(conn)
+    ;(conn as unknown as { hidden: boolean }).hidden = true
+
+    conn.connect()
+    await vi.advanceTimersByTimeAsync(0)
+    focus(conn)
+    await vi.advanceTimersByTimeAsync(60_000)
+
+    expect(calls).toBe(1)
+    expect(expiredEvents(seen)).toHaveLength(1)
+  })
+
+  it('a 404 (session deleted) is not read as expired', async () => {
+    let calls = 0
+    const conn = new WsSessionConnection(() => {
+      calls += 1
+      return Promise.reject(new ApiError(404, 'Session not found'))
+    })
+    const seen = listen(conn)
+    conn.connect()
+    await vi.advanceTimersByTimeAsync(0)
+    for (let i = 0; i < 3; i++) await vi.advanceTimersByTimeAsync(2000)
+    expect(calls).toBeGreaterThan(1)
+    expect(expiredEvents(seen)).toHaveLength(0)
+  })
+
+  it('any other ApiError status still retries', async () => {
+    let calls = 0
+    const conn = new WsSessionConnection(() => {
+      calls += 1
+      return Promise.reject(new ApiError(503, 'unavailable'))
+    })
+    const seen = listen(conn)
+    conn.connect()
+    await vi.advanceTimersByTimeAsync(0)
+    for (let i = 0; i < 3; i++) await vi.advanceTimersByTimeAsync(2000)
+    expect(calls).toBeGreaterThan(1)
+    expect(expiredEvents(seen)).toHaveLength(0)
+  })
+})
+
+describe('a 410 that lands before anyone subscribes', () => {
+  it('is replayed once to a listener that attaches later', async () => {
+    const conn = new WsSessionConnection(() =>
+      Promise.reject(new ApiError(410, 'This session is more than 24 hours old'))
+    )
+    conn.connect()
+    await vi.advanceTimersByTimeAsync(0)
+    const seen = listen(conn)
+    expect(seen.filter((m) => m.state === 'session_expired')).toHaveLength(1)
+  })
 })

@@ -93,11 +93,11 @@ describe("missing_parents", () => {
 
 function family(
   kids: [number | null, number | null][],
-  opts: { motherBirth?: number; motherDeath?: number | null; fatherDeath?: number } = {},
+  opts: { motherBirth?: number; motherDeath?: number | null; fatherDeath?: number; marriage?: number } = {},
 ) {
   const m = emptyModel(1);
   const persons = [
-    dp("DAD", "1", "Dad", "Male", 1850, opts.fatherDeath ?? 1920, { marriageDate: "1 May 1875" }),
+    dp("DAD", "1", "Dad", "Male", 1850, opts.fatherDeath ?? 1920, { marriageDate: `1 May ${opts.marriage ?? 1875}` }),
     dp(
       "MOM",
       "1-S1",
@@ -124,6 +124,23 @@ describe("family holes", () => {
     const g = detectGaps(family([[1876, 1950], [1884, 1950]])).filter((x) => x.type === "child_gap");
     expect(g).toHaveLength(1);
     expect(g[0].yearRange).toEqual({ start: 1877, end: 1883 });
+  });
+
+  it("child_gap: a child born years before the marriage is not a missing-child gap", () => {
+    const kids: [number, number][] = [[1705, 1780], [1713, 1790]];
+    const at = (marriage: number) =>
+      detectGaps(family(kids, { motherBirth: 1690, marriage })).filter((x) => x.type === "child_gap");
+    expect(at(1713)).toHaveLength(0);
+    expect(at(1704)).toHaveLength(1);
+    expect(at(1707)).toHaveLength(0);
+    expect(at(1706)).toHaveLength(1);
+  });
+
+  it("child_gap: several children before the marriage are the couple's own, so their gaps stay", () => {
+    const kids: [number, number][] = [[1860, 1930], [1868, 1940], [1870, 1945]];
+    const g = detectGaps(family(kids, { motherBirth: 1840, marriage: 1870 })).filter((x) => x.type === "child_gap");
+    expect(g).toHaveLength(1);
+    expect(g[0].yearRange).toEqual({ start: 1861, end: 1867 });
   });
 
   it("child_gap: a 4-year spacing is not a gap", () => {
@@ -298,6 +315,23 @@ describe("a mother with two husbands", () => {
         dp("DAD", "1-S1", "Dad", "Male", 1850, 1920),
         dp("DAD2", "1-S2", "Dad Two", "Male", 1845, 1915),
         ...kids,
+      ],
+      1,
+      4,
+    );
+    expect(detectGaps(m).filter((x) => x.type === "child_gap")).toHaveLength(1);
+  });
+
+  it("keeps a gap that starts before her marriage year, since that year is one of two marriages", () => {
+    const m = emptyModel(1);
+    addDescendancy(
+      m,
+      [
+        dp("MOM", "1", "Mom", "Female", 1690, 1760, { marriageDate: "1 May 1713" }),
+        dp("DAD", "1-S1", "Dad", "Male", 1685, 1750),
+        dp("DAD2", "1-S2", "Dad Two", "Male", 1680, 1710),
+        dp("K0", "1.1", "Kid0", "Male", 1705, 1780),
+        dp("K1", "1.2", "Kid1", "Male", 1713, 1790),
       ],
       1,
       4,

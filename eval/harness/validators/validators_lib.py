@@ -5,7 +5,7 @@ that take some subset of `before_state`, `after_state`, `tool_calls`,
 and `skill_frontmatter`, then raise `AssertionError` on failure.
 
 The first two seed validators (test_conflict_resolution.py,
-test_record_extraction.py) duplicated diff logic, append-only checks,
+extraction_validators.py) duplicated diff logic, append-only checks,
 and foreign-key reference checks across files. As the corpus grows to
 23 skills, that drift compounds — a fix in one file silently misses
 the others. These helpers centralise the patterns.
@@ -155,7 +155,7 @@ def new_section_entries(
     content changed in place (research_append op:"update").
 
     The general form of `new_log_entries` below, which is now a thin alias for
-    `section="log"`. Generalised rather than copied when `test_record_extraction`
+    `section="log"`. Generalised rather than copied when `extraction_validators`
     needed the same diff over `sources`; `include_modified` was added for
     `localities`, which locality-guide can rewrite in place, so an update is not
     silently skipped. `include_modified` defaults False, so `new_log_entries` and
@@ -305,7 +305,16 @@ def assert_capture_pending_item_not_terminal(
                     out[item["id"]] = item.get("status")
         return out
 
+    def _skip_categories(doc: dict) -> dict[str, str]:
+        out: dict[str, str] = {}
+        for plan in doc.get("plans") or []:
+            for item in plan.get("items") or []:
+                if item.get("id"):
+                    out[item["id"]] = item.get("skip_category")
+        return out
+
     before_items, after_items = _items(before), _items(after)
+    after_categories = _skip_categories(after)
     changed = {
         pid
         for pid, status in after_items.items()
@@ -354,11 +363,23 @@ def assert_capture_pending_item_not_terminal(
         if (pid, *key) in captured or (None, *key) in captured:
             continue
         status = after_items.get(pid)
+        # Two documented skips are exempt, matching the writer-tool guard
+        # `planItemCapturePendingInvariants` (CAPTURE_PENDING_SKIP_EXEMPT):
+        # `search-external-sites.md` step 4 marks the item `skipped` when no
+        # user can make the capture or the site is unreachable (`inaccessible`)
+        # or the user asked to skip it (`user_declined`). Refusing those would
+        # fail the skill's own documented path and stall an autonomous run.
+        if status == "skipped" and after_categories.get(pid) in (
+            "inaccessible",
+            "user_declined",
+        ):
+            continue
         assert status not in ("completed", "skipped"), (
             f"plan item {pid} is '{status}' but its latest external_site log "
             f"entry ({entry.get('id')}) has capture_received="
             f"{site.get('capture_received')!r} — the capture never arrived, so "
-            f"the search did not happen. Expected 'in_progress'. See #1226."
+            f"the search did not happen. Expected 'in_progress' (or skipped with "
+            f"skip_category inaccessible/user_declined). See #1226."
         )
 
 

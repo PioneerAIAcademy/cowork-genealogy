@@ -268,6 +268,61 @@ def test_snapshot_drift_excludes_gated_skill_md(tmp_path):
     assert not drifted, "the gated skill's own SKILL.md must be excluded from drift"
 
 
+def test_snapshot_drift_excludes_gated_agent_body_only(tmp_path):
+    """A suite keyed on an agent (person-evidence has no skills/ dir) gates an
+    edit to agents/<skill>.md: that file is excluded, another agent's is not."""
+    skill = "person-evidence"
+    own_rel = f"packages/engine/plugin/agents/{skill}.md"
+    other_rel = "packages/engine/plugin/agents/record-extractor.md"
+    for rel in (own_rel, other_rel):
+        p = tmp_path / rel.replace("/", os.sep)
+        p.parent.mkdir(parents=True, exist_ok=True)
+        p.write_text("edited body\n", encoding="utf-8")
+
+    snapshot = {own_rel: "d" * 64, other_rel: "e" * 64}
+
+    drifted = stale_snapshot_paths(snapshot, skill, tmp_path)
+    assert own_rel not in drifted, "the gated agent body must be excluded from drift"
+    assert drifted == [other_rel], "another agent's body must still read as drift"
+
+
+def test_snapshot_drift_excludes_gated_test_only_skill_md(tmp_path):
+    """A test-only skill lives under eval/skills/<skill>/ (extraction-append),
+    which the snapshot embeds: its SKILL.md is the gated file, not drift."""
+    skill = "extraction-append"
+    own_rel = f"eval/skills/{skill}/SKILL.md"
+    other_rel = "eval/skills/other-test-only-skill/SKILL.md"
+    for rel in (own_rel, other_rel):
+        p = tmp_path / rel.replace("/", os.sep)
+        p.parent.mkdir(parents=True, exist_ok=True)
+        p.write_text("edited body\n", encoding="utf-8")
+
+    snapshot = {own_rel: "f" * 64, other_rel: "0" * 64}
+
+    drifted = stale_snapshot_paths(snapshot, skill, tmp_path)
+    assert own_rel not in drifted, "the gated test-only SKILL.md must be excluded from drift"
+    assert drifted == [other_rel], "another test-only skill must still read as drift"
+
+
+def test_uncommitted_edit_check_covers_agent_body(monkeypatch):
+    """The no-edit check must diff the agent body too, or an agent-keyed suite
+    always reads as "no edit" and the gate can never print LOOKS GOOD."""
+    seen: list[list[str]] = []
+
+    class _Done:
+        returncode = 1
+
+    def fake_run(cmd, *args, **kwargs):
+        seen.append(cmd)
+        return _Done()
+
+    monkeypatch.setattr(skill_gate.subprocess, "run", fake_run)
+    assert skill_gate._has_uncommitted_skill_edit("person-evidence") is True
+    assert "packages/engine/plugin/agents/person-evidence.md" in seen[0]
+    assert "packages/engine/plugin/skills/person-evidence/SKILL.md" in seen[0]
+    assert "eval/skills/person-evidence/SKILL.md" in seen[0]
+
+
 # ---- drift_signal ----------------------------------------------------------
 
 
