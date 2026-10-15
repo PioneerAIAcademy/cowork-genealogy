@@ -1,0 +1,767 @@
+{
+  "persons": [
+    {
+      "id": "I1",
+      "gender": "Male",
+      "names": [
+        {
+          "id": "N1",
+          "preferred": true,
+          "given": "James",
+          "surname": "Tarrant",
+          "type": "BirthName"
+        }
+      ],
+      "facts": [
+        {
+          "id": "F1",
+          "type": "Birth",
+          "date": "1792",
+          "place": "Greenville, South Carolina, United States",
+          "standard_place": "Greenville, South Carolina, United States",
+          "sources": [
+            {
+              "ref": "S1",
+              "quality": 1
+            }
+          ]
+        },
+        {
+          "id": "F2",
+          "type": "Residence",
+          "date": "1840",
+          "place": "Bear Creek, Gallatin, Illinois, United States",
+          "standard_place": "Gallatin, Illinois, United States",
+          "sources": [
+            {
+              "ref": "S1",
+              "quality": 1
+            }
+          ]
+        },
+        {
+          "id": "F3",
+          "type": "Residence",
+          "date": "1850",
+          "place": "Bear Creek, Gallatin, Illinois, United States",
+          "standard_place": "Gallatin, Illinois, United States",
+          "sources": [
+            {
+              "ref": "S1",
+              "quality": 1
+            }
+          ]
+        },
+        {
+          "id": "F4",
+          "type": "Residence",
+          "date": "1860",
+          "place": "Township 7 Range 8 E 3 P M, Gallatin, Illinois, United States",
+          "standard_place": "Gallatin, Illinois, United States",
+          "sources": [
+            {
+              "ref": "S1",
+              "quality": 1
+            }
+          ]
+        },
+        {
+          "id": "F5",
+          "type": "Residence",
+          "date": "1870",
+          "place": "Gallatin, Illinois, United States",
+          "standard_place": "Gallatin, Illinois, United States",
+          "sources": [
+            {
+              "ref": "S1",
+              "quality": 1
+            }
+          ]
+        },
+        {
+          "id": "F6",
+          "type": "Death",
+          "place": "Gallatin, Illinois, United States",
+          "standard_place": "Gallatin, Illinois, United States",
+          "sources": [
+            {
+              "ref": "S1",
+              "quality": 1
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "I2",
+      "gender": "Male",
+      "names": [
+        {
+          "id": "N2",
+          "preferred": true,
+          "given": "Samuel",
+          "surname": "Tarrant",
+          "type": "BirthName"
+        }
+      ],
+      "facts": [
+        {
+          "id": "F7",
+          "type": "Birth",
+          "date": "1750",
+          "place": "Henry, Sussex, Virginia, British Colonial America",
+          "standard_place": "Henry, Sussex, Virginia, British Colonial America",
+          "sources": [
+            {
+              "ref": "S1",
+              "quality": 1
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "I3",
+      "gender": "Female",
+      "names": [
+        {
+          "id": "N3",
+          "preferred": true,
+          "given": "Elizabeth",
+          "surname": "Tarrant",
+          "type": "BirthName"
+        }
+      ],
+      "facts": [
+        {
+          "id": "F9",
+          "type": "Birth",
+          "date": "1753",
+          "place": "Kentucky, Virginia, British Colonial America",
+          "standard_place": "Kentuck, Pittsylvania, Virginia, British Colonial America",
+          "sources": [
+            {
+              "ref": "S1",
+              "quality": 1
+            }
+          ]
+        },
+        {
+          "id": "F10",
+          "type": "Death",
+          "date": "1850",
+          "place": "Kentucky, United States",
+          "standard_place": "Kentucky, United States",
+          "sources": [
+            {
+              "ref": "S1",
+              "quality": 1
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "I4",
+      "gender": "Male",
+      "names": [
+        {
+          "id": "N4",
+          "preferred": true,
+          "given": "James",
+          "surname": "Tarrant",
+          "type": "BirthName",
+          "suffix": "Sr."
+        }
+      ],
+      "facts": [
+        {
+          "id": "F11",
+          "type": "Birth",
+          "date": "1753-11-30",
+          "place": "Halifax Hills, Pittsylvania, Virginia, British Colonial America",
+          "standard_place": "Halifax Hills, Pittsylvania, Virginia, British Colonial America",
+          "sources": [
+            {
+              "ref": "S1",
+              "quality": 1
+            }
+          ]
+        },
+        {
+          "id": "F12",
+          "type": "Residence",
+          "date": "1830",
+          "place": "Jefferson, Alabama, United States",
+          "standard_place": "Jefferson, Alabama, United States",
+          "sources": [
+            {
+              "ref": "S1",
+              "quality": 1
+            }
+          ]
+        },
+        {
+          "id": "F13",
+          "type": "Residence",
+          "date": "1840",
+          "place": "Jefferson, Alabama, United States",
+          "standard_place": "Jefferson, Alabama, United States",
+          "sources": [
+            {
+              "ref": "S1",
+              "quality": 1
+            }
+          ]
+        },
+        {
+          "id": "F14",
+          "type": "Death",
+          "date": "1840-07-05",
+          "place": "Elyton, Jefferson, Alabama, United States",
+          "standard_place": "Elyton, Jefferson, Alabama, United States",
+          "sources": [
+            {
+              "ref": "S1",
+              "quality": 1
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "I5",
+      "gender": "Female",
+      "names": [
+        {
+          "id": "N5",
+          "preferred": true,
+          "given": "Jane",
+          "surname": "Burch",
+          "type": "BirthName"
+        }
+      ],
+      "facts": [
+        {
+          "id": "F15",
+          "type": "Birth",
+          "date": "1753",
+          "place": "Halifax, Halifax, Virginia, United States",
+          "standard_place": "Halifax, Halifax, Virginia, United States",
+          "sources": [
+            {
+              "ref": "S1",
+              "quality": 1
+            }
+          ]
+        },
+        {
+          "id": "F16",
+          "type": "Death",
+          "date": "1822-06-09",
+          "place": "Pendleton, South Carolina, United States",
+          "standard_place": "Pendleton, South Carolina, United States",
+          "sources": [
+            {
+              "ref": "S1",
+              "quality": 1
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "I6",
+      "gender": "Female",
+      "names": [
+        {
+          "id": "N6",
+          "preferred": true,
+          "given": "Jane",
+          "surname": "Bruce",
+          "type": "BirthName"
+        }
+      ],
+      "facts": [
+        {
+          "id": "F17",
+          "type": "Birth",
+          "date": "~1794",
+          "place": "North Carolina, United States",
+          "standard_place": "North Carolina, United States",
+          "sources": [
+            {
+              "ref": "S1",
+              "quality": 1
+            }
+          ]
+        },
+        {
+          "id": "F18",
+          "type": "Residence",
+          "date": "1840",
+          "place": "Bear Creek, Gallatin, Illinois, United States",
+          "standard_place": "Gallatin, Illinois, United States",
+          "sources": [
+            {
+              "ref": "S1",
+              "quality": 1
+            }
+          ]
+        },
+        {
+          "id": "F19",
+          "type": "Residence",
+          "date": "1850",
+          "place": "Bear Creek, Gallatin, Illinois, United States",
+          "standard_place": "Gallatin, Illinois, United States",
+          "sources": [
+            {
+              "ref": "S1",
+              "quality": 1
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "I7",
+      "gender": "Male",
+      "names": [
+        {
+          "id": "N7",
+          "preferred": true,
+          "given": "Asa Baron",
+          "surname": "Tarrant",
+          "type": "BirthName"
+        }
+      ],
+      "facts": [
+        {
+          "id": "F20",
+          "type": "Birth",
+          "date": "1818-10-17",
+          "place": "Kentucky, United States",
+          "standard_place": "Kentucky, United States",
+          "sources": [
+            {
+              "ref": "S1",
+              "quality": 1
+            }
+          ]
+        },
+        {
+          "id": "F21",
+          "type": "Residence",
+          "date": "1850",
+          "place": "Bear Creek, Gallatin, Illinois, United States",
+          "standard_place": "Gallatin, Illinois, United States",
+          "sources": [
+            {
+              "ref": "S1",
+              "quality": 1
+            }
+          ]
+        },
+        {
+          "id": "F22",
+          "type": "Death",
+          "date": "1891-10-14",
+          "place": "Kingman, Kansas, United States",
+          "standard_place": "Kingman, Kansas, United States",
+          "sources": [
+            {
+              "ref": "S1",
+              "quality": 1
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "I8",
+      "gender": "Male",
+      "names": [
+        {
+          "id": "N8",
+          "preferred": true,
+          "given": "James E.",
+          "surname": "Tarrant",
+          "type": "BirthName"
+        }
+      ],
+      "facts": [
+        {
+          "id": "F23",
+          "type": "Birth",
+          "date": "~1820",
+          "place": "Warren, Kentucky, United States",
+          "standard_place": "Warren, Kentucky, United States",
+          "sources": [
+            {
+              "ref": "S1",
+              "quality": 1
+            }
+          ]
+        },
+        {
+          "id": "F24",
+          "type": "Residence",
+          "date": "1850",
+          "place": "Cane Creek, Gallatin, Illinois, United States",
+          "standard_place": "Cane Creek, Gallatin, Illinois, United States",
+          "sources": [
+            {
+              "ref": "S1",
+              "quality": 1
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "I9",
+      "gender": "Female",
+      "names": [
+        {
+          "id": "N9",
+          "preferred": true,
+          "given": "Isavilla",
+          "surname": "Tarrant",
+          "type": "BirthName"
+        }
+      ],
+      "facts": [
+        {
+          "id": "F25",
+          "type": "Birth",
+          "date": "1828",
+          "place": "Illinois, United States",
+          "standard_place": "Illinois, United States",
+          "sources": [
+            {
+              "ref": "S1",
+              "quality": 1
+            }
+          ]
+        },
+        {
+          "id": "F26",
+          "type": "Residence",
+          "date": "1860",
+          "place": "Gallatin, Illinois, United States",
+          "standard_place": "Gallatin, Illinois, United States",
+          "sources": [
+            {
+              "ref": "S1",
+              "quality": 1
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "I10",
+      "gender": "Female",
+      "names": [
+        {
+          "id": "N10",
+          "preferred": true,
+          "given": "Mary Jane",
+          "surname": "Tarrant",
+          "type": "BirthName"
+        }
+      ],
+      "facts": [
+        {
+          "id": "F27",
+          "type": "Birth",
+          "date": "~1829",
+          "place": "Illinois, United States",
+          "standard_place": "Illinois, United States",
+          "sources": [
+            {
+              "ref": "S1",
+              "quality": 1
+            }
+          ]
+        },
+        {
+          "id": "F28",
+          "type": "Residence",
+          "date": "1850",
+          "place": "Bear Creek, Gallatin, Illinois, United States",
+          "standard_place": "Gallatin, Illinois, United States",
+          "sources": [
+            {
+              "ref": "S1",
+              "quality": 1
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "relationships": [
+    {
+      "id": "R1",
+      "type": "ParentChild",
+      "parent": "I2",
+      "child": "I1",
+      "sources": [
+        {
+          "ref": "S1",
+          "quality": 1
+        }
+      ]
+    },
+    {
+      "id": "R2",
+      "type": "ParentChild",
+      "parent": "I3",
+      "child": "I1",
+      "sources": [
+        {
+          "ref": "S1",
+          "quality": 1
+        }
+      ]
+    },
+    {
+      "id": "R3",
+      "type": "ParentChild",
+      "parent": "I4",
+      "child": "I1",
+      "sources": [
+        {
+          "ref": "S1",
+          "quality": 1
+        }
+      ]
+    },
+    {
+      "id": "R4",
+      "type": "ParentChild",
+      "parent": "I5",
+      "child": "I1",
+      "sources": [
+        {
+          "ref": "S1",
+          "quality": 1
+        }
+      ]
+    },
+    {
+      "id": "R5",
+      "type": "ParentChild",
+      "parent": "I1",
+      "child": "I7",
+      "sources": [
+        {
+          "ref": "S1",
+          "quality": 1
+        }
+      ]
+    },
+    {
+      "id": "R6",
+      "type": "ParentChild",
+      "parent": "I6",
+      "child": "I7",
+      "sources": [
+        {
+          "ref": "S1",
+          "quality": 1
+        }
+      ]
+    },
+    {
+      "id": "R7",
+      "type": "ParentChild",
+      "parent": "I1",
+      "child": "I8",
+      "sources": [
+        {
+          "ref": "S1",
+          "quality": 1
+        }
+      ]
+    },
+    {
+      "id": "R8",
+      "type": "ParentChild",
+      "parent": "I6",
+      "child": "I8",
+      "sources": [
+        {
+          "ref": "S1",
+          "quality": 1
+        }
+      ]
+    },
+    {
+      "id": "R9",
+      "type": "ParentChild",
+      "parent": "I1",
+      "child": "I9",
+      "sources": [
+        {
+          "ref": "S1",
+          "quality": 1
+        }
+      ]
+    },
+    {
+      "id": "R10",
+      "type": "ParentChild",
+      "parent": "I6",
+      "child": "I9",
+      "sources": [
+        {
+          "ref": "S1",
+          "quality": 1
+        }
+      ]
+    },
+    {
+      "id": "R11",
+      "type": "ParentChild",
+      "parent": "I1",
+      "child": "I10",
+      "sources": [
+        {
+          "ref": "S1",
+          "quality": 1
+        }
+      ]
+    },
+    {
+      "id": "R12",
+      "type": "ParentChild",
+      "parent": "I6",
+      "child": "I10",
+      "sources": [
+        {
+          "ref": "S1",
+          "quality": 1
+        }
+      ]
+    },
+    {
+      "id": "R13",
+      "type": "Couple",
+      "person1": "I1",
+      "person2": "I6",
+      "facts": [
+        {
+          "id": "F29",
+          "type": "Marriage",
+          "date": "~1818",
+          "sources": [
+            {
+              "ref": "S1",
+              "quality": 1
+            }
+          ]
+        }
+      ],
+      "sources": [
+        {
+          "ref": "S1",
+          "quality": 1
+        }
+      ]
+    },
+    {
+      "id": "R14",
+      "type": "Couple",
+      "person1": "I2",
+      "person2": "I3",
+      "facts": [
+        {
+          "id": "F30",
+          "type": "Marriage",
+          "date": "1769",
+          "place": "Henry, Virginia, British Colonial America",
+          "standard_place": "Henry, Sussex, Virginia, British Colonial America",
+          "sources": [
+            {
+              "ref": "S1",
+              "quality": 1
+            }
+          ]
+        }
+      ],
+      "sources": [
+        {
+          "ref": "S1",
+          "quality": 1
+        }
+      ]
+    },
+    {
+      "id": "R15",
+      "type": "Couple",
+      "person1": "I4",
+      "person2": "I5",
+      "facts": [
+        {
+          "id": "F31",
+          "type": "Marriage",
+          "date": "~1776",
+          "sources": [
+            {
+              "ref": "S1",
+              "quality": 1
+            }
+          ]
+        }
+      ],
+      "sources": [
+        {
+          "ref": "S1",
+          "quality": 1
+        }
+      ]
+    }
+  ],
+  "sources": [
+    {
+      "id": "S1",
+      "title": "FamilySearch Family Tree",
+      "author": "FamilySearch contributors",
+      "citation": "\"FamilySearch Tree,\" database, FamilySearch (https://www.familysearch.org), entry for James Tarrant (PID GHLT-TFG) and relatives; contributed by various users; accessed 6 October 2026.",
+      "url": "https://www.familysearch.org/ark:/61903/4:1:GHLT-TFG"
+    },
+    {
+      "id": "S2",
+      "title": "1810 U.S. census, Warren County, Kentucky, population schedule",
+      "author": "U.S. Census Office",
+      "url": "https://www.familysearch.org/ark:/61903/1:1:XH29-646"
+    },
+    {
+      "id": "S3",
+      "title": "Registers of Enlistments in the U.S. Army, 1798-1914 (NARA M233), vols. 23-24",
+      "author": "U.S. Army, Adjutant General's Office",
+      "url": "https://www.familysearch.org/ark:/61903/1:1:QJD5-KQXC"
+    },
+    {
+      "id": "S4",
+      "title": "War of 1812 Index to Pension Application Files (NARA M313)",
+      "author": "U.S. Pension Office",
+      "url": "https://www.familysearch.org/ark:/61903/1:1:X8ZH-MZG"
+    },
+    {
+      "id": "S5",
+      "title": "Index to Compiled Service Records of Volunteer Soldiers Who Served During the War of 1812 (NARA M602)",
+      "author": "U.S. Adjutant General's Office",
+      "url": "https://www.familysearch.org/ark:/61903/1:1:Q29K-BL3T"
+    },
+    {
+      "id": "S6",
+      "title": "Greenville County, South Carolina, Deed Book C",
+      "author": "Greenville County Clerk of Court",
+      "url": "https://www.familysearch.org/ark:/61903/3:1:3Q9M-CS79-13FG-2"
+    }
+  ]
+}
