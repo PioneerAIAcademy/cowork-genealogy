@@ -30,7 +30,7 @@ found:
   `compound-objective-fully-covered` differ only in the objective and title.
 - **Dropped** `log_005` and `log_007`, positive reads that had no assertions, and
   `log_010` with its four FAN assertions (`a_017`–`a_020`, unlinked Turnbow men
-  with no tree person). Each would trip an earlier routing row (record-extraction
+  with no tree person). Each would trip an earlier routing row (extraction
   or person-evidence) before the decision under test. What cited them went too:
   `ps_001`'s footnotes 9 and 10 (the 1850 Turnbow households, from `log_010`) and
   the sentences that cited them, tree sources `S10` and `S11` (the same two
