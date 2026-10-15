@@ -7612,7 +7612,11 @@ describe("research_append — detected core-identifier contradiction", () => {
 
   /** The gate called directly with both coordinates in hand, so only the
    *  country reading decides. */
-  const direct = (record: Record<string, unknown>, treeBirth: Record<string, unknown>, coords: [string, number, number][]) =>
+  const direct = (
+    record: Record<string, unknown>,
+    treeBirth: Record<string, unknown>,
+    coords: [string, number, number, string?][],
+  ) =>
     coreIdentifierContradictionInvariants(
       { assertion_id: "a_050", person_id: "I1", confidence: "confident" },
       { assertions: [{
@@ -7622,8 +7626,49 @@ describe("research_append — detected core-identifier contradiction", () => {
       { persons: [{ id: "I1", facts: [{ id: "F1", type: "Birth", ...treeBirth }] }] },
       [],
       undefined,
-      new Map(coords.map(([n, latitude, longitude]) => [n, { latitude, longitude, type: "City" }])),
+      new Map(coords.map(([n, latitude, longitude, type]) => [n, { latitude, longitude, type: type ?? "City" }])),
     );
+
+  // Two cities 78 mi apart: inside the 1850-1949 band, outside the pre-1850 one.
+  const kyoto = "Kyoto, Kyoto, Japan", nagoya = "Nagoya, Aichi, Japan";
+  const kyotoNagoya: [string, number, number, string?][] = [[kyoto, 35.0116, 135.7681], [nagoya, 35.1815, 136.9066]];
+
+  // Every year on either side spans the era: a tree birth of 1848 against a
+  // record dated 1851 touches 1850-1949, so the wider band applies.
+  it("takes the era band over the years of both sides", () => {
+    expect(direct({ place: kyoto, standard_place: kyoto }, { date: "1848", place: nagoya, standard_place: nagoya },
+      kyotoNagoya)).toHaveLength(1);
+    expect(direct({ place: kyoto, standard_place: kyoto, date: "1851" },
+      { date: "1848", place: nagoya, standard_place: nagoya }, kyotoNagoya)).toEqual([]);
+  });
+
+  // A prefecture, and a type the API qualifies ("State (Top level)"), are whole
+  // regions: their coordinates are a centre, so the pair caps.
+  it("reads region types the way Places writes them", () => {
+    for (const type of ["Prefecture", "State (Top level)", "Principality or Emirate"]) {
+      expect(direct({ place: kyoto, standard_place: kyoto, date: "1880" },
+        { date: "1880", place: nagoya, standard_place: nagoya },
+        [[kyoto, 35.0116, 135.7681, type], [nagoya, 35.1815, 136.9066]])).toHaveLength(1);
+    }
+  });
+
+  // Ireland under a trailing United Kingdom is still Ireland, not England's
+  // country: 135 mi in 1880 is inside the band, and the countries differ.
+  it("reads a country named before a trailing United Kingdom", () => {
+    const dublin = "Dublin, Ireland, United Kingdom", liverpool = "Liverpool, Lancashire, England";
+    expect(direct({ place: dublin, standard_place: "Dublin, Dublin, Ireland" },
+      { date: "1880", place: liverpool, standard_place: liverpool },
+      [["Dublin, Dublin, Ireland", 53.3498, -6.2603], [liverpool, 53.4084, -2.9916]])).toHaveLength(1);
+  });
+
+  // "CA" is Canada as often as California: the standard place names the
+  // country, so Windsor, Ontario against Detroit caps.
+  it("does not read a trailing CA as California", () => {
+    const windsor = "Windsor, Essex, Ontario, Canada", detroit = "Detroit, Wayne, Michigan, United States";
+    expect(direct({ place: "Windsor, Essex, Ontario, CA", standard_place: windsor },
+      { date: "1880", place: "Detroit, Wayne, Michigan", standard_place: detroit },
+      [[windsor, 42.3149, -83.0364], [detroit, 42.3314, -83.0458]])).toHaveLength(1);
+  });
 
   // Croatia is not in canonicalCountry's table, but a standard place always
   // ends at its country: 185 mi apart in 1880, inside the band, and two

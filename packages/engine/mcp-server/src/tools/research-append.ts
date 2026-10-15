@@ -52,6 +52,7 @@ import {
   canonicalCountry,
   standardPlaceToCoords,
   UK_CONSTITUENTS,
+  placeTypeKey,
   resolveStandardPlace,
   countryConsistency,
   isNonPlacePhrase,
@@ -801,11 +802,11 @@ const BIRTH_DATE_FACT_TYPES: ReadonlySet<string> = new Set([
  *  would read every `~1845` as a contradiction. */
 const MAX_BIRTH_YEAR_GAP = 5;
 
+const YEAR_PATTERN = /\b(1[0-9]{3}|20[0-9]{2})\b/;
+
 /** First 4-digit year in a date string, tolerating `~1845`, `11Jan1758`,
  *  `1858-03-12` and `about 1832`. Null when none is present -- an unparseable
  *  date states nothing to compare, which must not read as a contradiction. */
-const YEAR_PATTERN = /\b(1[0-9]{3}|20[0-9]{2})\b/;
-
 function yearOf(value: unknown): number | null {
   const m = YEAR_PATTERN.exec(String(value ?? ""));
   return m ? Number(m[1]) : null;
@@ -831,7 +832,8 @@ function yearOf(value: unknown): number | null {
  *  the era (lead ruling 2026-10-13, issue #3390): a research question's premise
  *  "near Nueva Italia, Michoacán" and a record's "La Unión, Guerrero", 85 mi
  *  apart in 1910, are not a contradiction. When the distance cannot be computed
- *  (no standard_place on a side, no coordinates, no year) the cap fires.
+ *  (no standard_place on a side, no coordinates, a side that is a whole region,
+ *  no year) the cap fires.
  *
  *  Scope is deliberately narrow: only the record's own assertions, only against
  *  the tree person's BIRTH fact, and only where both sides actually state a
@@ -991,39 +993,40 @@ function ownPartyLinkedTo(
  *  below is synchronous. A name that is absent or null was not resolved. */
 export type BirthPlaceCoords = ReadonlyMap<string, PlaceCoords | null>;
 
-/** Places types that name a whole region rather than somewhere a person is
- *  born. Their coordinates are the region's centre, so a distance from one is
- *  not computable and the pair caps. A county, department or municipality still
- *  gets a distance: the cruz-corona-ancestry record is a Mexican municipality. */
+/** Places types (as `placeTypeKey` reads them) that name a whole region rather
+ *  than somewhere a person is born. Their coordinates are the region's centre,
+ *  so a distance from one is not computable and the pair caps. A county,
+ *  department or municipality still gets a distance: the cruz-corona-ancestry
+ *  record is a Mexican municipality. */
 const REGION_PLACE_TYPES: ReadonlySet<string> = new Set([
-  "Continent", "Country", "Dependency or Protectorate", "State", "Province", "Territory", "Region",
+  "continent", "country", "dependency or protectorate", "colony", "state", "province", "territory",
+  "region", "prefecture", "governorate", "principality or emirate",
 ]);
 
 /** The write path's whole budget for those lookups. Over it, a pair has no
  *  coordinates and the cap fires. */
 const BIRTH_PLACE_COORDS_BUDGET_MS = 10_000;
 
-/** The country a free-text birth place names: a US state or state code as its
- *  last segment, else the last segment, read from the end, that
+/** The country a birth place names: the last segment, read from the end, that
  *  `canonicalCountry` recognizes. A trailing United Kingdom gives way to a
- *  constituent named before it, so "Bath, Somerset, England" and "Bath,
- *  Somerset, England, United Kingdom" both read England, and England against
- *  Scotland still differs. Null when no segment is recognized. Not
+ *  country named before it, so "Bath, Somerset, England" and "Bath, Somerset,
+ *  England, United Kingdom" both read England, while England against Scotland,
+ *  or against "Dublin, Ireland, United Kingdom", still differs. Null when no
+ *  segment is recognized. A US state is not read as the United States: "CA" is
+ *  also Canada, and a US place's standard_place names its country anyway. Not
  *  `placeCountry`: that groups countries whose borders moved, which suits a
  *  residence move and would let a census's "born Ireland" against "born
  *  England" through here. */
 function birthCountry(place: unknown): string | null {
   if (typeof place !== "string") return null;
   const segments = placeSegments(place);
-  const last = segments[segments.length - 1]?.toLowerCase();
-  if (last !== undefined && (US_STATES.has(last) || US_STATE_CODES.has(last))) return "united states";
   for (let i = segments.length - 1; i >= 0; i--) {
     const country = canonicalCountry(segments[i]);
     if (!country) continue;
     if (country === "united kingdom") {
       for (let k = i - 1; k >= 0; k--) {
         const inner = canonicalCountry(segments[k]);
-        if (inner && UK_CONSTITUENTS.has(inner)) return inner;
+        if (inner && inner !== "united kingdom") return inner;
       }
     }
     return country;
@@ -1077,8 +1080,8 @@ function birthPlacesFarApart(assertion: any, birth: any, coords?: BirthPlaceCoor
   const pa = coords?.get(sa);
   const pb = coords?.get(sb);
   if (!pa || !pb) return true;
-  if (REGION_PLACE_TYPES.has(pa.type ?? "") || REGION_PLACE_TYPES.has(pb.type ?? "")) return true;
-  const years = yearsIn(birth.date, birth.standard_date, assertion.date, assertion.standard_date);
+  if (REGION_PLACE_TYPES.has(placeTypeKey(pa.type)) || REGION_PLACE_TYPES.has(placeTypeKey(pb.type))) return true;
+  const years = yearsIn(birth.date, birth.standard_date, assertion.date);
   if (years.length === 0) return true;
   const { miles } = haversineDistance(pa.latitude, pa.longitude, pb.latitude, pb.longitude);
   return miles > birthThresholdMiles(Math.min(...years), Math.max(...years));

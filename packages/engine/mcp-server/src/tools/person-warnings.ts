@@ -60,9 +60,6 @@ import {
   type PlaceCoords,
 } from "../utils/place-resolver.js";
 import { birthThresholdMiles, lookupPlaceCoords, type PlaceCoordsResolver } from "../utils/place-coords.js";
-
-// Re-exported: tests and callers reach these through this module, their first home.
-export { lookupPlaceCoords, type PlaceCoordsResolver };
 import { earliestIsUnbounded, earliestYear, latestIsUnbounded, latestYear } from "../utils/date-helpers.js";
 import { haversineDistance } from "./distance.js";
 import { preferredName } from "../utils/name-helpers.js";

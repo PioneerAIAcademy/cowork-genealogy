@@ -670,16 +670,21 @@ function firstWord(key: string): string {
 
 const ADMIN_PREFIX_RE = /^(?:borough|town|city|township|village|parish|county|district|municipality|hundred) of /;
 
-/** A FamilySearch place type names a jurisdiction. The live API qualifies some
- *  types ("County (Top level)"), so the bracketed qualifier is dropped. */
+/** A FamilySearch place type as a lookup key: lower-cased, with the bracketed
+ *  qualifier the live API adds to some types ("County (Top level)") dropped. */
+export function placeTypeKey(type: string | undefined): string {
+  return normalizeKey((type ?? "").replace(/\s*\(.*\)\s*$/, ""));
+}
+
+/** A FamilySearch place type names a jurisdiction. */
 function isJurisdiction(type: string | undefined): boolean {
-  return JURISDICTION_TYPES.has(normalizeKey((type ?? "").replace(/\s*\(.*\)\s*$/, "")));
+  return JURISDICTION_TYPES.has(placeTypeKey(type));
 }
 
 /** A place type at the top of the hierarchy: a name that is one of these is
  *  already as specific as a bare name can be. */
 function isTopLevel(type: string | undefined): boolean {
-  return TOP_LEVEL_TYPES.has(normalizeKey((type ?? "").replace(/\s*\(.*\)\s*$/, "")));
+  return TOP_LEVEL_TYPES.has(placeTypeKey(type));
 }
 
 const TOP_LEVEL_TYPES = new Set(["continent", "country", "state", "province"]);
