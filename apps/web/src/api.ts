@@ -63,7 +63,7 @@ export const api = {
   listSessions: () => req<SessionSummary[]>('/api/sessions'),
   createSession: (body: { title?: string; model?: string; sample?: boolean }) =>
     req<SessionSummary>('/api/sessions', { method: 'POST', body: JSON.stringify(body) }),
-  // The prototype backend only: a new session on an expired (retired) session's project.
+  // The prototype backend only: a new session on a retired session's project.
   continueSession: (id: string) =>
     req<SessionSummary>(`/api/sessions/${id}/continue`, { method: 'POST' }),
   resumeSession: (id: string) =>

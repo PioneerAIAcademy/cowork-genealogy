@@ -40,12 +40,14 @@ describe('SessionList delete', () => {
     expect(screen.getByText('Research')).toBeTruthy()
   })
 
-  it('continues an expired session on its project in a new session, and opens it', async () => {
-    vi.mocked(api.listSessions).mockResolvedValue([{ ...SESSION, status: 'retired' }])
+  it('continues a retired session on its project in a new session, and opens it', async () => {
+    vi.mocked(api.listSessions).mockResolvedValue([{ ...SESSION, status: 'retired', continuable: false }])
     const cont = vi.spyOn(api, 'continueSession').mockResolvedValue({ ...SESSION, id: 'sess_2', status: 'active' })
     const onOpen = vi.fn()
     render(<SessionList onOpen={onOpen} />)
     fireEvent.click(await screen.findByText('Continue in a new session'))
+    expect(screen.getByText('ended')).toBeTruthy()
+    expect(screen.queryByText('expired')).toBeNull()
     await waitFor(() => expect(onOpen).toHaveBeenCalledWith('sess_2'))
     expect(cont).toHaveBeenCalledWith('sess_1')
     expect(onOpen).toHaveBeenCalledTimes(1)

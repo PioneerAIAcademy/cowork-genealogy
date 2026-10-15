@@ -403,12 +403,13 @@ def queue_body(turn_id: str, session: SessionRow, text: str, enqueued_at: str, n
 
 
 def session_out(row: SessionRow) -> dict[str, Any]:
-    """Every required key of api.ts's SessionSummary (`continuable` is optional and omitted, which reads as not ended); SessionList dereferences model/last_active."""
+    """Every key of api.ts's SessionSummary; SessionList dereferences model/last_active."""
     return {
         "id": row.session_id,
         "title": row.title,
         "model": row.model,
         "status": "retired" if row.retired_at is not None else "active",
+        "continuable": row.retired_at is None,
         "sandbox_id": "",
         "agent_session_id": None,
         "created": row.created_at.isoformat(),

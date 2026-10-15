@@ -60,10 +60,9 @@ from web.app import (  # noqa: E402
 T0 = datetime(2026, 9, 14, 12, 0, tzinfo=timezone.utc)
 
 # api.ts SessionSummary -- every key the SPA types (SessionList dereferences model and last_active).
-# `continuable` is left out on purpose: it is optional in api.ts, and the prototype omits it
-# (absent means not ended).
 SESSION_SUMMARY_KEYS = {
     "id", "title", "model", "status", "sandbox_id", "agent_session_id", "created", "updated", "last_active",
+    "continuable",
 }
 
 
@@ -1494,11 +1493,12 @@ async def test_a_retired_session_reads_as_retired_and_continues_on_its_project()
     store, queue = FakeStore(), FakeQueue()
     row = retire(store, store.seed_session().session_id)
     async with make_client(store, queue) as c:
-        assert (await c.get(f"/api/sessions/{row.session_id}")).json()["status"] == "retired"
+        old = (await c.get(f"/api/sessions/{row.session_id}")).json()
+        assert old["status"] == "retired" and old["continuable"] is False
         resp = await c.post(f"/api/sessions/{row.session_id}/continue")
         assert resp.status_code == 200, resp.text
         new = resp.json()
-        assert new["id"] != row.session_id and new["status"] == "active"
+        assert new["id"] != row.session_id and new["status"] == "active" and new["continuable"] is True
     assert store.sessions[new["id"]].project_id == row.project_id
 
 
