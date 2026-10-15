@@ -259,7 +259,7 @@ def test_run_skill_collects_builtin_calls_through_the_real_hook(tmp_path, monkey
             ],
         )
 
-    monkeypatch.setattr(sr, "query", fake_query)
+    monkeypatch.setattr(sr, "open_query", fake_query)
     result = asyncio.run(
         sr.run_skill(
             user_message="go",
@@ -337,7 +337,7 @@ def test_the_result_messages_ledger_reaches_the_key_skill_tokens_reads(
             ],
         )
 
-    monkeypatch.setattr(sr, "query", fake_query)
+    monkeypatch.setattr(sr, "open_query", fake_query)
     result = asyncio.run(
         sr.run_skill(
             user_message="go",
@@ -423,7 +423,7 @@ def _run_until_timeout(monkeypatch, tmp_path, *, turns):
             yield _fake_assistant_message(f"turn {i}")
         await asyncio.sleep(3600)  # hang until the wall clock fires
 
-    monkeypatch.setattr(sr, "query", fake_query)
+    monkeypatch.setattr(sr, "open_query", fake_query)
     monkeypatch.setattr(
         sr, "create_mock_server", lambda *a, **kw: (None, [], {})
     )
@@ -507,7 +507,7 @@ def _drive_hook(tmp_path, monkeypatch, hook_inputs, max_tool_calls=None, **run_k
             returns=returns,
         )
 
-    monkeypatch.setattr(sr, "query", fake_query)
+    monkeypatch.setattr(sr, "open_query", fake_query)
     kwargs = dict(
         user_message="go",
         workspace=tmp_path,
@@ -731,7 +731,7 @@ async def _run_short_circuit_with_prefix(monkeypatch, tmp_path, prefix):
         hook = kw["options"].hooks["PreToolUse"][0].hooks[0]
         return _HookDrivingStream(hook, hook_inputs, [*prefix, handoff_message])
 
-    monkeypatch.setattr(sr, "query", fake_query)
+    monkeypatch.setattr(sr, "open_query", fake_query)
     return await sr.run_skill(
         user_message="go",
         workspace=tmp_path,
@@ -806,7 +806,7 @@ async def _run_short_circuit(monkeypatch, tmp_path, messages):
         hook = kw["options"].hooks["PreToolUse"][0].hooks[0]
         return _HookDrivingStream(hook, hook_inputs, [handoff_message, *messages])
 
-    monkeypatch.setattr(sr, "query", fake_query)
+    monkeypatch.setattr(sr, "open_query", fake_query)
     return await sr.run_skill(
         user_message="go",
         workspace=tmp_path,
@@ -881,7 +881,7 @@ def test_a_message_after_the_denied_handoff_is_not_counted_when_the_hook_gets_no
             hook, hook_inputs, [handoff_message, reaction], hook_tool_use_id=None
         )
 
-    monkeypatch.setattr(sr, "query", fake_query)
+    monkeypatch.setattr(sr, "open_query", fake_query)
     result = asyncio.run(
         sr.run_skill(
             user_message="go",
@@ -923,7 +923,7 @@ def test_a_rate_limit_event_before_the_handoff_does_not_drop_it_when_the_hook_ge
             hook, hook_inputs, [early, handoff_message], hook_tool_use_id=None
         )
 
-    monkeypatch.setattr(sr, "query", fake_query)
+    monkeypatch.setattr(sr, "open_query", fake_query)
     result = asyncio.run(
         sr.run_skill(
             user_message="go",
@@ -974,7 +974,7 @@ def test_a_turn_boundary_separates_two_assistant_messages(tmp_path, monkeypatch)
             session_id="S1",
         )
 
-    monkeypatch.setattr(sr, "query", fake_query)
+    monkeypatch.setattr(sr, "open_query", fake_query)
     result = asyncio.run(
         sr.run_skill(
             user_message="go",
@@ -1009,7 +1009,7 @@ def test_two_text_blocks_in_one_turn_are_not_split(tmp_path, monkeypatch):
         yield ResultMessage(subtype="result", duration_ms=1, duration_api_ms=1,
                             is_error=False, num_turns=1, session_id="S1")
 
-    monkeypatch.setattr(sr, "query", fake_query)
+    monkeypatch.setattr(sr, "open_query", fake_query)
     result = asyncio.run(sr.run_skill(
         user_message="go", workspace=tmp_path, fixture_names=[],
         fixtures_dir=tmp_path,
@@ -1060,7 +1060,7 @@ def test_no_result_message_is_true_only_on_the_short_circuit(tmp_path, monkeypat
             ],
         )
 
-    monkeypatch.setattr(sr, "query", fake_query_normal)
+    monkeypatch.setattr(sr, "open_query", fake_query_normal)
     normal_result = asyncio.run(
         sr.run_skill(
             user_message="go",
@@ -1093,7 +1093,7 @@ def _run_with_messages(monkeypatch, tmp_path, messages):
         for m in messages:
             yield m
 
-    monkeypatch.setattr(sr, "query", fake_query)
+    monkeypatch.setattr(sr, "open_query", fake_query)
     monkeypatch.setattr(sr, "create_mock_server", lambda *a, **kw: (None, [], {}))
 
     return asyncio.run(
@@ -1386,7 +1386,7 @@ def test_a_quota_during_a_routing_short_circuit_survives_the_clean_clear(
             hook, hook_inputs, [rate_limit_event, handoff_message]
         )
 
-    monkeypatch.setattr(sr, "query", fake_query)
+    monkeypatch.setattr(sr, "open_query", fake_query)
     result = asyncio.run(
         sr.run_skill(
             user_message="go",
@@ -1464,7 +1464,7 @@ async def _run_short_circuit_hook_after_message(
             hook, hook_inputs, [handoff_message, *messages]
         )
 
-    monkeypatch.setattr(sr, "query", fake_query)
+    monkeypatch.setattr(sr, "open_query", fake_query)
     return await sr.run_skill(
         user_message="go",
         workspace=tmp_path,
@@ -1616,7 +1616,7 @@ def test_a_real_over_cap_turn_still_aborts(tmp_path, monkeypatch):
         hook = kw["options"].hooks["PreToolUse"][0].hooks[0]
         return _MessageFirstHookStream(hook, hook_inputs, [handoff_message])
 
-    monkeypatch.setattr(sr, "query", fake_query)
+    monkeypatch.setattr(sr, "open_query", fake_query)
     result = asyncio.run(
         sr.run_skill(
             user_message="go",
@@ -1758,7 +1758,7 @@ async def _run_stop_at_stub(
             return _MessageFirstHookStream(hook, hook_inputs, messages)
         return _HookDrivingStream(hook, hook_inputs, messages, returns=returns)
 
-    monkeypatch.setattr(sr, "query", fake_query)
+    monkeypatch.setattr(sr, "open_query", fake_query)
     return await sr.run_skill(
         user_message="go",
         workspace=tmp_path,
@@ -2088,7 +2088,7 @@ async def _run_interleaved(monkeypatch, tmp_path, events, returns, **run_kwargs)
         hook = kw["options"].hooks["PreToolUse"][0].hooks[0]
         return _InterleavedStream(hook, events, returns)
 
-    monkeypatch.setattr(sr, "query", fake_query)
+    monkeypatch.setattr(sr, "open_query", fake_query)
     return await sr.run_skill(
         user_message="go",
         workspace=tmp_path,
@@ -2438,7 +2438,7 @@ async def _run_short_circuit_with_cap(monkeypatch, tmp_path):
         hook = kw["options"].hooks["PreToolUse"][0].hooks[0]
         return _HookDrivingStream(hook, hook_inputs, [handoff_message])
 
-    monkeypatch.setattr(sr, "query", fake_query)
+    monkeypatch.setattr(sr, "open_query", fake_query)
     return await sr.run_skill(
         user_message="go",
         workspace=tmp_path,
@@ -2640,7 +2640,7 @@ def _run_with_init(monkeypatch, tmp_path, user_message, init_data, stage="resear
             result="done",
         )
 
-    monkeypatch.setattr(sr, "query", fake_query)
+    monkeypatch.setattr(sr, "open_query", fake_query)
     monkeypatch.setattr(sr, "create_mock_server", lambda *a, **kw: (None, [], {}))
     return asyncio.run(
         sr.run_skill(
@@ -2708,7 +2708,7 @@ def test_a_non_init_system_message_is_ignored(monkeypatch, tmp_path):
             num_turns=1, session_id="s", total_cost_usd=0.0, usage={}, result="d",
         )
 
-    monkeypatch.setattr(sr, "query", fake_query)
+    monkeypatch.setattr(sr, "open_query", fake_query)
     monkeypatch.setattr(sr, "create_mock_server", lambda *a, **kw: (None, [], {}))
     r = asyncio.run(
         sr.run_skill(
@@ -2757,7 +2757,7 @@ def test_slash_entry_is_first_and_each_skill_call_recorded_once(monkeypatch, tmp
             ],
         )
 
-    monkeypatch.setattr(sr, "query", fake_query)
+    monkeypatch.setattr(sr, "open_query", fake_query)
     monkeypatch.setattr(sr, "create_mock_server", lambda *a, **kw: (None, [], {}))
     r = asyncio.run(
         sr.run_skill(
