@@ -31,7 +31,6 @@ Run by .github/workflows/check-runlogs.yml. Self-contained: stdlib only
 
 from __future__ import annotations
 
-import ast
 
 import json
 import sys
@@ -50,6 +49,10 @@ if str(HERE) not in sys.path:
     sys.path.insert(0, str(HERE))
 
 from gh_annotations import gh_warning, write_step_summary  # noqa: E402
+
+if str(HARNESS_DIR) not in sys.path:
+    sys.path.insert(0, str(HARNESS_DIR))
+from harness.instrument import LIVE_TOOLS  # noqa: E402
 
 SKILLS_DIR = REPO_ROOT / "packages" / "engine" / "plugin" / "skills"
 TESTS_DIR = REPO_ROOT / "eval" / "tests" / "unit"
@@ -157,39 +160,12 @@ def fixture_tool_refs(skill: str) -> dict[str, list[str]]:
 #: was exempt and `validate_research_schema` -- equally live -- was warned about
 #: for as long as both have existed. Derived rather than copied a seventh time.
 #:
-#: Parsed with `ast`, not imported: this script is stdlib-only because the
-#: workflow installs no dependencies, and importing `harness.mock_mcp` would
-#: pull in its own. Parsed rather than grepped for the reason the encoding lint
-#: is: a grep over a multi-line set literal is wrong in both directions.
+#: Imported from `harness.instrument`, which is stdlib-only for the same reason
+#: this script is: the workflow installs no dependencies. (It used to be parsed
+#: out of `mock_mcp.py`, which cannot be imported here.)
 def live_tools() -> set[str]:
-    """`LIVE_TOOLS` as mock_mcp.py declares it, or an empty set if unreadable.
-
-    Empty on failure is deliberate: this is a warn-only lint, and a parse error
-    should surface the underlying gaps rather than silently exempt everything.
-    """
-    source = REPO_ROOT / "eval/harness/harness/mock_mcp.py"
-    try:
-        tree = ast.parse(source.read_text(encoding="utf-8"))
-    except (OSError, SyntaxError):
-        return set()
-    for node in ast.walk(tree):
-        target = None
-        if isinstance(node, ast.AnnAssign) and isinstance(node.target, ast.Name):
-            target = node.target.id
-        elif isinstance(node, ast.Assign) and len(node.targets) == 1 and isinstance(node.targets[0], ast.Name):
-            target = node.targets[0].id
-        if target != "LIVE_TOOLS" or node.value is None:
-            continue
-        try:
-            value = ast.literal_eval(node.value)
-        except (ValueError, TypeError):
-            # TypeError too: an unhashable element in a set literal raises it, and this
-            # lint is documented as empty-on-failure -- letting one escape would crash a
-            # warn-only check instead of surfacing the gaps (clack391, #3372).
-            return set()
-        if isinstance(value, (set, frozenset, list, tuple)):
-            return {v for v in value if isinstance(v, str)}
-    return set()
+    """`LIVE_TOOLS` as the harness declares it."""
+    return set(LIVE_TOOLS)
 
 
 def main() -> int:
@@ -266,7 +242,7 @@ def main() -> int:
     # the larger of the two sets is the invisible one.
     if LIVE:
         print(
-            f"\nAlso exempt, derived from mock_mcp.LIVE_TOOLS ({len(LIVE)}): "
+            f"\nAlso exempt, derived from LIVE_TOOLS ({len(LIVE)}): "
             "registered unconditionally and answered by the real compiled tool, so a "
             "fixture is not how they are covered."
         )

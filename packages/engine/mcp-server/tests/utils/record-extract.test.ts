@@ -192,6 +192,44 @@ describe("a marriage record", () => {
     expect(groomName.informant_proximity).toBe("self");
     expect(groomName.information_quality).toBe("primary");
   });
+
+  // Lead ruling 2026-10-14 (issue #3410): nobody witnessed their own birth or
+  // parentage, so these are the party's word at self/secondary.
+  const find = (role: string, factType: string, value?: string) =>
+    out.assertions.find(
+      (a) => a.record_role === role && a.fact_type === factType && (value === undefined || a.value === value),
+    )!;
+  const at = (role: string, factType: string, value?: string) => {
+    const a = find(role, factType, value);
+    return `${a.informant_proximity}/${a.information_quality}`;
+  };
+
+  it("classifies every fact of a parent role at self/secondary", () => {
+    expect(at("father_of_groom", "name")).toBe("self/secondary");
+    expect(at("mother_of_bride", "sex")).toBe("self/secondary");
+    expect(at("father_of_groom", "relationship", "spouse of Ellen Traxler")).toBe("self/secondary");
+  });
+
+  it("classifies each party's own birth date, birthplace and age at self/secondary", () => {
+    expect(at("groom", "birth", "1889")).toBe("self/secondary");
+    expect(at("groom", "birth", ", Defiance, OH")).toBe("self/secondary");
+    expect(at("groom", "age")).toBe("self/secondary");
+    expect(at("bride", "birth")).toBe("self/secondary");
+  });
+
+  it("classifies each party's \"child of\" relationship at self/secondary, and \"spouse of\" at primary", () => {
+    expect(at("groom", "relationship", "child of Frank Miller")).toBe("self/secondary");
+    expect(at("bride", "relationship", "child of S.d. Jackson")).toBe("self/secondary");
+    expect(at("groom", "relationship", "spouse of Olive E. Durfey")).toBe("self/primary");
+  });
+
+  it("keeps each party's sex, marital status and the marriage itself at self/primary", () => {
+    for (const role of ["groom", "bride"]) {
+      expect(at(role, "sex")).toBe("self/primary");
+      expect(at(role, "marital_status")).toBe("self/primary");
+      expect(at(role, "marriage")).toBe("self/primary");
+    }
+  });
 });
 
 describe("a death record", () => {
