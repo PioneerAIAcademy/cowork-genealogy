@@ -6,11 +6,6 @@
     "type": "negative",
     "description": "The user asks where the project stands. Per the lead's 2026-10-06 ruling, the main thread answers from project_context in one plain-language paragraph — a status request is NOT routed to a sub-skill or an agent. The main thread must not read research.json or tree.gedcomx.json directly, must not spawn an agent, must not call research_append, and the answer must contain no project identifiers (q_*, pli_*, pl_*, log_*, pers_*, a_*, c_*, h_*, src_*, pe_*, ps_*, tl_*, etc.).",
     "tags": [
-      "status-question",
-      "no-direct-file-read",
-      "no-agent-spawn",
-      "no-append",
-      "no-identifiers-in-response",
       "negative-status-question"
     ]
   },

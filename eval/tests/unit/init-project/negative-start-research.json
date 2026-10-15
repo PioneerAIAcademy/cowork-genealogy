@@ -2,9 +2,9 @@
   "test": {
     "id": "ut_init_project_009",
     "skill": "init-project",
-    "name": "Start research on an existing project — refuse, hand back to research, call no tool (direct-agent arm)",
+    "name": "Start research on an existing project — refuse, hand back to question-selection, call no tool (direct-agent arm)",
     "type": "negative",
-    "description": "The agent's own guard clause, reached by direct spawn. A research.json already exists (mid-research-flynn) and the delegation is init-flavored ('Start research'). The agent must call no MCP tool, write nothing, and return the one caller-facing line 'Hand-back: research — <clause>'. Kept when init-project became an agent rather than deleted with the description-routing negatives: on the direct arm there is no router, so this grades the refuse-if-exists gate itself, the suite's only coverage of it. A DIRECT negative graded on its invariant (unit-test-spec.md 5.2.1): test_hand_back_names_its_owner and test_existing_project_is_not_reinitialized.",
+    "description": "The agent's own guard clause, reached by direct spawn. A research.json already exists (mid-research-flynn) and the delegation is init-flavored ('Start research'). The agent must call no MCP tool, write nothing, and return the one caller-facing line 'Hand-back: question-selection — <clause>'. Kept when init-project became an agent rather than deleted with the description-routing negatives: on the direct arm there is no router, so this grades the refuse-if-exists gate itself, the suite's only coverage of it. A DIRECT negative graded on its invariant (unit-test-spec.md 5.2.1): test_hand_back_names_its_owner and test_existing_project_is_not_reinitialized.",
     "tags": [
       "refuse-if-exists",
       "hand-back",
@@ -17,13 +17,13 @@
   },
   "negative": {
     "correct_skill": [
-      "research"
+      "question-selection"
     ],
     "grade_on_invariant": true,
-    "explanation": "A research.json already exists, so init-project must not run: no person_read, person_search, place_search or project_create call, both project files unchanged, and a Hand-back line naming research, which answers where the project stands and picks the next step. Graded on that invariant; on the direct arm no router runs, so correct_skill names the hand-back owner the validator reads, not a skill the harness waits to see invoked."
+    "explanation": "A research.json already exists, so init-project must not run: no person_read, person_search, place_search or project_create call, both project files unchanged, and a Hand-back line naming question-selection, which picks the next research question (where the project stands is answered by the main thread from project_context). The owner is question-selection and not research because the agent's fixed researcher paragraph says 'a research project', so a `research` owner would be found in every reply and the hand-back check could never fail. Graded on that invariant; on the direct arm no router runs, so correct_skill names the hand-back owner the validator reads, not a skill the harness waits to see invoked."
   },
   "judge_context": [
-    "Should decline to initialize (research.json already exists) and return a caller-facing 'Hand-back: research' line, not re-run the init workflow",
+    "Should decline to initialize (research.json already exists) and return a caller-facing 'Hand-back: question-selection' line, not re-run the init workflow",
     "Should make no MCP tool calls — no person_read, no person_search, no place_search, no project_create. One built-in Read of research.json to detect the project is the guard's own check, not init work",
     "The researcher paragraph after the final '---' should say in plain language that a project already exists and nothing new was started; it must not name files, tools or fields"
   ]

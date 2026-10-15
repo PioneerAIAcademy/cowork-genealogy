@@ -18,9 +18,9 @@ import { fileURLToPath } from "node:url";
 // that agent's next body edit rather than flipping four run logs in one PR.
 // An entry here is checked in BOTH directions: an agent on the list that has
 // gained the heading fails ("stale entry — remove it"), and an agent off the
-// list that lacks it fails. One agent is excluded outright rather than
-// pending: `image-reader`, which by spec returns a transcription and nothing
-// else.
+// list that lacks it fails. Three agents are excluded outright rather than
+// pending, each with its reason in `EXCLUDED` below: `image-reader`,
+// `record-structurer` and `source-evaluation`.
 //
 // NOTE for anyone converting an agent: exclusion silences this lint in both
 // directions, so a green run says nothing about whether the excluded body is

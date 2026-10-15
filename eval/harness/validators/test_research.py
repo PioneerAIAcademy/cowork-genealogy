@@ -14,6 +14,7 @@ what is / is not covered.
 
 from __future__ import annotations
 
+import re
 import pytest
 
 from validators_lib import bare_tool_name
@@ -485,19 +486,19 @@ def test_every_bounded_deliverable_is_handed_off(skills_invoked, builtin_tool_ca
 # `negative-status-question` tag (issue #3112)
 # ---------------------------------------------------------------------------
 
-import re  # noqa: E402  — grouped with the tag-gated validators below
-
-
-# Project id prefixes used in `mid-research-flynn` (verified by
-# `grep -oE '"[a-z]+_[0-9]+"' eval/fixtures/scenarios/mid-research-flynn/research.json`).
-# If a future fixture adds a new prefix, extend this list.
+# Every research.json id prefix, as `ID_PREFIXES` in
+# packages/engine/mcp-server/src/validation/validator.ts declares it (validators
+# cannot import the TypeScript; tests/unit/test_status_question_validator.py pins
+# the two in step). Plus the tree ids `project_context` hands over (`I1`, `S3`...),
+# the kind every measured miss copied from the projection.
 _PROJECT_ID_PREFIXES = (
-    "a_", "c_", "h_", "log_", "pli_", "pl_", "pe_", "ps_",
-    "q_", "src_", "tl_", "rp_",
+    "rp_", "kh_", "q_", "pl_", "pli_", "log_", "src_", "a_", "pe_", "c_", "h_",
+    "t_", "ps_", "ev_", "loc_",
 )
 _PROJECT_ID_RE = re.compile(
-    r"\b(?:" + "|".join(re.escape(p) for p in _PROJECT_ID_PREFIXES) + r")\d+\b"
+    r"\b(?:(?:" + "|".join(re.escape(p) for p in _PROJECT_ID_PREFIXES) + r")\d+|[FINRS]\d+)\b"
 )
+_PROJECT_FILES = ("research.json", "tree.gedcomx.json")
 
 
 def test_status_question_answered_from_project_context_only(
@@ -507,67 +508,57 @@ def test_status_question_answered_from_project_context_only(
     answered by the main thread in one plain paragraph from `project_context`,
     per the lead's 2026-10-06 ruling (issue #3112).
 
-    Deterministic assertions — none depend on judge wording:
+    Deterministic assertions, each a hard assert:
 
-      1. `project_context` was called. (Advisory: ALWAYS_LOAD can mask this,
-         but a run with zero `project_context` calls is still a defect because
-         the description is what instructs the main thread to answer from it.)
-      2. No `Read` on `research.json` or `tree.gedcomx.json`. The ruling
-         explicitly forbids reading the raw project files; `project_context` is
-         the compact projection.
-      3. No `Agent` spawn in `builtin_tool_calls`. A status answer is a
-         main-thread paragraph; routing to any agent (research-exhaustiveness,
-         question-selection, etc.) is the behaviour the ruling retired.
-      4. No `research_append` call. A status question writes nothing.
-      5. No project identifier in the response text — no `<prefix>_<digits>`
-         for any prefix used in the project. The description says "No
-         identifiers, file names, tool names or field names."
+      1. `project_context` was called (a deferred schema loaded through
+         ToolSearch still records the call under its qualified name).
+      2. No `Read` or `Grep` of `research.json` or `tree.gedcomx.json`: the
+         projection is the read path.
+      3. No subagent spawn (`Agent` or `Task`): the status answer is the main
+         thread's own paragraph.
+      4. No `research_append` call: a status question writes nothing.
+      5. No identifier in the reply: no research.json id (`<prefix>_<digits>`
+         for any prefix the schema defines) and no tree id (`I1`, `S3`).
 
-    This is the acceptance proof for issue #3112's description-clause landing.
-    If the clause is removed from `project-context.ts`, assertions 2-4 may still
-    hold on a given run (ALWAYS_LOAD means `project_context` is in context
-    anyway), but assertion 5 fires on any id-bearing paragraph.
+    `project_context` is ALWAYS_LOAD, so assertion 1 can hold even with the
+    description clause removed; assertion 5 is the one that tracks the clause.
     """
+    from harness.skill_runner import spawned_agents
+
     if "negative-status-question" not in test.get("tags", []):
         pytest.skip("not a negative-status-question scenario")
 
-    # 1. project_context was called.
     pc_calls = [c for c in (tool_calls or []) if bare_tool_name(str(c.get("tool") or "")) == "project_context"]
     assert pc_calls, (
         "status question must call project_context — the tool's description "
         "instructs the main thread to answer from it"
     )
 
-    # 2. No Read of research.json or tree.gedcomx.json.
     forbidden_reads = []
     for c in (builtin_tool_calls or []):
-        if (c.get("tool") or "") != "Read":
+        if (c.get("tool") or "") not in ("Read", "Grep"):
             continue
-        path = (c.get("args") or {}).get("file_path") or ""
-        if path.endswith("research.json") or path.endswith("tree.gedcomx.json"):
-            forbidden_reads.append(path)
+        args = c.get("args") or {}
+        path = str(args.get("file_path") or args.get("path") or "")
+        if path.endswith(_PROJECT_FILES):
+            forbidden_reads.append(f"{c.get('tool')} {path}")
     assert not forbidden_reads, (
-        "status question must not Read raw project files; got: "
+        "status question must not read the raw project files; got: "
         f"{forbidden_reads}"
     )
 
-    # 3. No Agent spawn.
-    spawns = [c for c in (builtin_tool_calls or []) if (c.get("tool") or "") == "Agent"]
+    spawns = spawned_agents(builtin_tool_calls or [])
     assert not spawns, (
-        "status question must be answered by the main thread, not delegated; got "
-        f"{[(c.get('args') or {}).get('subagent_type') for c in spawns]}"
+        f"status question must be answered by the main thread, not delegated; got {spawns}"
     )
 
-    # 4. No research_append write.
     appends = [c for c in (tool_calls or []) if bare_tool_name(str(c.get("tool") or "")) == "research_append"]
     assert not appends, (
         "status question must not write to research.json; got "
         f"{len(appends)} research_append call(s)"
     )
 
-    # 5. No project identifier in the response text.
-    reply = text_response or ""
-    hits = _PROJECT_ID_RE.findall(reply)
+    hits = _PROJECT_ID_RE.findall(text_response or "")
     assert not hits, (
         "status answer must contain no project identifiers; found: "
         f"{sorted(set(hits))}"

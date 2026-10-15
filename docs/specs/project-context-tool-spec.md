@@ -363,6 +363,50 @@ cache file must never fail the whole projection.
   fields (`gedcomx_source_description_id`, `record_id`) are renamed at the
   boundary like every other tool.
 
+### Status-answering clause
+
+The tool's `description` opens with an instruction that reaches the main
+thread on every plane (the tool is `ALWAYS_LOAD` in `src/tool-schemas.ts`, and
+the unit harness serves the compiled production description in
+`eval/harness/harness/mock_mcp.py`; in the 2026-10-12 harness runs the schema
+was still deferred and arrived through ToolSearch, description included):
+
+> When the user asks where the project stands ("where are we?", "summarize
+> progress", "what have we found?") or reopens a project, call this and answer
+> from it in ONE plain-language paragraph: the objective, what is established,
+> what is open or waiting on the researcher, and the next step. No headings,
+> tables or lists, and no identifiers, file names, tool names or field names:
+> say "the proof summary" or "the parentage question", never q_001 or ps_001.
+> nextStep values name ids and agents; restate them in plain words. Do not
+> read the project files and do not delegate.
+
+It leads the description rather than closing it. Measured on `ut_research_025`
+(2026-10-12, scratch runs, not committed): appended after the field list, the clause was ignored — the reply
+was headings, a table and raw ids. Moved to the front it held in 2 of 3 runs,
+the third quoting `ps_001`. With the worked examples, 3 of 3 scratch runs and
+0 of 1 in the full suite; with the `nextStep` sentence added, 4 of 5. Every
+miss quoted `ps_001`, which `questionStatuses[].nextStep` hands over verbatim
+("gps-mentor (proof-critique) — ps_001").
+
+**Decided (lead, 2026-10-06):** delete the `project-status` agent; a status
+request is answered by the main thread in one plain paragraph from
+`project_context`. Rests on four facts: a live Cowork session (2026-10-02)
+confirmed the main-thread read matched the agent's report and caught two
+defects the agent missed; the agent's detailed summary never reached the user
+through the relay (`ut_project_status_010`, a test deleted with the agent; its run logs remain in git history); `project_context` already returns
+objective, per-question state and next step, open conflicts, persons, sources
+and `awaitingUser`; and writer tools already refuse dangling ids
+(`validator.ts`), covering the broken-foreign-key half of the agent's job.
+Supersedes "PS return: A" (2026-09-24). Knowingly dropped: the agent's
+stale-plan detection — replaced only once phase 2 of
+`docs/plan/research-as-a-job-later.md` lands.
+
+**Decided (review-ready, 2026-10-06):** the clause goes in the tool's
+description, not in a router skill description. Making a router description
+claim status would start a full research run on "where are we?"; the tool
+description reaches the main thread on every plane and leaves routers
+untouched.
+
 ## 4. Errors / edge cases
 
 | Condition | Behavior |
@@ -395,50 +439,6 @@ cache file must never fail the whole projection.
   a capture on a different URL closes nothing; an earlier capture does not
   close a later hand-off; a `positive` entry with `capture_received: false`
   never lists; a non-`external_site` entry never lists.
-
-## 5.1 Status-answering clause
-
-The tool's `description` opens with an instruction that reaches the main
-thread on every plane (the tool is `ALWAYS_LOAD` in `src/tool-schemas.ts`, and
-the unit harness serves the compiled production description in
-`eval/harness/harness/mock_mcp.py`; in the 2026-10-12 harness runs the schema
-was still deferred and arrived through ToolSearch, description included):
-
-> When the user asks where the project stands ("where are we?", "summarize
-> progress", "what have we found?") or reopens a project, call this and answer
-> from it in ONE plain-language paragraph: the objective, what is established,
-> what is open or waiting on the researcher, and the next step. No headings,
-> tables or lists, and no identifiers, file names, tool names or field names:
-> say "the proof summary" or "the parentage question", never q_001 or ps_001.
-> nextStep values name ids and agents; restate them in plain words. Do not
-> read the project files and do not delegate.
-
-It leads the description rather than closing it. Measured on `ut_research_025`
-(2026-10-12): appended after the field list, the clause was ignored — the reply
-was headings, a table and raw ids. Moved to the front it held in 2 of 3 runs,
-the third quoting `ps_001`. With the worked examples, 3 of 3 scratch runs and
-0 of 1 in the full suite; with the `nextStep` sentence added, 4 of 5. Every
-miss quoted `ps_001`, which `questionStatuses[].nextStep` hands over verbatim
-("gps-mentor (proof-critique) — ps_001").
-
-**Decided (lead, 2026-10-06):** delete the `project-status` agent; a status
-request is answered by the main thread in one plain paragraph from
-`project_context`. Rests on four facts: a live Cowork session (2026-10-02)
-confirmed the main-thread read matched the agent's report and caught two
-defects the agent missed; the agent's detailed summary never reached the user
-through the relay (ut_project_status_010); `project_context` already returns
-objective, per-question state and next step, open conflicts, persons, sources
-and `awaitingUser`; and writer tools already refuse dangling ids
-(`validator.ts`), covering the broken-foreign-key half of the agent's job.
-Supersedes "PS return: A" (2026-09-24). Knowingly dropped: the agent's
-stale-plan detection — replaced only once phase 2 of
-`docs/plan/research-as-a-job-later.md` lands.
-
-**Decided (review-ready, 2026-10-06):** the clause goes in the tool's
-description, not in a router skill description. Making a router description
-claim status would start a full research run on "where are we?"; the tool
-description reaches the main thread on every plane and leaves routers
-untouched.
 
 ## 6. Consumers / wiring
 
