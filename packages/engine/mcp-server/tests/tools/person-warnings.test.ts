@@ -983,6 +983,89 @@ describe("deathRangeGreaterThan predicate", () => {
 // hasLateMarriage — Java MobWarnings.hasLateMarriage
 // ────────────────────────────────────────────────────────────────────
 
+describe("marriage warnings read the Couple edge, not only the person", () => {
+  // A Marriage lives on the Couple relationship and is never duplicated onto
+  // either spouse. Both predicates read only `person.facts` before this, so
+  // across the committed corpus they saw 96 of 675 marriage-like facts and
+  // missed 579 — they could fire only on a tree where a couple event had been
+  // mis-materialized onto the person.
+  const coupleTree = (birth: string, marriage: string): SimplifiedGedcomX => ({
+    persons: [
+      { id: "I1", gender: "Male", names: [{ id: "N1", given: "John", surname: "Smith" }],
+        facts: [{ id: "F1", type: "Birth", date: birth, standard_date: birth }] },
+      { id: "I2", gender: "Female", names: [{ id: "N2", given: "Mary", surname: "Jones" }] },
+    ],
+    relationships: [
+      { id: "R1", type: "Couple", person1: "I1", person2: "I2",
+        facts: [{ id: "F2", type: "Marriage", date: marriage, standard_date: marriage }] },
+    ],
+  });
+
+  it("hasEarlyMarriage14 fires on a Marriage carried by the Couple edge", () => {
+    expect(hasEarlyMarriage(new Mob(coupleTree("1850", "1860"), "I1"), 14)).toBe(true);
+  });
+
+  it("hasLateMarriage90 fires on a Marriage carried by the Couple edge", () => {
+    expect(hasLateMarriage(new Mob(coupleTree("1800", "1900"), "I1"), 90)).toBe(true);
+  });
+
+  // The other direction: an ordinary marriage on the edge must stay silent, or
+  // the fix turns a dead warning into a false one that blocks tree writes.
+  it("must not fire: an ordinary marriage on the Couple edge warns on neither", () => {
+    const mob = new Mob(coupleTree("1850", "1875"), "I1");
+    expect(hasEarlyMarriage(mob, 14)).toBe(false);
+    expect(hasLateMarriage(mob, 90)).toBe(false);
+  });
+
+  it("the fired warning cites the Couple-edge marriage, not just the birth", () => {
+    // These tags refuse writes, and the refusal hands the agent the warning's
+    // `facts`. Citing only the birth tells it "married before age 14" and gives
+    // it nothing to check.
+    const warnings = calculateWarnings(
+      new Mob(coupleTree("1850", "1860"), "I1"),
+      new Mob(coupleTree("1850", "1860"), "I1"),
+      new Mob(coupleTree("1850", "1860"), "I1"),
+      true,
+    );
+    const early = warnings.find((w) => w.issueType === "hasEarlyMarriage14");
+    expect(early).toBeDefined();
+    const ids = (early?.facts ?? []).map((f) => f.id);
+    expect(ids).toContain("F2"); // the Marriage on the Couple edge
+    expect(ids).toContain("F1"); // and the Birth it is measured against
+  });
+
+  it("the fired late-marriage warning cites the Couple-edge marriage, not just the birth", () => {
+    const warnings = calculateWarnings(
+      new Mob(coupleTree("1750", "1850"), "I1"),
+      new Mob(coupleTree("1750", "1850"), "I1"),
+      new Mob(coupleTree("1750", "1850"), "I1"),
+      true,
+    );
+    const late = warnings.find((w) => w.issueType === "hasLateMarriage90");
+    expect(late).toBeDefined();
+    const ids = (late?.facts ?? []).map((f) => f.id);
+    expect(ids).toContain("F2"); // the Marriage on the Couple edge
+    expect(ids).toContain("F1"); // and the Birth it is measured against
+  });
+
+  it("reads only the anchor's own Couple edges, not another couple's", () => {
+    const tree: SimplifiedGedcomX = {
+      persons: [
+        { id: "I1", gender: "Male", names: [{ id: "N1", given: "John", surname: "Smith" }],
+          facts: [{ id: "F1", type: "Birth", date: "1850", standard_date: "1850" }] },
+        { id: "I3", gender: "Male", names: [{ id: "N3", given: "Other", surname: "Man" }] },
+        { id: "I4", gender: "Female", names: [{ id: "N4", given: "Other", surname: "Wife" }] },
+      ],
+      relationships: [
+        // I1 is not a party to this edge; its 1851 Marriage must not reach I1.
+        { id: "R9", type: "Couple", person1: "I3", person2: "I4",
+          facts: [{ id: "F9", type: "Marriage", date: "1851", standard_date: "1851" }] },
+      ],
+    };
+    expect(hasEarlyMarriage(new Mob(tree, "I1"), 14)).toBe(false);
+  });
+});
+
 describe("hasLateMarriage predicate", () => {
   it("fires when latest marriage-like year is more than 90 years after latest birth-like year", () => {
     const tree: SimplifiedGedcomX = {
