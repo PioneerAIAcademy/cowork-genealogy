@@ -2401,6 +2401,50 @@ describe("materialize_facts", () => {
       expect(result.created).toBe(false);
     });
 
+    it("a starting-tree person with a superseded link is not reused even when all resolvable refs trace back to this record", async () => {
+      // I9 is in the starting tree (a FamilySearch person assigned an I id by
+      // project_create). Its FamilySearch source ref ("FS-SD-1") is not in
+      // research.sources, so the ref walk in mintedFromThisRecord skips it.
+      // After the persona's Birth fact was materialized onto I9 (via an earlier
+      // explicit-personId call), the only ref that resolves is S1→REC-SON, which
+      // would make mintedFromThisRecord return true — unless startingPersonIds
+      // blocks it.
+      const startingI9 = {
+        id: "I9", gender: "Male",
+        names: [{ id: "N9", given: "Robert", surname: "Smith" }],
+        facts: [],
+        sources: [{ ref: "FS-SD-1" }],
+      };
+      await writeFile(join(dir, "starting-tree.gedcomx.json"), JSON.stringify({
+        persons: [startingI9],
+        relationships: [],
+        source_descriptions: [{ id: "FS-SD-1", about: "https://familysearch.org/ark:/...", title: "FS Person" }],
+      }), "utf-8");
+
+      // Current tree: I9 now also has the persona's Birth fact (from a previous
+      // materialization with explicit personId).
+      const currentI9 = {
+        ...startingI9,
+        facts: [{ id: "F1", type: "Birth", date: "1855", assertion_id: "a_003", sources: [{ ref: "S1", quality: 3 }] }],
+      };
+      const r = research({ sources: [S1], assertions: enrichPersona() });
+      // The only person_evidence link for I9 is superseded.
+      r.person_evidence = [{
+        id: "pe_001", assertion_id: "a_003", person_id: "I9", confidence: "confident",
+        rationale: "test", match_score: null, created: "2026-01-01", superseded_by: "pe_002",
+      }];
+      await writeProject(tree({ persons: [currentI9] }), r, { link: false });
+
+      const result = single(await materializeFacts({ projectPath: dir, recordId: "REC-SON", recordRole: "child" }));
+      expect(result.ok).toBe(true);
+      if (!result.ok) return;
+      // I9 is in the starting tree, so mintedFromThisRecord returns false;
+      // the pe link is superseded, so isEligibleTarget returns false;
+      // a new person is minted.
+      expect(result.personId).not.toBe("I9");
+      expect(result.created).toBe(true);
+    });
+
     it("batch: same persona twice without personId produces one person, both results share the id", async () => {
       await writeProject(tree(), research({ sources: [S1], assertions: enrichPersona() }), { link: false });
 

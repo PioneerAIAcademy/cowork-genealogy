@@ -55,7 +55,7 @@ import type {
 } from "../types/materialize-facts.js";
 import { validateIntroduced } from "../validation/introduced-errors.js";
 import { checkWarningGate } from "./tree-edit.js";
-import { mintedFromThisRecord } from "./research-append.js";
+import { mintedFromThisRecord, readStartingTree } from "./research-append.js";
 import { sanitizeTree } from "../validation/tree-sanitize.js";
 import {
   atomicWriteJson,
@@ -226,6 +226,7 @@ function applyMaterializeOp(
    *  the same op created — which the count's own definition ("existed BEFORE
    *  this op") says is impossible. */
   preExistingFactIds?: ReadonlySet<string>,
+  startingPersonIds?: ReadonlySet<string>,
 ): MaterializeFactsOpResult {
   const { recordId, recordRole } = op;
   if (str(recordId) === undefined || str(recordRole) === undefined) {
@@ -243,7 +244,7 @@ function applyMaterializeOp(
   }
 
   // ── Create-or-enrich: find the target person, or mint it (§4.3) ──
-  const targetId = str(op.personId) ?? findExistingPersonForPersona(tree, research, op) ?? nextId(tree, "I");
+  const targetId = str(op.personId) ?? findExistingPersonForPersona(tree, research, op, startingPersonIds) ?? nextId(tree, "I");
   let person = (tree.persons ?? []).find((p) => p && p.id === targetId);
   let created = false;
   if (!person) {
@@ -711,6 +712,7 @@ function applyOp(
   tree: SimplifiedGedcomX,
   research: any,
   op: MaterializeFactsAnyOp,
+  startingPersonIds?: ReadonlySet<string>,
 ): MaterializeFactsOpResult {
   // A null/non-object op is a caller error, not a crash: destructuring it threw
   // a raw TypeError straight out of the tool, past every `{ ok: false }` path.
@@ -765,8 +767,8 @@ function applyOp(
         "field(s) if you meant the persona form",
     );
   }
-  requireLinkToExistingPerson(tree, research, persona);
-  return applyMaterializeOp(tree, research, persona);
+  requireLinkToExistingPerson(tree, research, persona, startingPersonIds);
+  return applyMaterializeOp(tree, research, persona, undefined, startingPersonIds);
 }
 
 /** True when `personId` is an eligible target for persona `(recordId, recordRole)`:
@@ -781,8 +783,9 @@ function isEligibleTarget(
   recordRole: string,
   research: any,
   tree: SimplifiedGedcomX,
+  startingPersonIds?: ReadonlySet<string>,
 ): boolean {
-  if (mintedFromThisRecord(personId, recordId, research, tree)) return true;
+  if (mintedFromThisRecord(personId, recordId, research, tree, startingPersonIds)) return true;
   const persona = new Set<string>();
   for (const a of (Array.isArray(research.assertions) ? research.assertions : []) as any[]) {
     if (a && a.record_id === recordId && a.record_role === recordRole && typeof a.id === "string") {
@@ -808,6 +811,7 @@ function findExistingPersonForPersona(
   tree: SimplifiedGedcomX,
   research: any,
   op: MaterializeFactsOp,
+  startingPersonIds?: ReadonlySet<string>,
 ): string | undefined {
   const personaAssertionIds = new Set<string>();
   for (const a of (Array.isArray(research.assertions) ? research.assertions : []) as any[]) {
@@ -829,7 +833,7 @@ function findExistingPersonForPersona(
   if (candidates.length === 0) return undefined;
 
   const eligible = candidates.filter((pid) =>
-    isEligibleTarget(pid, String(op.recordId), String(op.recordRole), research, tree),
+    isEligibleTarget(pid, String(op.recordId), String(op.recordRole), research, tree, startingPersonIds),
   );
   if (eligible.length === 0) return undefined;
 
@@ -868,10 +872,11 @@ function requireLinkToExistingPerson(
   tree: SimplifiedGedcomX,
   research: any,
   op: MaterializeFactsOp,
+  startingPersonIds?: ReadonlySet<string>,
 ): void {
   const personId = str(op.personId);
   if (personId === undefined || !(tree.persons ?? []).some((p) => p?.id === personId)) return;
-  if (isEligibleTarget(personId, String(op.recordId), String(op.recordRole), research, tree)) return;
+  if (isEligibleTarget(personId, String(op.recordId), String(op.recordRole), research, tree, startingPersonIds)) return;
   throw new MaterializeFactsError(
     `'${personId}' was already in the tree, and no 'probable' or 'confident' person_evidence link ` +
       `ties record '${op.recordId}' role '${op.recordRole}' to them. Write that link with ` +
@@ -921,6 +926,16 @@ export async function materializeFacts(
     // in a section it never touched (#1572).
     const beforeTree = structuredClone(tree);
 
+    // Read once: starting-tree person ids discriminate FamilySearch persons from
+    // minted stubs in `mintedFromThisRecord`. Fail-open (an absent baseline
+    // yields an empty set) matches `readStartingTree`'s own contract.
+    const baseline = await readStartingTree(projectPath);
+    const startingPersonIds: ReadonlySet<string> = new Set(
+      ((Array.isArray(baseline?.persons) ? baseline.persons : []) as any[])
+        .map((p: any) => p?.id)
+        .filter((id: any): id is string => typeof id === "string" && id !== ""),
+    );
+
     // ─── Batch form: apply every op in-memory, then validate + write once ────
     if (input.ops !== undefined) {
       if (!Array.isArray(input.ops) || input.ops.length === 0) {
@@ -929,7 +944,7 @@ export async function materializeFacts(
       const results: MaterializeFactsOpResult[] = [];
       for (let i = 0; i < input.ops.length; i++) {
         try {
-          results.push(applyOp(tree, research, input.ops[i]));
+          results.push(applyOp(tree, research, input.ops[i], startingPersonIds));
         } catch (e) {
           if (e instanceof MaterializeFactsError) {
             // Identify the failing op; nothing has been written.
@@ -1002,6 +1017,7 @@ export async function materializeFacts(
             ...(input.name !== undefined ? { name: input.name } : {}),
             ...(input.gender !== undefined ? { gender: input.gender } : {}),
           } as MaterializeFactsAnyOp),
+      startingPersonIds,
     );
 
     const validation = await validateIntroduced({ research, tree: beforeTree }, { research, tree }, { projectPath });
