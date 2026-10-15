@@ -178,7 +178,7 @@ def test_run_skill_attributes_each_spawn_result_to_its_spawn(tmp_path, monkeypat
         ),
     ]
 
-    monkeypatch.setattr(sr, "query", lambda **kw: _Stream(messages))
+    monkeypatch.setattr(sr, "open_query", lambda **kw: _Stream(messages))
     result = asyncio.run(
         sr.run_skill(
             user_message="go",

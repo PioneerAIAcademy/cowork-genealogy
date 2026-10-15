@@ -85,10 +85,10 @@ class PatchSessionBody(BaseModel):
 # A sandbox keeps running the agent code it was created with, so an old one
 # drifts from the current control plane (issue #3406). Lead ruling 2026-10-13:
 # past this age a session can be read but not continued.
-SESSION_MAX_AGE = timedelta(hours=24)
+SESSION_MAX_AGE = timedelta(hours=72)
 
 _EXPIRED_DETAIL = (
-    "This session is more than 24 hours old and can't be continued. "
+    "This session is more than 72 hours old and can't be continued. "
     "Start a new session."
 )
 
