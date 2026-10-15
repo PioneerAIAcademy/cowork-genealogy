@@ -1808,18 +1808,18 @@ can supply; the caller passes `absentPersons` and those entries are built from i
 
 #### Classification
 
-Keyed on record type × role family × fact class. Measured against the 255
-`expected_classifications` cells in the 19 unit fixtures that pin them: 249/255
-agree. **That figure is in-sample** — the table was built by reading the same
-cells the eval checks, so it states internal consistency, not predictive
-accuracy.
+Keyed on record type × role family × fact class, and on a marriage record the
+fact type too. The table was built by reading the unit fixtures'
+`expected_classifications` cells, so agreement with those cells states internal
+consistency, not predictive accuracy.
 
 | Record type | Fact class | informant | proximity | quality |
 |---|---|---|---|---|
 | census | residence / the census event | census enumerator | `witness` | `primary` |
 | census | everything else | unknown household member | `household_member` | `indeterminate` |
 | census | a parent's birthplace, from the parent-birthplace columns (see below) | unknown household member | `household_member` | `secondary` |
-| marriage | a party's or parent's facts | the party | `self` | `primary` |
+| marriage | a party's own facts (name, sex, marital status, occupation, residence, the marriage, "spouse of" the other party) | the party | `self` | `primary` |
+| marriage | a party's birth date, birthplace, age and christening or baptism; their "child of" relationship; every fact of a parent role | the party | `self` | `secondary` |
 | marriage | a witness's facts | the witness | `witness` | `primary` |
 | death | the death event | the certifying official | `official_duty` | `primary` |
 | death | the cause of death, and the last illness's duration | the certifying physician | `official_duty` | `primary` |
@@ -2137,9 +2137,8 @@ above leave a case open:
 The probate rows are the genealogist's ruling (2026-09-30), split by who
 produced each part of the file. A petitioner's statement of the death follows
 the obituary's reading: family, but the file does not say who was present.
-Heirs named by the petitioner are `primary`, like a marriage party naming their
-own parents. `probate` joins the `RecordType` union, and the rows apply on both
-paths.
+Heirs named by the petitioner are `primary`. `probate` joins the `RecordType`
+union, and the rows apply on both paths.
 
 The obituary split is the genealogist's ruling (2026-09-29, option C). What the
 family knew firsthand and recently is `household_member`, and `indeterminate`
