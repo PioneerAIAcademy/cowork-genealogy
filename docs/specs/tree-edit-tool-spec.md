@@ -576,8 +576,8 @@ Sequence (validate-before-persist, tree-only):
   would fire only after the conflict had been justified away); making the
   warning unjustifiable (it would block an adoptive or step parent outright);
   routing in agent prose alone (a rule the model reads, not one the tool binds,
-  ADR-0011). **Only biological parents count** (no `subtype`, or
-  `Biological`), as `tooManyFathers2` / `tooManyMothers2` themselves count, so
+  ADR-0011). **Only biological parents count** (any subtype except Adoptive, Step, Foster or
+  Guardian, in any case — `isNonBiologicalSubtype`), as `tooManyFathers2` / `tooManyMothers2` themselves count, so
   an adoptive or step father beside a biological one lands without a refusal. The finding is computed from the before and
   after trees and gated under its own id (`competingParentage|child|sex|parents`,
   which replaces the count warning for that child), not from the gate's

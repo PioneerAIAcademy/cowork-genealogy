@@ -584,6 +584,13 @@ describe("competingParentage", () => {
     expect(surface([pc("R1", "I2")], [pc("R1", "I2"), pc("R2", "I3", "Biological")])).toHaveLength(1);
   });
 
+  it("counts a subtype exactly as tooManyFathers2 does: any case, any unrecognized value", () => {
+    for (const s of ["biological", "BiologicalParent", "Natural"]) {
+      expect(surface([pc("R1", "I2")], [pc("R1", "I2"), pc("R2", "I3", s)])).toHaveLength(1);
+    }
+    expect(surface([pc("R1", "I2")], [pc("R1", "I2"), pc("R2", "I3", "adoptive")])).toEqual([]);
+  });
+
   it("counts a parent holding both a Biological and an Adoptive edge once", () => {
     expect(surface([pc("R1", "I2")], [pc("R1", "I2"), pc("R2", "I2", "Adoptive")])).toEqual([]);
   });

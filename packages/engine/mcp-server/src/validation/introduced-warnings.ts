@@ -20,7 +20,7 @@ import type { ConflictSurfaced } from "../types/materialize-facts.js";
 import { relationshipEndpoints } from "../utils/relationship-endpoints.js";
 import type { PersonWarning } from "../types/person-warnings.js";
 import { Mob, normalizeGender } from "../utils/mob.js";
-import { calculateWarnings, getPersonName, isQualifyingParentChildEdge } from "../tools/person-warnings.js";
+import { calculateWarnings, getPersonName, isNonBiologicalSubtype } from "../tools/person-warnings.js";
 import { isRelationshipEstablishing } from "../utils/source-ref-resolver.js";
 
 /** Stable warning identifier: tag + person + related + sorted fact ids. */
@@ -369,7 +369,7 @@ function biologicalParentsByChild(
   const gender = new Map((tree.persons ?? []).map((p) => [rename(p.id ?? ""), normalizeGender(p.gender)]));
   const out = new Map<string, Set<string>>();
   for (const r of tree.relationships ?? []) {
-    if (!r.parent || !r.child || !isQualifyingParentChildEdge(r)) continue;
+    if (!r.parent || !r.child || r.type !== "ParentChild" || isNonBiologicalSubtype(r.subtype)) continue;
     const parent = rename(r.parent);
     if (gender.get(parent) !== sex) continue;
     const child = r.child;
@@ -396,7 +396,7 @@ function parentEvidence(
   if (fromCall) return fromCall;
   const refs: string[] = [];
   for (const r of tree.relationships ?? []) {
-    if (r.parent === parent && r.child === child && isQualifyingParentChildEdge(r)) {
+    if (r.parent === parent && r.child === child && r.type === "ParentChild" && !isNonBiologicalSubtype(r.subtype)) {
       for (const s of r.sources ?? []) if (s.ref && !refs.includes(s.ref)) refs.push(s.ref);
     }
   }

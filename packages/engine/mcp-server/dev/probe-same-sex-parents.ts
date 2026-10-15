@@ -23,7 +23,7 @@ import { readFileSync, readdirSync, statSync } from "fs";
 import { join, resolve } from "path";
 import type { SimplifiedGedcomX } from "../src/types/gedcomx.js";
 import { normalizeGender } from "../src/utils/mob.js";
-import { isQualifyingParentChildEdge } from "../src/tools/person-warnings.js";
+import { isNonBiologicalSubtype } from "../src/tools/person-warnings.js";
 
 const root = resolve(import.meta.dirname, "..", "..", "..", "..", "eval", "runlogs", "e2e");
 const list = process.argv.includes("--list");
@@ -46,7 +46,7 @@ for (const fixture of readdirSync(root).sort()) {
     for (const r of tree.relationships ?? []) {
       if (r.type !== "ParentChild" || !r.parent || !r.child) continue;
       const list = byChild.get(r.child) ?? [];
-      list.push({ parent: r.parent, biological: isQualifyingParentChildEdge(r) });
+      list.push({ parent: r.parent, biological: !isNonBiologicalSubtype(r.subtype) });
       byChild.set(r.child, list);
     }
     for (const [child, edges] of byChild) {
