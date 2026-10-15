@@ -314,6 +314,29 @@ runs, and no successful named-party op in the corpus carries a `personId`, so
 that gate has no executed population (measured at 529f81341 by
 `packages/engine/mcp-server/dev/replay-materialize-link.ts`).
 
+**Reuse when re-materializing without `personId`.** When `personId` is omitted,
+the persona arm scans `tree.persons` for any person whose facts carry an
+`assertion_id` matching one of this persona's assertions (same `record_id` +
+`record_role`). A candidate is reusable only where the explicit-personId gate
+would accept it (`existingPersonLinkRefusal` on the persona's own one-party
+assertions): it was minted from this record (`mintedFromThisRecord`), or a live
+`probable`/`confident` `person_evidence` entry links one of those assertions to
+it. Among eligible candidates, one with such a link is preferred; a link through
+the persona's marriage or relationship assertion does not count, since it may
+be to the other party. Remaining ties break by lowest numeric ID. Only when no eligible
+candidate exists does the tool allocate a fresh `I` via `nextId`. This prevents
+duplicate persons when the same persona is materialized more than once without an
+explicit `personId`.
+
+Three alternatives were rejected. Matching on backlinks alone: backlinks are
+also stamped onto an existing FamilySearch person when a persona is
+materialized onto them under a confident link. Once that link is superseded, a
+no-`personId` call would put the facts straight back on that person, past the
+link gate. Plain lowest id: in an already-duplicated project it picks the
+unlinked orphan stub over the person `research.json` links to. Refusing when
+several candidates match: that costs an error round-trip on every re-run in an
+already-duplicated project, and hands the agent a choice with no rule.
+
 > Reading assertions to *instantiate* a person is still an evidence-driven
 > act (it reads assertions, not nodes), so it stays on the correct side of
 > the §3 seam. It is not a merge — nothing is collapsed.
@@ -321,9 +344,12 @@ that gate has no executed population (measured at 529f81341 by
 ### 4.4 Idempotency and conflict surfacing
 
 - **Idempotent.** Re-running the same persona's materialization (retries are
-  common) duplicates neither facts nor refs — the §4.2 fact-identity test
-  (`factsEquivalent` + equal `value`) plus ref-set union makes a re-run a
-  no-op. Mirrors the idempotent-skip ratified as correct in the structured-fact model.
+  common) duplicates neither facts, refs, nor persons — when `personId` is
+  omitted, `assertion_id` backlinks on existing facts identify the person the
+  same persona was previously materialized onto (§4.3), and the §4.2
+  fact-identity test (`factsEquivalent` + equal `value`) plus ref-set union
+  makes the content a no-op. Mirrors the idempotent-skip ratified as correct
+  in the structured-fact model.
 - **Conflicts surfaced, not resolved — and only for single-valued types.**
   Conflict surfacing is **gated to single-valued / vital fact types**: reuse
   the existing `VITAL_PRIMARY_TYPES` set (`Birth`, `Death`, `Christening`,
@@ -760,8 +786,8 @@ materialize_facts({ projectPath, assertionId, relatedRole,
   event stays on the edge.
 - **Idempotent for a given `personId`** — a re-run unions the ref onto the
   matching name rather than duplicating it. An omitted `personId` allocates a
-  fresh `I` on every call, exactly as the persona arm does; that is allocation,
-  not a broken re-run.
+  fresh `I` on every call; the named-party arm has no `assertion_id` backlinks
+  to search for, so the persona arm's reuse rule (§4.3) does not apply here.
 
 **Why the caller supplies the name — and the alternatives this beat.** Recorded
 here so it is not re-derived. Measured 2026-09-07 by walking
