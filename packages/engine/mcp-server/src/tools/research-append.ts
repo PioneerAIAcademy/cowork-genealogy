@@ -2036,8 +2036,8 @@ function oneSummaryPerQuestion(entry: any, research: any, appendedId: string | u
  *  `claims[].relationship.child` entries (when `claims[]` is present; scalar
  *  proofs with no `claims[]` are not in scope, as assertions carry no
  *  `relationship` field) — have more than two distinct `ParentChild` parents in
- *  the pre-call tree, while no hypothesis in `preCallResearch` lists the proof's
- *  `question_id` in `related_question_ids`.
+ *  the pre-call tree, while fewer than two hypotheses in `preCallResearch` list
+ *  the proof's `question_id` in `related_question_ids`.
  *
  *  Uses the pre-call tree and pre-call research snapshots so a same-batch
  *  hypothesis write does not satisfy the precondition. */
