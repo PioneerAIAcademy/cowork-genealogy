@@ -25,9 +25,6 @@ tools:
   - mcp__genealogy__person_quality
   - mcp__remote-devices__Genealogy_Research__person_quality
   - mcp__Genealogy_Research__person_quality
-  - mcp__genealogy__record_search
-  - mcp__remote-devices__Genealogy_Research__record_search
-  - mcp__Genealogy_Research__record_search
 ---
 
 # Tree Survey
@@ -74,49 +71,22 @@ If `gaps` is empty, return no suggestions: one line saying how far the tree was
 read, then `---` and one plain sentence that the tree shows no holes in what was
 read. Name no person, count or field in that sentence. Do not invent suggestions.
 
-### 2. Check what FamilySearch has
+### 2. Read what FamilySearch has
 
-Take the strongest ~10 holes. `gaps` is already ordered: holes with a fitting pending hint first, then nearest the root,
-and each carries a `coverage` count (collections that exist for that place and
-period, a floor, not evidence about this person) and `pendingHints`
-(`fitting` of `total` pending record hints that are about the event the hole is
-missing; `null` when unread). Do not look up hints yourself. For each hole, gather what
-applies:
+Take the strongest ~10 holes. `gaps` is already ordered: holes with a fitting pending hint first, then nearest the root. Each hole carries:
 
-- **Missing census.** `person_quality({ personId })`; note an issue saying an
-  expected census is missing.
-- **A search on the hole.** `record_search` with the hole's `yearRange` and `place`:
-  - `missing_parents`: the person's own name, birth year range and place.
-  - `no_children`, `child_gap`, `early_last_child`: the couple as the parents
-    (`fatherGivenName`/`fatherSurname`, `motherGivenName`/`motherSurname`), with the
-    year range as the birth range and the place.
-  - `no_spouse`: the person's name, with the year range as the marriage range.
-  - `missing_surname`: the husband's name plus `spouseGivenName` set to her given name, with the year range as the marriage range.
-  - `no_birth_info`: the person's name, with the year range as the birth range. No year range, no search.
-  - `no_death_date`: the person's name, with the year range as the death range.
+- `pendingHints`: `fitting` of `total` pending record hints that are about the event the hole is missing; `null` when unread. Do not look up hints yourself.
+- `coverage`: collections that exist for the hole's place and period (a floor, not evidence about this person), and `censusYears`, the census years in the window; ignore 1890.
 
-  A search is signal only when a top result fits the hole's name, place and years; the
-  number of results is not signal. Use the hole's `place` as given.
-
-A non-empty `coverage.censusYears` means a census search is possible for that window; ignore
-1890 in it.
-
-Make each call once. A search that returns nothing is a result, not a reason to
-retry.
+For a hole you keep, call `person_quality({ personId })` once and note an issue saying an expected census is missing. Make each call once. Run no search.
 
 ### 3. Rank
 
-Rank by the strongest signal: a search whose top result fits the hole, then a hole with
-`pendingHints.fitting` above 0 (a `fitting` of 0 is no signal, however large `total`), then the census issue or a non-empty `coverage.censusYears`, then
-a `coverage.collections` above 0. A hole with a search or hint signal comes before every hole without
-one, however far from the root. Break ties by the hole's closeness to the root
-(`generation`, then smaller absolute value first). Drop a hole with no signal at all unless
-fewer than three remain.
+Rank by the strongest signal: `pendingHints.fitting` above 0 (a `fitting` of 0 is no signal, however large `total`), then the census issue or a non-empty `coverage.censusYears`, then a `coverage.collections` above 0. A hole with a signal comes before every hole without one, however far from the root. Break ties by closeness to the root (`generation`, then smaller absolute value first).
 
 ### 4. Suggest 3-5
 
-One suggestion per person; if two holes fall on the same person, keep the
-stronger. Each suggestion gives:
+Suggest the holes in rank order, up to 5, and at least one whenever `gaps` is not empty: a hole with no signal is still suggested, saying plainly that nothing further is known. One suggestion per person; if two holes fall on the same person, keep the stronger. Each suggestion gives:
 
 - the person
 - the hole in plain words
