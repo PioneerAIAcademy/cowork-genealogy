@@ -151,11 +151,13 @@ tree_edit({
 
   // ── targeting (per operation) ──
   personId?: string,          // add_fact/update_fact (person-held facts — exactly one of
-                              //   personId | relationshipId), add_name, update_name, update_person
+                              //   personId | relationshipId), add_name, update_name, update_person,
+                              //   remove (scopes a shared factId to this person's copy)
   factId?: string,            // update_fact, remove
   nameId?: string,            // update_name
   relationshipId?: string,    // add_fact/update_fact (Couple-held facts — exactly one of
-                              //   personId | relationshipId), update_relationship, remove
+                              //   personId | relationshipId), update_relationship,
+                              //   remove (the edge itself, or scopes a shared factId to it)
   sourceId?: string,          // update_source
 
   // ── payloads (snake_case, NO id — the tool assigns) ──
@@ -316,8 +318,18 @@ tree_edit({
   op `add_relationship`'s corroboration warning names, so a subtype only ever
   moves on an explicit correction.
 - **`remove`** `{ factId }` **or** `{ relationshipId }` — delete that entry. **Only
-  facts and relationships** — a `personId` here is an error (person removal is
-  `merge_tree_persons`).
+  facts and relationships** — a `personId` **on its own** is an error (person
+  removal is `merge_tree_persons`).
+  - **A `factId` names a fact, not a holder, and holders share ids.** FamilySearch
+    reuses fact ids across the persons an import touches: 65 of the 136 committed
+    e2e starting trees carry one id on two or more holders, one of them on 15. An
+    unscoped remove of a shared id is **refused**, naming every holder, because
+    deleting one person's disproved imported Birth would otherwise delete it for
+    all fifteen.
+  - **`personId` or `relationshipId` beside a `factId` scopes the removal** to that
+    holder's copy; the other holders keep theirs. Both together is an error. A
+    `factId` whose id only one holder carries needs no scope.
+  - `{ relationshipId }` with no `factId` still removes the edge itself.
 
 **Fact payload shape (all fact write paths).** On every path that writes a fact —
 `add_fact`, `update_fact`, `add_person` inline facts, `add_relationship` facts —
@@ -557,7 +569,9 @@ Sequence (validate-before-persist, tree-only):
 | `add_fact` / `update_fact` targeting a `ParentChild` relationship, or `add_relationship` with facts on a `ParentChild` | input error — facts live only on Couple relationships |
 | A fact payload (any write path) with a non-string `date` / `standard_date` / `place` / `standard_place` / `value` — e.g. a nested `{ original, formal }` date object | input error naming the field and expected shape; write nothing (§4.1 "Fact payload shape") |
 | `add_person` inline fact / `add_relationship` fact carries an `id` | input error — the tool assigns `F` ids |
-| `remove` with a `personId` (attempt to delete a person) | input error — use `merge_tree_persons` |
+| `remove` with a `personId` and no `factId` (attempt to delete a person) | input error — use `merge_tree_persons` |
+| `remove` of a `factId` more than one holder carries, unscoped | input error naming every holder — pass `personId` or `relationshipId` |
+| `remove` with both `personId` and `relationshipId` | input error — one or the other scopes a `factId` |
 | `update_relationship` with no `relationshipId` or no `subtype` | input error |
 | `update_relationship` with an empty or whitespace `subtype` | input error; write nothing |
 | `update_relationship` on a `relationshipId` not in the tree | staleness error; write nothing |
@@ -625,7 +639,7 @@ The caller (`tree-edit` skill) still:
   round-trip into the written `S` entry; `update_source` merges by `sourceId` (id
   immutable), errors on an unknown `sourceId`; missing-payload guards return
   `{ ok: false }`; a titleless `add_source` fails validation and writes nothing.
-- **remove** — fact/relationship deleted by id; `remove` with `personId` rejected.
+- **remove** — fact/relationship deleted by id; `remove` with a bare `personId` rejected; a shared `factId` refused unscoped and removed from only the scoped holder.
 - **staleness** — an unknown `factId` returns an error, writes nothing.
 - **validate-before-persist** — an edit that would invalidate the project writes
   nothing and returns `{ ok: false, errors }`; no `.bak` written.
