@@ -52,7 +52,7 @@ The bridge between planning (research-plan) and extraction (`extraction_append`)
 ❌ WRONG: `Skill("project-status")` → read project → answer with research recommendations  
 ✅ CORRECT: spawn `@plugin:research-plan` with no prior tool calls → stop
 
-After any routed Skill call or agent spawn, stop, except for an authorized hand-back from research-plan (above). Do not read files, call MCP tools, or provide supplementary information; relay what a spawned agent's return prints after its `---` line, as it came back.
+After any routed Skill call or agent spawn, stop, except for an authorized hand-back from research-plan (above). Do not read files, call MCP tools, or provide supplementary information; relay a spawned agent's return as it came back, or only what follows its `---` line when it has one.
 
 ## GPS Grounding
 
