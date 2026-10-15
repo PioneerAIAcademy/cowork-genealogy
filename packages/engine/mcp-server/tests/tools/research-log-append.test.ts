@@ -1386,6 +1386,34 @@ describe("research_log_append — logging-without-persistence nudge (#1478)", ()
     expect(research.log).toHaveLength(3);
   });
 
+  it("does not count reference lookups (#3244), and still counts record searches", async () => {
+    const wiki = (n: number) => ({ ...pos(n), tool: "wikipedia_search", query: { query: "Schuylkill County" } });
+    await write(baseResearch([wiki(1), wiki(2)]));
+    const r = await researchLogAppend({
+      projectPath: dir,
+      tool: "wikipedia_search",
+      query: { query: "Schuylkill County", title: "Schuylkill County, Pennsylvania" },
+      outcome: "positive",
+      resultsExamined: 1,
+      planItemId: null,
+      notes: "# Schuylkill County, Pennsylvania\n\nA county in eastern Pennsylvania.",
+    });
+    expect(r.ok).toBe(true);
+    expect(warnOf(r)).not.toMatch(NUDGE);
+
+    await write(baseResearch([pos(1), pos(2)]));
+    const r2 = await researchLogAppend({
+      projectPath: dir,
+      tool: "record_search",
+      query: { surname: "Ashby" },
+      outcome: "positive",
+      resultsExamined: 1,
+      planItemId: null,
+    });
+    expect(r2.ok).toBe(true);
+    expect(warnOf(r2)).toMatch(NUDGE);
+  });
+
   it("stays silent below the threshold", async () => {
     await write(baseResearch([pos(1)]));
     const r = await researchLogAppend({

@@ -1194,6 +1194,53 @@ def test_data_bucket_blocks_public_access(stack):
     assert fake.calls_to("s3api", "put-bucket-encryption")
 
 
+def _web_policy(fake) -> list[dict]:
+    put = [a for a in fake.calls_to("iam", "put-role-policy") if "genealogy-u13-web" in a][0]
+    return fake.file_of(put, "--policy-document")["Statement"]
+
+
+def _key(statement: dict) -> tuple:
+    def flat(v):
+        return tuple(sorted(v)) if isinstance(v, list) else (v,)
+    return statement["Effect"], flat(statement["Action"]), flat(statement["Resource"])
+
+
+def test_web_policy_reads_the_bucket_and_writes_only_feedback(stack):
+    """U20: beyond its secrets and SQS, exactly GetObject on <bucket>/* and PutObject on
+    <bucket>/feedback/* -- no ListBucket, no DeleteObject, no PutObject elsewhere."""
+    env, fake, _ = stack
+    statements = _web_policy(fake)
+    s3 = sorted(_key(st) for st in statements
+                if any(a.startswith("s3:") for a in _key(st)[1]))
+    run_id = json.loads((env["work"] / "inventory.json").read_text(encoding="utf-8"))["run_id"]
+    bucket = f"arn:aws:s3:::genealogy-u13-data-{run_id}"
+    assert s3 == sorted([("Allow", ("s3:GetObject",), (f"{bucket}/*",)),
+                         ("Allow", ("s3:PutObject",), (f"{bucket}/feedback/*",))])
+    others = {a for st in statements for a in _key(st)[1] if not a.startswith("s3:")}
+    assert others == {"secretsmanager:GetSecretValue", "sqs:SendMessage"}
+
+
+def test_web_options_name_the_feedback_bucket(stack):
+    env, _, _ = stack
+    web = options_file(env, rh.ENV_NAMES["web"])
+    run_id = json.loads((env["work"] / "inventory.json").read_text(encoding="utf-8"))["run_id"]
+    assert web[(rh.ENV_NS, "GENEALOGY_S3_BUCKET")] == f"genealogy-u13-data-{run_id}"
+    assert web[(rh.ENV_NS, "GENEALOGY_S3_REGION")] == rh.REGION
+    assert not {name for ns, name in web if name.startswith(("GENEALOGY_S3_ENDPOINT", "GENEALOGY_S3_ACCESS",
+                                                              "GENEALOGY_S3_SECRET", "DEV_"))}
+
+
+def test_data_bucket_lifecycle_is_one_rule_on_feedback(stack):
+    """put-bucket-lifecycle-configuration replaces the whole document, so the whole document
+    is pinned: a rule on any other prefix would expire project objects."""
+    _, fake, _ = stack
+    put = fake.calls_to("s3api", "put-bucket-lifecycle-configuration")
+    assert len(put) == 1
+    assert fake.file_of(put[0], "--lifecycle-configuration") == {"Rules": [
+        {"ID": "feedback-retention", "Status": "Enabled", "Filter": {"Prefix": "feedback/"},
+         "Expiration": {"Days": 90}}]}
+
+
 def test_worker_sets_both_sqsd_namespaces_equal_to_the_template(stack):
     env, _, _ = stack
     worker = options_file(env, rh.ENV_NAMES["worker"])
