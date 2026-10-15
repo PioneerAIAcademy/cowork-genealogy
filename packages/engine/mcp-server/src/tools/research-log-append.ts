@@ -1133,6 +1133,11 @@ export function stagedPre1880UsCensusYears(rows: readonly unknown[]): number[] {
   return titled > 0 ? [...years] : [];
 }
 
+/** A British collection title: "England and Wales Census, 1851", "England,
+ *  Wiltshire, Church Records, 1518-1990", "Scotland Census, 1861". Anchored at
+ *  the start, so "New England, ..." and "British Columbia, ..." are not. */
+const BRITISH_TITLE = /^(?:england|wales|scotland|great\s+britain|united\s+kingdom)\b/i;
+
 /**
  * The relationship-column threshold the staged payload's JURISDICTION implies,
  * for an unqualified census mention in the note to take (issue #3409). Only
@@ -1143,11 +1148,6 @@ export function stagedPre1880UsCensusYears(rows: readonly unknown[]): number[] {
  * row's `collectionTitle`, or from a `record_read` row's `sd_c_` source (the
  * collection description); any other tool returns undefined.
  */
-/** A British collection title: "England and Wales Census, 1851", "England,
- *  Wiltshire, Church Records, 1518-1990", "Scotland Census, 1861". Anchored at
- *  the start, so "New England, ..." and "British Columbia, ..." are not. */
-const BRITISH_TITLE = /^(?:england|wales|scotland|great\s+britain|united\s+kingdom)\b/i;
-
 export function stagedPayloadColumnFrom(tool: string, rows: readonly unknown[]): number | undefined {
   if (tool !== "record_search" && tool !== "record_read") return undefined;
   let titled = 0;
