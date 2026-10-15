@@ -33,6 +33,7 @@ PINNED = {
     "010_claim_epoch.sql": "a9ee9f17ca640192089d42999445e6acb9cbce1071dd64fcc61cede221c8c9c3",
     "011_session_entries_uuid_index.sql": "ca31d8c245493b9b020ffe014d874ce098895f8b34053e37ac53039a5d281493",
     "012_turn_bearer.sql": "06d60ca9d298cf661e6260ec4dd89efed9b821cffa9b017d4881a48f31a529b0",
+    "013_retention.sql": "d05d4e1dc4334aa0a0cc61d249ea37e0fced6fb1b83a39e6f29e2791d8067afe",
 }
 
 
