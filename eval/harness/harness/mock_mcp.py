@@ -93,95 +93,11 @@ from typing import Any
 from claude_agent_sdk import create_sdk_mcp_server, tool
 
 from harness.fixtures import build_manifest, load_fixtures, matches
+from harness.instrument import LIVE_TOOLS, CatalogUnavailable, load_tool_catalog, node_module_url
 
 # Bare tool names that are always registered as live handlers rather than
-# fixture-backed mocks. See module docstring for the rationale.
-LIVE_TOOLS: set[str] = {
-    "validate_research_schema",
-    "research_log_append",
-    "research_append",
-    "extraction_append",
-    "tree_edit",
-    "tree_correct",
-    "materialize_facts",
-    "merge_warnings",
-    # Reads tree.gedcomx.json from the workspace. The compiled-tool handler
-    # computes every tag from the workspace tree, so a live handler is more
-    # faithful than a canned answer. Its one networked check
-    # (hasBirthFarFromParentsResidence) is switched off through
-    # `_COMPILED_TOOL_EXTRA_ARGS`: a unit run must not reach the Places API, and
-    # the tool skips that check when a lookup returns nothing. Live since 2026-09-03
-    # (lead ruling on PR #2151). `person_quality` is NOT here and must not be:
-    # it calls FamilySearch.
-    "person_warnings",
-    # Served by its own handler (`_make_person_quality_handler`), registered
-    # outside both loops below. The tool first decides what to score with no
-    # network call: a project's local id is looked up in the workspace tree and
-    # resolved to the person's FamilySearch link; a person with no link gets the
-    # tool's own sentence, which is safe and faithful to run for real. A call that
-    # resolves to a FamilySearch id is answered from the test's person_quality
-    # fixtures keyed on THAT id, or refused. Kept in this set because
-    # allowed_tools' callee-fixture check exempts LIVE_TOOLS members.
-    "person_quality",
-    "project_context",
-    # The bounded-delivery signal. Live rather than fixture-backed because the
-    # tool IS inert by contract -- no network, no auth, no project write; it
-    # returns a fixed acknowledgement (`research-delivered.ts`) -- so running the
-    # real one is both free and more faithful than a canned answer.
-    #
-    # It was advertised NOWHERE in this harness until now, which is why #2813
-    # item 1 reached alpha untested: the hosted Stop hook only allows a bounded
-    # turn to stop when the model calls this tool, and a model that cannot see
-    # the tool cannot call it. Every unit eval therefore graded the skill on
-    # prose it had no way to act on.
-    "research_delivered",
-    # Read-only projection over the workspace's own research.json — same shape
-    # as project_context, and deterministic, so mocking it would only invite
-    # drift. Added when search-records / research were pointed at it in place of
-    # whole-file Reads; without it a skill following that instruction hits an
-    # uncovered tool call and grades badly for doing the right thing.
-    "research_query",
-    # The reader for the two sidecar classes research_query cannot serve — a
-    # verdict body under evaluations/ and a text upload under uploads/. Same
-    # deterministic-in-workspace-state rationale as research_query; the
-    # gps-mentor agent's existing-verdict skip depends on it being live.
-    "sidecar_read",
-    # The only route by which a project comes into existence. init-project's
-    # tests start from an EMPTY workspace, so a fixture cannot serve this: what
-    # is graded is whether both files end up on disk and valid, and only the
-    # real tool decides that. A canned success would grade the arguments while
-    # the workspace stayed empty and every file-existence check failed — and an
-    # uncovered call here aborts the test outright (Type 1), wasting the whole
-    # paid run.
-    "project_create",
-    # Pure arithmetic, and the one case where a fixture would be dishonest in the
-    # opposite direction from the rest of this list: it depends on no workspace
-    # state at all, but a canned response would supply the computed answer the
-    # test exists to measure. convert-dates declares it as its ONLY tool and its
-    # body forbids hand arithmetic ("Do not fall back to hand arithmetic"), yet
-    # across four committed run logs / 56 runs it was never called once - it was
-    # registered nowhere, so it never appeared in the model's tool list and every
-    # conversion was done by hand and graded a pass. Tool Arguments is N/A
-    # whenever tool_calls is empty, so the defect switched off the dimension that
-    # covers it. conflict-resolution declares it too. Issue #1654 (deep dive).
-    "convert_calendar",
-    # Census arithmetic whose computed answer (how many children are missing, and
-    # each birth window) is exactly what check-warnings' tests grade; a canned
-    # fixture would grade a number the test author typed. Unlike convert_calendar
-    # it reads workspace state in tree mode (motherId): the injected projectPath
-    # points it at the test's own tree.
-    "census_children_gap",
-    # Same rationale as convert_calendar: URL-templating with no network
-    # dependency, so a canned fixture would supply the exact URL string
-    # search-external-sites' eval exists to measure. Its one workspace write
-    # (the hand-off log entry, only when the agent passes projectPath) runs
-    # against the harness workspace — see _OPTIONAL_PROJECT_PATH_TOOLS.
-    "build_external_search_url",
-    # Same rationale as convert_calendar: a pure table lookup with no workspace
-    # or network dependency. Nothing calls it until issue #1828; kept live so
-    # that PR's eval doesn't quietly get the answer from a canned fixture.
-    "get_name_variants",
-}
+# fixture-backed mocks. Declared in `harness.instrument`, which the stdlib-only
+# `check_runlogs.py` fingerprints them from; see this module's docstring for why.
 
 # Path to the compiled MCP server build output, used by live tool handlers.
 _REPO_ROOT = Path(__file__).resolve().parents[3]
@@ -405,12 +321,9 @@ def _run_node_eval(
 
 
 def _node_module_url(p: Path | str) -> str:
-    """A compiled module's path as a Node ESM import specifier, safe to embed in
-    a single-quoted JS string. Windows needs a ``file:///`` URL: Node rejects a
-    bare drive-letter path (``C:/...``) with ERR_UNSUPPORTED_ESM_URL_SCHEME.
-    The one copy every ``node --eval`` site here uses."""
-    posix = str(p).replace("\\", "/").replace("'", "\\'")
-    return ("file:///" + posix) if sys.platform == "win32" else posix
+    """A compiled module's path as a Node ESM import specifier; the one copy
+    lives in `harness.instrument`."""
+    return node_module_url(p)
 
 
 _build_tool_catalog_cache: dict[str, dict[str, Any]] | None = None
@@ -452,30 +365,11 @@ def _load_build_tool_catalog() -> dict[str, dict[str, Any]]:
 
 
 def _load_build_tool_catalog_uncached() -> dict[str, dict[str, Any]]:
-    schemas_js = _MCP_BUILD / "tool-schemas.js"
-    if not schemas_js.exists():
-        return {}
-    schemas_url = _node_module_url(schemas_js)
-    script = (
-        f"import {{ allToolSchemas }} from '{schemas_url}';"
-        " const out = allToolSchemas.map("
-        "(s) => ({ name: s.name, description: s.description, inputSchema: s.inputSchema })"
-        ");"
-        " process.stdout.write(JSON.stringify(out));"
-    )
+    """The shared strict loader, mapped back to this module's `{}`-on-failure
+    contract. A stale build still loads here; only the CI gate requires fresh."""
     try:
-        proc = _run_node_eval(script)
-        out = proc.stdout.strip()
-        if not out:
-            return {}
-        return {
-            entry["name"]: {
-                "description": entry.get("description"),
-                "inputSchema": entry.get("inputSchema"),
-            }
-            for entry in json.loads(out)
-        }
-    except Exception:
+        return load_tool_catalog(_MCP_BUILD, run=_run_node_eval)
+    except CatalogUnavailable:
         return {}
 
 # Fixture-backed search tools whose canned response must be *staged* so the
