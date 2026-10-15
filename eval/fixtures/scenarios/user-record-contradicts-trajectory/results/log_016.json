@@ -1,0 +1,1272 @@
+{
+  "log_id": "log_016",
+  "tool": "record_search",
+  "retrieved": "2026-10-05T18:02:43.623Z",
+  "returned_count": 11,
+  "payload": {
+    "query": {
+      "surname": "Burton",
+      "givenName": "Polly",
+      "collectionId": "1674848",
+      "deathYearFrom": 1898,
+      "deathYearTo": 1910,
+      "deathPlace": "Kentucky",
+      "subjectId": "I2",
+      "projectPath": "/project"
+    },
+    "totalMatches": 11,
+    "paginationCappedAt": 4999,
+    "returned": 11,
+    "offset": 0,
+    "hasMore": false,
+    "results": [
+      {
+        "recordId": "ark:/61903/1:1:FWY2-YYQ",
+        "events": [],
+        "treeMatches": [],
+        "personName": "Mary Burton",
+        "score": 4.7428803,
+        "confidence": 3,
+        "sex": "Female",
+        "birthDate": "1866",
+        "deathDate": "26 April 1905",
+        "deathPlace": "Kentucky, United States",
+        "collectionId": "1674848",
+        "collectionTitle": "Kentucky, Deaths and Burials, 1843-1970",
+        "collectionUrl": "https://familysearch.org/collections/1674848",
+        "recordTitle": "Entry for Mary Burton, \"Kentucky, Deaths and Burials, 1843-1970\"",
+        "recordArk": "ark:/61903/1:2:M6DX-V8N",
+        "gedcomx": {
+          "persons": [
+            {
+              "id": "p_11103235114",
+              "ark": "ark:/61903/1:1:FWY2-YYQ",
+              "principal": true,
+              "gender": "Female",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "given": "Mary",
+                  "surname": "Burton"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Death",
+                  "primary": true,
+                  "date": "26 Apr 1905",
+                  "standard_date": "26 Apr 1905",
+                  "place": "Kentucky, United States",
+                  "standard_place": "Kentucky, United States"
+                },
+                {
+                  "type": "Birth",
+                  "date": "1866",
+                  "standard_date": "1866"
+                }
+              ]
+            }
+          ],
+          "sources": [
+            {
+              "id": "sd_c_1674848",
+              "resource_type": "Collection",
+              "title": "Kentucky, Deaths and Burials, 1843-1970",
+              "url": "https://familysearch.org/collections/1674848",
+              "coverage": {
+                "place_rep_id": "354",
+                "date_range": "1843/1970",
+                "record_type": "Vital"
+              }
+            },
+            {
+              "id": "src_r_326014546",
+              "resource_type": "Record",
+              "title": "Entry for Mary Burton, \"Kentucky, Deaths and Burials, 1843-1970\"",
+              "citation": "\"Kentucky, Deaths and Burials, 1843-1970,\" database, <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:2:M6DX-V8N : 19 February 2021), Entry for Mary Burton, ; citing reference ; FHL microfilm .",
+              "url": "https://familysearch.org/ark:/61903/1:2:M6DX-V8N",
+              "coverage": {
+                "place_rep_id": "354",
+                "date_range": "26 Apr 1905",
+                "record_type": "Vital"
+              }
+            },
+            {
+              "id": "src_p_p_11103235114",
+              "resource_type": "Person",
+              "url": "#p_11103235114"
+            }
+          ],
+          "places": [
+            {
+              "id": "354",
+              "name": "Kentucky, United States",
+              "latitude": 37.5,
+              "longitude": -85.25
+            }
+          ]
+        },
+        "primaryId": "p_11103235114",
+        "batchNumber": "B07072-0",
+        "role": "Principal"
+      },
+      {
+        "recordId": "ark:/61903/1:1:FWYG-MNP",
+        "events": [],
+        "treeMatches": [],
+        "personName": "Mary E. Burton",
+        "score": 4.7428803,
+        "confidence": 3,
+        "sex": "Female",
+        "birthDate": "1828",
+        "deathDate": "21 April 1906",
+        "deathPlace": "Kentucky, United States",
+        "collectionId": "1674848",
+        "collectionTitle": "Kentucky, Deaths and Burials, 1843-1970",
+        "collectionUrl": "https://familysearch.org/collections/1674848",
+        "recordTitle": "Entry for Mary E. Burton, \"Kentucky, Deaths and Burials, 1843-1970\"",
+        "recordArk": "ark:/61903/1:2:M6DX-RTP",
+        "gedcomx": {
+          "persons": [
+            {
+              "id": "p_11103264503",
+              "ark": "ark:/61903/1:1:FWYG-MNP",
+              "principal": true,
+              "gender": "Female",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "given": "Mary E.",
+                  "surname": "Burton"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Death",
+                  "primary": true,
+                  "date": "21 Apr 1906",
+                  "standard_date": "21 Apr 1906",
+                  "place": "Kentucky, United States",
+                  "standard_place": "Kentucky, United States"
+                },
+                {
+                  "type": "Birth",
+                  "date": "1828",
+                  "standard_date": "1828"
+                }
+              ]
+            }
+          ],
+          "sources": [
+            {
+              "id": "sd_c_1674848",
+              "resource_type": "Collection",
+              "title": "Kentucky, Deaths and Burials, 1843-1970",
+              "url": "https://familysearch.org/collections/1674848",
+              "coverage": {
+                "place_rep_id": "354",
+                "date_range": "1843/1970",
+                "record_type": "Vital"
+              }
+            },
+            {
+              "id": "src_r_326021303",
+              "resource_type": "Record",
+              "title": "Entry for Mary E. Burton, \"Kentucky, Deaths and Burials, 1843-1970\"",
+              "citation": "\"Kentucky, Deaths and Burials, 1843-1970,\" database, <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:2:M6DX-RTP : 19 February 2021), Entry for Mary E. Burton, ; citing reference ; FHL microfilm .",
+              "url": "https://familysearch.org/ark:/61903/1:2:M6DX-RTP",
+              "coverage": {
+                "place_rep_id": "354",
+                "date_range": "21 Apr 1906",
+                "record_type": "Vital"
+              }
+            },
+            {
+              "id": "src_p_p_11103264503",
+              "resource_type": "Person",
+              "url": "#p_11103264503"
+            }
+          ],
+          "places": [
+            {
+              "id": "354",
+              "name": "Kentucky, United States",
+              "latitude": 37.5,
+              "longitude": -85.25
+            }
+          ]
+        },
+        "primaryId": "p_11103264503",
+        "batchNumber": "B07072-0",
+        "role": "Principal"
+      },
+      {
+        "recordId": "ark:/61903/1:1:FWP5-52X",
+        "events": [],
+        "treeMatches": [],
+        "personName": "Mary L. Burton",
+        "score": 4.73288,
+        "confidence": 3,
+        "sex": "Female",
+        "deathDate": "9 July 1907",
+        "deathPlace": "Louisville, Jefferson, Kentucky, United States",
+        "collectionId": "1674848",
+        "collectionTitle": "Kentucky, Deaths and Burials, 1843-1970",
+        "collectionUrl": "https://familysearch.org/collections/1674848",
+        "recordTitle": "Entry for Mary L. Burton, \"Kentucky, Deaths and Burials, 1843-1970\"",
+        "recordArk": "ark:/61903/1:2:M6DX-5XY",
+        "gedcomx": {
+          "persons": [
+            {
+              "id": "p_11100100214",
+              "ark": "ark:/61903/1:1:FWP5-52X",
+              "principal": true,
+              "gender": "Female",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "given": "Mary L.",
+                  "surname": "Burton"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Death",
+                  "primary": true,
+                  "date": "9 Jul 1907",
+                  "standard_date": "9 Jul 1907",
+                  "place": "Louisville, Jefferson, Kentucky, United States",
+                  "standard_place": "Louisville, Jefferson, Kentucky, United States"
+                }
+              ]
+            }
+          ],
+          "sources": [
+            {
+              "id": "sd_c_1674848",
+              "resource_type": "Collection",
+              "title": "Kentucky, Deaths and Burials, 1843-1970",
+              "url": "https://familysearch.org/collections/1674848",
+              "coverage": {
+                "place_rep_id": "354",
+                "date_range": "1843/1970",
+                "record_type": "Vital"
+              }
+            },
+            {
+              "id": "src_r_326020047",
+              "resource_type": "Record",
+              "title": "Entry for Mary L. Burton, \"Kentucky, Deaths and Burials, 1843-1970\"",
+              "citation": "\"Kentucky, Deaths and Burials, 1843-1970,\" database, <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:2:M6DX-5XY : 19 February 2021), Entry for Mary L. Burton, ; citing reference ; FHL microfilm .",
+              "url": "https://familysearch.org/ark:/61903/1:2:M6DX-5XY",
+              "coverage": {
+                "place_rep_id": "4192405",
+                "date_range": "9 Jul 1907",
+                "record_type": "Vital"
+              }
+            },
+            {
+              "id": "src_p_p_11100100214",
+              "resource_type": "Person",
+              "url": "#p_11100100214"
+            }
+          ],
+          "places": [
+            {
+              "id": "4192405",
+              "name": "Louisville, Jefferson, Kentucky, United States",
+              "latitude": 38.25417,
+              "longitude": -85.75944
+            }
+          ]
+        },
+        "primaryId": "p_11100100214",
+        "batchNumber": "B03704-7",
+        "role": "Principal"
+      },
+      {
+        "recordId": "ark:/61903/1:1:FWY7-6YX",
+        "events": [
+          {
+            "type": "Burial",
+            "date": "28 Apr 1905",
+            "place": "Jefferson, Kentucky, United States"
+          }
+        ],
+        "treeMatches": [],
+        "personName": "Mary Burton",
+        "score": 4.73288,
+        "confidence": 3,
+        "sex": "Female",
+        "deathDate": "April 1905",
+        "deathPlace": "Louisville, Jefferson, Kentucky, United States",
+        "collectionId": "1674848",
+        "collectionTitle": "Kentucky, Deaths and Burials, 1843-1970",
+        "collectionUrl": "https://www.familysearch.org/service/cds/recapi/collections/1674848",
+        "recordTitle": "Entry for Mary Burton, \"Kentucky, Deaths and Burials, 1843-1970\"",
+        "recordArk": "ark:/61903/1:2:M6DC-SNH",
+        "gedcomx": {
+          "persons": [
+            {
+              "id": "p_11102817524",
+              "ark": "ark:/61903/1:1:FWY7-6YX",
+              "principal": true,
+              "gender": "Female",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "given": "Mary",
+                  "surname": "Burton"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Burial",
+                  "primary": true,
+                  "date": "28 Apr 1905",
+                  "standard_date": "28 Apr 1905",
+                  "place": "Jefferson, Kentucky, United States",
+                  "standard_place": "Jefferson, Kentucky, United States"
+                },
+                {
+                  "type": "Death",
+                  "date": "Apr 1905",
+                  "standard_date": "Apr 1905",
+                  "place": "Louisville, Jefferson, Kentucky",
+                  "standard_place": "Louisville, Jefferson, Kentucky, United States"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd2"
+                }
+              ]
+            }
+          ],
+          "sources": [
+            {
+              "id": "sd_c_1674848",
+              "resource_type": "Collection",
+              "title": "Kentucky, Deaths and Burials, 1843-1970",
+              "url": "https://www.familysearch.org/service/cds/recapi/collections/1674848",
+              "coverage": {
+                "place_rep_id": "354",
+                "date_range": "1843/1970",
+                "record_type": "Vital"
+              }
+            },
+            {
+              "id": "src_r_325865288",
+              "resource_type": "Record",
+              "title": "Entry for Mary Burton, \"Kentucky, Deaths and Burials, 1843-1970\"",
+              "citation": "\"Kentucky, Deaths and Burials, 1843-1970\", database, <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:2:M6DC-SNH : 21 September 2026), Entry for Mary Burton, 1905.",
+              "url": "https://familysearch.org/ark:/61903/1:2:M6DC-SNH",
+              "coverage": {
+                "place_rep_id": "4192405",
+                "date_range": "28 Apr 1905",
+                "record_type": "Vital"
+              }
+            },
+            {
+              "id": "sd2",
+              "resource_type": "DigitalArtifact",
+              "url": "https://familysearch.org/ark:/61903/3:1:3QS7-89XF-MS2N?cc=1674848"
+            },
+            {
+              "id": "src_p_p_11102817524",
+              "resource_type": "Person",
+              "url": "#p_11102817524"
+            }
+          ],
+          "places": [
+            {
+              "id": "394131",
+              "name": "Jefferson, Kentucky, United States",
+              "latitude": 38.183329,
+              "longitude": -85.65
+            },
+            {
+              "id": "4192405",
+              "name": "Louisville, Jefferson, Kentucky, United States",
+              "latitude": 38.25417,
+              "longitude": -85.75944
+            }
+          ]
+        },
+        "primaryId": "p_11102817524",
+        "batchNumber": "B01112-2",
+        "role": "Principal"
+      },
+      {
+        "recordId": "ark:/61903/1:1:FWYL-D24",
+        "events": [],
+        "treeMatches": [],
+        "personName": "Mary J. Barton",
+        "score": 4.0121603,
+        "confidence": 2,
+        "sex": "Female",
+        "birthDate": "1833",
+        "deathDate": "5 October 1905",
+        "deathPlace": "Kentucky, United States",
+        "collectionId": "1674848",
+        "collectionTitle": "Kentucky, Deaths and Burials, 1843-1970",
+        "collectionUrl": "https://familysearch.org/collections/1674848",
+        "recordTitle": "Entry for Mary J. Barton, \"Kentucky, Deaths and Burials, 1843-1970\"",
+        "recordArk": "ark:/61903/1:2:M6DX-F4M",
+        "gedcomx": {
+          "persons": [
+            {
+              "id": "p_11103248407",
+              "ark": "ark:/61903/1:1:FWYL-D24",
+              "principal": true,
+              "gender": "Female",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "given": "Mary J.",
+                  "surname": "Barton"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Death",
+                  "primary": true,
+                  "date": "5 Oct 1905",
+                  "standard_date": "5 Oct 1905",
+                  "place": "Kentucky, United States",
+                  "standard_place": "Kentucky, United States"
+                },
+                {
+                  "type": "Birth",
+                  "date": "1833",
+                  "standard_date": "1833"
+                }
+              ]
+            }
+          ],
+          "sources": [
+            {
+              "id": "sd_c_1674848",
+              "resource_type": "Collection",
+              "title": "Kentucky, Deaths and Burials, 1843-1970",
+              "url": "https://familysearch.org/collections/1674848",
+              "coverage": {
+                "place_rep_id": "354",
+                "date_range": "1843/1970",
+                "record_type": "Vital"
+              }
+            },
+            {
+              "id": "src_r_326011710",
+              "resource_type": "Record",
+              "title": "Entry for Mary J. Barton, \"Kentucky, Deaths and Burials, 1843-1970\"",
+              "citation": "\"Kentucky, Deaths and Burials, 1843-1970,\" database, <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:2:M6DX-F4M : 19 February 2021), Entry for Mary J. Barton, ; citing reference ; FHL microfilm .",
+              "url": "https://familysearch.org/ark:/61903/1:2:M6DX-F4M",
+              "coverage": {
+                "place_rep_id": "354",
+                "date_range": "5 Oct 1905",
+                "record_type": "Vital"
+              }
+            },
+            {
+              "id": "src_p_p_11103248407",
+              "resource_type": "Person",
+              "url": "#p_11103248407"
+            }
+          ],
+          "places": [
+            {
+              "id": "354",
+              "name": "Kentucky, United States",
+              "latitude": 37.5,
+              "longitude": -85.25
+            }
+          ]
+        },
+        "primaryId": "p_11103248407",
+        "batchNumber": "B07072-0",
+        "role": "Principal"
+      },
+      {
+        "recordId": "ark:/61903/1:1:FWPB-YPF",
+        "events": [
+          {
+            "type": "Burial",
+            "date": "4 Sep 1908",
+            "place": "Louisville, Jefferson, Kentucky, United States"
+          },
+          {
+            "type": "Ethnicity",
+            "value": "American"
+          },
+          {
+            "type": "MaritalStatus",
+            "value": "Widowed"
+          },
+          {
+            "type": "Race",
+            "value": "White"
+          },
+          {
+            "type": "Residence",
+            "place": "Louisville, Jefferson, Kentucky"
+          }
+        ],
+        "treeMatches": [],
+        "personName": "Marium Barton",
+        "score": 4.00216,
+        "confidence": 2,
+        "sex": "Female",
+        "birthDate": "1836",
+        "birthPlace": "Kentucky, United States",
+        "deathDate": "2 September 1908",
+        "collectionId": "1674848",
+        "collectionTitle": "Kentucky, Deaths and Burials, 1843-1970",
+        "collectionUrl": "https://www.familysearch.org/service/cds/recapi/collections/1674848",
+        "recordTitle": "Entry for Marium Barton, \"Kentucky, Deaths and Burials, 1843-1970\"",
+        "recordArk": "ark:/61903/1:2:M6DF-ZM4",
+        "gedcomx": {
+          "persons": [
+            {
+              "id": "p_11100211005",
+              "ark": "ark:/61903/1:1:FWPB-YPF",
+              "principal": true,
+              "gender": "Female",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "given": "Marium",
+                  "surname": "Barton"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Burial",
+                  "primary": true,
+                  "date": "4 Sep 1908",
+                  "standard_date": "4 Sep 1908",
+                  "place": "Louisville, Jefferson, Kentucky, United States",
+                  "standard_place": "Louisville, Jefferson, Kentucky, United States"
+                },
+                {
+                  "type": "Birth",
+                  "date": "1836",
+                  "standard_date": "1836",
+                  "place": "Ky",
+                  "standard_place": "Kentucky, United States"
+                },
+                {
+                  "type": "Death",
+                  "date": "2 Sep 1908",
+                  "standard_date": "2 Sep 1908"
+                },
+                {
+                  "type": "Ethnicity",
+                  "value": "American"
+                },
+                {
+                  "type": "MaritalStatus",
+                  "value": "Widowed"
+                },
+                {
+                  "type": "Race",
+                  "value": "White"
+                },
+                {
+                  "type": "Residence",
+                  "place": "Louisville, Jefferson, Kentucky",
+                  "standard_place": "Louisville, Jefferson, Kentucky, United States"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd2"
+                }
+              ]
+            }
+          ],
+          "sources": [
+            {
+              "id": "sd_c_1674848",
+              "resource_type": "Collection",
+              "title": "Kentucky, Deaths and Burials, 1843-1970",
+              "url": "https://www.familysearch.org/service/cds/recapi/collections/1674848",
+              "coverage": {
+                "place_rep_id": "354",
+                "date_range": "1843/1970",
+                "record_type": "Vital"
+              }
+            },
+            {
+              "id": "src_r_326034007",
+              "resource_type": "Record",
+              "title": "Entry for Marium Barton, \"Kentucky, Deaths and Burials, 1843-1970\"",
+              "citation": "\"Kentucky, Deaths and Burials, 1843-1970\", database, <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:2:M6DF-ZM4 : 21 September 2026), Entry for Marium Barton, 1908.",
+              "url": "https://familysearch.org/ark:/61903/1:2:M6DF-ZM4",
+              "coverage": {
+                "place_rep_id": "4192405",
+                "date_range": "4 Sep 1908",
+                "record_type": "Vital"
+              }
+            },
+            {
+              "id": "sd2",
+              "resource_type": "DigitalArtifact",
+              "url": "https://familysearch.org/ark:/61903/3:1:3QS7-99XF-J9Q7?cc=1674848"
+            },
+            {
+              "id": "src_p_p_11100211005",
+              "resource_type": "Person",
+              "url": "#p_11100211005"
+            }
+          ],
+          "places": [
+            {
+              "id": "354",
+              "name": "Kentucky, United States",
+              "latitude": 37.5,
+              "longitude": -85.25
+            },
+            {
+              "id": "4192405",
+              "name": "Louisville, Jefferson, Kentucky, United States",
+              "latitude": 38.25417,
+              "longitude": -85.75944
+            }
+          ]
+        },
+        "primaryId": "p_11100211005",
+        "batchNumber": "B03805-8",
+        "role": "Principal"
+      },
+      {
+        "recordId": "ark:/61903/1:1:FWTM-4DQ",
+        "events": [],
+        "treeMatches": [],
+        "personName": "Mary Barton",
+        "score": 2.8521602,
+        "confidence": 2,
+        "sex": "Female",
+        "birthPlace": "Kentucky, United States",
+        "collectionId": "1674848",
+        "collectionTitle": "Kentucky, Deaths and Burials, 1843-1970",
+        "collectionUrl": "https://familysearch.org/collections/1674848",
+        "recordTitle": "Entry for Clarinda Ann Bowen, \"Kentucky, Deaths and Burials, 1843-1970\"",
+        "recordArk": "ark:/61903/1:2:M6D7-2SZ",
+        "gedcomx": {
+          "persons": [
+            {
+              "id": "p_11101866664",
+              "ark": "ark:/61903/1:1:FWTM-4DQ",
+              "gender": "Female",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "given": "Mary",
+                  "surname": "Barton"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Birth",
+                  "place": "Kentucky",
+                  "standard_place": "Kentucky, United States"
+                }
+              ]
+            },
+            {
+              "id": "p_11101866662",
+              "ark": "ark:/61903/1:1:FWTM-4DS",
+              "principal": true,
+              "gender": "Female",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "given": "Clarinda Ann",
+                  "surname": "Bowen"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Death",
+                  "primary": true,
+                  "date": "11 Jul 1944",
+                  "standard_date": "11 Jul 1944",
+                  "place": "Dayton, Campbell, Kentucky, United States",
+                  "standard_place": "Dayton, Campbell, Kentucky, United States"
+                },
+                {
+                  "type": "Birth",
+                  "date": "22 Nov 1867",
+                  "standard_date": "22 Nov 1867",
+                  "place": "Pendleton Co., Kentucky",
+                  "standard_place": "Pendleton, Kentucky, United States"
+                }
+              ]
+            },
+            {
+              "id": "p_11101866663",
+              "ark": "ark:/61903/1:1:FWTM-4D3",
+              "gender": "Male",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "given": "William",
+                  "surname": "McMillian"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Birth",
+                  "place": "Kentucky",
+                  "standard_place": "Kentucky, United States"
+                }
+              ]
+            }
+          ],
+          "relationships": [
+            {
+              "type": "ParentChild",
+              "parent": "p_11101866663",
+              "child": "p_11101866662"
+            },
+            {
+              "type": "ParentChild",
+              "parent": "p_11101866664",
+              "child": "p_11101866662"
+            },
+            {
+              "type": "Couple",
+              "person1": "p_11101866663",
+              "person2": "p_11101866664"
+            }
+          ],
+          "sources": [
+            {
+              "id": "sd_c_1674848",
+              "resource_type": "Collection",
+              "title": "Kentucky, Deaths and Burials, 1843-1970",
+              "url": "https://familysearch.org/collections/1674848",
+              "coverage": {
+                "place_rep_id": "354",
+                "date_range": "1843/1970",
+                "record_type": "Vital"
+              }
+            },
+            {
+              "id": "src_r_325773070",
+              "resource_type": "Record",
+              "title": "Entry for Clarinda Ann Bowen, \"Kentucky, Deaths and Burials, 1843-1970\"",
+              "citation": "\"Kentucky, Deaths and Burials, 1843-1970,\" database, <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:2:M6D7-2SZ : 19 February 2021), Entry for Clarinda Ann Bowen, ; citing reference ; FHL microfilm .",
+              "url": "https://familysearch.org/ark:/61903/1:2:M6D7-2SZ",
+              "coverage": {
+                "place_rep_id": "4130352",
+                "date_range": "11 Jul 1944",
+                "record_type": "Vital"
+              }
+            },
+            {
+              "id": "src_p_p_11101866664",
+              "resource_type": "Person",
+              "url": "#p_11101866664"
+            }
+          ],
+          "places": [
+            {
+              "id": "354",
+              "name": "Kentucky, United States",
+              "latitude": 37.5,
+              "longitude": -85.25
+            },
+            {
+              "id": "394376",
+              "name": "Pendleton, Kentucky, United States",
+              "latitude": 38.7,
+              "longitude": -84.366669
+            },
+            {
+              "id": "4130352",
+              "name": "Dayton, Campbell, Kentucky, United States",
+              "latitude": 39.1128,
+              "longitude": -84.4728
+            }
+          ]
+        },
+        "primaryId": "p_11101866664",
+        "batchNumber": "B00705-4",
+        "role": "Mother"
+      },
+      {
+        "recordId": "ark:/61903/1:1:FW5Q-1Y8",
+        "events": [],
+        "treeMatches": [],
+        "personName": "Burton",
+        "score": 0.03018199,
+        "confidence": 1,
+        "sex": "Female",
+        "deathDate": "13 January 1898",
+        "deathPlace": "Louisville, Jefferson, Kentucky, United States",
+        "collectionId": "1674848",
+        "collectionTitle": "Kentucky, Deaths and Burials, 1843-1970",
+        "collectionUrl": "https://familysearch.org/collections/1674848",
+        "recordTitle": "Entry for Burton, \"Kentucky, Deaths and Burials, 1843-1970\"",
+        "recordArk": "ark:/61903/1:2:M6DX-4PN",
+        "gedcomx": {
+          "persons": [
+            {
+              "id": "p_11100374921",
+              "ark": "ark:/61903/1:1:FW5Q-1Y8",
+              "principal": true,
+              "gender": "Female",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "surname": "Burton"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Death",
+                  "primary": true,
+                  "date": "13 Jan 1898",
+                  "standard_date": "13 Jan 1898",
+                  "place": "Louisville, Jefferson, Kentucky, United States",
+                  "standard_place": "Louisville, Jefferson, Kentucky, United States"
+                }
+              ]
+            },
+            {
+              "id": "p_11100374922",
+              "ark": "ark:/61903/1:1:FW5Q-1YD",
+              "gender": "Male",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "given": "Lewis",
+                  "surname": "Burton"
+                }
+              ]
+            }
+          ],
+          "relationships": [
+            {
+              "type": "ParentChild",
+              "parent": "p_11100374922",
+              "child": "p_11100374921"
+            }
+          ],
+          "sources": [
+            {
+              "id": "sd_c_1674848",
+              "resource_type": "Collection",
+              "title": "Kentucky, Deaths and Burials, 1843-1970",
+              "url": "https://familysearch.org/collections/1674848",
+              "coverage": {
+                "place_rep_id": "354",
+                "date_range": "1843/1970",
+                "record_type": "Vital"
+              }
+            },
+            {
+              "id": "src_r_326005006",
+              "resource_type": "Record",
+              "title": "Entry for Burton, \"Kentucky, Deaths and Burials, 1843-1970\"",
+              "citation": "\"Kentucky, Deaths and Burials, 1843-1970,\" database, <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:2:M6DX-4PN : 19 February 2021), Entry for Burton, ; citing reference ; FHL microfilm .",
+              "url": "https://familysearch.org/ark:/61903/1:2:M6DX-4PN",
+              "coverage": {
+                "place_rep_id": "4192405",
+                "date_range": "13 Jan 1898",
+                "record_type": "Vital"
+              }
+            },
+            {
+              "id": "src_p_p_11100374921",
+              "resource_type": "Person",
+              "url": "#p_11100374921"
+            }
+          ],
+          "places": [
+            {
+              "id": "4192405",
+              "name": "Louisville, Jefferson, Kentucky, United States",
+              "latitude": 38.25417,
+              "longitude": -85.75944
+            }
+          ]
+        },
+        "primaryId": "p_11100374921",
+        "batchNumber": "B05193-0",
+        "role": "Principal"
+      },
+      {
+        "recordId": "ark:/61903/1:1:FW5Q-ZM4",
+        "events": [],
+        "treeMatches": [],
+        "personName": "Burton",
+        "score": 0.03018199,
+        "confidence": 1,
+        "sex": "Male",
+        "deathDate": "17 February 1899",
+        "deathPlace": "Louisville, Jefferson, Kentucky, United States",
+        "collectionId": "1674848",
+        "collectionTitle": "Kentucky, Deaths and Burials, 1843-1970",
+        "collectionUrl": "https://familysearch.org/collections/1674848",
+        "recordTitle": "Entry for Burton, \"Kentucky, Deaths and Burials, 1843-1970\"",
+        "recordArk": "ark:/61903/1:2:M6DX-35D",
+        "gedcomx": {
+          "persons": [
+            {
+              "id": "p_11100357007",
+              "ark": "ark:/61903/1:1:FW5Q-ZM4",
+              "principal": true,
+              "gender": "Male",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "surname": "Burton"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Death",
+                  "primary": true,
+                  "date": "17 Feb 1899",
+                  "standard_date": "17 Feb 1899",
+                  "place": "Louisville, Jefferson, Kentucky, United States",
+                  "standard_place": "Louisville, Jefferson, Kentucky, United States"
+                }
+              ]
+            },
+            {
+              "id": "p_11100357008",
+              "ark": "ark:/61903/1:1:FW5Q-ZMH",
+              "gender": "Male",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "given": "H.y.",
+                  "surname": "Burton"
+                }
+              ]
+            },
+            {
+              "id": "p_11100357009",
+              "ark": "ark:/61903/1:1:FW5Q-ZMC",
+              "gender": "Female",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "given": "Mammie"
+                }
+              ]
+            }
+          ],
+          "relationships": [
+            {
+              "type": "ParentChild",
+              "parent": "p_11100357008",
+              "child": "p_11100357007"
+            },
+            {
+              "type": "ParentChild",
+              "parent": "p_11100357009",
+              "child": "p_11100357007"
+            },
+            {
+              "type": "Couple",
+              "person1": "p_11100357008",
+              "person2": "p_11100357009"
+            }
+          ],
+          "sources": [
+            {
+              "id": "sd_c_1674848",
+              "resource_type": "Collection",
+              "title": "Kentucky, Deaths and Burials, 1843-1970",
+              "url": "https://familysearch.org/collections/1674848",
+              "coverage": {
+                "place_rep_id": "354",
+                "date_range": "1843/1970",
+                "record_type": "Vital"
+              }
+            },
+            {
+              "id": "src_r_326001432",
+              "resource_type": "Record",
+              "title": "Entry for Burton, \"Kentucky, Deaths and Burials, 1843-1970\"",
+              "citation": "\"Kentucky, Deaths and Burials, 1843-1970,\" database, <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:2:M6DX-35D : 19 February 2021), Entry for Burton, ; citing reference ; FHL microfilm .",
+              "url": "https://familysearch.org/ark:/61903/1:2:M6DX-35D",
+              "coverage": {
+                "place_rep_id": "4192405",
+                "date_range": "17 Feb 1899",
+                "record_type": "Vital"
+              }
+            },
+            {
+              "id": "src_p_p_11100357007",
+              "resource_type": "Person",
+              "url": "#p_11100357007"
+            }
+          ],
+          "places": [
+            {
+              "id": "4192405",
+              "name": "Louisville, Jefferson, Kentucky, United States",
+              "latitude": 38.25417,
+              "longitude": -85.75944
+            }
+          ]
+        },
+        "primaryId": "p_11100357007",
+        "batchNumber": "B05192-9",
+        "role": "Principal"
+      },
+      {
+        "recordId": "ark:/61903/1:1:FWY6-96Y",
+        "events": [],
+        "treeMatches": [],
+        "personName": "Burton",
+        "score": -1.1268181,
+        "confidence": 1,
+        "sex": "Male",
+        "collectionId": "1674848",
+        "collectionTitle": "Kentucky, Deaths and Burials, 1843-1970",
+        "collectionUrl": "https://www.familysearch.org/service/cds/recapi/collections/1674848",
+        "recordTitle": "Entry for <Unknown>, \"Kentucky, Deaths and Burials, 1843-1970\"",
+        "recordArk": "ark:/61903/1:2:M6D4-GMZ",
+        "gedcomx": {
+          "persons": [
+            {
+              "id": "p_11103022317",
+              "ark": "ark:/61903/1:1:FWY6-96Y",
+              "gender": "Male",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "surname": "Burton"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd2"
+                }
+              ]
+            },
+            {
+              "id": "p_11103022316",
+              "ark": "ark:/61903/1:1:FWY6-96T",
+              "principal": true,
+              "gender": "Unknown",
+              "facts": [
+                {
+                  "type": "Burial",
+                  "primary": true,
+                  "date": "2 Sep 1873",
+                  "standard_date": "2 Sep 1873",
+                  "place": "Louisville, Jefferson, Kentucky, United States",
+                  "standard_place": "Louisville, Jefferson, Kentucky, United States"
+                },
+                {
+                  "type": "Death",
+                  "place": "Louisville, Jefferson, Kentucky",
+                  "standard_place": "Louisville, Jefferson, Kentucky, United States"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd2"
+                }
+              ]
+            }
+          ],
+          "relationships": [
+            {
+              "type": "ParentChild",
+              "parent": "p_11103022317",
+              "child": "p_11103022316"
+            }
+          ],
+          "sources": [
+            {
+              "id": "sd_c_1674848",
+              "resource_type": "Collection",
+              "title": "Kentucky, Deaths and Burials, 1843-1970",
+              "url": "https://www.familysearch.org/service/cds/recapi/collections/1674848",
+              "coverage": {
+                "place_rep_id": "354",
+                "date_range": "1843/1970",
+                "record_type": "Vital"
+              }
+            },
+            {
+              "id": "src_r_325828810",
+              "resource_type": "Record",
+              "title": "Entry for <Unknown>, \"Kentucky, Deaths and Burials, 1843-1970\"",
+              "citation": "\"Kentucky, Deaths and Burials, 1843-1970\", database, <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:2:M6D4-GMZ : 10 September 2026), Entry for <Unknown>, 1873.",
+              "url": "https://familysearch.org/ark:/61903/1:2:M6D4-GMZ",
+              "coverage": {
+                "place_rep_id": "4192405",
+                "date_range": "2 Sep 1873",
+                "record_type": "Vital"
+              }
+            },
+            {
+              "id": "sd2",
+              "resource_type": "DigitalArtifact",
+              "url": "https://familysearch.org/ark:/61903/3:1:3QSQ-G9XF-KHCY?cc=1674848"
+            },
+            {
+              "id": "src_p_p_11103022317",
+              "resource_type": "Person",
+              "url": "#p_11103022317"
+            }
+          ],
+          "places": [
+            {
+              "id": "4192405",
+              "name": "Louisville, Jefferson, Kentucky, United States",
+              "latitude": 38.25417,
+              "longitude": -85.75944
+            }
+          ]
+        },
+        "primaryId": "p_11103022317",
+        "batchNumber": "B00424-8",
+        "role": "Father"
+      },
+      {
+        "recordId": "ark:/61903/1:1:FWPJ-32T",
+        "events": [],
+        "treeMatches": [],
+        "personName": "Borton",
+        "score": -1.8505379,
+        "confidence": 1,
+        "sex": "Male",
+        "collectionId": "1674848",
+        "collectionTitle": "Kentucky, Deaths and Burials, 1843-1970",
+        "collectionUrl": "https://www.familysearch.org/service/cds/recapi/collections/1674848",
+        "recordTitle": "Entry for Grace V. Eslinger, \"Kentucky, Deaths and Burials, 1843-1970\"",
+        "recordArk": "ark:/61903/1:2:M6D7-HFZ",
+        "gedcomx": {
+          "persons": [
+            {
+              "id": "p_11099892326",
+              "ark": "ark:/61903/1:1:FWPJ-32T",
+              "gender": "Male",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "surname": "Borton"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd2"
+                }
+              ]
+            },
+            {
+              "id": "p_11099892325",
+              "ark": "ark:/61903/1:1:FWPJ-32R",
+              "principal": true,
+              "gender": "Female",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "given": "Grace V.",
+                  "surname": "Eslinger"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Burial",
+                  "primary": true,
+                  "date": "14 Jan 1949",
+                  "standard_date": "14 Jan 1949",
+                  "place": "Alexandria, Campbell, Kentucky, United States",
+                  "standard_place": "Alexandria, Campbell, Kentucky, United States"
+                },
+                {
+                  "type": "Death",
+                  "date": "11 Jan 1949",
+                  "standard_date": "11 Jan 1949"
+                },
+                {
+                  "type": "Birth",
+                  "date": "1882",
+                  "standard_date": "1882",
+                  "place": "Kentucky",
+                  "standard_place": "Kentucky, United States"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd2"
+                }
+              ]
+            }
+          ],
+          "relationships": [
+            {
+              "type": "ParentChild",
+              "parent": "p_11099892326",
+              "child": "p_11099892325"
+            }
+          ],
+          "sources": [
+            {
+              "id": "sd_c_1674848",
+              "resource_type": "Collection",
+              "title": "Kentucky, Deaths and Burials, 1843-1970",
+              "url": "https://www.familysearch.org/service/cds/recapi/collections/1674848",
+              "coverage": {
+                "place_rep_id": "354",
+                "date_range": "1843/1970",
+                "record_type": "Vital"
+              }
+            },
+            {
+              "id": "src_r_325762660",
+              "resource_type": "Record",
+              "title": "Entry for Grace V. Eslinger, \"Kentucky, Deaths and Burials, 1843-1970\"",
+              "citation": "\"Kentucky, Deaths and Burials, 1843-1970\", database, <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:2:M6D7-HFZ : 21 September 2026), Entry for Grace V. Eslinger, 1949.",
+              "url": "https://familysearch.org/ark:/61903/1:2:M6D7-HFZ",
+              "coverage": {
+                "place_rep_id": "4145019",
+                "date_range": "14 Jan 1949",
+                "record_type": "Vital"
+              }
+            },
+            {
+              "id": "sd2",
+              "resource_type": "DigitalArtifact",
+              "url": "https://familysearch.org/ark:/61903/3:1:3QSQ-G9XF-CXMM?cc=1674848"
+            },
+            {
+              "id": "src_p_p_11099892326",
+              "resource_type": "Person",
+              "url": "#p_11099892326"
+            }
+          ],
+          "places": [
+            {
+              "id": "354",
+              "name": "Kentucky, United States",
+              "latitude": 37.5,
+              "longitude": -85.25
+            },
+            {
+              "id": "4145019",
+              "name": "Alexandria, Campbell, Kentucky, United States",
+              "latitude": 38.9594,
+              "longitude": -84.3881
+            }
+          ]
+        },
+        "primaryId": "p_11099892326",
+        "batchNumber": "B03628-2",
+        "role": "Father"
+      }
+    ]
+  }
+}
