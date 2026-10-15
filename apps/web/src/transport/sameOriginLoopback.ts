@@ -34,3 +34,40 @@ export function sameOriginLoopback(wssUrl: string, pageHostname: string): string
   // so returning one here would produce `//?token=` and a 404 on the handshake path.
   return u.toString().replace(/\/$/, '')
 }
+
+/** Dev only: route a loopback sandbox socket through THIS origin's dev server.
+ *
+ * `sameOriginLoopback` above fixes the host; this fixes the PORT, which is the part some
+ * browsers block. A local sandbox listens on its own high port, and a browser that is
+ * happy with every proxied HTTP request can still refuse a direct `ws://` to a different
+ * port -- measured: a clean Chromium opened it fine while the reporter's browser could
+ * not, on the same origin, same machine, same sandbox.
+ *
+ * `/sandbox-ws/<port>` is spliced to `127.0.0.1:<port>` by the `sandbox-ws-tunnel` plugin
+ * in vite.config.ts. Same origin, same port as the page, so there is nothing left to
+ * block.
+ *
+ * Returns the input unchanged unless ALL of: we are in dev, the URL is loopback, and it
+ * carries an explicit port. A hosted `wss://…e2b.app` is never rewritten -- that would
+ * aim the socket at the viewer's own machine.
+ */
+export function devSandboxTunnel(wssUrl: string, isDev: boolean, pageOrigin: string): string {
+  if (!isDev || !wssUrl || !pageOrigin) return wssUrl
+  let u: URL
+  try {
+    u = new URL(wssUrl)
+  } catch {
+    return wssUrl
+  }
+  if (u.protocol !== 'ws:') return wssUrl           // never touch wss://
+  if (!LOOPBACK.has(u.hostname)) return wssUrl
+  if (!u.port) return wssUrl
+  let origin: URL
+  try {
+    origin = new URL(pageOrigin)
+  } catch {
+    return wssUrl
+  }
+  const scheme = origin.protocol === 'https:' ? 'wss:' : 'ws:'
+  return `${scheme}//${origin.host}/sandbox-ws/${u.port}`
+}

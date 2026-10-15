@@ -56,16 +56,16 @@ class _Conn:
     def execute(self, sql, params): self.sql = (sql, params); return _Cur(self._row)
 
 
-class _Body:
-    def __init__(self, data): self._d = data
-    def read(self): return self._d
-
-
 class _S3:
+    """The `S3Blobs` facade's surface. `fetch_sidecar` takes the shared facade now rather
+    than a raw client: the client it used to be handed keyed on GENEALOGY_S3_ENDPOINT,
+    which the handoff says to leave unset on AWS, so it was None on every deployed tier
+    and this route always answered "no sidecar"."""
+
     def __init__(self, data=None, boom=False): self._d = data; self._boom = boom
-    def get_object(self, Bucket, Key):  # noqa: N803 - boto3's own signature
+    def get(self, key):
         if self._boom: raise RuntimeError("no such key")
-        return {"Body": _Body(self._d)}
+        return self._d
 
 
 from datetime import datetime, timezone  # noqa: E402
@@ -77,28 +77,28 @@ T0 = datetime(2026, 9, 29, 12, 0, tzinfo=timezone.utc)
 
 def test_fetch_returns_the_object_body_and_the_rows_timestamp():
     conn = _Conn(("s3/abc", T0))
-    blob = fetch_sidecar(conn, _S3(b'{"log_id":"log_1"}'), "projects", "proj_1", "log_1")
+    blob = fetch_sidecar(conn, _S3(b'{"log_id":"log_1"}'), "proj_1", "log_1")
     assert blob.raw == '{"log_id":"log_1"}'
     assert blob.mtime == T0.timestamp()
 
 
 def test_fetch_asks_for_the_right_key():
     conn = _Conn(("s3/abc", T0))
-    fetch_sidecar(conn, _S3(b"{}"), "projects", "proj_1", "log_7")
+    fetch_sidecar(conn, _S3(b"{}"), "proj_1", "log_7")
     assert conn.sql[1] == ("proj_1", "results/log_7.json")
 
 
 def test_no_row_means_no_sidecar():
-    assert fetch_sidecar(_Conn(None), _S3(b"{}"), "projects", "proj_1", "log_1") is None
+    assert fetch_sidecar(_Conn(None), _S3(b"{}"), "proj_1", "log_1") is None
 
 
 def test_a_row_whose_object_is_gone_is_no_sidecar_not_a_crash():
     """A half-written project must show "no sidecar", not a 500."""
-    assert fetch_sidecar(_Conn(("s3/gone", T0)), _S3(boom=True), "projects", "proj_1", "log_1") is None
+    assert fetch_sidecar(_Conn(("s3/gone", T0)), _S3(boom=True), "proj_1", "log_1") is None
 
 
 def test_a_bad_log_id_never_reaches_the_database():
     conn = _Conn(("s3/abc", T0))
     with pytest.raises(ValueError):
-        fetch_sidecar(conn, _S3(b"{}"), "projects", "proj_1", "../etc/passwd")
+        fetch_sidecar(conn, _S3(b"{}"), "proj_1", "../etc/passwd")
     assert conn.sql is None, "the traversal attempt must be refused BEFORE any query"

@@ -31,22 +31,24 @@ from web.project_blobs import (  # noqa: E402
 
 
 class FakeS3:
+    """The `S3Blobs` facade's surface, not a raw client. Both helpers take the shared
+    facade now so one object knows how to reach the bucket -- the raw client they used
+    to build keyed on GENEALOGY_S3_ENDPOINT and so was None on every AWS tier.
+
+    No `delete`: the facade has none. A superseded object is left to U19's orphan sweep,
+    because deleting it here ran before the route's commit.
+    """
+
     def __init__(self) -> None:
         self.objects: dict[str, bytes] = {}
-        self.deleted: list[str] = []
+        self.content_types: dict[str, str] = {}
 
-    def put_object(self, Bucket: str, Key: str, Body: bytes) -> None:  # noqa: N803
-        self.objects[Key] = Body
+    def put(self, key: str, data: bytes, content_type: str) -> None:
+        self.objects[key] = data
+        self.content_types[key] = content_type
 
-    def get_object(self, Bucket: str, Key: str) -> dict:  # noqa: N803
-        if Key not in self.objects:
-            raise KeyError(Key)
-        body = self.objects[Key]
-        return {"Body": type("B", (), {"read": staticmethod(lambda: body)})()}
-
-    def delete_object(self, Bucket: str, Key: str) -> None:  # noqa: N803
-        self.deleted.append(Key)
-        self.objects.pop(Key, None)
+    def get(self, key: str) -> bytes:
+        return self.objects[key]  # KeyError when absent, as botocore raises
 
 
 class FakeConn:
@@ -70,45 +72,53 @@ def test_a_stored_scan_comes_back_as_bytes():
     """The clause: a census page opens from the feed. Bytes, not UTF-8 — `fetch_sidecar`
     decodes and an image must not."""
     s3, conn = FakeS3(), FakeConn()
-    put_blob(conn, s3, "b", "p1", "images/a.jpg", b"\xff\xd8\xff\xe0 jpeg bytes")
-    blob = fetch_blob(conn, s3, "b", "p1", "images/a.jpg")
+    put_blob(conn, s3, "p1", "images/a.jpg", b"\xff\xd8\xff\xe0 jpeg bytes")
+    blob = fetch_blob(conn, s3, "p1", "images/a.jpg")
     assert blob is not None and blob.body == b"\xff\xd8\xff\xe0 jpeg bytes"
 
 
 def test_a_missing_scan_is_none_not_an_error():
     """404 is a real state here: most projects hold no scans."""
-    assert fetch_blob(FakeConn(), FakeS3(), "b", "p1", "images/none.jpg") is None
+    assert fetch_blob(FakeConn(), FakeS3(), "p1", "images/none.jpg") is None
 
 
 def test_a_row_pointing_at_a_vanished_object_is_none_not_a_500():
     """A half-written project should read as 'not there'."""
     s3, conn = FakeS3(), FakeConn()
-    put_blob(conn, s3, "b", "p1", "images/a.jpg", b"x")
+    put_blob(conn, s3, "p1", "images/a.jpg", b"x")
     s3.objects.clear()
-    assert fetch_blob(conn, s3, "b", "p1", "images/a.jpg") is None
+    assert fetch_blob(conn, s3, "p1", "images/a.jpg") is None
 
 
 def test_an_upload_writes_bytes_and_indexes_them():
     s3, conn = FakeS3(), FakeConn()
-    n = put_blob(conn, s3, "b", "p1", upload_key("deed.pdf"), b"%PDF-1.4 hello")
+    n = put_blob(conn, s3, "p1", upload_key("deed.pdf"), b"%PDF-1.4 hello")
     assert n == 14
     s3_key, nbytes, sha = conn.rows[("p1", "uploads/deed.pdf")]
     assert nbytes == 14 and len(sha) == 64, "bytes and sha256 are NOT NULL columns"
     assert s3.objects[s3_key] == b"%PDF-1.4 hello"
 
 
-def test_reuploading_a_name_replaces_it_and_strands_no_object():
+def test_reuploading_a_name_replaces_the_row_and_leaves_the_old_object_to_the_sweep():
     """Upsert, mirroring the engine's `indexObject`: the researcher's mental model is a
-    folder. The superseded OBJECT must go too, or every re-upload leaks one."""
+    folder, so the ROW must point at the new bytes.
+
+    The superseded OBJECT is deliberately NOT deleted here any more. The delete ran before
+    the route commits, so a commit failure after a re-upload rolled the row back to a key
+    whose object had just been removed and a good file read as "image not found". On AWS
+    the web role has no DeleteObject at all; granting it to make uploads work would have
+    activated exactly that. The object is unreferenced and `<project>/<key>/<uuid>`-shaped,
+    which is what U19's orphan sweep collects.
+    """
     s3, conn = FakeS3(), FakeConn()
-    put_blob(conn, s3, "b", "p1", upload_key("a.pdf"), b"first")
+    put_blob(conn, s3, "p1", upload_key("a.pdf"), b"first")
     first_key = conn.rows[("p1", "uploads/a.pdf")][0]
-    put_blob(conn, s3, "b", "p1", upload_key("a.pdf"), b"second")
+    put_blob(conn, s3, "p1", upload_key("a.pdf"), b"second")
     second_key = conn.rows[("p1", "uploads/a.pdf")][0]
 
     assert second_key != first_key, "a fresh object key per write, never overwrite in place"
-    assert first_key in s3.deleted, "the superseded object was left behind"
-    assert fetch_blob(conn, s3, "b", "p1", upload_key("a.pdf")).body == b"second"
+    assert first_key in s3.objects, "the superseded object must survive for the sweep to collect"
+    assert fetch_blob(conn, s3, "p1", upload_key("a.pdf")).body == b"second"
 
 
 def test_the_object_is_written_before_the_row_points_at_it():
@@ -117,13 +127,13 @@ def test_the_object_is_written_before_the_row_points_at_it():
     None, so it reads as 'no scan' forever rather than erring."""
     s3, conn = FakeS3(), FakeConn()
     order: list[str] = []
-    real_put, real_exec = s3.put_object, conn.execute
-    s3.put_object = lambda **kw: (order.append("object"), real_put(**kw))[1]  # type: ignore[assignment]
+    real_put, real_exec = s3.put, conn.execute
+    s3.put = lambda *a, **kw: (order.append("object"), real_put(*a, **kw))[1]  # type: ignore[assignment]
     conn.execute = lambda sql, params: (  # type: ignore[assignment]
         order.append("row") if sql.startswith("INSERT") else None,
         real_exec(sql, params),
     )[1]
-    put_blob(conn, s3, "b", "p1", "images/a.jpg", b"x")
+    put_blob(conn, s3, "p1", "images/a.jpg", b"x")
     assert order == ["object", "row"]
 
 

@@ -85,7 +85,6 @@ import functools
 import html
 import json
 import logging
-from functools import lru_cache
 import os
 import re
 import secrets
@@ -378,39 +377,6 @@ def _pg_dsn() -> str:
     `make harness-lint`'s F821 pass covered `eval/harness` but not `apps/server`.
     """
     return os.environ.get("PG_DSN") or DEFAULT_PG_DSN
-
-@lru_cache(maxsize=1)
-def _s3_client():
-    """A blob-store client, or None where none is configured.
-
-    None rather than raising: a deployment with no blob store should serve every
-    other route, and its sidecars are legitimately absent.
-
-    The body was lost in the 2026-10-12 main merge, leaving `return None` as the only
-    path -- so every sidecar on a deployed tier answered "no blob store configured",
-    the viewer read that as "this log has no sidecar", and nothing went red. The route
-    tests all stub the lookup, so they cannot see this class of break; the unit test on
-    this function is what can.
-    """
-    if not S3_ENDPOINT:
-        return None
-    try:
-        # botocore, not boto3. Both are in `proto-web`, but only botocore is in the
-        # venv the tests run in -- so a guard written against boto3 cannot execute in
-        # CI, which is the whole reason this function went unprotected long enough to
-        # lose its body. `fetch_sidecar` asks this client for `get_object` and nothing
-        # else, and botocore's own client provides it.
-        import botocore.session  # noqa: PLC0415 - optional, absent in a no-blob deployment
-
-        return botocore.session.get_session().create_client(
-            "s3",
-            endpoint_url=S3_ENDPOINT,
-            region_name=os.environ.get("GENEALOGY_S3_REGION", "us-east-1"),
-            aws_access_key_id=os.environ.get("GENEALOGY_S3_ACCESS_KEY", ""),
-            aws_secret_access_key=os.environ.get("GENEALOGY_S3_SECRET_KEY", ""),
-        )
-    except Exception:  # noqa: BLE001 - a client we cannot build is a client we do not have
-        return None
 
 
 # ── rows ─────────────────────────────────────────────────────────────────────────
@@ -1800,13 +1766,19 @@ def create_app(
             # A traversal attempt is a bad request, not a missing file -- 404 would
             # tell a prober that the path shape was accepted.
             raise HTTPException(status_code=400, detail="not a log id") from None
-        s3 = _s3_client()
-        if s3 is None:
+        # The SHARED facade, not a second client: `blobstore.client` keys on the bucket
+        # and omits `endpoint_url` when unset, so it works on AWS where the regional
+        # endpoint is correct and the instance profile signs. `_s3_client` keyed on
+        # GENEALOGY_S3_ENDPOINT, which the handoff says to leave unset on AWS, so it
+        # returned None on every deployed tier and this route always 404'd.
+        blobs = request.app.state.blobs
+        if blobs is None:
+            # 404, not 503: a scan reads as ABSENT rather than unimplemented.
             raise HTTPException(status_code=404, detail="no blob store configured")
         import psycopg
 
         with psycopg.connect(_pg_dsn()) as conn:
-            blob = fetch_sidecar(conn, s3, S3_BUCKET, row.project_id, log_id)
+            blob = fetch_sidecar(conn, blobs, row.project_id, log_id)
         payload = sidecar_payload(blob)
         if payload is None:
             # 404 is a REAL state: most log entries have no sidecar.
@@ -1842,13 +1814,14 @@ def create_app(
         row = await _session(request, session_id, user)
         if not filename or ".." in filename or not IMAGE_REF_RE.match(filename):
             raise HTTPException(status_code=400, detail="not an image reference")
-        s3 = _s3_client()
-        if s3 is None:
+        blobs = request.app.state.blobs
+        if blobs is None:
+            # 404, not 503: most projects hold no scans, so absent is the honest answer.
             raise HTTPException(status_code=404, detail="no blob store configured")
         import psycopg
 
         with psycopg.connect(_pg_dsn()) as conn:
-            blob = fetch_blob(conn, s3, S3_BUCKET, row.project_id, filename)
+            blob = fetch_blob(conn, blobs, row.project_id, filename)
         if blob is None:
             # 404 is a REAL state: most projects hold no scans.
             raise HTTPException(status_code=404, detail="image not found")
@@ -1887,14 +1860,17 @@ def create_app(
             raise HTTPException(status_code=400, detail="the file is empty")
         if len(body) > UPLOAD_MAX_BYTES:
             raise HTTPException(status_code=413, detail="the file is larger than 25 MB")
-        s3 = _s3_client()
-        if s3 is None:
+        blobs = request.app.state.blobs
+        if blobs is None:
+            # 503 here, unlike the GETs: the researcher asked to STORE something and a
+            # missing store is "unavailable", not "absent". Matches the feedback route.
             raise HTTPException(status_code=503, detail="no blob store configured")
         key = upload_key(name)
         import psycopg
 
         with psycopg.connect(_pg_dsn()) as conn:
-            written = put_blob(conn, s3, S3_BUCKET, row.project_id, key, body)
+            written = put_blob(conn, blobs, row.project_id, key, body,
+                               content_type=file.content_type or "application/octet-stream")
             conn.commit()
         return {"path": key, "sizeBytes": written}
 

@@ -49,7 +49,7 @@ def sidecar_payload(blob: SidecarBlob | None) -> dict[str, Any] | None:
     return {"raw": blob.raw, "mtime": float(blob.mtime)}
 
 
-def fetch_sidecar(conn: Any, s3: Any, bucket: str, project_id: str, log_id: str) -> SidecarBlob | None:
+def fetch_sidecar(conn: Any, blobs: Any, project_id: str, log_id: str) -> SidecarBlob | None:
     """The blob for one log's sidecar, or None.
 
     Two steps because the body is not in Postgres: the `blobs` row carries the S3 key
@@ -67,8 +67,9 @@ def fetch_sidecar(conn: Any, s3: Any, bucket: str, project_id: str, log_id: str)
     s3_key = row[0] if not isinstance(row, dict) else row["s3_key"]
     created = row[1] if not isinstance(row, dict) else row["created_at"]
     try:
-        obj = s3.get_object(Bucket=bucket, Key=s3_key)
-        raw = obj["Body"].read().decode("utf-8")
+        # The shared facade, not a raw client: one object knows how to reach the bucket,
+        # and it is the one that works on AWS with no endpoint set.
+        raw = blobs.get(s3_key).decode("utf-8")
     except Exception:  # noqa: BLE001 - a missing or unreadable object is "no sidecar"
         return None
     mtime = created.timestamp() if hasattr(created, "timestamp") else float(created or 0)
