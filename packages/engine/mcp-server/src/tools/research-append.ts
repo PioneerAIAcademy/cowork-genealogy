@@ -23,6 +23,7 @@ import { SETTLED_CONFLICT_STATUSES, VALIDATOR_ENUMS } from "../validation/valida
 import { validateIntroduced } from "../validation/introduced-errors.js";
 import { sanitizeTree } from "../validation/tree-sanitize.js";
 import {
+  competingParentSets,
   conflictBlocksCompletion,
   questionTiedAssertionIds,
   whyConflictBlocksCompletion,
@@ -46,13 +47,24 @@ import {
 import { compatiblePlace } from "../utils/date-comparison.js";
 import { normalizeString } from "../utils/string-similarity.js";
 import { getDayRange, isABeforeB } from "../utils/date-helpers.js";
-import { placeSegments, canonicalCountry } from "../utils/place-resolver.js";
+import {
+  placeSegments,
+  canonicalCountry,
+  standardPlaceToCoords,
+  UK_CONSTITUENTS,
+  placeTypeKey,
+  resolveStandardPlace,
+  countryConsistency,
+  isNonPlacePhrase,
+  type PlaceCoords,
+} from "../utils/place-resolver.js";
+import { birthThresholdMiles, lookupPlaceCoords } from "../utils/place-coords.js";
+import { haversineDistance } from "./distance.js";
 import { exampleHints } from "./research-append-examples.js";
 import { gcUnreferencedImages, sourceImageCapState } from "../utils/image-store.js";
 import { nextId } from "../utils/gedcomx-ids.js";
 import { arkToBareId } from "../utils/ark.js";
 import { PERSONA_BEARING_PRODUCERS } from "../utils/results-staging.js";
-import { resolveStandardPlace, countryConsistency } from "../utils/place-resolver.js";
 import { isStopGateSatisfied, getStoppedBecause } from "../utils/question-stop.js";
 
 // Re-exported for back-compat: tests and any other importer that reaches this
@@ -69,6 +81,7 @@ import {
   factText,
   materializesToPersonFact,
   type AssertionFactAttr,
+  factTypeKey,
 } from "../utils/record-persona.js";
 import type { SimplifiedGedcomX, SimplifiedFact } from "../types/gedcomx.js";
 import { recordBasisOf } from "../utils/record-basis.js";
@@ -789,11 +802,13 @@ const BIRTH_DATE_FACT_TYPES: ReadonlySet<string> = new Set([
  *  would read every `~1845` as a contradiction. */
 const MAX_BIRTH_YEAR_GAP = 5;
 
+const YEAR_PATTERN = /\b(1[0-9]{3}|20[0-9]{2})\b/;
+
 /** First 4-digit year in a date string, tolerating `~1845`, `11Jan1758`,
  *  `1858-03-12` and `about 1832`. Null when none is present -- an unparseable
  *  date states nothing to compare, which must not read as a contradiction. */
 function yearOf(value: unknown): number | null {
-  const m = /\b(1[0-9]{3}|20[0-9]{2})\b/.exec(String(value ?? ""));
+  const m = YEAR_PATTERN.exec(String(value ?? ""));
   return m ? Number(m[1]) : null;
 }
 
@@ -811,7 +826,16 @@ function yearOf(value: unknown): number | null {
  *
  *  Place uses `birthPlacesAgree`: equality and containment are both
  *  compatible, so only an outright disagreement counts. A place-less assertion
- *  states nothing and is skipped.
+ *  states nothing and is skipped, and so does a non-place phrase ("Same
+ *  House"). A disagreement then counts only when the two places are in
+ *  different countries or further apart than `birthThresholdMiles` allows for
+ *  the era (lead ruling 2026-10-13, issue #3390): a research question's premise
+ *  "near Nueva Italia, Michoacán" and a record's "La Unión, Guerrero", 85 mi
+ *  apart in 1910, are not a contradiction. When the distance cannot be computed
+ *  (no standard_place on a side, no coordinates, a side that is a whole region,
+ *  two counties, no year) the cap fires. A place-only assertions update
+ *  re-resolves its standard_place in `prepareOps`, so a stale one does not stand
+ *  for the corrected place.
  *
  *  Scope is deliberately narrow: only the record's own assertions, only against
  *  the tree person's BIRTH fact, and only where both sides actually state a
@@ -967,16 +991,124 @@ function ownPartyLinkedTo(
   });
 }
 
-export function coreIdentifierContradictionInvariants(
+/** Coordinates of standard places, looked up in `prepareOps` because the gate
+ *  below is synchronous. A name that is absent or null was not resolved. */
+export type BirthPlaceCoords = ReadonlyMap<string, PlaceCoords | null>;
+
+/** Places types (as `placeTypeKey` reads them) that name a whole region rather
+ *  than somewhere a person is born. Their coordinates are the region's centre,
+ *  so a distance from one is not computable and the pair caps. A county,
+ *  department or municipality still gets a distance: the cruz-corona-ancestry
+ *  record is a Mexican municipality. Two counties against each other cap,
+ *  though: two different counties named as a birthplace are two different
+ *  places (Perthshire against Forfarshire), not one place measured twice. */
+const REGION_PLACE_TYPES: ReadonlySet<string> = new Set([
+  "continent", "country", "dependency or protectorate", "colony", "state", "province", "territory",
+  "region", "prefecture", "governorate", "principality or emirate",
+]);
+
+/** The write path's whole budget for those lookups. Over it, a pair has no
+ *  coordinates and the cap fires. */
+const BIRTH_PLACE_COORDS_BUDGET_MS = 10_000;
+
+/** The country a birth place names: the last segment, read from the end, that
+ *  `canonicalCountry` recognizes. A trailing United Kingdom gives way to a
+ *  country named before it, so "Bath, Somerset, England" and "Bath, Somerset,
+ *  England, United Kingdom" both read England, while England against Scotland,
+ *  or against "Dublin, Ireland, United Kingdom", still differs. Null when no
+ *  segment is recognized. A US state is not read as the United States: "CA" is
+ *  also Canada, and a US place's standard_place names its country anyway. Not
+ *  `placeCountry`: that groups countries whose borders moved, which suits a
+ *  residence move and would let a census's "born Ireland" against "born
+ *  England" through here. */
+function birthCountry(place: unknown): string | null {
+  if (typeof place !== "string") return null;
+  const segments = placeSegments(place);
+  for (let i = segments.length - 1; i >= 0; i--) {
+    const country = canonicalCountry(segments[i]);
+    if (!country) continue;
+    if (country === "united kingdom") {
+      for (let k = i - 1; k >= 0; k--) {
+        const inner = canonicalCountry(segments[k]);
+        if (inner && inner !== "united kingdom") return inner;
+      }
+    }
+    return country;
+  }
+  return null;
+}
+
+/** The country a standard place names. A FamilySearch standard place always
+ *  ends at its country, so the last segment is read as one even when
+ *  `canonicalCountry` does not know it ("Zagreb, Croatia"). */
+function standardPlaceCountry(standardPlace: unknown): string | null {
+  const known = birthCountry(standardPlace);
+  if (known) return known;
+  if (typeof standardPlace !== "string") return null;
+  const segments = placeSegments(standardPlace);
+  return segments.length > 1 ? normalizeString(segments[segments.length - 1]) : null;
+}
+
+/** Both sides name a country and the two differ. Read from the place text, or
+ *  from the standard_place when the text names none. A bare United Kingdom
+ *  does not differ from a constituent: it names no constituent to differ from.
+ *  Offline. */
+function birthCountriesDiffer(assertion: any, birth: any): boolean {
+  const a = birthCountry(assertion?.place) ?? standardPlaceCountry(assertion?.standard_place);
+  const b = birthCountry(birth?.place) ?? standardPlaceCountry(birth?.standard_place);
+  if (a === null || b === null || a === b) return false;
+  const ukPair = (x: string, y: string) => x === "united kingdom" && UK_CONSTITUENTS.has(y);
+  return !ukPair(a, b) && !ukPair(b, a);
+}
+
+/** Every year `yearOf` would find in each value, not only the first. */
+function yearsIn(...values: unknown[]): number[] {
+  const out: number[] = [];
+  for (const v of values) {
+    for (const m of String(v ?? "").matchAll(new RegExp(YEAR_PATTERN, "g"))) out.push(Number(m[1]));
+  }
+  return out;
+}
+
+/** Whether two birth places that do not agree are far enough apart to be a
+ *  contradiction (lead ruling 2026-10-13, issue #3390): different countries, or
+ *  further apart than `birthThresholdMiles` allows for the era the dates span.
+ *  Fails closed: with no country difference, the pair counts as far apart unless
+ *  both sides carry a standard_place with coordinates finer than a region
+ *  (`REGION_PLACE_TYPES`), they are not two counties, and some year is known. */
+function birthPlacesFarApart(assertion: any, birth: any, coords?: BirthPlaceCoords): boolean {
+  if (birthCountriesDiffer(assertion, birth)) return true;
+  const sa = assertion?.standard_place;
+  const sb = birth?.standard_place;
+  if (typeof sa !== "string" || typeof sb !== "string") return true;
+  const pa = coords?.get(sa);
+  const pb = coords?.get(sb);
+  if (!pa || !pb) return true;
+  if (REGION_PLACE_TYPES.has(placeTypeKey(pa.type)) || REGION_PLACE_TYPES.has(placeTypeKey(pb.type))) return true;
+  if (placeTypeKey(pa.type) === "county" && placeTypeKey(pb.type) === "county") return true;
+  const years = yearsIn(birth.date, birth.standard_date, assertion.date);
+  if (years.length === 0) return true;
+  const { miles } = haversineDistance(pa.latitude, pa.longitude, pb.latitude, pb.longitude);
+  return miles > birthThresholdMiles(Math.min(...years), Math.max(...years));
+}
+
+interface ContradictionScope {
+  twoParty: boolean;
+  birth: any;
+  sameRecord: any[];
+}
+
+/** What the gate compares for one link, or null when the link is out of scope:
+ *  not confident/probable, no resolvable record, a two-party assertion about the
+ *  other party, or a tree person with no Birth fact. */
+function contradictionScope(
   entry: any,
   research: any,
   tree: any,
-  // Optional so every existing caller compiles unchanged; absent, a two-party
-  // assertion stays out of scope exactly as before.
   personLinks?: ReadonlyArray<PersonLink>,
   batchAssertions?: Map<string, any>,
-): string[] {
-  if (entry.confidence !== "confident" && entry.confidence !== "probable") return [];
+): ContradictionScope | null {
+  if (entry.confidence !== "confident" && entry.confidence !== "probable") return null;
   // Every assertion this call can resolve: the document's, plus this batch's
   // predicted appends. Reading only `research.assertions` let a batch that puts
   // its assertion appends AFTER the person_evidence ops silence this gate, the
@@ -988,9 +1120,9 @@ export function coreIdentifierContradictionInvariants(
   if (batchAssertions) for (const [id, a] of batchAssertions) assertionById.set(id, { ...a, id });
   const assertions: any[] = [...assertionById.values()];
   const linked = assertionById.get(entry.assertion_id);
-  if (!linked) return [];
+  if (!linked) return null;
   const recordId = linked.record_id ?? linked.source_id ?? null;
-  if (recordId == null) return [];
+  if (recordId == null) return null;
 
   // A relationship assertion bears on BOTH people it names, and its own party
   // is only one of them: `a_004` ("listed in household of Thomas Flynn,
@@ -1019,16 +1151,16 @@ export function coreIdentifierContradictionInvariants(
   const twoParty = RELATIONAL_FACT_TYPES.has(String(linked.fact_type ?? "").toLowerCase());
   if (twoParty) {
     if (!ownPartyLinkedTo(linked, entry, recordId, assertionById, personLinks)) {
-      return [];
+      return null;
     }
   }
 
   const person = ((tree?.persons ?? []) as any[]).find((p: any) => p?.id === entry.person_id);
-  if (!person) return [];
+  if (!person) return null;
   const birth = ((person.facts ?? []) as any[]).find(
     (f: any) => String(f?.type ?? "").toLowerCase() === "birth",
   );
-  if (!birth) return [];
+  if (!birth) return null;
 
   // Every assertion this record makes about THE SAME PARTY as the linked one.
   //
@@ -1046,27 +1178,74 @@ export function coreIdentifierContradictionInvariants(
       partyKey(a) === linkedParty &&
       linkedParty !== null,
   );
+  return { twoParty, birth, sameRecord };
+}
+
+/** The record's birth-place assertions that disagree with the tree's Birth
+ *  place, before the distance test. */
+function disagreeingBirthPlaces(scope: ContradictionScope): any[] {
+  const { twoParty, birth, sameRecord } = scope;
+  if (twoParty || typeof birth.place !== "string" || placeSegments(birth.place).length === 0) return [];
+  return sameRecord.filter((a: any) =>
+    // Like for like. An ANY-place comparison refuses 274 of 323 committed
+    // confident/probable entries (85%) because a marriage or census place is
+    // not a claim about birthplace: a man born in Ireland appears in a
+    // Pennsylvania census, and that is biography, not contradiction.
+    BIRTH_PLACE_FACT_TYPES.has(String(a.fact_type ?? "").toLowerCase()) &&
+    contradictionIsCredible(a) &&
+    typeof a.place === "string" &&
+    placeSegments(a.place).length > 0 &&
+    // "Same House" names no place, so it states nothing, like a place-less one.
+    !isNonPlacePhrase(a.place) &&
+    !birthPlacesAgree(a, birth),
+  );
+}
+
+/** The standard places the distance test needs for one link: both sides of
+ *  every disagreeing pair whose countries are not already known to differ. */
+export function birthPlaceCoordNames(
+  entry: any,
+  research: any,
+  tree: any,
+  personLinks?: ReadonlyArray<PersonLink>,
+  batchAssertions?: Map<string, any>,
+): string[] {
+  const scope = contradictionScope(entry, research, tree, personLinks, batchAssertions);
+  if (!scope) return [];
+  const names: string[] = [];
+  for (const a of disagreeingBirthPlaces(scope)) {
+    if (birthCountriesDiffer(a, scope.birth)) continue;
+    if (typeof a.standard_place !== "string" || typeof scope.birth.standard_place !== "string") continue;
+    names.push(a.standard_place, scope.birth.standard_place);
+  }
+  return names;
+}
+
+export function coreIdentifierContradictionInvariants(
+  entry: any,
+  research: any,
+  tree: any,
+  // Optional so every existing caller compiles unchanged; absent, a two-party
+  // assertion stays out of scope exactly as before.
+  personLinks?: ReadonlyArray<PersonLink>,
+  batchAssertions?: Map<string, any>,
+  // Prefetched in `prepareOps`. Absent, every same-country pair counts as far
+  // apart, which is the place arm before the distance test.
+  birthPlaceCoords?: BirthPlaceCoords,
+): string[] {
+  const scope = contradictionScope(entry, research, tree, personLinks, batchAssertions);
+  if (!scope) return [];
+  const { birth, sameRecord } = scope;
 
   const findings: string[] = [];
 
   // ── place ────────────────────────────────────────────────────────────────
-  if (!twoParty && typeof birth.place === "string" && placeSegments(birth.place).length > 0) {
-    for (const a of sameRecord) {
-      // Like for like. An ANY-place comparison refuses 274 of 323 committed
-      // confident/probable entries (85%) because a marriage or census place is
-      // not a claim about birthplace: a man born in Ireland appears in a
-      // Pennsylvania census, and that is biography, not contradiction.
-      if (!BIRTH_PLACE_FACT_TYPES.has(String(a.fact_type ?? "").toLowerCase())) continue;
-      if (!contradictionIsCredible(a)) continue;
-      if (typeof a.place !== "string" || placeSegments(a.place).length === 0) continue;
-      if (!birthPlacesAgree(a, birth)) {
-        findings.push(
-          `the record states '${a.place}' (assertion '${a.id}') where the tree person ` +
-            `attests '${birth.place}'`,
-        );
-        break;
-      }
-    }
+  const far = disagreeingBirthPlaces(scope).find((a) => birthPlacesFarApart(a, birth, birthPlaceCoords));
+  if (far) {
+    findings.push(
+      `the record states '${far.place}' (assertion '${far.id}') where the tree person ` +
+        `attests '${birth.place}'`,
+    );
   }
 
   // ── date ─────────────────────────────────────────────────────────────────
@@ -2030,6 +2209,55 @@ function oneSummaryPerQuestion(entry: any, research: any, appendedId: string | u
   ];
 }
 
+/** A `proof_summaries` write when the persons this proof bears on — its
+ *  `claims[].relationship.child` entries (when `claims[]` is present; scalar
+ *  proofs with no `claims[]` are not in scope, as assertions carry no
+ *  `relationship` field) — have more than two distinct `ParentChild` parents in
+ *  the pre-call tree, while fewer than two hypotheses in `preCallResearch` list
+ *  the proof's `question_id` in `related_question_ids`.
+ *
+ *  Uses the pre-call tree and pre-call research snapshots so a same-batch
+ *  hypothesis write does not satisfy the precondition. */
+export function competingParentSetsInvariants(
+  entry: any,
+  preCallResearch: any,
+  tree: any,
+): string[] {
+  const tier = entry?.tier;
+  if (typeof tier === "string" && (tier === "not_proved" || tier === "disproved")) return [];
+
+  const qid = entry?.question_id;
+  if (typeof qid !== "string" || qid === "") return [];
+
+  // In-scope: only persons whose parentage this proof is actually concluding.
+  // Claims-based proofs: persons named as a child in a ParentChild claim.
+  // Scalar proofs (no claims[]) are not in scope — assertions have no
+  // `relationship` field, so there is no reliable way to derive the child
+  // person id from supporting_assertion_ids alone.
+  // Subject_person_ids alone is too broad — it includes parents and siblings,
+  // causing false refusals on children/marriage proofs where the subject happens
+  // to have a data-quality tree issue unrelated to the question.
+  const extraPersonIds = new Set<string>();
+  for (const c of Array.isArray(entry.claims) ? entry.claims : []) {
+    if (c?.relationship?.type === "ParentChild" && typeof c.relationship.child === "string") {
+      extraPersonIds.add(c.relationship.child);
+    }
+  }
+  if (extraPersonIds.size === 0) return [];
+
+  const competing = competingParentSets(preCallResearch, tree, qid, new Set(), extraPersonIds);
+  if (competing.length === 0) return [];
+
+  const details = competing
+    .map(({ personId, parentIds }) => `${personId} (${parentIds.join(", ")})`)
+    .join("; ");
+  return [
+    `proof_summaries ${entry.id ?? "(new entry)"}: question ${qid} has persons with competing ` +
+      `parent sets — ${details} — but fewer than two hypotheses in hypotheses[] list "${qid}" in ` +
+      `related_question_ids. Decline to conclude; name hypothesis-tracking as the next step.`,
+  ];
+}
+
 /** A question's `status` may not claim an exhaustiveness that its stop decision
  *  does not carry.
  *
@@ -2341,6 +2569,85 @@ function planItemLogAttributionInvariants(
       `planItemId: null is only for an ad-hoc search that matches no plan item. If that ` +
       `search was already logged with planItemId: null, leave this item 'in_progress' ` +
       `rather than logging the same search twice.`,
+  ];
+}
+
+// A plan item whose external-site search is still awaiting a capture must not
+// be marked terminal (`completed`/`skipped`): search-external-sites cannot
+// search a paywalled site — it hands the user a URL and waits for a PDF — so a
+// terminal status claims a search that did not happen, and
+// research-exhaustiveness then declares the question exhaustively researched.
+// Decidable from research.json alone (ADR-0011's first question), so it is a
+// writer-tool precondition rather than the SKILL.md Step-6 prose that did not
+// bind it: with that prose in place the search-records run still drifted to
+// `skipped` on 1 of 3 samples (#1226; #2484).
+//
+// Mirrors the eval guard `assert_capture_pending_item_not_terminal`
+// (validators_lib.py): the LATEST log entry naming the item decides, across
+// every tool — a later FamilySearch hit or any positive non-link search closes
+// it, so an older external-site handoff further up the log is not how it ended.
+// A capture that arrived is a later entry, and step 6 does not carry
+// `planItemId` onto it, so an arrival is matched on `(site, url_generated)`
+// (which every external-site entry carries) under this item's id or a null one.
+//
+// Two documented `skipped` paths are exempt (`CAPTURE_PENDING_SKIP_EXEMPT`):
+// `search-external-sites.md` step 4 tells the agent to mark an external-site
+// item `skipped` when no user is present to make the capture or the site cannot
+// be reached (`inaccessible`), or when the user asked to skip it
+// (`user_declined`). Refusing those denies the skill's own instruction, and the
+// "leave it in_progress" remedy would stall an autonomous run — exhaustiveness
+// will not declare while an item is `in_progress` (EdmondOware review,
+// 2026-10-14). `completed` is never exempt (it claims the search happened), and
+// a `skipped` with any other category — the `ut_search_records_026` escalation
+// shape, where a real user capture is still outstanding — is still refused.
+const CAPTURE_PENDING_SKIP_EXEMPT = new Set(["inaccessible", "user_declined"]);
+
+export function planItemCapturePendingInvariants(entry: any, research: any): string[] {
+  if (entry?.status !== "completed" && entry?.status !== "skipped") return [];
+  if (entry?.status === "skipped" && CAPTURE_PENDING_SKIP_EXEMPT.has(entry?.skip_category)) {
+    return [];
+  }
+  const pid = entry?.id;
+  // Guarded for shape rather than assumed — fires before document validation,
+  // the same reason planItemLogAttributionInvariants guards its id.
+  if (typeof pid !== "string" || pid === "") return [];
+  const log = Array.isArray(research?.log) ? research.log : [];
+  let latest: any = null;
+  const captured = new Set<string>();
+  for (const e of log) {
+    if (!e) continue; // a legacy `log: [null]` must not take the writer down
+    const tool = e.tool;
+    if (
+      e.plan_item_id === pid &&
+      (tool === "external_site" ||
+        (e.outcome === "positive" && tool !== "external_links_search"))
+    ) {
+      latest = e;
+    }
+    if (tool === "external_site") {
+      const d = e.external_site || {};
+      if (d.capture_received === true && d.site && d.url_generated) {
+        captured.add(JSON.stringify([e.plan_item_id ?? null, d.site, d.url_generated]));
+      }
+    }
+  }
+  if (!latest || latest.tool !== "external_site") return [];
+  const site = latest.external_site || {};
+  if (site.capture_received === true) return [];
+  if (
+    captured.has(JSON.stringify([pid, site.site, site.url_generated])) ||
+    captured.has(JSON.stringify([null, site.site, site.url_generated]))
+  ) {
+    return [];
+  }
+  return [
+    `plan_items[${pid}]: its latest external-site search (${latest.id}) is still awaiting a ` +
+      `capture (capture_received=false), so marking it '${entry.status}' claims a paywalled ` +
+      `search that has not happened — research-exhaustiveness would then read the question as ` +
+      `exhaustively searched. The way through: if no user can make the capture or the site ` +
+      `cannot be reached, skip it with skip_category: "inaccessible"; if the user asked to skip ` +
+      `it, skip_category: "user_declined"; otherwise leave it 'in_progress' until the capture ` +
+      `arrives as a later log entry (or re-plan). See #1226.`,
   ];
 }
 
@@ -2921,12 +3228,6 @@ function rewriteLinkedFacts(
           if (concluded) concludedTouched.add(fact);
         }
       }
-      // A `place` correction that leaves an un-corrected `standard_place` is the
-      // shape this card was filed about, one level down: the display string
-      // reads corrected while the place-AUTHORITY value still names the old
-      // jurisdiction. The update path cannot re-resolve it (the sidecar/geocode
-      // lever is append-only), and the assertion is equally stale, so the guard
-      // below cannot see it either. Say so rather than let it pass silently.
       if (
         touched.includes("date") &&
         typeof fact.standard_date === "string" &&
@@ -2941,17 +3242,6 @@ function rewriteLinkedFacts(
           `fact '${fact.id}' kept standard_date '${fact.standard_date}' while its date was ` +
             `corrected from assertion '${a.entryId}' — an assertion carries no standard_date, so ` +
             "the sidecar was not part of this correction. Re-check it with tree_correct.",
-        );
-      }
-      if (
-        placeRewritten &&
-        !touched.includes("standard_place") &&
-        typeof fact.standard_place === "string"
-      ) {
-        mutationWarnings.push(
-          `fact '${fact.id}' kept standard_place '${fact.standard_place}' while its place was ` +
-            `corrected from assertion '${a.entryId}' — the place authority value was not part of ` +
-            "this correction. Update the assertion's standard_place too if the reading moved.",
         );
       }
       // Country-contradiction guard on the pair this rewrite just produced.
@@ -3261,7 +3551,6 @@ const FACT_TYPE_ALIASES: Record<string, string> = {
   christeningplace: "christening",
   baptism: "christening",
   marriage: "marriage",
-  marriagelicense: "marriage",
 };
 
 /** Normalized keys of the place-of-event fact_type variants. When the model
@@ -3279,12 +3568,6 @@ const PLACE_VARIANT_KEYS = new Set([
   "christeningplace",
 ]);
 
-/** Reduce a label to its normalized comparison key: lowercase, then drop every
- *  non-alphanumeric character. */
-function labelKey(raw: string): string {
-  return raw.toLowerCase().replace(/[^a-z0-9]/g, "");
-}
-
 function isBlank(v: unknown): boolean {
   return typeof v !== "string" || v.trim() === "";
 }
@@ -3298,7 +3581,7 @@ function isBlank(v: unknown): boolean {
 function canonicalizeAssertionLabels(entry: Record<string, unknown>): void {
   const ft = entry.fact_type;
   if (typeof ft !== "string") return;
-  const key = labelKey(ft);
+  const key = factTypeKey(ft);
   // hasOwn, not a bare index — see the note on SECTIONS in applyOne. A bare
   // index on `constructor` yields `Object`, which is truthy, so the assignment
   // below would replace a string fact_type with a function.
@@ -3585,6 +3868,7 @@ function applyOne(
   startingPersonIds?: ReadonlySet<string>,
   createdAssertions?: ReadonlySet<string>,
   personLinks?: ReadonlyArray<PersonLink>,
+  birthPlaceCoords?: BirthPlaceCoords,
 ): AppliedOp {
   const section = op.section;
   // hasOwn, not a bare index: `section` is LLM-supplied, and a bare index walks
@@ -4019,6 +4303,11 @@ function applyOne(
           .filter((it: any) => it && it.status === "skipped")
           .map((it: any) => it.id),
       );
+      const storedStatusById = new Map<string, unknown>(
+        (Array.isArray(storedPlan?.items) ? storedPlan.items : [])
+          .filter((it: any) => it && typeof it.id === "string")
+          .map((it: any) => [it.id, it.status]),
+      );
       for (const item of Array.isArray(resultEntry?.items) ? resultEntry.items : []) {
         if (item && alreadyCompleted.has(item.id)) continue;
         invariantErrors.push(...planItemLogAttributionInvariants(item, research));
@@ -4028,6 +4317,13 @@ function applyOne(
         // no prior rationale to overwrite, so only the category clause applies.
         if (item && !alreadySkipped.has(item.id)) {
           invariantErrors.push(...planItemSkipInvariants(item, {}, true));
+        }
+        // The capture-pending guard reaches the same field for the same reason:
+        // a `skipped`/`completed` item set inline on a `plans` op would bypass
+        // the `plan_items` arm below. Gated on a genuine status change, so an
+        // item re-sent at its stored status (an append has none) is untouched.
+        if (item && storedStatusById.get(item.id) !== item.status) {
+          invariantErrors.push(...planItemCapturePendingInvariants(item, research));
         }
       }
     }
@@ -4061,6 +4357,19 @@ function applyOne(
       invariantErrors.push(
         ...planItemLogAttributionInvariants(resultEntry, research, op.op === "append"),
       );
+    }
+    // Capture-pending guard (#1226): refuse moving an item INTO a terminal
+    // status while its latest external-site search still awaits a capture.
+    // Gated on a genuine status CHANGE so re-stating fixture state is not
+    // refused — mirrors the eval validator's "items this run changed" scope.
+    const priorItemStatus =
+      op.op === "update"
+        ? (Array.isArray(preCallResearch?.plans) ? preCallResearch.plans : [])
+            .flatMap((pl: any) => (pl && Array.isArray(pl.items) ? pl.items : []))
+            .find((it: any) => it && it.id === resultEntry?.id)?.status
+        : undefined;
+    if (statusTouchedThisOp && priorItemStatus !== resultEntry?.status) {
+      invariantErrors.push(...planItemCapturePendingInvariants(resultEntry, research));
     }
     // A `skipped` item must carry a category. Gated the same way, and
     // additionally skipped when the item was ALREADY `skipped` before this
@@ -4155,7 +4464,7 @@ function applyOne(
     invariantErrors.push(
       ...(op.op === "update" && resultEntry.superseded_by
         ? []
-        : coreIdentifierContradictionInvariants(resultEntry, research, tree, personLinks, batchAssertions)),
+        : coreIdentifierContradictionInvariants(resultEntry, research, tree, personLinks, batchAssertions, birthPlaceCoords)),
     );
     // An update re-checks the move only when it sets the tier or the bridge, or
     // re-points the link (a new pairing, as the score gate below reads it), so a
@@ -4254,6 +4563,10 @@ function applyOne(
     // update walked past it. `oneSummaryPerQuestion` excludes the entry by id,
     // so an ordinary update of an existing summary still passes.
     invariantErrors.push(...oneSummaryPerQuestion(resultEntry, research, resultEntry?.id));
+    // Reads PRE-CALL tree and PRE-CALL research: a same-batch hypothesis write
+    // does not satisfy this precondition. Gated only on the entry's standing
+    // tier (not_proved/disproved pass), not on which fields this op touches.
+    invariantErrors.push(...competingParentSetsInvariants(resultEntry, preCallResearch, tree));
   }
   if (invariantErrors.length > 0) {
     throw new ResearchAppendError(invariantErrors);
@@ -4305,6 +4618,7 @@ interface PreparedOps {
    *  to, read once here because `applyOne` is synchronous and holds no
    *  `projectPath`. Empty when nothing in the batch links. */
   matchScores: Map<string, MatchScoreFile>;
+  birthPlaceCoords: BirthPlaceCoords;
   /** Existing assertions plus this batch's predicted appends, so the score gate
    *  resolves a link's assertion whatever order the ops arrive in. */
   batchAssertions: Map<string, any>;
@@ -4426,15 +4740,15 @@ export function reextractionKey(a: any): string | undefined {
         : undefined;
   if (who === undefined) return undefined;
   const log = typeof a.log_entry_id === "string" && a.log_entry_id !== "" ? a.log_entry_id : "";
-  const ftKey = labelKey(a.fact_type);
-  const fact = Object.hasOwn(FACT_TYPE_ALIASES, ftKey) ? labelKey(FACT_TYPE_ALIASES[ftKey]) : ftKey;
+  const ftKey = factTypeKey(a.fact_type);
+  const fact = Object.hasOwn(FACT_TYPE_ALIASES, ftKey) ? factTypeKey(FACT_TYPE_ALIASES[ftKey]) : ftKey;
   return [a.source_id, arkToBareId(a.record_id), log, who, fact].join("\u0000");
 }
 
 /** The canonical spelling of a fact_type for a message (the alias fold §3.7 applies). */
 function factLabel(ft: unknown): string {
   if (typeof ft !== "string") return String(ft);
-  const k = labelKey(ft);
+  const k = factTypeKey(ft);
   return Object.hasOwn(FACT_TYPE_ALIASES, k) ? FACT_TYPE_ALIASES[k] : ft;
 }
 
@@ -4550,6 +4864,43 @@ function createdAssertionIds(research: any, ops: ResearchAppendOp[]): Set<string
     running.push({ ...entry, id });
   }
   return out;
+}
+
+/** Coordinates for every standard place the contradiction gate's distance test
+ *  will need on this batch's person_evidence ops, under one budget. The ops are
+ *  replayed in order, the way `applyOne` will apply them: an assertions update
+ *  changes the assertion later links compare, and an update's link is its
+ *  post-merge one. An update retiring a link is not checked. */
+async function prefetchBirthPlaceCoords(
+  research: any,
+  ops: ResearchAppendOp[],
+  tree: any,
+  personLinks: ReadonlyArray<PersonLink>,
+  batchAssertions: Map<string, any>,
+): Promise<BirthPlaceCoords> {
+  const assertions = new Map(batchAssertions);
+  const live: any[] = Array.isArray(research?.person_evidence) ? research.person_evidence : [];
+  const names: string[] = [];
+  for (const op of ops) {
+    const fields = (op as any).fields ?? {};
+    if (op.section === "assertions" && op.op === "update" && typeof op.entryId === "string") {
+      const cur = assertions.get(op.entryId);
+      if (cur) assertions.set(op.entryId, { ...cur, ...fields });
+      continue;
+    }
+    if (op.section !== "person_evidence") continue;
+    let entry: any;
+    if (op.op === "update") {
+      if (fields.superseded_by) continue;
+      entry = { ...(live.find((e: any) => e?.id === op.entryId) ?? {}), ...fields };
+    } else {
+      entry = (op as any).entry;
+    }
+    if (!entry || typeof entry !== "object") continue;
+    names.push(...birthPlaceCoordNames(entry, research, tree, personLinks, assertions));
+  }
+  if (names.length === 0) return new Map();
+  return lookupPlaceCoords(names, (name) => standardPlaceToCoords(name), BIRTH_PLACE_COORDS_BUDGET_MS);
 }
 
 function recordIdsForPersonEvidence(research: any, ops: ResearchAppendOp[]): Set<string> {
@@ -4883,6 +5234,86 @@ async function prepareOps(
     placesByRecord.set(key, [...(placesByRecord.get(key) ?? []), place]);
   }
 
+  /** Place levers (b) then (a) on one assertion's fields, in place. A
+   *  standard_place contradicting the place's country is an error, unless
+   *  `dropContradiction`, when it is left unset instead. */
+  const applyPlaceLevers = async (
+    entry: any,
+    i: number,
+    matchedRecord: any,
+    dropContradiction = false,
+  ): Promise<void> => {
+    // ── Place lever (b): never geocode what the source record already
+    // resolved — copy the sidecar's standard_place for the same place string.
+    // `standard_place: null` is an explicit opt-out (skip resolution + guard);
+    // only a fully omitted field triggers resolution. A non-place phrase
+    // ("Same House") is left unset, silently: it has no standard form.
+    let geocoded = false;
+    if (
+      factText(entry.place) !== undefined &&
+      entry.standard_place === undefined &&
+      !isNonPlacePhrase(factText(entry.place)!)
+    ) {
+      let sp: string | null = null;
+      let source: "sidecar" | "geocoded" | null = null;
+      if (matchedRecord) {
+        sp = sidecarStandardPlace(matchedRecord.gedcomx, entry.place);
+        if (sp) source = "sidecar";
+      }
+      if (!sp && input.resolveStandardPlace !== false) {
+        // resolveStandardPlace swallows network failures and returns null, so
+        // a miss and a failure look the same here — both warrant the warning
+        // (a silently unresolved place is part of the wrong-geocode theme).
+        try {
+          const contextPlaces = (placesByRecord.get(String(entry.record_id ?? "")) ?? [])
+            .filter((p) => p !== entry.place);
+          sp = (await resolveStandardPlace(entry.place, { contextPlaces })) ?? null;
+        } catch {
+          sp = null;
+        }
+        if (sp) {
+          source = "geocoded";
+          geocoded = true;
+        } else {
+          warnings.push(`could not resolve standard_place for '${entry.place}' (left unset)`);
+        }
+      }
+      if (sp && source) {
+        entry.standard_place = sp;
+        resolvedPlaces.push({ place: entry.place, standardPlace: sp, source });
+      }
+    }
+
+    // ── Place lever (a): country-contradiction guard on the final pair
+    // (supplied or resolved). Skipped when standard_place is null/absent.
+    if (typeof entry.place === "string" && typeof entry.standard_place === "string") {
+      const verdict = countryConsistency(entry.place, entry.standard_place);
+      if (verdict === "contradiction" && dropContradiction) {
+        entry.standard_place = undefined;
+        return;
+      }
+      if (verdict === "contradiction") {
+        errors.push(
+          fmt(
+            i,
+            `standard_place '${entry.standard_place}' contradicts place '${entry.place}' — the place text ` +
+              "names a different country. Re-resolve with place_search / place_search_all and supply the " +
+              "correct standard_place, or set standard_place: null if no standard form exists.",
+          ),
+        );
+        return;
+      }
+      if (verdict === "unverifiable" && geocoded) {
+        warnings.push(
+          `resolved standard_place '${entry.standard_place}' for place '${entry.place}' — the country ` +
+            "could not be cross-checked (either the place text names no country, or the standard place " +
+            "names none that is recognized — e.g. a historical polity like 'Bohemia'); verify it is the " +
+            "right place",
+        );
+      }
+    }
+  };
+
   for (let i = 0; i < ops.length; i++) {
     const op = ops[i];
     if (op.section !== "assertions" || op.op !== "append") continue;
@@ -4926,7 +5357,7 @@ async function prepareOps(
           );
           continue;
         }
-        // No sidecar (record_read, PDF, image, pasted records, or a nil/negative
+        // No sidecar (an unstaged record_read, PDF, image, pasted records, or a nil/negative
         // search): the field must be absent or null — there is no persona
         // document to point at.
         if (entry.record_persona_id != null) {
@@ -4934,7 +5365,7 @@ async function prepareOps(
             fmt(
               i,
               `record_persona_id must be null — log entry '${logId}' has no results sidecar ` +
-                "(results_ref is null; record_read/PDF/image/pasted records carry no persona ids)",
+                "(results_ref is null; a record_read logged without stagedResultsRef, or a PDF/image/pasted record, has no persona document to point at)",
             ),
           );
           continue;
@@ -4942,7 +5373,7 @@ async function prepareOps(
       } else if (typeof ref === "string") {
         const results = await readSidecarResults(ref);
         if (results) {
-          // Only record_search stages GedcomX personas; its results key on
+          // record_search and record_read stage GedcomX personas; their results key on
           // `recordId`. fulltext_search / external_links_search stage transcript
           // text and links keyed on `id`, with no persona document — matching
           // them on `recordId` (a field they never carry) matched nothing every
@@ -5053,65 +5484,33 @@ async function prepareOps(
       }
     }
 
-    // ── Place lever (b): never geocode what the source record already
-    // resolved — copy the sidecar's standard_place for the same place string.
-    // `standard_place: null` is an explicit opt-out (skip resolution + guard);
-    // only a fully omitted field triggers resolution.
-    let geocoded = false;
-    if (factText(entry.place) !== undefined && entry.standard_place === undefined) {
-      let sp: string | null = null;
-      let source: "sidecar" | "geocoded" | null = null;
-      if (matchedRecord) {
-        sp = sidecarStandardPlace(matchedRecord.gedcomx, entry.place);
-        if (sp) source = "sidecar";
-      }
-      if (!sp && input.resolveStandardPlace !== false) {
-        // resolveStandardPlace swallows network failures and returns null, so
-        // a miss and a failure look the same here — both warrant the warning
-        // (a silently unresolved place is part of the wrong-geocode theme).
-        try {
-          const contextPlaces = (placesByRecord.get(String(entry.record_id ?? "")) ?? [])
-            .filter((p) => p !== entry.place);
-          sp = (await resolveStandardPlace(entry.place, { contextPlaces })) ?? null;
-        } catch {
-          sp = null;
-        }
-        if (sp) {
-          source = "geocoded";
-          geocoded = true;
-        } else {
-          warnings.push(`could not resolve standard_place for '${entry.place}' (left unset)`);
-        }
-      }
-      if (sp && source) {
-        entry.standard_place = sp;
-        resolvedPlaces.push({ place: entry.place, standardPlace: sp, source });
-      }
-    }
+    await applyPlaceLevers(entry, i, matchedRecord);
+  }
 
-    // ── Place lever (a): country-contradiction guard on the final pair
-    // (supplied or resolved). Skipped when standard_place is null/absent.
-    if (typeof entry.place === "string" && typeof entry.standard_place === "string") {
-      const verdict = countryConsistency(entry.place, entry.standard_place);
-      if (verdict === "contradiction") {
-        errors.push(
-          fmt(
-            i,
-            `standard_place '${entry.standard_place}' contradicts place '${entry.place}' — the place text ` +
-              "names a different country. Re-resolve with place_search / place_search_all and supply the " +
-              "correct standard_place, or set standard_place: null if no standard form exists.",
-          ),
-        );
-        continue;
-      }
-      if (verdict === "unverifiable" && geocoded) {
-        warnings.push(
-          `resolved standard_place '${entry.standard_place}' for place '${entry.place}' — the country ` +
-            "could not be cross-checked (either the place text names no country, or the standard place " +
-            "names none that is recognized — e.g. a historical polity like 'Bohemia'); verify it is the " +
-            "right place",
-        );
-      }
+  // An assertions update that corrects `place` to another place and says nothing of
+  // `standard_place` gets the same levers, with the existing assertion as the
+  // base: otherwise the old standard_place stands for the corrected place, and
+  // the contradiction gate measures its distance from the wrong point. When
+  // nothing resolves, the stale value is cleared rather than kept.
+  for (let i = 0; i < ops.length; i++) {
+    const op = ops[i];
+    if (op.section !== "assertions" || op.op !== "update" || typeof op.entryId !== "string") continue;
+    const fields = (op as any).fields;
+    if (!fields || typeof fields !== "object") continue;
+    if (!Object.prototype.hasOwnProperty.call(fields, "place") || Object.prototype.hasOwnProperty.call(fields, "standard_place")) continue;
+    const cur = ((research.assertions ?? []) as any[]).find((a: any) => a?.id === op.entryId);
+    const place = factText(fields.place);
+    if (!cur || place === undefined || place === factText(cur.place)) continue;
+    const view: any = { ...cur, ...fields, standard_place: undefined };
+    await applyPlaceLevers(view, i, null, true);
+    if (typeof view.standard_place === "string") {
+      fields.standard_place = view.standard_place;
+    } else if (typeof cur.standard_place === "string") {
+      fields.standard_place = null;
+      warnings.push(
+        `assertion '${op.entryId}': cleared standard_place '${cur.standard_place}' because its place ` +
+          `was corrected to '${place}' and no standard form was found for the new place`,
+      );
     }
   }
 
@@ -5231,7 +5630,9 @@ async function prepareOps(
   if (errors.length > 0) throw new ResearchAppendError(errors);
   const verdictFile = prepareVerdict(input, ops, fmt, errors);
   if (errors.length > 0) throw new ResearchAppendError(errors);
-  return { treeMutated, matchScores, batchAssertions, startingPersonIds, createdAssertions, personLinks, sourceDescriptionId, sourceReuse, resolvedPlaces, warnings, verdictFile };
+  // Last, so this batch's assertions carry the standard_place resolved above.
+  const birthPlaceCoords = await prefetchBirthPlaceCoords(research, ops, tree, personLinks, batchAssertions);
+  return { treeMutated, matchScores, batchAssertions, startingPersonIds, createdAssertions, personLinks, sourceDescriptionId, sourceReuse, resolvedPlaces, warnings, verdictFile, birthPlaceCoords };
 }
 
 // ─── Entry point ─────────────────────────────────────────────────────────────
@@ -5453,6 +5854,7 @@ export async function researchAppend(
             prep.startingPersonIds,
             prep.createdAssertions,
             prep.personLinks,
+            prep.birthPlaceCoords,
           ),
         );
       } catch (e) {

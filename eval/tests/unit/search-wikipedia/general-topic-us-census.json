@@ -8,13 +8,13 @@
     "tags": [
       "wikipedia",
       "general-topic",
-      "slug-united-states-census",
+      "title-united-states-census",
       "direct-arm"
     ]
   },
   "input": {
-    "delegation": "Save a Wikipedia summary about the United States census\n\ntopic: the United States census",
-    "scenario": null
+    "delegation": "Save a Wikipedia summary about the United States census\n\ntopic: the United States census\nprojectPath: <workspace>",
+    "scenario": "empty-project-just-created"
   },
   "mcp_fixtures": [
     "wikipedia-search-us-federal-census"

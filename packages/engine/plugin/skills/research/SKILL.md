@@ -219,6 +219,7 @@ it by name.
    | Assertions not yet linked to persons | `@plugin:person-evidence` — **always the agent, never inline.** You (the orchestrator) never write `person_evidence` entries or add record-derived facts/relationships to tree persons yourself: person-evidence owns the identity decision and scores every cross-record link with `same_person` before it links. Writing `pe_` links inline skips that check — it is exactly how a same-named stranger's record gets attached to the subject (a b. 1814 man was given a 1918 death, age 104, this way). Extraction never links; its output ALWAYS flows through person-evidence next |
    | Evidence conflicts present | `@plugin:conflict-resolution` |
    | Identity uncertainty across assertions | `@plugin:hypothesis-tracking` |
+   | `project_context` reports **`competingParentSets`** for the question (its `nextStep` reads `hypothesis-tracking — competing parent sets`) — the tree gives a person more than one set of parents with no hypothesis per set | `@plugin:hypothesis-tracking`, naming the person and parent ids it lists — one hypothesis per parent couple. Never compare or eliminate the sets yourself |
    | Analyzed evidence now plausibly answers the active question | `@plugin:research-exhaustiveness` (consult the stop criteria *before* draining the rest of the plan; it sends you back to `research-plan` if the question — e.g. a completeness "did they have *any other* children?" question — is not yet reasonably exhausted) |
    | All plan items for a question are `completed` or `skipped`, and analysis above is done | `@plugin:research-exhaustiveness` |
    | `research-exhaustiveness` returned "not yet exhaustive" with gaps to fill | `research-plan` (extend the plan) or `@plugin:question-selection` (FAN pivot) |
@@ -248,7 +249,9 @@ it by name.
    compared), then cite the resulting `h_`/`c_` id in the narrative — never
    the reverse. A proof narrative that names an elimination or an identity
    comparison with no backing `hypotheses`/`conflicts` entry is incomplete,
-   whatever tier it claims.
+   whatever tier it claims. This binds your summary after a hand-off too: list
+   each candidate neutrally, never which one the evidence favours, and report
+   only what the callee's return states it wrote.
 
    **Exhaustiveness/proof-conclusion contract — enforced, not advisory.**
    `research-exhaustiveness`, `proof-conclusion` and `person-evidence` are

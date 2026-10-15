@@ -133,7 +133,7 @@ A run is **releasable** iff invoked as `--skill <name>` with no `--tag`. Anythin
 two reader families handle it differently (`harness/since_window.py`):
 
 - **Aggregating reports FILTER** — `make e2e-corpus`, `make e2e-guardrail-shadow`,
-  `make e2e-latency`, `make e2e-skill-episodes`, `make e2e-wiki-failures`, `make e2e-transcribe-failures`, `make e2e-transcription-join` tally many runs into one number, so mixing eras corrupts
+  `make e2e-latency`, `make e2e-skill-episodes`, `make e2e-wiki-failures`, `make e2e-transcribe-failures`, `make e2e-transcription-join`, `make e2e-relay-fidelity` tally many runs into one number, so mixing eras corrupts
   it. They window to 14 days and print the window plus how many runs they
   excluded. `SINCE=all` opts back in. (`make e2e-wiki-failures`'s useful horizon
   IS the 14-day default: it classifies calls from `response_summary`, and the e2e
@@ -159,7 +159,13 @@ two reader families handle it differently (`harness/since_window.py`):
   `make replay-collapse` is not windowed for the same reason, but it reads one
   thing the strip removes: each walk call's recorded `count`. A stripped run's
   walks therefore report `unverifiable` (and if every walk is, it exits 2) —
-  it fails loudly, never falsely.
+  it fails loudly, never falsely. Its `plural-id` rule reports two more
+  statuses: `collapsed-empty`, a walk whose every call answered 0 (passes only
+  on `count: 0` with an all-zero `countById`), and `unfaithful`, a walk whose
+  replayed count misses the recorded one, by cause — `source-id-unstamped`
+  (the replay does not model the server-side `source_id` stamp; allowed, and
+  it recurs in new runs) or `ledger-missing-writes` (allowed only for the
+  groups pinned in `KNOWN_LEDGER_GAPS`). Any other unfaithful group is exit 3.
 - **Per-skill reports FLAG** — `make eval-timings`, `make skill-latency`, `make judge-report` show
   the newest 1–2 run logs per skill, so there is no sample to narrow: a date
   cut would delete the *skill*, hiding that it needs a re-run. They show every
