@@ -636,8 +636,8 @@ def _feedback_markdown(
 _REDACTED_TOKEN = "[REDACTED_TOKEN]"
 _BEARER_RE = re.compile(r"(?i:bearer)\s+[A-Za-z0-9._~+/=-]{16,}")
 _BEARER_RE_B = re.compile(rb"(?i:bearer)\s+[A-Za-z0-9._~+/=-]{16,}")
-_ACCESS_TOKEN_RE = re.compile(r"((?i:access_token)[\"']?\s*[=:]\s*[\"']?)[A-Za-z0-9._~+/-]{16,}")
-_ACCESS_TOKEN_RE_B = re.compile(rb"((?i:access_token)[\"']?\s*[=:]\s*[\"']?)[A-Za-z0-9._~+/-]{16,}")
+_ACCESS_TOKEN_RE = re.compile(r"((?i:access_token)[\\\"']*\s*[=:]\s*[\\\"']*)[A-Za-z0-9._~+/-]{16,}")
+_ACCESS_TOKEN_RE_B = re.compile(rb"((?i:access_token)[\\\"']*\s*[=:]\s*[\\\"']*)[A-Za-z0-9._~+/-]{16,}")
 # A literal shorter than this is not a token, and replacing it would shred the text.
 _MIN_LITERAL_TOKEN = 16
 

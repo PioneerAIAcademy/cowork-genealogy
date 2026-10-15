@@ -381,6 +381,8 @@ def test_access_token_redaction_shapes():
     assert proto.redact_tokens_str('{"access_token": "' + "t" * 20 + '"}') == '{"access_token": "[REDACTED_TOKEN]"}'
     assert proto.redact_tokens_str("?ACCESS_TOKEN=" + "t" * 20) == "?ACCESS_TOKEN=[REDACTED_TOKEN]"
     assert proto.redact_tokens_str("the access_token field is required") == "the access_token field is required"
+    nested = json.dumps({"c": json.dumps({"access_token": "t" * 20})})
+    assert proto.redact_tokens_str(nested) == json.dumps({"c": json.dumps({"access_token": "[REDACTED_TOKEN]"})})
     assert proto.redact_tokens_str("access_token=short") == "access_token=short"
 
 
