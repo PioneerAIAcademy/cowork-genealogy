@@ -23,6 +23,7 @@ import { SETTLED_CONFLICT_STATUSES, VALIDATOR_ENUMS } from "../validation/valida
 import { validateIntroduced } from "../validation/introduced-errors.js";
 import { sanitizeTree } from "../validation/tree-sanitize.js";
 import {
+  competingParentSets,
   conflictBlocksCompletion,
   questionTiedAssertionIds,
   whyConflictBlocksCompletion,
@@ -2031,6 +2032,55 @@ function oneSummaryPerQuestion(entry: any, research: any, appendedId: string | u
   ];
 }
 
+/** A `proof_summaries` write when the persons this proof bears on — its
+ *  `claims[].relationship.child` entries (when `claims[]` is present; scalar
+ *  proofs with no `claims[]` are not in scope, as assertions carry no
+ *  `relationship` field) — have more than two distinct `ParentChild` parents in
+ *  the pre-call tree, while fewer than two hypotheses in `preCallResearch` list
+ *  the proof's `question_id` in `related_question_ids`.
+ *
+ *  Uses the pre-call tree and pre-call research snapshots so a same-batch
+ *  hypothesis write does not satisfy the precondition. */
+export function competingParentSetsInvariants(
+  entry: any,
+  preCallResearch: any,
+  tree: any,
+): string[] {
+  const tier = entry?.tier;
+  if (typeof tier === "string" && (tier === "not_proved" || tier === "disproved")) return [];
+
+  const qid = entry?.question_id;
+  if (typeof qid !== "string" || qid === "") return [];
+
+  // In-scope: only persons whose parentage this proof is actually concluding.
+  // Claims-based proofs: persons named as a child in a ParentChild claim.
+  // Scalar proofs (no claims[]) are not in scope — assertions have no
+  // `relationship` field, so there is no reliable way to derive the child
+  // person id from supporting_assertion_ids alone.
+  // Subject_person_ids alone is too broad — it includes parents and siblings,
+  // causing false refusals on children/marriage proofs where the subject happens
+  // to have a data-quality tree issue unrelated to the question.
+  const extraPersonIds = new Set<string>();
+  for (const c of Array.isArray(entry.claims) ? entry.claims : []) {
+    if (c?.relationship?.type === "ParentChild" && typeof c.relationship.child === "string") {
+      extraPersonIds.add(c.relationship.child);
+    }
+  }
+  if (extraPersonIds.size === 0) return [];
+
+  const competing = competingParentSets(preCallResearch, tree, qid, new Set(), extraPersonIds);
+  if (competing.length === 0) return [];
+
+  const details = competing
+    .map(({ personId, parentIds }) => `${personId} (${parentIds.join(", ")})`)
+    .join("; ");
+  return [
+    `proof_summaries ${entry.id ?? "(new entry)"}: question ${qid} has persons with competing ` +
+      `parent sets — ${details} — but fewer than two hypotheses in hypotheses[] list "${qid}" in ` +
+      `related_question_ids. Decline to conclude; name hypothesis-tracking as the next step.`,
+  ];
+}
+
 /** A question's `status` may not claim an exhaustiveness that its stop decision
  *  does not carry.
  *
@@ -2342,6 +2392,85 @@ function planItemLogAttributionInvariants(
       `planItemId: null is only for an ad-hoc search that matches no plan item. If that ` +
       `search was already logged with planItemId: null, leave this item 'in_progress' ` +
       `rather than logging the same search twice.`,
+  ];
+}
+
+// A plan item whose external-site search is still awaiting a capture must not
+// be marked terminal (`completed`/`skipped`): search-external-sites cannot
+// search a paywalled site — it hands the user a URL and waits for a PDF — so a
+// terminal status claims a search that did not happen, and
+// research-exhaustiveness then declares the question exhaustively researched.
+// Decidable from research.json alone (ADR-0011's first question), so it is a
+// writer-tool precondition rather than the SKILL.md Step-6 prose that did not
+// bind it: with that prose in place the search-records run still drifted to
+// `skipped` on 1 of 3 samples (#1226; #2484).
+//
+// Mirrors the eval guard `assert_capture_pending_item_not_terminal`
+// (validators_lib.py): the LATEST log entry naming the item decides, across
+// every tool — a later FamilySearch hit or any positive non-link search closes
+// it, so an older external-site handoff further up the log is not how it ended.
+// A capture that arrived is a later entry, and step 6 does not carry
+// `planItemId` onto it, so an arrival is matched on `(site, url_generated)`
+// (which every external-site entry carries) under this item's id or a null one.
+//
+// Two documented `skipped` paths are exempt (`CAPTURE_PENDING_SKIP_EXEMPT`):
+// `search-external-sites.md` step 4 tells the agent to mark an external-site
+// item `skipped` when no user is present to make the capture or the site cannot
+// be reached (`inaccessible`), or when the user asked to skip it
+// (`user_declined`). Refusing those denies the skill's own instruction, and the
+// "leave it in_progress" remedy would stall an autonomous run — exhaustiveness
+// will not declare while an item is `in_progress` (EdmondOware review,
+// 2026-10-14). `completed` is never exempt (it claims the search happened), and
+// a `skipped` with any other category — the `ut_search_records_026` escalation
+// shape, where a real user capture is still outstanding — is still refused.
+const CAPTURE_PENDING_SKIP_EXEMPT = new Set(["inaccessible", "user_declined"]);
+
+export function planItemCapturePendingInvariants(entry: any, research: any): string[] {
+  if (entry?.status !== "completed" && entry?.status !== "skipped") return [];
+  if (entry?.status === "skipped" && CAPTURE_PENDING_SKIP_EXEMPT.has(entry?.skip_category)) {
+    return [];
+  }
+  const pid = entry?.id;
+  // Guarded for shape rather than assumed — fires before document validation,
+  // the same reason planItemLogAttributionInvariants guards its id.
+  if (typeof pid !== "string" || pid === "") return [];
+  const log = Array.isArray(research?.log) ? research.log : [];
+  let latest: any = null;
+  const captured = new Set<string>();
+  for (const e of log) {
+    if (!e) continue; // a legacy `log: [null]` must not take the writer down
+    const tool = e.tool;
+    if (
+      e.plan_item_id === pid &&
+      (tool === "external_site" ||
+        (e.outcome === "positive" && tool !== "external_links_search"))
+    ) {
+      latest = e;
+    }
+    if (tool === "external_site") {
+      const d = e.external_site || {};
+      if (d.capture_received === true && d.site && d.url_generated) {
+        captured.add(JSON.stringify([e.plan_item_id ?? null, d.site, d.url_generated]));
+      }
+    }
+  }
+  if (!latest || latest.tool !== "external_site") return [];
+  const site = latest.external_site || {};
+  if (site.capture_received === true) return [];
+  if (
+    captured.has(JSON.stringify([pid, site.site, site.url_generated])) ||
+    captured.has(JSON.stringify([null, site.site, site.url_generated]))
+  ) {
+    return [];
+  }
+  return [
+    `plan_items[${pid}]: its latest external-site search (${latest.id}) is still awaiting a ` +
+      `capture (capture_received=false), so marking it '${entry.status}' claims a paywalled ` +
+      `search that has not happened — research-exhaustiveness would then read the question as ` +
+      `exhaustively searched. The way through: if no user can make the capture or the site ` +
+      `cannot be reached, skip it with skip_category: "inaccessible"; if the user asked to skip ` +
+      `it, skip_category: "user_declined"; otherwise leave it 'in_progress' until the capture ` +
+      `arrives as a later log entry (or re-plan). See #1226.`,
   ];
 }
 
@@ -4013,6 +4142,11 @@ function applyOne(
           .filter((it: any) => it && it.status === "skipped")
           .map((it: any) => it.id),
       );
+      const storedStatusById = new Map<string, unknown>(
+        (Array.isArray(storedPlan?.items) ? storedPlan.items : [])
+          .filter((it: any) => it && typeof it.id === "string")
+          .map((it: any) => [it.id, it.status]),
+      );
       for (const item of Array.isArray(resultEntry?.items) ? resultEntry.items : []) {
         if (item && alreadyCompleted.has(item.id)) continue;
         invariantErrors.push(...planItemLogAttributionInvariants(item, research));
@@ -4022,6 +4156,13 @@ function applyOne(
         // no prior rationale to overwrite, so only the category clause applies.
         if (item && !alreadySkipped.has(item.id)) {
           invariantErrors.push(...planItemSkipInvariants(item, {}, true));
+        }
+        // The capture-pending guard reaches the same field for the same reason:
+        // a `skipped`/`completed` item set inline on a `plans` op would bypass
+        // the `plan_items` arm below. Gated on a genuine status change, so an
+        // item re-sent at its stored status (an append has none) is untouched.
+        if (item && storedStatusById.get(item.id) !== item.status) {
+          invariantErrors.push(...planItemCapturePendingInvariants(item, research));
         }
       }
     }
@@ -4055,6 +4196,19 @@ function applyOne(
       invariantErrors.push(
         ...planItemLogAttributionInvariants(resultEntry, research, op.op === "append"),
       );
+    }
+    // Capture-pending guard (#1226): refuse moving an item INTO a terminal
+    // status while its latest external-site search still awaits a capture.
+    // Gated on a genuine status CHANGE so re-stating fixture state is not
+    // refused — mirrors the eval validator's "items this run changed" scope.
+    const priorItemStatus =
+      op.op === "update"
+        ? (Array.isArray(preCallResearch?.plans) ? preCallResearch.plans : [])
+            .flatMap((pl: any) => (pl && Array.isArray(pl.items) ? pl.items : []))
+            .find((it: any) => it && it.id === resultEntry?.id)?.status
+        : undefined;
+    if (statusTouchedThisOp && priorItemStatus !== resultEntry?.status) {
+      invariantErrors.push(...planItemCapturePendingInvariants(resultEntry, research));
     }
     // A `skipped` item must carry a category. Gated the same way, and
     // additionally skipped when the item was ALREADY `skipped` before this
@@ -4248,6 +4402,10 @@ function applyOne(
     // update walked past it. `oneSummaryPerQuestion` excludes the entry by id,
     // so an ordinary update of an existing summary still passes.
     invariantErrors.push(...oneSummaryPerQuestion(resultEntry, research, resultEntry?.id));
+    // Reads PRE-CALL tree and PRE-CALL research: a same-batch hypothesis write
+    // does not satisfy this precondition. Gated only on the entry's standing
+    // tier (not_proved/disproved pass), not on which fields this op touches.
+    invariantErrors.push(...competingParentSetsInvariants(resultEntry, preCallResearch, tree));
   }
   if (invariantErrors.length > 0) {
     throw new ResearchAppendError(invariantErrors);

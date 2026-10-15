@@ -97,7 +97,7 @@ def _duplicates(registry: dict) -> list[str]:
     dupes = []
     for e in _entries(registry):
         d, k = _detector_of(e), e.get("kind")
-        if d in seen_detectors:
+        if d is not None and d in seen_detectors:
             dupes.append(f"{d}: listed twice")
         if k is not None and k in seen_kinds:
             dupes.append(f"{k}: listed twice")
@@ -180,7 +180,7 @@ def test_the_backlog_and_the_exemptions_are_frozen():
 
 def test_no_registered_guard_is_also_in_the_backlog():
     reg = _registry()
-    registered = {g["harness_detector"] for g in reg["guards"]}
+    registered = {g.get("harness_detector") for g in reg["guards"]} - {None}
     frozen = {d for d, _ in FROZEN_OWES_CASE_FILE | FROZEN_NOT_A_CANDIDATE}
     assert not registered & frozen
 
@@ -189,8 +189,9 @@ def test_no_registered_guard_is_also_in_the_backlog():
 def test_registered_guard_meets_the_rule_and_replays(guard):
     case_file = json.loads((CASES_DIR / guard["case_file"]).read_text(encoding="utf-8"))
     assert _case_file_problems(case_file) == []
-    detector = getattr(skill_invocation, guard["harness_detector"])
-    assert _replay_mismatches(case_file, detector) == []
+    if guard.get("harness_detector"):
+        detector = getattr(skill_invocation, guard["harness_detector"])
+        assert _replay_mismatches(case_file, detector) == []
 
 
 @pytest.mark.parametrize("guard", [g for g in _registry()["guards"] if g.get("writer_guard")], ids=lambda g: g["name"])

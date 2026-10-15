@@ -98,7 +98,12 @@ WIDENED: dict[str, set[str]] = {
     #: hint to record-extraction, and before it a hint review persisted nothing. The
     #: agent writes only through `research_log_append`, which takes no `section`, so
     #: the widening adds a writer to an append-only, multi-writer section.
-    "log": {"survey-surname", "search-hints"},
+    #:
+    #: `log` gains `search-wikipedia` and `search-familysearch-wiki` (#3244
+    #: option L, U20). Both agents delivered a loose `.md` through `Write`, which
+    #: never reaches the hosted ProjectStore; each now logs its lookup through
+    #: `research_log_append`, the article or guidance in the entry's `notes`.
+    "log": {"survey-surname", "search-hints", "search-wikipedia", "search-familysearch-wiki"},
     #: `sources` gains `init-project` (issue #2122). The skill always wrote one
     #: `sources` entry per transcribed memory through `research_append` (its
     #: Step 4a) with no row naming it; the agent's hook lane makes that write

@@ -146,6 +146,26 @@ caller's expressed intent. `validate_research_schema` now also enforces the
 `^pli_` prefix on a log entry's `plan_item_id`, matching the JSON Schema and the
 sibling reference fields.
 
+**A superseded plan's items are refused.** When the plan that owns `planItemId`
+has `status: "superseded"`, the op is rejected: research-plan replaced that plan,
+and a search counted toward one of its items counts toward a strategy nobody is
+running. The error names the superseded plan and, for the same question, the
+active plan and its next open item (`in_progress` before `planned`). When there
+is no active plan, or it has no open item, the error says so and points at
+`planItemId: null` or research-plan. In a batch, one such op refuses the whole
+call and writes nothing.
+
+An item on a `completed` plan is **not** refused, and neither is an id no plan
+owns (that is the validator's reference check). Over the committed e2e corpus,
+replayed against the state each call saw
+(`eval/harness/scripts/measure_superseded_log_items.py`, 2026-10-12 at
+`08e7ba018`), 696 successful calls were replayable and 1,490 were not, their
+responses stripped. Of the 1,283 replayable ops naming a plan item, 1,239 were
+on an active plan, 0 on a superseded one, and 44 on a completed one. All 44 are
+in two runs, and in both the question had no active plan, so a refusal there
+would leave the caller nowhere to log. Widening the rule to every non-active
+plan waits for a run that shows a completed-plan write is wrong.
+
 **`externalSite.urlGenerated` validation.** Must be an absolute `http(s)` URL —
 it is the string the skill presents as the clickable link and persists into
 `research.json`, the same caller-composed shape `build_external_search_url`
@@ -389,7 +409,10 @@ are two that do block, and the distinction is what makes them legitimate.
   sources-without-assertions warning (which fires once ≥3 sources exist); it
   self-silences the instant any source or assertion lands, and fires on every
   qualifying `research_log_append` call while the two-empty state holds.
-  Tool-neutral message.
+  Tool-neutral message. Reference lookups (`REFERENCE_LOOKUP_TOOLS`: `wiki_search`,
+  `wiki_read`, `wikipedia_search`, `historical_context`) are not counted: their
+  `positive` entries carry a looked-up article or overview in `notes`, not a
+  record to persist. The pre-1880 census hedge is unaffected.
   It cannot reach a session that logs nothing at all (bundle 3) — that shape has
   no tool-boundary trigger.
 
@@ -779,8 +802,8 @@ recorded for different arguments.
   staging search tool reports `resultsAvailable > 0` with no `stagedResultsRef`
   and stays silent for a nil search; the logging-without-persistence nudge fires
   once ≥3 positive searches are logged with zero sources and zero assertions,
-  stays silent below the threshold, and stays silent once any source or assertion
-  exists. Both keep `ok: true` and leave the log entry written.
+  stays silent below the threshold, stays silent once any source or assertion
+  exists, and does not count reference-lookup entries. Both keep `ok: true` and leave the log entry written.
 - **Nil escalation (§8.1)** — `escalationDue` appears on the third nil against a
   census plan item with an open question, single or batched; stays absent at two,
   for a probate plan item, once the plan item has a positive or partial entry or

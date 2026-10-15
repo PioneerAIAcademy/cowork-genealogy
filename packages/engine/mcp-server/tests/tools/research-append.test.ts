@@ -9591,6 +9591,193 @@ describe("research_append — person_evidence requires a recorded score", () => 
 });
 
 
+describe("research_append — capture-pending plan item not terminal (#1226, #2484)", () => {
+  let dir: string;
+  beforeEach(async () => {
+    dir = await mkdtemp(join(tmpdir(), "research-append-capture-"));
+  });
+  afterEach(async () => {
+    await rm(dir, { recursive: true, force: true });
+  });
+
+  const ANCESTRY_URL =
+    "https://www.ancestry.com/search/collections/1850usfedcen/?name=Patrick_Flynn";
+
+  /** A project whose single plan item's latest log entry is an external-site
+   *  handoff. `captureReceived` toggles whether that handoff's capture arrived;
+   *  `extraLog` appends later entries (a FamilySearch hit, or a capture arrival
+   *  under a null plan_item_id). */
+  function captureResearch(itemStatus: string, captureReceived: boolean, extraLog: any[] = []) {
+    const r = baseResearch();
+    r.questions = [validQuestion("q_001")];
+    r.plans = [
+      validPlan("pl_001", "q_001", "active", [{ ...seededPlanItem("pli_001"), status: itemStatus }]),
+    ];
+    r.log = [
+      {
+        id: "log_001",
+        plan_item_id: "pli_001",
+        performed: "2026-05-01T10:15:00Z",
+        tool: "external_site",
+        query: { surname: "Flynn" },
+        outcome: "negative",
+        results_examined: 0,
+        results_ref: null,
+        external_site: { site: "ancestry", url_generated: ANCESTRY_URL, capture_received: captureReceived },
+      },
+      ...extraLog,
+    ];
+    return r;
+  }
+  async function writeProject(research: any) {
+    await writeFile(join(dir, "research.json"), JSON.stringify(research, null, 2));
+    await writeFile(join(dir, "tree.gedcomx.json"), JSON.stringify(baseTree, null, 2));
+  }
+  // A new skip must carry skip_category (#1830, planItemSkipInvariants) — send it
+  // so these cases exercise the capture-pending guard in isolation, not that rule.
+  const setStatus = (status: string) => ({
+    projectPath: dir,
+    section: "plan_items" as const,
+    op: "update" as const,
+    planId: "pl_001",
+    entryId: "pli_001",
+    fields: status === "skipped" ? { status, skip_category: "answered" } : { status },
+  });
+
+  it("refuses 'skipped' while the latest external-site search awaits a capture", async () => {
+    await writeProject(captureResearch("in_progress", false));
+    const errs = failure(await researchAppend(setStatus("skipped") as any)).errors.join(" ");
+    expect(errs).toMatch(/pli_001/);
+    expect(errs).toMatch(/awaiting a capture/);
+    expect(errs).toMatch(/#1226/);
+    // The message names the way through, so an autonomous skip is not steered
+    // back into the stall (EdmondOware review).
+    expect(errs).toMatch(/skip_category: "inaccessible"/);
+    expect(errs).toMatch(/user_declined/);
+  });
+
+  it("refuses 'completed' in the same state", async () => {
+    await writeProject(captureResearch("in_progress", false));
+    expect((await researchAppend(setStatus("completed") as any)).ok).toBe(false);
+  });
+
+  it("allows 'in_progress' — the correct state while the capture is outstanding", async () => {
+    await writeProject(captureResearch("planned", false));
+    expect(singleOk(await researchAppend(setStatus("in_progress") as any))).toBeTruthy();
+  });
+
+  it("allows 'skipped' once the handoff's own capture has arrived", async () => {
+    await writeProject(captureResearch("in_progress", true));
+    expect(singleOk(await researchAppend(setStatus("skipped") as any))).toBeTruthy();
+  });
+
+  it("allows 'skipped' when a later arrival (same site+url, null plan_item_id) carries the capture", async () => {
+    await writeProject(
+      captureResearch("in_progress", false, [
+        {
+          id: "log_002",
+          plan_item_id: null,
+          performed: "2026-05-02T10:15:00Z",
+          tool: "external_site",
+          query: { surname: "Flynn" },
+          outcome: "positive",
+          results_examined: 1,
+          results_ref: null,
+          external_site: { site: "ancestry", url_generated: ANCESTRY_URL, capture_received: true },
+        },
+      ]),
+    );
+    expect(singleOk(await researchAppend(setStatus("skipped") as any))).toBeTruthy();
+  });
+
+  it("allows terminal when a later FamilySearch hit, not the handoff, is the item's latest entry", async () => {
+    await writeProject(
+      captureResearch("in_progress", false, [
+        {
+          id: "log_002",
+          plan_item_id: "pli_001",
+          performed: "2026-05-03T10:15:00Z",
+          tool: "record_search",
+          query: { surname: "Flynn" },
+          outcome: "positive",
+          results_examined: 1,
+          results_ref: null,
+          external_site: null,
+        },
+      ]),
+    );
+    expect(singleOk(await researchAppend(setStatus("completed") as any))).toBeTruthy();
+  });
+
+  it("does not fire on a no-op restatement of an already-terminal status (no status change this op)", async () => {
+    await writeProject(captureResearch("skipped", false));
+    const r: any = await researchAppend(setStatus("skipped") as any);
+    expect(JSON.stringify(r.errors ?? [])).not.toContain("awaiting a capture");
+  });
+
+  // The `plans` route reaches items[] directly (a `plans` update's `fields:
+  // { items }` is copied through), so the guard has to hold there too or it is
+  // one inline edit away from being bypassed — the gap EdmondOware's review
+  // flagged. `skip_category` is sent so only the capture-pending rule can fire.
+  const setItemStatusViaPlans = (status: string) => ({
+    projectPath: dir,
+    section: "plans" as const,
+    op: "update" as const,
+    entryId: "pl_001",
+    fields: {
+      items: [
+        {
+          ...seededPlanItem("pli_001"),
+          status,
+          ...(status === "skipped" ? { skip_category: "answered" } : {}),
+        },
+      ],
+    },
+  });
+
+  it("refuses 'skipped' set inline through a plans update while the capture is pending", async () => {
+    await writeProject(captureResearch("in_progress", false));
+    const errs = failure(await researchAppend(setItemStatusViaPlans("skipped") as any)).errors.join(" ");
+    expect(errs).toMatch(/pli_001/);
+    expect(errs).toMatch(/awaiting a capture/);
+  });
+
+  it("allows 'skipped' inline through a plans update once the capture has arrived", async () => {
+    await writeProject(captureResearch("in_progress", true));
+    expect(singleOk(await researchAppend(setItemStatusViaPlans("skipped") as any))).toBeTruthy();
+  });
+
+  // The documented autonomous no-user / inaccessible-site skip: search-external-
+  // sites.md step 4 tells the agent to mark the item `skipped` with one of these
+  // categories when a capture cannot be obtained. Refusing it would deny the
+  // skill's own instruction and stall the run (EdmondOware review).
+  const setSkipWithCategory = (skip_category: string) => ({
+    projectPath: dir,
+    section: "plan_items" as const,
+    op: "update" as const,
+    planId: "pl_001",
+    entryId: "pli_001",
+    fields: { status: "skipped", skip_category, skip_reason: "no user available in autonomous run" },
+  });
+
+  it("allows a capture-pending 'skipped' with skip_category 'inaccessible' (no user to capture)", async () => {
+    await writeProject(captureResearch("in_progress", false));
+    expect(singleOk(await researchAppend(setSkipWithCategory("inaccessible") as any))).toBeTruthy();
+  });
+
+  it("allows a capture-pending 'skipped' with skip_category 'user_declined'", async () => {
+    await writeProject(captureResearch("in_progress", false));
+    expect(singleOk(await researchAppend(setSkipWithCategory("user_declined") as any))).toBeTruthy();
+  });
+
+  it("still refuses a capture-pending 'skipped' with a non-exempt skip_category (the _026 escalation shape)", async () => {
+    await writeProject(captureResearch("in_progress", false));
+    const errs = failure(await researchAppend(setSkipWithCategory("answered") as any)).errors.join(" ");
+    expect(errs).toMatch(/awaiting a capture/);
+  });
+});
+
+
 describe("research_append — the two exhaustiveness gates (#1335, Phase 4)", () => {
   let dir: string;
   beforeEach(async () => {
