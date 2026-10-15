@@ -99,6 +99,10 @@ const MUTATIONS: readonly (readonly [string, string, string])[] = [
   ["hedge: does not record a relationship", "/\\b(?:does|did)(?:\\s+not|n['’]t)\\s+record\\b[^.]{0,60}\\brelationship/.test(text) ||", ""],
   ["pre- binding", "Number(y) - (before && i === 0 ? 1 : 0)", "Number(y)"],
   ["pre- first year only", "(before && i === 0 ? 1 : 0)", "(before ? 1 : 0)"],
+  ["payload: every row British", "if (relationshipColumnFrom(title.split(\",\")[0]) !== 1851) return undefined;", "if (relationshipColumnFrom(title.split(\",\")[0]) !== 1851) continue;"],
+  ["payload: qualified kept", "!m.qualified && payloadColumnFrom !== undefined", "payloadColumnFrom !== undefined"],
+  ["payload: sd_c_ only", '&& s.id.startsWith("sd_c_")', ""],
+  ["payload: British wording", "fired.every((m) => m.columnFrom === 1851)", "false"],
 ];
 
 /** `{ passed, failed }` from one vitest run, or null if none was parsed. */

@@ -464,6 +464,21 @@ Scope, and why it is this narrow:
   The jurisdiction must touch the census token: most non-US words in real notes
   are birthplaces on a US schedule ("1850 US Census, Schuylkill County ... born
   Ireland"), which stays refused.
+  **An unqualified mention takes its jurisdiction from the staged payload**
+  (decided at review-ready 2026-10-14). An unqualified census reads
+  as US, so "1851 census, Trowbridge: Job Purnell head of household, wife Ann."
+  logged against an English search was refused as a US census. When the entry's
+  staged payload (`record_search` rows' `collectionTitle`, or a `record_read`
+  record's `sd_c_` collection description) has at least one titled row and every
+  titled row's leading segment is British, an unqualified mention takes the 1851
+  threshold. A mention that names its own jurisdiction, US included, keeps it.
+  Anything else — a US row, a mixed payload, an undocumented jurisdiction, no
+  titles — changes nothing. This supplies the jurisdiction; it does not skip the
+  check, so an 1841 mention against English rows stays refused ("still refuses
+  an 1841 England census" in `pre1880-census-hedge.test.ts`), now in British
+  words. The rejected option skipped the note-only path whenever no staged row
+  was a US federal census: it accepts "1841 England census … wife" and frees
+  none of the church-records notes, whose payload names no census.
 - **Undecidable inputs skip** rather than guessing: when no year binds to a
   census at all, the note-only gate does not fire — the same behaviour as an
   undocumented jurisdiction. What this gives up: an unhedged pre-1880 US census
@@ -478,10 +493,13 @@ Scope, and why it is this narrow:
   shape, never by the note's census patterns, which read an unqualified census as
   US and would take "Ecuador, Census, 1737-1990" for one), the note is judged
   whatever word it uses, provided it binds no census year of its own. A bound
-  year keeps precedence, so no note-only verdict moves. A mixed search (1850 and
+  year keeps precedence, so no note-only verdict moves on the census years (a
+  British payload can still re-jurisdiction an unqualified bound year — see the
+  jurisdiction bullet above). A mixed search (1850 and
   1880 rows) does not decide, because the note may describe the other row; nor
   does "the top-ranked row", which is the best match only when ranking ran.
-  Other search tools carry no collection title and keep the note-only rule.
+  Other search tools carry no collection title and keep the note-only rule;
+  `record_read` feeds only the jurisdiction above, never the census years.
 - **The note does not have to repeat the census year** (2026-10-02). Until then
   the payload tie also required one of its years to appear in the note text,
   which hid real misses: `ut_search_records_001` ("…in household of Thomas
