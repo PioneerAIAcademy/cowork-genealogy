@@ -28,17 +28,19 @@ match strength.
 
 ## Notes for reviewers
 
-**DRAFT PENDING ADJUDICATION.** This fixture comes from a hint batch
-(`filtered-list-samples-3.csv` row 19, `hint-samples.csv` row 660,
-flags `adds_birth,adds_christening`, confidence 3) in which roughly half the hint records are
-**false matches**, and the authors do not know which.
-`expected-findings.json` was transcribed from the hint record — "Philippines, Catholic Church Records, 1520-2014", a baptism entry from the parish of San Pablo (Saint Paul the First Hermit), Laguna, for Isabel Flores, born 7 July 1880 and baptized 11 July 1880, daughter of Policronio Flores and Catalina Ortiz; it also names paternal grandparents Florentino Flores and María Gulaglay, maternal grandparents Antonio Ortes and Rita Gusmán, and godmother Paula Ortiz.
-The genealogist + developer teams must decide (a) true match — keep the
-findings; (b) different answer — edit `expected-findings.json`; or (c) no
-findable answer — replace the findings with a `"polarity": "avoid"` guard
-naming the July 1880 San Pablo baptism, plus a `required` finding that the report documents
-the rejection.
+**Resolved: TRUE MATCH (index-only).** The 1880 San Pablo baptism of Isabel Flores (hint record `ark:/61903/1:1:666Y-8VPJ`) is the birth record of the tree's Isabel Flores (`GCNR-K3J`), wife of Fermin Barleta. She was born 7 July 1880 and baptized 11 July 1880 at San Pablo (Saint Paul the First Hermit), Laguna, daughter of Policronio/Apolonio Flores and Catalina Ortiz.
 
-A real candidate with one named conflict. For it: same parish as every baptism in the family, the mother is Catalina Ortiz exactly as in the tree, and a girl born in July 1880 is a natural wife for a man born in July 1878 who started having children in 1904. Against it: the tree's father is Apolonio, not Policronio, and that name comes from two separate entries — the maternal-grandfather lines on Cesario's 1908 baptism (`ark:/61903/1:1:66X7-T1CZ`) and Florentina's 1911 baptism (`ark:/61903/1:1:66NS-KNYT`), both indexed "Apolonio" with no surname. Neither is a re-index of this 1880 entry. The flags carry no `adds_father`, because the tree already has a father, so the hint was proposed despite the clash.
+**What decided it — the parents' 1877 marriage.** The marriage of **Apolonio Flores and Catalina Ortiz**, 5 February 1877, San Pablo (`ark:/61903/1:1:XWM9-CGG8`, index), closes the identity:
 
-Two readings fit the evidence. Either the 1880 priest wrote Policronio and the later registers (or their indexers) shortened or garbled it, which is possible since both names end in "-onio"; or this Isabel is a cousin — another Flores couple whose wife was also a Catalina Ortiz — and the tree's Isabel was baptized elsewhere in the register. The discriminating check is the marriage entry of Fermin Barleta and Isabel Flores (San Pablo, about 1900–1903), which names the bride's parents and usually her age: a father named Policronio settles it for the hint; a father Apolonio, or an age well away from 1880, points to another baptism.
+- **The mother is conclusively the same Catalina Ortiz.** The 1877 marriage names the bride Catalina Ortis as daughter of **Antonio Ortis and Rita Gusman**; the 1880 Isabel baptism names the maternal grandparents as **Antonio Ortis and Rita Guzman, with Rita deceased**. Both grandparents *and* the distinctive detail that Rita had died match exactly — the same Catalina Ortiz in both records.
+- **The father is the same man, named Apolonio in his own record.** The 1877 groom is **Apolonio** Flores — the name the tree and the children's baptisms carry — and his mother is **Maria Gulaylay**, matching the 1880 baptism's paternal grandmother **Maria Gulaglay** (a rare, distinctive surname). So the 1880 register's "**Policronio**" is the lone outlier, outweighed by Apolonio in the 1877 marriage and the 1904/1908/1911 baptisms, and is read as a scribal variant for the same man. (The paternal grandfather likewise varies, Fulgencio in 1877 vs Florentino in 1880 — a secondary scribal slip; the grandmother anchors the line.)
+
+So the 1880 Isabel is a daughter of Apolonio Flores and Catalina Ortiz — the tree's Isabel's parents. Corroborating, Isabel's own children's baptisms name her parents as Apolonio and Catalina Ortiz: Cesario 1908 (`ark:/61903/1:1:66X7-T1CZ`) and Florentina 1911 (`ark:/61903/1:1:66NS-KNYT`).
+
+**Competing candidate excluded and alternatives searched.** The other Barleta × Isabel(a) Flores couple — Apolinario Barleta and Isabela Flores, married 1871 (`ark:/61903/1:1:XWMQ-426F`), parents of Rufina (b. 1874) — is an earlier generation and ruled out. A search of San Pablo baptisms 1865–1895 found **no other Flores child of Catalina Ortiz**, so there is only one Isabel baptism; no childhood burial of the 1880 Isabel was found (San Pablo burials of the era are sparsely indexed). The chronology fits: born July 1880, a natural wife for Fermin Barleta (b. July 1878) whose first child came in 1904.
+
+**Why not the marriage of Fermin and Isabel.** That marriage (San Pablo, ~1900–1903) would have been the most direct discriminator, but it is **not indexed**, and its register volume (image group `007771115`) is **image-restricted (HTTP 403)** — it could not be read. The identification does not depend on it.
+
+**Image calibration (Step 1a).** The 1880 baptism image (`ark:/61903/3:1:3Q9M-CSM6-4HJJ`) was read once as a control and calibrated against two other entries on the same page that the FamilySearch index holds — **Isabelo Aquino** (`ark:/61903/1:1:666Y-8VPW`) and **Tranquilina Estrellado** (`ark:/61903/1:1:666Y-8VGJ`) — both matching the index on child, father and date, so the reading is licensed. It confirms the 1880 register genuinely records "Policronio" (not an indexing error). The resolution itself rests on **index evidence** (the 1877 marriage index plus the baptism indexes), so `fixture.json` sets `image_basis: false`.
+
+**Retrieval** was read-only via the MCP `record_read` / `record_search` / `image_transcribe` tools against live FamilySearch; the identity judgement is the genealogist's.
