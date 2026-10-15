@@ -808,3 +808,74 @@ def test_no_warnings_without_tree_person(tool_calls, test):
 # reading KD96-WX7 -- and the JUDGE does catch it, which is how it was found. If
 # this is ever made deterministic it needs the test to declare which ids are
 # persons, not a pattern over the reply.
+
+
+# ---------------------------------------------------------------------------
+# Census-variance gate (issue #3434)
+#
+# A census birth year or age within a couple of years of the profile is
+# ordinary variance (informant-reported), not an indexing error.  The 1900
+# United States Census's month-and-year-of-birth column is informant-reported,
+# not a civil registration, so a two-year drift there is ordinary variance too.
+#
+# _find_census_year_error_line checks each line that contains "indexing error"
+# and asks whether "1900" appears within a two-line window around it.  The
+# window catches both same-line findings ("1900 — indexing error") and
+# split-line headings ("United States Census, 1900\nThis is an indexing error").
+# A negation within the same window ("not an indexing error") passes.
+# Death-index lines (1954 / 1945 in this corpus) never co-appear with "1900"
+# in any window, so they are never flagged.
+# ---------------------------------------------------------------------------
+
+_CENSUS_INDEX_ERROR_RE = re.compile(r"\bindex(?:ing)?\s+error\b", re.IGNORECASE)
+_CENSUS_NEGATION_RE = re.compile(
+    r"\bnot(?:\s+\w+){0,3}\s+(?:an?\s+)?index(?:ing)?\s+error\b", re.IGNORECASE
+)
+_CENSUS_1900_RE = re.compile(r"\b1900\b", re.IGNORECASE)
+
+
+def _find_census_year_error_line(reply: str) -> str | None:
+    """Return the first line pairing '1900' with 'indexing error', or None.
+
+    Checks each "indexing error" line and the two lines immediately before it
+    for "1900" — covering same-line findings and split-line headings where the
+    collection name (with the year) appears on its own line above the verdict.
+    Looking only backward avoids picking up "1900" from the census line that
+    follows a separate death-index "indexing error" line.
+    """
+    lines = reply.splitlines()
+    for i, line in enumerate(lines):
+        if not _CENSUS_INDEX_ERROR_RE.search(line):
+            continue
+        window = "\n".join(lines[max(0, i - 2) : i + 1])  # current + 2 before
+        if not _CENSUS_1900_RE.search(window):
+            continue
+        if _CENSUS_NEGATION_RE.search(window):
+            continue
+        return line
+    return None
+
+
+def _requires_census_variance_trap(test) -> None:
+    if "census-variance-trap" not in (test.get("tags") or []):
+        pytest.skip("test does not declare census-variance-trap")
+    if test.get("type") != "positive":
+        pytest.skip("negative tests route away and produce no audit")
+
+
+def test_census_drift_is_not_a_finding(
+    text_response, test, agent_returns=None
+) -> None:
+    """1900 census birth year drift must not be classified as an indexing error."""
+    _requires_census_variance_trap(test)
+    from harness.skill_runner import subject_reply_text
+
+    reply = subject_reply_text(agent_returns, text_response, "source-evaluation", test)
+    bad_line = _find_census_year_error_line(reply)
+    assert bad_line is None, (
+        "agent classified a 1900-census birth year drift as an indexing error:\n"
+        f"  {bad_line!r}\n"
+        "A census birth year within a couple of years is ordinary variance "
+        "(informant-reported, not a transcription error); do not list it as a "
+        "finding of any kind."
+    )

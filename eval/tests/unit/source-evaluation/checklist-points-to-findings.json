@@ -10,6 +10,7 @@
       "doctrine",
       "quality-detail",
       "checklist-overlap",
+      "census-variance-trap",
       "direct-arm"
     ]
   },

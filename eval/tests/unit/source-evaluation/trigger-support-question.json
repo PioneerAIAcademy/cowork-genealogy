@@ -7,6 +7,7 @@
     "description": "An audit request phrased as a question about support — 'do these sources actually back up what is on his profile' — on the issue title's framing rather than the tester's verbatim words. Formerly a trigger positive for the skill's description; since issue #2796 the agent is spawned directly with this request, so the test grades the audit it produces on this phrasing, not whether anything fired.",
     "tags": [
       "trigger",
+      "census-variance-trap",
       "direct-arm"
     ]
   },

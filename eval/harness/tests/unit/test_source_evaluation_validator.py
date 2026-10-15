@@ -923,3 +923,150 @@ def test_warnings_guards_skip_an_untagged_test():
             fn([], {"tags": []})
     with pytest.raises(pytest.skip.Exception):
         _pw_verbatim([], "", {"tags": []})
+
+
+# ---------------------------------------------------------------------------
+# Census-variance trap (issue #3434)
+#
+# A census birth year or age within a couple of years of the profile is
+# ordinary variance, not an indexing error.  The 1900 United States Census's
+# month-and-year-of-birth column is informant-reported, not a civil registration,
+# so a two-year drift there is ordinary variance too.
+#
+# Prove both directions per CLAUDE.md: the guard MUST fire on bad output and
+# MUST NOT fire on correct output.
+# ---------------------------------------------------------------------------
+
+_census_trap = _VALIDATOR.test_census_drift_is_not_a_finding
+_find_census_year_error_line = _VALIDATOR._find_census_year_error_line
+_CENSUS_TEST = {"tags": ["census-variance-trap"], "type": "positive"}
+
+# Text that MUST fire the guard (agent misclassifies 1900 census drift).
+# Drawn from actual agent outputs observed in round 9 and round 10 eval runs.
+_CENSUS_FAIL_PLAIN = (
+    "SOURCES ON: Christian P. Hole (KD96-TV2) — 2 findings\n"
+    "1. Minnesota Death Index — indexing error in death year (1954 vs 1945).\n"
+    "2. United States Census, 1900 — indexing error (birth year)\n"
+    "Indexed birth year 1877; the profile records 1875."
+)
+_CENSUS_FAIL_HEADER = (
+    "SOURCES ON: Christian P. Hole (KD96-TV2) — 1 finding\n"
+    "1. Minnesota Death Index — indexing error in death year (1954 vs 1945).\n"
+    '**Finding 1. "United States Census, 1900" — indexing error (birth year)**\n'
+    "Indexed birth year 1877; the profile records 1875."
+)
+_CENSUS_FAIL_POSSIBLE = (
+    "SOURCES ON: Christian P. Hole (KD96-TV2) — 2 findings\n"
+    "1. Minnesota Death Index — indexing error (1954 vs 1945).\n"
+    "**2. United States Census, 1900 — possible indexing error (birth year)**\n"
+    "The birth year 1877 vs profile 1875 may reflect a transcription slip."
+)
+
+# Text that must NOT fire the guard (agent correctly handles ordinary variance).
+_CENSUS_PASS_CLEAN = (
+    "SOURCES ON: Christian P. Hole (KD96-TV2) — 1 finding\n"
+    "1. Minnesota Death Index — indexing error in death year (1954 vs 1945).\n"
+    "Next: re-read the underlying death certificate and correct the indexed year."
+)
+_CENSUS_PASS_NEGATED = (
+    "SOURCES ON: Christian P. Hole (KD96-TV2) — 1 finding\n"
+    "1. Minnesota Death Index — indexing error in death year (1954 vs 1945).\n"
+    "(The 1900 census entry also shows a birth year of 1877 against the profile's "
+    "1875 — a two-year gap on an informant-reported census field. This is ordinary "
+    "variance, not an indexing error, and is not counted as a finding.)"
+)
+_CENSUS_PASS_NEGATED_LONG = (
+    "SOURCES ON: Christian P. Hole (KD96-TV2) — 1 finding\n"
+    "1. Minnesota Death Index — indexing error in death year (1954 vs 1945).\n"
+    "The 1900 census included a month-and-year-of-birth column whose values were "
+    "supplied by whoever answered the enumerator's questions — an informant-reported "
+    "figure. A two-year drift from 1875 to 1877 does not constitute evidence of an "
+    "indexing error."
+)
+
+
+# A split-line heading: "1900" on one line, "indexing error" on the next.
+# The per-line regex would miss this; the window-based guard must catch it.
+_CENSUS_FAIL_SPLIT_LINE = (
+    "SOURCES ON: Christian P. Hole (KD96-TV2) — 2 findings\n"
+    "1. Minnesota Death Index — indexing error in death year (1954 vs 1945).\n"
+    "**Finding 2 — United States Census, 1900**\n"
+    "This is an indexing error: birth year 1877 does not match the profile's 1875."
+)
+
+
+def test_census_trap_fires_on_bad_output():
+    for text in (_CENSUS_FAIL_PLAIN, _CENSUS_FAIL_HEADER, _CENSUS_FAIL_POSSIBLE):
+        assert _find_census_year_error_line(text) is not None, (
+            f"guard did not fire on expected bad output:\n{text!r}"
+        )
+
+
+def test_census_trap_fires_on_split_line_finding():
+    """Guard must catch '1900' on a heading line and 'indexing error' on the next."""
+    assert _find_census_year_error_line(_CENSUS_FAIL_SPLIT_LINE) is not None, (
+        "guard missed a split-line census indexing-error finding"
+    )
+
+
+def test_census_trap_passes_on_correct_output_inner():
+    for text in (_CENSUS_PASS_CLEAN, _CENSUS_PASS_NEGATED, _CENSUS_PASS_NEGATED_LONG):
+        assert _find_census_year_error_line(text) is None, (
+            f"guard fired on correct output:\n{text!r}"
+        )
+
+
+def test_census_trap_error_message_names_the_offending_line():
+    """Assertion error must show the actual bad line, not an empty string."""
+    with pytest.raises(AssertionError, match=r"United States Census, 1900"):
+        _census_trap(text_response=_CENSUS_FAIL_PLAIN, test=_CENSUS_TEST)
+
+
+def test_census_trap_fails_on_indexing_error_label():
+    for text in (_CENSUS_FAIL_PLAIN, _CENSUS_FAIL_HEADER, _CENSUS_FAIL_POSSIBLE):
+        with pytest.raises(AssertionError):
+            _census_trap(text_response=text, test=_CENSUS_TEST)
+
+
+def test_census_trap_passes_on_correct_output():
+    for text in (_CENSUS_PASS_CLEAN, _CENSUS_PASS_NEGATED, _CENSUS_PASS_NEGATED_LONG):
+        _census_trap(text_response=text, test=_CENSUS_TEST)
+
+
+def test_census_trap_fails_when_agent_returns_carry_bad_text():
+    """Via agent_returns (delegation test): the subagent's own return is checked."""
+    ar = [{"subagent_type": "source-evaluation", "text": _CENSUS_FAIL_PLAIN}]
+    with pytest.raises(AssertionError):
+        _census_trap(
+            text_response="",
+            test={**_CENSUS_TEST, "delegation": True},
+            agent_returns=ar,
+        )
+
+
+def test_census_trap_passes_when_agent_returns_carry_correct_text():
+    """Via agent_returns: a clean agent return passes even if relay is dirty."""
+    ar = [{"subagent_type": "source-evaluation", "text": _CENSUS_PASS_NEGATED}]
+    dirty_relay = "1900 United States Census — indexing error"
+    _census_trap(
+        text_response=dirty_relay,
+        test={**_CENSUS_TEST, "delegation": True},
+        agent_returns=ar,
+    )
+
+
+def test_census_trap_skips_when_tag_absent():
+    for test in ({"tags": []}, {}):
+        with pytest.raises(pytest.skip.Exception):
+            _census_trap(
+                text_response="1900 United States Census — indexing error",
+                test=test,
+            )
+
+
+def test_census_trap_skips_on_negative_test():
+    with pytest.raises(pytest.skip.Exception):
+        _census_trap(
+            text_response="1900 United States Census — indexing error",
+            test={**_CENSUS_TEST, "type": "negative"},
+        )
