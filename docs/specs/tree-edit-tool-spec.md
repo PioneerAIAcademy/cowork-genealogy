@@ -569,6 +569,8 @@ Sequence (validate-before-persist, tree-only):
 | `add_fact` / `update_fact` targeting a `ParentChild` relationship, or `add_relationship` with facts on a `ParentChild` | input error — facts live only on Couple relationships |
 | A fact payload (any write path) with a non-string `date` / `standard_date` / `place` / `standard_place` / `value` — e.g. a nested `{ original, formal }` date object | input error naming the field and expected shape; write nothing (§4.1 "Fact payload shape") |
 | `add_person` inline fact / `add_relationship` fact carries an `id` | input error — the tool assigns `F` ids |
+| `add_fact` with a `personId`, or an `add_person` inline fact, whose `type` is a couple event (Marriage, Divorce, Annulment, Engagement, MarriageBanns, Separation, and any spelling folding to one) | input error naming the Couple route; write nothing |
+| `update_fact` with a `personId` that RETYPES a fact into a couple event | input error naming the Couple route. Editing a fact that is **already** a person-level couple event is admitted (Decision 24) |
 | `remove` with a `personId` and no `factId` (attempt to delete a person) | input error — use `merge_tree_persons` |
 | `remove` of a `factId` more than one holder carries, unscoped | input error naming every holder — pass `personId` or `relationshipId` |
 | `remove` with both `personId` and `relationshipId` | input error — one or the other scopes a `factId` |

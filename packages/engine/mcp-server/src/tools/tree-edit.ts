@@ -33,6 +33,7 @@ import {
   type WarningJustificationInput,
 } from "../validation/introduced-warnings.js";
 import { dedupSourceRefs, relationshipMatches } from "../utils/merge-gedcomx.js";
+import { isCoupleEventFactType } from "../utils/record-persona.js";
 import { sanitizeTree } from "../validation/tree-sanitize.js";
 import {
   atomicWriteJson,
@@ -221,6 +222,26 @@ type FactHolder = SimplifiedPerson | SimplifiedRelationship;
  * `relationshipId`. Facts on relationships are legal only on Couples
  * (Marriage, Divorce, …) — the tree schema rejects `facts` on ParentChild.
  */
+/**
+ * A couple event belongs on the Couple relationship's `facts[]`, never on a
+ * person — `tree_edit`'s own convention ("a Marriage/Divorce fact lives on the
+ * Couple, never duplicated onto each spouse"). Writing one onto a person leaves
+ * the Couple edge factless, which is the shape the materialize-facts skip
+ * already refuses to create on the extraction side.
+ *
+ * Matched with the shared folded key, so every spelling of one event is caught
+ * — `MarriageBanns` and a licence or intention spelling alike — rather than the
+ * exact strings someone happened to list.
+ */
+function refuseCoupleEventOnPerson(type: unknown, op: string): void {
+  if (!isCoupleEventFactType(type)) return;
+  throw new TreeEditError(
+    `${op}: '${String(type)}' is a couple event and belongs on the Couple relationship, ` +
+      "not on a person. Add it with `add_relationship` carrying the fact inline, or with " +
+      "`add_fact` naming the Couple edge in `relationshipId`",
+  );
+}
+
 function requireFactHolder(tree: SimplifiedGedcomX, input: TreeEditInput, op: string): FactHolder {
   const targets = [input.personId, input.relationshipId].filter(Boolean);
   if (targets.length !== 1) {
@@ -453,6 +474,9 @@ async function applyOperation(
       // fact lives on the Couple, not duplicated onto each spouse).
       const holder = requireFactHolder(tree, input, "add_fact");
       if (!input.fact) throw new TreeEditError("add_fact requires a `fact`");
+      // Only when the target is a PERSON: the same fact on a Couple edge is
+      // exactly where it belongs.
+      if (input.personId) refuseCoupleEventOnPerson(input.fact.type, "add_fact");
       if (input.fact.id) throw new TreeEditError("add_fact `fact` must not carry an id — the tool assigns it");
       requireFactShape(input.fact, "add_fact");
       const fact: SimplifiedFact = { ...input.fact, id: nextId(tree, "F") };
@@ -473,6 +497,17 @@ async function applyOperation(
       if (!existing) {
         const where = input.personId ? `person '${input.personId}'` : `relationship '${input.relationshipId}'`;
         throw new TreeEditError(`fact '${input.factId}' not found on ${where}`);
+      }
+      // Decision 24: refuse only an op that MAKES a person-level couple event.
+      // Editing one already there is admitted — 13 such facts sit in 8 committed
+      // e2e starting trees, and refusing their correction would strand data the
+      // agent is supposed to be able to fix.
+      if (
+        input.personId &&
+        input.fact.type !== undefined &&
+        !isCoupleEventFactType(existing.type)
+      ) {
+        refuseCoupleEventOnPerson(input.fact.type, "update_fact");
       }
       // Delta-scoped provenance rule (§6): an update may not REMOVE an existing
       // ref (e.g. clear a populated `sources`). It is NOT "the result must have a
@@ -602,6 +637,10 @@ async function applyOperation(
         }
         rawPerson.names = [rawPerson.name];
         delete rawPerson.name;
+      }
+      // Inline facts take the same rule as add_fact: a new person is a person.
+      for (const f of input.person.facts ?? []) {
+        refuseCoupleEventOnPerson(f.type, "add_person");
       }
       const personId = nextId(tree, "I");
       const nMax = maxIdNum(tree, "N");
