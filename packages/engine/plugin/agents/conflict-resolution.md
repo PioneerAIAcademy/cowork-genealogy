@@ -164,9 +164,9 @@ Look for:
 - A tree writer (`tree_edit`, `tree_correct`, `merge_tree_persons`,
   `materialize_facts`) returns a `conflicts_surfaced` entry with
   `factType: "ParentChild"` when a write would give a child two
-  biological parents of one sex. Treat it as an **identity question
-  first**: the two parents may be one person entered twice, or rival
-  candidates. Each value names a parent and the evidence behind it, as
+  biological parents of one sex. Record it as an identity-level
+  conflict (§6): the two parents may be one person entered twice, or
+  rival candidates. Each value names a parent and the evidence behind it, as
   assertion ids or, failing that, `source S…`; for a source ref, find its
   assertions through the `research.json` source whose
   `gedcomx_source_description_id` matches. Record the conflict with those
