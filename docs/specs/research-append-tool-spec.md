@@ -2137,8 +2137,8 @@ above leave a case open:
 The probate rows are the genealogist's ruling (2026-09-30), split by who
 produced each part of the file. A petitioner's statement of the death follows
 the obituary's reading: family, but the file does not say who was present.
-Heirs named by the petitioner are `primary`. `probate` joins the `RecordType` union, and the rows apply on both
-paths.
+Heirs named by the petitioner are `primary`. `probate` joins the `RecordType`
+union, and the rows apply on both paths.
 
 The obituary split is the genealogist's ruling (2026-09-29, option C). What the
 family knew firsthand and recently is `household_member`, and `indeterminate`
