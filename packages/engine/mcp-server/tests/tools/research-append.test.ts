@@ -361,7 +361,7 @@ describe("research_append (Phase 1)", () => {
       const f = await factF4();
       expect(f.place).toBe("West Bromwich, England");
       expect(f.standard_place).toBeUndefined();
-      expect(r.validation.warnings.join(" ")).toMatch(/cleared \(left unset\)/);
+      expect(r.validation.warnings.join(" ")).toMatch(/cleared standard_place/);
     });
 
     it("(5) `place: null` clears the fact's place rather than writing a null", async () => {
@@ -508,10 +508,31 @@ describe("research_append (Phase 1)", () => {
       expect(r.validation.warnings.join(" ")).toMatch(/non-string 'value'/);
     });
 
-    it("(12) warns when a place correction leaves an un-corrected standard_place", async () => {
-      // The card's own harm one level down: the display string reads corrected
-      // while the place-AUTHORITY value still names the old jurisdiction. Both
-      // the assertion and the fact carry it, so the agreement guard cannot see it.
+    it("(12) re-resolves standard_place when a place correction leaves it out", async () => {
+      // Kept, the old value would name the old jurisdiction while the display
+      // string reads corrected, and the birthplace cap would measure distance
+      // from it. Resolved, the new value lands on the assertion and the fact.
+      await writeProject(withAssertion(backlinkAssertion()), treeWithBacklink());
+
+      const r = await researchAppend({
+        projectPath: dir,
+        section: "assertions",
+        op: "update",
+        entryId: "a_011",
+        fields: { place: "West Bromwich, Staffordshire, England" },
+      });
+      expect(r.ok).toBe(true);
+      if (!r.ok) return;
+
+      const f = await factF4();
+      expect(f.place).toBe("West Bromwich, Staffordshire, England");
+      expect(f.standard_place).toBe("West Bromwich, Staffordshire, England, United Kingdom");
+      const research = JSON.parse(await readFile(join(dir, "research.json"), "utf-8"));
+      const a = research.assertions.find((x: any) => x.id === "a_011");
+      expect(a.standard_place).toBe("West Bromwich, Staffordshire, England, United Kingdom");
+    });
+
+    it("(12b) clears standard_place when the corrected place resolves to nothing", async () => {
       await writeProject(withAssertion(backlinkAssertion()), treeWithBacklink());
 
       const r = await researchAppend({
@@ -526,8 +547,8 @@ describe("research_append (Phase 1)", () => {
 
       const f = await factF4();
       expect(f.place).toBe("Odessa, Francis No. 127, Saskatchewan, Canada");
-      expect(f.standard_place).toBe("Thames Centre Township, Middlesex, Ontario, Canada");
-      expect(r.validation.warnings.join(" ")).toMatch(/place authority value was not part of this correction/);
+      expect(f.standard_place).toBeUndefined();
+      expect(r.validation.warnings.join(" ")).toMatch(/cleared standard_place 'Thames Centre Township/);
     });
 
     it("(13) warns loudly when the rewritten fact is a concluded (primary) value", async () => {
@@ -7652,6 +7673,21 @@ describe("research_append — detected core-identifier contradiction", () => {
     }
   });
 
+  // Two counties named as a birthplace are two places, whatever their centres'
+  // distance; a county against a town inside the band still gets a distance.
+  it("caps two counties against each other inside the band", () => {
+    const perth = "Perthshire, Scotland, United Kingdom", angus = "Angus, Scotland, United Kingdom";
+    const kirriemuir = "Kirriemuir, Forfarshire, Scotland, United Kingdom";
+    const coords: [string, number, number, string?][] = [
+      [perth, 56.5, -3.75, "County (Top level)"], [angus, 56.7, -2.9, "County (Top level)"],
+      [kirriemuir, 56.6738, -3.0043, "Town"],
+    ];
+    expect(direct({ place: perth, standard_place: perth }, { date: "1865", place: angus, standard_place: angus },
+      coords)).toHaveLength(1);
+    expect(direct({ place: angus, standard_place: angus }, { date: "1832", place: kirriemuir, standard_place: kirriemuir },
+      coords)).toEqual([]);
+  });
+
   // Ireland under a trailing United Kingdom is still Ireland, not England's
   // country: 135 mi in 1880 is inside the band, and the countries differ.
   it("reads a country named before a trailing United Kingdom", () => {
@@ -7775,6 +7811,16 @@ describe("research_append — detected core-identifier contradiction", () => {
 
   it("caps a same-country pair with no year on either side", async () => {
     await write(cruzRecord, { place: NUEVA_ITALIA, standard_place: NUEVA_ITALIA, date: undefined });
+    expect((await researchAppend(link("confident"))).ok).toBe(false);
+  });
+
+  // A place-only update must not leave the old standard_place standing for the
+  // new place: Tijuana is about 1,300 mi from Nueva Italia.
+  it("caps when a place-only update leaves a stale standard_place near the tree birth", async () => {
+    await write(cruzRecord, cruzTree);
+    const upd = await researchAppend({ projectPath: dir, section: "assertions", op: "update" as const,
+      entryId: "a_050", fields: { place: "Tijuana, Baja California, Mexico" } } as any);
+    expect(upd.ok).toBe(true);
     expect((await researchAppend(link("confident"))).ok).toBe(false);
   });
 

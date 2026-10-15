@@ -833,7 +833,9 @@ function yearOf(value: unknown): number | null {
  *  "near Nueva Italia, Michoacán" and a record's "La Unión, Guerrero", 85 mi
  *  apart in 1910, are not a contradiction. When the distance cannot be computed
  *  (no standard_place on a side, no coordinates, a side that is a whole region,
- *  no year) the cap fires.
+ *  two counties, no year) the cap fires. A place-only assertions update
+ *  re-resolves its standard_place in `prepareOps`, so a stale one does not stand
+ *  for the corrected place.
  *
  *  Scope is deliberately narrow: only the record's own assertions, only against
  *  the tree person's BIRTH fact, and only where both sides actually state a
@@ -997,7 +999,9 @@ export type BirthPlaceCoords = ReadonlyMap<string, PlaceCoords | null>;
  *  than somewhere a person is born. Their coordinates are the region's centre,
  *  so a distance from one is not computable and the pair caps. A county,
  *  department or municipality still gets a distance: the cruz-corona-ancestry
- *  record is a Mexican municipality. */
+ *  record is a Mexican municipality. Two counties against each other cap,
+ *  though: two different counties named as a birthplace are two different
+ *  places (Perthshire against Forfarshire), not one place measured twice. */
 const REGION_PLACE_TYPES: ReadonlySet<string> = new Set([
   "continent", "country", "dependency or protectorate", "colony", "state", "province", "territory",
   "region", "prefecture", "governorate", "principality or emirate",
@@ -1071,7 +1075,7 @@ function yearsIn(...values: unknown[]): number[] {
  *  further apart than `birthThresholdMiles` allows for the era the dates span.
  *  Fails closed: with no country difference, the pair counts as far apart unless
  *  both sides carry a standard_place with coordinates finer than a region
- *  (`REGION_PLACE_TYPES`) and some year is known. */
+ *  (`REGION_PLACE_TYPES`), they are not two counties, and some year is known. */
 function birthPlacesFarApart(assertion: any, birth: any, coords?: BirthPlaceCoords): boolean {
   if (birthCountriesDiffer(assertion, birth)) return true;
   const sa = assertion?.standard_place;
@@ -1081,6 +1085,7 @@ function birthPlacesFarApart(assertion: any, birth: any, coords?: BirthPlaceCoor
   const pb = coords?.get(sb);
   if (!pa || !pb) return true;
   if (REGION_PLACE_TYPES.has(placeTypeKey(pa.type)) || REGION_PLACE_TYPES.has(placeTypeKey(pb.type))) return true;
+  if (placeTypeKey(pa.type) === "county" && placeTypeKey(pb.type) === "county") return true;
   const years = yearsIn(birth.date, birth.standard_date, assertion.date);
   if (years.length === 0) return true;
   const { miles } = haversineDistance(pa.latitude, pa.longitude, pb.latitude, pb.longitude);
@@ -3223,12 +3228,6 @@ function rewriteLinkedFacts(
           if (concluded) concludedTouched.add(fact);
         }
       }
-      // A `place` correction that leaves an un-corrected `standard_place` is the
-      // shape this card was filed about, one level down: the display string
-      // reads corrected while the place-AUTHORITY value still names the old
-      // jurisdiction. The update path cannot re-resolve it (the sidecar/geocode
-      // lever is append-only), and the assertion is equally stale, so the guard
-      // below cannot see it either. Say so rather than let it pass silently.
       if (
         touched.includes("date") &&
         typeof fact.standard_date === "string" &&
@@ -3243,17 +3242,6 @@ function rewriteLinkedFacts(
           `fact '${fact.id}' kept standard_date '${fact.standard_date}' while its date was ` +
             `corrected from assertion '${a.entryId}' — an assertion carries no standard_date, so ` +
             "the sidecar was not part of this correction. Re-check it with tree_correct.",
-        );
-      }
-      if (
-        placeRewritten &&
-        !touched.includes("standard_place") &&
-        typeof fact.standard_place === "string"
-      ) {
-        mutationWarnings.push(
-          `fact '${fact.id}' kept standard_place '${fact.standard_place}' while its place was ` +
-            `corrected from assertion '${a.entryId}' — the place authority value was not part of ` +
-            "this correction. Update the assertion's standard_place too if the reading moved.",
         );
       }
       // Country-contradiction guard on the pair this rewrite just produced.
@@ -5246,6 +5234,86 @@ async function prepareOps(
     placesByRecord.set(key, [...(placesByRecord.get(key) ?? []), place]);
   }
 
+  /** Place levers (b) then (a) on one assertion's fields, in place. A
+   *  standard_place contradicting the place's country is an error, unless
+   *  `dropContradiction`, when it is left unset instead. */
+  const applyPlaceLevers = async (
+    entry: any,
+    i: number,
+    matchedRecord: any,
+    dropContradiction = false,
+  ): Promise<void> => {
+    // ── Place lever (b): never geocode what the source record already
+    // resolved — copy the sidecar's standard_place for the same place string.
+    // `standard_place: null` is an explicit opt-out (skip resolution + guard);
+    // only a fully omitted field triggers resolution. A non-place phrase
+    // ("Same House") is left unset, silently: it has no standard form.
+    let geocoded = false;
+    if (
+      factText(entry.place) !== undefined &&
+      entry.standard_place === undefined &&
+      !isNonPlacePhrase(factText(entry.place)!)
+    ) {
+      let sp: string | null = null;
+      let source: "sidecar" | "geocoded" | null = null;
+      if (matchedRecord) {
+        sp = sidecarStandardPlace(matchedRecord.gedcomx, entry.place);
+        if (sp) source = "sidecar";
+      }
+      if (!sp && input.resolveStandardPlace !== false) {
+        // resolveStandardPlace swallows network failures and returns null, so
+        // a miss and a failure look the same here — both warrant the warning
+        // (a silently unresolved place is part of the wrong-geocode theme).
+        try {
+          const contextPlaces = (placesByRecord.get(String(entry.record_id ?? "")) ?? [])
+            .filter((p) => p !== entry.place);
+          sp = (await resolveStandardPlace(entry.place, { contextPlaces })) ?? null;
+        } catch {
+          sp = null;
+        }
+        if (sp) {
+          source = "geocoded";
+          geocoded = true;
+        } else {
+          warnings.push(`could not resolve standard_place for '${entry.place}' (left unset)`);
+        }
+      }
+      if (sp && source) {
+        entry.standard_place = sp;
+        resolvedPlaces.push({ place: entry.place, standardPlace: sp, source });
+      }
+    }
+
+    // ── Place lever (a): country-contradiction guard on the final pair
+    // (supplied or resolved). Skipped when standard_place is null/absent.
+    if (typeof entry.place === "string" && typeof entry.standard_place === "string") {
+      const verdict = countryConsistency(entry.place, entry.standard_place);
+      if (verdict === "contradiction" && dropContradiction) {
+        entry.standard_place = undefined;
+        return;
+      }
+      if (verdict === "contradiction") {
+        errors.push(
+          fmt(
+            i,
+            `standard_place '${entry.standard_place}' contradicts place '${entry.place}' — the place text ` +
+              "names a different country. Re-resolve with place_search / place_search_all and supply the " +
+              "correct standard_place, or set standard_place: null if no standard form exists.",
+          ),
+        );
+        return;
+      }
+      if (verdict === "unverifiable" && geocoded) {
+        warnings.push(
+          `resolved standard_place '${entry.standard_place}' for place '${entry.place}' — the country ` +
+            "could not be cross-checked (either the place text names no country, or the standard place " +
+            "names none that is recognized — e.g. a historical polity like 'Bohemia'); verify it is the " +
+            "right place",
+        );
+      }
+    }
+  };
+
   for (let i = 0; i < ops.length; i++) {
     const op = ops[i];
     if (op.section !== "assertions" || op.op !== "append") continue;
@@ -5416,70 +5484,33 @@ async function prepareOps(
       }
     }
 
-    // ── Place lever (b): never geocode what the source record already
-    // resolved — copy the sidecar's standard_place for the same place string.
-    // `standard_place: null` is an explicit opt-out (skip resolution + guard);
-    // only a fully omitted field triggers resolution. A non-place phrase
-    // ("Same House") is left unset, silently: it has no standard form.
-    let geocoded = false;
-    if (
-      factText(entry.place) !== undefined &&
-      entry.standard_place === undefined &&
-      !isNonPlacePhrase(factText(entry.place)!)
-    ) {
-      let sp: string | null = null;
-      let source: "sidecar" | "geocoded" | null = null;
-      if (matchedRecord) {
-        sp = sidecarStandardPlace(matchedRecord.gedcomx, entry.place);
-        if (sp) source = "sidecar";
-      }
-      if (!sp && input.resolveStandardPlace !== false) {
-        // resolveStandardPlace swallows network failures and returns null, so
-        // a miss and a failure look the same here — both warrant the warning
-        // (a silently unresolved place is part of the wrong-geocode theme).
-        try {
-          const contextPlaces = (placesByRecord.get(String(entry.record_id ?? "")) ?? [])
-            .filter((p) => p !== entry.place);
-          sp = (await resolveStandardPlace(entry.place, { contextPlaces })) ?? null;
-        } catch {
-          sp = null;
-        }
-        if (sp) {
-          source = "geocoded";
-          geocoded = true;
-        } else {
-          warnings.push(`could not resolve standard_place for '${entry.place}' (left unset)`);
-        }
-      }
-      if (sp && source) {
-        entry.standard_place = sp;
-        resolvedPlaces.push({ place: entry.place, standardPlace: sp, source });
-      }
-    }
+    await applyPlaceLevers(entry, i, matchedRecord);
+  }
 
-    // ── Place lever (a): country-contradiction guard on the final pair
-    // (supplied or resolved). Skipped when standard_place is null/absent.
-    if (typeof entry.place === "string" && typeof entry.standard_place === "string") {
-      const verdict = countryConsistency(entry.place, entry.standard_place);
-      if (verdict === "contradiction") {
-        errors.push(
-          fmt(
-            i,
-            `standard_place '${entry.standard_place}' contradicts place '${entry.place}' — the place text ` +
-              "names a different country. Re-resolve with place_search / place_search_all and supply the " +
-              "correct standard_place, or set standard_place: null if no standard form exists.",
-          ),
-        );
-        continue;
-      }
-      if (verdict === "unverifiable" && geocoded) {
-        warnings.push(
-          `resolved standard_place '${entry.standard_place}' for place '${entry.place}' — the country ` +
-            "could not be cross-checked (either the place text names no country, or the standard place " +
-            "names none that is recognized — e.g. a historical polity like 'Bohemia'); verify it is the " +
-            "right place",
-        );
-      }
+  // An assertions update that corrects `place` to another place and says nothing of
+  // `standard_place` gets the same levers, with the existing assertion as the
+  // base: otherwise the old standard_place stands for the corrected place, and
+  // the contradiction gate measures its distance from the wrong point. When
+  // nothing resolves, the stale value is cleared rather than kept.
+  for (let i = 0; i < ops.length; i++) {
+    const op = ops[i];
+    if (op.section !== "assertions" || op.op !== "update" || typeof op.entryId !== "string") continue;
+    const fields = (op as any).fields;
+    if (!fields || typeof fields !== "object") continue;
+    if (!Object.prototype.hasOwnProperty.call(fields, "place") || Object.prototype.hasOwnProperty.call(fields, "standard_place")) continue;
+    const cur = ((research.assertions ?? []) as any[]).find((a: any) => a?.id === op.entryId);
+    const place = factText(fields.place);
+    if (!cur || place === undefined || place === factText(cur.place)) continue;
+    const view: any = { ...cur, ...fields, standard_place: undefined };
+    await applyPlaceLevers(view, i, null, true);
+    if (typeof view.standard_place === "string") {
+      fields.standard_place = view.standard_place;
+    } else if (typeof cur.standard_place === "string") {
+      fields.standard_place = null;
+      warnings.push(
+        `assertion '${op.entryId}': cleared standard_place '${cur.standard_place}' because its place ` +
+          `was corrected to '${place}' and no standard form was found for the new place`,
+      );
     }
   }
 
