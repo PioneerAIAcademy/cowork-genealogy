@@ -353,7 +353,9 @@ These are the regression causes:
   boundary likewise moves `response_summary`, but only for
   `image_transcribe`: `5` preserves the full `transcription` where `4`
   truncated it at 500 chars, so a transcribe-call diff across it is the
-  capture change, not FS drift. The later
+  capture change, not FS drift. The `7` → `8` boundary does the same for
+  `Agent`/`Task` calls: `8` keeps the subagent's full return where `7` cut it
+  at 500 chars. The later
   `tool_calls[].is_error` boundary does **not** affect
   `response_summary`, so a drift comparison still holds across it; what
   it does move is `compliance` — no longer `outcome` — and the guardrail violation

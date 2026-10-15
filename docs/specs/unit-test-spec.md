@@ -629,7 +629,7 @@ skill never fired still fails.
 | Field | Type | Required | Description |
 |-------|------|----------|-------------|
 | `user_message` | string | one of two | The exact user input fed to the test harness. For positive tests, this should trigger the skill. For negative tests, this should look like it might trigger the skill but shouldn't. **Known limitation:** this assumes single-turn interaction. Multi-turn skills (e.g., `search-external-sites`, which generates a URL then waits for a user to paste back a capture) are not supported in v1 |
-| `scenario` | string or null | no | Name of a shared scenario directory under `eval/fixtures/scenarios/`. The harness loads the scenario's `research.json` and `tree.gedcomx.json` as the starting project state. Null or omitted for stateless skills (search-wikipedia, translation, historical-context, locality-guide, convert-dates) |
+| `scenario` | string or null | no | Name of a shared scenario directory under `eval/fixtures/scenarios/`. The harness loads the scenario's `research.json` and `tree.gedcomx.json` as the starting project state. Null or omitted for stateless skills (translation, historical-context, locality-guide, convert-dates) |
 | `scenario_notes` | string or null | no | Documentation only — the harness ignores this field. Describes how the test's required state differs from the selected scenario. The scenario must already contain the exact required state for the test to be runnable. When a junior can't find an exact scenario, they pick the closest one and describe the gap here, then either create a new scenario that matches or wait for one to be created. If the same notes appear in 3+ tests, promote to a new named scenario |
 | `delegation` | string | one of two | **Direct-agent arm.** The exact text the orchestrator hands the pair's agent, in place of a user turn. A test carries `user_message` **or** `delegation`, never both and never neither (`input.oneOf` in the schema). On a direct test the harness sends the main thread its own dispatcher prompt wrapping this string, and `test_direct_delegation_relayed_verbatim` fails the run unless the recorded `Agent` spawn contains it as an exact substring — see §5.2.1 |
 
@@ -661,6 +661,13 @@ annotations, which key on `(test_id, dimension_source, dimension_name)`.
 > about the harness.) `make unit-relay-fidelity` measures it offline over the
 > committed run logs instead — a report, never a gate, whose direct block is
 > dispatcher fidelity rather than a statement about production.
+> `make e2e-relay-fidelity` is the production counterpart, over the committed
+> e2e corpus: it scores a subagent's full return against main-thread narration
+> on a real route. A run log below `harness_schema_version` 8 is reported
+> **unscorable rather than clean** — such a log records the return cut at 500
+> characters and a narration with no `thread` tag, so scoring it would read
+> this harness's own truncation, and a subagent's own words, as the relay's
+> work.
 
 **A converted suite is the one case where the direct test keeps the original
 `test.id`.** Once a skill is deleted outright rather than thinned into a router
@@ -1221,7 +1228,7 @@ For each run, the harness computes a derived boolean `output.activated` per the 
 **The skill under test is `activated: true` if it appears in `output.skills_invoked` AND any of the following is true:**
 
 1. **Owned-section writes.** The skill wrote to any section it owns per the ownership table in `research-schema-spec.md` Section 4. Examples: conflict-resolution wrote to `conflicts`; the test-only `extraction-append` skill wrote to `assertions` or `sources` through `extraction_append`.
-2. **Files created or modified.** The skill created or modified files in `cwd` other than those it normally reads (for stateless skills, e.g., search-wikipedia writing a markdown file in the user's working folder).
+2. **Files created or modified.** The skill created or modified files in `cwd` other than those it normally reads (e.g., an agent writing a markdown file in the user's working folder).
 3. **Substantive response.** The skill produced a response that is either (a) at least `_SUBSTANTIVE_MIN_WORDS_LONG` (30) words long, OR (b) does not pattern-match as a routing acknowledgement — short responses must not mention any other skill name. This catches legitimate concise outputs like `convert-dates` → `"1850-03-15"` while excluding "I see you're asking about X, but Y skill handles this" pure-routing.
 4. **A hand-off the run was stopped at.** On a test that sets `execution.stop_at_stub` (§5.7) the harness ends the run at the skill's first stubbed hand-off, before it can write or summarize, so the narration it leaves can be one short line naming the next row, which rule 3 reads as routing away. There the recorded hand-off is the skill's work (`derive_activated`'s `handed_off`). Only that stop sets it, so a skill that merely names another one is still not activated.
 
@@ -2131,7 +2138,7 @@ Junior genealogists create tests via the CRUD UI. Senior genealogists review a s
 }
 ```
 
-### 13.3 Positive test: search-wikipedia (stateless, direct-agent)
+### 13.3 Positive test: search-wikipedia (direct-agent)
 
 `search-wikipedia` became an agent on 2026-09-27, so `test.skill` names
 `agents/search-wikipedia.md` and the input is a `delegation` (§5.2.1).
@@ -2150,14 +2157,15 @@ Junior genealogists create tests via the CRUD UI. Senior genealogists review a s
   "input": {
     "delegation": "Look up Schuylkill County, Pennsylvania on Wikipedia
 
-topic: Schuylkill County, Pennsylvania",
-    "scenario": null
+topic: Schuylkill County, Pennsylvania
+projectPath: <workspace>",
+    "scenario": "empty-project-just-created"
   },
 
   "mcp_fixtures": ["wikipedia-search-schuylkill-county"],
 
   "judge_context": [
-    "Should save the summary to a file in the working folder, not just display it"
+    "Should log the summary as one research-log entry, the filled template in its notes, not just display it"
   ]
 }
 ```
@@ -2392,7 +2400,7 @@ After each run, the harness compares `before_state` and `after_state` to produce
    - `deleted`: IDs in `before` but not in `after` — emit the full old object. Should always be empty (no-delete enforcement).
    - `common`: IDs in both — for each, compare each field. If any field differs, emit `{id, changed_fields: {<field>: {before, after}}}`. If all fields match, omit.
 3. **The `project` section is a single object, not an array.** Treat it as a one-entry array keyed by `id` for purposes of diffing.
-4. **Files outside `research.json` / `tree.gedcomx.json`** (e.g., a markdown file from `search-wikipedia`) are not diffed structurally — they appear in `output.files_created` with their path, and content is left to the validators or judge to interpret.
+4. **Files outside `research.json` / `tree.gedcomx.json`** (e.g., a markdown table from `survey-surname`) are not diffed structurally — they appear in `output.files_created` with their path, and content is left to the validators or judge to interpret.
 
 The harness does not use RFC 6902 JSON Patch. Patch operations are less readable in the UI and would require teaching the LLM judge a separate format.
 
@@ -2523,7 +2531,7 @@ post_state = snapshot_json_files(tmp_dir)
 diff = compute_diff(pre_state, post_state)  # what changed, what was created
 ```
 
-For stateless skills that write new files (search-wikipedia saves a markdown file, init-project creates research.json), the harness detects newly created files in the temp directory.
+For stateless skills that write new files (survey-surname saves a markdown table, init-project creates research.json), the harness detects newly created files in the temp directory.
 
 ### Prompt caching
 

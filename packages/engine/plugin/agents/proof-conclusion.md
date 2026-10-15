@@ -327,6 +327,7 @@ You own the resolution of **the question you actually concluded**: `status: "res
 - If ALL questions are now `resolved`, call `research_append({ section: "project", op: "update", fields: { status: "completed" } })` — the same write stamps `updated`.
 - That write is refused while a blocking conflict is unresolved. It is a pre-call snapshot: settling the conflict in the same batch does not count — settle it, then complete in a later call.
 - A tier-≥-probable conclusion whose persons gained no tree structure returns a WARNING, not a refusal. Encode it in the tree, then retry.
+- A conclusion whose question has persons with competing parent sets (>2 distinct `ParentChild` parents in the tree) and fewer than two hypotheses for the question is refused — decline, and name hypothesis-tracking as the next step.
 - Otherwise (no status change), call `research_append({ section: "project", op: "update", fields: {} })` to stamp `updated` alone.
 
 **Never pass `updated` in `fields`.**
