@@ -248,6 +248,43 @@ export type ResearchLogAppendResult =
 class LogAppendError extends Error {}
 
 /**
+ * The refusal for a log entry whose plan item sits on a `superseded` plan, or
+ * null when the item is on any other plan or on none (an unknown id is the
+ * validator's foreign-key check, not this one). Names the same question's
+ * active plan and its next open item, so the caller has a way forward.
+ */
+function supersededPlanItemRefusal(research: any, planItemId: string): string | null {
+  const plans: any[] = Array.isArray(research?.plans) ? research.plans : [];
+  const owner = plans.find((p) => Array.isArray(p?.items) && p.items.some((i: any) => i?.id === planItemId));
+  if (owner?.status !== "superseded") return null;
+  const active = plans.find((p) => p?.status === "active" && p?.question_id === owner.question_id);
+  const items: any[] = Array.isArray(active?.items) ? active.items : [];
+  const next =
+    items.find((i) => i?.status === "in_progress") ?? items.find((i) => i?.status === "planned");
+  const head =
+    `planItemId '${planItemId}' belongs to plan ${owner.id ?? "?"}, which is superseded: ` +
+    `its items are retired and a search logged against one counts toward a plan nobody is running.`;
+  if (!active) {
+    return (
+      `${head} Question ${owner.question_id ?? "?"} has no active plan — log this search with ` +
+      `planItemId null, or have research-plan write the plan it belongs to.`
+    );
+  }
+  if (!next) {
+    return (
+      `${head} The active plan for question ${owner.question_id ?? "?"} is ${active.id ?? "?"}, ` +
+      `and none of its items is planned or in progress — log this search with planItemId null, ` +
+      `or have research-plan extend ${active.id ?? "the plan"}.`
+    );
+  }
+  return (
+    `${head} The active plan for question ${owner.question_id ?? "?"} is ${active.id ?? "?"}; ` +
+    `its next open item is '${next.id}'${next.record_type ? ` (${next.record_type})` : ""}. ` +
+    `Log this search against that item if it serves it, or with planItemId null.`
+  );
+}
+
+/**
  * Census mentions the note actually makes: a year BOUND to the word "census",
  * with the jurisdiction that qualifies it.
  *
@@ -1369,6 +1406,17 @@ async function applyLogAppendOp(
         `(q_...) is not a plan-item id — supply the pli_ item under that ` +
         `question, or null.`,
     );
+  }
+
+  // 0d. A superseded plan's items are retired: research-plan replaced the plan,
+  //     and a search logged against one of its items counts toward a strategy
+  //     nobody is running (issue #2155). Refuse it and name the active plan's
+  //     next open item. A `completed` plan is not refused: the write-time replay
+  //     over the e2e corpus found its only hits with no active plan to point at,
+  //     where a refusal would leave the caller nowhere to log.
+  if (typeof planItemId === "string") {
+    const refusal = supersededPlanItemRefusal(research, planItemId);
+    if (refusal) throw new LogAppendError(refusal);
   }
 
   // 1. Input-consistency checks (external_site ↔ tool, enums).
