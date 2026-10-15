@@ -50,12 +50,27 @@ describe('entryIdentity', () => {
     expect(entryIdentity(SAMPLE.death)).toBe('Patrick Flynn · Schuylkill County, Pennsylvania · 1908')
   })
 
-  it('ignores camelCase spellings of the persisted keys', () => {
-    // Pins the convention. If someone "corrects" the implementation back to camelCase,
-    // this fails instead of the feature silently going blank again.
-    expect(entryIdentity({ birthPlace: 'Pennsylvania', birthYear: 1845 })).toBe('')
-    expect(entryIdentity({ deathPlace: 'Schuylkill County', deathYear: 1908 })).toBe('')
-    expect(entryIdentity({ personId: 'ABCD-123' })).toBe('')
+  it('reads the camelCase a REAL hosted run writes', () => {
+    // These are the actual keys and counts from the committed McAndrew capture, which
+    // writes 145 camelCase keys and no snake_case ones. An earlier version of this test
+    // asserted these return '' -- pinning the exact half that was broken in production,
+    // which is how a green suite sat on top of rows nobody could tell apart.
+    expect(entryIdentity({ givenName: 'Patrick', surname: 'Flynn', collectionId: '1325221' }))
+      .toBe('Patrick Flynn · 1325221')
+    expect(entryIdentity({ surname: 'Mogan', residencePlace: 'Detroit, Wayne, Michigan' }))
+      .toBe('Mogan · Detroit, Wayne, Michigan')
+  })
+
+  it('still reads the snake_case the seeded sample writes', () => {
+    // Both shapes are on disk: the seed fixture writes 14 snake_case keys and no camel.
+    // Reading one casing only leaves whichever population it is not rendering blank.
+    expect(entryIdentity(SAMPLE.census1850)).toBe('Patrick Flynn · 1850 Census · Pennsylvania')
+  })
+
+  it('does not print the same person twice when both spellings are present', () => {
+    // A document carrying both would otherwise spend two of its three slots on one name.
+    expect(entryIdentity({ given: 'Patrick', givenName: 'Patrick', surname: 'Flynn' }))
+      .toBe('Patrick Flynn')
   })
 
   it('does not print the same value twice', () => {

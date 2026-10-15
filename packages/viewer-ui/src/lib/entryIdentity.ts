@@ -11,12 +11,21 @@
  * dropped: a log row is an identity line, not a dump, and an unbounded join is how one
  * row becomes three lines wide.
  *
- * SNAKE_CASE, because this reads `research.json`, and persisted project documents are
- * snake_case throughout (CLAUDE.md, "Identifier casing"). The first cut of this list was
- * camelCase -- MCP tool-parameter style -- so `birth_place`, `birth_year`, `death_place`,
- * `death_year` and `person_id` never matched anything at all, and only the single-word
- * keys worked by accident. Found by opening the sample project in a browser; the unit
- * tests had encoded the same mistake, so they passed throughout.
+ * BOTH casings, because `log[].query` is not consistently either and both shapes exist
+ * on disk today. Measured, rather than reasoned from the convention: the committed
+ * McAndrew capture -- a real hosted run -- writes 145 camelCase keys and no snake_case
+ * ones (`collectionId` 43, `givenName` 22, `residencePlace` 12), while the seeded sample
+ * project writes 14 snake_case keys and no camelCase ones.
+ *
+ * The reason is that this field is a COPY OF THE MCP TOOL'S PARAMETERS, and tool
+ * parameters are camelCase (CLAUDE.md, "Identifier casing") -- so the agent writes camel
+ * straight through, while whoever hand-wrote the fixture used the persisted convention
+ * that governs the rest of the document. An earlier cut of this list was camel-only and
+ * matched nothing in the fixture; the cut after it was snake-only and matched nothing in
+ * a real run. Reading both is what makes every project already on disk render.
+ *
+ * Which casing SHOULD be written is a separate question about the writer and the
+ * fixture, not about this renderer.
  *
  * Order is by how DISCRIMINATING a key is, not by reading order, because three parts is
  * the whole budget. A person's `birth_place`/`birth_year` are the subject's own
@@ -30,21 +39,32 @@ const IDENTITY_KEYS = [
   'surname',
   'name',
   'person_id',
+  'personId',
   // what was searched for
   'collection',
+  'collectionId',
   'event_type',
+  'eventType',
   'title',
+  'recordId',
   // where and when the EVENT was
   'death_place',
+  'deathPlace',
   'jurisdiction',
   'place',
+  'residencePlace',
+  'standardPlace',
   'death_year',
+  'deathYearFrom',
   'date_range',
   'death_year_range',
   'year',
+  'startYear',
   // the subject's own attributes -- least discriminating, so last
   'birth_place',
-  'birth_year'
+  'birthPlace',
+  'birth_year',
+  'birthYearFrom'
 ] as const
 
 /** At most this many parts, so one row stays one line. */
@@ -62,13 +82,15 @@ export function entryIdentity(query: unknown): string {
   const parts: string[] = []
   const seen = new Set<string>()
 
-  // `given` and `surname` read as one person, not two facts.
-  const given = typeof q.given === 'string' ? q.given.trim() : ''
-  const surname = typeof q.surname === 'string' ? q.surname.trim() : ''
+  // `given` and `surname` read as one person, not two facts — in EITHER casing, and
+  // both are marked seen so the generic loop below cannot append the given name a
+  // second time after the joined one.
+  const str = (key: string): string => (typeof q[key] === 'string' ? (q[key] as string).trim() : '')
+  const given = str('given') || str('givenName')
+  const surname = str('surname') || str('surnameAlt')
   if (given || surname) {
     parts.push([given, surname].filter(Boolean).join(' '))
-    seen.add('given')
-    seen.add('surname')
+    for (const key of ['given', 'givenName', 'surname', 'surnameAlt']) seen.add(key)
   }
 
   // De-duplicated by VALUE, not just by key. Several of the keys above routinely carry
