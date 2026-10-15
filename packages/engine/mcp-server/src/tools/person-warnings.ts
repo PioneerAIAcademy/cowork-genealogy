@@ -50,6 +50,8 @@ import {
   latestYearOfChildFacts,
   latestYearOfPersonFacts,
   latestYearOfSelfFacts,
+  latestYearOfFacts,
+  earliestYearOfFacts,
   perfectDaysOfSelfFacts,
 } from "../utils/fact-helpers.js";
 import { nameSimilarity, normalizeString } from "../utils/string-similarity.js";
@@ -488,7 +490,14 @@ export function deathRangeGreaterThan(mob: Mob, years: number): boolean {
  */
 export function hasLateMarriage(mob: Mob, years: number): boolean {
   const latestBirth = latestYearOfSelfFacts(mob, BIRTHLIKE_FACT_TYPES);
-  const latestMarriage = latestYearOfSelfFacts(mob, MARRIAGELIKE_FACT_TYPES);
+  // The marriage is read from the anchor's facts AND its Couple edges. A
+  // Marriage lives on the edge, so a person-only read saw 96 of the corpus's
+  // 675 marriage-like facts and missed 579 — the warning could fire only on a
+  // tree where a couple event had been mis-materialized onto the person.
+  const latestMarriage = latestYearOfFacts(
+    mob.factsWithCoupleFacts(),
+    MARRIAGELIKE_FACT_TYPES,
+  );
   if (latestBirth === null || latestMarriage === null) return false;
   return latestMarriage - latestBirth > years;
 }
@@ -501,14 +510,17 @@ export function hasLateMarriage(mob: Mob, years: number): boolean {
  * the tag `hasEarlyMarriage14` — married before age 14 is unusual.
  */
 export function hasEarlyMarriage(mob: Mob, years: number): boolean {
-  const age = factYearsDiffEarliestEarliest(
-    mob,
-    BIRTHLIKE_FACT_TYPES,
-    null,
+  // Not factYearsDiffEarliestEarliest: that reads both sides from the anchor's
+  // own facts, and the marriage side lives on the Couple edge (see
+  // hasLateMarriage).
+  const earliestBirth = earliestYearOfSelfFacts(mob, BIRTHLIKE_FACT_TYPES);
+  const earliestMarriage = earliestYearOfFacts(
+    mob.factsWithCoupleFacts(),
     MARRIAGELIKE_FACT_TYPES,
-    null,
   );
-  return age !== null && age < years;
+  if (earliestBirth === null || earliestMarriage === null) return false;
+  const age = earliestMarriage - earliestBirth;
+  return age < years;
 }
 
 /**
@@ -1644,7 +1656,15 @@ function checkHasLateMarriage90(mob: Mob): PersonWarning | null {
     severity: "implausible",
     personId: mob.anchorId,
     personName: getPersonName(mob.getPerson()),
-    facts: selfFactIds(mob, BIRTHLIKE_FACT_TYPES, MARRIAGELIKE_FACT_TYPES),
+    // The marriage that fired this is on the Couple edge, so cite it too.
+    // These tags refuse writes, and a refusal hands the agent this list: being
+    // told "married more than 90 years after birth" while shown only a birth
+    // leaves nothing to check. Citing it changes the warning id, which is built
+    // from the fact ids — the same way a person-level marriage already behaves.
+    facts: unionFactIds(
+      selfFactIds(mob, BIRTHLIKE_FACT_TYPES, MARRIAGELIKE_FACT_TYPES),
+      warningFactsOfPerson({ facts: mob.coupleFacts() }, MARRIAGELIKE_FACT_TYPES),
+    ),
     message:
       "This person appears to have married more than 90 years after their birth, which is biologically unusual.",
   };
@@ -1658,7 +1678,15 @@ function checkHasEarlyMarriage14(mob: Mob): PersonWarning | null {
     severity: "implausible",
     personId: mob.anchorId,
     personName: getPersonName(mob.getPerson()),
-    facts: selfFactIds(mob, BIRTHLIKE_FACT_TYPES, MARRIAGELIKE_FACT_TYPES),
+    // The marriage that fired this is on the Couple edge, so cite it too.
+    // These tags refuse writes, and a refusal hands the agent this list: being
+    // told "married before age 14" while shown only a birth leaves nothing to
+    // check. Citing it changes the warning id, which is built from the fact
+    // ids — the same way a person-level marriage already behaves.
+    facts: unionFactIds(
+      selfFactIds(mob, BIRTHLIKE_FACT_TYPES, MARRIAGELIKE_FACT_TYPES),
+      warningFactsOfPerson({ facts: mob.coupleFacts() }, MARRIAGELIKE_FACT_TYPES),
+    ),
     message:
       "This person appears to have married before age 14, which is unusual.",
   };
