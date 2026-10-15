@@ -1173,8 +1173,9 @@ export function stagedPayloadColumnFrom(tool: string, rows: readonly unknown[]):
 
 /**
  * Run the census check for one op BEFORE any op is applied, so a refusal is
- * reported before any op writes a sidecar. `notes` is read raw, as it always
- * was; only `stagedResultsRef` gets the "null"-string mapping.
+ * reported before any op writes a sidecar. `notes` is read as researchLogAppend
+ * left it (JSON-escaped tables already decoded, #3414); only `stagedResultsRef`
+ * gets the "null"-string mapping.
  */
 async function preflightCensusHedge(op: ResearchLogAppendOp, projectPath: string): Promise<void> {
   if (op.notes === undefined || op.notes === null) return;
@@ -1388,6 +1389,35 @@ function coerceObjectArg(value: unknown, field: string): unknown {
     throw new LogAppendError(`${field} must be a JSON object`);
   }
   return parsed;
+}
+
+const JSON_ESCAPE = /\\(u[0-9a-fA-F]{4}|[nrt"\\/])/g;
+const JSON_ESCAPE_CHAR: Record<string, string> = { n: "\n", r: "\r", t: "\t", '"': '"', "\\": "\\", "/": "/" };
+
+/** No real newline, two or more literal `\n`, and one that opens a table row or heading. */
+function looksJsonEscaped(notes: string): boolean {
+  return !notes.includes("\n") && (notes.match(/\\n/g)?.length ?? 0) >= 2 && /\\n\s*[|#]/.test(notes);
+}
+
+/**
+ * Decode a markdown table or heading a model sent JSON-escaped (literal `\n`,
+ * no real newline). Measured on #3414: 3 of 12 survey-surname tables arrived so
+ * and were stored as one line. Decodes only \n \r \t \" \\ \/ \uXXXX and keeps
+ * any other backslash (\| \* \'); undoes at most two levels of escaping.
+ */
+export function unescapeJsonNotes(notes: string | null | undefined): string | null | undefined {
+  if (typeof notes !== "string") return notes;
+  // The string's own closing quote can leak through: drop a trailing `"` when it
+  // is the only unescaped quote in an escaped table (#3414, 1 of 12).
+  let out = looksJsonEscaped(notes) && /(?<!\\)"$/.test(notes) && (notes.match(/(?<!\\)"/g)?.length ?? 0) === 1
+    ? notes.slice(0, -1)
+    : notes;
+  for (let pass = 0; pass < 2 && looksJsonEscaped(out); pass++) {
+    out = out.replace(JSON_ESCAPE, (_m, e: string) =>
+      e.length === 5 ? String.fromCharCode(parseInt(e.slice(1), 16)) : JSON_ESCAPE_CHAR[e],
+    );
+  }
+  return out;
 }
 
 async function readJson(projectPath: string, filename: string): Promise<any> {
@@ -1716,6 +1746,14 @@ export async function researchLogAppend(
   // Recover a batch `ops` array the model serialized as a JSON string (see
   // coerceJsonArg) before any shape checks.
   input.ops = coerceJsonArg(input.ops) as ResearchLogAppendOp[] | undefined;
+  // Repair JSON-escaped notes before any check reads them, so the gates judge
+  // the text that is stored.
+  input.notes = unescapeJsonNotes(input.notes);
+  if (Array.isArray(input.ops)) {
+    for (const op of input.ops) {
+      if (op && typeof op === "object") op.notes = unescapeJsonNotes(op.notes);
+    }
+  }
 
   // Serialize the read-modify-write against every other writer on this project
   // (issue #1715).

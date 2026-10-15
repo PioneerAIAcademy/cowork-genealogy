@@ -5,7 +5,7 @@ import { join } from "path";
 import { readFileSync } from "fs";
 import { fileURLToPath } from "url";
 import { tmpdir } from "os";
-import { researchLogAppend } from "../../src/tools/research-log-append.js";
+import { researchLogAppend, unescapeJsonNotes } from "../../src/tools/research-log-append.js";
 import { stageSearchResults, STAGING_SUBDIR } from "../../src/utils/results-staging.js";
 import { setProjectStore, type ProjectStore } from "../../src/store/project-store.js";
 import { backingStore } from "../helpers/store-backend.js";
@@ -2218,5 +2218,134 @@ describe("research_log_append — superseded plan items (#2155)", () => {
     expect(r.ok).toBe(false);
     expect(r.errors.join("\n")).toMatch(/ops\[1\].*pli_001.*superseded/s);
     expect(await logged()).toEqual([]);
+  });
+});
+
+describe("research_log_append — wholly JSON-escaped notes are decoded (#3414)", () => {
+  let dir: string;
+  beforeEach(async () => {
+    dir = await mkdtemp(join(tmpdir(), "log-append-3414-"));
+    await writeFile(join(dir, "research.json"), JSON.stringify(baseResearch(), null, 2));
+    await writeFile(join(dir, "tree.gedcomx.json"), JSON.stringify(minimalTree, null, 2));
+  });
+  afterEach(async () => {
+    await rm(dir, { recursive: true, force: true });
+  });
+
+  const TABLE = [
+    "| Name | Age | Born |",
+    "|---|---|---|",
+    "| Amos Whitfield | 33 | Georgia |",
+    "| Nancy Whitfield | 30 | Kentucky |",
+    "",
+    "1850 US census, Pike County: Amos Whitfield household with wife Nancy.",
+  ].join("\n");
+  const HEDGE = "Family structure inferred from listing order, not stated.";
+  /** What the model sent: the string body of JSON.stringify, so `\n` is two characters. */
+  const escaped = (s: string) => JSON.stringify(s).slice(1, -1);
+  const append = (notes: string | null | undefined) =>
+    researchLogAppend({
+      projectPath: dir,
+      tool: "record_search",
+      query: { surname: "Whitfield" },
+      outcome: "positive",
+      resultsExamined: 2,
+      planItemId: null,
+      notes,
+    });
+  const storedNotes = async () =>
+    JSON.parse(await readFile(join(dir, "research.json"), "utf-8")).log.map((e: any) => e.notes);
+
+  describe("unescapeJsonNotes", () => {
+    it.each([
+      ["\\n escapes", String.raw`| a |\n| b |\n| c |`, "| a |\n| b |\n| c |"],
+      ["\\\" escapes", String.raw`| \"Jack\" |\n| b |\n| c |`, '| "Jack" |\n| b |\n| c |'],
+      ["\\t escapes", String.raw`| a\tx |\n| b |\n| c |`, "| a\tx |\n| b |\n| c |"],
+      ["a \\u2014 em dash", String.raw`## Pike \u2014 1850\n| a |\n| b |`, "## Pike \u2014 1850\n| a |\n| b |"],
+      ["a whole household table", escaped(`${TABLE}\n${HEDGE}`), `${TABLE}\n${HEDGE}`],
+      // Partly escaped: the newlines are escaped, something else is not.
+      ["a raw unescaped quote", String.raw`| Name |\n|---|\n| John "Jack" Smith |`, '| Name |\n|---|\n| John "Jack" Smith |'],
+      ["a raw tab", String.raw`| Name |\n|---|\n| A` + "\t" + "B |", "| Name |\n|---|\n| A\tB |"],
+      ["a markdown \\| escape, kept", String.raw`| a |\n|---|\n| x \| y |`, "| a |\n|---|\n| x \\| y |"],
+      ["a \\' escape, kept", String.raw`| a |\n|---|\n| O\'Brien |`, "| a |\n|---|\n| O\\'Brien |"],
+      ["\\* and \\_ escapes, kept", String.raw`| a |\n|---|\n| \*illegible\* John\_Smith |`, "| a |\n|---|\n| \\*illegible\\* John\\_Smith |"],
+      ["a lone trailing backslash, kept", String.raw`| a |\n| b |\n| c |` + "\\", "| a |\n| b |\n| c |\\"],
+      ["an escaped backslash, decoded once", String.raw`| C:\\notes |\n| b |\n| c |`, "| C:\\notes |\n| b |\n| c |"],
+      ["a table escaped twice", String.raw`| a |\\n| b |\\n| c |`, "| a |\n| b |\n| c |"],
+      ["the string's own closing quote, dropped", String.raw`| a |\n| \"b\" |\n${HEDGE}"`, `| a |\n| "b" |\n${HEDGE}`],
+      ["a raw quote pair at the end, kept", String.raw`| a |\n|---|\n| John "Jack"`, '| a |\n|---|\n| John "Jack"'],
+    ])("decodes %s", (_label, input, want) => {
+      expect(unescapeJsonNotes(input)).toBe(want);
+    });
+
+    it.each([
+      // Without the real-newline guard the two `\n|` / `\n#` here would decode.
+      ["a note with real newlines and literal \\n| inside", "| a |\n| b |\n" + String.raw`split on \n| then \n# here`],
+      ["no escapes at all", "Amos Whitfield, b. 1817, Georgia."],
+      ["a Windows path with \\n \\f \\t segments", String.raw`Image saved at C:\new\folder\table.png`],
+      ["another Windows path", String.raw`See C:\temp\new\b.txt`],
+      ["prose naming the \\n sequence", String.raw`The transcription marks line breaks as \n in the source text`],
+      ["prose naming \\n and \\t", String.raw`Split on the pattern \n and \t only`],
+      ["escaped prose with no table or heading", String.raw`a\nb\nc`],
+      ["a single literal \\n before a pipe", String.raw`Rows were split on \n| in the export`],
+      ["an escaped tab with no \\n", String.raw`a\tb`],
+      ["the empty string", ""],
+    ])("leaves %s unchanged", (_label, input) => {
+      expect(unescapeJsonNotes(input)).toBe(input);
+    });
+
+    it("passes null and undefined through", () => {
+      expect(unescapeJsonNotes(null)).toBeNull();
+      expect(unescapeJsonNotes(undefined)).toBeUndefined();
+    });
+  });
+
+  it("stores the decoded table, with real newlines, from a single call", async () => {
+    const r = await append(escaped(`${TABLE}\n${HEDGE}`));
+    expect(r.ok).toBe(true);
+    const [notes] = await storedNotes();
+    expect(notes).toBe(`${TABLE}\n${HEDGE}`);
+    expect(notes).not.toContain("\\n");
+    expect(notes.split("\n")).toHaveLength(7);
+  });
+
+  it("decodes each op's notes in a batch", async () => {
+    const op = (notes: string) => ({
+      tool: "record_search",
+      query: { surname: "Whitfield" },
+      outcome: "positive",
+      resultsExamined: 2,
+      notes,
+    });
+    const r = await researchLogAppend({
+      projectPath: dir,
+      ops: [op(escaped(`${TABLE}\n${HEDGE}`)), op("Plain note, left as sent.")],
+    });
+    expect(r.ok).toBe(true);
+    expect(await storedNotes()).toEqual([`${TABLE}\n${HEDGE}`, "Plain note, left as sent."]);
+  });
+
+  it("lets the census gate judge the decoded text: a hedged table passes and is stored decoded", async () => {
+    const lineStart = `${TABLE.replace("\n\n1850", "\n1850")}\n${HEDGE}`;
+    const r = await append(escaped(lineStart));
+    expect(r.ok).toBe(true);
+    expect(await storedNotes()).toEqual([lineStart]);
+  });
+
+  it("lets the census gate judge the decoded text: an unhedged table is refused", async () => {
+    // Escaped, `\n1850` reads as `n1850`, so the year binds to no census and
+    // the note-only gate skips. Decoded first, the gate sees the line start.
+    const lineStart = TABLE.replace("\n\n1850", "\n1850");
+    const r = await append(escaped(lineStart));
+    expect(r.ok).toBe(false);
+    expect((r as any).errors.join(" ")).toMatch(/relationship-to-head/);
+    expect(await storedNotes()).toEqual([]);
+  });
+
+  it("stores a note with real newlines exactly as sent", async () => {
+    const note = `${TABLE}\n${HEDGE}\n` + String.raw`Image saved to C:\new\scan.jpg`;
+    const r = await append(note);
+    expect(r.ok).toBe(true);
+    expect(await storedNotes()).toEqual([note]);
   });
 });
