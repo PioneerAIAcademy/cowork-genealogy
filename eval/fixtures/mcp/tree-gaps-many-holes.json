@@ -1,6 +1,6 @@
 {
   "tool": "tree_gaps",
-  "description": "CONSTRUCTED for the tree-survey ranking test -- six holes, nearest the root first; only the generation-3 hole (TGAP-H3A) has a pending hint whose record type fits it (its `pendingHints` has `fitting` 1). Shape follows docs/specs/tree-gaps-tool-spec.md, Output.",
+  "description": "CONSTRUCTED for the tree-survey ranking test -- six holes, nearest the root first; only the generation-3 hole (TGAP-H3A) has a pending hint whose record type fits it (see person-record-matches-tgap-h3a). Shape follows docs/specs/tree-gaps-tool-spec.md, Output.",
   "args": {
     "personId": "TGAP-ROT"
   },
