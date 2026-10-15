@@ -2169,7 +2169,7 @@ async function sectionG(): Promise<void> {
   }
 
   // Same question one level down. The tool composes `recordSubdivision` into
-  // `q.recordSubcountry=<country>,<subdivision>`, so the raw form is built the
+  // `f.recordSubcountry=<country>,<subdivision>`, so the raw form is built the
   // same way here.
   const US = "United States";
   for (const [label, sub] of [
@@ -2178,13 +2178,47 @@ async function sectionG(): Promise<void> {
   ] as Array<[string, string]>) {
     const q =
       `q.surname=Martin&q.recordCountry=${encodeURIComponent(US)}` +
-      `&q.recordSubcountry=${encodeURIComponent(`${US},${sub}`)}`;
+      `&f.recordSubcountry=${encodeURIComponent(`${US},${sub}`)}`;
     const r = await search(`${q}&count=3&${REQUIRE_SWITCH}`);
     const key = `subdivision:${sub}`;
     totals[key] = measuredTotal(r.total) ? r.total : null;
     record("G", key, totals[key]);
     console.log(`  recordSubdivision=${label.padEnd(22)}${fmt(r.total)}`);
   }
+
+  // Why `f.` and not `q.`: a hyphenated subdivision, measured under both. The
+  // tool sent `q.` until 2026-10-14, when Aust-Agder searches all returned 0.
+  const HYPHENATED = "Norway,Aust-Agder";
+  for (const param of ["q", "f"] as const) {
+    const q =
+      `q.surname=Olsen&q.recordCountry=Norway` +
+      `&${param}.recordSubcountry=${encodeURIComponent(HYPHENATED)}`;
+    const r = await search(`${q}&count=3&${REQUIRE_SWITCH}`);
+    const key = `subdivision:Aust-Agder:${param}.`;
+    totals[key] = measuredTotal(r.total) ? r.total : null;
+    record("G", key, totals[key]);
+    console.log(`  ${param}.recordSubcountry=${HYPHENATED.padEnd(17)}${fmt(r.total)}`);
+  }
+  const hyphenQ = totals["subdivision:Aust-Agder:q."] ?? null;
+  const hyphenF = totals["subdivision:Aust-Agder:f."] ?? null;
+  record(
+    "G",
+    "verdict:q. zeroes a hyphenated subdivision",
+    hyphenQ === null
+      ? "NOT MEASURED"
+      : hyphenQ === 0
+        ? "ZEROED — q.recordSubcountry returns 0 for a hyphenated subdivision"
+        : "HONOURED — q.recordSubcountry now returns results for a hyphenated subdivision"
+  );
+  record(
+    "G",
+    "verdict:f. honours a hyphenated subdivision",
+    hyphenF === null
+      ? "NOT MEASURED"
+      : hyphenF > 0
+        ? "HONOURED — f.recordSubcountry returns results for a hyphenated subdivision"
+        : "ZEROED — f.recordSubcountry returns 0 for a hyphenated subdivision"
+  );
 
   const usTotal = totals.UnitedStates ?? null;
   const narnia = totals.Narnia ?? null;

@@ -290,6 +290,12 @@ services:
       # regime. The cap is not the spend control either; 1e's per-session bound is.
       # test_proto_config re-derives the p99 from the corpus and fails if this drops below it.
       AUTONOMOUS_MAX_NUDGES: ${AUTONOMOUS_MAX_NUDGES:-60}
+      # U20: POST /api/feedback stores its zip under feedback/ in the projects bucket and
+      # reads blob bytes from it (web/blobstore.py); the same four as the tools service.
+      GENEALOGY_S3_ENDPOINT: http://minio:9000
+      GENEALOGY_S3_BUCKET: projects
+      GENEALOGY_S3_ACCESS_KEY: proto
+      GENEALOGY_S3_SECRET_KEY: protoproto
     depends_on:
       postgres:
         condition: service_healthy
@@ -297,6 +303,8 @@ services:
         condition: service_completed_successfully
       elasticmq:
         condition: service_healthy
+      minio-init:
+        condition: service_completed_successfully
 
   # D16 tool server: the genealogy engine (build/http.js) on Streamable HTTP at /mcp,
   # /healthz for the wait. Context is the repo root so the engine's src/ compiles inside

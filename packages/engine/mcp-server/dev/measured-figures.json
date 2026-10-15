@@ -193,13 +193,17 @@
     "measured_at": "2026-08-11T10:29:14.458Z"
   },
   "G": {
-    "UnitedStates": 14035394,
+    "UnitedStates": 13644213,
     "Narnia": 0,
-    "subdivision:Alabama": 342439,
+    "subdivision:Alabama": 325982,
     "subdivision:Xanadu": 0,
+    "subdivision:Aust-Agder:q.": 0,
+    "subdivision:Aust-Agder:f.": 240388,
+    "verdict:q. zeroes a hyphenated subdivision": "ZEROED — q.recordSubcountry returns 0 for a hyphenated subdivision",
+    "verdict:f. honours a hyphenated subdivision": "HONOURED — f.recordSubcountry returns results for a hyphenated subdivision",
     "verdict:recordCountry is strict": "STRICT",
     "verdict:recordSubdivision is strict": "STRICT — a nonexistent subdivision returns 0",
-    "measured_at": "2026-08-11T03:23:42.479Z"
+    "measured_at": "2026-10-14T22:19:46.064Z"
   },
   "H": {
     "bands:records-birth": {

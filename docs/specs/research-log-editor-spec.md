@@ -18,7 +18,7 @@ schema-valid. The log is append-only by GPS rule, so the tool deliberately offer
 
 Every search produces a log entry (`research-log-protocol.md` Rule 1), so this is
 the highest-volume write in the system, performed today by hand across four skills
-(`search-records`, `search-external-sites`, `search-full-text`, `record-extraction`).
+(`search-records`, `search-external-sites`, `search-full-text`, `record-extraction` — the last since retired).
 The hand-write is the worst-case version of the problems the read/write direction
 exists to kill:
 
@@ -389,7 +389,10 @@ are two that do block, and the distinction is what makes them legitimate.
   sources-without-assertions warning (which fires once ≥3 sources exist); it
   self-silences the instant any source or assertion lands, and fires on every
   qualifying `research_log_append` call while the two-empty state holds.
-  Tool-neutral message.
+  Tool-neutral message. Reference lookups (`REFERENCE_LOOKUP_TOOLS`: `wiki_search`,
+  `wiki_read`, `wikipedia_search`, `historical_context`) are not counted: their
+  `positive` entries carry a looked-up article or overview in `notes`, not a
+  record to persist. The pre-1880 census hedge is unaffected.
   It cannot reach a session that logs nothing at all (bundle 3) — that shape has
   no tool-boundary trigger.
 
@@ -779,8 +782,8 @@ recorded for different arguments.
   staging search tool reports `resultsAvailable > 0` with no `stagedResultsRef`
   and stays silent for a nil search; the logging-without-persistence nudge fires
   once ≥3 positive searches are logged with zero sources and zero assertions,
-  stays silent below the threshold, and stays silent once any source or assertion
-  exists. Both keep `ok: true` and leave the log entry written.
+  stays silent below the threshold, stays silent once any source or assertion
+  exists, and does not count reference-lookup entries. Both keep `ok: true` and leave the log entry written.
 - **Nil escalation (§8.1)** — `escalationDue` appears on the third nil against a
   census plan item with an open question, single or batched; stays absent at two,
   for a probate plan item, once the plan item has a positive or partial entry or
@@ -825,9 +828,9 @@ recorded for different arguments.
   hand-written log + sidecar step with a `research_log_append` call. Their
   `research-log-protocol.md` references shrink to "call the tool" + the analytical
   rules (when to log negative, what to put in `query`/`notes`).
-- `record-extraction` — uses it for the `user_provided` log entry it writes when no
-  search skill logged the record (`research-log-protocol.md` §"When record-extraction
-  writes log entries").
+- `extraction_append` — calls it in code: a `record_read` entry for each
+  `recordIds` record it reads, and an `image_transcribe` or `user_provided` entry
+  for each `documents` source.
 - Downstream skills are unaffected: they still link to a log entry via
   `log_entry_id` on sources/assertions (the reverse-lookup provenance model is
   unchanged).

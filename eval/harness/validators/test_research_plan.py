@@ -839,18 +839,33 @@ _ADJ_ON_NON_COLLECTION_RE = re.compile(
     r"for\s+(?:this|the)\s+\w+)\b",
     re.I,
 )
-# A bracket right after a non-collection id describes that item, so the
-# adjective inside it is not a claim about the collection the sentence also
-# names. ut_research_plan_015, 2026-10-13, pli_009: "Image group 004748896
-# (Thisted Amt military levy rolls, 1789-1814, browse-only (personCount 0))
-# provides the raw roll images if the name search in collection 2513529 (item
-# 3) fails" charged "browse-only" to 2513529 (personCount 200408). One level
-# of nested brackets is allowed, for the "(personCount 0)" inside it.
-_PAREN_ON_NON_COLLECTION_RE = re.compile(
-    r"\b(?:image\s+groups?|volumes?|films?|microfilms?|dgs)\s+(?:no\.?\s*)?\d{5,}\s*"
-    r"\((?:[^()]|\([^()]*\))*\)",
+# An availability adjective describes the nearest identifier before it. When
+# that is a volume, film or image group, it is not a claim about the one
+# collection the sentence names. Two recorded false positives, both
+# ut_research_plan_015: pli_009 on 2026-10-13, "Image group 004748896 (Thisted
+# Amt military levy rolls, 1789-1814, browse-only (personCount 0)) provides the
+# raw roll images if the name search in collection 2513529 (item 3) fails", and
+# pli_008 on 2026-10-14, "If the probate index (pli_007, collection 2015318)
+# does not return an entry …, browse volume 004392710, which covers Hassing
+# Herred probate records 1690-1850 and is browse-only (personCount 0)".
+_NON_COLLECTION_ID_RE = re.compile(
+    r"\b(?:image\s+groups?|volumes?|films?|microfilms?|dgs)\s+(?:no\.?\s*)?\d{5,}",
     re.I,
 )
+
+
+def _claim_on_collection(pattern: re.Pattern, text: str, cid: str) -> bool:
+    """True when some match of `pattern` in `text` binds to collection `cid`:
+    the nearest identifier before it is `cid`, or there is none."""
+    subjects = sorted(
+        [(m.end(), False) for m in _NON_COLLECTION_ID_RE.finditer(text)]
+        + [(m.end(), True) for m in re.finditer(rf"(?<!\d){re.escape(cid)}(?!\d)", text)]
+    )
+    for m in pattern.finditer(text):
+        before = [is_collection for end, is_collection in subjects if end <= m.start()]
+        if not before or before[-1]:
+            return True
+    return False
 # A coverage percentage ("412 images, 0% indexed", "only 4% name-indexed") is
 # neither an indexed nor a browse-only claim. ut_research_plan_007 run 0 on
 # 2026-09-24 (issue #2685) wrote "…returned personCount 0, so this is a browse
@@ -919,14 +934,13 @@ def test_research_plan_availability_claim_matches_counts(
                 cid = ids_here[0]
                 pcs = counts[cid]
                 claim_text = _PERCENT_INDEXED_RE.sub(" ", sentence)
-                claim_text = _PAREN_ON_NON_COLLECTION_RE.sub(" ", claim_text)
-                claims_indexed = bool(_INDEXED_RE.search(claim_text)) and not (
-                    _UNINDEXED_RE.search(claim_text)
-                )
+                claims_indexed = _claim_on_collection(
+                    _INDEXED_RE, claim_text, cid
+                ) and not _claim_on_collection(_UNINDEXED_RE, claim_text, cid)
                 about_collection = _ADJ_ON_NON_COLLECTION_RE.sub(" ", claim_text)
-                claims_browse = bool(_BROWSE_ONLY_RE.search(about_collection)) or bool(
-                    _UNINDEXED_RE.search(about_collection)
-                )
+                claims_browse = _claim_on_collection(
+                    _BROWSE_ONLY_RE, about_collection, cid
+                ) or _claim_on_collection(_UNINDEXED_RE, about_collection, cid)
                 if claims_indexed == claims_browse:
                     continue  # neither claim, or a self-contradicting sentence
                 if claims_indexed and not any(pc > 0 for pc in pcs):
