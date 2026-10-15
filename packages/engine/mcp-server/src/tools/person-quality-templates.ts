@@ -162,7 +162,7 @@ const BY_ISSUE_TYPE: Record<string, string> = {
     "to {placeNormalizedToYear}. This conflicts with the {conclusionType} date of {conclusionNormalizedDate}.",
   DATE_PLACE_MISMATCH_UNKNOWN_TO_YEAR:
     'The standard "{placeNormalized}" (ID: {placeRepId}) is used for dates from ' +
-    "{placeNormalizedToYear} onward. This conflicts with the {conclusionType} date of {conclusionNormalizedDate}.",
+    "{placeNormalizedFromYear} onward. This conflicts with the {conclusionType} date of {conclusionNormalizedDate}.",
   CHILDREN_BORN_TOO_CLOSE:
     "This person gave birth to {youngerSiblingGivenName} {ageGapInMonths} months after " +
     "{olderSiblingGivenName} was born.",

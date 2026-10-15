@@ -740,6 +740,18 @@ describe("samePerson — project-relative arm", () => {
     expect(recordReadMock.mock.calls[0][0].resultsRef).toBeUndefined();
   });
 
+  it("passes a record_read sidecar ref to record_read — persona-bearing", async () => {
+    recordReadMock.mockResolvedValue({ persons: [{ id: "MP1" }] });
+    const r = research();
+    r.log.push({ id: "log_rr", tool: "record_read", results_ref: "results/log_rr.json" });
+    r.assertions[0].log_entry_id = "log_rr";
+    await project(r);
+    okScore();
+    await samePerson({ projectPath: dir, assertionId: "a_005", treePersonId: "I1" }, LOCAL);
+    expect(recordReadMock).toHaveBeenCalledTimes(1);
+    expect(recordReadMock.mock.calls[0][0].resultsRef).toBe("results/log_rr.json");
+  });
+
   it("does not serve one project's resolved record to another", async () => {
     recordReadMock.mockResolvedValue({ persons: [{ id: "MP1" }] });
     await project();

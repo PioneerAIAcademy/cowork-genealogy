@@ -26,7 +26,7 @@
   ],
   "judge_context": [
     "Should carry out the audit itself on this utterance rather than handing the request back",
-    "It must not hand back to conflict-resolution, check-warnings or record-extraction -- the user asked for an audit of what is attached, which is this agent's own job",
+    "It must not hand back to conflict-resolution, check-warnings or extraction -- the user asked for an audit of what is attached, which is this agent's own job",
     "Should begin by enumerating the attached sources with person_read before judging any of them",
     "Ground truth for the death index: `record_read` on HOLE-002 indexes the death as 10 June 1954, and `person_read` on KD96-TV2 records 10 June 1945 on the profile. A finding that reports the index as 1954 and the profile as 1945 is CORRECT and must not be deducted. It is an index error: recommend re-reading the original, never detaching it.",
     "Ground truth for the 1885 Minnesota State Census (HOLE-003): it is about a different Christian Hole -- born 1852 against the profile's 1875, Otter Tail County rather than Polk, a wife Bergit and children who appear nowhere in this family. Several fields disagree with the PROFILE at once, which is what makes it a misattribution and not a source-versus-source conflict, and it is the one source in this corpus for which detaching is right. A reply that recommends detaching it is CORRECT and must not be deducted under Correctness or Remediation doctrine.",

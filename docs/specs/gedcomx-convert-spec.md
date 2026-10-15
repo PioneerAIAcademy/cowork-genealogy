@@ -391,6 +391,15 @@ name: `toSimplified` (pure) takes it from `place.normalized` — preferring the
 `lang === "en"` entry, else the first. The `description` reference is dropped;
 richer place data lives in the top-level `places[]` array (Rule 12).
 
+A census or register answer that names no place ("Same House", "Same Place",
+"Do", "Rural", …: `NON_PLACE_PHRASES` in `place-resolver.ts`, whole text
+only, case, spacing and periods ignored) keeps `place` and never gets a
+`standard_place`, neither from `normalized` nor from the resolver below.
+Resolved, these became a real place sharing the word ("Same House" →
+"Same, Manufahi, Timor-Leste"; "Do" → "Dominican Republic"). A phrase
+followed by a jurisdiction ("Same Place, Wayne, Ohio") is not matched and
+standardizes as usual.
+
 `standard_place` is a simplified-format-only sidecar (like `standard_date`):
 `toGedcomX` writes only `{ original: placeString }` and ignores
 `standard_place` on the reverse path.

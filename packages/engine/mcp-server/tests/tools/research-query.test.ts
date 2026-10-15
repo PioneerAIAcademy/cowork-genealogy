@@ -205,6 +205,7 @@ describe("research_query", () => {
 
   it("filters conflicts by questionId — a CONTAINS match on blocks_question_ids", async () => {
     await writeResearch({
+      assertions: [],
       conflicts: [
         { id: "c_001", blocks_question_ids: ["q_001"], status: "unresolved" },
         { id: "c_002", blocks_question_ids: ["q_002"], status: "resolved" },
@@ -214,6 +215,40 @@ describe("research_query", () => {
     expect(result.ok).toBe(true);
     if (!result.ok) return;
     expect(result.items.map((i) => i.id)).toEqual(["c_001"]);
+  });
+
+  it("conflicts × questionId also matches a conflict over the question's own assertions, at any status", async () => {
+    // ut_search_external_sites_013: the birthplace conflict was resolved, so its
+    // blocks_question_ids was empty, and a questionId read returned nothing.
+    await writeResearch({
+      assertions: [
+        { id: "a_009", extracted_for_question_ids: ["q_001"] },
+        { id: "a_012", extracted_for_question_ids: ["q_001", "q_002"] },
+        { id: "a_020", extracted_for_question_ids: ["q_002"] },
+        { id: "a_030" },
+      ],
+      conflicts: [
+        { id: "c_001", competing_assertion_ids: ["a_009", "a_030"], blocks_question_ids: [], status: "resolved" },
+        { id: "c_002", competing_assertion_ids: ["a_020", "a_030"], blocks_question_ids: [], status: "unresolved" },
+        { id: "c_003", competing_assertion_ids: ["a_030"], blocks_question_ids: ["q_001"], status: "unresolved" },
+      ],
+    });
+    const q1 = await researchQuery({ projectPath: dir, section: "conflicts", questionId: "q_001" });
+    expect(q1.ok).toBe(true);
+    if (!q1.ok) return;
+    expect(q1.items.map((i) => i.id)).toEqual(["c_001", "c_003"]);
+    const q2 = await researchQuery({ projectPath: dir, section: "conflicts", questionId: "q_002" });
+    expect(q2.ok && q2.items.map((i) => i.id)).toEqual(["c_002"]);
+    const q3 = await researchQuery({ projectPath: dir, section: "conflicts", questionId: "q_003" });
+    expect(q3.ok && q3.count).toBe(0);
+    const resolvedOnly = await researchQuery({ projectPath: dir, section: "conflicts", questionId: "q_001", status: "resolved" });
+    expect(resolvedOnly.ok && resolvedOnly.items.map((i) => i.id)).toEqual(["c_001"]);
+  });
+
+  it("conflicts × questionId errors (not count:0) when assertions is missing — a corrupt document", async () => {
+    await writeResearch({ conflicts: [{ id: "c_001", competing_assertion_ids: ["a_001"], status: "resolved" }] });
+    const r = await researchQuery({ projectPath: dir, section: "conflicts", questionId: "q_001" });
+    expect(r.ok).toBe(false);
   });
 
   it("filters sources by sourceId (exact match on id)", async () => {

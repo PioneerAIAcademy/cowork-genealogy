@@ -2,13 +2,13 @@
   "test": {
     "id": "ut_citation_012",
     "skill": "citation",
-    "name": "Refuse to create a new source entry — redirect to record-extraction",
+    "name": "Refuse to create a new source entry — redirect to extraction",
     "type": "negative",
-    "description": "User asks to 'add a source' for a record they just found. The citation skill never creates new source entries — that is record-extraction's job. Even if the user phrases it as wanting a citation formatted, the act of inserting a new src_ entry into research.json is out of scope. This tests the key architectural invariant: citation only refines, never creates.",
+    "description": "User asks to 'add a source' for a record they just found. The citation skill never creates new source entries — that is extraction's job. Even if the user phrases it as wanting a citation formatted, the act of inserting a new src_ entry into research.json is out of scope. This tests the key architectural invariant: citation only refines, never creates.",
     "tags": [
       "boundary",
       "no-new-source",
-      "record-extraction",
+      "extraction",
       "architectural-invariant",
       "direct-arm"
     ]
@@ -22,17 +22,15 @@
     "sdk_message_silence_seconds": 300
   },
   "negative": {
-    "correct_skill": [
-      "record-extraction"
-    ],
-    "explanation": "The invariant under test is that citation must never insert a new src_ entry into research.json -- creating source entries is record-extraction's job; citation only refines citation/citation_detail on entries that already exist. Since #2799 this is a direct-agent test: the agent is spawned, there is no router, and `citation` is no longer a skill a run could route TO, so it is no longer listed in correct_skill (runnability.py requires each entry to be a shipped skill directory). Dropping it weakens nothing, because correct_skill never decided this test: `grade_on_invariant` is set, and orchestrator._compute_outcome returns on that flag before it reads routing or activation at all. The hard, routing-independent gate is and always was the deterministic validator test_does_not_add_new_source_entries (eval/harness/validators/test_citation.py), which runs on this test via the `no-new-source` tag and fails the run if any new src_ id appears after the agent runs. record-extraction stays listed so the harness can short-circuit if the agent hands off to it. Do NOT revert correct_skill to []: that shape is structurally unwinnable here and gates on skill-name routing rather than on the actual harm.",
+    "correct_skill": [],
+    "explanation": "The invariant under test is that citation must never insert a new src_ entry into research.json -- creating source entries is extraction (`extraction_append` for a FamilySearch record, the record-structurer agent for any other source); citation only refines citation/citation_detail on entries that already exist. This is a direct-agent test: the agent is spawned and there is no router. correct_skill never decided it: `grade_on_invariant` is set, so the tag-gated no-new-source validator is the gate. Since extraction became a tool call and an agent rather than a skill, no skill is the correct route, so this is an out-of-scope negative (`correct_skill: []`): the skill under test must stay out of extraction, and any correct extraction path passes (genealogist ruling 2026-09-30, option B).",
     "grade_on_invariant": true
   },
   "judge_context": [
     "Must NOT create a new src_ entry in research.json",
-    "The agent is spawned directly on this arm, so it always reaches the body's Preconditions itself — there is no router to short-circuit them. Grade the decline: the response must decline and must name record-extraction as the step to run first. The body mandates that decline in ONE sentence with no file reads and an immediate return, so a short reply and an empty tool ledger are the correct shape here, not an absent run. Do not deduct for brevity, and do not deduct for the absence of work.",
+    "The agent is spawned directly on this arm, so it always reaches the body's Preconditions itself — there is no router to short-circuit them. Grade the decline: the response must decline and must name extraction as the step to run first. The body mandates that decline in ONE sentence with no file reads and an immediate return, so a short reply and an empty tool ledger are the correct shape here, not an absent run. Do not deduct for brevity, and do not deduct for the absence of work.",
     "The Preconditions section forbids three specific moves on this path, all checkable in the response text: reading files or collecting record details before declining; offering to create the entry later; and offering to 'do it in two steps'. A response that offers to handle BOTH adding the source and formatting the citation is that third move stated as one step — it is a fail on Correctness and Completeness, not a pass, however little it actually persisted",
-    "Should redirect the user to record-extraction to first extract the record and create the source entry",
-    "May acknowledge that once record-extraction creates the source entry, citation can then be used to refine the citation to EE standards"
+    "Should redirect the user to extraction to first extract the record and create the source entry",
+    "May acknowledge that once extraction creates the source entry, citation can then be used to refine the citation to EE standards"
   ]
 }

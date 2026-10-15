@@ -21,10 +21,10 @@ research_query({ projectPath, section, ...well-known filters }) -> { count, item
 ## 1. Why this exists
 
 `project_context` already exists to stop one re-read pattern (the
-record-extractor's fresh-context `Read` of the whole project on every
+record-extractor's (since retired) fresh-context `Read` of the whole project on every
 delegation). It deliberately does **not** cover per-assertion detail or any
 other section body (`project-context-tool-spec.md` §3: "no assertion bodies —
-deliberately excluded"), because its one consumer needs a stable, small,
+deliberately excluded"), because its consumers need a stable, small,
 unfiltered orientation snapshot, not a lookup.
 
 A different pattern showed up in the 2026-07-26 batching-work verification
@@ -90,7 +90,7 @@ inspected; `validate_research_schema` remains the diagnosis tool.
 | `person_evidence` | `personId` | `person_id` | exact |
 | | `assertionId` | `assertion_id` | exact |
 | `conflicts` | `assertionId` | `competing_assertion_ids` | contains |
-| | `questionId` | `blocks_question_ids` | contains |
+| | `questionId` | `blocks_question_ids`, OR a `competing_assertion_ids` entry whose assertion's `extracted_for_question_ids` contains the value — the link the completion gate derives; any status, so a resolved conflict (whose `blocks_question_ids` is empty) still answers for its question | via assertions |
 | | `status` | `status` | exact |
 | `hypotheses` | `questionId` | `related_question_ids` | contains |
 | | `assertionId` | `supporting_assertion_ids` OR `contradicting_assertion_ids` | contains-either |
