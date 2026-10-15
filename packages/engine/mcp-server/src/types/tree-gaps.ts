@@ -80,6 +80,14 @@ export interface TreeGapCoverage {
   placeLevel: PlaceLevel;
 }
 
+// FamilySearch's pending record hints for the hole's person (and spouse, for a
+// couple-level hole). `fitting` counts those whose collection's record-type
+// facet could hold the record the hole needs; `total` counts them all.
+export interface TreeGapHints {
+  fitting: number;
+  total: number;
+}
+
 export interface TreeGap {
   type: TreeGapType;
   personId: string;
@@ -98,6 +106,9 @@ export interface TreeGap {
   yearRange: TreeGapYearRange | null;
   place: string | null;
   coverage: TreeGapCoverage | null;
+  // `null` when the catalog was unavailable, time ran out, or the hints could
+  // not be read for any person on the hole.
+  pendingHints: TreeGapHints | null;
 }
 
 export interface TreeGapsResult {

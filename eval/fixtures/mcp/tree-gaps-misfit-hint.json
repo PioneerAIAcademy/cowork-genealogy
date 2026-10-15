@@ -1,0 +1,88 @@
+{
+  "tool": "tree_gaps",
+  "description": "CONSTRUCTED for the tree-survey ranking test (issue #3362) -- two holes: the nearer one has a pending hint whose record type does not fit it (fitting 0 of 1), the farther one has a pending hint that does (fitting 1 of 1). Shape follows docs/specs/tree-gaps-tool-spec.md, Output.",
+  "args": {
+    "personId": "TGAP-ROT"
+  },
+  "response": {
+    "root": {
+      "personId": "TGAP-ROT",
+      "name": "Walter Ashby"
+    },
+    "gaps": [
+      {
+        "type": "no_spouse",
+        "personId": "TGAP-M1A",
+        "name": "August Ashby",
+        "lifespan": "1858-1931",
+        "generation": 1,
+        "detail": "Died at 73 with no spouse in the tree.",
+        "yearRange": {
+          "start": 1876,
+          "end": 1931
+        },
+        "place": "Lancaster, Lancaster, Pennsylvania, United States",
+        "coverage": {
+          "collections": 9,
+          "records": 4200000,
+          "recordTypes": [
+            "CENSUS",
+            "CHURCH_RECORD",
+            "VITAL"
+          ],
+          "censusYears": [
+            1900,
+            1910,
+            1920
+          ],
+          "placeLevel": "locality"
+        },
+        "pendingHints": {
+          "fitting": 0,
+          "total": 1
+        }
+      },
+      {
+        "type": "missing_parents",
+        "personId": "TGAP-M2A",
+        "name": "Hannah Pruitt",
+        "lifespan": "1861-1934",
+        "generation": 2,
+        "detail": "Father and mother are both missing from the tree.",
+        "yearRange": {
+          "start": 1860,
+          "end": 1864
+        },
+        "place": "Lancaster, Lancaster, Pennsylvania, United States",
+        "coverage": {
+          "collections": 9,
+          "records": 4200000,
+          "recordTypes": [
+            "CENSUS",
+            "CHURCH_RECORD",
+            "VITAL"
+          ],
+          "censusYears": [
+            1900,
+            1910,
+            1920
+          ],
+          "placeLevel": "locality"
+        },
+        "pendingHints": {
+          "fitting": 1,
+          "total": 1
+        }
+      }
+    ],
+    "scanned": {
+      "ancestorGenerations": 8,
+      "descendantGenerations": 4,
+      "persons": 120,
+      "descendancyReads": 12,
+      "stoppedEarly": false,
+      "stopReason": null
+    },
+    "notes": []
+  }
+}

@@ -83,7 +83,8 @@ raising the timeout:
   cannot run past it, and a read with under 2 s left is not started. The catalog
   wait is the lesser of 15 s and the time left.
 - The catalog is fetched in parallel from the start and waited on for at most
-  15 s; if it is late the holes are returned with `coverage: null` and a note.
+  15 s; if it is late the holes are returned with `coverage: null` and a note. Without the catalog there is no
+  `pendingHints` either.
 - **Early exit.** Waves run nearest the root first. The **near tier** — the root's
   descendants and every couple within 4 generations — always runs: its holes
   outrank anything farther out, and a pedigree edge alone can hold `maxHoles`
@@ -144,7 +145,8 @@ them. A living root whose descendants are all living yields no holes.
     detail,                     // plain words
     yearRange: {start,end}|null,
     place: string|null,
-    coverage: {collections, records, recordTypes[], censusYears[], placeLevel}|null
+    coverage: {collections, records, recordTypes[], censusYears[], placeLevel}|null,
+    pendingHints: {fitting, total}|null
   }],
   scanned: { ancestorGenerations, descendantGenerations, persons,
              descendancyReads, stoppedEarly, stopReason },
@@ -190,6 +192,29 @@ catalog was unavailable. **It is a floor, not a verdict:** the catalog counts
 collections that exist for the jurisdiction, not records indexed for this
 person. The agent confirms with per-person checks (hints, `record_search`).
 
+## Pending hints
+
+After the catalog arrives, `pendingHints` counts, per hole, FamilySearch's
+**pending** record matches (`person_record_matches`, `includeSummary: true`) for
+the hole's person and, on a couple-level hole, the spouse, each match counted
+once. `total` is all of them; `fitting` is those whose collection carries one of
+the hole type's facets in the table above. A match's own `collection` field is
+the same generic URL on every match (measured 2026-10-14), so the collection is
+identified by the catalog id in the match summary
+(`sourceDescriptions[Collection].identifiers["http://gedcomx.org/Primary"]`,
+returned as `collectionId`) and looked up in the catalog. A match whose
+collection is not in the catalog counts toward `total` only.
+
+`pendingHints` is `null` when the catalog was unavailable, when any person on
+the hole could not be read (the match service answers "no tree person" for some
+valid ids, and a read fails or is not started in time), or when the hole has no
+person to read. A partial count is never returned. Each person is read once
+however many holes name them, six at a time, started only before the 40 s time
+budget, and the whole phase is cut at the 50 s deadline. Unreadable people are
+counted in `notes`.
+
+The agent ranks on `fitting`; it does not call `person_record_matches` itself.
+
 **Not done:** the lead's example URL filters by `placeId`. The catalog carries
 `searchMetadata.placeIds`, but matching them needs the place's ancestry chain
 (county → state → country), so v1 reuses the title-scope match. A placeId
@@ -215,6 +240,6 @@ holes); a failed read of the root's own descendancy fails the call.
 
 `src/tools/tree-gaps.ts` (fetch, budget, coverage), `src/utils/tree-gap-detect.ts`
 (pure detection), `src/types/tree-gaps.ts`, `src/tools/collections-search.ts`
-(`collectionCoverage`), `dev/probe-descendancy.ts`, `dev/try-tree-gaps.ts`,
+(`collectionCoverage`), `src/tools/match-by-id.ts` (`collectionId`), `dev/probe-descendancy.ts`, `dev/try-tree-gaps.ts`,
 `tests/utils/tree-gap-detect.test.ts`, `tests/tools/tree-gaps.test.ts`,
 `eval/fixtures/mcp/tree-gaps-*.json`.

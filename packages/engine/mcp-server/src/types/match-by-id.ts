@@ -22,6 +22,9 @@ export interface MatchByIdMatch {
   title: string;
   status: MatchStatus;
   collection: string;
+  // The collection's catalog id (the `id` collections_search lists). Only with
+  // includeSummary: `collection` above is the same generic URL on every match.
+  collectionId?: string;
   published?: string;
   summary?: unknown;
 }

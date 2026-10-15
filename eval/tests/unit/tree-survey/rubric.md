@@ -16,7 +16,7 @@ Did the agent survey the tree with `tree_gaps` and report only what it returned?
 
 Did the agent check what FamilySearch holds for the holes it kept, without retrying empty results?
 
-- **pass:** For each hole it kept, the agent used at least one of pending hints, `person_quality`, a `record_search` on the hole's place and years, or the collections floor, and treated an empty result as a result. With no holes, it made none of these calls.
+- **pass:** For each hole it kept, the agent used at least one of the hole's `pendingHints`, `person_quality`, a `record_search` on the hole's place and years, or the collections floor, and treated an empty result as a result. With no holes, it made none of these calls.
 - **partial:** The agent checked only some holes it then suggested, or repeated the same search after it came back empty.
 - **fail:** The agent suggested a person with no check at all, or searched for people no hole named.
 

@@ -245,8 +245,25 @@ function simplifyEntry(entry: MatchApiEntry): MatchByIdMatch | null {
     collection: matchInfo.collection ?? "",
   };
   if (entry.published) m.published = entry.published;
-  if (entry.content?.gedcomx) m.summary = entry.content.gedcomx;
+  if (entry.content?.gedcomx) {
+    m.summary = entry.content.gedcomx;
+    const collectionId = collectionIdOf(entry.content.gedcomx);
+    if (collectionId) m.collectionId = collectionId;
+  }
   return m;
+}
+
+// The summary's Collection source description carries the catalog id as its
+// Primary identifier (measured live 2026-10-14: "2221801" for Find a Grave Index).
+function collectionIdOf(gedcomx: unknown): string | null {
+  const sds = (gedcomx as { sourceDescriptions?: unknown })?.sourceDescriptions;
+  if (!Array.isArray(sds)) return null;
+  for (const sd of sds) {
+    if (sd?.resourceType !== "http://gedcomx.org/Collection") continue;
+    const id = sd.identifiers?.["http://gedcomx.org/Primary"]?.[0];
+    if (typeof id === "string" && id !== "") return id;
+  }
+  return null;
 }
 
 async function throwForBadStatus(

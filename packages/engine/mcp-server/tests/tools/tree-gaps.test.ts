@@ -234,6 +234,74 @@ describe("treeGapsTool", () => {
     });
   });
 
+  describe("pending hints", () => {
+    const catalogEntry = (id: string, title: string, typeFacet: string) => ({
+      content: {
+        gedcomx: { collections: [{ id, title, searchMetadata: [{ startYear: 1850, endYear: 1950, typeFacet }] }] },
+      },
+    });
+    const hint = (pid: string, collectionId: string) => ({
+      id: `https://familysearch.org/ark:/61903/1:1:${pid}`,
+      confidence: 4,
+      score: 0.9,
+      title: "x",
+      matchInfo: [{ status: "http://familysearch.org/v1/Pending", collection: "https://familysearch.org/platform/collections/records" }],
+      content: {
+        gedcomx: {
+          sourceDescriptions: [
+            { resourceType: "http://gedcomx.org/Collection", identifiers: { "http://gedcomx.org/Primary": [collectionId] } },
+          ],
+        },
+      },
+    });
+    const survey = (matches: () => unknown) =>
+      route({
+        "/tree/ancestry": () =>
+          json({
+            persons: [
+              person("KNDX-MKG", { ascendancyNumber: "1", name: "R", gender: "Male", birthDate: "1 May 1900", lifespan: "1900-1990" }),
+            ],
+          }),
+        "/tree/descendancy": () => json({ persons: [] }),
+        "/service/search/hr/v2/collections": () =>
+          json({ entries: [catalogEntry("11", "Births", "VITAL"), catalogEntry("12", "Military Rolls", "MILITARY")] }),
+        "/match/resolutions/match/matches": matches,
+      });
+
+    it("counts only the hints whose collection type fits the hole", async () => {
+      survey(() => json({ entries: [hint("AAAA-111", "11"), hint("BBBB-222", "12"), hint("CCCC-333", "999")] }));
+      const r = await treeGapsTool({ personId: "KNDX-MKG", ancestorGenerations: 1 }, LOCAL);
+      const hole = r.gaps.find((g) => g.type === "no_death_date")!;
+      // A VITAL hint fits a missing death date; MILITARY does not; an id the catalog lacks cannot be judged.
+      expect(hole.pendingHints).toEqual({ fitting: 1, total: 3 });
+    });
+
+    it("counts zero fitting when every hint is the wrong type", async () => {
+      survey(() => json({ entries: [hint("BBBB-222", "12")] }));
+      const r = await treeGapsTool({ personId: "KNDX-MKG", ancestorGenerations: 1 }, LOCAL);
+      expect(r.gaps.find((g) => g.type === "no_death_date")!.pendingHints).toEqual({ fitting: 0, total: 1 });
+    });
+
+    it("leaves pendingHints null, with a note, when the hints cannot be read", async () => {
+      survey(() => json({}, 500));
+      const r = await treeGapsTool({ personId: "KNDX-MKG", ancestorGenerations: 1 }, LOCAL);
+      expect(r.gaps.every((g) => g.pendingHints === null)).toBe(true);
+      expect(r.notes.join(" ")).toMatch(/Pending hints could not be read for 1 person/);
+    });
+
+    it("leaves pendingHints null when the catalog is unavailable", async () => {
+      survey(() => json({ entries: [hint("AAAA-111", "11")] }));
+      route({
+        "/tree/ancestry": () =>
+          json({ persons: [person("KNDX-MKG", { ascendancyNumber: "1", name: "R", gender: "Male", birthDate: "1 May 1900", lifespan: "1900-1990" })] }),
+        "/tree/descendancy": () => json({ persons: [] }),
+        "/service/search/hr/v2/collections": () => json({}, 500),
+      });
+      const r = await treeGapsTool({ personId: "KNDX-MKG", ancestorGenerations: 1 }, LOCAL);
+      expect(r.gaps.every((g) => g.pendingHints === null)).toBe(true);
+    });
+  });
+
   it("scores a hole against the catalog: place scope, years and record type", async () => {
     const entry = (id: string, title: string, typeFacet: string, years: [number, number] = [1850, 1950]) => ({
       content: {

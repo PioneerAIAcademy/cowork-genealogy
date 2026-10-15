@@ -16,13 +16,11 @@
   },
   "mcp_fixtures": [
     "tree-gaps-many-holes",
-    "person-record-matches-tgap-h3a",
     "collections-search-any",
     "place-search-any",
     "record-search-any",
     "record-search-any-parents",
     "record-search-any-country",
-    "person-record-matches-any",
     "person-quality-any"
   ],
   "execution": {

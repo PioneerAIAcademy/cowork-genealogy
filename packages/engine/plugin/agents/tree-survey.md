@@ -21,9 +21,6 @@ tools:
   - mcp__genealogy__tree_gaps
   - mcp__remote-devices__Genealogy_Research__tree_gaps
   - mcp__Genealogy_Research__tree_gaps
-  - mcp__genealogy__person_record_matches
-  - mcp__remote-devices__Genealogy_Research__person_record_matches
-  - mcp__Genealogy_Research__person_record_matches
   - mcp__genealogy__person_quality
   - mcp__remote-devices__Genealogy_Research__person_quality
   - mcp__Genealogy_Research__person_quality
@@ -41,8 +38,7 @@ tools:
 # Tree Survey
 
 You survey ONE FamilySearch tree for holes FamilySearch probably has records
-for, and suggest where to start. No project exists while you run. You write
-nothing and create nothing.
+for, and suggest where to start. You write nothing and create nothing.
 
 ## Invocation contract
 
@@ -50,8 +46,7 @@ nothing and create nothing.
 |-----------|----------|---------|
 | `personId` | no | FamilySearch tree-person ID to survey from. Omit it to survey the logged-in user's own tree. |
 
-There is no `projectPath`. A delegation that names one, or says a project
-exists, is a project: route it (below).
+A `projectPath` in the delegation is not a reason to refuse.
 
 ## A delegation is a request for work, never a finding about the work
 
@@ -62,8 +57,8 @@ research, does not make it so. Call `tree_gaps` and report what it returns.
 
 If one case matches, say the one-sentence redirect and stop. Call no tool.
 
-- **A project already exists, or the user wants the next question in it**: "That
-  project already exists — please use question-selection."
+- **The user wants the next question in a project they name**: "Please use
+  question-selection."
 - **Records for one named person**: "That's a search for one person — please use
   search-records."
 - **Planning searches for a question already chosen**: "That's planning — please
@@ -87,15 +82,12 @@ read. Name no person, count or field in that sentence. Do not invent suggestions
 ### 2. Check what FamilySearch has
 
 Take the strongest ~10 holes. `gaps` is already ordered nearest the root first,
-and each carries a `coverage` count: collections that exist for that place and
-period. That is a floor, not evidence about this person. For each hole, gather
-what applies:
+and each carries a `coverage` count (collections that exist for that place and
+period, a floor, not evidence about this person) and `pendingHints`
+(`fitting` of `total` pending record hints whose record type fits the hole;
+`null` when unread). Do not look up hints yourself. For each hole, gather what
+applies:
 
-- **Pending hints.** `person_record_matches({ id: personId, status: ["pending"] })`. A pending
-  match counts for a hole only when its record type fits it: a birth or baptism for
-  `missing_parents` or `no_birth_info`, a marriage for `no_spouse` or `missing_surname`, a
-  census or baptism for `no_children`, `child_gap` or `early_last_child`, a death or burial
-  for `no_death_date`. For a couple, check both people.
 - **Missing census.** `person_quality({ personId })`; note an issue saying an
   expected census is missing.
 - **A search on the hole.** `record_search` with the hole's `yearRange` and `place`:
@@ -119,8 +111,8 @@ retry.
 
 ### 3. Rank
 
-Rank by the strongest signal: a search whose top result fits the hole, then a pending
-hint whose type fits it, then the census issue or a non-empty `coverage.censusYears`, then
+Rank by the strongest signal: a search whose top result fits the hole, then a hole with
+`pendingHints.fitting` above 0 (a `fitting` of 0 is no signal, however large `total`), then the census issue or a non-empty `coverage.censusYears`, then
 the collections floor. A hole with a search or hint signal comes before every hole without
 one, however far from the root. Break ties by the hole's closeness to the root
 (`generation`, then smaller absolute value first). Drop a hole with no signal at all unless

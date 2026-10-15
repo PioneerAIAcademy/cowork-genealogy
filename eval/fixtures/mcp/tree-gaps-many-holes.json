@@ -36,6 +36,10 @@
             1920
           ],
           "placeLevel": "locality"
+        },
+        "pendingHints": {
+          "fitting": 0,
+          "total": 0
         }
       },
       {
@@ -64,6 +68,10 @@
             1920
           ],
           "placeLevel": "locality"
+        },
+        "pendingHints": {
+          "fitting": 0,
+          "total": 0
         }
       },
       {
@@ -92,6 +100,10 @@
             1920
           ],
           "placeLevel": "locality"
+        },
+        "pendingHints": {
+          "fitting": 0,
+          "total": 0
         }
       },
       {
@@ -120,6 +132,10 @@
             1920
           ],
           "placeLevel": "locality"
+        },
+        "pendingHints": {
+          "fitting": 1,
+          "total": 1
         }
       },
       {
@@ -148,6 +164,10 @@
             1920
           ],
           "placeLevel": "locality"
+        },
+        "pendingHints": {
+          "fitting": 0,
+          "total": 0
         }
       },
       {
@@ -178,7 +198,11 @@
           "placeLevel": "locality"
         },
         "spouseId": "TGAP-H5B",
-        "spouseName": "Karl Ruhl"
+        "spouseName": "Karl Ruhl",
+        "pendingHints": {
+          "fitting": 0,
+          "total": 0
+        }
       }
     ],
     "scanned": {

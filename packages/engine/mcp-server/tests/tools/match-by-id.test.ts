@@ -341,6 +341,29 @@ describe("Response parsing", () => {
     expect(m.summary).toBeDefined();
   });
 
+  it("reads collectionId from the summary's Collection source description", async () => {
+    const body = JSON.parse(JSON.stringify(KNDX_RESPONSE));
+    body.entries[0].content = {
+      gedcomx: {
+        sourceDescriptions: [
+          { resourceType: "http://gedcomx.org/Person" },
+          { resourceType: "http://gedcomx.org/Collection", identifiers: { "http://gedcomx.org/Primary": ["2026973"] } },
+        ],
+      },
+    };
+    mockJson(body);
+    const result = await personRecordMatches({ id: "KNDX-MKG", includeSummary: true }, LOCAL);
+    expect(result.matches[0].collectionId).toBe("2026973");
+  });
+
+  it("omits collectionId when the summary names no collection", async () => {
+    const body = JSON.parse(JSON.stringify(KNDX_RESPONSE));
+    body.entries[0].content = { gedcomx: { sourceDescriptions: [] } };
+    mockJson(body);
+    const result = await personRecordMatches({ id: "KNDX-MKG", includeSummary: true }, LOCAL);
+    expect(result.matches[0].collectionId).toBeUndefined();
+  });
+
   it("omits summary when content.gedcomx is missing", async () => {
     const body = JSON.parse(JSON.stringify(KNDX_RESPONSE));
     delete body.entries[0].content;

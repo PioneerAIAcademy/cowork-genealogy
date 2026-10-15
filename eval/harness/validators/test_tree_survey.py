@@ -7,7 +7,7 @@ the prose is plain, is judged by the rubric; the checks here are the ones a
 reader can verify from the tool calls and the reply alone.
 
 Tag gates: `survey` marks a positive test, `no-holes` a tree with nothing to
-suggest, `many-holes` the ranking test.
+suggest, `many-holes` and `misfit-hint` the ranking tests.
 
 See test_universal.py module docstring for the validator function-signature
 contract.
@@ -135,12 +135,21 @@ def test_suggestions_are_holes_at_most_five_and_distinct(tool_calls, agent_retur
     assert len(ids) == len(set(ids)), f"a person is suggested twice: {ids}"
 
 
+# Ranking tests: the tag says which hole's person must lead the suggestions.
+_FIRST_BY_TAG = {"many-holes": "TGAP-H3A", "misfit-hint": "TGAP-M2A"}
+
+
+# Ranking tests: the tag says which hole's person must lead the suggestions.
+_FIRST_BY_TAG = {"many-holes": "TGAP-H3A", "misfit-hint": "TGAP-M2A"}
+
+
 def test_the_hole_with_a_fitting_hint_ranks_first(agent_returns, text_response, test):
-    if "many-holes" not in test.get("tags", []):
-        pytest.skip("not the ranking test")
+    tag = next((t for t in test.get("tags", []) if t in _FIRST_BY_TAG), None)
+    if tag is None:
+        pytest.skip("not a ranking test")
     ids = _suggested_ids(_reply(agent_returns, text_response, test))
     assert ids, "no suggestion carried an identifier"
-    assert ids[0] == "TGAP-H3A", (
-        "the hole with a pending hint that fits it must come first, ahead of nearer holes with no signal; "
-        f"got {ids}"
+    assert ids[0] == _FIRST_BY_TAG[tag], (
+        "the hole whose `pendingHints.fitting` is nonzero must come first, ahead of nearer holes "
+        f"without a fitting hint; got {ids}"
     )

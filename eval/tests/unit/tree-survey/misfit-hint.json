@@ -1,0 +1,35 @@
+{
+  "test": {
+    "id": "ut_tree_survey_015",
+    "skill": "tree-survey",
+    "name": "A pending hint that does not fit its hole ranks below one that does",
+    "type": "positive",
+    "description": "tree_gaps returns two holes. The nearer one carries one pending hint that does not fit it (fitting 0 of 1); the farther one carries one that does (fitting 1 of 1). The agent must rank the farther hole first.",
+    "tags": [
+      "survey",
+      "misfit-hint",
+      "direct-arm"
+    ]
+  },
+  "input": {
+    "delegation": "What should I research in my tree?\n\npersonId: TGAP-ROT"
+  },
+  "mcp_fixtures": [
+    "tree-gaps-misfit-hint",
+    "collections-search-any",
+    "place-search-any",
+    "record-search-any",
+    "record-search-any-parents",
+    "record-search-any-country",
+    "person-quality-any"
+  ],
+  "execution": {
+    "max_wall_clock_seconds": 300
+  },
+  "judge_context": [
+    "This is the direct-agent arm: no routing skill is staged, and the delegation is relayed verbatim. No project exists in this test, so the agent must not look for research.json, create a project, or call any writer tool (it holds none).",
+    "tree_gaps returns TWO holes, nearest the root first: TGAP-M1A (no spouse, generation 1, one pending hint that does not fit: `pendingHints` fitting 0, total 1) and TGAP-M2A (missing parents, generation 2, `pendingHints` fitting 1, total 1). The other checks return empty results.",
+    "The first suggestion must be TGAP-M2A's person: a hole with a fitting hint comes before a nearer hole whose hint does not fit. A deterministic validator checks the order and that at most five people are suggested, none twice, so do not re-grade the order yourself. Grade the questions: each must be a single fact, name the person, and scope place and years.",
+    "The agent's return should end with the summary_for_user block: a `---` line followed by plain prose with no label, and no identifiers, file names, tool names or field names in it."
+  ]
+}

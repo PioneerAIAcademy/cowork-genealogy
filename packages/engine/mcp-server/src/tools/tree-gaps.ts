@@ -3,7 +3,8 @@ import { fsFetch } from "../utils/fs-fetch.js";
 import { getValidToken } from "../auth/refresh.js";
 import { parseUpstreamErrorBody } from "../utils/search-helpers.js";
 import { mapWithConcurrency } from "../utils/place-resolver.js";
-import { collectionCoverage, fetchAllCollections } from "./collections-search.js";
+import { collectionCoverage, fetchAllCollections, unwrapEntry } from "./collections-search.js";
+import { personRecordMatches } from "./match-by-id.js";
 import {
   addAncestry,
   addDescendancy,
@@ -75,7 +76,9 @@ export const treeGapsToolSchema = {
     "or place, a deceased person with no death date. Each hole gives the " +
     "person's ID, name, life years, the year range and place to search, and " +
     "`coverage`: catalog collections that could hold the record, census " +
-    "years inside the window, and how specific the place is. Living " +
+    "years inside the window, and how specific the place is, and " +
+    "`pendingHints`: how many of FamilySearch's pending record hints for " +
+    "the person fit the hole's record type. Living " +
     "people never carry a " +
     "hole. If personId is omitted it uses the logged-in user; for anyone " +
     "else, call person_search first. Reads only; writes nothing. Requires " +
@@ -239,6 +242,74 @@ function score(gaps: TreeGap[], catalog: FSCollectionEntry[]): void {
   }
 }
 
+// Pending hints per hole. A match fits when its collection (by catalog id, from
+// the match summary) carries one of the hole type's record-type facets. Each
+// person is read once however many holes name them. A person whose matches
+// cannot be read, or who is not read before the deadline, leaves their holes
+// uncounted: if any person on a hole is unread the hole's count is null, never a
+// partial number the agent would rank on.
+async function scoreHints(
+  gaps: TreeGap[],
+  catalog: FSCollectionEntry[],
+  principal: Principal,
+  started: number,
+): Promise<number> {
+  const facetById = new Map<string, string>();
+  for (const entry of catalog) {
+    const data = unwrapEntry(entry);
+    const facet = data?.searchMetadata?.[0]?.typeFacet;
+    if (data && facet) facetById.set(data.id, facet);
+  }
+  const people = new Set<string>();
+  for (const g of gaps) {
+    for (const id of [g.personId, g.spouseId]) if (id && id !== "UNKNOWN") people.add(id);
+  }
+  const hints = new Map<string, { ark: string; facet: string | undefined }[]>();
+  let failed = 0;
+  const reads = mapWithConcurrency([...people], CONCURRENCY, async (id) => {
+    if (Date.now() - started > TIME_BUDGET_MS) return;
+    try {
+      const res = await personRecordMatches(
+        { id, status: ["pending"], includeSummary: true },
+        principal,
+      );
+      hints.set(
+        id,
+        res.matches.map((m) => ({
+          ark: m.ark,
+          facet: m.collectionId ? facetById.get(m.collectionId) : undefined,
+        })),
+      );
+    } catch {
+      failed += 1;
+    }
+  });
+  // A match read has no per-call window, so the whole phase is raced against the
+  // deadline; whatever has not answered by then leaves its holes null.
+  let timer: ReturnType<typeof setTimeout> | undefined;
+  await Promise.race([
+    reads.catch(() => undefined),
+    new Promise<void>((r) => {
+      timer = setTimeout(r, Math.max(0, DEADLINE_MS - (Date.now() - started)));
+    }),
+  ]);
+  clearTimeout(timer);
+  for (const g of gaps) {
+    const ids = [g.personId, g.spouseId].filter(
+      (id): id is string => !!id && id !== "UNKNOWN",
+    );
+    const reads = ids.map((id) => hints.get(id));
+    if (reads.length === 0 || reads.some((r) => !r)) continue;
+    const seen = new Map<string, string | undefined>();
+    for (const r of reads) for (const h of r!) seen.set(h.ark, h.facet);
+    g.pendingHints = {
+      fitting: [...seen.values()].filter((f) => f && TYPE_FACETS[g.type].includes(f)).length,
+      total: seen.size,
+    };
+  }
+  return failed;
+}
+
 export async function treeGapsTool(
   input: TreeGapsInput,
   principal: Principal,
@@ -357,8 +428,17 @@ export async function treeGapsTool(
   clearTimeout(waitTimer);
   if (catalog) {
     score(gaps, catalog);
+    const failedHints = await scoreHints(gaps, catalog, principal, started);
+    if (failedHints > 0) {
+      notes.push(
+        `Pending hints could not be read for ${failedHints} person${failedHints === 1 ? "" : "s"}; ` +
+          "`pendingHints` is null on their holes.",
+      );
+    }
   } else {
-    notes.push("Collection coverage was unavailable; `coverage` is null on every hole.");
+    notes.push(
+      "Collection coverage was unavailable; `coverage` and `pendingHints` are null on every hole.",
+    );
   }
   if (failedReads > 0) {
     notes.push(

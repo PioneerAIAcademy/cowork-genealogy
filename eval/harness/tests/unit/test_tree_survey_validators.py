@@ -164,3 +164,23 @@ def test_ranking_fires_unless_the_fitting_hint_is_first():
         check_first(reply("no identifier here\n---\nprose"), None, t)
     with pytest.raises(pytest.skip.Exception):
         check_first(reply(GOOD), None, survey_test())
+
+
+def test_ranking_fires_when_a_misfit_hint_hole_leads():
+    t = survey_test(tags=("survey", "misfit-hint"))
+    check_first(reply("TGAP-M2A: q\nTGAP-M1A: q\n---\nprose"), None, t)
+    with pytest.raises(AssertionError):
+        check_first(reply("TGAP-M1A: q\nTGAP-M2A: q\n---\nprose"), None, t)  # the misfit hint first
+
+
+def test_ranking_fires_when_a_misfit_hint_hole_leads():
+    t = survey_test(tags=("survey", "misfit-hint"))
+    check_first(reply("TGAP-M2A: q
+TGAP-M1A: q
+---
+prose"), None, t)
+    with pytest.raises(AssertionError):
+        check_first(reply("TGAP-M1A: q
+TGAP-M2A: q
+---
+prose"), None, t)  # the misfit hint first
