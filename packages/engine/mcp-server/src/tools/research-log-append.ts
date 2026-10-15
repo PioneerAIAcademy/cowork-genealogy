@@ -364,8 +364,29 @@ function supersededPlanItemRefusal(research: any, planItemId: string): string | 
  * the unbroken run of words touching the census token -- punctuation ends the
  * run -- so "born 1821 Wales, 1860 census at Cosumnes Township, California"
  * still reads as a US 1860 census (correctly refused) rather than a Welsh one.
+ *
+ * THE STAGED PAYLOAD SUPPLIES THE JURISDICTION OF AN UNQUALIFIED MENTION (issue
+ * #3409, decided at review-ready 2026-10-14). An unqualified "1851 census" reads
+ * as US, so a note logged against an English search was refused as a US census
+ * and rewritten until the gate stopped firing. When every titled row of the
+ * staged payload is British (`stagedPayloadColumnFrom`), an unqualified mention
+ * takes 1851 as its threshold; a mention that names its own jurisdiction, US
+ * included, keeps it. It does NOT skip the check: an unqualified 1841 mention
+ * against English rows stays refused, so "still refuses an 1841 England census"
+ * in pre1880-census-hedge.test.ts holds. The rejected option was to skip the
+ * note-only path whenever no staged row is a US federal census: that accepts
+ * "1841 England census ... wife" and frees none of the church-records notes,
+ * whose payload names no census at all. "pre-1880 census" and "census of the
+ * U.S." count as US-qualified, and a collection title is British only when it
+ * STARTS with a British name, so "New England ..." and "British Columbia ..."
+ * are not.
  */
 type CensusMention = { year: number; columnFrom: number };
+/** A mention, plus whether it is explicitly US-worded: "US", "U.S.", "USA",
+ *  "United States", "federal", "census of the U.S.", or a `pre-`/`before` year.
+ *  A British-qualified mention stays false: the payload can only supply 1851,
+ *  the threshold it already has. */
+type QualifiedMention = CensusMention & { qualified: boolean };
 
 const CENSUS_YEAR = String.raw`1[6-9]\d\d`;
 /** A run of years sharing one census token: "1860 and 1870 censuses". */
@@ -414,15 +435,25 @@ function relationshipColumnFrom(qualifier: string): number | null {
   return 1880; // unqualified or explicitly US/federal
 }
 
+/** An explicitly US mention: never re-jurisdictioned by a staged payload. */
+const US_QUALIFIER = /\b(?:u\.?\s?s|united\s+states|federal)\b/i;
+
 export function censusMentions(notes: string): CensusMention[] {
-  const out: CensusMention[] = [];
-  const push = (years: string, qualifier: string, post: string, before = false) => {
+  return qualifiedMentions(notes).map(({ year, columnFrom }) => ({ year, columnFrom }));
+}
+
+function qualifiedMentions(notes: string): QualifiedMention[] {
+  const out: QualifiedMention[] = [];
+  const push = (years: string, qualifier: string, post: string, before = false, usAfter = false) => {
     const from = relationshipColumnFrom(`${qualifier} ${post}`);
     if (from === null || Number.isNaN(from)) return;
+    // `population`, `state` and the other non-place words leave a mention
+    // unqualified; a NaN jurisdiction was dropped above. "pre-1880" is US wording.
+    const qualified = before || usAfter || US_QUALIFIER.test(`${qualifier} ${post}`);
     // The prefix qualifies the year it touches, not the run: "before 1880 and
     // 1880 census" is a pre-1880 census and the 1880 one.
     for (const [i, y] of (years.match(new RegExp(CENSUS_YEAR, "g")) ?? []).entries()) {
-      out.push({ year: Number(y) - (before && i === 0 ? 1 : 0), columnFrom: from });
+      out.push({ year: Number(y) - (before && i === 0 ? 1 : 0), columnFrom: from, qualified });
     }
   };
   for (const m of notes.matchAll(CENSUS_BEFORE)) {
@@ -431,7 +462,10 @@ export function censusMentions(notes: string): CensusMention[] {
     // 1880 it skipped the whole note: a ut_search_records_027 roster saying
     // "(pre-1880 census)" passed whatever else it asserted.
     const before = /\b(?:pre[-\s]?|before\s+)$/i.test(notes.slice(Math.max(0, m.index - 7), m.index));
-    push(m[1], m[2] ?? "", /^\s*(?:of|for)\s+([A-Za-z&\s]{0,20})/.exec(post)?.[1] ?? "", before);
+    // The `of|for` capture stops at a period, so "census of the U.S." is read
+    // here, and so is "census for the USA".
+    const usAfter = /^\s*(?:of|for)\s+(?:the\s+)?(?:u\.?\s?s(?:\.?a)?\b|united\s+states\b)/i.test(post);
+    push(m[1], m[2] ?? "", /^\s*(?:of|for)\s+([A-Za-z&\s]{0,20})/.exec(post)?.[1] ?? "", before, usAfter);
   }
   for (const m of notes.matchAll(CENSUS_AFTER)) push(m[2], m[1] ?? "", "");
   return out;
@@ -920,6 +954,7 @@ function assertsHousehold(notes: string): boolean {
 export function requirePre1880CensusHedge(
   notes: string,
   stagedCensusYears?: readonly number[],
+  payloadColumnFrom?: number,
 ): void {
   const text = notes.toLowerCase();
   const payloadYears = stagedCensusYears ?? [];
@@ -957,7 +992,11 @@ export function requirePre1880CensusHedge(
   // Decided (lead, 2026-09-29), issue #2945: the whole-note fallback
   // (`saysCensus && /\b18[0-7]\d\b/`) made 46 of 223 note-only refusals over
   // ~4,000 distinct corpus notes, about 38 of them wrong on reading.
-  const bound = censusMentions(notes);
+  // An UNQUALIFIED mention takes its jurisdiction from the staged payload when
+  // `stagedPayloadColumnFrom` found one (issue #3409); a qualified one keeps its own.
+  const bound = qualifiedMentions(notes).map((m) =>
+    !m.qualified && payloadColumnFrom !== undefined ? { ...m, columnFrom: payloadColumnFrom } : m,
+  );
   // A note naming a DIFFERENT record type is not about the census rows, and the
   // payload cannot rule that out: `stagedPre1880UsCensusYears` counts only rows
   // carrying a `collectionTitle`, so an untitled parish-register row can sit in
@@ -1000,8 +1039,9 @@ export function requirePre1880CensusHedge(
     .reduce((a, b) => Math.min(a, b), Number.POSITIVE_INFINITY);
   const isAboutOtherSource =
     sourceAt >= 0 && Number.isFinite(claimAt) && sourceAt < claimAt;
+  const fired = bound.filter((m) => m.year < m.columnFrom);
   const namesColumnlessCensus = bound.length > 0
-    ? bound.some((m) => m.year < m.columnFrom)
+    ? fired.length > 0
     : payloadYears.length > 0 && !isAboutOtherSource;
   if (!namesColumnlessCensus) return;
 
@@ -1040,10 +1080,18 @@ export function requirePre1880CensusHedge(
     INDEXED_ROLE_HEDGES.some((re) => re.test(text));
   if (hedged) return;
 
+  // British wording only when every mention that fired is British; a note that
+  // also fires on a US mention, or on the US payload alone, keeps the US text.
+  const british = fired.length > 0 && fired.every((m) => m.columnFrom === 1851);
   throw new LogAppendError(
-    "This note describes a pre-1880 US census household but states the family " +
-      "structure as fact. 1850/1860/1870 censuses have NO relationship-to-head " +
-      "column, so the structure is an inference from surname, ages and listing " +
+    (british
+      ? "This note describes a pre-1851 British census household but states the " +
+        "family structure as fact. The 1841 England, Wales and Scotland censuses " +
+        "have NO relationship-to-head column (it begins in 1851)"
+      : "This note describes a pre-1880 US census household but states the family " +
+        "structure as fact. 1850/1860/1870 censuses have NO relationship-to-head " +
+        "column") +
+      ", so the structure is an inference from surname, ages and listing " +
       "order -- as are any ParentChild/Couple edges on the record, which the " +
       "indexer inferred the same way. Say so in the note, e.g. \"...in one " +
       "dwelling; family structure inferred from surname, ages and order, not " +
@@ -1089,6 +1137,40 @@ export function stagedPre1880UsCensusYears(rows: readonly unknown[]): number[] {
   return titled > 0 ? [...years] : [];
 }
 
+/** A British collection title: "England and Wales Census, 1851", "England,
+ *  Wiltshire, Church Records, 1518-1990", "Scotland Census, 1861". Anchored at
+ *  the start, so "New England, ..." and "British Columbia, ..." are not. */
+const BRITISH_TITLE = /^(?:england|wales|scotland|great\s+britain|united\s+kingdom)\b/i;
+
+/**
+ * The relationship-column threshold the staged payload's JURISDICTION implies,
+ * for an unqualified census mention in the note to take (issue #3409). Only
+ * British collections answer: 1851 when at least one row is titled and EVERY
+ * titled row is a `BRITISH_TITLE`. A US row, any other jurisdiction, a mixed
+ * payload or no titles returns undefined and changes nothing: this clause
+ * cancels a deny, so it fails closed. Titles come from each `record_search`
+ * row's `collectionTitle`, or from a `record_read` row's `sd_c_` source (the
+ * collection description); any other tool returns undefined.
+ */
+export function stagedPayloadColumnFrom(tool: string, rows: readonly unknown[]): number | undefined {
+  if (tool !== "record_search" && tool !== "record_read") return undefined;
+  let titled = 0;
+  for (const row of rows) {
+    const r = row as { collectionTitle?: unknown; gedcomx?: { sources?: unknown } } | null;
+    const sources = r?.gedcomx?.sources;
+    const title =
+      tool === "record_search"
+        ? r?.collectionTitle
+        : Array.isArray(sources)
+          ? sources.find((s: any) => typeof s?.id === "string" && s.id.startsWith("sd_c_"))?.title
+          : undefined;
+    if (typeof title !== "string") continue;
+    titled++;
+    if (!BRITISH_TITLE.test(title.trim())) return undefined;
+  }
+  return titled > 0 ? 1851 : undefined;
+}
+
 /**
  * Run the census check for one op BEFORE any op is applied, so a refusal is
  * reported before any op writes a sidecar. `notes` is read raw, as it always
@@ -1098,7 +1180,8 @@ async function preflightCensusHedge(op: ResearchLogAppendOp, projectPath: string
   if (op.notes === undefined || op.notes === null) return;
   const ref = asNull(op.stagedResultsRef);
   let years: number[] | undefined;
-  if (op.tool === "record_search" && typeof ref === "string") {
+  let columnFrom: number | undefined;
+  if ((op.tool === "record_search" || op.tool === "record_read") && typeof ref === "string") {
     try {
       // Staged handles only, by the same resolved-path test `finalizeStagedResults`
       // applies, so every ref finalize accepts is judged: `./results/.staging/x`
@@ -1106,13 +1189,15 @@ async function preflightCensusHedge(op: ResearchLogAppendOp, projectPath: string
       // also reads a finalized sidecar, which finalize rejects, and that error
       // must reach the caller before a census refusal asks for a rewritten note.
       if (isInsideProject(join(projectPath, STAGING_SUBDIR), assertInsideProject(projectPath, ref))) {
-        years = stagedPre1880UsCensusYears(await readStagedResults(projectPath, ref));
+        const rows = await readStagedResults(projectPath, ref);
+        if (op.tool === "record_search") years = stagedPre1880UsCensusYears(rows);
+        columnFrom = stagedPayloadColumnFrom(op.tool, rows);
       }
     } catch {
       years = undefined; // a bad ref is finalize's error to report, not this check's
     }
   }
-  requirePre1880CensusHedge(op.notes, years);
+  requirePre1880CensusHedge(op.notes, years, columnFrom);
 }
 
 /**
