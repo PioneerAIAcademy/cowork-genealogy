@@ -23,6 +23,7 @@ import { SETTLED_CONFLICT_STATUSES, VALIDATOR_ENUMS } from "../validation/valida
 import { validateIntroduced } from "../validation/introduced-errors.js";
 import { sanitizeTree } from "../validation/tree-sanitize.js";
 import {
+  competingParentSets,
   conflictBlocksCompletion,
   questionTiedAssertionIds,
   whyConflictBlocksCompletion,
@@ -2028,6 +2029,55 @@ function oneSummaryPerQuestion(entry: any, research: any, appendedId: string | u
       `with { section: "proof_summaries", op: "update", entryId: "${ids[0]}", fields: { … } }, ` +
       "passing only the fields that changed. Appending here would leave two contradictory " +
       "conclusions on one question, with nothing to say which is current.",
+  ];
+}
+
+/** A `proof_summaries` write when the persons this proof bears on — its
+ *  `claims[].relationship.child` entries (when `claims[]` is present; scalar
+ *  proofs with no `claims[]` are not in scope, as assertions carry no
+ *  `relationship` field) — have more than two distinct `ParentChild` parents in
+ *  the pre-call tree, while fewer than two hypotheses in `preCallResearch` list
+ *  the proof's `question_id` in `related_question_ids`.
+ *
+ *  Uses the pre-call tree and pre-call research snapshots so a same-batch
+ *  hypothesis write does not satisfy the precondition. */
+export function competingParentSetsInvariants(
+  entry: any,
+  preCallResearch: any,
+  tree: any,
+): string[] {
+  const tier = entry?.tier;
+  if (typeof tier === "string" && (tier === "not_proved" || tier === "disproved")) return [];
+
+  const qid = entry?.question_id;
+  if (typeof qid !== "string" || qid === "") return [];
+
+  // In-scope: only persons whose parentage this proof is actually concluding.
+  // Claims-based proofs: persons named as a child in a ParentChild claim.
+  // Scalar proofs (no claims[]) are not in scope — assertions have no
+  // `relationship` field, so there is no reliable way to derive the child
+  // person id from supporting_assertion_ids alone.
+  // Subject_person_ids alone is too broad — it includes parents and siblings,
+  // causing false refusals on children/marriage proofs where the subject happens
+  // to have a data-quality tree issue unrelated to the question.
+  const extraPersonIds = new Set<string>();
+  for (const c of Array.isArray(entry.claims) ? entry.claims : []) {
+    if (c?.relationship?.type === "ParentChild" && typeof c.relationship.child === "string") {
+      extraPersonIds.add(c.relationship.child);
+    }
+  }
+  if (extraPersonIds.size === 0) return [];
+
+  const competing = competingParentSets(preCallResearch, tree, qid, new Set(), extraPersonIds);
+  if (competing.length === 0) return [];
+
+  const details = competing
+    .map(({ personId, parentIds }) => `${personId} (${parentIds.join(", ")})`)
+    .join("; ");
+  return [
+    `proof_summaries ${entry.id ?? "(new entry)"}: question ${qid} has persons with competing ` +
+      `parent sets — ${details} — but fewer than two hypotheses in hypotheses[] list "${qid}" in ` +
+      `related_question_ids. Decline to conclude; name hypothesis-tracking as the next step.`,
   ];
 }
 
@@ -4352,6 +4402,10 @@ function applyOne(
     // update walked past it. `oneSummaryPerQuestion` excludes the entry by id,
     // so an ordinary update of an existing summary still passes.
     invariantErrors.push(...oneSummaryPerQuestion(resultEntry, research, resultEntry?.id));
+    // Reads PRE-CALL tree and PRE-CALL research: a same-batch hypothesis write
+    // does not satisfy this precondition. Gated only on the entry's standing
+    // tier (not_proved/disproved pass), not on which fields this op touches.
+    invariantErrors.push(...competingParentSetsInvariants(resultEntry, preCallResearch, tree));
   }
   if (invariantErrors.length > 0) {
     throw new ResearchAppendError(invariantErrors);
