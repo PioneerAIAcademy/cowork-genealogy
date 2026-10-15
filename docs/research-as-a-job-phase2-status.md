@@ -44,7 +44,7 @@ What is left: R2's live measurement, and the two stale eval runs (`research`,
 | `0e82c1da6` | `make e2e-narration-figures` — derives the plan's load-bearing figures |
 | `5d9c53e70` | Harness: an agent SPAWN counts toward a negative test's routing verdict; plus a `main`-red fix in `setup-feedback-case.sh` |
 | `98e179f75`, `0538d487d` | `export.py` writes the feed a hosted reader saw, and its wiring is guarded |
-| `7e3b9914a` | **R1** — router re-entry on every turn's system prompt, plus the ledger recording which callee a `Skill`/`Task` call names |
+| `7e3b9914a` | **R1** — router re-entry on every turn's system prompt. **DROPPED 2026-10-15** (lead): the Oct 8 merge of main removed it, and rather than port it the plugin's two front doors were collapsed into one. Nothing re-adds it. |
 | `ed159989c`, `beeb69742` | **R4** — the `delivered` exit: outcome, hook arm, browser label, and the `research_delivered` MCP tool |
 | `81b8e9041`, `4b71fdded` | When to deliver, taught in the turn prompt rather than 27 skill bodies |
 | `45dcd3ff8` | `make proto-up` unbroken — minio repointed after every registry refused it |
@@ -181,7 +181,9 @@ could. Three usable `grade:trigger` tests exist — `ut_research_001`, `_004`, `
 `_h22`, carries the tag but enters with `/research` and so cannot measure triggering at all.
 All three run on `mid-research-flynn`, an **active** project. They measure the #2927 trigger
 flap, which is the shape R2's 3/3 bar exists for, but not R2's literal object: a new session's
-first turn, where the web client prefixes `OPENING_TURN` and init-project holds call 1.
+first turn. **Changed 2026-10-15:** the web client no longer prefixes `OPENING_TURN`, so
+init-project no longer holds call 1 by construction and `research` can genuinely be the
+first call — see the reading below, which that change makes satisfiable.
 
 So the unit run is **evidence, not acceptance**. #3119 records these tests proven 3/3 on main
 on 2026-10-08; a re-run is justified only by this branch's `research/SKILL.md` differing from
@@ -295,7 +297,7 @@ days after project-status converted.
 
 | Item | State | Needs |
 |---|---|---|
-| R1 router re-entry | **BUILT** — per-turn system prompt, plus the ledger recording which callee a Skill/Task call names | Nothing |
+| R1 router re-entry | **DROPPED** (lead, 2026-10-15) — not ported. The real problem was two front doors: init-project's description claimed the same first messages as research. R1 and the web opener both patched that server-side and neither reached Cowork. `research` is now the only front door. | Nothing |
 | R4 `delivered` outcome | **BUILT and MERGED** end to end — tool, hook arm, outcome, label, spec | The enforcement half, #3372, merged 2026-10-13. Note the gap it closes was NOT "no instruction": `DELIVERY_GUIDANCE` named the tool on both hosted planes all along. The router body said "end your turn" at the same moment and the nearer instruction won — a conflict, not an absence |
 | "Not every turn is a job" finish line | **BUILT and fully merged**, across #3147 (the exit), #3187 (the bounded/job decision), #3235 (save what the turn finds), #3286 (compound asks) and #3372 (the enforcement half, merged 2026-10-13) | Nothing. The "in review" qualifier this row carried is discharged |
 | Capture a real feed | **DONE 2026-09-29** — `docs/captures/2026-09-29-mcandrew-children/`. 133 min, outcome `completed`, 2,697 events, 282 narration paragraphs | Nothing |
@@ -315,7 +317,7 @@ Everything is BUILT. The acceptance is a separate bar and is **not** met yet —
 | Ends `completed` or `decision`, never `budget`/`no_progress` | **met** — `completed` |
 | Its feed committed to the repo | **met** — 2,697 events, 282 paragraphs |
 | No body ends a reply with an offer the run overrides | **met** — 0 offers in 282 paragraphs |
-| Invokes `research` in its first turn | **met** — settled 2026-09-29: it means DURING the first turn, not AS the first call. `init-project` always holds call 1 because the web client prefixes `OPENING_TURN`, so the strict reading is unsatisfiable by construction. The router was entered at call 6 of 42, within the run's single turn |
+| Invokes `research` in its first turn | **met** — settled 2026-09-29 as DURING the first turn, not AS the first call, because `init-project` then held call 1 by construction: the web client prefixed `OPENING_TURN`. The router was entered at call 6 of 42, within the run's single turn. **The construction is gone (2026-10-15)**: nothing is prefixed, `research` is the only front door, and the strict reading is now satisfiable. `ut_research_r2` measures it directly |
 | **Three consecutive runs** | **NOT met** — one run |
 | "…but leave it at that" ends with the delivered outcome | **met** — `delivered`, a rendered `pl_001`, and zero research-log entries (`docs/captures/2026-09-29-bounded-requests/`). The criterion itself is fixed (R10) to name an identifiable subject |
 | "where are we?" ends after the answer, delivered, no new log entry | **met** — `delivered` in 1 minute, no new log entry |
