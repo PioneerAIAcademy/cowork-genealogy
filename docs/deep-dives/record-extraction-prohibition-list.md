@@ -255,7 +255,7 @@ rebuilding it.**
 89. **Marriage — a stated parent name is `primary` quality and `direct` evidence** —
     death-certificate secondhand-relay doctrine does not transfer (:602–612).
     *Reversed 2026-10-14 (lead ruling, issue #3410): a stated parent name, and a
-    party's own birth date, birthplace and age, are now `secondary`.*
+    party's own birth date, birthplace, age and christening, are now `secondary`.*
 90. **Place is the locality, not the venue** — a church/cemetery/hospital name stays in
     `value`; this applies to every record type (:617–620).
 91. **A witness attests at `witness`, never `self`** (:621–625).
