@@ -51,27 +51,27 @@
       "record_role": "father_of_groom",
       "fact_type": "name",
       "record_basis": "stated",
-      "information_quality": "primary"
+      "information_quality": "secondary"
     },
     {
       "record_role": "mother_of_groom",
       "fact_type": "name",
       "record_basis": "stated",
-      "information_quality": "primary"
+      "information_quality": "secondary"
     },
     {
       "record_role": "father_of_bride",
       "fact_type": "name",
       "optional": true,
       "record_basis": "stated",
-      "information_quality": "primary"
+      "information_quality": "secondary"
     },
     {
       "record_role": "mother_of_bride",
       "fact_type": "name",
       "optional": true,
       "record_basis": "stated",
-      "information_quality": "primary"
+      "information_quality": "secondary"
     }
   ]
 }
