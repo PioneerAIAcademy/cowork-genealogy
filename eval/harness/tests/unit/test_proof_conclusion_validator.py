@@ -298,6 +298,22 @@ def test_refresh_rejects_both_rewritten_but_walworth_still_to_search():
         check_refresh(*_refresh_states(stale, _COMPLIANT_SUMMARY), REFRESH_TAGGED)
 
 
+def test_refresh_rejects_walworth_under_a_heading_list():
+    """A cue heading on its own line, then a blank line, then the list."""
+    stale = (
+        "# P\n\n**What could resolve it:**\n\n"
+        "- Walworth, *Hyde Genealogy* (1864)\n- death certificates"
+    )
+    with pytest.raises(AssertionError, match="still lists Walworth"):
+        check_refresh(*_refresh_states(stale, _COMPLIANT_SUMMARY), REFRESH_TAGGED)
+
+
+def test_refresh_rejects_walworth_under_a_markdown_heading():
+    stale = "# P\n\n## Next steps\n\n- Walworth's Hyde Genealogy\n- death certificates"
+    with pytest.raises(AssertionError, match="still lists Walworth"):
+        check_refresh(*_refresh_states(stale, _COMPLIANT_SUMMARY), REFRESH_TAGGED)
+
+
 def test_refresh_rejects_a_second_summary_for_the_question():
     dup = {"id": "ps_003", "question_id": "q_002", "tier": "not_proved"}
     with pytest.raises(AssertionError, match="only proof summary"):

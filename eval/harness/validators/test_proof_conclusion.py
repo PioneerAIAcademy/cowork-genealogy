@@ -803,9 +803,10 @@ _STILL_TO_SEARCH_CUE = re.compile(
 
 
 def _still_to_search_text(text):
-    """Each paragraph's text from its first still-to-search cue to its end."""
+    """Each section's text, split at heading lines, from its first
+    still-to-search cue to its end."""
     parts = []
-    for para in re.split(r"\n\s*\n", text or ""):
+    for para in re.split(r"\n(?=[ \t]*(?:#{1,6}[ \t]|\*\*[^*\n]+\*\*[ \t]*$))", text or "", flags=re.M):
         m = _STILL_TO_SEARCH_CUE.search(para)
         if m:
             parts.append(para[m.start():])
