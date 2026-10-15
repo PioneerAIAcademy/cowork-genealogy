@@ -33,14 +33,16 @@ two.
 
 ## Citation completeness
 
-If any wiki/Wikipedia tool was called, does the response end with a "Sources
+If any wiki/Wikipedia tool was called, does the narrative end with a "Sources
 consulted" list — one bullet per page actually used, title linked to its
 actual URL (`source_url` on `wiki_search` results, `url` from
-`wiki_read`/`wikipedia_search`)? This is a distinct check from Source
-quality above — a response can be fully accurate (clean Source quality)
-while still failing to link its sources, and vice versa. Grade the
-end-of-response list, not inline citation — inline citation of individual
-claims is a bonus, not what this dimension requires.
+`wiki_read`/`wikipedia_search`)? The list sits at the end of the narrative,
+directly above the `### Search implications` block and the plain-language
+paragraphs after `---`; it does not have to be the last thing in the reply.
+This is a distinct check from Source quality above — a response can be fully
+accurate (clean Source quality) while still failing to link its sources, and
+vice versa. Grade the end-of-narrative list, not inline citation — inline
+citation of individual claims is a bonus, not what this dimension requires.
 
 - **pass:** A "Sources consulted" (or equivalently named) list is present and every wiki/Wikipedia page the response actually drew from appears in it with its real URL, not just its title.
 - **partial:** A sources list is present but omits at least one page the response actually drew from, or lists a page by title with no URL.

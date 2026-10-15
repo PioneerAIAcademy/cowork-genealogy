@@ -870,14 +870,15 @@ Applying this:
 - **Use occupational and geographic networks.** When families are connected
   through shared occupations or locations, note these connections explicitly.
   They suggest new sources to search.
-- **End every response that called a wiki/Wikipedia tool with a "Sources
-  consulted" list — one bullet per page actually used, title linked to its URL**
+- **End the narrative of every response that called a wiki/Wikipedia tool with a
+  "Sources consulted" list, directly above the Search implications block — one
+  bullet per page actually used, title linked to its URL**
   (`source_url` on each `wiki_search` result, `url` from `wiki_read` and
   `wikipedia_search`), e.g. `- [Germany Genealogy — Getting Started]
   (https://www.familysearch.org/en/wiki/Germany_Genealogy#...)`. This is the hard
   requirement — inline citation of individual claims is good practice on top of
   it, but a scattered narrative naming a source by title mid-paragraph and never
-  elsewhere is not a citation; the end-of-response list is what makes every
+  elsewhere is not a citation; the end-of-narrative list is what makes every
   source checkable regardless of how the prose reads. A claim you cannot trace to
   a returned URL is not a finding: say the wiki/Wikipedia does not cover it rather
   than asserting it from memory. A constructed URL that 404s or a page that
