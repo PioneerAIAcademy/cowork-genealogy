@@ -53,7 +53,7 @@ import { gcUnreferencedImages, sourceImageCapState } from "../utils/image-store.
 import { nextId } from "../utils/gedcomx-ids.js";
 import { arkToBareId } from "../utils/ark.js";
 import { PERSONA_BEARING_PRODUCERS } from "../utils/results-staging.js";
-import { resolveStandardPlace, countryConsistency } from "../utils/place-resolver.js";
+import { resolveStandardPlace, countryConsistency, isNonPlacePhrase } from "../utils/place-resolver.js";
 import { isStopGateSatisfied, getStoppedBecause } from "../utils/question-stop.js";
 
 // Re-exported for back-compat: tests and any other importer that reaches this
@@ -70,6 +70,7 @@ import {
   factText,
   materializesToPersonFact,
   type AssertionFactAttr,
+  factTypeKey,
 } from "../utils/record-persona.js";
 import type { SimplifiedGedcomX, SimplifiedFact } from "../types/gedcomx.js";
 import { recordBasisOf } from "../utils/record-basis.js";
@@ -2394,6 +2395,85 @@ function planItemLogAttributionInvariants(
   ];
 }
 
+// A plan item whose external-site search is still awaiting a capture must not
+// be marked terminal (`completed`/`skipped`): search-external-sites cannot
+// search a paywalled site — it hands the user a URL and waits for a PDF — so a
+// terminal status claims a search that did not happen, and
+// research-exhaustiveness then declares the question exhaustively researched.
+// Decidable from research.json alone (ADR-0011's first question), so it is a
+// writer-tool precondition rather than the SKILL.md Step-6 prose that did not
+// bind it: with that prose in place the search-records run still drifted to
+// `skipped` on 1 of 3 samples (#1226; #2484).
+//
+// Mirrors the eval guard `assert_capture_pending_item_not_terminal`
+// (validators_lib.py): the LATEST log entry naming the item decides, across
+// every tool — a later FamilySearch hit or any positive non-link search closes
+// it, so an older external-site handoff further up the log is not how it ended.
+// A capture that arrived is a later entry, and step 6 does not carry
+// `planItemId` onto it, so an arrival is matched on `(site, url_generated)`
+// (which every external-site entry carries) under this item's id or a null one.
+//
+// Two documented `skipped` paths are exempt (`CAPTURE_PENDING_SKIP_EXEMPT`):
+// `search-external-sites.md` step 4 tells the agent to mark an external-site
+// item `skipped` when no user is present to make the capture or the site cannot
+// be reached (`inaccessible`), or when the user asked to skip it
+// (`user_declined`). Refusing those denies the skill's own instruction, and the
+// "leave it in_progress" remedy would stall an autonomous run — exhaustiveness
+// will not declare while an item is `in_progress` (EdmondOware review,
+// 2026-10-14). `completed` is never exempt (it claims the search happened), and
+// a `skipped` with any other category — the `ut_search_records_026` escalation
+// shape, where a real user capture is still outstanding — is still refused.
+const CAPTURE_PENDING_SKIP_EXEMPT = new Set(["inaccessible", "user_declined"]);
+
+export function planItemCapturePendingInvariants(entry: any, research: any): string[] {
+  if (entry?.status !== "completed" && entry?.status !== "skipped") return [];
+  if (entry?.status === "skipped" && CAPTURE_PENDING_SKIP_EXEMPT.has(entry?.skip_category)) {
+    return [];
+  }
+  const pid = entry?.id;
+  // Guarded for shape rather than assumed — fires before document validation,
+  // the same reason planItemLogAttributionInvariants guards its id.
+  if (typeof pid !== "string" || pid === "") return [];
+  const log = Array.isArray(research?.log) ? research.log : [];
+  let latest: any = null;
+  const captured = new Set<string>();
+  for (const e of log) {
+    if (!e) continue; // a legacy `log: [null]` must not take the writer down
+    const tool = e.tool;
+    if (
+      e.plan_item_id === pid &&
+      (tool === "external_site" ||
+        (e.outcome === "positive" && tool !== "external_links_search"))
+    ) {
+      latest = e;
+    }
+    if (tool === "external_site") {
+      const d = e.external_site || {};
+      if (d.capture_received === true && d.site && d.url_generated) {
+        captured.add(JSON.stringify([e.plan_item_id ?? null, d.site, d.url_generated]));
+      }
+    }
+  }
+  if (!latest || latest.tool !== "external_site") return [];
+  const site = latest.external_site || {};
+  if (site.capture_received === true) return [];
+  if (
+    captured.has(JSON.stringify([pid, site.site, site.url_generated])) ||
+    captured.has(JSON.stringify([null, site.site, site.url_generated]))
+  ) {
+    return [];
+  }
+  return [
+    `plan_items[${pid}]: its latest external-site search (${latest.id}) is still awaiting a ` +
+      `capture (capture_received=false), so marking it '${entry.status}' claims a paywalled ` +
+      `search that has not happened — research-exhaustiveness would then read the question as ` +
+      `exhaustively searched. The way through: if no user can make the capture or the site ` +
+      `cannot be reached, skip it with skip_category: "inaccessible"; if the user asked to skip ` +
+      `it, skip_category: "user_declined"; otherwise leave it 'in_progress' until the capture ` +
+      `arrives as a later log entry (or re-plan). See #1226.`,
+  ];
+}
+
 /** The seven `skip_category` values, for the refusal message. Kept as a literal
  *  rather than read from the schema: the validator already enforces membership,
  *  and what this list is for is telling the agent what to pick. */
@@ -3311,7 +3391,6 @@ const FACT_TYPE_ALIASES: Record<string, string> = {
   christeningplace: "christening",
   baptism: "christening",
   marriage: "marriage",
-  marriagelicense: "marriage",
 };
 
 /** Normalized keys of the place-of-event fact_type variants. When the model
@@ -3329,12 +3408,6 @@ const PLACE_VARIANT_KEYS = new Set([
   "christeningplace",
 ]);
 
-/** Reduce a label to its normalized comparison key: lowercase, then drop every
- *  non-alphanumeric character. */
-function labelKey(raw: string): string {
-  return raw.toLowerCase().replace(/[^a-z0-9]/g, "");
-}
-
 function isBlank(v: unknown): boolean {
   return typeof v !== "string" || v.trim() === "";
 }
@@ -3348,7 +3421,7 @@ function isBlank(v: unknown): boolean {
 function canonicalizeAssertionLabels(entry: Record<string, unknown>): void {
   const ft = entry.fact_type;
   if (typeof ft !== "string") return;
-  const key = labelKey(ft);
+  const key = factTypeKey(ft);
   // hasOwn, not a bare index — see the note on SECTIONS in applyOne. A bare
   // index on `constructor` yields `Object`, which is truthy, so the assignment
   // below would replace a string fact_type with a function.
@@ -4069,6 +4142,11 @@ function applyOne(
           .filter((it: any) => it && it.status === "skipped")
           .map((it: any) => it.id),
       );
+      const storedStatusById = new Map<string, unknown>(
+        (Array.isArray(storedPlan?.items) ? storedPlan.items : [])
+          .filter((it: any) => it && typeof it.id === "string")
+          .map((it: any) => [it.id, it.status]),
+      );
       for (const item of Array.isArray(resultEntry?.items) ? resultEntry.items : []) {
         if (item && alreadyCompleted.has(item.id)) continue;
         invariantErrors.push(...planItemLogAttributionInvariants(item, research));
@@ -4078,6 +4156,13 @@ function applyOne(
         // no prior rationale to overwrite, so only the category clause applies.
         if (item && !alreadySkipped.has(item.id)) {
           invariantErrors.push(...planItemSkipInvariants(item, {}, true));
+        }
+        // The capture-pending guard reaches the same field for the same reason:
+        // a `skipped`/`completed` item set inline on a `plans` op would bypass
+        // the `plan_items` arm below. Gated on a genuine status change, so an
+        // item re-sent at its stored status (an append has none) is untouched.
+        if (item && storedStatusById.get(item.id) !== item.status) {
+          invariantErrors.push(...planItemCapturePendingInvariants(item, research));
         }
       }
     }
@@ -4111,6 +4196,19 @@ function applyOne(
       invariantErrors.push(
         ...planItemLogAttributionInvariants(resultEntry, research, op.op === "append"),
       );
+    }
+    // Capture-pending guard (#1226): refuse moving an item INTO a terminal
+    // status while its latest external-site search still awaits a capture.
+    // Gated on a genuine status CHANGE so re-stating fixture state is not
+    // refused — mirrors the eval validator's "items this run changed" scope.
+    const priorItemStatus =
+      op.op === "update"
+        ? (Array.isArray(preCallResearch?.plans) ? preCallResearch.plans : [])
+            .flatMap((pl: any) => (pl && Array.isArray(pl.items) ? pl.items : []))
+            .find((it: any) => it && it.id === resultEntry?.id)?.status
+        : undefined;
+    if (statusTouchedThisOp && priorItemStatus !== resultEntry?.status) {
+      invariantErrors.push(...planItemCapturePendingInvariants(resultEntry, research));
     }
     // A `skipped` item must carry a category. Gated the same way, and
     // additionally skipped when the item was ALREADY `skipped` before this
@@ -4480,15 +4578,15 @@ export function reextractionKey(a: any): string | undefined {
         : undefined;
   if (who === undefined) return undefined;
   const log = typeof a.log_entry_id === "string" && a.log_entry_id !== "" ? a.log_entry_id : "";
-  const ftKey = labelKey(a.fact_type);
-  const fact = Object.hasOwn(FACT_TYPE_ALIASES, ftKey) ? labelKey(FACT_TYPE_ALIASES[ftKey]) : ftKey;
+  const ftKey = factTypeKey(a.fact_type);
+  const fact = Object.hasOwn(FACT_TYPE_ALIASES, ftKey) ? factTypeKey(FACT_TYPE_ALIASES[ftKey]) : ftKey;
   return [a.source_id, arkToBareId(a.record_id), log, who, fact].join("\u0000");
 }
 
 /** The canonical spelling of a fact_type for a message (the alias fold §3.7 applies). */
 function factLabel(ft: unknown): string {
   if (typeof ft !== "string") return String(ft);
-  const k = labelKey(ft);
+  const k = factTypeKey(ft);
   return Object.hasOwn(FACT_TYPE_ALIASES, k) ? FACT_TYPE_ALIASES[k] : ft;
 }
 
@@ -4980,7 +5078,7 @@ async function prepareOps(
           );
           continue;
         }
-        // No sidecar (record_read, PDF, image, pasted records, or a nil/negative
+        // No sidecar (an unstaged record_read, PDF, image, pasted records, or a nil/negative
         // search): the field must be absent or null — there is no persona
         // document to point at.
         if (entry.record_persona_id != null) {
@@ -4988,7 +5086,7 @@ async function prepareOps(
             fmt(
               i,
               `record_persona_id must be null — log entry '${logId}' has no results sidecar ` +
-                "(results_ref is null; record_read/PDF/image/pasted records carry no persona ids)",
+                "(results_ref is null; a record_read logged without stagedResultsRef, or a PDF/image/pasted record, has no persona document to point at)",
             ),
           );
           continue;
@@ -4996,7 +5094,7 @@ async function prepareOps(
       } else if (typeof ref === "string") {
         const results = await readSidecarResults(ref);
         if (results) {
-          // Only record_search stages GedcomX personas; its results key on
+          // record_search and record_read stage GedcomX personas; their results key on
           // `recordId`. fulltext_search / external_links_search stage transcript
           // text and links keyed on `id`, with no persona document — matching
           // them on `recordId` (a field they never carry) matched nothing every
@@ -5110,9 +5208,14 @@ async function prepareOps(
     // ── Place lever (b): never geocode what the source record already
     // resolved — copy the sidecar's standard_place for the same place string.
     // `standard_place: null` is an explicit opt-out (skip resolution + guard);
-    // only a fully omitted field triggers resolution.
+    // only a fully omitted field triggers resolution. A non-place phrase
+    // ("Same House") is left unset, silently: it has no standard form.
     let geocoded = false;
-    if (factText(entry.place) !== undefined && entry.standard_place === undefined) {
+    if (
+      factText(entry.place) !== undefined &&
+      entry.standard_place === undefined &&
+      !isNonPlacePhrase(factText(entry.place)!)
+    ) {
       let sp: string | null = null;
       let source: "sidecar" | "geocoded" | null = null;
       if (matchedRecord) {
