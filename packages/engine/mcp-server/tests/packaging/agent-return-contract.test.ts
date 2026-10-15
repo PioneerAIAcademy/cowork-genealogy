@@ -79,7 +79,7 @@ const PENDING: Record<string, string> = {
   // docs/skill-authoring-guide.md and CONTRIBUTING.md all point at
   // agents/search-images.md instead.
   "search-wikipedia.md":
-    "measured conflict with its own suite's reply-brevity grading; premise of the 2026-09-18 ruling does not hold for a file-deliverable agent (#2795)",
+    "measured conflict with its own suite's reply-brevity grading; premise of the 2026-09-18 ruling does not hold for a log-entry deliverable agent (#2795)",
 };
 
 function stripFences(text: string): string {

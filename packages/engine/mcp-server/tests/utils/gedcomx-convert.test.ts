@@ -1680,3 +1680,29 @@ describe("source-reference id precedence", () => {
     expect(out.persons?.[0].sources).toEqual([{ ref: "A-1", page: "p. 7", quality: 3 }]);
   });
 })
+
+describe("gedcomx-convert — non-place phrases keep no standard_place (#1962)", () => {
+  it("drops FamilySearch's normalized value for a non-place phrase, keeps it for a real place", () => {
+    const result = toSimplified({
+      persons: [
+        {
+          id: "p1",
+          facts: [
+            {
+              type: "http://gedcomx.org/Residence",
+              place: { original: "Same House", normalized: [{ value: "Same, Manufahi, Timor-Leste", lang: "en" }] },
+            },
+            {
+              type: "http://gedcomx.org/Residence",
+              place: { original: "Wayne, Ohio", normalized: [{ value: "Wayne, Ohio, United States", lang: "en" }] },
+            },
+          ],
+        },
+      ],
+    });
+    const facts = result.persons?.[0].facts ?? [];
+    expect(facts[0].place).toBe("Same House");
+    expect(facts[0].standard_place).toBeUndefined();
+    expect(facts[1].standard_place).toBe("Wayne, Ohio, United States");
+  });
+});

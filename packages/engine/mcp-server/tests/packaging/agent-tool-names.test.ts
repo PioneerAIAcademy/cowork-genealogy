@@ -647,21 +647,15 @@ const AGENT_PERMISSIONS: Record<string, { tools: string[]; denies: string[] }> =
   },
 
   // search-familysearch-wiki (issue #2794) holds the one tool the skill it
-  // replaced declared, `wiki_search`, plus two built-ins it relied on from the
-  // main thread. `Write`: the deliverable IS a markdown file, and handing the
-  // save back to the main thread would take it out of the graded subject, so
-  // the file validators could no longer tell the agent failed. It follows
-  // `search-wikipedia` (issue #2795) as the precedent for `Write`; the plugin
-  // hook's `Write` matcher still keeps research.json and tree.gedcomx.json
-  // off-limits to any caller. `Read`:
-  // `Write` refuses to overwrite a file it has not read, and a repeat
-  // invocation overwrites the topic file in place.
+  // replaced declared, `wiki_search`, plus `research_log_append` (#3244 option
+  // L, U20): its deliverable is one `log` entry carrying the guidance in
+  // `notes`, written through the tool so it reaches the hosted ProjectStore.
+  // It once held `Write` and `Read` to save a loose `.md` in the project
+  // folder, which the hosted worker's read-only `/project` refused (EACCES) and
+  // which no store ever saw; both are dropped, and the omission is the
+  // restriction. `log` is its only ownership row (`agent:search-familysearch-wiki`).
   "search-familysearch-wiki.md": {
-    tools: [
-      "Read",
-      "Write",
-      "wiki_search",
-    ],
+    tools: ["research_log_append", "wiki_search"],
     denies: [],
   },
 
@@ -844,15 +838,13 @@ const AGENT_PERMISSIONS: Record<string, { tools: string[]; denies: string[] }> =
   },
 
   // search-wikipedia (issue #2795) holds the one tool the skill it replaced
-  // declared — `wikipedia_search` — plus the built-in `Write`, decided by
-  // review-ready on 2026-09-24 and accepted by the lead the same day, on the
-  // reasoning issue #2794 settled for the same grant: the deliverable of this
-  // agent IS a file, and moving the save out to the main thread would take it
-  // out of the graded subject, so `test_wrote_one_markdown_file` could no
-  // longer tell that the agent failed to save. The grant reaches no project
-  // state — the plugin PreToolUse hook's Write matcher still protects
-  // research.json and tree.gedcomx.json, and this agent's body writes one
-  // standalone markdown file in the working folder and nothing else.
+  // declared — `wikipedia_search` — plus `research_log_append` (#3244 option L,
+  // U20): its deliverable is one `log` entry carrying the article summary in
+  // `notes`, written through the tool so it reaches the hosted ProjectStore and
+  // stays inside the graded subject, where `test_one_log_entry_appended` sees
+  // it. It once held the built-in `Write` (review-ready 2026-09-24) to save a
+  // loose `.md`, which the hosted worker's read-only `/project` refused (EACCES)
+  // and no store ever saw; that grant is dropped.
   //
   // Nothing else is granted, and the omissions are the restriction: no `Read`
   // (the body inlines its own template rather than reading one — the skill's
@@ -867,7 +859,7 @@ const AGENT_PERMISSIONS: Record<string, { tools: string[]; denies: string[] }> =
     denies: [],
   },
   "search-wikipedia.md": {
-    tools: ["Write", "wikipedia_search"],
+    tools: ["research_log_append", "wikipedia_search"],
     denies: [],
   },
 

@@ -82,9 +82,9 @@ they run against a fake `aws`.
 | Phase | Creates |
 |---|---|
 | `guard` | The `DAILY` cost budget `genealogy-u13`. Its limit is the trailing 30-day maximum daily `UnblendedCost` plus $15, with ACTUAL alerts at max + $5 and at the limit. Every run recomputes it and prints the trailing min and max. |
-| `iam` | The service role and four instance roles and profiles (web, worker, tools, bastion), each with `AmazonSSMManagedInstanceCore`. Web gets `sqs:SendMessage`. Tools gets the data bucket's object actions and `s3:ListBucket`. Each tier can read its own secrets. |
+| `iam` | The service role and four instance roles and profiles (web, worker, tools, bastion), each with `AmazonSSMManagedInstanceCore`. Web gets `sqs:SendMessage`, `s3:GetObject` on the data bucket and `s3:PutObject` on its `feedback/` prefix only (U20). Tools gets the data bucket's object actions and `s3:ListBucket`. Each tier can read its own secrets. |
 | `net` | Security groups `web`, `worker`, `tools`, `tools-alb` (80 from `worker`) and `rds` (5432 from the three tier groups), in the default VPC. |
-| `stores` | RDS PostgreSQL 16.13 `db.t4g.micro` (`--rds-class` picks another when AWS reports `InsufficientDBInstanceCapacity`, as us-east-1 did for gp3 on 2026-10-07): private, encrypted, with an RDS-managed master secret, a subnet group and a parameter group. Also the data bucket, with the public-access block and SSE. |
+| `stores` | RDS PostgreSQL 16.13 `db.t4g.micro` (`--rds-class` picks another when AWS reports `InsufficientDBInstanceCapacity`, as us-east-1 did for gp3 on 2026-10-07): private, encrypted, with an RDS-managed master secret, a subnet group and a parameter group. Also the data bucket, with the public-access block, SSE and one lifecycle rule expiring `feedback/` at 90 days (U20; the whole lifecycle document, so no other prefix expires). |
 | `secrets` | The six secrets, created from 0600 files. |
 | `bastion` | A t3.micro AL2023 instance in the `worker` group, reachable only over SSM. |
 | `versions` | The storage location, recording whether this run created the bucket. Then the application, and the three application versions (`--process`). |
