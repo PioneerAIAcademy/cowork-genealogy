@@ -1243,6 +1243,34 @@ _RUNLOG_STRING_MAX = 500
 # acceptable at 0.7%, but that is the trade, not an absence of one.
 _RUNLOG_MAX_CHARS = 4000
 
+# An `Agent` result is the one payload whose VALUE is the thing being measured:
+# issue #3188 compares what a subagent returned against what the main thread
+# relayed, and a raw side cut at 500 chars reports "the relay dropped content"
+# for content the LOG dropped. Measured over the 203 committed e2e logs: 834
+# truncated strings inside `Agent` summaries, full lengths median 2,274 / p90
+# 5,684 / p95 7,092 / max 21,578, ~2.06 MB dropped corpus-wide. 8,000 covers
+# 97% of them and recovers ~1.97 MB of that; 25,000 would be needed for the
+# last 3%, which is the tail this bound deliberately keeps out of a committed
+# artifact. The whole-response companion is sized for two text blocks (the
+# return, then the `agentId:/<usage>` announcement) plus the JSON envelope.
+#
+# NOT done through `_RUNLOG_EXEMPT_KEYS`: that path saves ONE value per key,
+# last wins — safe for `image_transcribe` (always one text block) and wrong
+# here, where 807 of 845 corpus summaries carry two text blocks and the
+# announcement is last in all 845. Exempting `text` would save the
+# announcement and overwrite the return with it.
+_RUNLOG_AGENT_STRING_MAX = 8000
+_RUNLOG_AGENT_MAX_CHARS = 12000
+
+
+def _is_agent_tool(tool_name: str | None) -> bool:
+    """Suffix match, as `_exempt_keys_for` does, so every server spelling
+    resolves (CLAUDE.md "Dual-spelled tool names"). The corpus spells it
+    `Agent` in all 1,738 calls; `Task` is accepted for the same reason."""
+    return bool(tool_name) and (
+        tool_name.endswith("Agent") or tool_name.endswith("Task")
+    )
+
 # Per-key exemptions from the string and backstop caps above. Each entry is
 # (bare_tool_suffix, response_key): a tool matched by suffix (so every server
 # spelling resolves — CLAUDE.md § "Dual-spelled tool names") and a top-level
@@ -1379,7 +1407,11 @@ def _summarize_tool_response(
                     if key in doc:
                         saved[key] = doc[key]
 
-    summary = _summarize_response(unwrapped, string_max=_RUNLOG_STRING_MAX)
+    agentish = _is_agent_tool(tool_name)
+    summary = _summarize_response(
+        unwrapped,
+        string_max=_RUNLOG_AGENT_STRING_MAX if agentish else _RUNLOG_STRING_MAX,
+    )
 
     # Re-insert full values of exempt keys, replacing truncated copies.
     if saved:
@@ -1402,8 +1434,9 @@ def _summarize_tool_response(
     # is to preserve the full value (issue #2561 item 2: the largest
     # transcriptions run past the 4000-char backstop, so it would truncate them
     # without this bypass).
-    if not saved and len(text) > _RUNLOG_MAX_CHARS:
-        text = text[: _RUNLOG_MAX_CHARS - 3] + "..."
+    max_chars = _RUNLOG_AGENT_MAX_CHARS if agentish else _RUNLOG_MAX_CHARS
+    if not saved and len(text) > max_chars:
+        text = text[: max_chars - 3] + "..."
 
     # Never emit a SHORTER capture than the old head-truncation would have. A
     # key-preserving summary can come out shorter on a long list of small items —
@@ -2875,15 +2908,23 @@ async def _run_agent(
                                     "tool_calls_before": len(tool_calls),
                                     "kind": "assistant",
                                     "text": block.text,
-                                    # Which thread said it. `foldChatEvent` drops all
-                                    # sub-agent prose, so a narration figure that mixes
-                                    # the two counts paragraphs no reader ever sees:
-                                    # on the 133-minute McAndrew capture the "opens
-                                    # Now/Let me" share is 9.2% of the feed and 3.7% of
-                                    # the screen, because 19 of its 26 openers are
-                                    # sub-agent. Same tag the usage accounting derives
-                                    # below; recorded here so the two cannot diverge,
-                                    # and so a reader of a committed log can tell
+                                    # Which thread said it, for two independent readers.
+                                    #
+                                    # RELAY FIDELITY (#3188): a subagent's own AssistantMessages
+                                    # stream through this same branch -- `usage.thread_windows.sub`
+                                    # is non-zero in 28 of the 28 committed logs carrying it,
+                                    # reaching 223 messages in one run -- so without this a reader
+                                    # cannot tell the main thread's words from the subagent's it is
+                                    # supposed to be compared against.
+                                    #
+                                    # NARRATION FIGURES: `foldChatEvent` drops all sub-agent prose, so
+                                    # a figure that mixes the two counts paragraphs no reader ever
+                                    # sees: on the 133-minute McAndrew capture the "opens Now/Let me"
+                                    # share is 9.2% of the feed and 3.7% of the screen, because 19 of
+                                    # its 26 openers are sub-agent.
+                                    #
+                                    # Same tag the usage accounting derives below; recorded here so the
+                                    # two cannot diverge, and so a reader of a committed log can tell
                                     # "main thread" from "not asked".
                                     "thread": (
                                         "main"

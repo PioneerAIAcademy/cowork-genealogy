@@ -361,9 +361,14 @@ export function buildSearchUrl(input: RecordSearchInput): string {
   // reference documents was unexecutable from this skill.
   if (input.batchNumber) add("q.batchNumber", input.batchNumber);
   if (input.recordCountry) add("q.recordCountry", input.recordCountry);
+  // `f.`, not `q.`: verified live 2026-10-14 (probe section G), the `q.` form
+  // returns 0 for every hyphenated subdivision (`Aust-Agder`, `Sør-Trøndelag`)
+  // while the `f.` facet filter honours them, and the two agree on every other
+  // value measured (totals and page-1 ids), including a nonexistent one, which
+  // still returns 0.
   if (input.recordSubdivision && input.recordCountry) {
     add(
-      "q.recordSubcountry",
+      "f.recordSubcountry",
       `${input.recordCountry},${input.recordSubdivision}`
     );
   }

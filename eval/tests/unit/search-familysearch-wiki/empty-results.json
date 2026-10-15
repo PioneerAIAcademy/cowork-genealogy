@@ -2,19 +2,19 @@
   "test": {
     "id": "ut_search_wiki_016",
     "skill": "search-familysearch-wiki",
-    "name": "Empty wiki results — no file should be saved",
+    "name": "Empty wiki results — log one negative entry, save nothing else",
     "type": "positive",
-    "description": "wiki_search returns an empty results list. The skill must tell the user no guidance was found and must not save a file. Exercises the no-result handling path described in SKILL.md step 3.",
+    "description": "wiki_search returns an empty results list. The agent must log the nil search as one negative research-log entry (results_examined 0, notes null), tell the user no guidance was found, and write nothing else. Exercises the no-result handling path in the agent body's step 3.",
     "tags": ["fs-wiki", "no-results", "negative-path", "direct-arm"]
   },
   "input": {
-    "delegation": "Search the FamilySearch wiki for blockchain birth certificate records",
-    "scenario": null
+    "delegation": "Search the FamilySearch wiki for blockchain birth certificate records\n\nprojectPath: <workspace>",
+    "scenario": "empty-project-just-created"
   },
   "mcp_fixtures": ["wiki-search-empty-results"],
   "judge_context": [
     "Should call wiki_search and receive an empty results array",
     "Should tell the user no wiki guidance was found and stop — this is the correct behavior",
-    "Must not save any file — writing a file when results are empty is a failure"
+    "Should log exactly one research-log entry for the nil search — tool wiki_search, outcome negative, results_examined 0, notes null — and save no file. Logging the nil is correct, per the log-every-search rule."
   ]
 }
