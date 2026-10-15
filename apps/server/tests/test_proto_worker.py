@@ -66,6 +66,7 @@ from __future__ import annotations
 
 import ast
 import asyncio
+from psycopg.types.json import Jsonb
 import contextlib
 import errno
 import http.client
@@ -821,6 +822,87 @@ def _call(hook, data):
     return asyncio.run(hook(data, tool_use_id, {"signal": None}))
 
 
+# ── `wrote` reaches the COLUMN, and only for writes that happened ───────────────
+# Blocker 3 of the #3262 self-review: migration 012 added the column, `insert_tool_call`
+# never inserted it, and three of four record sites never passed it — so "what changed
+# this session" returned nothing and the phase-3 change review stayed blocked. The one
+# existing test asserted the KEY on a dict, which is what let it ship dead; these assert
+# the SQL and the params.
+
+_APPEND = {"tool_name": "mcp__genealogy__research_append",
+           "tool_input": {"section": "person_evidence", "op": "update", "entryId": "pe_1"}}
+
+
+def test_the_insert_names_wrote_and_binds_one_param_per_placeholder(tmp_path):
+    """The load-bearing one. `insert_tool_call` runs on every tool call, so a column/param
+    mismatch breaks every write path at once."""
+    conn = FakeConn()
+    worker.insert_tool_call(conn, {"turn_id": "t", "session_id": "s", "tool_name": "x",
+                                   "decision": "allow", "wrote": {"section": "a", "op": "append", "ids": []}})
+    sql, params = conn.executed[-1]
+    cols = [c.strip() for c in sql.split("(", 1)[1].split(")", 1)[0].split(",")]
+    assert "wrote" in cols, "the INSERT does not name the column the migration added"
+    assert cols[-1] == "wrote", "wrote must stay LAST — _tool_call_decisions reads p[6] positionally"
+    assert sql.count("%s") == len(params) == len(cols), "a placeholder/param/column mismatch"
+
+
+def test_a_writer_call_stores_the_shape_as_jsonb(tmp_path):
+    conn = FakeConn()
+    shape = {"section": "person_evidence", "op": "update", "ids": ["pe_1"]}
+    worker.insert_tool_call(conn, {"turn_id": "t", "session_id": "s", "tool_name": "x",
+                                   "decision": "allow", "wrote": shape})
+    _, params = conn.executed[-1]
+    assert isinstance(params[-1], Jsonb), f"wrote must bind as Jsonb, got {type(params[-1])}"
+
+
+def test_a_read_stores_null_not_an_empty_json_document(tmp_path):
+    """The column is sparse by design and its index is `WHERE wrote IS NOT NULL`. A
+    `Jsonb(None)` would be indexed and read as a write that touched nothing."""
+    conn = FakeConn()
+    worker.insert_tool_call(conn, {"turn_id": "t", "session_id": "s", "tool_name": "Read",
+                                   "decision": "allow"})
+    _, params = conn.executed[-1]
+    assert params[-1] is None
+
+
+def test_an_allowed_writer_records_what_it_wrote(tmp_path):
+    rows: list[dict] = []
+    _call(_hook(rows, str(tmp_path), str(tmp_path / "cfg")), {**_APPEND, "tool_use_id": "tu-1"})
+    assert rows and rows[-1]["decision"] == "allow"
+    assert rows[-1]["wrote"] is not None, "an allowed write recorded nothing"
+    assert rows[-1]["wrote"]["ids"] == ["pe_1"]
+
+
+def test_a_DENIED_writer_records_no_write(tmp_path):
+    """A denied call never runs. Recording a shape would put a write that never happened
+    into the change-review scan, which the `WHERE wrote IS NOT NULL` index cannot filter
+    out — it has no decision clause."""
+    rows: list[dict] = []
+    hook = options.make_pretool_hook(
+        turn_id="turn-1", session_id="sess-1", cwd=str(tmp_path),
+        config_root=str(tmp_path / "cfg"), record=rows.append,
+        blocked={"research_append"},
+    )
+    _call(hook, {**_APPEND, "tool_use_id": "tu-2"})
+    assert rows and rows[-1]["decision"] == "deny"
+    assert rows[-1]["wrote"] is None, "a denied write was recorded as a write"
+
+
+def test_a_HALTED_call_records_no_write(tmp_path):
+    """The halt arm records and then returns `_halt(...)`, so the tool body never runs. A
+    Stop pressed while a research_append is in flight must not leave a row claiming it
+    happened."""
+    rows: list[dict] = []
+    hook = options.make_pretool_hook(
+        turn_id="turn-1", session_id="sess-1", cwd=str(tmp_path),
+        config_root=str(tmp_path / "cfg"), record=rows.append,
+        halt=lambda **_: "stopped by the researcher",
+    )
+    _call(hook, {**_APPEND, "tool_use_id": "tu-3"})
+    assert rows and rows[-1]["decision"] == "halt"
+    assert rows[-1]["wrote"] is None, "a halted call was recorded as a write"
+
+
 def test_a_decision_row_records_what_the_call_wrote(tmp_path):
     """The decision arm's `tool_calls` row carries `wrote`, the shape of what a write
     wrote (None for a read).
@@ -849,9 +931,11 @@ def test_every_call_gets_a_tool_calls_row_with_the_decision(tmp_path):
     out = _call(hook, {"tool_name": "mcp__genealogy__convert_calendar", "tool_input": {"date": "4 April 1751"},
                        "tool_use_id": "tu-1", "session_id": "sdk-sid"})
     assert out == {}
+    # `wrote` is None here because convert_calendar is not a writer; the key is present
+    # on every recorded row so the row shape does not vary by tool.
     assert rows == [{"turn_id": "turn-1", "session_id": "sess-1", "agent_id": None, "agent_type": None,
                      "tool_name": "mcp__genealogy__convert_calendar", "input_path": None, "decision": "allow",
-                     "tool_use_id": "tu-1"}]
+                     "tool_use_id": "tu-1", "wrote": None}]
 
 
 @pytest.mark.parametrize("tool_name", ["Agent", "Task"])
@@ -2171,7 +2255,13 @@ def test_insert_tool_call_writes_the_tool_use_id_and_finish_stamps_the_open_row(
     worker.insert_tool_call(conn, {"turn_id": "t", "session_id": "s", "tool_name": "Read", "decision": "allow",
                                    "tool_use_id": "toolu_9"})
     sql, params = conn.executed[-1]
-    assert "tool_use_id" in sql and params[-1] == "toolu_9"
+    # Located by COLUMN NAME, not by position: this read `params[-1]` and broke the moment
+    # `wrote` was appended. Positional reads of this INSERT are a standing trap --
+    # `_tool_call_decisions` still takes p[6] for the decision, which is why `wrote` had
+    # to be appended last rather than put anywhere more natural.
+    cols = [c.strip() for c in sql.split("(", 1)[1].split(")", 1)[0].split(",")]
+    assert "tool_use_id" in cols
+    assert params[cols.index("tool_use_id")] == "toolu_9"
     worker.finish_tool_call(conn, "t", "toolu_9")
     sql, params = conn.executed[-1]
     assert sql.startswith("UPDATE tool_calls SET duration_ms") and "now() - ts" in sql

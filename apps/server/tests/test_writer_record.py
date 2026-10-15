@@ -152,3 +152,69 @@ def test_no_writer_in_the_capture_falls_through_to_none():
         out = writer_record(f"mcp__genealogy__{tool}", {"projectPath": "/project"})
         assert out is not None, f"{tool} recorded nothing"
         assert out["section"], f"{tool} recorded no section"
+
+
+# ── The id reach-back, widened (blocker 3 of the #3262 self-review) ──────────────
+# Before this, `_ID_FIELDS` carried only the camelCase half, so most writers recorded
+# `ids: []` and "what changed this session" reached back to nothing.
+
+def test_a_research_append_update_records_the_entry_it_changed():
+    """`entryId` is research_append's update parameter and was absent, so EVERY update
+    recorded no id at all."""
+    out = writer_record("research_append", {"section": "person_evidence", "op": "update",
+                                            "entryId": "pe_001", "fields": {"confidence": "probable"}})
+    assert out is not None and out["ids"] == ["pe_001"]
+
+
+def test_an_appended_entry_records_what_it_REFERENCES():
+    """An append's own id does not exist yet -- PreToolUse runs before the tool assigns
+    it -- but the ids it points AT do, and they are the reach-back a diff needs."""
+    out = writer_record("research_append", {"section": "person_evidence", "op": "append",
+                                            "entry": {"assertion_id": "a_007", "person_id": "I3"}})
+    assert out is not None
+    assert "a_007" in out["ids"] and "I3" in out["ids"]
+
+
+def test_an_appended_entry_records_no_id_of_its_own():
+    """The other half of the same fact, asserted as the ABSENCE of an assigned id rather
+    than as `ids == []`, which would be false now that referenced ids are recorded."""
+    out = writer_record("research_append", {"section": "person_evidence", "op": "append",
+                                            "entry": {"assertion_id": "a_007", "person_id": "I3"}})
+    assert out is not None and not [i for i in out["ids"] if i.startswith("pe_")]
+
+
+def test_array_ids_are_recorded():
+    """`extraction_append` takes `recordIds`/`questionIds` as LISTS, which a string-only
+    check can never pick up -- so every extraction recorded nothing."""
+    out = writer_record("extraction_append", {"recordIds": ["r_1", "r_2"], "questionIds": ["q_9"]})
+    assert out is not None
+    assert {"r_1", "r_2", "q_9"} <= set(out["ids"])
+
+
+def test_a_merge_records_both_sides():
+    """`merge_tree_persons` carries its ids as `merges: [[survivor, collapsed]]` -- no
+    field NAME reaches them, so it is matched by shape. A merge is the change a review
+    most needs to trace, and it recorded nothing at all."""
+    out = writer_record("merge_tree_persons", {"merges": [["I1", "I2"], ["I5", "I6"]]})
+    assert out is not None
+    assert {"I1", "I2", "I5", "I6"} <= set(out["ids"])
+
+
+def test_the_tree_writers_reach_back_to_what_they_touched():
+    """tree_edit / tree_correct / materialize_facts all took id parameters the list
+    did not carry."""
+    for tool, payload, expected in (
+        ("tree_edit", {"relationshipId": "r_1", "sourceAssertionId": "a_2"}, {"r_1", "a_2"}),
+        ("tree_correct", {"factId": "f_3", "relationshipId": "r_4"}, {"f_3", "r_4"}),
+        ("materialize_facts", {"recordId": "rec_5"}, {"rec_5"}),
+    ):
+        out = writer_record(tool, payload)
+        assert out is not None, tool
+        assert expected <= set(out["ids"]), f"{tool} recorded {out['ids']}"
+
+
+def test_a_malformed_id_shape_is_ignored_rather_than_crashing():
+    """The recorder must never raise: it runs inside a PreToolUse hook, and an exception
+    there fails a tool call the user was entitled to make."""
+    out = writer_record("merge_tree_persons", {"merges": [None, ["I1", 7], "nope", []]})
+    assert out is not None and out["ids"] == ["I1"]

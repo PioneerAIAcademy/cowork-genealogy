@@ -38,7 +38,26 @@ _WRITERS: dict[str, tuple[str, str]] = {
 }
 
 # Fields that name something a diff should be able to reach back to.
-_ID_FIELDS = ("id", "planItemId", "plan_item_id", "assertionId", "personId")
+#
+# Both spellings on purpose: tool PARAMETERS are camelCase and persisted ENTRY fields are
+# snake_case (CLAUDE.md, "Identifier casing"), and a writer call carries both -- the entry
+# in its persisted shape, the op's own ids as parameters. Carrying only the camel half is
+# why most writers recorded `ids: []`: verified against each schema, `tree_edit`
+# (relationshipId, sourceAssertionId), `tree_correct` (factId, relationshipId),
+# `materialize_facts` (recordId) and every `research_append` update (entryId) reached back
+# to nothing at all.
+#
+# An APPENDED entry's own id is still absent, and that is not a gap here: `PreToolUse`
+# runs before the tool does, and the tool assigns the id afterwards. Its REFERENCED ids
+# -- assertion_id, person_id, log_entry_id, planId -- do exist by then, which is what
+# this list now reaches.
+_ID_LIST_FIELDS = ("recordIds", "questionIds")
+
+_ID_FIELDS = (
+    "id", "entryId", "planId", "planItemId", "plan_item_id",
+    "assertionId", "assertion_id", "personId", "person_id",
+    "log_entry_id", "relationshipId", "sourceAssertionId", "factId", "recordId",
+)
 
 
 def _bare(tool_name: str) -> str:
@@ -54,6 +73,21 @@ def _id_of(entry: Any) -> list[str]:
             value = entry.get(field)
             if isinstance(value, str) and value:
                 out.append(value)
+        # Plural spellings carry LISTS of ids -- `extraction_append` takes `recordIds`
+        # and `questionIds` -- and a string-only check can never pick one up, so those
+        # calls reached back to nothing.
+        for field in _ID_LIST_FIELDS:
+            value = entry.get(field)
+            if isinstance(value, list):
+                out.extend(v for v in value if isinstance(v, str) and v)
+        # `merge_tree_persons` carries its ids as pairs, `merges: [[survivor, collapsed]]`
+        # -- unreachable by any field NAME, so it is matched by shape. A merge is the
+        # change a review most needs to trace, and it recorded nothing.
+        merges = entry.get("merges")
+        if isinstance(merges, list):
+            for pair in merges:
+                if isinstance(pair, (list, tuple)):
+                    out.extend(v for v in pair if isinstance(v, str) and v)
     return out
 
 
