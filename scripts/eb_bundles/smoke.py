@@ -367,7 +367,8 @@ def tools_tier(zip_path: Path, platform: str, keep: bool, extra: dict[str, str])
             print(app_log(name))
         imports = ("await import('./smoke/dev/smoke-calls.js');"
                    "await import('@modelcontextprotocol/sdk/client/index.js');"
-                   "await import('@modelcontextprotocol/sdk/client/streamableHttp.js');")
+                   "await import('@modelcontextprotocol/sdk/client/streamableHttp.js');"
+                   "await import('pg');")
         imp = docker("exec", "-u", "node", "-w", layout.APP_DIR, name, "sh", "-c",
                      f"node --check smoke/dev/smoke-http.js && node --input-type=module -e {shlex.quote(imports)}",
                      check=False)

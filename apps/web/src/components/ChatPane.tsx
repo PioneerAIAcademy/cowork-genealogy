@@ -14,7 +14,7 @@ import {
 } from './chatEvents'
 
 export const SESSION_EXPIRED_TEXT =
-  "This session is more than 24 hours old and can't be continued. Start a new session."
+  "This session is more than 72 hours old and can't be continued. Start a new session."
 
 // How close to the bottom still counts as "at the bottom". Deliberately not an
 // equality check: fractional device pixel ratios and sub-pixel scrollHeight
@@ -168,7 +168,7 @@ export default function ChatPane({
   // event being folded, not as of the last render. See trackLiveTask.
   const liveTasksRef = useRef<ReadonlySet<string>>(new Set())
   const [connState, setConnState] = useState<'open' | 'reconnecting'>('open')
-  // Set when /connect refused the session as more than 24 h old (#3406). The
+  // Set when /connect refused the session as more than 72 h old (#3406). The
   // connection never opens, so the composer is replaced for good.
   const [expired, setExpired] = useState<string | null>(null)
   // 1c: the label for how the last turn ended, or null for an ordinary finish.
