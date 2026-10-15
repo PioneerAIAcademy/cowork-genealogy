@@ -93,3 +93,74 @@ describe("rankForReview", () => {
     expect(() => rankForReview([{} as never, { confidence: 5 } as never])).not.toThrow();
   });
 });
+
+// --- The ranking, through the real query tool ---------------------------------------
+//
+// should-fix 14 of the #3262 self-review: this module was marked BUILT and imported by
+// nothing but this file. Ranking that no caller applies orders nothing.
+
+import { researchQuery } from "../../src/tools/research-query.js";
+import { mkdtempSync, writeFileSync, mkdirSync } from "node:fs";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
+
+function project(personEvidence: unknown[]): string {
+  const dir = mkdtempSync(join(tmpdir(), "rank-"));
+  mkdirSync(join(dir, "results"), { recursive: true });
+  writeFileSync(join(dir, "research.json"), JSON.stringify({
+    project: { id: "rp_t", status: "active" },
+    questions: [], plans: [], plan_items: [], log: [], sources: [], assertions: [],
+    person_evidence: personEvidence,
+    conflicts: [], hypotheses: [], timelines: [], proof_summaries: [],
+    evaluations: [], localities: [], known_holdings: [],
+  }), "utf8");
+  writeFileSync(join(dir, "tree.gedcomx.json"),
+    JSON.stringify({ persons: [{ id: "I1" }], relationships: [], sources: [] }), "utf8");
+  return dir;
+}
+
+describe("research_query orders person_evidence by consequence", () => {
+  // Insertion order puts the safe link first; ranking must not.
+  const LINKS = [
+    { id: "pe_001", assertion_id: "a_1", person_id: "I1", confidence: "confident", match_score: 0.95 },
+    { id: "pe_002", assertion_id: "a_2", person_id: "I1", confidence: "speculative", match_score: 0.2,
+      core_identifier_conflict: "Birth year: census states 1853; tree attests ~1840" },
+  ];
+
+  it("puts the consequential link first, ahead of insertion order", async () => {
+    const r = await researchQuery({ projectPath: project(LINKS), section: "person_evidence", orderBy: "review" } as never) as any;
+    expect(r.ok).toBe(true);
+    expect(r.items.map((i: any) => i.id)).toEqual(["pe_002", "pe_001"]);
+  });
+
+  it("says WHY, because a rank with no reason is a number to distrust", async () => {
+    const r = await researchQuery({ projectPath: project(LINKS), section: "person_evidence", orderBy: "review" } as never) as any;
+    expect(r.reviewReasons?.pe_002).toContain("core identifier conflict");
+  });
+
+  it("carries no reasons key when nothing stands out", async () => {
+    const plain = [{ id: "pe_001", assertion_id: "a_1", person_id: "I1",
+                     confidence: "confident", match_score: 0.95 }];
+    const r = await researchQuery({ projectPath: project(plain), section: "person_evidence", orderBy: "review" } as never) as any;
+    expect(r.reviewReasons).toBeUndefined();
+  });
+
+  it("does NOT reorder without orderBy — the default is what replays depend on", async () => {
+    // `research_query`'s default order is what every committed run replays against.
+    // Reordering by default rewrote the recorded truth of 9 replay groups and
+    // `test_the_real_engine_collapses_plural_walks` caught it, which is why this is
+    // opt-in rather than always-on.
+    const r = await researchQuery({ projectPath: project(LINKS), section: "person_evidence" } as never) as any;
+    expect(r.items.map((i: any) => i.id)).toEqual(["pe_001", "pe_002"]);
+    expect(r.reviewReasons).toBeUndefined();
+  });
+
+  it("leaves other sections in their own order", async () => {
+    // The ranking is person_evidence's; applying it elsewhere would reorder sections
+    // whose order is meaningful (a plan's items are sequenced).
+    const r = await researchQuery({ projectPath: project(LINKS), section: "assertions" } as never) as any;
+    expect(r.ok).toBe(true);
+    expect(r.reviewReasons).toBeUndefined();
+  });
+});
+

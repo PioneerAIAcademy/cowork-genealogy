@@ -31,6 +31,7 @@ import { readProjectJson, NoProjectError, noProjectResult } from "../utils/proje
 import { readExternalCollections } from "../utils/external-collections-store.js";
 import { placeSegments } from "../utils/place-resolver.js";
 import { unregisteredDisagreements, type UnregisteredDisagreement } from "../utils/question-state.js";
+import { rankForReview, type ReviewLink } from "../utils/review-ranking.js";
 
 const MAX_ITEMS = 50;
 
@@ -102,6 +103,10 @@ export const RESEARCH_QUERY_EXCLUDED: Readonly<Record<string, string>> = {
 export interface ResearchQueryInput {
   projectPath: string;
   section: ResearchQuerySection;
+  /** `"review"` orders `person_evidence` by consequence rather than insertion, and
+   *  returns `reviewReasons`. Opt-in because the default order is what every
+   *  committed run replays against. Ignored for other sections. */
+  orderBy?: "review";
   /** PLURAL_KEYS: one id, or a list of ids (a JSON-array string is accepted as one). */
   recordId?: string | string[];
   recordRole?: string;
@@ -143,6 +148,11 @@ export type ResearchQueryResult =
        *  `count: 0` as "no conflicts present" skipped conflict-resolution while
        *  these sat unregistered (ut_research_h22). */
       unregisteredDisagreements?: UnregisteredDisagreement[];
+      /** Why a `person_evidence` link sits where it does in `items`, keyed by link id.
+       *  Present only for that section, and only for links carrying a reason — the
+       *  ordering is by consequence, and a rank with no reason is a number to
+       *  distrust. Absent where nothing stands out. */
+      reviewReasons?: Record<string, string[]>;
     }
   // `reason: "no_project"` marks the one ok:false that is an answer rather than
   // a failure (see noProjectResult). Optional field on the existing arm, NOT a
@@ -606,20 +616,46 @@ export async function researchQuery(input: ResearchQueryInput): Promise<Research
       ),
     );
 
+    // OPT-IN ordering by consequence. The captured run
+    // wrote 311 links and its own narration said they "should be reviewed for
+    // cleanup" -- a review nobody can do, because one page of 50 insertion-ordered
+    // links is not where the wrong ones are. Ranking decides which links a reviewer
+    // sees first, and with paging that is the whole difference between a usable
+    // review and a list.
+    //
+    // Opt-in, not the default, and that is not timidity: `research_query`'s order is
+    // what every committed run replays against, so reordering by default rewrote the
+    // recorded truth of 9 replay groups (`test_the_real_engine_collapses_plural_walks`
+    // caught it). A caller asking for a review asks for review order.
+    //
+    // Reasons ride alongside rather than on the items: the item shape is a schema
+    // contract, and a rank with no reason is a number to distrust.
+    let ordered = filtered;
+    let reviewReasons: Record<string, string[]> | undefined;
+    if (input.orderBy === "review" && section === "person_evidence" && filtered.length > 0) {
+      const ranked = rankForReview(filtered as ReviewLink[]);
+      ordered = ranked.map((r) => r.link);
+      reviewReasons = Object.fromEntries(
+        ranked.filter((r) => r.reasons.length > 0).map((r) => [r.id, r.reasons]),
+      );
+      if (Object.keys(reviewReasons).length === 0) reviewReasons = undefined;
+    }
+
     const start = input.offset ?? 0;
     const page: Extract<ResearchQueryResult, { ok: true }> = {
       ok: true as const,
       section,
-      count: filtered.length,
-      items: filtered.slice(start, start + MAX_ITEMS),
-      truncated: filtered.length > start + MAX_ITEMS,
+      count: ordered.length,
+      items: ordered.slice(start, start + MAX_ITEMS),
+      truncated: ordered.length > start + MAX_ITEMS,
     };
+    if (reviewReasons) page.reviewReasons = reviewReasons;
     // Per id over the whole match set, so a page answers "0 means none" for
     // every id it was asked about, not only for the ids its items carry.
     if (listFilter) {
       const { rule, values } = listFilter;
       page.countById = Object.fromEntries(
-        values.map((id) => [id, filtered.filter((item) => matches(item, rule, [id])).length]),
+        values.map((id) => [id, ordered.filter((item) => matches(item, rule, [id])).length]),
       );
     }
     if (section !== "conflicts" || (input.status !== undefined && input.status !== "unresolved")) {

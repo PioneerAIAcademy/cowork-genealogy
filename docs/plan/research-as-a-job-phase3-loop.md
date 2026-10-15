@@ -10,8 +10,8 @@ five blocking defects; all applied. Parent:
 | 1. The decision card, and the data it needs | **built** | `ddb68837f`, `1edb28362` |
 | 2. Errands / `waiting` | **NOT BUILT — blocked** | rulings recorded in `b7c30c196`; the work needs #1830, assigned to Benter, which the owner sequenced first |
 | 3. A rejection is its own record | **built** | `fdeef5803` (+ the spec sites it missed, `355159302`) |
-| 4. Order the review by consequence | **built** | `0e8683ad6` |
-| 5. Flag a next action that cannot be usable | **built** | `a409637fa` |
+| 4. Order the review by consequence | **built** | `0e8683ad6` (logic) + wired into `research_query`'s `person_evidence` ordering, which is what decides the first page of 311 links |
+| 5. Flag a next action that cannot be usable | **built** | `a409637fa` (logic) + wired into `research_append`'s warnings on a `plan_items` write |
 
 **Item 2 is the only open one, and it is blocked rather than pending.** Its five rulings
 are recorded (`docs/research-as-a-job-decisions.md`); what it waits on is #1830, which the

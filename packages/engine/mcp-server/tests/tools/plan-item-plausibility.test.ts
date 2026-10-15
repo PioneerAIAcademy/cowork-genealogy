@@ -66,3 +66,74 @@ describe("planItemFlags — years", () => {
     }
   });
 });
+
+// --- The flags, through the real writer tool ----------------------------------------
+//
+// should-fix 14 of the #3262 self-review: this module was marked BUILT and imported by
+// nothing but this file. A correct function nothing invokes looks identical to a working
+// feature -- the plan called it built for two weeks while no caller existed.
+
+import { researchAppend } from "../../src/tools/research-append.js";
+import { mkdtempSync, writeFileSync, mkdirSync } from "node:fs";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
+
+function project(research: Record<string, unknown>): string {
+  const dir = mkdtempSync(join(tmpdir(), "plan-"));
+  mkdirSync(join(dir, "results"), { recursive: true });
+  writeFileSync(join(dir, "research.json"), JSON.stringify({
+    project: { id: "rp_t", status: "active" },
+    questions: [{ id: "q_001", question: "Who were his parents?" }],
+    plans: [{ id: "pl_001", question_id: "q_001" }],
+    plan_items: [], log: [], sources: [], assertions: [], person_evidence: [],
+    conflicts: [], hypotheses: [], timelines: [], proof_summaries: [],
+    evaluations: [], known_holdings: [],
+    localities: [{ id: "lo_001", place: "Schuylkill, Pennsylvania" }],
+    ...research
+  }), "utf8");
+  writeFileSync(join(dir, "tree.gedcomx.json"),
+    JSON.stringify({ persons: [{ id: "I1" }], relationships: [], sources: [] }), "utf8");
+  return dir;
+}
+
+/** A schema-valid plan item; the tests vary only the field under test. */
+const ITEM = {
+  sequence: 1,
+  record_type: "civil",
+  jurisdiction: "Schuylkill, Pennsylvania",
+  date_range: "1900-1910",
+  repository: "FamilySearch",
+  rationale: "Civil death registers name parents in this jurisdiction after 1893.",
+  fallback_for: null,
+  status: "planned",
+};
+
+async function append(dir: string, entry: Record<string, unknown>) {
+  const out = await researchAppend({
+    projectPath: dir, section: "plan_items", op: "append", planId: "pl_001", entry,
+  } as never, undefined as never).catch((e: Error) => e);
+  return out instanceof Error ? out.message : JSON.stringify(out);
+}
+
+describe("research_append surfaces the plan-item flags", () => {
+  it("warns when the jurisdiction sits outside every recorded locality", async () => {
+    const text = await append(project({}), { ...ITEM, jurisdiction: "Fairfax, Virginia" });
+    expect(text).toMatch(/Fairfax, Virginia is not inside any locality/);
+    // Names the localities it DID compare against, or the researcher cannot tell a
+    // real inconsistency from a project that simply has not recorded a place yet.
+    expect(text).toMatch(/Schuylkill, Pennsylvania/);
+  });
+
+  it("does NOT refuse the write — flags, never gates", async () => {
+    // Searching a neighbouring jurisdiction can be deliberate. The whole design rests
+    // on this reporting rather than blocking, so a refusal here is the defect.
+    const text = await append(project({}), { ...ITEM, jurisdiction: "Fairfax, Virginia" });
+    expect(text).toMatch(/"ok":\s*true/);
+  });
+
+  it("stays silent on a jurisdiction inside a recorded locality", async () => {
+    const text = await append(project({}), { ...ITEM, jurisdiction: "Pottsville, Schuylkill, Pennsylvania" });
+    expect(text).not.toMatch(/outside|inconsistent/i);
+  });
+});
+

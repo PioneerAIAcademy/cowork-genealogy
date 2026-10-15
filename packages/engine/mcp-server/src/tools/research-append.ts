@@ -19,6 +19,7 @@
 // sections, the phase-3 sections, and the `project` singleton).
 
 import { rejectionFor, type RejectedLink } from "../utils/rejected-links.js";
+import { planItemFlags } from "../utils/plan-item-plausibility.js";
 import { getProjectStore } from "../store/project-store.js";
 import { SETTLED_CONFLICT_STATUSES, VALIDATOR_ENUMS } from "../validation/validator.js";
 import { validateIntroduced } from "../validation/introduced-errors.js";
@@ -5979,6 +5980,26 @@ export async function researchAppend(
       treeEncodingWarnings = treeEncodingCompletionWarnings(research, tree, startingTree);
     }
 
+    // A planned next action unlikely to be usable: a jurisdiction outside every
+    // recorded locality, or a date range that cannot contain the event. "Dead ends
+    // become next actions" fails when the next actions are not usable -- in the
+    // reported case 2 of 8, then 1 of 3 suggestions were viable, including COUNTY
+    // records for a death in an independent city the locality guide had flagged.
+    //
+    // FLAGS, NEVER GATES, so it rides the warnings channel and refuses nothing:
+    // searching a neighbouring jurisdiction can be deliberate and a year outside the
+    // obvious window can be a fallback. Decided from the project documents alone, so
+    // it needs no network call and works while the run is offline.
+    const localitiesForPlan = Array.isArray(research?.localities) ? research.localities : [];
+    const planItemWarnings: string[] = [];
+    for (const planOp of ops) {
+      if (planOp.section !== "plan_items") continue;
+      const entry = ((planOp.op === "append" ? (planOp as any).entry : (planOp as any).fields) ?? {});
+      for (const flag of planItemFlags(entry, localitiesForPlan)) {
+        planItemWarnings.push(flag.message);
+      }
+    }
+
     // ─── Validate once, write once (both files when the tree changed) ────────
     let validationWarnings: string[] = [];
     let filesWritten: string[] = [];
@@ -6083,7 +6104,7 @@ export async function researchAppend(
       : [];
     const validationBlock = {
       valid: true as const,
-      warnings: [...validationWarnings, ...opWarnings, ...rewriteWarnings, ...treeEncodingWarnings, ...(persistenceWarning ? [persistenceWarning] : []), ...transcriptionWarnings],
+      warnings: [...validationWarnings, ...opWarnings, ...rewriteWarnings, ...treeEncodingWarnings, ...planItemWarnings, ...(persistenceWarning ? [persistenceWarning] : []), ...transcriptionWarnings],
     };
     const extras: Pick<BatchSuccess, "sourceDescriptionId" | "sourceReuse" | "resolvedPlaces"> = {};
     if (prep.sourceDescriptionId) extras.sourceDescriptionId = prep.sourceDescriptionId;
