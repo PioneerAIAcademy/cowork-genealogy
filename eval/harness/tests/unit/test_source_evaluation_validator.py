@@ -994,6 +994,19 @@ _CENSUS_FAIL_SPLIT_LINE = (
     "This is an indexing error: birth year 1877 does not match the profile's 1875."
 )
 
+# A draft heading dismissed by "ordinary variance" in the next lines.
+# Mirrors the h5w false positive found in v3_2026-10-15_18-39-03.json: the
+# agent writes a numbered section label with "indexing error", then rejects it.
+_CENSUS_PASS_FORWARD_DISMISSAL = (
+    "SOURCES ON: Christian P. Hole (KD96-TV2)\n"
+    '**1. "United States Census, 1900" — indexing error (birth year)**\n'
+    "The record shows birth year 1877 vs profile's 1875.\n"
+    "A two-year gap on a census record is ordinary variance "
+    "and is not counted here as a finding.\n"
+    "Moving on.\n"
+    '**Finding 1. "Minnesota Death Index" — indexing error (death year)**\n'
+)
+
 
 def test_census_trap_fires_on_bad_output():
     for text in (_CENSUS_FAIL_PLAIN, _CENSUS_FAIL_HEADER, _CENSUS_FAIL_POSSIBLE):
@@ -1010,10 +1023,22 @@ def test_census_trap_fires_on_split_line_finding():
 
 
 def test_census_trap_passes_on_correct_output_inner():
-    for text in (_CENSUS_PASS_CLEAN, _CENSUS_PASS_NEGATED, _CENSUS_PASS_NEGATED_LONG):
+    for text in (
+        _CENSUS_PASS_CLEAN,
+        _CENSUS_PASS_NEGATED,
+        _CENSUS_PASS_NEGATED_LONG,
+        _CENSUS_PASS_FORWARD_DISMISSAL,
+    ):
         assert _find_census_year_error_line(text) is None, (
             f"guard fired on correct output:\n{text!r}"
         )
+
+
+def test_census_trap_passes_on_forward_dismissed_draft():
+    """Guard must not fire when agent drafts a label then dismisses it as ordinary variance."""
+    assert _find_census_year_error_line(_CENSUS_PASS_FORWARD_DISMISSAL) is None, (
+        "guard fired on a draft heading the agent immediately dismissed as ordinary variance"
+    )
 
 
 def test_census_trap_error_message_names_the_offending_line():

@@ -823,6 +823,8 @@ def test_no_warnings_without_tree_person(tool_calls, test):
 # window catches both same-line findings ("1900 — indexing error") and
 # split-line headings ("United States Census, 1900\nThis is an indexing error").
 # A negation within the same window ("not an indexing error") passes.
+# A forward dismissal — "ordinary variance" in the next 8 lines — also passes,
+# covering agents that write a draft heading then immediately reject it.
 # Death-index lines (1954 / 1945 in this corpus) never co-appear with "1900"
 # in any window, so they are never flagged.
 # ---------------------------------------------------------------------------
@@ -832,6 +834,7 @@ _CENSUS_NEGATION_RE = re.compile(
     r"\bnot(?:\s+\w+){0,3}\s+(?:an?\s+)?index(?:ing)?\s+error\b", re.IGNORECASE
 )
 _CENSUS_1900_RE = re.compile(r"\b1900\b", re.IGNORECASE)
+_CENSUS_DISMISSAL_RE = re.compile(r"\bordinary\s+(?:census\s+)?variance\b", re.IGNORECASE)
 
 
 def _find_census_year_error_line(reply: str) -> str | None:
@@ -842,6 +845,11 @@ def _find_census_year_error_line(reply: str) -> str | None:
     collection name (with the year) appears on its own line above the verdict.
     Looking only backward avoids picking up "1900" from the census line that
     follows a separate death-index "indexing error" line.
+
+    Also checks the next 8 lines forward for "ordinary variance" dismissal
+    language: an agent may draft a heading then immediately reject the
+    classification in the next sentence.  That pattern is correct reasoning,
+    not a misfiled finding.
     """
     lines = reply.splitlines()
     for i, line in enumerate(lines):
@@ -851,6 +859,9 @@ def _find_census_year_error_line(reply: str) -> str | None:
         if not _CENSUS_1900_RE.search(window):
             continue
         if _CENSUS_NEGATION_RE.search(window):
+            continue
+        forward = "\n".join(lines[i : min(len(lines), i + 9)])  # current + 8 after
+        if _CENSUS_DISMISSAL_RE.search(forward):
             continue
         return line
     return None
