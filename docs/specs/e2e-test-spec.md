@@ -877,7 +877,8 @@ the `max_cost_usd` note in §6 step 5.
 
    **Stall-detect + resume.** The progress watchdog above doesn't only abort:
    with `--resume-on-stall` (default ON; `RESUME_ON_STALL=0` to disable) the
-   harness tears down the hung `query()` and **resumes the same session**
+   harness closes the hung stream, waits for its CLI to exit, and only then
+   **resumes the same session**
    (`fork_session=False`), bounded to 2 attempts — but only in a provably-safe
    state (no in-flight tool call), else it fails fast. The safe-state gate means
    a resume can't double-apply a non-idempotent write. Resumes are recorded in
