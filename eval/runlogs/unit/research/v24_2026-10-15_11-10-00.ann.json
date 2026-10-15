@@ -1,17 +1,17 @@
 {
-  "run_log": "v24_2026-10-14_13-44-02.json",
-  "annotator": "mercybocumy2000@gmail.com",
+  "run_log": "v24_2026-10-15_11-10-00.json",
+  "annotator": "edmondoware70@gmail.com",
   "corrections": [
     {
-      "test_id": "ut_research_019",
+      "test_id": "ut_research_021",
       "dimension_source": "base",
-      "dimension_name": "Tool Arguments",
+      "dimension_name": "Correctness",
       "llm_score": 3,
       "corrected_score": 3,
       "comment": null
     },
     {
-      "test_id": "ut_research_019",
+      "test_id": "ut_research_017",
       "dimension_source": "base",
       "dimension_name": "Completeness",
       "llm_score": 3,
@@ -19,7 +19,7 @@
       "comment": null
     },
     {
-      "test_id": "ut_research_019",
+      "test_id": "ut_research_017",
       "dimension_source": "base",
       "dimension_name": "Correctness",
       "llm_score": 3,
@@ -27,124 +27,108 @@
       "comment": null
     },
     {
-      "test_id": "ut_research_001",
-      "dimension_source": "base",
-      "dimension_name": "Correctness",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_research_001",
-      "dimension_source": "base",
-      "dimension_name": "Tool Arguments",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_research_zfp",
-      "dimension_source": "base",
-      "dimension_name": "Tool Arguments",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_research_zfp",
-      "dimension_source": "base",
-      "dimension_name": "Completeness",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_research_zfp",
-      "dimension_source": "base",
-      "dimension_name": "Correctness",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_research_tsv",
-      "dimension_source": "base",
-      "dimension_name": "Correctness",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_research_tsv",
-      "dimension_source": "base",
-      "dimension_name": "Completeness",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_research_tsv",
-      "dimension_source": "base",
-      "dimension_name": "Tool Arguments",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_research_tsi",
+      "test_id": "ut_research_018",
       "dimension_source": "base",
       "dimension_name": "Tool Arguments",
       "llm_score": null,
       "corrected_score": null,
-      "comment": null
+      "comment": "No MCP tool was called on this test, so N/A is the right grade for Tool Arguments."
     },
     {
-      "test_id": "ut_research_tsi",
-      "dimension_source": "base",
-      "dimension_name": "Completeness",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_research_tsi",
-      "dimension_source": "base",
-      "dimension_name": "Correctness",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_research_008",
-      "dimension_source": "base",
-      "dimension_name": "Correctness",
-      "llm_score": 1,
-      "corrected_score": 1,
-      "comment": "The AI correctly flags the skill for soliciting project details instead of routing to @plugin:tree-survey or @plugin:init-project for an empty-folder state."
-    },
-    {
-      "test_id": "ut_research_008",
-      "dimension_source": "base",
-      "dimension_name": "Completeness",
-      "llm_score": 1,
-      "corrected_score": 1,
-      "comment": "The AI correctly marks this incomplete — the required routing delegation was never performed."
-    },
-    {
-      "test_id": "ut_research_008",
+      "test_id": "ut_research_017",
       "dimension_source": "base",
       "dimension_name": "Tool Arguments",
       "llm_score": null,
       "corrected_score": null,
+      "comment": "No MCP tool was called on this test, so N/A is the right grade for Tool Arguments."
+    },
+    {
+      "test_id": "ut_research_018",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
       "comment": null
     },
     {
-      "test_id": "ut_research_001",
+      "test_id": "ut_research_018",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_016",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_016",
       "dimension_source": "base",
       "dimension_name": "Completeness",
-      "llm_score": 2,
+      "llm_score": 3,
       "corrected_score": 3,
-      "comment": "delegating the mother search to research-plan is the correct orchestration pattern; the research skill’s job is to route, not execute the search itself."
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_016",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": null,
+      "corrected_score": null,
+      "comment": "No MCP tool was called on this test, so N/A is the right grade for Tool Arguments."
+    },
+    {
+      "test_id": "ut_research_tsv",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": null,
+      "corrected_score": null,
+      "comment": "No MCP tool was called on this test, so N/A is the right grade for Tool Arguments."
+    },
+    {
+      "test_id": "ut_research_tsv",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_tsv",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_015",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_015",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_015",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "No MCP tool was called on this test, so N/A is the right grade for Tool Arguments."
     }
   ]
 }
