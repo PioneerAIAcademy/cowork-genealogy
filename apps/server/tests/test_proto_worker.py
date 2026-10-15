@@ -1431,6 +1431,9 @@ class FakeSessionStore:
         return self._entries
 
 
+_UNSET = object()  # ToolCall's "no agent_id key given" marker (distinct from None/"")
+
+
 class ToolCall:
     """A sentinel in a canned stream: the fake client fires the turn's REAL PreToolUse
     hook for it instead of yielding it. That is what moves ``counters["tool_calls"]``,
@@ -1438,8 +1441,12 @@ class ToolCall:
     that writes a tool_calls row, so a stream with model turns and no ToolCall is
     faithfully an attempt that changed nothing."""
 
-    def __init__(self, tool_name: str = "mcp__genealogy__research_append") -> None:
+    def __init__(self, tool_name: str = "mcp__genealogy__research_append",
+                 agent_id: Any = _UNSET) -> None:
         self.tool_name = tool_name
+        # _UNSET means the main thread (no `agent_id` key at all); any value given --
+        # including None or "" -- makes this a subagent call (#3376).
+        self.agent_id = agent_id
 
 
 class StopDispatch:
@@ -1467,8 +1474,11 @@ class FakeClient:
         hook = ((self.env or {}).get("options") or {}).get("pretool_hook")
         assert hook is not None, "the option set must be captured before the stream runs"
         self.tool_uses += 1
+        data: dict[str, Any] = {"tool_name": call.tool_name, "tool_input": {}}
+        if call.agent_id is not _UNSET:  # absent key = main thread (#3376)
+            data["agent_id"] = call.agent_id
         self.pretool_replies.append(
-            await hook({"tool_name": call.tool_name, "tool_input": {}}, f"toolu_{self.tool_uses}", None))
+            await hook(data, f"toolu_{self.tool_uses}", None))
 
     async def _fire_stop(self) -> None:
         hook = ((self.env or {}).get("options") or {}).get("stop_hook")
@@ -2226,7 +2236,7 @@ def test_the_halt_returns_the_sdks_stop_fields_and_denies_the_call(tmp_path):
     rows: list[dict] = []
     hook = options.make_pretool_hook(
         turn_id="t", session_id="s", cwd=str(tmp_path), config_root=str(tmp_path),
-        record=rows.append, halt=lambda: "Stopped by the researcher.",
+        record=rows.append, halt=lambda *, subagent: "Stopped by the researcher.",
     )
     out = _call(hook, {"tool_name": "mcp__genealogy__record_search", "tool_input": {}})
     assert out["continue_"] is False and out["stopReason"] == "Stopped by the researcher."
@@ -2246,7 +2256,7 @@ def test_the_halt_is_checked_before_every_other_decision(tmp_path):
                              ("Read", {"file_path": str(tmp_path / "x")})):
         hook = options.make_pretool_hook(
             turn_id="t", session_id="s", cwd=str(tmp_path), config_root=str(tmp_path),
-            record=lambda r: None, blocked=frozenset({"person_read"}), halt=lambda: "stop",
+            record=lambda r: None, blocked=frozenset({"person_read"}), halt=lambda *, subagent: "stop",
         )
         assert _call(hook, {"tool_name": tool, "tool_input": tool_input})["continue_"] is False
 
@@ -2261,7 +2271,7 @@ def test_a_halt_predicate_that_raises_halts_the_call(tmp_path):
     hook = options.make_pretool_hook(
         turn_id="t", session_id="s", cwd=str(tmp_path), config_root=str(tmp_path),
         record=rows.append, log=lambda **f: logged.append(f),
-        halt=lambda: (_ for _ in ()).throw(RuntimeError("pg is down")),
+        halt=lambda *, subagent: (_ for _ in ()).throw(RuntimeError("pg is down")),
         on_halt_failed=lambda: failed.append("x"),
     )
     out = _call(hook, {"tool_name": "mcp__genealogy__record_search", "tool_input": {}})
@@ -2276,7 +2286,7 @@ def test_a_halt_predicate_that_raises_halts_the_call(tmp_path):
 def test_a_halt_failure_callback_that_raises_still_halts(tmp_path):
     hook = options.make_pretool_hook(
         turn_id="t", session_id="s", cwd=str(tmp_path), config_root=str(tmp_path),
-        record=lambda r: None, halt=lambda: 1 / 0, on_halt_failed=lambda: 1 / 0,
+        record=lambda r: None, halt=lambda *, subagent: 1 / 0, on_halt_failed=lambda: 1 / 0,
     )
     assert _call(hook, {"tool_name": "Read", "tool_input": {}})["continue_"] is False
 
@@ -2958,6 +2968,45 @@ def test_a_message_typed_mid_turn_ends_the_turn_at_the_next_tool_call(turn_env, 
     assert [f["ev"] for f in logged if f.get("ev") == "handover"] == ["handover"]
     halts = [f for f in logged if f.get("ev") == "halt"]
     assert halts and halts[0]["reason"] == options.HANDOVER_REASON
+
+
+def test_a_waiting_message_does_not_cut_off_a_subagent_mid_task(turn_env, monkeypatch):
+    """#3376: the handover must not fire INSIDE a subagent. A message typed while a subagent
+    runs is taken at the orchestrator's next MAIN-THREAD tool call -- cutting the subagent
+    off loses its work, which the orchestrator then re-does from scratch. The outcome is
+    `queued` either way, so the discriminator is WHICH call halted: the subagent call must
+    be allowed (`{}`), the following main-thread call hands over."""
+    monkeypatch.setattr(worker, "pending_user_message", lambda conn, sid: True)
+    monkeypatch.setattr(worker, "stop_requested", lambda conn, sid: False)
+    logged: list[dict] = []
+    monkeypatch.setattr(worker, "log", lambda **f: logged.append(f))
+    # Call 1 (main thread) engages the message -- the one-call guard. Calls 2-3 are subagent
+    # calls, which must NOT hand over -- including one with a falsy `agent_id`, since the gate
+    # is membership not truthiness. Call 4 (main thread) is where the handover fires.
+    summary = _run(turn_env, [
+        _init(), ToolCall(), ToolCall(agent_id="ag_1"), ToolCall(agent_id=None),
+        ToolCall(), _text("x"), _result(num_turns=2),
+    ])
+    replies = turn_env["client"].pretool_replies
+    assert replies[1] == {}, "the subagent call must run; the handover cannot fire inside it"
+    assert replies[2] == {}, "agent_id present but falsy is STILL a subagent (membership)"
+    assert replies[3].get("continue_") is False, "the next main-thread call hands over"
+    assert summary["outcome"] == "queued"
+    assert [f["ev"] for f in logged if f.get("ev") == "handover"] == ["handover"]
+
+
+def test_the_subagent_gate_is_the_handover_clause_alone_a_stop_still_halts(turn_env, monkeypatch):
+    """Stop means stop everywhere (#3376). Only the handover clause reads `subagent`; a
+    patron Stop pressed while a subagent call is in flight still ends the turn `stopped` --
+    even with a message ALSO pending, so this reds both if Stop were wrongly gated and if
+    the gated handover were allowed to outrank it."""
+    _mid_run(monkeypatch)
+    monkeypatch.setattr(worker, "pending_user_message", lambda conn, sid: True)
+    monkeypatch.setattr(worker, "stop_requested", lambda conn, sid: True)
+    summary = _run(turn_env, [_init(), ToolCall(agent_id="ag_1"), _text("x"), _result(num_turns=2)])
+    assert turn_env["client"].pretool_replies[0].get("continue_") is False, (
+        "the subagent call itself must halt on Stop")
+    assert summary["outcome"] == "stopped", "a subagent call is not exempt from Stop"
 
 
 def test_a_turn_released_for_a_held_message_does_some_work_before_handing_over(turn_env, monkeypatch):
@@ -4845,7 +4894,7 @@ def test_a_stop_outranks_a_delivery():
     """The researcher's own stop wins: the halt check runs before the delivered arm."""
     hook = options.make_pretool_hook(
         turn_id="t1", session_id="s1", cwd="/project", config_root="/cfg",
-        record=lambda row: None, halt=lambda: "stopped",
+        record=lambda row: None, halt=lambda *, subagent: "stopped",
     )
     out = asyncio.run(hook({"tool_name": options.DELIVERED_TOOL, "tool_input": {}}, "u1", None))
     assert out.get("stopReason") == "stopped", "a halt must outrank the delivery arm"

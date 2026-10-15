@@ -446,13 +446,55 @@ def _pretool(agent):
 def test_a_message_typed_mid_turn_is_taken_at_the_next_step_on_the_alpha():
     """`runner.serve` holds a pending message while `turn_task` is not done -- and under
     1d that task is the whole job, so the message waited a JOB boundary. The prototype
-    answers at the next tool call, a median 2.6 s away."""
+    answers at the next tool call, a median 2.6 s away.
+
+    The FIRST call must do work: two messages typed in quick succession are held
+    together (serve pops one, leaves the rest pending), so without the prototype's
+    one-call rule the turn released for the first would halt at its own first tool
+    call, do no work on it -- and that message is never re-queued."""
     quiet = asyncio.run(_pretool(_FakeAgent(pending=False))({}, None, None))
     assert quiet == {}
 
-    waiting = asyncio.run(_pretool(_FakeAgent(pending=True))({}, None, None))
+    hook = _pretool(_FakeAgent(pending=True))
+    assert asyncio.run(hook({}, None, None)) == {}, \
+        "the turn must engage with its own message before handing over"
+    waiting = asyncio.run(hook({}, None, None))
     assert waiting.get("continue") is False
     assert "message" in waiting["stopReason"].lower()
+
+
+def test_the_one_call_guard_holds_on_every_turn_not_only_the_first():
+    """The hooks dict lives for the SESSION (the SDK client is cached), so a guard on the
+    session-wide `tool_calls` lets every turn after the first halt at its own first call
+    and the message that turn was released for gets no work. The guard counts per turn."""
+    from app.agent import real_agent as ra
+
+    agent = _FakeAgent(pending=True)
+    hook = _pretool(agent)
+    asyncio.run(hook({}, None, None))
+    asyncio.run(hook({}, None, None))           # turn 1 hands over at its second call
+    ra.RealAgent._begin_turn_hook_state(agent)  # turn 2, released for a held message
+    assert asyncio.run(hook({}, None, None)) == {}, \
+        "turn 2's first call must do work on its own message before handing over"
+    assert asyncio.run(hook({}, None, None)).get("continue") is False
+
+
+def test_a_subagent_call_does_not_take_a_waiting_message_on_the_alpha():
+    """#3376: the pending-message halt is gated on the MAIN thread, like the delivered arm.
+    A subagent call -- one carrying an `agent_id` KEY, membership not truthiness so None and
+    "" count -- must run to the end of its task even with a message waiting; the message is
+    taken at the orchestrator's next main-thread call. Without the gate a mid-task halt
+    strands the orchestrator with the subagent's last in-progress note as its final report."""
+    # ONE hook across the sequence, as in a real session: the counter is past the
+    # one-call guard by the time the main-thread call arrives.
+    hook = _pretool(_FakeAgent(pending=True))
+    assert asyncio.run(hook({"agent_id": "record-extractor"}, None, None)) == {}
+    assert asyncio.run(hook({"agent_id": None}, None, None)) == {}, (
+        "agent_id present but falsy is STILL a subagent -- a truthiness test would halt it"
+    )
+    # The main thread (no agent_id key) still hands over at the next call.
+    main = asyncio.run(hook({}, None, None))
+    assert main.get("continue") is False and "message" in main["stopReason"].lower()
 
 
 def test_the_halt_never_fails_a_tool_call_the_researcher_was_entitled_to_make():
