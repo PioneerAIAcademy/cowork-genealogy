@@ -280,27 +280,27 @@ birthplace."
 
 ### 4. Log the overview
 
-After writing the overview, call `research_log_append` **once**, with
-`projectPath` and an `ops` list:
+Two `research_log_append` calls, in order, each with `projectPath`.
+**You must actually call them — do not just describe them in your response.**
 
-- One op per `wiki_search`, `wiki_read` and `wikipedia_search` call you made:
-  `tool` (that tool's name), `query` (the arguments you sent), `planItemId:
-  null`, `outcome` (`positive` when it returned content, `negative` when it
-  returned nothing, `error` when it errored or 404'd), `resultsExamined` (results
-  returned; 1 for a page read; 0 on `negative` or `error`), `notes: null`.
-- Last, one op: `tool: "historical_context"`, `query: {topic, places}` (the
-  question in a few words and the places it concerns), `planItemId: null`,
-  `outcome: "positive"`, `resultsExamined` (pages and articles read), `notes`
-  set to the **full** overview exactly as you return it, including Sources
-  consulted, never a summary.
+1. **The lookups.** One call with an `ops` list, one op per `wiki_search`,
+   `wiki_read` and `wikipedia_search` call you made: `tool` (that tool's name),
+   `query` (the arguments you sent), `planItemId: null`, `outcome` (`positive`
+   when it returned content, `negative` when it returned nothing, `error` when
+   it errored or 404'd), `resultsExamined` (results returned; 1 for a page read;
+   0 on `negative` or `error`), `notes: null`. With no lookups, skip to call 2.
+   - `reason: "no_project"` → stop logging; make no second call.
+2. **The overview.** One op: `tool: "historical_context"`, `query: {topic,
+   places}` (the question in a few words and the places it concerns),
+   `planItemId: null`, `outcome: "positive"`, `resultsExamined` (pages and
+   articles read), `notes` set to the **full** overview exactly as you return
+   it, including Sources consulted, never a summary.
+   - `reason: "no_project"` → stop logging.
+   - Refused with a rewrite instruction (e.g. a pre-1880 census hedge) →
+     rewrite `notes` as instructed, use the same text in your return, and
+     re-send. Never drop the overview entry.
 
-**You must actually call it — do not just describe it in your response.**
-
-- `reason: "no_project"` → log nothing more; return as usual.
-- Refused with a rewrite instruction (e.g. a pre-1880 census hedge) → rewrite
-  the named `notes` as instructed, use the same text in your return, and re-send
-  the whole call. Never drop the overview entry.
-- A hand-back from the scope section logs nothing.
+A hand-back from the scope section logs nothing.
 
 ## Broad context factors
 
@@ -854,8 +854,8 @@ Applying this:
 
 ## Important rules
 
-- **Log the overview; write nothing else.** Inside a project, Step 4's one
-  `research_log_append` call is your only write.
+- **Log the overview; write nothing else.** Inside a project, Step 4's
+  `research_log_append` calls are your only writes.
 - **Connect context to action.** Do not just explain history — explain how it
   affects the user's specific research. "This means you should search in X" or
   "This explains the discrepancy in assertion a_012."

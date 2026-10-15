@@ -114,6 +114,7 @@ _TOPICAL_FIXTURE_BY_TEST_ID = {
     "ut_historical_context_005": "wiki-read-west-virginia-genealogy",
     "ut_historical_context_007": "wiki-read-england-civil-registration",
     "ut_historical_context_013": "wiki-read-germany-civil-registration",
+    "ut_historical_context_frq": "wiki-read-french-republican-calendar",
 }
 
 

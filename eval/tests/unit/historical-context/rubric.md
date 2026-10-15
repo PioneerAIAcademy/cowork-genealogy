@@ -2,7 +2,7 @@
 
 Grading dimensions for historical-context unit tests. Evaluated by the LLM judge alongside the base rubric (correctness, completeness).
 
-Inside a project the agent ends with one `research_log_append` call that logs its lookups and the overview; those entries appear in the file changes summary, and their shape is checked by validators, not by you. Most tests in this suite run with **no project**. There that one `research_log_append` call answers `ok: false`, `reason: "no_project"`: it is how the agent learns there is no project, and is correct behavior, not a failed tool call or a wrong argument. Do not mark Tool Arguments or any other dimension down for it, and `(no file changes)` is the correct outcome on those tests.
+Inside a project the agent ends with two `research_log_append` calls, one logging its lookups and one the overview; those entries appear in the file changes summary, and their shape is checked by validators, not by you. Most tests in this suite run with **no project**. There its first `research_log_append` call answers `ok: false`, `reason: "no_project"`: it is how the agent learns there is no project, and is correct behavior, not a failed tool call or a wrong argument. Do not mark Tool Arguments or any other dimension down for it, and `(no file changes)` is the correct outcome on those tests.
 
 ## Relevance to research
 

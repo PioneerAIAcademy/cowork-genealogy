@@ -17,6 +17,9 @@
     "delegation": "Patrick Flynn's 1908 death record says he was born in Pennsylvania about 1845, but his family was Irish. Give me a historical overview of why a record might say that, and what it means for where I search next.\n\nprojectPath: <workspace>",
     "scenario": "mid-research-flynn"
   },
+  "execution": {
+    "max_wall_clock_seconds": 600
+  },
   "mcp_fixtures": [
     "wiki-search-irish-immigration",
     "wiki-search-great-famine-emigration",
