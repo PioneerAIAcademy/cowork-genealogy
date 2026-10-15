@@ -1180,8 +1180,8 @@ table (per row), a per-source bullet list (per item), and a recap block
 *correct* report failed the guard.
 
 This replaced co-occurrence inside one blank-line block, under which a reply
-naming the source in one block and recommending the detach in the next passed
-(issue #2481). Attribution now follows the section the author put them in, so
+naming the source in one block and recommending the detach in the next
+passed. Attribution now follows the section the author put them in, so
 re-chopping the same content cannot move the verdict — pinned by
 `test_the_same_violation_fires_in_every_shape`, which writes one meaning seven
 ways. Gated on the `index-discrepancy` tag; a test carrying
