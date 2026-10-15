@@ -100,6 +100,74 @@ def test_reading_the_raw_project_files_fails(call):
         _run(builtin=[call])
 
 
+COWORK_REPLY = (
+    "The Flynn project is working on identifying the parents of Patrick Flynn, born about "
+    "1845 in Pennsylvania and died in 1908 in Schuylkill County. The parentage question has "
+    "reached a conclusion — Thomas Flynn is now recorded as his father, with Mary and James "
+    "Flynn as siblings — resting on a handful of census and vital records from FamilySearch "
+    "and one from Ancestry. The question itself, though, is still flagged as in progress in "
+    "the file, so the tidy-up step is to mark it resolved. A second question has all its "
+    "evidence gathered but no written conclusion yet, so that's the real next piece of work."
+)
+
+
+@pytest.mark.parametrize(
+    "text",
+    [
+        COWORK_REPLY,
+        "The question of who his parents were is concluded; the next step is a mentor review.",
+        "Searches covered the 1850 and 1860 censuses - both name Thomas - and the next step is probate.",
+    ],
+    ids=["live-cowork-reply", "question-mark-mid-sentence", "hyphen-and-years-mid-text"],
+)
+def test_a_plain_paragraph_passes(text):
+    _run(text=text)
+
+
+@pytest.mark.parametrize(
+    "text",
+    [
+        "Here's where things stand:\n\n" + CLEAN,
+        CLEAN + "\n\n" + CLEAN,
+        CLEAN + "\nThe next step is probate.",
+        "## Status\n" + CLEAN,
+        "## The parentage question is concluded.",
+        "| The parentage question | concluded |",
+        "- " + CLEAN,
+        "1. " + CLEAN,
+        "| Question | State |\n|---|---|\n| parentage | concluded |",
+        "The parents of **Patrick Flynn** are the open question.",
+        CLEAN + " Would you like me to start the probate search?",
+        "   ",
+    ],
+    ids=[
+        "lead-in-line", "two-paragraphs", "single-line-break", "heading", "one-line-heading",
+        "one-line-table-row", "bullet",
+        "numbered", "table", "bold", "closing-question", "empty",
+    ],
+)
+def test_a_shaped_reply_fails(text):
+    with pytest.raises(AssertionError, match="ONE plain paragraph"):
+        _run(text=text)
+
+
+RECORDED_SHAPED_REPLY = (
+    "Here's where things stand:\n\n"
+    "The project's goal is to identify the parents of **Patrick Flynn** (born ca. 1845 in "
+    "Pennsylvania, died 1908 in Schuylkill County, PA). Good progress has been made.\n\n"
+    "The primary parentage question has effectively been answered by the evidence and is in "
+    "a concluded state, but it hasn't been formally closed out yet.\n\n"
+    "In short: the research is largely done, but two wrap-up steps remain. Would you like to "
+    "proceed with writing that proof conclusion?"
+)
+
+
+def test_the_recorded_multi_paragraph_reply_fails():
+    """A full-suite reply (2026-10-15, abridged) that passed before the shape check existed."""
+    with pytest.raises(AssertionError, match="ONE plain paragraph"):
+        _run(text=RECORDED_SHAPED_REPLY)
+
+
 def test_no_project_context_call_fails():
     with pytest.raises(AssertionError, match="must call project_context"):
         _run(tool_calls=[])

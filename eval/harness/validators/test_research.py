@@ -499,6 +499,7 @@ _PROJECT_ID_RE = re.compile(
     r"\b(?:(?:" + "|".join(re.escape(p) for p in _PROJECT_ID_PREFIXES) + r")\d+|[FINRS]\d+)\b"
 )
 _PROJECT_FILES = ("research.json", "tree.gedcomx.json")
+_SHAPED_LINE_RE = re.compile(r"^\s*(?:#|\||[-*+]\s|\d+[.)]\s)", re.MULTILINE)
 
 
 def test_status_question_answered_from_project_context_only(
@@ -517,11 +518,15 @@ def test_status_question_answered_from_project_context_only(
       3. No subagent spawn (`Agent` or `Task`): the status answer is the main
          thread's own paragraph.
       4. No `research_append` call: a status question writes nothing.
-      5. No identifier in the reply: no research.json id (`<prefix>_<digits>`
+      5. The reply is one plain paragraph: no line break (so no lead-in line
+         and no second paragraph), no heading, list or table line, no bold,
+         and no closing question.
+      6. No identifier in the reply: no research.json id (`<prefix>_<digits>`
          for any prefix the schema defines) and no tree id (`I1`, `S3`).
 
     `project_context` is ALWAYS_LOAD, so assertion 1 can hold even with the
-    description clause removed; assertion 5 is the one that tracks the clause.
+    description clause removed; assertions 5 and 6 are the ones that track the
+    clause.
     """
     from harness.skill_runner import SPAWN_TOOL_NAMES
 
@@ -564,6 +569,21 @@ def test_status_question_answered_from_project_context_only(
     assert not appends, (
         "status question must not write to research.json; got "
         f"{len(appends)} research_append call(s)"
+    )
+
+    body = (text_response or "").strip()
+    shape = []
+    if "\n" in body:
+        shape.append(f"{len([ln for ln in body.splitlines() if ln.strip()])} lines")
+    if _SHAPED_LINE_RE.search(body):
+        shape.append("a heading, list or table line")
+    if "**" in body:
+        shape.append("bold")
+    if body.endswith("?"):
+        shape.append("a closing question")
+    assert body and not shape, (
+        "status answer must be ONE plain paragraph with no lead-in, headings, "
+        f"tables, lists, bold or closing question; got: {shape or ['an empty reply']}"
     )
 
     hits = _PROJECT_ID_RE.findall(text_response or "")

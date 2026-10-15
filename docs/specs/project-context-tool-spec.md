@@ -373,9 +373,11 @@ was still deferred and arrived through ToolSearch, description included):
 
 > When the user asks where the project stands ("where are we?", "summarize
 > progress", "what have we found?") or reopens a project, call this and answer
-> from it in ONE plain-language paragraph: the objective, what is established,
-> what is open or waiting on the researcher, and the next step. No headings,
-> tables or lists, and no identifiers, file names, tool names or field names:
+> from it in exactly ONE plain-language paragraph and nothing else: the
+> objective, what is established, what is open or waiting on the researcher,
+> and the next step, stated rather than asked. No lead-in line ("Here's where
+> things stand:"), no line breaks, headings, tables, lists or bold, no closing
+> question, and no identifiers, file names, tool names or field names:
 > say "the proof summary" or "the parentage question", never q_001 or ps_001.
 > nextStep values name ids and agents; restate them in plain words. Do not
 > read the project files and do not delegate.
@@ -387,6 +389,13 @@ the third quoting `ps_001`. With the worked examples, 3 of 3 scratch runs and
 0 of 1 in the full suite; with the `nextStep` sentence added, 4 of 5. Every
 miss quoted `ps_001`, which `questionStatuses[].nextStep` hands over verbatim
 ("gps-mentor (proof-critique) — ps_001").
+
+The shape half is checked too: the validator fails a reply with more than one
+paragraph, a heading, list or table line, bold, or a closing question. Before
+that check existed, both committed full-suite replies passed while breaking it
+(2026-10-15) — a "Here's where things stand:" lead-in, four and seven
+paragraphs, bold names and a closing offer — and the wording above was
+tightened to name each of those.
 
 **Decided (lead, 2026-10-06):** delete the `project-status` agent; a status
 request is answered by the main thread in one plain paragraph from
