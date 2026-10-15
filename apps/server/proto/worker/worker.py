@@ -2247,7 +2247,6 @@ async def _run_turn(
             # the main thread -- stop means stop.
             if subagent:
                 return None
-            #
             # DEVIATION from the plan, stated here because it is one: the plan wires
             # `pending_user_message()` into the STOP hook only. But its own measurement
             # says the model yields a median of ONCE per run and 31% of runs never yield
@@ -2318,7 +2317,9 @@ async def _run_turn(
                 return STORE_UNAVAILABLE_REASON
             for clause, check in halt_clauses:
                 try:
-                    reason = check(subagent) if clause == "handover" else check()
+                    # Dispatch by IDENTITY, not by the tuple label: a renamed label would
+                    # silently stop passing the flag and revert #3376.
+                    reason = check(subagent) if check is handover_clause else check()
                 except Exception as exc:  # noqa: BLE001 - classified: down halts, else next clause
                     down = (isinstance(exc, (psycopg.OperationalError, psycopg.InterfaceError))
                             or bool(getattr(conn, "broken", False)))

@@ -704,28 +704,36 @@ def _build_hooks(HookMatcher, project_dir: Path, agent=None) -> dict:
         prototype's ``PreToolUse`` halt. Both reads are in-memory, so the no-I/O promise
         above still holds."""
         counter["tool_calls"] += 1
-        # Both arms below are gated on the MAIN thread (`"agent_id" not in _input_data`).
-        # Delivered: a subagent calling it means only its own leg is done. Pending message
-        # (#3376): halting a subagent mid-task strands the orchestrator, which takes its last
-        # in-progress note as the final report and re-does the work in a fresh subagent.
+        data = _input_data or {}
+        # Both arms below are gated on the MAIN thread -- membership, not truthiness: the
+        # key is absent on the main thread, and a subagent whose `agent_id` is None or ""
+        # is still a subagent. Delivered: a subagent calling it means only its own leg is
+        # done. Pending message (#3376): halting a subagent mid-task strands the
+        # orchestrator, which takes its last in-progress note as the final report and
+        # re-does the work in a fresh subagent.
+        main_thread = "agent_id" not in data
         # A bounded request was met and the model is stopping on purpose (#2813 item 1).
-        if (_input_data or {}).get("tool_name") == DELIVERED_TOOL and "agent_id" not in (
-            _input_data or {}
-        ):
+        if data.get("tool_name") == DELIVERED_TOOL and main_thread:
             counter["delivered"] = True
             _log("[agent] delivered — allowing the stop")
             # Prepend the model's own one-sentence summary, as the prototype does
             # (`options.py`). It is the whole reason the tool takes a `summary`:
             # without it the researcher is told a delivery happened but not what
             # was delivered, and the two planes claim a parity they do not have.
-            delivered_input = (_input_data or {}).get("tool_input") or {}
+            delivered_input = data.get("tool_input") or {}
             return {
                 "continue": False,
                 "stopReason": delivered_stop_reason(delivered_input.get("summary")),
             }
         # The researcher typed mid-turn. Main-thread only (#3376): a subagent runs to the
         # end of its task and the message is taken at the orchestrator's next tool call.
-        if agent is not None and "agent_id" not in (_input_data or {}):
+        # The count guard is the prototype's one-call rule (worker.py, handover_clause):
+        # two messages typed in quick succession are held together by runner.serve, and
+        # the turn released for the first must do some work on it before handing over to
+        # the second -- without the guard it halts at its own first tool call and the
+        # first message gets no work at all. This hook counts BEFORE deciding, so the
+        # turn's first call sees counter == 1.
+        if agent is not None and main_thread and counter["tool_calls"] >= 2:
             try:
                 if agent.pending_user_message():
                     return {"continue": False,

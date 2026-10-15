@@ -398,7 +398,10 @@ def make_pretool_hook(
     record: Callable[[dict[str, Any]], None],
     log: Callable[..., None] | None = None,
     blocked: frozenset[str] = frozenset(),
-    halt: Callable[[bool], str | None] | None = None,
+    # `Callable[..., ...]`, not `Callable[[bool], ...]`: the hook calls it by KEYWORD
+    # (`halt(subagent=...)`), a contract a positional-only annotation would misstate --
+    # and a conforming positional-only halt would TypeError into STORE_UNAVAILABLE.
+    halt: Callable[..., str | None] | None = None,
     on_delivered: Callable[[], None] | None = None,
     on_halt_failed: Callable[[], None] | None = None,
 ):

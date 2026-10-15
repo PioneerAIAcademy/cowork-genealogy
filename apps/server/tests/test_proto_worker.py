@@ -2997,9 +2997,11 @@ def test_a_waiting_message_does_not_cut_off_a_subagent_mid_task(turn_env, monkey
 
 def test_the_subagent_gate_is_the_handover_clause_alone_a_stop_still_halts(turn_env, monkeypatch):
     """Stop means stop everywhere (#3376). Only the handover clause reads `subagent`; a
-    patron Stop pressed while a subagent call is in flight still ends the turn `stopped`."""
+    patron Stop pressed while a subagent call is in flight still ends the turn `stopped` --
+    even with a message ALSO pending, so this reds both if Stop were wrongly gated and if
+    the gated handover were allowed to outrank it."""
     _mid_run(monkeypatch)
-    monkeypatch.setattr(worker, "pending_user_message", lambda conn, sid: False)
+    monkeypatch.setattr(worker, "pending_user_message", lambda conn, sid: True)
     monkeypatch.setattr(worker, "stop_requested", lambda conn, sid: True)
     summary = _run(turn_env, [_init(), ToolCall(agent_id="ag_1"), _text("x"), _result(num_turns=2)])
     assert turn_env["client"].pretool_replies[0].get("continue_") is False, (

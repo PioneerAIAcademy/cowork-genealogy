@@ -446,11 +446,19 @@ def _pretool(agent):
 def test_a_message_typed_mid_turn_is_taken_at_the_next_step_on_the_alpha():
     """`runner.serve` holds a pending message while `turn_task` is not done -- and under
     1d that task is the whole job, so the message waited a JOB boundary. The prototype
-    answers at the next tool call, a median 2.6 s away."""
+    answers at the next tool call, a median 2.6 s away.
+
+    The FIRST call must do work: two messages typed in quick succession are held
+    together (serve pops one, leaves the rest pending), so without the prototype's
+    one-call rule the turn released for the first would halt at its own first tool
+    call, do no work on it -- and that message is never re-queued."""
     quiet = asyncio.run(_pretool(_FakeAgent(pending=False))({}, None, None))
     assert quiet == {}
 
-    waiting = asyncio.run(_pretool(_FakeAgent(pending=True))({}, None, None))
+    hook = _pretool(_FakeAgent(pending=True))
+    assert asyncio.run(hook({}, None, None)) == {}, \
+        "the turn must engage with its own message before handing over"
+    waiting = asyncio.run(hook({}, None, None))
     assert waiting.get("continue") is False
     assert "message" in waiting["stopReason"].lower()
 
@@ -461,13 +469,15 @@ def test_a_subagent_call_does_not_take_a_waiting_message_on_the_alpha():
     "" count -- must run to the end of its task even with a message waiting; the message is
     taken at the orchestrator's next main-thread call. Without the gate a mid-task halt
     strands the orchestrator with the subagent's last in-progress note as its final report."""
-    agent = _FakeAgent(pending=True)
-    assert asyncio.run(_pretool(agent)({"agent_id": "record-extractor"}, None, None)) == {}
-    assert asyncio.run(_pretool(agent)({"agent_id": None}, None, None)) == {}, (
+    # ONE hook across the sequence, as in a real session: the counter is past the
+    # one-call guard by the time the main-thread call arrives.
+    hook = _pretool(_FakeAgent(pending=True))
+    assert asyncio.run(hook({"agent_id": "record-extractor"}, None, None)) == {}
+    assert asyncio.run(hook({"agent_id": None}, None, None)) == {}, (
         "agent_id present but falsy is STILL a subagent -- a truthiness test would halt it"
     )
     # The main thread (no agent_id key) still hands over at the next call.
-    main = asyncio.run(_pretool(agent)({}, None, None))
+    main = asyncio.run(hook({}, None, None))
     assert main.get("continue") is False and "message" in main["stopReason"].lower()
 
 
