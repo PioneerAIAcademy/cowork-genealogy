@@ -11,10 +11,17 @@ name: Check runlog discipline
 #   PR-branch state of all snapshot-tracked files. A PR that adds no run
 #   log is held to the latest full-skill run log on disk instead.
 #
-#   Rule 2b (warn-only): The same run log's judge_prompt_hash matches the
-#   current eval/harness/judge/prompt.md. Mismatch surfaces a warning
-#   annotation but does not block merge — judge-prompt edits are a
-#   separate project-wide cadence.
+#   Rule 2b (blocking on a judge-prompt PR): The same run log's
+#   judge_prompt_hash matches the current eval/harness/judge/prompt.md.
+#   Blocks only when this PR edits prompt.md (satisfied by `make
+#   judge-regrade`); warns on any other PR.
+#
+#   Rule 2c (blocking on suite-specific inputs): The same run log's
+#   `instrument` fingerprint matches the current validators and advertised
+#   tool schemas. A change to the suite's own validator file or to a tool its
+#   fixtures serve blocks; a change to the shared validators, the LIVE_TOOLS
+#   schemas or a live tool's compiled module warns. Needs the engine build,
+#   so this job builds it.
 #
 #   Rule 3 (blocking): The same run log's .ann.json contains
 #   a correction entry for every (test_id, dimension_source, dimension_name)
@@ -61,7 +68,7 @@ permissions:
   pull-requests: read
   issues: read
 
-# Cosmetic-skip escape hatch (rule 2 only), PER SKILL. A senior applies
+# Cosmetic-skip escape hatch (rules 2 and 2c), PER SKILL. A senior applies
 # `eval-cosmetic-skip:<skill>` for each skill whose change is behavior-neutral
 # (rewording, typo), keeping that skill's prior run log active without a re-run
 # + re-grade. `<skill>` is the run-log directory name, the one rule 2's error
@@ -114,15 +121,21 @@ jobs:
     steps:
       # The former `paths:` filter, moved into the job. `agents/**` is here so
       # the frontmatter lint gates plugin agent descriptions too, not just
-      # skills. MCP source (packages/engine/mcp-server/src/**) is intentionally
-      # absent: it is no longer embedded in the run-log snapshot, so a src-only
-      # change cannot affect run-log activeness (rule 2).
+      # skills. MCP source (packages/engine/mcp-server/src/**) and the engine's
+      # build inputs are here for rule 2c: a tool description edit moves the
+      # `instrument` fingerprint of every suite that advertises the tool.
       - name: Does this PR touch run logs, unit tests, skills, agents, fixtures, or the harness?
         id: scope
         env:
           GH_TOKEN: ${{ github.token }}
           PR_NUMBER: ${{ github.event.pull_request.number }}
-          PATTERNS: '^eval/runlogs/unit/|^eval/tests/unit/|^eval/skills/|^packages/engine/plugin/skills/|^packages/engine/plugin/agents/|^eval/fixtures/|^eval/harness/|^docs/|^CLAUDE\.md$|^DEVELOPMENT\.md$|^README\.md$|^\.github/workflows/check-runlogs\.yml$'
+          PATTERNS: '^eval/runlogs/unit/|^eval/tests/unit/|^eval/skills/|^packages/engine/plugin/skills/|^packages/engine/plugin/agents/|^eval/fixtures/|^eval/harness/|^docs/|^CLAUDE\.md$|^DEVELOPMENT\.md$|^README\.md$|^\.github/workflows/check-runlogs\.yml$|^packages/engine/mcp-server/src/|^packages/engine/mcp-server/(package\.json|package-lock\.json|tsconfig\.json)$'
+          # The subset that can put a suite in front of rule 2c, which reads the
+          # engine's tool catalog. A docs-only PR matches PATTERNS but grades no
+          # suite, so it skips the engine build. Fails closed: a path that reached
+          # the catalog without matching here would make the gate error naming the
+          # missing build, never pass silently.
+          ENGINE_PATTERNS: '^eval/runlogs/unit/|^eval/tests/unit/|^eval/skills/|^packages/engine/plugin/skills/|^packages/engine/plugin/agents/|^eval/fixtures/|^eval/harness/|^packages/engine/mcp-server/'
         run: |
           set -euo pipefail
           files="$(gh api "repos/${{ github.repository }}/pulls/${PR_NUMBER}/files" \
@@ -132,6 +145,11 @@ jobs:
           else
             echo "relevant=false" >> "$GITHUB_OUTPUT"
             echo "::notice::No run-log, unit-test, skill, agent, fixture, or harness path changed; reporting success without running the discipline checks."
+          fi
+          if printf '%s\n' "$files" | grep -qE "$ENGINE_PATTERNS"; then
+            echo "needs_engine=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "needs_engine=false" >> "$GITHUB_OUTPUT"
           fi
 
       - name: Resolve cosmetic-skip state
@@ -173,6 +191,32 @@ jobs:
         uses: actions/setup-python@v7
         with:
           python-version: '3.12'
+
+      # Rule 2c reads the advertised tool schemas from the compiled engine
+      # (build/tool-schemas.js), which is gitignored. Same setup as
+      # engine-tests.yml: the engine's .npmrc is engine-strict on npm >=11.12,
+      # which Node 22's bundled npm 10 fails.
+      - name: Set up Node
+        if: steps.scope.outputs.needs_engine == 'true'
+        uses: actions/setup-node@v7
+        with:
+          node-version: '22'
+          cache: 'npm'
+          cache-dependency-path: packages/engine/mcp-server/package-lock.json
+
+      - name: Install the pinned npm (from the packageManager field)
+        if: steps.scope.outputs.needs_engine == 'true'
+        run: |
+          NPM_VER="$(node -p "require('./packages/engine/mcp-server/package.json').packageManager.split('@')[1]")"
+          npm install -g "npm@${NPM_VER}"
+          echo "Using npm $(npm --version)"
+
+      - name: Build the engine (rule 2c reads its tool catalog)
+        if: steps.scope.outputs.needs_engine == 'true'
+        working-directory: packages/engine/mcp-server
+        run: |
+          npm ci
+          npm run build
 
       - name: Run runlog discipline checks
         if: steps.scope.outputs.relevant == 'true'
