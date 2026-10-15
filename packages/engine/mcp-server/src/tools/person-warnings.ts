@@ -55,10 +55,14 @@ import {
 import { nameSimilarity, normalizeString } from "../utils/string-similarity.js";
 import {
   countryConsistency,
-  mapWithConcurrency,
   placeSegments,
   standardPlaceToCoords,
+  type PlaceCoords,
 } from "../utils/place-resolver.js";
+import { birthThresholdMiles, lookupPlaceCoords, type PlaceCoordsResolver } from "../utils/place-coords.js";
+
+// Re-exported: tests and callers reach these through this module, their first home.
+export { lookupPlaceCoords, type PlaceCoordsResolver };
 import { earliestIsUnbounded, earliestYear, latestIsUnbounded, latestYear } from "../utils/date-helpers.js";
 import { haversineDistance } from "./distance.js";
 import { preferredName } from "../utils/name-helpers.js";
@@ -4297,10 +4301,6 @@ export function calculateWarnings(
 // coordinates, a network lookup, and calculateWarnings stays synchronous and
 // offline for the write gate and merge_warnings.
 
-export type PlaceCoordsResolver = (
-  standardPlace: string,
-) => Promise<{ latitude: number; longitude: number } | null>;
-
 export interface PersonWarningsOptions {
   /** Coordinates for a standard place name; null when unknown. Default: Places lookup. */
   placeCoords?: PlaceCoordsResolver;
@@ -4309,7 +4309,6 @@ export interface PersonWarningsOptions {
 }
 
 export const PLACE_LOOKUP_BUDGET_MS = 30_000;
-const PLACE_LOOKUP_CONCURRENCY = 4;
 const BIRTH_RESIDENCE_WINDOW_YEARS = 20;
 const BIRTH_ANCHOR_TYPES = ["Birth", "Christening", "Baptism"] as const;
 
@@ -4334,15 +4333,6 @@ function boundedYears(fact: SimplifiedFact): { minYear: number; maxYear: number 
   const minYear = earliestYear(std);
   const maxYear = latestYear(std);
   return minYear === null || maxYear === null ? null : { minYear, maxYear };
-}
-
-/** The era threshold; a range touching more than one era gets the most generous. */
-function birthThresholdMiles(minYear: number, maxYear: number): number {
-  let miles = 0;
-  if (minYear < 1850) miles = Math.max(miles, 25);
-  if (minYear <= 1949 && maxYear >= 1850) miles = Math.max(miles, 250);
-  if (maxYear >= 1950) miles = Math.max(miles, 500);
-  return miles;
 }
 
 /**
@@ -4380,46 +4370,11 @@ export function birthResidencePairs(mob: Mob): BirthResidencePair[] {
   return pairs;
 }
 
-/** Look up every distinct place once; a name not resolved within the budget stays null. */
-export async function lookupPlaceCoords(
-  names: string[],
-  resolver: PlaceCoordsResolver,
-  budgetMs: number,
-): Promise<Map<string, { latitude: number; longitude: number } | null>> {
-  const coords = new Map<string, { latitude: number; longitude: number } | null>();
-  const distinct = [...new Set(names)];
-  for (const name of distinct) coords.set(name, null);
-  let timer: ReturnType<typeof setTimeout> | undefined;
-  let expired = false;
-  const lookups = mapWithConcurrency(distinct, PLACE_LOOKUP_CONCURRENCY, async (name) => {
-    if (expired) return;
-    let found: { latitude: number; longitude: number } | null = null;
-    try {
-      found = await resolver(name);
-    } catch {
-      found = null;
-    }
-    if (!expired) coords.set(name, found);
-  });
-  const cap = new Promise<void>((resolve) => {
-    timer = setTimeout(() => {
-      expired = true;
-      resolve();
-    }, budgetMs);
-  });
-  try {
-    await Promise.race([lookups, cap]);
-  } finally {
-    clearTimeout(timer);
-  }
-  return coords;
-}
-
 /** The first pair farther apart than its era allows, as a warning; pairs with an unknown place are skipped. */
 export function checkBirthFarFromParentsResidence(
   mob: Mob,
   pairs: BirthResidencePair[],
-  coords: Map<string, { latitude: number; longitude: number } | null>,
+  coords: Map<string, PlaceCoords | null>,
 ): PersonWarning | null {
   for (const pair of pairs) {
     const a = coords.get(pair.birth.place);
