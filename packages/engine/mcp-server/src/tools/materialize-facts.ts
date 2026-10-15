@@ -585,6 +585,30 @@ function applyNamedPartyOp(
   // assertions on this record.
   const existingId = str(op.personId);
   if (existingId !== undefined) {
+    // The naming assertion is linked to both of its parties, so its link to the
+    // assertion's OWN party (the groom, when the bride is named) is about him.
+    // A target the own persona is linked to is that persona, never the party
+    // the assertion names, whatever link the naming assertion carries to it.
+    const ownRole = String(assertion.record_role ?? "");
+    const ownPersona = new Set<string>(
+      (Array.isArray(research.assertions) ? research.assertions : [])
+        .filter(
+          (a: any) =>
+            a && a.record_id === recordId && a.record_role === ownRole &&
+            typeof a.id === "string" && !isRelationshipEstablishing(a.fact_type),
+        )
+        .map((a: any) => a.id),
+    );
+    const isOwnParty = ((research.person_evidence ?? []) as any[]).some(
+      (e) => e && !e.superseded_by && e.person_id === existingId && ownPersona.has(e.assertion_id),
+    );
+    if (isOwnParty) {
+      throw new MaterializeFactsError(
+        `'${existingId}' is linked to record '${recordId}' role '${ownRole}', the persona assertion ` +
+          `'${assertionId}' belongs to, so it is not the '${relatedRole}' that assertion names. ` +
+          "Pass the person who is that party, or omit personId to mint them.",
+      );
+    }
     const qualifying = new Set<string>([assertionId]);
     for (const a of siblings) {
       if (typeof a.id === "string" && !isRelationshipEstablishing(a.fact_type)) qualifying.add(a.id);

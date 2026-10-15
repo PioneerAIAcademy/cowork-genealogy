@@ -283,7 +283,11 @@ qualify.
 - **Named-party arm (§4.6):** the assertion naming the party, or one of the
   related role's own one-party assertions on the record. The check runs on the
   tree as it stood before the op, because the op's own name write attaches this
-  record's ref, after which any person reads as the record's stub.
+  record's ref, after which any person reads as the record's stub. A target that
+  the assertion's own persona is linked to is refused outright: the naming
+  assertion is linked to both of its parties, so its link to its own party (the
+  groom, when the bride is named) would otherwise let the bride's name and facts
+  land on him.
 
 Minting needs no link (the link to a new person is written after it exists),
 and neither does re-running a record onto the stub it minted

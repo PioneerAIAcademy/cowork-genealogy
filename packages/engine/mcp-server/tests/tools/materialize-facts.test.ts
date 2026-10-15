@@ -378,6 +378,33 @@ describe("materialize_facts", () => {
       expect((await nameParty()).ok).toBe(true);
     });
 
+    it("refuses a named party onto the assertion's own party, though the naming assertion is linked to him", async () => {
+      // The agent links the marriage assertion to both parties, so it is linked
+      // to the groom too; pointed at him, the bride's name and birth must not land.
+      const r = research({
+        sources: [S1],
+        assertions: [...namedBride(), assertion("a_023", { record_id: "REC-MARR", record_role: "groom", fact_type: "name", value: "Thomas Flynn" })],
+      });
+      const GROOM = { id: "I3", gender: "Male", names: [{ id: "N3", given: "Thomas", surname: "Flynn" }] };
+      r.person_evidence = [
+        pe("probable", { id: "pe_001", assertion_id: "a_023", person_id: "I3" }),
+        pe("probable", { id: "pe_002", assertion_id: "a_021", person_id: "I3" }),
+        pe("probable", { id: "pe_003", assertion_id: "a_021", person_id: "I2" }),
+      ];
+      await writeProject(tree({ persons: [MARY, GROOM] }), r, { link: false });
+      const out = single(
+        await materializeFacts({
+          projectPath: dir, personId: "I3", assertionId: "a_021", relatedRole: "bride",
+          name: { given: "Mary", surname: "Doyle" },
+        }),
+      );
+      expect(out.ok).toBe(false);
+      if (!out.ok) expect(out.errors[0]).toContain("is not the 'bride'");
+      const him = findPerson(await readTree(), "I3");
+      expect(him.names).toHaveLength(1);
+      expect(him.facts ?? []).toHaveLength(0);
+    });
+
     // A person the project began with is not a stub this record minted, even
     // when her only refs reach this record. One case per arm, so dropping the
     // baseline at either call fails a test.
