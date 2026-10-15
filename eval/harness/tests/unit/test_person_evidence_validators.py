@@ -392,6 +392,64 @@ def test_materialized_stands_down_on_unmaterializable_fact_types():
         )
 
 
+@pytest.mark.parametrize(
+    "fact_type",
+    ["marriage_intention", "marriage_bann", "marriage_date",
+     "Marriage Banns", "marriage_licence", "divorce"],
+)
+def test_materialized_stands_down_on_every_couple_event_spelling(fact_type):
+    """Only the exact string `marriage` stood this down before, so every other
+    spelling of a couple event made the validator demand a person-level fact the
+    engine will never write. `marriage_intention`, `marriage_bann` and
+    `marriage_date` each came out of a live e2e run. Mirrors
+    COUPLE_EVENT_FACT_KEYS in record-persona.ts, folded the same way."""
+    after = {
+        "assertions": [{"id": "a_005", "record_persona_id": None,
+                        "fact_type": fact_type}],
+        "person_evidence": [{"id": "pe_012", "assertion_id": "a_005",
+                             "person_id": "I2"}],
+    }
+    with pytest.raises(pytest.skip.Exception):
+        check_materialized(
+            _state({"assertions": after["assertions"], "person_evidence": []}, _tree("I2")),
+            _state(after, _tree("I2")),
+            [],
+            _TAGGED,
+        )
+
+
+def test_materialized_still_fires_on_an_ordinary_fact_that_looks_adjacent():
+    """The other direction. Folding must not swallow a real person fact: a
+    guard that over-reached here would stand the validator down on evidence it
+    exists to demand."""
+    after = {
+        "assertions": [{"id": "a_005", "record_persona_id": None,
+                        "fact_type": "marriage_record_number"}],
+        "person_evidence": [{"id": "pe_012", "assertion_id": "a_005",
+                             "person_id": "I2"}],
+    }
+    # NOT `pytest.raises(AssertionError)`: an over-reaching fold stands the
+    # validator DOWN, which raises skip.Exception, and pytest would report this
+    # test as skipped rather than failed — green CI past the bug it exists to
+    # catch. Catch the stand-down explicitly and fail on it.
+    try:
+        check_materialized(
+            _state({"assertions": after["assertions"], "person_evidence": []}, _tree("I2")),
+            _state(after, _tree("I2")),
+            [],
+            _TAGGED,
+        )
+    except pytest.skip.Exception:
+        pytest.fail(
+            "stood down on `marriage_record_number` — the couple-event fold "
+            "over-reached and swallowed an ordinary person fact"
+        )
+    except AssertionError:
+        pass  # expected: the validator fires, demanding the materialized fact
+    else:
+        pytest.fail("validator neither fired nor stood down")
+
+
 def test_materialized_stands_down_when_the_person_is_new():
     """§5 already owns the newly minted case and its own validator checks it."""
     after = {

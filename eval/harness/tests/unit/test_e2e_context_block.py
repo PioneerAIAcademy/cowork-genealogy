@@ -918,3 +918,41 @@ def test_a_run_with_no_result_message_carries_no_ledger(tmp_path, monkeypatch):
     )[2]
     assert usage is not None and usage.get("total_cost_usd") is None  # the fallback block
     assert "model_usage" not in usage
+
+
+def test_narration_thread_is_main_only_without_a_parent_tool_use_id(tmp_path, monkeypatch):
+    """Drives `_run_agent`'s assistant-narration branch. The AST pin in
+    test_e2e_orchestrator.py proves the `thread` key exists; only this proves its
+    polarity, which is the whole relay-fidelity selection (#3188)."""
+    from claude_agent_sdk import AssistantMessage, TextBlock
+    from harness.auth import AuthConfig
+
+    monkeypatch.setattr(
+        orchestrator,
+        "resolve_auth",
+        lambda: AuthConfig(skill_runner_mode="api_key", api_key="x", detail="stub"),
+    )
+
+    def fake_query(**kw):
+        return _HookDrivingAgent(
+            None,
+            [],
+            [
+                SystemMessage(subtype="init", data={"session_id": "S1"}),
+                AssistantMessage(content=[TextBlock(text="main says")], model="m"),
+                AssistantMessage(
+                    content=[TextBlock(text="sub says")],
+                    model="m",
+                    parent_tool_use_id="toolu_agent",
+                ),
+                _result(),
+            ],
+            {},
+        )
+
+    monkeypatch.setattr(orchestrator, "query", fake_query)
+    narration = asyncio.run(
+        _run_agent(fixture=_fixture(tmp_path), workspace=tmp_path, mcp_server_entry=Path("dummy"))
+    )[1]
+    threads = {n["text"]: n.get("thread") for n in narration if n.get("kind") == "assistant"}
+    assert threads == {"main says": "main", "sub says": "sub"}, narration

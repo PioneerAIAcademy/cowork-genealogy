@@ -26,11 +26,26 @@ A *case* is that zip unpacked into a working research project — not an archive
 The point of the shape below is that a triager can open the folder, re-issue
 the tester's prompt, and watch the same failure happen against the same state.
 
-Two producers emit the bundle — the Electron viewer
-(`apps/electron/src/main/feedback.ts`) and the hosted web workbench
-(`apps/server/app/feedback.py`). They emit the **same** structure so the triage
-workflow consumes either unchanged; `feedback.json`'s `platform` field is what
-tells you which one you have.
+Three producers emit the bundle — the Electron viewer
+(`apps/electron/src/main/feedback.ts`), the hosted web workbench
+(`apps/server/app/feedback.py`), and the search-agent prototype's web tier
+(`apps/server/proto/web/feedback.py`, U20). They emit the **same** structure so
+the triage workflow consumes any of them unchanged; `feedback.json`'s `platform`
+field is what tells you which kind you have. The prototype also says `"web"`:
+its `viewer_version` is `web <built_at> (<git_sha>)` from the Beanstalk bundle's
+`BUILD-INFO.json`, or `web dev (dev)` off a bundle.
+
+**The prototype stores its bundle and sends it nowhere.** It reads the project
+from Postgres and S3 instead of a folder (`documents` rows, rendered the way the
+engine's `readText` renders them, and `blobs` bytes; `results/.staging/` is
+skipped as the alpha's walker skipped dot-dirs) and the transcript from
+`session_entries` instead of `~/.claude/projects/`. The zip goes to the data
+bucket at `feedback/<owner_id>/<project_id>/feedback-<ts>-<hex>.zip` — no
+Drive, no Apps Script, so **no triage issue is opened** (where it goes next is
+the lead's open question, behind `forward_stored_feedback`). A lifecycle rule
+expires `feedback/` at 90 days. The pure half of the alpha's code is vendored
+into the prototype, and `apps/server/tests/test_proto_feedback.py`'s parity
+tests hold the two copies equal.
 
 ## 2. Capture-time guarantees
 
@@ -153,6 +168,18 @@ consumer reading only the main log cannot tell a clean session from an unseen
 one. Layout, the rejected merge, and the no-`agentType`-filter rule:
 `apps/electron/docs/feedback-json-spec.md` §6.
 
+**The prototype's transcript** is the same layout built from `session_entries`
+rows: a `(session_id, subpath)` group per file, one compact JSON line per row in
+`seq` order, a subagent's `agent_metadata` rows becoming its `.meta.json` (the
+last one, `type` dropped, as the SDK's own resume materialiser writes it), and
+each group's largest `seq` standing in for a file's mtime in "newest first". The
+active session is the web session's `sdk_session_id`. Rows are streamed in
+500-row batches, so a transcript over what is left of the shared budget stops
+at the first batch past it and is named `(over the transcript size budget)` —
+where the alpha would have read it whole first. A nested subagent subpath
+(`subagents/workflows/…`), which the alpha's one-level directory read never saw
+either, is named as not bundled.
+
 ### 2.3 API-key redaction
 
 A tester who pasted an OpenRouter or Anthropic key into the chat has it in the
@@ -187,6 +214,18 @@ Tests: `test_session_log_redacts_api_keys_in_every_member_of_the_set`
 (`apps/server/tests/test_feedback.py`) and its named mirror in
 `apps/electron/src/main/__tests__/feedback.test.ts`, both of which plant a key
 in the parent, the child, and the child's meta.
+
+**Bearer tokens (prototype only).** The prototype's worker writes the owner's
+FamilySearch access token into its per-turn `mcp.json` as
+`Authorization: Bearer …`. A turn that read that file would leave the token in a
+`session_entries` tool result, which the three `sk-` shapes do not match. The
+worker now refuses that read (`apps/server/proto/worker/deny.py`), and the
+prototype's `admit` and its form fields add two passes after the API-key one:
+any `Bearer <16+ token characters>` becomes `Bearer [REDACTED_TOKEN]` — an
+older turn's row holds the token *that* turn had, possibly rotated since — and
+the owner's current access and refresh tokens are replaced literally, for token
+text with no `Bearer` in front. Test: `test_living_people_api_keys_and_tokens_are_redacted`
+(`apps/server/tests/test_proto_feedback.py`).
 
 ## 3. The case directory contract
 

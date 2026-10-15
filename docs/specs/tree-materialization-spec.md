@@ -522,9 +522,16 @@ substitution does not explain still fails.
 
 Never sets `primary`/`preferred`; never resolves conflicts; never collapses
 or merges persons; never writes relationships (those are `tree_edit`
-`add_relationship`, see §8); never materializes a `marriage` assertion as a
-person-level fact (added 2026-07-27, `SKIP_TYPES` in `materialize-facts.ts`).
-A marriage is a Couple-relationship event — per `tree_edit`'s own convention
+`add_relationship`, see §8); never materializes a **couple event** as a
+person-level fact (added 2026-07-27 as `marriage` alone, `SKIP_TYPES` in
+`materialize-facts.ts`; widened to every couple event in any spelling by
+`COUPLE_EVENT_FACT_KEYS` in `record-persona.ts`). `fact_type` is an open enum,
+so one event arrives spelled several ways — `marriage_bann`, `Marriage Banns`
+and `MarriageBanns` are one event — and the key is matched folded (lowercased,
+non-alphanumerics stripped) rather than raw. Matching the raw string skipped
+only `marriage`: three live e2e runs wrote `marriage_intention`,
+`marriage_bann` and `marriage_date` onto a person, and no fixture carries any of
+them. A marriage is a Couple-relationship event — per `tree_edit`'s own convention
 ("a Marriage/Divorce fact lives on the Couple, never duplicated onto each
 spouse"), it can never be a correct person-level write, not just usually a
 wrong one, so the tool silently skips it rather than relying on caller
