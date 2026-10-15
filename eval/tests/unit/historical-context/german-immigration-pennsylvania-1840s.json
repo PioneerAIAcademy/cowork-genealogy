@@ -11,6 +11,9 @@
     "delegation": "My ancestor immigrated from Germany to Pennsylvania around 1845. What historical context should I know about German immigration during that period, and how does it affect my research?",
     "scenario": null
   },
+  "execution": {
+    "max_wall_clock_seconds": 600
+  },
   "mcp_fixtures": [
     "wiki-search-german-ancestors",
     "wiki-search-german-church-records",
