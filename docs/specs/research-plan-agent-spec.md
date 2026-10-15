@@ -145,7 +145,8 @@ test file. Until then `test_objective_target_leads_the_plan` has no tagged test.
 | ~~`locality-survey-guide.md`~~ | deleted | Named by nothing. A genealogist's verdict (2026-08-24, `docs/deep-dives/research-plan-findings-2026-08-24.md`) found every live item restated elsewhere. Its substitute-sources passage is place-shaped and belongs in the `localities` entry. |
 
 The skill-to-agent conversion deleted `references/` and folded these two files
-verbatim into the agent as Appendix A and Appendix B.
+into the agent as Appendix A and Appendix B, with the edits named at the top of
+this spec.
 
 ## 5. Wiki slugs probed (2026-10-02)
 

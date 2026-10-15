@@ -502,9 +502,14 @@ _FORBIDDEN_SKILL = "locality-guide"
 def test_research_plan_no_out_of_lane_tools(
     tool_calls, attempted_mcp_calls, skills_invoked, builtin_tool_calls=None
 ):
-    """research-plan states "You have no place-survey tools" (SKILL.md Step 2).
-    Fail on any call OR attempt of wiki_search / wiki_place_page /
+    """research-plan states "You have no place-survey tools" (the agent body's
+    Step 2). Fail on any call OR attempt of wiki_search / wiki_place_page /
     place_population, or delegation to locality-guide. Issue #1866 V2.
+
+    The agent holds none of these tools and no spawn tool (its `tools:` list,
+    pinned by agent-tool-names.test.ts), so on the direct arm this gate catches
+    a widened grant or a dispatcher that strays from its one Agent call, not a
+    call the agent can make today.
     `wiki_read` is granted since issue #2251 for the Step 3 record-type
     pre-work and is deliberately not in the prohibition.
 

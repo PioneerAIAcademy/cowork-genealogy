@@ -38,19 +38,21 @@ The bridge between planning (research-plan) and extraction (`extraction_append`)
 | Condition | Action |
 |-----------|--------|
 | User names a non-FamilySearch site (Ancestry, MyHeritage, FindMyPast, FindAGrave, Newspapers.com, or any other commercial site) | Spawn `@plugin:search-external-sites` — stop |
-| User asks what to search, which records to check, whether research is complete, how to find someone, or what to do next (any strategy question rather than executing an already-planned search) | Spawn `@plugin:research-plan` with `projectPath`, and the question id only when the request already names it — never the plan or record type you expect it to choose — stop |
+| User asks what to search, which records to check, how to find someone, or what to do next (any strategy question rather than executing an already-planned search) | Spawn `@plugin:research-plan` with `projectPath`, and the question id only when the request already names it — never the plan or record type you expect it to choose — stop, unless its return hands execution back as already authorized: then execute the FamilySearch item it names (Step 1 onward) and spawn `@plugin:search-external-sites` for any other |
+| User asks whether research on a question is complete | Spawn `@plugin:research-exhaustiveness` with `projectPath`, and the question id only when the request already names it — never your own view of whether it is done — stop |
 | User wants to analyze, extract from, or interpret a record already in hand | `extraction_append({ recordIds })` for a FamilySearch record, `@plugin:record-structurer` for any other source — stop |
 
 **The key test:** is the user asking you to EXECUTE a search or to DECIDE what to search?
 - "Search for X" / "Find X in Y records" / "Execute pli_001" → execute (proceed below)
-- "What should I search for?" / "What next?" / "How do I find X?" / "Is the research done?" → spawn `@plugin:research-plan` immediately
+- "What should I search for?" / "What next?" / "How do I find X?" → spawn `@plugin:research-plan` immediately
+- "Is the research done?" → spawn `@plugin:research-exhaustiveness` immediately
 
 **CRITICAL — do NOT call `Skill("project-status")` before routing.** research-plan handles its own project reading; call it with no prior tool calls.
 
 ❌ WRONG: `Skill("project-status")` → read project → answer with research recommendations  
 ✅ CORRECT: spawn `@plugin:research-plan` with no prior tool calls → stop
 
-After any routed Skill call or agent spawn, stop. Do not read files, call MCP tools, or provide supplementary information; relay a spawned agent's return as it came back.
+After any routed Skill call or agent spawn, stop, except for an authorized hand-back from research-plan (above). Do not read files, call MCP tools, or provide supplementary information; relay what a spawned agent's return prints after its `---` line, as it came back.
 
 ## GPS Grounding
 
@@ -85,7 +87,7 @@ step, and stop. The caller decides what runs next.
 
 Find the next plan item with `status: "planned"` in the active plan for the
 current question. If you already hold the active plan and its item statuses in
-context from this run (e.g. research-plan just wrote it), work from that — don't
+context from this run, work from that — don't
 re-read `research.json` "to be safe"; the writer tools validate the whole project
 on every write, so the in-context view can't be silently stale.
 
@@ -96,9 +98,9 @@ grows all run, so a whole-file read costs more context every time.
 **At most one such call per invocation, and only when you are actually missing
 something.** Ask for `plans` — the plan item you are executing and its status —
 and nothing else; not `questions`, since the question is already in the plan item.
-Do not re-query between searches in this invocation. If the plan item arrived
-in your prompt, in a hand-off, or from `research-plan` earlier in this same run,
-issue no query at all.
+Do not re-query between searches in this invocation. If the full plan item
+arrived in your prompt or a hand-off, issue no query at all. A spawned agent's
+return names an item but is not the item: query it.
 
 **Planned or ad-hoc — decide before you search.** The line is *who chose the
 search*, not whether a plan exists.

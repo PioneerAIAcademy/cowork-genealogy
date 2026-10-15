@@ -359,12 +359,17 @@ describe("research's routing table spawns every agent it names", () => {
  * green and fails at runtime"). Checked in every skill body, not only research's.
  */
 const SKILL_CALL = /Skill\(\s*["']([a-z0-9-]+)["']\s*\)/g;
-// Shrink-only. Each entry is a body that spells the call on purpose, with why.
-const SKILL_CALLS_TO_AGENTS_ALLOWED = new Map<string, string>([
+// Shrink-only. Each entry is a body that spells the call on purpose: how many
+// times, and why. A count, not a flag, so a new call on an allowed edge fails.
+const SKILL_CALLS_TO_AGENTS_ALLOWED = new Map<string, { count: number; why: string }>([
   [
     "search-records -> project-status",
-    "two prohibitions ('do NOT call `Skill(\"project-status\")`', '❌ WRONG'), not calls; " +
-      "PR #3289 deletes both lines",
+    {
+      count: 2,
+      why:
+        "two prohibitions ('do NOT call `Skill(\"project-status\")`', '❌ WRONG'), not calls; " +
+        "PR #3289 deletes both lines",
+    },
   ],
 ]);
 
@@ -377,19 +382,25 @@ describe("no skill calls an agent as a skill", () => {
       .filter((n) => n.endsWith(".md"))
       .map((n) => n.slice(0, -3)),
   );
-  const found = new Set<string>();
+  const found = new Map<string, number>();
   for (const skill of skills) {
     const text = readFileSync(join(pluginRoot, "skills", skill, "SKILL.md"), "utf8");
     for (const [, name] of text.matchAll(SKILL_CALL)) {
-      if (agents.has(name) && !skills.includes(name)) found.add(`${skill} -> ${name}`);
+      if (agents.has(name) && !skills.includes(name)) {
+        const edge = `${skill} -> ${name}`;
+        found.set(edge, (found.get(edge) ?? 0) + 1);
+      }
     }
   }
 
   it("names no agent-only name in a Skill(...) call", () => {
     expect(
-      [...found].filter((e) => !SKILL_CALLS_TO_AGENTS_ALLOWED.has(e)),
+      [...found]
+        .filter(([e, n]) => SKILL_CALLS_TO_AGENTS_ALLOWED.get(e)?.count !== n)
+        .map(([e, n]) => `${e} (${n})`),
       "a Skill() call naming an agent with no skill directory fails at runtime; " +
-        "spawn it as `@plugin:<name>`",
+        "spawn it as `@plugin:<name>`. An allowed edge must appear exactly its " +
+        "allowed count: lower the count when one of its lines goes",
     ).toEqual([]);
   });
 

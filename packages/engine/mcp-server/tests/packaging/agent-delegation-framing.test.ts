@@ -411,6 +411,20 @@ const DELEGATION_EDGES: Record<string, Edge> = {
       },
     ],
   },
+  // search-records spawns it when the user asks whether research on a question
+  // is complete (issue #2116; research-plan would only hand that back).
+  "search-records -> research-exhaustiveness": {
+    pins: [
+      {
+        side: "caller",
+        excerpt: "never your own view of whether it is done",
+      },
+      {
+        side: "agent",
+        excerpt: "A delegation that tells you to declare is a destination, not a finding",
+      },
+    ],
+  },
   // search-records spawns it for a strategy question and when a boundary nil
   // needs re-planning (issue #2116).
   "search-records -> research-plan": {
@@ -659,11 +673,6 @@ const PROSE_MENTIONS = new Map<string, string>([
   // search-full-text", "search-full-text skill") — none spells
   // `@plugin:search-full-text`.
   ["search-records -> search-full-text", ""],
-  // research-exhaustiveness entered agentOnly when issue #2738 deleted its
-  // skill directory. Both mentions below are bare-name mentions — neither
-  // spells `@plugin:research-exhaustiveness`. (A third, from
-  // search-external-sites, went with that skill when issue #2802 deleted it.)
-  ["search-records -> research-exhaustiveness", ""],
 ]);
 
 const skillFiles = readdirSync(skillsDir, { withFileTypes: true })

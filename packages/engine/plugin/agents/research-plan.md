@@ -166,8 +166,8 @@ From the question's `rationale` and `selection_basis`, determine:
 
 You always start cold: you run in fresh context, and a delegation message is a
 caller's summary, not project state. Read the project yourself every time —
-`project_context` for the objective, the questions and the `localities`
-entries, `research_query` for the `plans` and `log` sections, and `Read` on
+`project_context` for the objective and the questions, `research_query` for
+the `plans`, `log`, `localities` and `proof_summaries` sections, and `Read` on
 `tree.gedcomx.json` for the persons. (Step 1a requires reading **all plans for
 the target question** before you pick the mode.)
 

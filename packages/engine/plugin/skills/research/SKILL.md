@@ -275,7 +275,7 @@ it by name.
    **Every spawn names `projectPath` and the id the agent works on** — a
    `questionId` for `@plugin:research-exhaustiveness`,
    `@plugin:proof-conclusion` and `@plugin:research-plan` (plus, when disposing,
-   the `pli_` ids research-exhaustiveness named), the assertion ids for
+   a `planItemIds:` line with the `pli_` ids research-exhaustiveness named), the assertion ids for
    `@plugin:person-evidence`, the conflict or competing assertion ids for
    `@plugin:conflict-resolution`, the `h_`/`c_`/assertion ids at issue for
    `@plugin:hypothesis-tracking`, one jurisdiction and its period per call for
