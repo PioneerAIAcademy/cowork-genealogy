@@ -4,17 +4,17 @@
     "skill": "search-familysearch-wiki",
     "name": "FamilySearch wiki — census records",
     "type": "positive",
-    "description": "User asks how to use census records on FamilySearch. Also verifies slug normalization — topic 'census records' should save as census-records.md.",
-    "tags": ["fs-wiki", "how-to", "census", "slug-normalization", "expects-file-census-records", "direct-arm"]
+    "description": "User asks how to use census records on FamilySearch, and the logged notes must keep the census era boundaries the chunk states.",
+    "tags": ["fs-wiki", "how-to", "census", "title-normalization", "direct-arm"]
   },
   "input": {
-    "delegation": "Search the FamilySearch wiki for how to use census records to trace my family",
-    "scenario": null
+    "delegation": "Search the FamilySearch wiki for how to use census records to trace my family\n\nprojectPath: <workspace>",
+    "scenario": "empty-project-just-created"
   },
   "mcp_fixtures": ["wiki-search-census-records"],
   "judge_context": [
     "Should call the FamilySearch wiki with a query about using census records on FamilySearch",
-    "The saved file should be named census-records.md — lowercase, hyphenated, no extra characters",
+    "The logged entry's notes should open with '# FamilySearch Wiki: ' and the question's core noun phrase (census records), not the whole question",
     "Summary should only reflect what the wiki actually said — no invented census years, states, or coverage details"
   ]
 }

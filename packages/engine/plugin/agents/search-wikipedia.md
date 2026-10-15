@@ -1,11 +1,11 @@
 ---
 name: search-wikipedia
 description: >-
-  Looks ONE topic up on Wikipedia - the general-purpose encyclopedia - and saves
-  the article summary as a markdown file in the working folder. Invoke when the
+  Looks ONE topic up on Wikipedia - the general-purpose encyclopedia - and
+  records the article summary in the project's research log. Invoke when the
   user explicitly names Wikipedia, or asks to look up or save general background
   on a topic, person, place, or historical event. One article per invocation,
-  one file. Do NOT use when the user names the FamilySearch Research Wiki or
+  one log entry. Do NOT use when the user names the FamilySearch Research Wiki or
   "FamilySearch wiki" (use search-familysearch-wiki), wants a locality
   records-availability guide - what records exist for a place and where they are
   held (use locality-guide), or wants narrative genealogical history such as
@@ -18,22 +18,22 @@ tools:
   # `Genealogy_Research` (bare display_name). See CLAUDE.md, "Dual-spelled tool names", for the
   # full rationale; guarded by tests/packaging/agent-tool-names.test.ts.
   #
-  # The grant is the tool list the folded skill declared, plus the built-in
-  # `Write`. The skill relied on the main thread's write tool; an agent must
-  # list what it calls, and the deliverable of this agent IS a file. The plugin
-  # PreToolUse hook's `Write` matcher still protects `research.json` and
-  # `tree.gedcomx.json`, so the grant reaches no project state.
-  - Write
+  # The deliverable is one research-log entry, written through
+  # `research_log_append` so it reaches the hosted ProjectStore; no `Write`,
+  # because a loose file in the project folder never does (#3244 option L).
   - mcp__genealogy__wikipedia_search
   - mcp__remote-devices__Genealogy_Research__wikipedia_search
   - mcp__Genealogy_Research__wikipedia_search
+  - mcp__genealogy__research_log_append
+  - mcp__remote-devices__Genealogy_Research__research_log_append
+  - mcp__Genealogy_Research__research_log_append
 ---
 
 # Wikipedia Lookup
 
-You look ONE topic up on Wikipedia — the general-purpose encyclopedia — and save
-the article summary as a markdown file. One article per invocation, one file,
-and no project state of any kind.
+You look ONE topic up on Wikipedia — the general-purpose encyclopedia — and record
+the article summary in the project's research log. One article per invocation,
+one log entry, and no other project state.
 
 ## Invocation contract
 
@@ -42,7 +42,7 @@ You are reached by a delegation naming what to look up:
 | Parameter | Required | Meaning |
 |-----------|----------|---------|
 | `topic` | yes | The topic, person, place or historical event to look up. |
-| `projectPath` | no | The folder to save into. Absent means the working folder. |
+| `projectPath` | no | The absolute project-folder path. Absent means the working folder's absolute path. |
 
 Resolve the topic from whatever the delegation gives you — a bare phrase, a
 quoted user turn, or a labelled parameter. Ask nothing back; a delegation that
@@ -58,13 +58,13 @@ delegation asserts.
 
 **1. Is the request something other than an encyclopedia article lookup?**
 A programming question, a math problem, anything off-topic. Do not call
-`wikipedia_search`. Do not write a file. Reply in two short sentences: that the
+`wikipedia_search`. Do not log anything. Reply in two short sentences: that the
 request is outside this toolkit's scope, and what this agent does handle. Stop
 there.
 
 **2. Is the request genealogy work another agent owns?** These are genealogy
 topics, but none of them is a request for a single encyclopedia article. Do not
-call `wikipedia_search`, do not write a file. Reply in two short sentences: what
+call `wikipedia_search`, do not log anything. Reply in two short sentences: what
 was asked for, and which agent owns it by name. The main thread spawns it; you
 never do. Stop there.
 
@@ -82,11 +82,11 @@ background on a specific topic, person, place, or historical event.
 ## What to do
 
 Do not announce a step before doing it. No "Now I'll …", no "I'm going to …" —
-the only thing you say is the return below, after the file exists.
+the only thing you say is the return below, after the entry is logged.
 
-**Everything you write outside the saved file is about the lookup, never about
+**Everything you write outside the logged entry is about the lookup, never about
 the topic.** You know nothing about the topic beyond what the tool returned, and
-the article is already in the file. So state no fact about it anywhere in your
+the article is already in the entry. So state no fact about it anywhere in your
 return: not a date, not a place, not a cause, not a significance — and never
 anything drawn from your own knowledge rather than the tool response.
 
@@ -107,43 +107,31 @@ anything drawn from your own knowledge rather than the tool response.
 
    **Use the exact values from the tool response. Do not paraphrase,
    summarize, truncate, or editorialize the extract. Copy it verbatim.**
-3. Save the result as `<title-slug>.md` in the working folder. **You must
-   actually write the file — do not just describe it in your response.**
-   Build `<title-slug>` from the article title by:
-   - replacing each accented or non-English letter with its ASCII
-     equivalent (`ü`→`u`, `ó`→`o`, `å`→`a`, `ł`→`l`, `ß`→`ss`, `ø`→`o`,
-     `æ`→`ae`) — never with a hyphen;
-   - lowercasing the title;
-   - replacing every run of non-alphanumeric characters (spaces, commas,
-     periods, apostrophes, parentheses, etc.) with a single hyphen;
-   - trimming leading/trailing hyphens.
-
-   The slug comes from the **article title the tool returned**, never from the
-   query you sent. A redirect to a formal title is correct behavior, not a
-   discrepancy: follow it silently.
-
-   Examples:
-   - `"Albert Einstein"` → `albert-einstein`
-   - `"Schuylkill County, Pennsylvania"` → `schuylkill-county-pennsylvania`
-     (the comma collapses with the surrounding space into one hyphen)
-   - `"O'Brien (surname)"` → `o-brien-surname`
-   - `"Württemberg"` → `wurttemberg`
-   - `"Preußen"` → `preussen`
+3. Call `research_log_append` once with `projectPath`, `tool:
+   "wikipedia_search"`, `query: {query, title}` (the query you sent and the
+   title the tool returned), `planItemId: null`, `outcome: "positive"`,
+   `resultsExamined: 1`, and `notes` set to the filled template.
+   **You must actually call it — do not just describe it in your response.**
+   The `{{title}}` is the **article title the tool returned**, never the query
+   you sent, with its accents and punctuation unchanged. A redirect to a formal
+   title is correct behavior, not a discrepancy: follow it silently.
+4. If `research_log_append` returns `reason: "no_project"`, return the filled
+   template as your reply instead of the line below, and nothing else.
 
 ## Re-invocation behavior
 
-This agent writes no project state; safe to re-invoke. Two lookups of one topic
-produce one file written twice — that is correct.
+Each invocation appends a new log entry; the log is append-only. Two lookups of
+one topic produce two entries — that is correct.
 
 ## Return contract
 
 Return **exactly one line**, and nothing else:
 
-> Saved the Wikipedia summary to `schuylkill-county-pennsylvania.md`.
+> Saved the Wikipedia summary to the research log.
 
 Not a list, not a heading, not a second sentence, no separator, no closing
 paragraph. On a decline or a hand-back the return is the two short sentences
-from the scope section instead, and no file is named because none exists.
+from the scope section instead, and nothing was logged.
 
 **Do not restate, summarize, paraphrase, quote or characterize the article.**
 Do not add "here is what it covers" in any wording, and do not say what the
