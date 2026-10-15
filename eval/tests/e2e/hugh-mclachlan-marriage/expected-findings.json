@@ -3,15 +3,15 @@
     {
       "id": "f1",
       "type": "fact",
-      "description": "Hugh Mclachlan married Catherine Muir in 1845 in the parish of Kilninian, Argyll, Scotland (Isle of Mull); the index gives the year only.",
+      "description": "Hugh Mclachlan married Catherine Muir on 30 May 1845 in the parish of Kilninian and Kilmore, Argyll, Scotland (Isle of Mull).",
       "details": {
         "subject_person": "Hugh Mclachlan (KCWN-N2T)",
         "fact_type": "Marriage",
-        "date": "1845",
-        "place": "Kilninian, Argyll, Scotland"
+        "date": "30 May 1845",
+        "place": "Kilninian and Kilmore, Argyll, Scotland"
       },
       "supporting_sources": [
-        "Scotland, Marriages, 1561-1910 — marriage entry for Hugh McLachlan and Catherine Muir, 1845, Kilninian, Argyll (ark:/61903/1:1:XTK4-QYM)",
+        "Scotland, Marriages, 1561-1910 — marriage entry for Hugh McLachlan and Catherine Muir, 30 May 1845, Kilninian and Kilmore, Argyll, entered in a Tobermory parish register (ark:/61903/1:1:XTK4-QYM)",
         "Scotland, Census, 1861 — household of Cathrine McLachlin, widow, Campbeltown, Argyll: Cathrine born Saddell; daughters Flora (about 1847) and Annie (about 1849) born Tobermory, in Kilninian and Kilmore parish (ark:/61903/1:1:VB78-JSC)",
         "Scotland, Census, 1851 — household of Hugh Mclachlin, fisher, Campbeltown (Cantyre) district, Argyll: Hugh born Midlothian, Cathrine, Flora, Agness and the infant Niel (ark:/61903/1:1:VYYQ-ZGH)",
         "Scotland, Civil Registration, 1855-1875 — marriage of James McLauchlan, coppersmith, born about 1852, Southend, Argyll, son of Hugh McLauchlan and Catherine Muir (ark:/61903/1:1:XSF1-FGNL)"
