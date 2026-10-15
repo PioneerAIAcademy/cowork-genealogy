@@ -1,12 +1,21 @@
-# Specification: research-plan skill — record-type pages and the reference layer
+# Specification: research-plan agent — record-type pages and the reference layer
 
 This document records the decisions behind what `research-plan` fetches from
 the FamilySearch wiki, what it leaves to `locality-guide`, and what its
-`references/` folder still holds. The skill body
-(`packages/engine/plugin/skills/research-plan/SKILL.md`) and its eval suite
+reference layer holds. The agent body
+(`packages/engine/plugin/agents/research-plan.md`) and its eval suite
 (`eval/tests/unit/research-plan/`, `eval/harness/validators/test_research_plan.py`)
 must conform to it. It covers the step-2 wiki move under ADR-0012 (2026-10);
-it is not a full behavioural spec of the skill.
+it is not a full behavioural spec of the agent.
+
+The skill was converted into this agent and deleted, under the lead's
+2026-09-22 ruling that every skill becomes an agent. The two
+`references/` files that survived the wiki move were folded into the agent body
+as Appendix A (`planning-standards.md`) and Appendix B (`record-type-guide.md`),
+unchanged apart from their titles and Appendix A's Standard 18 paragraph, which
+now has the agent report an unmet GPS in its return because it may not write
+`questions`; there is no `references/` folder any more. Section 4
+below keeps the file names, because they are how the decisions were recorded.
 
 ---
 
@@ -33,7 +42,7 @@ So the split is:
 | Levy rolls for sons, naming conventions | subject × country | `research-plan` | `wiki_read` in the Step 3 pre-work block |
 | Which records exist for the place | place | `research-plan` | `collections_search`, `volume_search`, `external_links_search` |
 | Relatives, facts and attached sources the project tree lacks | the question person | `research-plan` | `person_read`, for each question person whose tree entry has an `ark`, before any plan item |
-| Record-type selection by goal, FAN, sequencing, BCG 9–18 | GPS craft | `research-plan` | body and `references/` |
+| Record-type selection by goal, FAN, sequencing, BCG 9–18 | GPS craft | `research-plan` | body and its Appendices A and B |
 
 `wiki_search`, `wiki_place_page` and `place_population` stay forbidden to
 research-plan (validator V2, `test_research_plan_no_out_of_lane_tools`).
@@ -126,17 +135,17 @@ precondition work restore it from git as its acceptance test. Its scenario
 (`hansen-kongsberg-baptism`) and MCP fixtures stay, so the restore is the one
 test file. Until then `test_objective_target_leads_the_plan` has no tagged test.
 
-## 4. What `references/` holds
+## 4. What the reference layer holds (now Appendices A and B)
 
 | File | Route | Why it survives |
 |---|---|---|
 | `planning-standards.md` | 3 — craft | BCG Standards 9–18. ADR-0012 measured the wiki as carrying none of the GPS planning craft. |
 | `record-type-guide.md` | 3 — craft, trimmed | The record-type-by-goal table, FAN "others mentioned", the parents'-marriage item, the levy-roll and death-route reasoning, less-consulted types, and the contextual checklist. The Danish dates and session notations, and the Iberian surname convention, were removed; they come from the fetched pages. Record destruction now points at the `localities` entry. |
-| ~~`places-guidance.md`~~ | deleted | Lead ruling 2026-08-31: delete the `places-guidance.md` family rather than adjudicate its copies. The rules the body needed are inlined in SKILL.md's **Places:** line: use `standardPlace` verbatim, and broaden by dropping the leading component only when the specific level returns nothing usable. An earlier wording ("call again, then combine the levels") roughly doubled discovery calls on several tests in the 2026-10-02 full run (fbn 6 to 12) and pushed calls off their fixtures, so the conditional form is deliberate. |
+| ~~`places-guidance.md`~~ | deleted | Lead ruling 2026-08-31: delete the `places-guidance.md` family rather than adjudicate its copies. The rules the body needed are inlined in the body's **Places:** line: use `standardPlace` verbatim, and broaden by dropping the leading component only when the specific level returns nothing usable. An earlier wording ("call again, then combine the levels") roughly doubled discovery calls on several tests in the 2026-10-02 full run (fbn 6 to 12) and pushed calls off their fixtures, so the conditional form is deliberate. |
 | ~~`locality-survey-guide.md`~~ | deleted | Named by nothing. A genealogist's verdict (2026-08-24, `docs/deep-dives/research-plan-findings-2026-08-24.md`) found every live item restated elsewhere. Its substitute-sources passage is place-shaped and belongs in the `localities` entry. |
 
-The skill-to-agent conversion's fold deletes `references/`; the two surviving files are what it
-folds.
+The skill-to-agent conversion deleted `references/` and folded these two files
+verbatim into the agent as Appendix A and Appendix B.
 
 ## 5. Wiki slugs probed (2026-10-02)
 

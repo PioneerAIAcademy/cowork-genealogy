@@ -14,11 +14,12 @@
       "new-plan-items-planned-status",
       "first-plan-fan-production-shape",
       "issue-2208",
-      "production-tree-shape"
+      "production-tree-shape",
+      "direct-arm"
     ]
   },
   "input": {
-    "user_message": "Create the first research plan for q_001 -- why did Michael Sheahan move to Schuylkill County around 1882?",
+    "delegation": "Create the first research plan for q_001 -- why did Michael Sheahan move to Schuylkill County around 1882?\n\nquestionId: q_001\nprojectPath: <workspace>",
     "scenario": "first-plan-fan-production-shape"
   },
   "mcp_fixtures": [

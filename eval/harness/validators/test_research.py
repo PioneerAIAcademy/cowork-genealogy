@@ -19,6 +19,7 @@ import pytest
 from validators_lib import bare_tool_name
 from validators_lib import new_log_entries as _new_log_entries
 from validators_lib import check_no_gate_stop
+from validators_lib import existing_plan_changes, new_plan_ids
 
 _ROUTES_TO_PREFIX = "routes-to:"
 
@@ -551,4 +552,138 @@ def test_a_bounded_turn_ends_with_the_delivery_signal(tool_calls, test):
         f"got {summary!r}. Read from the FIRST call, which is the one the hosted plane "
         "halts on and puts in front of the stop reason -- an empty summary there is what "
         "the researcher reads, however well-formed a later call might be."
+    )
+
+# ── Moved from test_research_plan.py (issue #2116) ─────────────────────
+#
+# `ut_research_rpn` (formerly `ut_research_plan_003`) moved here when the
+# research-plan skill was deleted. Validators load by suite name, so its
+# tag-gated invariants move with it; `research-plan-no-new-plan` stays gated in
+# test_research_plan.py too, for that suite's review tests.
+
+
+def test_no_new_plan(before_state, after_state, test):
+    """Tag-gated (``research-plan-no-new-plan``): no new ``pl_`` entry."""
+    if "research-plan-no-new-plan" not in test.get("tags", []):
+        pytest.skip("not a research-plan-no-new-plan scenario")
+    before = before_state.get("research_json")
+    after = after_state.get("research_json")
+    if before is None or after is None:
+        pytest.skip("missing research.json for diff")
+    new_plans = new_plan_ids(before, after)
+    assert not new_plans, (
+        f"a new plan was written where none was asked for; new plan IDs: {new_plans}"
+    )
+
+
+def test_no_plan_writes_when_resolved(before_state, after_state, test):
+    """Tag-gated: on a question whose `search_stop.stopped_because` is
+    already a stop-gate value, no run may add or change anything in `plans[]`.
+
+    Covers the gap the other two leave. `test_no_new_plan` catches a whole
+    new `pl_` and the universal `test_no_entries_deleted` catches removals;
+    neither sees an item **appended to an existing plan** or an existing item
+    **edited in place**. Either rewrites the GPS audit trail the declaration
+    rests on — and appending to `pl_002` is the obvious way to write a plan
+    without creating one.
+
+    This is one of two routing-independent gates for `ut_research_rpn`
+    (formerly `ut_research_plan_003`; `grade_on_invariant`): whichever skill ends up handling the prompt, no run
+    may leave a mark on `plans[]`. Its companion
+    `test_resolved_question_not_reopened` guards the question's own state —
+    `status`, `search_stop`, `project.status` — which this one does
+    not look at and which is the likelier harm on that prompt. Both are gated
+    on the same tag; neither is sufficient alone.
+    """
+    if "no-plan-writes-when-resolved" not in test.get("tags", []):
+        pytest.skip("not a no-plan-writes-when-resolved scenario")
+    before = before_state.get("research_json")
+    after = after_state.get("research_json")
+    if before is None or after is None:
+        pytest.skip("missing research.json for diff")
+
+    errors = existing_plan_changes(before, after)
+    assert not errors, (
+        "a plan was written to a question whose search is already declared "
+        "exhaustive:\n  - " + "\n  - ".join(errors)
+    )
+
+
+def test_resolved_question_not_reopened(before_state, after_state, test):
+    """Tag-gated: the resolved question's own state must survive untouched.
+
+    Companion to `test_no_plan_writes_when_resolved`, and the more important
+    half. That one guards `plans[]`; this guards the fields the ut_003 prompt
+    actually tempts the skill to change.
+
+    Why it has to exist here rather than being covered already: the universal
+    `test_ownership_table` / `test_tree_ownership_table` **skip themselves on
+    negative tests**, and their docstring gives the reason — "a negative test
+    where the skill *does* wrongly activate already fails on the routing
+    check." `grade_on_invariant: true` is precisely the flag that removes that
+    routing check (`orchestrator.py` returns "pass" the moment validators
+    pass), so for this test the premise behind the skip is void and nothing
+    replaces it. Verified against the real fixture: with a writer-tool call
+    present, flipping `q_001` back to open, un-declaring exhaustiveness,
+    reopening `project.status`, or rewriting the question text all scored a
+    clean pass before this check existed.
+
+    That is the harm the prompt invites. "The probate search came up empty —
+    are we done?" tempts reopening the question far more than it tempts adding
+    a plan item, and reopening silently undoes a completed GPS proof: the
+    declaration and the proof summary both cite the negative probate result.
+
+    Deliberately narrow. A blanket "questions[] must not change" would
+    false-fail the legitimate routes — `question-selection` may append a
+    follow-on question, which is one of this test's `correct_skill` answers.
+    So this names the specific deltas that are never legitimate here: the
+    target question's `status` and `search_stop`, and
+    `project.status`. Same shape as
+    `test_search_external_sites.py::test_no_external_search_or_log_on_routeaway_negative`.
+    """
+    if "no-plan-writes-when-resolved" not in test.get("tags", []):
+        pytest.skip("not a no-plan-writes-when-resolved scenario")
+    before = before_state.get("research_json")
+    after = after_state.get("research_json")
+    if before is None or after is None:
+        pytest.skip("missing research.json for diff")
+
+    def _resolved(research: dict) -> dict:
+        return {
+            q.get("id"): q
+            for q in (research.get("questions") or [])
+            if q.get("status") == "resolved"
+            or (q.get("search_stop") or {}).get("stopped_because") in {"question_answered", "record_exhausted", "nothing_further_reachable"}
+        }
+
+    before_q = _resolved(before)
+    if not before_q:
+        pytest.skip("no resolved/declared question in the before-state")
+
+    errors: list[str] = []
+    after_q = {q.get("id"): q for q in (after.get("questions") or [])}
+    for qid, was in before_q.items():
+        now = after_q.get(qid)
+        if now is None:
+            errors.append(f"{qid}: resolved question DELETED")
+            continue
+        for field in ("status", "search_stop", "question",
+                      "resolution_assertion_ids", "resolved"):
+            if was.get(field) != now.get(field):
+                errors.append(
+                    f"{qid}: '{field}' changed {was.get(field)!r} -> "
+                    f"{now.get(field)!r} on a question whose search is "
+                    f"already declared exhaustive"
+                )
+
+    before_status = (before.get("project") or {}).get("status")
+    after_status = (after.get("project") or {}).get("status")
+    if before_status != after_status:
+        errors.append(
+            f"project.status changed {before_status!r} -> {after_status!r}"
+        )
+
+    assert not errors, (
+        "the resolved question's own state was modified:\n  - "
+        + "\n  - ".join(errors)
     )

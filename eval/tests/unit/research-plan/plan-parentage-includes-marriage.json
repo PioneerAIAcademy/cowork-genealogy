@@ -12,11 +12,12 @@
       "marriage-record",
       "record-type-selection",
       "research-plan-new-plan-for-q-001",
-      "new-plan-items-planned-status"
+      "new-plan-items-planned-status",
+      "direct-arm"
     ]
   },
   "input": {
-    "user_message": "Create the first research plan for q_001 — who were Patrick Flynn's parents?",
+    "delegation": "Create the first research plan for q_001 — who were Patrick Flynn's parents?\n\nquestionId: q_001\nprojectPath: <workspace>",
     "scenario": "flynn-first-plan-surveyed"
   },
   "mcp_fixtures": [

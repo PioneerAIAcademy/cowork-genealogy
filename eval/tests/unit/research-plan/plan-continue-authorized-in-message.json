@@ -4,17 +4,18 @@
     "skill": "research-plan",
     "name": "Don't stop to ask 'start executing?' when the message already authorized it",
     "type": "positive",
-    "description": "The user's message combines a plan request with an execute/continue-authorization phrase in the same turn ('...and go ahead and start executing it as soon as it's ready... I want this to be exhaustive'). research-plan must write the plan and then attempt to proceed toward execution in the same turn, not end by asking 'Would you like me to start executing this plan?' when the user already answered that question. Mined from a real alpha feedback case (issue #1319): the tester had to prompt twice before the agent proceeded past presenting a plan she had already authorized executing. Uses execution.stub_skills for Skill('search-records') -- the same documented pattern ut_search_records_018 uses for Skill('search-external-sites') -- since compute_allowed_tools does not extend a callee skill's own MCP tools into this test's session, so running search-records for real would fail on a harness artifact unrelated to what this test checks.",
+    "description": "The user's message combines a plan request with an execute/continue-authorization phrase in the same turn ('...and go ahead and start executing it as soon as it's ready... I want this to be exhaustive'). research-plan must write the plan and hand execution back to its caller as already authorized, not end by asking 'Would you like me to start executing this plan?' when the user already answered that question. Mined from a real alpha feedback case (issue #1319): the tester had to prompt twice before the agent proceeded past presenting a plan she had already authorized executing. Since research-plan became an agent (issue #2116) it executes nothing itself: an agent cannot invoke a skill, and a request that belongs to another agent is handed back, never spawned. Its execution.stub_skills block was dropped in that conversion: on the direct arm no stub can fire, and a stub_skills block makes test_ownership_table skip the test.",
     "tags": [
       "planning",
       "control-flow",
       "continuation",
       "from-cowork",
-      "plan-continue-authorized-in-message"
+      "plan-continue-authorized-in-message",
+      "direct-arm"
     ]
   },
   "input": {
-    "user_message": "Create the research plan for q_001 -- who were Bridget's other children with John Doyle -- and go ahead and start executing it as soon as it's ready. I want this to be exhaustive, so don't stop to check in with me first.",
+    "delegation": "Create the research plan for q_001 -- who were Bridget's other children with John Doyle -- and go ahead and start executing it as soon as it's ready. I want this to be exhaustive, so don't stop to check in with me first.\n\nquestionId: q_001\nprojectPath: <workspace>",
     "scenario": "plan-continue-authorized-in-message"
   },
   "mcp_fixtures": [
@@ -37,8 +38,8 @@
   "judge_context": [
     "GENERAL RULE UNDER TEST: when the invoking message already carries an execute/continue-authorization phrase in the same turn as the plan request, research-plan must hand off toward execution without an additional round-trip. This is not specific to Bridget Halloran or this question -- the same rule applies to any first-plan request phrased as a compound 'plan AND execute/continue' instruction.",
     "The user's message here is functionally equivalent to a user who, after being shown a plan, replies 'yes, start' -- it just arrived pre-emptively, in the same message as the plan request.",
-    "Skill('search-records') AND Skill('search-external-sites') are both stubbed (execution.stub_skills) to return canned confirmations that execution proceeded -- each stands in for that skill's own suite, which already covers its own correctness. Do not grade the content of either canned confirmation. Which of the two the skill hands off to depends on the plan it writes, so either is compliant.",
-    "COMPLIANT: the skill writes the plan, then invokes Skill('search-records') or Skill('search-external-sites') (which return the canned confirmations) -- or otherwise explicitly states it is proceeding to execute -- rather than posing execution as an open question.",
+    "On the direct arm the research-plan agent cannot run a search itself: it executes nothing and hands execution back to its caller. Do not grade whether search-records or search-external-sites ran.",
+    "COMPLIANT: the agent writes the plan, then hands execution back as already authorized -- its return names the executing step (search-records for FamilySearch items, search-external-sites for the others) and says the researcher authorized it to run now, or otherwise states plainly that execution proceeds next -- rather than posing execution as an open question.",
     "NON-COMPLIANT (the specific failure this test guards against): the skill writes the plan and ends its turn with an open question like 'Would you like me to start executing this plan?' -- re-asking something the invoking message already answered. Score Correctness low ONLY for this pattern.",
     "This judges the CONTROL FLOW after the plan is written, not the plan's record-type content -- do not fail this dimension solely because the plan's breadth or record-type selection is imperfect (that is Record type selection's job); judge only whether the skill stopped to ask despite already having authorization, versus proceeding.",
     "If the skill asks a genuinely different clarifying question (e.g., which of two ambiguous candidate jurisdictions to search first) that is not a re-ask of the already-answered 'should I start executing' question, that is acceptable and should not be penalized under this dimension."
@@ -47,28 +48,6 @@
   "execution": {
     "max_wall_clock_seconds": 1200,
     "sdk_message_silence_seconds": 360,
-    "max_turns": 30,
-    "stub_skills": [
-      {
-        "skill": "search-records",
-        "response": "Executing pl_001 now, in sequence. pli_001 (1860 census, Schuylkill County, PA): searched FamilySearch, one candidate found and logged as log_001; plan item updated to in_progress. Continuing to pli_002 without stopping to check in, per your instruction -- each subsequent planned item will be searched and logged the same way in turn. No further confirmation needed from you for this batch."
-      },
-      {
-        "skill": "search-external-sites",
-        "response": "Executing the plan's external-repository items now, without stopping to check in, per your instruction. For each one I generated targeted search URLs (Ancestry and FindAGrave, Schuylkill County, Pennsylvania, surname Doyle) and logged each as an external_site entry with outcome 'partial' -- the URL is generated but no capture has been received yet. No MyHeritage or FindMyPast links: researcher_profile lists no subscription to either. Those items stay in_progress until the researcher opens the URLs in their own authenticated browser and uploads the PDF captures. Every remaining external item in the plan is handled the same way in turn."
-      },
-      {
-        "skill": "record-structurer",
-        "response": "Extracted the queued records from the earlier positive log entries into research.json and the tree. Returning to the plan's remaining items, without stopping to check in, per your instruction."
-      },
-      {
-        "skill": "person-evidence",
-        "response": "Linked the extracted assertions to the matching tree persons. Returning to the plan's remaining items, without stopping to check in, per your instruction."
-      },
-      {
-        "skill": "search-images",
-        "response": "Searched the plan's browse-only volumes and logged each image group for reading. Returning to the plan's remaining items, without stopping to check in, per your instruction."
-      }
-    ]
+    "max_turns": 30
   }
 }

@@ -1,0 +1,38 @@
+{
+  "test": {
+    "id": "ut_research_plan_d03",
+    "skill": "research-plan",
+    "name": "Dispose of the named planned item after an exhaustiveness refusal (direct-agent arm)",
+    "type": "positive",
+    "description": "Dispose mode, reached the way research/SKILL.md's routing row reaches it: research-exhaustiveness refused a stop-gate declaration for q_001 because pli_010 on the active plan pl_002 is still `planned`, and the router spawns research-plan to dispose of the named item (issue #2116; no test reached Dispose mode before). flynn-planned-item-blocks: pli_010 (St. Patrick's Minersville marriage register) was never searched; no log entry names it. So the correct disposal is `skipped` with a `skip_category` and a `skip_reason`, not `completed`. Nothing else may change: no new plan or item, no supersede, no other item edited. Decided by the tag-gated validators research-plan-dispose and research-plan-no-new-plan.",
+    "tags": [
+      "planning",
+      "dispose-mode",
+      "research-plan-dispose",
+      "research-plan-no-new-plan",
+      "direct-arm"
+    ]
+  },
+  "input": {
+    "delegation": "research-exhaustiveness refused the stop-gate declaration for q_001 because pli_010 on the active plan pl_002 is still planned. Dispose of the named item: complete it if its search was done, or skip it with a skip_category.\n\nquestionId: q_001\nplanItemIds: pli_010\nprojectPath: <workspace>",
+    "scenario": "flynn-planned-item-blocks"
+  },
+  "mcp_fixtures": [
+    "place-search-schuylkill-county",
+    "collections-search-schuylkill",
+    "collections-search-pennsylvania",
+    "place-search-pennsylvania",
+    "external-links-search-schuylkill",
+    "collections-search-us-national"
+  ],
+  "judge_context": [
+    "This is Dispose mode (the agent body's Step 1a): the delegation names pli_010, the item research-exhaustiveness found still `planned`. The correct outcome is pli_010 set to `skipped` with a `skip_category` and a `skip_reason` saying why it is not needed (the question's evidence is otherwise complete); no log entry names pli_010, so `completed` would claim a search that never ran.",
+    "The agent must not add items, write a new plan, supersede pl_002, or change any other item. Recapping the rest of the plan is fine.",
+    "GRADING NOTE: no plan is being created, so Record type selection, Objective scope containment, Sequencing logic and Jurisdiction accuracy are N/A here and should be scored null. Plan mode and lifecycle applies: Dispose mode is the correct mode, and setting pli_010's status is that mode working, not an in-place edit of the plan."
+  ],
+  "judge_reads_files": true,
+  "execution": {
+    "max_wall_clock_seconds": 600,
+    "sdk_message_silence_seconds": 300
+  }
+}

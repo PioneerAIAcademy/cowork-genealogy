@@ -4,18 +4,19 @@
     "skill": "research-plan",
     "name": "A confirmed geographic boundary split gets co-equal plan items, not a fallback_for chain",
     "type": "positive",
-    "description": "feliciana-parish-boundary-split: q_001 asks where Silas Bankston married circa 1828, after his family's documented residence in the old, undivided Feliciana Parish, Louisiana split into East and West Feliciana Parish in 1824. The locality entry already flags this as a geographic (not temporal) split whose successor is unknown without more information. A sound plan searches BOTH East and West Feliciana Parish marriage records as co-equal primaries, not one plus a fallback_for the other. Guards the SKILL.md 'A confirmed boundary split within the target date range is not a fallback_for' fix and the new 'boundaries changed within the date range' Key selection principle (issue #1472, Rule 1).",
+    "description": "feliciana-parish-boundary-split: q_001 asks where Silas Bankston married circa 1828, after his family's documented residence in the old, undivided Feliciana Parish, Louisiana split into East and West Feliciana Parish in 1824. The locality entry already flags this as a geographic (not temporal) split whose successor is unknown without more information. A sound plan searches BOTH East and West Feliciana Parish marriage records as co-equal primaries, not one plus a fallback_for the other. Guards the agent body's 'A confirmed boundary split within the target date range is not a fallback_for' fix and the new 'boundaries changed within the date range' Key selection principle (issue #1472, Rule 1).",
     "tags": [
       "planning",
       "boundary-change",
       "jurisdiction",
       "jurisdiction-accuracy",
       "louisiana",
-      "new-plan-items-planned-status"
+      "new-plan-items-planned-status",
+      "direct-arm"
     ]
   },
   "input": {
-    "user_message": "Create the first research plan for q_001 — where did Silas Bankston marry, circa 1828?",
+    "delegation": "Create the first research plan for q_001 — where did Silas Bankston marry, circa 1828?\n\nquestionId: q_001\nprojectPath: <workspace>",
     "scenario": "feliciana-parish-boundary-split"
   },
   "mcp_fixtures": [
@@ -27,6 +28,7 @@
     "volume-search-feliciana",
     "external-links-search-feliciana",
     "collections-search-us-national",
+    "place-search-united-states",
     "external-links-search-any"
   ],
   "judge_context": [

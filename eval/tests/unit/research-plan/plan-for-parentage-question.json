@@ -11,11 +11,13 @@
       "parentage",
       "in-progress-plan",
       "research-plan-no-new-plan",
-      "pli-006-status-unchanged"
+      "pli-006-status-unchanged",
+      "research-plan-review-no-writes",
+      "direct-arm"
     ]
   },
   "input": {
-    "user_message": "Review the research plan for the parentage question and confirm the next step.",
+    "delegation": "Review the research plan for the parentage question and confirm the next step.\n\nquestionId: q_001\nprojectPath: <workspace>",
     "scenario": "mid-research-flynn"
   },
   "mcp_fixtures": [

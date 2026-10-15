@@ -11,11 +11,12 @@
       "family-associates-neighbors",
       "parentage",
       "research-plan-new-plan-for-q-001",
-      "new-plan-items-planned-status"
+      "new-plan-items-planned-status",
+      "direct-arm"
     ]
   },
   "input": {
-    "user_message": "Direct census and vital records haven't proved parentage yet — create a new plan that takes a FAN approach for the parentage question.",
+    "delegation": "Direct census and vital records haven't proved parentage yet — create a new plan that takes a FAN approach for the parentage question.\n\nquestionId: q_001\nprojectPath: <workspace>",
     "scenario": "flynn-census-exhausted-surveyed"
   },
   "mcp_fixtures": [

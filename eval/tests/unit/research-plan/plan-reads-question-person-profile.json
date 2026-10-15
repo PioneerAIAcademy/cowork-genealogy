@@ -10,11 +10,12 @@
       "profile-reread",
       "research-plan-new-plan-for-q-001",
       "new-plan-items-planned-status",
-      "issue-2208"
+      "issue-2208",
+      "direct-arm"
     ]
   },
   "input": {
-    "user_message": "Create the first research plan for q_001 -- who were the parents of Thomas Kerrigan?",
+    "delegation": "Create the first research plan for q_001 -- who were the parents of Thomas Kerrigan?\n\nquestionId: q_001\nprojectPath: <workspace>",
     "scenario": "plan-reads-question-person-profile"
   },
   "mcp_fixtures": [
