@@ -238,8 +238,10 @@ gh api graphql -f owner=PioneerAIAcademy -f repo=cowork-genealogy -F number=<N> 
 ```
 
 0.5s against 30s, and it returns the `<ITEM_ID>` the `item-edit` above needs, so
-it replaces looking that up from the board snapshot too. Use the same query after
-a close, since `--reason "not planned"` intermittently lands the card in Done.
+it replaces looking that up from the board snapshot too. After a close the card
+reads Done for up to a minute, until project-status-sync moves it to Not planned.
+Run the same query after that, and move the card yourself only if it is still in
+Done.
 
 **Never set an assignee.** People self-serve from Ready and the lead hands work
 out at standup.

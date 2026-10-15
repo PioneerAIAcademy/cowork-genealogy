@@ -927,6 +927,108 @@ describe("tree_edit", () => {
     expect(tree.relationships[0].facts.filter((f: any) => f.primary === true)).toHaveLength(2);
   });
 
+  // ── remove {factId} scopes to one holder ──────────────────────────────────
+  //
+  // FamilySearch reuses fact ids across the persons an import touches: 65 of
+  // the 136 committed e2e starting trees carry one id on two or more holders,
+  // one of them on 15. Removing unscoped deleted every copy.
+
+  const sharedFactTree = () => {
+    const t = twoPersons();
+    (t as any).persons[0].facts = [{ id: "F1", type: "Birth", date: "1820", sources: [{ ref: "S1" }] }];
+    (t as any).persons[1].facts = [{ id: "F1", type: "Birth", date: "1822", sources: [{ ref: "S1" }] }];
+    return t;
+  };
+
+  it("remove of a fact id two persons share is refused unscoped, and removes only the scoped person's fact", async () => {
+    await writeProject(sharedFactTree());
+    const unscoped = await treeCorrect({ projectPath: dir, operation: "remove", factId: "F1" } as any);
+    expect(unscoped.ok).toBe(false);
+    if (!unscoped.ok) expect(JSON.stringify(unscoped)).toMatch(/carried by 2 holders/);
+    // Nothing was written by the refusal.
+    expect(((await readTree()) as any).persons.every((p: any) => p.facts.length === 1)).toBe(true);
+
+    const scoped = await treeCorrect({ projectPath: dir, operation: "remove", factId: "F1", personId: "I1" } as any);
+    expect(scoped.ok).toBe(true);
+    const tree: any = await readTree();
+    expect(tree.persons.find((p: any) => p.id === "I1").facts).toHaveLength(0);
+    // I2 keeps its own Birth — the whole point.
+    expect(tree.persons.find((p: any) => p.id === "I2").facts).toHaveLength(1);
+    expect(tree.persons.find((p: any) => p.id === "I2").facts[0].date).toBe("1822");
+  });
+
+  it("must not fire: remove of an unshared fact id needs no scope", async () => {
+    const t = twoPersons();
+    (t as any).persons[0].facts = [{ id: "F1", type: "Birth", date: "1820", sources: [{ ref: "S1" }] }];
+    await writeProject(t);
+    const r = await treeCorrect({ projectPath: dir, operation: "remove", factId: "F1" } as any);
+    expect(r.ok).toBe(true);
+    expect(((await readTree()) as any).persons[0].facts).toHaveLength(0);
+  });
+
+  it("remove with a factId and a relationshipId removes that relationship's fact and keeps the edge", async () => {
+    const t = twoPersons();
+    (t as any).persons[0].facts = [{ id: "F1", type: "Marriage", date: "1850", sources: [{ ref: "S1" }] }];
+    (t as any).relationships = [
+      { id: "R1", type: "Couple", person1: "I1", person2: "I2", sources: [{ ref: "S1" }],
+        facts: [{ id: "F1", type: "Marriage", date: "1850", sources: [{ ref: "S1" }] }] },
+    ];
+    await writeProject(t);
+    const r = await treeCorrect({ projectPath: dir, operation: "remove", factId: "F1", relationshipId: "R1" } as any);
+    expect(r.ok).toBe(true);
+    const tree: any = await readTree();
+    expect(tree.relationships).toHaveLength(1);
+    expect(tree.relationships[0].facts ?? []).toHaveLength(0);
+    // The person's same-id fact is untouched.
+    expect(tree.persons.find((p: any) => p.id === "I1").facts).toHaveLength(1);
+  });
+
+  it("a remove carrying both personId and relationshipId is refused", async () => {
+    await writeProject(sharedFactTree());
+    const r = await treeCorrect({
+      projectPath: dir, operation: "remove", factId: "F1", personId: "I1", relationshipId: "R1",
+    } as any);
+    expect(r.ok).toBe(false);
+    if (!r.ok) expect(JSON.stringify(r)).toMatch(/not both/);
+  });
+
+  it("remove scoped to an id that is not in the tree is refused", async () => {
+    // I3 is absent from sharedFactTree(), so this is the not-found arm — NOT
+    // the "says who does" one, which needs a person who exists and simply does
+    // not carry the fact. That case is the test below; without it, disabling
+    // the "it is on ..." throw left all 103 tests green.
+    await writeProject(sharedFactTree());
+    const r = await treeCorrect({ projectPath: dir, operation: "remove", factId: "F1", personId: "I3" } as any);
+    expect(r.ok).toBe(false);
+    if (!r.ok) expect(JSON.stringify(r)).toMatch(/person 'I3' not found in tree/);
+  });
+
+  it("remove scoped to a person who does not carry the fact names who does", async () => {
+    const t = sharedFactTree();
+    (t as any).persons.push({ id: "I3", names: [{ id: "N3", full: "Third Person" }], facts: [] });
+    await writeProject(t);
+    const r = await treeCorrect({ projectPath: dir, operation: "remove", factId: "F1", personId: "I3" } as any);
+    expect(r.ok).toBe(false);
+    if (!r.ok) {
+      expect(JSON.stringify(r)).toMatch(/is not carried by person 'I3'/);
+      expect(JSON.stringify(r)).toMatch(/person 'I1'/);
+      expect(JSON.stringify(r)).toMatch(/person 'I2'/);
+    }
+    // The refusal wrote nothing: both real holders keep their fact.
+    expect(((await readTree()) as any).persons.filter((p: any) => (p.facts ?? []).length === 1)).toHaveLength(2);
+  });
+
+  it("remove carrying both scopes and no factId complains about the scopes, not about persons", async () => {
+    await writeProject(sharedFactTree());
+    const r = await treeCorrect({
+      projectPath: dir, operation: "remove", personId: "I1", relationshipId: "R1",
+    } as any);
+    expect(r.ok).toBe(false);
+    // Not "remove does not delete persons" — that would send the caller to
+    // merge_tree_persons when the mistake was passing two scopes.
+    if (!r.ok) expect(JSON.stringify(r)).toMatch(/not both/);
+  });
+
   it("add_relationship corroborating an existing edge swaps primary onto the new fact", async () => {
     // The positive twin of the must-not-fire case above: on the matched edge the
     // swap add_fact performs does run, so one Marriage stays primary.

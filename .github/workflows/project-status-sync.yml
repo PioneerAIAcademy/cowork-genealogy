@@ -183,10 +183,29 @@ jobs:
               return body.data;
             }
 
+            // Board calls on the App token, retried twice. GitHub fails a
+            // few of these runs with a transient 503 or a "Something went
+            // wrong while executing your query" (runs 32050743432,
+            // 38411122415), which arrives as HTTP 200 and so escapes
+            // github-script's own `retries:`. On a close, a failed run leaves
+            // a not-planned card in Done, where the built-in put it. Every call
+            // is safe to repeat; the third failure still fails the job.
+            async function gql(query, variables) {
+              for (let attempt = 1; ; attempt++) {
+                try {
+                  return await github.graphql(query, variables);
+                } catch (e) {
+                  if (attempt === 3) throw e;
+                  core.warning(`GitHub API error, retrying in ${2 * attempt}s: ${e.message}`);
+                  await new Promise(r => setTimeout(r, 2000 * attempt));
+                }
+              }
+            }
+
             // ---- board metadata ---------------------------------------------
             // Looked up by name, not hardcoded as node ids, so a rename fails
             // here with a clear message instead of writing the wrong field.
-            const meta = await github.graphql(`
+            const meta = await gql(`
               query($org: String!, $number: Int!) {
                 organization(login: $org) {
                   projectV2(number: $number) {
@@ -273,7 +292,7 @@ jobs:
             // ---- board lookup -------------------------------------------------
             // An issue can belong to several projects; filter to ours.
             async function card(issueNodeId) {
-              const q = await github.graphql(`
+              const q = await gql(`
                 query($content: ID!) {
                   node(id: $content) {
                     ... on Issue {
@@ -295,7 +314,7 @@ jobs:
             }
 
             async function move(itemId, opt) {
-              await github.graphql(`
+              await gql(`
                 mutation($project: ID!, $item: ID!, $field: ID!, $option: String!) {
                   updateProjectV2ItemFieldValue(input: {
                     projectId: $project, itemId: $item, fieldId: $field,
@@ -353,7 +372,7 @@ jobs:
               // correct to re-run because it compares against current state.
               let cursor = null;
               for (;;) {
-                const page = await github.graphql(`
+                const page = await gql(`
                   query($project: ID!, $cursor: String) {
                     node(id: $project) {
                       ... on ProjectV2 {

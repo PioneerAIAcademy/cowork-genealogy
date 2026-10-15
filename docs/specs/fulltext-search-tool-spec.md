@@ -105,19 +105,19 @@ Arabic and Hebrew, and Eastern European records.
     },
     "recordPlace0": {
       "type": "string",
-      "description": "Filter by region."
+      "description": "Filter by region. Must be the numeric filterParam from a Place facet (e.g. \"10\" for United States). Call with includeFacets: true first."
     },
     "recordPlace1": {
       "type": "string",
-      "description": "Filter by country (or state within US/Mexico/Canada/UK)."
+      "description": "Filter by country/state. Must be the filterParam from a Place facet (e.g. \"10,Alabama\"). Drill down: send recordPlace0 with includeFacets: true."
     },
     "recordPlace2": {
       "type": "string",
-      "description": "Filter by county."
+      "description": "Filter by county. Must be the filterParam from a Place facet (e.g. \"10,Alabama,Autauga\"). Drill down from recordPlace1."
     },
     "recordPlace3": {
       "type": "string",
-      "description": "Filter by city."
+      "description": "Filter by city. Must be the filterParam from a Place facet (e.g. \"10,Alabama,Autauga,Booth\"). Drill down from recordPlace2."
     },
     "count": {
       "type": "number",
@@ -141,6 +141,11 @@ Arabic and Hebrew, and Eastern European records.
 ```
 
 At least one of `keywords`, `name`, `place`, `nlQuery`, or `imageGroupNumber` must be provided (`validateInput`).
+
+Each `recordPlaceN` must match `^\d+(,[^,]+){N}$` — a leading numeric segment
+followed by exactly N non-empty comma-separated segments. Plain text is refused
+with an actionable error directing the caller to use `includeFacets: true` and
+pass the `filterParam` value from the facet response.
 
 ## Query parameter mapping
 
@@ -214,6 +219,9 @@ interface FulltextResult {
 interface FulltextFacet {
   name: string;
   count: number;
+  /** Each item's filterParam is the bare f.* value extracted from the compound
+   *  c.…&f.… upstream `params` (e.g. upstream "c.recordPlace1=on&f.recordPlace0=10"
+   *  yields filterParam "10"). */
   items: { name: string; count: number; filterParam: string }[];
 }
 
@@ -357,7 +365,10 @@ query shape.
    section). The `f.recordPlace*` filters accept only the numeric
    hierarchical IDs returned by the facets API (e.g.
    `f.recordPlace1=10,Alabama`), not plain text values — plain text
-   silently returns zero results. Guarded by
+   silently returns zero results. The tool now validates each
+   `recordPlaceN` against `^\d+(,[^,]+){N}$` and refuses plain text
+   with an actionable error rather than passing it through silently.
+   Guarded by
    `tests/packaging/measured-figures.test.ts` (`FORBIDDEN_WHEN` rules
    for `J.verdict:q.recordPlace searches` and
    `J.verdict:f.recordPlace searches`; the tool description is also
