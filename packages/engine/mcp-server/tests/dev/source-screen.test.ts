@@ -30,6 +30,7 @@ import {
   guardPath,
   liveTools,
   loadSpec,
+  main,
   readFindings,
   readJson,
   readRecord,
@@ -203,6 +204,20 @@ describe("path guard", () => {
     expect(guardPath("--spec", SPEC_PATH)).toBe(SPEC_PATH);
     expect(() => guardPath("--spec", join(REPO_ROOT, "eval", "other.json"))).toThrow(/committed spec/);
     expect(guardPath("--spec", join(outside, "spec.json"))).toBe(join(outside, "spec.json"));
+    expect(() => guardPath("--out", join(REPO_ROOT, "..data", "x"))).toThrow(/inside the repo/);
+    expect(guardPath("--out", join(REPO_ROOT, "..", "sibling-of-repo"))).toBe(join(REPO_ROOT, "..", "sibling-of-repo"));
+  });
+
+  it("refuses a no-op run: --sample 0, an unknown --no- flag, and a resume with another PID file", async () => {
+    const out = mkTmp();
+    writeFileSync(join(out, "p.txt"), "AAAA-111\nBBBB-111\n", "utf8");
+    const tools = fakeTools(world({ persons: { "AAAA-111": person("AAAA-111"), "BBBB-111": person("BBBB-111") } }));
+    await expect(main(["snapshot", "--pids", join(out, "p.txt"), "--out", join(out, "s"), "--sample", "0"], tools)).rejects.toThrow(/positive integer/);
+    await expect(main(["snapshot", "--pids", join(out, "p.txt"), "--out", join(out, "s"), "--no-same-persons"], tools)).rejects.toThrow(/does not take --no-same-persons/);
+    await expect(main(["baseline", "--snapshot", join(out, "s"), "--no-same-person"], tools)).rejects.toThrow(/does not take/);
+    await main(["snapshot", "--pids", join(out, "p.txt"), "--out", join(out, "s")], tools);
+    writeFileSync(join(out, "p.txt"), "AAAA-111\n", "utf8");
+    await expect(main(["snapshot", "--pids", join(out, "p.txt"), "--out", join(out, "s")], tools)).rejects.toThrow(/drawn from 2 PIDs/);
   });
 });
 
@@ -254,6 +269,24 @@ describe("error classes", () => {
     expect(Object.fromEntries(Object.entries(got).map(([k, v]) => [k, v.split(" <- ")[0]])), JSON.stringify(got, null, 2)).toEqual(want);
     expect(classifyError("something nobody has seen before")).toBe("transient");
   }, 30_000);
+
+  it("stops the run on a 429 from every one of the five tools", async () => {
+    fetchMock.mockImplementation(async () => res(429));
+    const gx = { persons: [{ id: "p1", names: [{ given: "A", surname: "B" }] }] };
+    const calls: [string, () => Promise<unknown>][] = [
+      ["person_read", () => tools.personRead("KWCB-QZ3")],
+      ["record_read", () => tools.recordRead(ark("QQQQ-120"))],
+      ["source_attachments", () => tools.sourceAttachments([ark("QQQQ-121")])],
+      ["person_quality", () => tools.personQuality("KWCB-QZ5")],
+      ["same_person", () => tools.samePerson({ gedcomx1: gx, primaryId1: "p1", gedcomx2: gx, primaryId2: "p1" })],
+    ];
+    const got: Record<string, string> = {};
+    for (const [name, act] of calls) {
+      const msg = await messageOf(act());
+      got[name] = `${classifyError(msg)} <- ${msg}`;
+    }
+    expect(Object.values(got).map((v) => v.split(" <- ")[0]), JSON.stringify(got, null, 2)).toEqual(Array(5).fill("stop"));
+  }, 60_000);
 
   it("counts only the relationship note as a partial read", () => {
     expect(relationshipNoteCount(["2 of 5 source descriptions cited by relationships could not be read, so those sources are missing from this response's relationships."])).toBe(2);
@@ -396,6 +429,14 @@ describe("baseline", () => {
     expect(summary.join_checks.person_quality_conflict_uris_unmatched).toBe(0);
   });
 
+  it("baseline skips and counts a person whose read failed for good", async () => {
+    const out = mkTmp();
+    const w = world({ persons: { "AAAA-111": person("AAAA-111", { personas: ["P1"] }) }, records: { [ark("P1")]: record("P1") } });
+    await snap(out, pidsFile(out, ["AAAA-111", "GONE-111"]), w);
+    const { summary } = runBaseline(out);
+    expect(summary.counts).toMatchObject({ persons: 1, person_read_failed: 1 });
+  });
+
   it("baseline counts a subject-level ARK returned unattached", async () => {
     const out = mkTmp();
     const w = world({
@@ -502,6 +543,14 @@ describe("plant", () => {
     const out = mkTmp();
     await runPlant(spec([{ id: "ok_b", type: "nickname", host: "HOST-111", source_ark: ark("P1") }]), out, fakeTools(plantWorld()));
     expect(Object.keys(readJson(join(out, "run.json")).plants)).toEqual(["HOST-111.unplanted"]);
+  });
+
+  it("refuses a living host, and still writes the plant ledger", async () => {
+    const out = mkTmp();
+    const w = plantWorld();
+    w.persons["HOST-111"] = person("HOST-111", { living: true, personas: ["P1"] });
+    await expect(runPlant(spec([{ id: "fx_a", type: "easy_wrong_person", host: "HOST-111", donor_ark: ark("DONR-111") }]), out, fakeTools(w))).rejects.toThrow(/is living/);
+    expect(readdirSync(join(out, "runs")).some((f) => f.startsWith("plant-"))).toBe(true);
   });
 
   it("applyIndexingPlant refuses an edit that changes nothing", () => {
@@ -618,6 +667,13 @@ describe("score", () => {
   it("excludes harness_miss", () => {
     const s = byType(scoreFindings(SPEC, { path: "judge.jsonl", step: "judge", rows: [row("wp1", ark("DON1"), "misattributed")] }, present([], ["wp1"])));
     expect(s.hard_wrong_person).toMatchObject({ harness_miss: ["wp1"], scored: 1, caught: 0, misses: ["wp2"] });
+  });
+
+  it("excludes a judge copy whose findings block did not parse, rather than scoring it clean", () => {
+    const presence = (c: string) => ({ present: true, harnessMiss: false, parseError: c === "H4.unplanted" || c === "wp1" });
+    const s = byType(scoreFindings(SPEC, { path: "judge.jsonl", step: "judge", rows: [] }, presence));
+    expect(s.nickname).toMatchObject({ parse_error: ["nf1"], scored: 1, false_alarms: 0 });
+    expect(s.hard_wrong_person).toMatchObject({ parse_error: ["wp1"], scored: 1, misses: ["wp2"] });
   });
 
   it("lists every miss", () => {

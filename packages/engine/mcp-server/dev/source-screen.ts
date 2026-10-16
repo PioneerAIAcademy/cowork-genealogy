@@ -27,7 +27,7 @@ import {
   cpSync,
   writeFileSync,
 } from "fs";
-import { dirname, isAbsolute, join, relative, resolve, basename } from "path";
+import { dirname, isAbsolute, join, relative, resolve, basename, sep } from "path";
 import { fileURLToPath } from "url";
 import { localPrincipal, type Principal } from "../src/auth/principal.js";
 import { personReadTool } from "../src/tools/person-read.js";
@@ -59,12 +59,12 @@ function real(p: string): string {
     tail.unshift(basename(probe));
     probe = dirname(probe);
   }
-  return join(realpathSync(probe), ...tail);
+  return join(realpathSync.native(probe), ...tail);
 }
 
 export function isInsideRepo(p: string, repoRoot = REPO_ROOT): boolean {
   const rel = relative(real(repoRoot), real(p));
-  return rel === "" || (!rel.startsWith("..") && !isAbsolute(rel));
+  return rel === "" || (rel !== ".." && !rel.startsWith(`..${sep}`) && !isAbsolute(rel));
 }
 
 /** Refuse a path argument inside the repo; `--spec` may only be the committed spec. */
@@ -161,7 +161,7 @@ export function buildAuditList(read: PersonReadResult): AuditList {
 
 export type ErrorClass = "transient" | "permanent" | "stop";
 
-const STOP_PATTERNS = [/rate limit/i, /Retry-After/i, /login tool/i];
+const STOP_PATTERNS = [/rate limit/i, /Retry-After/i, /login tool/i, /\b429\b/];
 const PERMANENT_PATTERNS = [
   /was not found in FamilySearch historical records/i,
   /is restricted and cannot be viewed/i,
@@ -550,6 +550,9 @@ export interface SnapshotOpts {
 export async function runSnapshot(opts: SnapshotOpts): Promise<Ledger> {
   const runPath = join(opts.out, "run.json");
   let run: RunJson | undefined = readJsonIf(runPath);
+  if (run && run.input_count !== opts.pids.length && run.draw.length > 0) {
+    throw new Error(`${runPath} was drawn from ${run.input_count} PIDs, this --pids file holds ${opts.pids.length}; use the same file, or a new --out`);
+  }
   if (run && (run.sample !== opts.sample || run.seed !== opts.seed)) {
     throw new Error(`${runPath} was drawn with --sample ${run.sample} --seed ${run.seed}; use those, or a new --out`);
   }
@@ -634,7 +637,7 @@ export function runBaseline(snapshot: string, threshold = DEFAULT_THRESHOLD): Ba
   const rows: FindingRow[] = [];
   const flaggedPersons: Record<string, Set<string>> = {};
   const flaggedSources: Record<string, Set<string>> = {};
-  const counts = { persons: 0, living: 0, not_ready: 0, unscorable: 0, relationship_unscored: 0, merged_duplicate: 0 };
+  const counts = { persons: 0, living: 0, not_ready: 0, person_read_failed: 0, unscorable: 0, relationship_unscored: 0, merged_duplicate: 0 };
   const walls: number[] = [];
   const callTotals: number[] = [];
   const scores: number[] = [];
@@ -658,6 +661,10 @@ export function runBaseline(snapshot: string, threshold = DEFAULT_THRESHOLD): Ba
     }
     if (meta.living) {
       counts.living += 1;
+      continue;
+    }
+    if (!existsSync(join(dir, "audit.json"))) {
+      counts.person_read_failed += 1;
       continue;
     }
     counts.persons += 1;
@@ -888,6 +895,11 @@ export async function runPlant(spec: FixtureSpec, out: string, tools: Tools, sam
         const { outcome } = await snapshotPerson(ctx, host, { copyKey: key });
         if (outcome === "transient") throw new Error(`host ${host} had a transient error; re-run plant`);
       }
+      const meta = readJson(join(personsDir(out, key), "meta.json"));
+      if (meta.living) throw new Error(`host ${host} is living; fixture hosts must be deceased`);
+      if (!existsSync(join(personsDir(out, key), "audit.json"))) {
+        throw new Error(`host ${host} could not be read: ${meta.person_read_error ?? "no audit.json"}`);
+      }
       registerCopy(out, key, { host });
     }
     for (const f of spec.fixtures) {
@@ -902,11 +914,15 @@ export async function runPlant(spec: FixtureSpec, out: string, tools: Tools, sam
       registerCopy(out, f.id, { fixture_id: f.id, host: f.host, type: f.type });
     }
   } catch (e) {
-    if (!(e instanceof StopRun)) throw e;
+    if (!(e instanceof StopRun)) {
+      ctx.ledger.stopped = e instanceof Error ? e.message : String(e);
+      throw e;
+    }
     ctx.ledger.stopped = e.message;
+  } finally {
+    ctx.ledger.finished = new Date().toISOString();
+    writeJson(join(out, "runs", `plant-${ctx.ledger.started.replace(/[:.]/g, "-")}.json`), ctx.ledger);
   }
-  ctx.ledger.finished = new Date().toISOString();
-  writeJson(join(out, "runs", `plant-${ctx.ledger.started.replace(/[:.]/g, "-")}.json`), ctx.ledger);
   return ctx.ledger;
 }
 
@@ -1008,6 +1024,7 @@ export interface TypeScore {
   misses: string[];
   missing: string[];
   harness_miss: string[];
+  parse_error: string[];
   confounded?: string[];
   indexing_on_planted?: number;
   blind?: number;
@@ -1019,23 +1036,27 @@ export interface TypeScore {
 }
 
 /** Whether a copy has its step's output: a baseline person dir, or a judge file. */
-function copyPresent(f: FindingsFile, copy: string): { present: boolean; harnessMiss: boolean } {
+function copyPresent(f: FindingsFile, copy: string): { present: boolean; harnessMiss: boolean; parseError?: boolean } {
   const snap = dirname(f.path);
   if (f.step === "baseline") return { present: existsSync(join(personsDir(snap, copy), "meta.json")), harnessMiss: false };
   const j = readJsonIf(join(snap, "judge", `${copy}.json`));
-  return { present: Boolean(j), harnessMiss: Boolean(j?.harness_miss) };
+  return { present: Boolean(j), harnessMiss: Boolean(j?.harness_miss), parseError: Boolean(j?.parse_error) };
 }
 
 const rowSig = (r: FindingRow) => `${r.ark}|${r.kind}|${r.signal}`;
 
-export function scoreFindings(spec: FixtureSpec, file: FindingsFile, presence = (copy: string) => copyPresent(file, copy)): TypeScore[] {
+export function scoreFindings(
+  spec: FixtureSpec,
+  file: FindingsFile,
+  presence: (copy: string) => { present: boolean; harnessMiss: boolean; parseError?: boolean } = (copy) => copyPresent(file, copy),
+): TypeScore[] {
   const byCopy = new Map<string, FindingRow[]>();
   for (const r of file.rows) byCopy.set(r.copy_key, [...(byCopy.get(r.copy_key) ?? []), r]);
   const out: TypeScore[] = [];
   for (const type of [...MUST_FLAG, ...MUST_NOT_FLAG]) {
     const fixtures = spec.fixtures.filter((f) => f.type === type);
     const mustNot = (MUST_NOT_FLAG as readonly string[]).includes(type);
-    const s: TypeScore = { type, fixtures: fixtures.length, scored: 0, caught: 0, rate: null, misses: [], missing: [], harness_miss: [] };
+    const s: TypeScore = { type, fixtures: fixtures.length, scored: 0, caught: 0, rate: null, misses: [], missing: [], harness_miss: [], parse_error: [] };
     if (type === "indexing_error") s.confounded = [];
     if (WRONG_PERSON.has(type)) s.indexing_on_planted = 0;
     if (file.step === "baseline" && !mustNot) {
@@ -1056,6 +1077,11 @@ export function scoreFindings(spec: FixtureSpec, file: FindingsFile, presence = 
       }
       if (p.harnessMiss) {
         s.harness_miss.push(f.id);
+        continue;
+      }
+      // A findings block that did not parse is not a clean audit.
+      if (p.parseError) {
+        s.parse_error.push(f.id);
         continue;
       }
       s.scored += 1;
@@ -1119,6 +1145,7 @@ export function formatScores(file: FindingsFile, scores: TypeScore[]): string {
         : "",
       s.missing.length ? `missing: ${s.missing.join(", ")}` : "",
       s.harness_miss.length ? `harness_miss (excluded): ${s.harness_miss.join(", ")}` : "",
+      s.parse_error.length ? `parse_error (excluded): ${s.parse_error.join(", ")}` : "",
       s.confounded?.length ? `confounded: ${s.confounded.join(", ")}` : "",
       s.indexing_on_planted ? `filed as indexing: ${s.indexing_on_planted}` : "",
       s.blind ? `blind signals on plants: ${s.blind}` : "",
@@ -1154,7 +1181,7 @@ function intFlag(flags: Record<string, string[]>, name: string, fallback: number
   const v = flags[name]?.[0];
   if (v === undefined) return fallback;
   const n = Number(v);
-  if (!Number.isInteger(n) || n < 0) throw new Error(`${name} must be a non-negative integer, got ${v}`);
+  if (!Number.isInteger(n) || n < (name === "--sample" ? 1 : 0)) throw new Error(`${name} must be a${name === "--sample" ? " positive" : " non-negative"} integer, got ${v}`);
   return n;
 }
 
@@ -1169,6 +1196,9 @@ const PATH_FLAGS = new Set(["--pids", "--out", "--snapshot", "--findings", "--sp
 export async function main(argv: string[], tools?: Tools): Promise<number> {
   const { cmd, flags, bools } = parseArgs(argv);
   if (!ALLOWED[cmd]) throw new Error(`usage: source-screen.ts snapshot|baseline|plant|score [flags]`);
+  for (const b of bools) {
+    if (b !== "--no-same-person" || !["snapshot", "plant"].includes(cmd)) throw new Error(`${cmd} does not take ${b}`);
+  }
   for (const f of Object.keys(flags)) {
     if (!ALLOWED[cmd].includes(f)) throw new Error(`${cmd} does not take ${f}`);
     if (PATH_FLAGS.has(f)) flags[f] = flags[f].map((p) => guardPath(f, p));
