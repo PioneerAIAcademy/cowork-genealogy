@@ -85,10 +85,10 @@ class PatchSessionBody(BaseModel):
 # A sandbox keeps running the agent code it was created with, so an old one
 # drifts from the current control plane (issue #3406). Lead ruling 2026-10-13:
 # past this age a session can be read but not continued.
-SESSION_MAX_AGE = timedelta(hours=24)
+SESSION_MAX_AGE = timedelta(hours=72)
 
 _EXPIRED_DETAIL = (
-    "This session is more than 24 hours old and can't be continued. "
+    "This session is more than 72 hours old and can't be continued. "
     "Start a new session."
 )
 
@@ -162,8 +162,10 @@ async def push_token_to_live_sandboxes(
     /connect via sync_fs_token.
 
     Uses provider.get() -- not resume() -- so the running timeout is not
-    extended. Both auto-resume a paused VM via _connect(), but only resume()
-    calls set_timeout(). The last_active filter means targeted sandboxes are
+    extended; only resume() calls set_timeout(). A paused target wakes either
+    way: _connect() calls connect(), which auto-resumes, only on a cache miss,
+    and on a cached handle the token write is itself inbound traffic, which
+    auto_resume answers. The last_active filter means targeted sandboxes are
     likely still running, so the auto-resume is a no-op in practice.
 
     Failures are swallowed and logged per sandbox: a failed push to one sandbox

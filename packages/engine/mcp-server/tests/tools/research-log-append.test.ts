@@ -1386,6 +1386,17 @@ describe("research_log_append — logging-without-persistence nudge (#1478)", ()
     expect(research.log).toHaveLength(3);
   });
 
+  it.each(["wiki_search", "wiki_read", "wikipedia_search", "historical_context"])(
+    "does not count %s as a positive search (#3244)",
+    async (tool) => {
+      await write(baseResearch([]));
+      const op = { tool, query: { query: "Kingsclear" }, outcome: "positive", resultsExamined: 1, planItemId: null, notes: null };
+      const r = await researchLogAppend({ projectPath: dir, ops: [op, op, op] });
+      expect(r.ok).toBe(true);
+      expect(warnOf(r)).not.toMatch(NUDGE);
+    },
+  );
+
   it("does not count reference lookups (#3244), and still counts record searches", async () => {
     const wiki = (n: number) => ({ ...pos(n), tool: "wikipedia_search", query: { query: "Schuylkill County" } });
     await write(baseResearch([wiki(1), wiki(2)]));
