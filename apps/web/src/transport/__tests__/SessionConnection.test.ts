@@ -458,7 +458,7 @@ describe('replay dedupe across reconnect (#3387)', () => {
   })
 
   it('frames with no seq are always delivered, even repeated', async () => {
-    // Old sandboxes keep running pre-#3387 server code for up to 24 h
+    // Old sandboxes keep running pre-#3387 server code for up to 72 h
     // (sessions.py SESSION_MAX_AGE) and stamp nothing; their frames — and
     // status/snapshot/ping from any server — must pass through as today.
     const seen = await openConn()
