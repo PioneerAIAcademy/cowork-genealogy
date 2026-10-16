@@ -1377,7 +1377,7 @@ e2e-detector-diff: ## Old-vs-new replay of a detector correction over committed 
 	# applicable committed run, and reports every run where the two disagree.
 	cd eval/harness && uv run python -m e2e.detector_before_after_report --detector $(DETECTOR) $(if $(TEST),--test $(TEST),) $(if $(SINCE),--since $(SINCE),)
 
-.PHONY: e2e-latency
+.PHONY: e2e-narration-figures
 e2e-narration-figures: ## Derive the plan's narration figures (R7): make e2e-narration-figures
 	# Pure analysis over committed run JSONs — no live run, no API. Derives the
 	# three load-bearing narration figures in docs/plan/research-as-a-job-later.md
@@ -1386,6 +1386,7 @@ e2e-narration-figures: ## Derive the plan's narration figures (R7): make e2e-nar
 	# reporting a cheerful 0%.
 	cd eval/harness && uv run python -m e2e.narration_figures_report ../runlogs/e2e
 
+.PHONY: e2e-latency
 e2e-latency: ## Phase-0 latency breakdown of committed e2e runs: make e2e-latency (all) | TEST=<slug> | MD=1 for a Markdown table | BY_SKILL=1 for a per-skill phase breakdown | SINCE=all|N|YYYY-MM-DD
 	# Pure analysis over committed run JSONs — no live run, no API. Answers
 	# "how much of wall-clock is model generation vs tool execution?" (the

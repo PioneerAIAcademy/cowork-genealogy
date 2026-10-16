@@ -1,10 +1,24 @@
 # Research as a job — phase 2 (router re-entry and the turn's finish line)
 
-**Status:** BUILT 2026-09-29/30 on the `research-as-a-job-phase2` branch (unmerged).
-R1 and R4 are complete end to end; the acceptance measurement is blocked on #2793/#2927.
-Originally written 2026-09-29 against the code as it stands on
-`research-as-a-job-phase2`, after the *Before phase 2* sweep. Supersedes nothing;
-the parent is `research-as-a-job-later-REVISED.md`, whose R1 and R4 this executes.
+**Status, corrected 2026-10-16:** R1 (the section below) is **dropped, not built** — the
+2026-10-15 "one front door" directive removed the second front door R1 was a server-side
+patch over, and the commit that did it (`f6d5fad6ea`) says so: "R1 is dropped, not ported.
+Already absent from the branch." This file's own Status line went on saying "R1 and R4 are
+complete end to end" for a day after that landed; it did not. #2793 and #2927, named below
+as the acceptance measurement's blocker, are both since closed, but the measurement itself
+was redesigned rather than unblocked: R2 is now a unit test (`ut_research_r2`, added by the
+same commit) rather than a live measurement, and that test has not yet been run. R4 is
+still built, now on `main` through PRs #3147/#3187 rather than through this plan. R1's own
+section below is kept as the record of what was tried and the measurement behind it
+(reach: a derived 31.6% of e2e runs never yield, so a Stop-hook-only contract is
+undelivered on the rest) — read it as history, not as a description of the current system.
+
+**Original status (2026-09-29/30, superseded above):** BUILT on the
+`research-as-a-job-phase2` branch (unmerged). R1 and R4 are complete end to end; the
+acceptance measurement is blocked on #2793/#2927. Originally written 2026-09-29 against
+the code as it stands on `research-as-a-job-phase2`, after the *Before phase 2* sweep.
+Supersedes nothing; the parent is `research-as-a-job-later-REVISED.md`, whose R1 and R4
+this executes.
 
 ## What the sweep established, and what it cost
 

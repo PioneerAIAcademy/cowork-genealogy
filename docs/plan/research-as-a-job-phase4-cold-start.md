@@ -1,9 +1,17 @@
 # Phase 4 — the cold start (detailed pass)
 
-**Status:** BUILT, 2026-09-30, on the `research-as-a-job-phase2` branch (unmerged). All
-three steps and all four acceptance items are done; see "Order of work" and
-"Acceptance" below, each annotated with what landed. Parent:
-`docs/plan/research-as-a-job-later-REVISED.md`, "## Phase 4 — the cold start".
+**Status, corrected 2026-10-16: SUPERSEDED, not built.** Everything this plan shipped was
+later deleted by the 2026-10-15 "one front door" directive (`f6d5fad6ea`): a project now
+always requires a FamilySearch person ID, so `init-project` never searches by name and the
+namesake-flood ambiguity this plan solves cannot arise any more. Concretely, as of that
+commit, none of this exists on the branch: `src/utils/person-search-decisiveness.ts`, the
+`pick` field on `person_search`'s response, and `packages/engine/plugin/skills/init-project/`
+itself (the skill became an agent, `agents/init-project.md`, which does not read `pick`).
+The eval candidate this plan names (`v6_2026-09-30_13-45-44.json`) was never released and
+now describes a skill that has been deleted outright, so releasing it is moot. The rest of
+this file — the "Order of work", the probe that derived the decisiveness rule, the
+acceptance table — is kept as the record of what was built and why, in case a future design
+needs the same probe; it is not a description of the current system.
 
 What shipped, in the order the plan set:
 
