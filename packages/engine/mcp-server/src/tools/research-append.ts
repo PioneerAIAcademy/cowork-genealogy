@@ -19,6 +19,7 @@
 // sections, the phase-3 sections, and the `project` singleton).
 
 import { getProjectStore } from "../store/project-store.js";
+import { readStartingTree, startingPersonIdsOf } from "../utils/starting-tree.js";
 import { SETTLED_CONFLICT_STATUSES, VALIDATOR_ENUMS } from "../validation/validator.js";
 import { validateIntroduced } from "../validation/introduced-errors.js";
 import { sanitizeTree } from "../validation/tree-sanitize.js";
@@ -2919,20 +2920,6 @@ async function readJson(projectPath: string, filename: string): Promise<any> {
   }
 }
 
-/** Read the write-once starting-tree.gedcomx.json baseline, or null when it is
- *  absent or unreadable. Fail-open by design: legacy projects created before the
- *  baseline shipped have no such file, and a tree-encoding WARNING must never
- *  block a completion for a project that simply predates it. */
-export async function readStartingTree(projectPath: string): Promise<SimplifiedGedcomX | null> {
-  try {
-    const raw = await getProjectStore().readText(projectPath, "starting-tree.gedcomx.json");
-    const parsed = JSON.parse(raw);
-    return parsed && typeof parsed === "object" ? (parsed as SimplifiedGedcomX) : null;
-  } catch {
-    return null;
-  }
-}
-
 /** Tree-encoding completion check (issue #1490), shadow → WARNING.
  *
  * A tier->=-probable conclusion is expected to leave a trace in the tree. This
@@ -4955,17 +4942,7 @@ async function prepareOps(
   const personLinks = batchPersonLinks(research, ops);
   // Read once here: `applyOne` is synchronous. Fail-open (an absent baseline
   // yields an empty set) matches `readStartingTree`'s own contract.
-  const baseline = await readStartingTree(projectPath);
-  // Array.isArray, not `?? []`: `readStartingTree` is fail-open for a read or
-  // parse failure but returns any parsed object as-is, so a baseline whose
-  // `persons` is not an array reached `.map` and threw a raw TypeError out of
-  // `researchAppend` -- not a ResearchAppendError, and from `prepareOps`, so it
-  // killed every call including ones with no person_evidence op at all.
-  const startingPersonIds: ReadonlySet<string> = new Set(
-    ((Array.isArray(baseline?.persons) ? baseline.persons : []) as any[])
-      .map((p: any) => p?.id)
-      .filter((id: any): id is string => typeof id === "string" && id !== ""),
-  );
+  const startingPersonIds = startingPersonIdsOf(await readStartingTree(projectPath));
   for (const recordId of recordIdsForPersonEvidence(research, ops)) {
     const file = await readMatchScores(projectPath, recordId);
     if (file !== null) matchScores.set(recordId, file);
