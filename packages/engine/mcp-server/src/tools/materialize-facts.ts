@@ -1191,7 +1191,7 @@ export async function materializeFacts(
         beforeTree, tree, research, projectPath,
         input.warningJustifications, "materialize_facts",
       );
-      if (batchGateResult && "ok" in batchGateResult) return batchGateResult as any;
+      if (batchGateResult && "ok" in batchGateResult) return batchGateResult;
       const batchJustPersisted = batchGateResult?.justificationsPersisted === true;
 
       if (batchJustPersisted) {
@@ -1257,7 +1257,7 @@ export async function materializeFacts(
       beforeTree, tree, research, projectPath,
       input.warningJustifications, "materialize_facts",
     );
-    if (singleGateResult && "ok" in singleGateResult) return singleGateResult as any;
+    if (singleGateResult && "ok" in singleGateResult) return singleGateResult;
     const singleJustPersisted = singleGateResult?.justificationsPersisted === true;
 
     if (singleJustPersisted) {
