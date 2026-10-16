@@ -81,6 +81,15 @@ that keeps the judge off the routing decision.
 legend reads as a `Skill` call. The skill was deleted in #2268, so the row now
 spells `@plugin:search-images`, and `_paired_names()` picks it up.
 
+`ut_research_es9` failed once in its first suite run because the router followed
+`project_context`'s advisory `nextStep`, which then said `search-records` for any
+planned item whatever its repository. The step now names `search-external-sites`
+for a non-FamilySearch item (`docs/specs/project-context-tool-spec.md`). The
+advisory is still wrong on two of these states and the router passed both 3 of 3
+regardless: for `pe7` it says `research-exhaustiveness`, because a no-link leaves
+no record to tell a rejected assertion from an unlinked one, and for `si3` it says
+`search-records`, because browse-only is stated only in the plan item's rationale.
+
 Rows not given a test of their own: the "not yet exhaustive" and "declaration
 refused" rows route on what `research-exhaustiveness` returned in the same
 session, which a fresh-context test cannot seed; the proof-conclusion

@@ -4,7 +4,7 @@
     "skill": "research",
     "name": "Routes to search-images when the remaining plan item is a browse of unindexed images",
     "type": "positive",
-    "description": "Routing table row 'A plan item targets a digitized-but-unindexed FamilySearch record set'. barren-order-books-browse-only has one in_progress question: its indexed probate search and its full-text pass are completed and logged negative, and the one item left is the Barren County court order books, browse-only images at 0% record-searchable. The router must spawn the search-images agent to read the volume page by page. Both log entries are negative, so there is nothing to extract; project_context's advisory nextStep reads 'extraction' on this state because it counts log entries without reading their outcome.",
+    "description": "Routing table row 'A plan item targets a digitized-but-unindexed FamilySearch record set'. barren-order-books-browse-only has one in_progress question: its indexed probate search and its full-text pass are completed and logged negative, and the one item left is the Barren County court order books, browse-only images at 0% record-searchable. The router must spawn the search-images agent to read the volume page by page. Both log entries are negative, so there is nothing to extract. project_context's advisory nextStep reads 'search-records' here: whether a set is browse-only is stated in the plan item's rationale, which the host does not read.",
     "tags": [
       "routing",
       "routes-to:search-images"

@@ -4,7 +4,7 @@
     "skill": "research",
     "name": "Routes to search-external-sites when the next plan item is on a non-FamilySearch site",
     "type": "positive",
-    "description": "Routing table row 'The question's active plan has items not yet executed' with its non-FS branch: '(or @plugin:search-external-sites for non-FS sources)'. ma-state-census-external has one in_progress question and one planned item whose repository is MyHeritage (the researcher's subscription). The router must spawn the search-external-sites agent with the plan item id, not run a FamilySearch search for an item FamilySearch does not hold. project_context's advisory nextStep reads 'search-records' on this state; it does not read the repository.",
+    "description": "Routing table row 'The question's active plan has items not yet executed' with its non-FS branch: '(or @plugin:search-external-sites for non-FS sources)'. ma-state-census-external has one in_progress question and one planned item whose repository is MyHeritage (the researcher's subscription). The router must spawn the search-external-sites agent with the plan item id, not run a FamilySearch search for an item FamilySearch does not hold. project_context's advisory nextStep names search-external-sites for this item; before issue #1851 it read 'search-records', and a suite run followed it to search-records once.",
     "tags": [
       "routing",
       "routes-to:search-external-sites"
