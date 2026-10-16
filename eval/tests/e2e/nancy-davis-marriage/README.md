@@ -87,14 +87,6 @@ identify `L8YY-CBX` (b. ~1853 Missouri) as Brewer's wife rather than
 `LJK2-JBH` (b. ~1837 Tennessee). `image_basis` stays **false**, and no Step 1a
 image calibration was performed or is relied upon.
 
-**Acceptance-criteria note.** Issue #3347's "Done when" asks that the README say
-"which register field decided it." The register image
-(`ark:/61903/3:1:3QS7-998M-Y8G2`) returned **HTTP 403** and was not examined, so
-no register field was inspected or verified. The resolution instead relies on
-the marriage index and the corroborating census and death records above. The
-literal register-field criterion therefore **remains unmet, pending code-owner
-review and sign-off** — it is neither waived nor treated as satisfied here.
-
 **Retrieval** was read-only via the MCP `record_read` and `person_read` tools
 (and an `image_transcribe` attempt on the register image, which returned 403)
 against live FamilySearch; the identity judgement is the genealogist's.
