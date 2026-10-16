@@ -1,0 +1,166 @@
+{
+  "run_log": "v5_2026-10-16_10-55-10.json",
+  "annotator": "edenosas1@gmail.com",
+  "corrections": [
+    {
+      "test_id": "ut_question_selection_007",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Wrote q_003 'Who was the mother of Patrick Flynn, born ca. 1845 in Ireland, residing in Schuylkill County, Pennsylvania by 1850?' on objective_decomposition with depends_on ['q_001'], after reading q_001 (father) and q_002 (1850 census) as resolved. The Ireland birthplace matches the scenario's accepted conclusion, and the user paragraph says plainly that the father is confirmed and the mother is still unnamed in every record seen."
+    },
+    {
+      "test_id": "ut_question_selection_007",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Persisted depends_on ['q_001'] and unblocks [] as required. The rationale and the user paragraph both point the mother search at the Thomas Flynn household in the 1850 and 1860 censuses, which is what judge_context asked for. Caller lines come above the `---` and two plain paragraphs follow it, with no ids."
+    },
+    {
+      "test_id": "ut_question_selection_007",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Called project_context and research_query for questions, conflicts, hypotheses, plans and timelines, then made one research_append (section questions, op append) with a full entry that validated and returned q_003."
+    },
+    {
+      "test_id": "ut_question_selection_007",
+      "dimension_source": "rubric",
+      "dimension_name": "Question specificity",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "The question names the person, his birth year and place, his residence by 1850, and the one fact sought (his mother). It does not name a record set, so a search can be designed directly from it."
+    },
+    {
+      "test_id": "ut_question_selection_008",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Wrote q_002 'Do independent records confirm or refute that Thomas Flynn (b. ~1815, Ireland) is the father of Patrick Flynn (b. ~1845, PA, d. 1908, Schuylkill County, PA)?' on hypothesis_test, testing h_001 rather than assuming it. The rationale cites the single unsourced Ancestry member tree, which matches src_001 ('No underlying source records cited')."
+    },
+    {
+      "test_id": "ut_question_selection_008",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Rationale gives the compiled, unsourced nature of the tree as the reason to verify first. depends_on is [] and unblocks is ['q_001'], the existing open parents question. The user paragraph explains in plain words that the online-tree claim must be tested before the search goes further, with no ids."
+    },
+    {
+      "test_id": "ut_question_selection_008",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Read project_context and the questions, plans, conflicts, hypotheses, timelines and assertions sections, then made one well-formed research_append to questions that validated and returned q_002."
+    },
+    {
+      "test_id": "ut_question_selection_008",
+      "dimension_source": "rubric",
+      "dimension_name": "Question specificity",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "The confirm-or-refute question names both men with birth years and places, Patrick's death year and county, and the single relationship under test. It names no record set."
+    },
+    {
+      "test_id": "ut_question_selection_013",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Made no research_append and reported that q_001 'Who were the parents of Job Purnell (b. ~1826, Trowbridge, Wiltshire)?' already covers the objective, with pli_001 (Trowbridge christenings, 1824-1828) still planned. That is the outcome the test expects. Its preamble states correctly that pli_001 is 'planned' and not 'in_progress'."
+    },
+    {
+      "test_id": "ut_question_selection_013",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 2,
+      "comment": "The return breaks the output contract. A reasoning walkthrough sits above the `---`, and the caller line 'no question written — q_001 already covers the sole fact the objective targets and it is open' sits below it. So the caller's section has no status line, and the part printed verbatim to the user carries a q_ id plus three blocks instead of two plain paragraphs. The recommendation to run the planned Trowbridge christening search is present."
+    },
+    {
+      "test_id": "ut_question_selection_013",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Six read calls: project_context, then research_query for questions, plans, conflicts, hypotheses and timelines. All had correct arguments, and correctly no write was made."
+    },
+    {
+      "test_id": "ut_question_selection_013",
+      "dimension_source": "rubric",
+      "dimension_name": "Question specificity",
+      "llm_score": 3,
+      "corrected_score": null,
+      "comment": "No question was written, so this dimension's situation never arose and it is N/A. The judge scored 3 by grading the existing q_001, and gave null for the identical outcome in d04."
+    },
+    {
+      "test_id": "ut_question_selection_d02",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Wrote q_001 'Who were the parents of Patrick Flynn, born ca. 1845 in Pennsylvania, who died in 1908 in Schuylkill County, PA?' on objective_decomposition, with depends_on [] and unblocks []. That restates the single-fact objective with identifying detail, as Step 1c requires. The user paragraph speculates he was 'likely an Irish immigrant', which sits oddly with a Pennsylvania birth but is hedged and not persisted."
+    },
+    {
+      "test_id": "ut_question_selection_d02",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "On an empty project it read the context and sections, wrote the one first question with every field, and returned caller lines above the `---` and two plain paragraphs below it with no ids."
+    },
+    {
+      "test_id": "ut_question_selection_d02",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Read project_context and the questions, conflicts, hypotheses and timelines sections, then made one valid research_append that returned q_001."
+    },
+    {
+      "test_id": "ut_question_selection_d02",
+      "dimension_source": "rubric",
+      "dimension_name": "Question specificity",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "The question names the person, his birth year and place, his death year and county, and the fact sought (his parents). It is not narrowed to a record."
+    },
+    {
+      "test_id": "ut_question_selection_d04",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 2,
+      "comment": "No question was written, which is the expected outcome, and it scoped Serena Deacon and Samuel Jesse Purnell out of the objective. But the returned reason is false: 'Step 1a applies: complete that in-flight direct-evidence path' contradicts its own preamble ('pli_001 is status planned, not in_progress. No item is in flight'). The main thread passed a misstated rule on to the user: 'a new question is only added when the current direct-evidence path is complete or exhausted'."
+    },
+    {
+      "test_id": "ut_question_selection_d04",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 2,
+      "comment": "Same contract break as 013. A reasoning dump sits above the `---`, and 'No question written. The sole open question (q_001) has a planned but not-yet-executed search item (`pli_001` ...)' sits below it. So the caller gets no status line and the user-facing block carries q_ and pli_ ids across three blocks. It does recommend executing the Trowbridge baptism search, 1824-1828."
+    },
+    {
+      "test_id": "ut_question_selection_d04",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Read project_context, then research_query for questions, conflicts, hypotheses, plans (with questionId) and timelines (with personId). All arguments were correct and no write was made."
+    },
+    {
+      "test_id": "ut_question_selection_d04",
+      "dimension_source": "rubric",
+      "dimension_name": "Question specificity",
+      "llm_score": null,
+      "corrected_score": null,
+      "comment": "No question was written, so this is N/A. It declined to turn the caller's nudge about Serena and Samuel into a question."
+    }
+  ]
+}
