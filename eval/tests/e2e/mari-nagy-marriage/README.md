@@ -64,8 +64,8 @@ recorded. In order they run from 1877 to 1895, which fits a mother born about 18
 first child and 37 at Szidonia. Vas civil registration continues the family: Szidonia was born
 9 Dec 1895 (`ark:/61903/1:1:6JB3-6L88`) and died 10 Feb 1896 (`ark:/61903/1:1:6JYB-PPXJ`), a János
 was born 27 May 1897 (`ark:/61903/1:1:6JBS-943Y`), and a Juliánna was born 16 May 1898
-(`ark:/61903/1:1:6JB3-JYL4`). The 1877 János fits the Vas civil death of János Szőke, son of János
-Szőke and Mária Nagy, on 6 Apr 1898 at age 20 (`ark:/61903/1:1:6JY1-TCCM`).
+(`ark:/61903/1:1:6JB3-JYL4`). The 1877 János fits the Vas civil death of a János Szőke whose parents
+are indexed as János Szőke and Mária Nagy, on 6 Apr 1898 at age 20 (`ark:/61903/1:1:6JY1-TCCM`).
 
 The 1907 Vas civil marriage of Teréz Szőke (born 1884) to József Vámos (`ark:/61903/1:1:6JB9-NM3N`)
 names her parents as János Szőke and **Mári Nagy**, the tree's own spelling of the mother's name. That
@@ -84,10 +84,11 @@ listing the same duplication repeats under other series (Horváth Lajos `XZ9V-P2
 József `XZ9V-P2Q`/`XZ9V-PLY`). So the repeated Annas do not point to twins or a second couple.
 
 **Second-couple check.** Within Egyházasrádóc, apart from the doubly photographed 1893 page, there is
-one baptism per child, spaced 1877–1895, with no overlapping births. A search for marriages of János
+one baptism per child, spaced 1877–1895 with no two in the same year. The indexes give years only, so
+closer spacing between 1880 and 1881 cannot be checked from them. A search for marriages of János
 Szőke/Szöke to Mária Nagy anywhere in Hungary, 1860–1900, returned two church marriages: this one and
 Dunapataj, Pest-Pilis-Solt-Kiskun, 16 Sep 1895 (`ark:/61903/1:1:6N3H-31C8`). Dunapataj is too late
-for these children. That search found the hint record, which shows it was not filtering it out. The
+for these children, and its groom is indexed born 1864, not 1847. That search found the hint record, which shows it was not filtering it out. The
 other János Szőke × Mária Nagy families the indexes hold are outside Vas: Gyöngyöstarján (Heves),
 Hajdúszovát, Szeghalom, Izsák and Debrecen. The Anna Szőke who died 6 Dec 1895 aged 2
 (`ark:/61903/1:1:6N71-1HR8`) belongs to the Gyöngyöstarján couple, not this one.
@@ -98,10 +99,10 @@ positive control: they returned none of the known Egyházasrádóc baptisms. The
 therefore not evidence of absence and were not relied on. The baptisms above come from searching János
 Szőke/Szöke with spouse Mária Nagy, which did return them.
 
-**Open question, not evidence against the match.** A Vas civil death of Ferencz Szőke, son of János
-Szőke and Mária Nagy, on 2 Jun 1897 gives his age as 5 (`ark:/61903/1:1:6JY1-Z6YV`). That points to
+**Open question, not evidence against the match.** A Vas civil death of Ferencz Szőke, whose parents
+are indexed as János Szőke and Mária Nagy, on 2 Jun 1897 gives his age as 5 (`ark:/61903/1:1:6JY1-Z6YV`). That points to
 a birth about 1892, not the 1889 baptism. Either the indexed age is wrong or there was a second,
-unindexed Ferencz. An Anna Szöke of the same parents who died at Felsőcsatár, Vas, on 30 Mar 1902
+unindexed Ferencz. An Anna Szöke whose parents carry the same names, who died at Felsőcsatár, Vas, on 30 Mar 1902
 aged 8 (`ark:/61903/1:1:6JY1-CBVL`) was not tied to this family either way.
 
 `expected-findings.json` keeps the marriage as f1 with the hint's ark. Its description no longer
