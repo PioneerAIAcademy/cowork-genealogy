@@ -4,8 +4,16 @@ survey-surname tabulates every household of a surname across a place's US
 federal censuses. It resolves a place with ``place_search``, calls
 ``record_search`` per census year with ``projectPath`` for staging, logs
 every page with ``research_log_append``, groups stubs by ``recordArk``
-into households, sections by census year and collection title, and writes
-the table via ``Write``.
+into households, and sections by census year and collection title.
+
+The deliverable is one more research-log entry (#3244 option L, issue #3414):
+``tool: "survey_surname"``, ``plan_item_id`` null, ``query`` naming the
+surname, place and year span, no staged ref, and the household table in
+``notes``, ending with ``HEDGE`` verbatim. It used to be a loose
+``surname-survey-*.md`` written with ``Write``, which the hosted worker's
+read-only ``/project`` refused and no ProjectStore ever saw. The table
+validators below read that entry's ``notes``, never the reply text: on a
+direct test the reply is the dispatcher's relay, not the agent's table.
 
 Narrative-quality dimensions (place resolution accuracy, table prose) live
 in the rubric and are graded by the LLM judge. The mechanical checks here
@@ -75,7 +83,33 @@ def test_paging_offsets_1840(tool_calls, test):
     )
 
 
-# --- Negative: no MCP calls and no Write -----------------------------
+HEDGE = (
+    "Censuses before 1880 have no relationship column: the first person "
+    "listed in a dwelling is shown as head, and relationships are not stated."
+)
+
+
+def _files_created(before_state, after_state):
+    """New workspace files other than the ones the engine writes: staged
+    payloads under ``results/.staging/`` and the ``results_ref`` sidecar of a
+    new log entry."""
+    before = set((before_state or {}).get("files") or {})
+    after = set((after_state or {}).get("files") or {})
+    refs = {e.get("results_ref") for e in _new_log_entries(before_state, after_state)}
+    return sorted(
+        p for p in after - before
+        if not p.startswith("results/.staging/") and p not in refs
+    )
+
+
+def _survey_entries(before_state, after_state):
+    return [
+        e for e in _new_log_entries(before_state, after_state)
+        if e.get("tool") == "survey_surname"
+    ]
+
+
+# --- Negative: no MCP calls and nothing logged or written -------------
 
 def test_negative_makes_no_mcp_calls(tool_calls, test):
     """d4: a negative routing test must make zero MCP calls."""
@@ -87,10 +121,21 @@ def test_negative_makes_no_mcp_calls(tool_calls, test):
     )
 
 
-def test_negative_makes_no_write(builtin_tool_calls, test):
-    """d4: a negative routing test must not call Write."""
+def test_negative_makes_no_write(
+    builtin_tool_calls, before_state, after_state, test
+):
+    """d4: a negative routing test appends no log entry and creates no file.
+
+    d4 has no scenario, so there is no research.json and the log check cannot
+    fail; test_negative_makes_no_mcp_calls is what catches a log call."""
     if test.get("type") != "negative":
         pytest.skip("only negative tests")
+    new = _new_log_entries(before_state, after_state)
+    assert not new, (
+        f"negative test should log nothing; got {[e.get('tool') for e in new]}"
+    )
+    files = _files_created(before_state, after_state)
+    assert not files, f"negative test should create no file; wrote: {files}"
     writes = _builtin_calls(builtin_tool_calls, "Write")
     assert not writes, "negative test should not call Write"
 
@@ -127,44 +172,75 @@ def test_positive_logs_each_search_page(
     )
 
 
-# --- Positive: Write call to surname-survey-*.md ---------------------
+# --- Positive: the table is one survey_surname log entry -------------
 
-def test_positive_writes_table(builtin_tool_calls, test):
-    """Each positive test must call Write to a surname-survey-*.md file."""
+def test_one_log_entry_appended(before_state, after_state, test):
+    """Each positive test appends exactly one ``survey_surname`` log entry
+    carrying the table, and writes no file.
+
+    The entry has ``plan_item_id`` null, a ``query`` naming ``surname``,
+    ``place`` and ``yearSpan``, no staged ref (``results_ref`` null), outcome
+    ``positive`` (every positive fixture returns at least one household), and
+    ``notes`` ending with ``HEDGE`` verbatim. Trailing whitespace is tolerated.
+    """
     if test.get("type") != "positive":
         pytest.skip("only positive tests")
-    writes = _builtin_calls(builtin_tool_calls, "Write")
-    survey_writes = [
-        w for w in writes
-        if "surname-survey" in (w.get("args", {}).get("file_path") or "")
+    entries = _survey_entries(before_state, after_state)
+    assert len(entries) == 1, (
+        f"expected exactly one new survey_surname log entry; got {len(entries)}"
+    )
+    entry = entries[0]
+    assert entry.get("plan_item_id") is None, (
+        f"the table entry's plan_item_id is {entry.get('plan_item_id')!r}, not null"
+    )
+    query = entry.get("query")
+    missing = [
+        k for k in ("surname", "place", "yearSpan")
+        if not isinstance(query, dict) or not query.get(k)
     ]
-    assert survey_writes, (
-        "expected a Write call to a surname-survey-*.md file; "
-        f"got writes to: {[w.get('args', {}).get('file_path') for w in writes]}"
+    assert not missing, f"the table entry's query {query!r} lacks {missing}"
+    assert entry.get("results_ref") is None, (
+        f"the table entry carries a staged ref: {entry.get('results_ref')!r}"
+    )
+    assert entry.get("outcome") == "positive", (
+        f"the table entry's outcome is {entry.get('outcome')!r}, not 'positive'"
+    )
+    notes = entry.get("notes")
+    assert isinstance(notes, str) and notes.strip(), (
+        "the table entry's notes must carry the table"
+    )
+    assert notes.rstrip().endswith(HEDGE), (
+        "the table entry's notes must end with the pre-1880 hedge sentence, "
+        f"verbatim; they end: {notes.rstrip()[-200:]!r}"
+    )
+    files = _files_created(before_state, after_state)
+    assert not files, (
+        f"the table belongs in the log entry's notes, not a file; wrote: {files}"
     )
 
 
 # --- d5: recordArk grouping and slave-schedule sectioning -------------
 
-def _survey_file(after_state):
-    files = (after_state or {}).get("files") or {}
-    for path, text in files.items():
-        name = path.rsplit("/", 1)[-1]
-        if name.startswith("surname-survey") and name.endswith(".md"):
-            return text
-    return ""
+def _survey_table(before_state, after_state):
+    """The ``notes`` of the one new ``survey_surname`` entry, or "" when there
+    is not exactly one. Never the reply text: on a direct test that is the
+    dispatcher's relay."""
+    entries = _survey_entries(before_state, after_state)
+    if len(entries) != 1:
+        return ""
+    notes = entries[0].get("notes")
+    return notes if isinstance(notes, str) else ""
 
 
-def test_household_grouping_and_slave_schedule(after_state, test):
-    """d5: in the written table, the two stubs sharing a recordArk (Edmund and
+def test_household_grouping_and_slave_schedule(before_state, after_state, test):
+    """d5: in the logged table, the two stubs sharing a recordArk (Edmund and
     Mary) are one row, and the slave-schedule stub sits under its own heading.
 
-    Reads the file from after_state["files"]: the recorded Write args are
-    truncated, and on a direct test text_response is the dispatcher's relay."""
+    Reads the table from the survey_surname log entry's notes."""
     if "household-grouping" not in test.get("tags", []):
         pytest.skip("not a household-grouping test")
-    text = _survey_file(after_state)
-    assert text, "no surname-survey-*.md in the workspace"
+    text = _survey_table(before_state, after_state)
+    assert text, "no single survey_surname log entry carrying the table"
     population, slave, heading = [], [], ""
     for line in text.lower().splitlines():
         s = line.strip()
@@ -192,14 +268,14 @@ def _is_rule(line):
     return line.startswith("|") and bool(body) and set(body) == {"-"}
 
 
-def test_table_has_rubric_columns(after_state, test):
-    """Positive tests: every household table in the written file carries the six
-    columns the agent body and the rubric's Table structure bar name.
-    Non-population schedule tables are exempt."""
+def test_table_has_rubric_columns(before_state, after_state, test):
+    """Positive tests: every household table in the logged entry's notes
+    carries the six columns the agent body and the rubric's Table structure bar
+    name. Non-population schedule tables are exempt."""
     if test.get("type") != "positive":
         pytest.skip("only positive tests")
-    text = _survey_file(after_state)
-    assert text, "no surname-survey-*.md in the workspace"
+    text = _survey_table(before_state, after_state)
+    assert text, "no single survey_surname log entry carrying the table"
     lines = [line.strip().lower() for line in text.splitlines()]
     heading, headers = "", []
     for s, nxt in zip(lines, lines[1:] + [""]):
@@ -209,7 +285,7 @@ def test_table_has_rubric_columns(after_state, test):
             if "schedule" in heading and "population" not in heading:
                 continue
             headers.append(s)
-    assert headers, "no household table in the survey file"
+    assert headers, "no household table in the logged survey entry"
     for h in headers:
         missing = [c for c in _REQUIRED_COLUMNS if c not in h]
         assert not missing, f"table header {h!r} lacks {missing}"

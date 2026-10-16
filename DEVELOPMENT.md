@@ -341,9 +341,11 @@ since mid-2026 was verified without one. Verification is automated:
    `make engine-smoke-http` starts `build/http.js` on the compose Postgres + minio
    store (`make proto-up-store`, so Docker), calls every advertised tool but the
    four auth exclusions over Streamable HTTP under a fresh `smoke-<uuid>` project id
-   (`SMOKE_PROJECT_ID=` pins it), and fails if a tool is neither called nor excluded
-   (`BASE=http://127.0.0.1:8787` runs it against the compose `tools` service
-   instead). All read `dev/smoke-calls.ts`.
+   (`SMOKE_PROJECT_ID=` pins it), and fails if a tool is neither called nor excluded.
+   The project rows run as a synthetic bearer stamped on a `turns` row the smoke seeds
+   and deletes through `--pg-dsn`, which both arms pass: the tool server 403s any other
+   bearer (U4). `BASE=http://127.0.0.1:8787` runs it against the compose `tools`
+   service instead. All read `dev/smoke-calls.ts`.
 
 Three guides survive in `docs/testing-guides/`, covering setup paths the
 harness cannot reach: `oauth-tool-testing-guide.md` (how to get a

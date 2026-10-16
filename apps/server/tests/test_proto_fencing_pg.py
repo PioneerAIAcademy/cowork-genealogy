@@ -12,6 +12,15 @@ race runs here: a proxy over a real connection holds the newer claim at its comm
 (``CommitGate``), the stale attempt's write runs into it, and the release comes only once
 ``pg_stat_activity`` shows that write waiting on the claim -- never inferred from a sleep.
 
+U4: the tool server's door sits in front of the fence. A project request is admitted only
+when its bearer's sha256 is the one the attempt stamped (``worker.STAMP_BEARER_SQL``) on that
+open turn of that project, else a 403 before any transport, which the MCP client raises at
+``initialize``. Every claim of an open turn clears the stamp, so each claim here is followed
+by the attempt's stamp, as the worker does before its CLI exists. The door does not test the
+epoch: both attempts of a turn bear ``t`` here, as one patron's attempts do absent a refresh,
+so once the newer attempt has stamped, the older one passes the door and the fence refuses it
+in-band; before it has stamped, the older one gets the 403.
+
 The tool server is ``node packages/engine/mcp-server/build/http.js``, two processes, the way
 two instances would run it (``_proto_tools``). Without the DSN, ``node`` or the build the
 module skips -- except under ``CI``, where it fails, so the job cannot pass by skipping.
@@ -31,10 +40,11 @@ import pytest
 from proto.worker import options, worker
 from proto.worker.session_store import PgSessionStore
 from tests._proto_pg import PROTO, database, session, sql, turn
-from tests._proto_tools import call_tool, result_text, spawn_tool_server
+from tests._proto_tools import call_tool, http_statuses, result_text, spawn_tool_server
 
 WAIT_S = 10.0
 ANCHOR = "/project"
+BEARER = "t"
 
 
 @pytest.fixture(scope="module")
@@ -121,9 +131,16 @@ def claim(dsn: str, row: dict, receive_count: int) -> worker.Claim:
     return claimed
 
 
-def headers(row: dict, epoch: int) -> dict[str, str]:
+def stamp(dsn: str, row: dict, epoch: int, bearer: str = BEARER) -> None:
+    """The attempt's bearer stamp (U4), through the worker's own STAMP_BEARER_SQL: what it
+    runs after every claim, before the CLI that bears ``bearer`` exists."""
+    with psycopg.connect(dsn, autocommit=True) as conn:
+        assert worker.stamp_bearer(conn, row["turn_id"], epoch, bearer), "the stamp matched no open row"
+
+
+def headers(row: dict, epoch: int, bearer: str = BEARER) -> dict[str, str]:
     """The worker's own header builder: a renamed or reformatted header fails here."""
-    return options.tool_server_headers(project_id=row["project_id"], bearer="t", turn_id=row["turn_id"],
+    return options.tool_server_headers(project_id=row["project_id"], bearer=bearer, turn_id=row["turn_id"],
                                        claim_epoch=epoch)
 
 
@@ -161,6 +178,19 @@ def documents(dsn: str, project_id: str) -> list[tuple]:
                (project_id,))
 
 
+async def refused_at_door(server, hdrs: dict[str, str], name: str, args: dict) -> None:
+    """U4: the door's 403, raised by the MCP client at ``initialize`` -- the guard emitted
+    the refusal, the call did not merely fail -- so no tool ran. Bounded, so a client that
+    swallowed the refusal fails here rather than hangs."""
+    with pytest.raises(BaseException) as raised:
+        await asyncio.wait_for(call_tool(server, hdrs, name, args), WAIT_S * 3)
+    assert 403 in http_statuses(raised.value), f"not the door's 403: {raised.value!r}"
+
+
+def assert_forbidden(server, hdrs: dict[str, str], name: str, args: dict) -> None:
+    asyncio.run(refused_at_door(server, hdrs, name, args))
+
+
 def assert_refused(result, epoch: int) -> None:
     """A stale write's answer names why: the guard emitted, it did not merely fail."""
     text = result_text(result)
@@ -181,6 +211,7 @@ def test_a_stale_write_through_a_second_tool_server_is_a_no_op(pg_dsn, servers):
         # is held at its commit.
         a = claim(pg_dsn, row, 1)
         assert a.epoch == 1 and a.message["text"] == "go"
+        stamp(pg_dsn, row, a.epoch)
         b_claim = GatedClaim(pg_dsn, row, 2)
         try:
             # A's write starts against the committed epoch 1, so its BEGIN pre-check passes,
@@ -193,7 +224,12 @@ def test_a_stale_write_through_a_second_tool_server_is_a_no_op(pg_dsn, servers):
         assert b.epoch == 2 and b.message["text"] == "go"
         assert_refused(await stale, 1)
 
-        # A's retry after B's claim committed: refused at its BEGIN pre-check.
+        # U4: B's claim cleared A's stamp and B has not stamped yet: the door refuses A.
+        await refused_at_door(s1, headers(row, 1), "project_create", create("alpha"))
+        stamp(pg_dsn, row, b.epoch)
+
+        # A's retry after B's claim committed and B stamped the same bearer: past the door,
+        # refused at its BEGIN pre-check.
         assert_refused(await call_tool(s1, headers(row, 1), "project_create", create("alpha")), 1)
         live = await call_tool(s2, headers(row, b.epoch), "project_create", create("bravo"))
         assert not live.isError, result_text(live)
@@ -217,26 +253,33 @@ def test_a_stale_write_through_a_second_tool_server_is_a_no_op(pg_dsn, servers):
 
 
 def test_a_fence_naming_another_project_s_turn_is_refused(pg_dsn, servers):
-    """The fence is (turn, project, epoch): a live turn's fence sent with another project's
-    header must not authorise a write to that project. The legitimate direction: the same
-    project with no fence headers at all writes as it always did."""
+    """U4: a live turn's bearer and fence sent with another project's header is a 403 at the
+    door, and so is the other patron's turn with this bearer, and a project request with no
+    fence at all -- there is no turn to match. None of them writes. The legitimate
+    direction: the caller's own stamped turn, fenced, on its own project writes."""
     s1, _ = servers
     theirs = seeded(pg_dsn)
     live = claim(pg_dsn, theirs, 1)
-    mine = session(pg_dsn).project_id
+    stamp(pg_dsn, theirs, live.epoch, "t-theirs")
+    ours = seeded(pg_dsn)
+    own = claim(pg_dsn, ours, 1)
+    stamp(pg_dsn, ours, own.epoch, "t-ours")
+    mine = ours["project_id"]
 
     async def scenario():
-        forged = options.tool_server_headers(project_id=mine, bearer="t", turn_id=theirs["turn_id"],
+        forged = options.tool_server_headers(project_id=mine, bearer="t-theirs", turn_id=theirs["turn_id"],
                                              claim_epoch=live.epoch)
-        refused = await call_tool(s1, forged, "project_create", create("forged"))
-        unfenced = await call_tool(s1, {"Authorization": "Bearer t", options.PROJECT_ID_HEADER: mine},
-                                   "project_create", create("plain"))
-        return refused, unfenced
+        await refused_at_door(s1, forged, "project_create", create("forged"))
+        await refused_at_door(s1, headers(ours, own.epoch, "t-theirs"), "project_create", create("borrowed"))
+        await refused_at_door(s1, {"Authorization": "Bearer t-ours", options.PROJECT_ID_HEADER: mine},
+                              "project_create", create("plain"))
+        assert documents(pg_dsn, mine) == [], "a refused request wrote"
+        return await call_tool(s1, headers(ours, own.epoch, "t-ours"), "project_create", create("fenced"))
 
-    refused, unfenced = asyncio.run(scenario())
-    assert_refused(refused, live.epoch)
-    assert not unfenced.isError, result_text(unfenced)
-    assert [doc for name, _, doc in documents(pg_dsn, mine) if name == "research.json"][0].count('"plain"') == 1
+    fenced = asyncio.run(scenario())
+    assert not fenced.isError, result_text(fenced)
+    research = [doc for name, _, doc in documents(pg_dsn, mine) if name == "research.json"][0]
+    assert research.count('"fenced"') == 1 and '"forged"' not in research and '"plain"' not in research
 
 
 # ── 3.2 the worker's own writes are fenced on real rows ───────────────────────────────
@@ -259,7 +302,10 @@ def test_a_superseded_attempt_s_worker_writes_are_no_ops(pg_dsn):
     row = seeded(pg_dsn)
     tid = row["turn_id"]
     assert claim(pg_dsn, row, 1).epoch == 1
+    stamp(pg_dsn, row, 1)
     assert claim(pg_dsn, row, 2).epoch == 2
+    assert sql(pg_dsn, "SELECT bearer_sha256 FROM turns WHERE turn_id = %s", (tid,)) == [(None,)], \
+        "a claim of an open turn clears the older attempt's stamp (U4)"
     with psycopg.connect(pg_dsn, autocommit=True) as conn:
         with pytest.raises(worker.Superseded, match="epoch 1 superseded by 2"):
             worker.complete(conn, {**row, "claim_epoch": 1}, 1, only_if_open=True, claim_epoch=1)
@@ -276,6 +322,11 @@ def test_a_superseded_attempt_s_worker_writes_are_no_ops(pg_dsn):
 
         assert worker.claim_current(conn, tid, 1) is False
         assert worker.claim_current(conn, tid, 2) is True
+
+        # U4: the stamp is the attempt's epoch's: the superseded one matches no row.
+        assert worker.stamp_bearer(conn, tid, 1, BEARER) is False
+        assert sql(pg_dsn, "SELECT bearer_sha256 FROM turns WHERE turn_id = %s", (tid,)) == [(None,)]
+        assert worker.stamp_bearer(conn, tid, 2, BEARER) is True
 
     stale = PgSessionStore(pg_dsn, row["project_id"], turn_id=tid, claim_epoch=1)
     with pytest.raises(RuntimeError, match="superseded"):
@@ -363,6 +414,7 @@ def test_a_sweep_close_fences_the_attempt_it_gave_up_on(pg_dsn, servers, monkeyp
     s1, _ = servers
     row = seeded(pg_dsn)
     assert claim(pg_dsn, row, 1).epoch == 1
+    stamp(pg_dsn, row, 1)
     sql(pg_dsn, "UPDATE turns SET claimed_at = now() - interval '1 hour' WHERE turn_id = %s", (row["turn_id"],))
     monkeypatch.setattr(worker, "PG_DSN", pg_dsn)
     monkeypatch.setattr(worker, "QUEUE_URL", "")
@@ -370,8 +422,8 @@ def test_a_sweep_close_fences_the_attempt_it_gave_up_on(pg_dsn, servers, monkeyp
     assert row["turn_id"] in closed
     assert sql(pg_dsn, "SELECT completed_at IS NOT NULL, claim_epoch FROM turns WHERE turn_id = %s",
                (row["turn_id"],)) == [(True, 2)]
-    result = asyncio.run(call_tool(s1, headers(row, 1), "project_create", create("survivor")))
-    assert_refused(result, 1)
+    # U4: the turn is closed, so its own bearer and fence are a 403 at the door.
+    assert_forbidden(s1, headers(row, 1), "project_create", create("survivor"))
     assert documents(pg_dsn, row["project_id"]) == []
 
 
@@ -392,11 +444,12 @@ def test_a_web_tier_fail_turn_fences_a_claimed_attempt(pg_dsn, servers):
     row = seeded(pg_dsn)
     tid = row["turn_id"]
     assert claim(pg_dsn, row, 1).epoch == 1
+    stamp(pg_dsn, row, 1)
     asyncio.run(web_store()(pg_dsn).fail_turn(tid, "enqueue_failed"))
     assert sql(pg_dsn, "SELECT completed_at IS NOT NULL, outcome, claim_epoch FROM turns WHERE turn_id = %s",
                (tid,)) == [(True, "enqueue_failed", 2)], "the web tier's fail_turn did not fence the claim"
 
-    assert_refused(asyncio.run(call_tool(s1, headers(row, 1), "project_create", create("ghost"))), 1)
+    assert_forbidden(s1, headers(row, 1), "project_create", create("ghost"))  # U4: closed, so the door
     assert documents(pg_dsn, row["project_id"]) == []
     stale = PgSessionStore(pg_dsn, row["project_id"], turn_id=tid, claim_epoch=1)
     with pytest.raises(RuntimeError, match="superseded"):
@@ -416,10 +469,15 @@ def test_a_claim_of_a_completed_turn_keeps_its_epoch(pg_dsn):
     row = seeded(pg_dsn)
     assert claim(pg_dsn, row, 1).epoch == 1
     closer = claim(pg_dsn, row, 2).epoch
+    stamp(pg_dsn, row, closer)
     with psycopg.connect(pg_dsn, autocommit=True) as conn:
         assert worker.complete(conn, {**row, "claim_epoch": closer}, 2, only_if_open=True,
                                claim_epoch=closer) is not None
+        assert worker.stamp_bearer(conn, row["turn_id"], closer, BEARER) is False, "a closed turn takes no stamp"
+    stamped = sql(pg_dsn, "SELECT bearer_sha256 FROM turns WHERE turn_id = %s", (row["turn_id"],))
     assert claim(pg_dsn, row, 3).epoch == closer
+    assert sql(pg_dsn, "SELECT bearer_sha256 FROM turns WHERE turn_id = %s", (row["turn_id"],)) == stamped, \
+        "a late duplicate of a closed turn keeps its stamp (U4)"
     flush = PgSessionStore(pg_dsn, row["project_id"], turn_id=row["turn_id"], claim_epoch=closer)
     asyncio.run(flush.append(key(row), entries("flush")))
     assert not flush.superseded and entry_count(pg_dsn, row, "flush") == 2

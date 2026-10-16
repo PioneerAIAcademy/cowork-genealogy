@@ -651,8 +651,9 @@ Architecturally:
   `createServer(principal)` there; `src/index.ts` (the shipped `.mcpb`, binding
   `LOCAL`) and `src/http.ts` (the search-agent prototype's Streamable HTTP
   tool server, binding each request's bearer and a `PgS3ProjectStore` from its
-  `X-Genealogy-Project-Id` header, fenced on the worker attempt's claim when
-  `X-Genealogy-Turn-Id` / `X-Genealogy-Claim-Epoch` are sent) are entrypoints that only connect
+  `X-Genealogy-Project-Id` header, fenced on the worker attempt's claim
+  (`X-Genealogy-Turn-Id` / `X-Genealogy-Claim-Epoch`), and 403 unless the bearer is
+  the one stamped on that open turn of that project, U4) are entrypoints that only connect
   a transport, so a new arm goes in `server.ts` and both get it. A
   commented-out `case` does not
   count as live, and if dispatch is ever refactored to a lookup map the
@@ -1709,29 +1710,35 @@ it costs nothing at runtime, and **it is not a gap and no decision waits on it.*
 - **E2B Hobby caps *uninterrupted* runtime at 1 hour — not total session
   length.** `_RUNNING_TIMEOUT_S = 3600` is the maximum the tier permits, not a
   backstop we chose: create with 7200 fails 400 "Timeout cannot be greater than 1
-  hours" (measured 2026-08-09), while `set_timeout` past the ceiling returns 204
-  and silently no-ops — so an over-large value fails loudly at create and
+  hours" (measured 2026-08-09), while `set_timeout` with a value over 3600 returns
+  204 and silently no-ops — so an over-large value fails loudly at create and
   silently everywhere else. But **the window resets on pause/resume**: the
-  sandbox is created with `on_timeout: pause` + `auto_resume` and `resume()`
-  re-arms the full window on every `/connect`, so reaching the cap pauses rather
-  than kills and the next request resumes (~1s). A session therefore runs for as
-  many hours as it needs. **Do not read the cap as a session-length limit** —
+  sandbox is created with `on_timeout: pause` + `auto_resume`, so reaching the cap
+  pauses rather than kills, and the next request resumes it (~1s) with a fresh
+  hour. A session therefore runs for as many hours as it needs. **Do not read the
+  cap as a session-length limit** —
   both "there is a 1-hour cap" and "sessions run for hours" are true at once. The
-  control plane sets the outer limit: `/connect` refuses a session more than 24 h
+  control plane sets the outer limit: `/connect` refuses a session more than 72 h
   past `projects.created` with a 410 (`SESSION_MAX_AGE` in `app/sessions.py`),
   because its sandbox still runs the agent code it was created with. `/resume` and
   the read endpoints stay open, so an ended session's research can still be read.
-  Whether a pause landing mid-turn breaks that turn is **asserted, not
-  measured** — which is exactly why the 2026-09-21 continuous-work ruling
-  refused to accept the pause. Since continuous work shipped, `set_timeout` is no longer
-  called only from `resume()`: `app/sandbox_heartbeat.py` beats every recently
-  live sandbox on a 300 s loop from the control plane, so a turn cannot age out
-  while it works. That matters now because a turn is a whole research job —
-  median 53.9 minutes, p90 107.9 — so under continuous work one user message
-  would otherwise reach the cap mid-flight on about half of runs. The control
-  plane is deliberately out of the streaming path (`/connect` hands the browser
-  a WSS straight to the sandbox), so the loop beats on **liveness**, the
-  superset of "a turn is active" that it can actually see.
+  **A turn cannot run through the cap, though.** `set_timeout` cannot push a
+  running sandbox's end time past its hour: five minutes after create,
+  `set_timeout(3600)` returns success and leaves the end time at start + 3600,
+  while `set_timeout(1800)` does move it in (measured 2026-10-15 by
+  `apps/server/dev/probe_e2b_heartbeat.py`). So **a turn that runs past one hour
+  of continuous sandbox runtime is paused, and the call in flight can fail.** An
+  alpha session's feedback bundle (submitted 2026-10-12) froze four times
+  mid-turn, each about an hour after a `/connect` or `/resume`; three of the four
+  calls in flight failed on resume
+  (`image_transcribe` aborted after 15,061 s; `API Error: Failed to parse JSON`,
+  twice), and the fourth turn sat until the user came back. That matters because
+  a turn is a whole research job — median 53.9 minutes, p90 107.9 — so under
+  continuous work one user message reaches the cap mid-flight on about half of
+  runs. The heartbeat the 2026-09-21 continuous-work ruling chose, a control-plane
+  loop calling `set_timeout` every 300 s, could not prevent this and was removed
+  once the probe above measured the cap. Making a turn survive the pause (the Pro
+  tier, or pause-aware turns) is not built.
 
 - **The delete-janitor for abandoned sandboxes is unimplemented** — paused
   sandboxes are never reclaimed, by us or by E2B (never reaping them is what
@@ -1817,7 +1824,7 @@ bridge-free path has never been observed.
 | **Hosted control plane** (`app/agent/real_agent.py`) | `plugins=[{"type": "local", …}]` | **staged** into `<project>/.claude/agents/` | plugin's **+ its own `hooks=`** — the plugin half is the one arm of this column that is **measured**, by `make hook-smoke` (§9.1) | `bypassPermissions`, no allowlist | own stdio registration under `genealogy` |
 | **Unit harness** (`eval/harness/harness/workspace.py`) | staged into `.claude/skills/` | staged into `.claude/agents/` | **its own `hooks=`** — not the plugin's `hooks.json`, but it **imports the shipped predicates**, so the write lockdown and the ownership rules bind (§5.4) | `bypassPermissions` — chosen over `dontAsk` so declared `Write`/`Edit` still work. No MCP tool is blocked: every registered tool is granted, and `test_tool_allowlist` only warns (§5.1) | mock server under `genealogy` |
 | **E2e harness** (`eval/harness/e2e/orchestrator.py`) | staged | staged | **its own `hooks=`** | **`dontAsk`**, which on CLI ≥2.1 denies `Write`/`Edit` outright | live server under `genealogy` |
-| **Search-agent prototype** (`apps/server/proto/worker/`, `apps/server/proto/tools/`) | `plugins=[{"type": "local", …}]` from `ENGINE_PLUGIN_DIR` | passed as `agents=`, parsed from the plugin's `agents/` | plugin's **+ its own `hooks=`** (`PreToolUse`, `PostToolUse`, `Stop`) | `bypassPermissions`, `setting_sources=[]` | `build/http.js`, Streamable HTTP at `/mcp` — the one non-stdio row; the worker registers it under `genealogy` with a per-request `Authorization: Bearer`, never `LOCAL`, and a per-request `X-Genealogy-Project-Id` header that binds a `PgS3ProjectStore` on the stack's Postgres/S3 store, plus the `X-Genealogy-Turn-Id` / `X-Genealogy-Claim-Epoch` claim fence (U6) that makes a superseded attempt's writes roll back |
+| **Search-agent prototype** (`apps/server/proto/worker/`, `apps/server/proto/tools/`) | `plugins=[{"type": "local", …}]` from `ENGINE_PLUGIN_DIR` | passed as `agents=`, parsed from the plugin's `agents/` | plugin's **+ its own `hooks=`** (`PreToolUse`, `PostToolUse`, `Stop`) | `bypassPermissions`, `setting_sources=[]` | `build/http.js`, Streamable HTTP at `/mcp` — the one non-stdio row; the worker registers it under `genealogy` with a per-request `Authorization: Bearer`, never `LOCAL`, and a per-request `X-Genealogy-Project-Id` header that binds a `PgS3ProjectStore` on the stack's Postgres/S3 store, plus the `X-Genealogy-Turn-Id` / `X-Genealogy-Claim-Epoch` claim fence (U6) that makes a superseded attempt's writes roll back; a project request is refused 403 unless its bearer's sha256 is the one the attempt stamped on that open turn (U4) |
 
 **The permission-mode column is not a footnote.** It is why the e2e tier and the
 unit tier disagree about raw writes for reasons that have nothing to do with the
