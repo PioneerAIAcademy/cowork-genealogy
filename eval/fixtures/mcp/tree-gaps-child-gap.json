@@ -34,7 +34,11 @@
           "placeLevel": "locality"
         },
         "spouseId": "TGAP-GM1",
-        "spouseName": "Clara Weis"
+        "spouseName": "Clara Weis",
+        "pendingHints": {
+          "fitting": 0,
+          "total": 0
+        }
       }
     ],
     "scanned": {

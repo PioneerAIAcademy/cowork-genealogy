@@ -807,3 +807,89 @@ def test_no_warnings_without_tree_person(tool_calls, test):
 # reading KD96-WX7 -- and the JUDGE does catch it, which is how it was found. If
 # this is ever made deterministic it needs the test to declare which ids are
 # persons, not a pattern over the reply.
+
+
+# ---------------------------------------------------------------------------
+# Census-variance gate (issue #3434)
+#
+# A census birth year or age within a couple of years of the profile is
+# ordinary variance (informant-reported), not an indexing error.  The 1900
+# United States Census's month-and-year-of-birth column is informant-reported,
+# not a civil registration, so a two-year drift there is ordinary variance too.
+#
+# _find_census_year_error_line checks each line that contains "indexing error"
+# and asks whether "census" and "1900" co-appear on the same line within a
+# two-line backward window.  Requiring both words on the same line avoids
+# false positives from incidental "1900" mentions (e.g. "solid evidence of
+# the 1900 residence") appearing near a death-index "indexing error" line.
+# The window catches split-line headings like:
+#   United States Census, 1900
+#   This is an indexing error
+# A negation within the same window ("not an indexing error") passes.
+# A forward dismissal — "ordinary variance" in the next 8 lines — also passes,
+# covering agents that write a draft heading then immediately reject it.
+# ---------------------------------------------------------------------------
+
+_CENSUS_INDEX_ERROR_RE = re.compile(r"\bindex(?:ing)?\s+error\b", re.IGNORECASE)
+_CENSUS_NEGATION_RE = re.compile(
+    r"\bnot(?:\s+\w+){0,3}\s+(?:an?\s+)?index(?:ing)?\s+error\b", re.IGNORECASE
+)
+_CENSUS_1900_RE = re.compile(
+    r"(?:\bcensus\b[^\n]*\b1900\b|\b1900\b[^\n]*\bcensus\b)", re.IGNORECASE
+)
+_CENSUS_DISMISSAL_RE = re.compile(r"\bordinary\s+(?:census\s+)?variance\b", re.IGNORECASE)
+
+
+def _find_census_year_error_line(reply: str) -> str | None:
+    """Return the first line pairing a census-1900 reference with 'indexing error'.
+
+    Checks each "indexing error" line and the two lines immediately before it
+    for a line that contains BOTH "census" and "1900" (in any order on the
+    same line).  Requiring co-occurrence prevents false positives from
+    incidental "1900" mentions (e.g. "1900 residence") near a death-index
+    "indexing error" line.
+
+    Also checks the next 8 lines forward for "ordinary variance" dismissal
+    language: an agent may draft a heading then immediately reject the
+    classification in the next sentence.  That pattern is correct reasoning,
+    not a misfiled finding.
+    """
+    lines = reply.splitlines()
+    for i, line in enumerate(lines):
+        if not _CENSUS_INDEX_ERROR_RE.search(line):
+            continue
+        window = "\n".join(lines[max(0, i - 2) : i + 1])  # current + 2 before
+        if not _CENSUS_1900_RE.search(window):
+            continue
+        if _CENSUS_NEGATION_RE.search(window):
+            continue
+        forward = "\n".join(lines[i : min(len(lines), i + 9)])  # current + 8 after
+        if _CENSUS_DISMISSAL_RE.search(forward):
+            continue
+        return line
+    return None
+
+
+def _requires_census_variance_trap(test) -> None:
+    if "census-variance-trap" not in (test.get("tags") or []):
+        pytest.skip("test does not declare census-variance-trap")
+    if test.get("type") != "positive":
+        pytest.skip("negative tests route away and produce no audit")
+
+
+def test_census_drift_is_not_a_finding(
+    text_response, test, agent_returns=None
+) -> None:
+    """1900 census birth year drift must not be classified as an indexing error."""
+    _requires_census_variance_trap(test)
+    from harness.skill_runner import subject_reply_text
+
+    reply = subject_reply_text(agent_returns, text_response, "source-evaluation", test)
+    bad_line = _find_census_year_error_line(reply)
+    assert bad_line is None, (
+        "agent classified a 1900-census birth year drift as an indexing error:\n"
+        f"  {bad_line!r}\n"
+        "A census birth year within a couple of years is ordinary variance "
+        "(informant-reported, not a transcription error); do not list it as a "
+        "finding of any kind."
+    )
