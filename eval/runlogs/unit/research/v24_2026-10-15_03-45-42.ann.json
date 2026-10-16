@@ -1,17 +1,17 @@
 {
-  "run_log": "v24_2026-10-14_14-02-00.json",
-  "annotator": "dallan@quass.org",
+  "run_log": "v24_2026-10-15_03-45-42.json",
+  "annotator": "ikeboateng2018@gmail.com",
   "corrections": [
     {
-      "test_id": "ut_research_005",
+      "test_id": "ut_research_019",
       "dimension_source": "base",
       "dimension_name": "Correctness",
       "llm_score": 3,
       "corrected_score": 3,
-      "comment": null
+      "comment": "Routing to question-selection is right and the subject's dates and places match the objective. Minor: the next-steps list names \"Irish immigration records\", an origin the scenario does not give; it is a search lead, not a claim about the tree, so it stays a 3."
     },
     {
-      "test_id": "ut_research_005",
+      "test_id": "ut_research_019",
       "dimension_source": "base",
       "dimension_name": "Completeness",
       "llm_score": 3,
@@ -19,7 +19,7 @@
       "comment": null
     },
     {
-      "test_id": "ut_research_005",
+      "test_id": "ut_research_019",
       "dimension_source": "base",
       "dimension_name": "Tool Arguments",
       "llm_score": 3,
@@ -27,31 +27,15 @@
       "comment": null
     },
     {
-      "test_id": "ut_research_008",
+      "test_id": "ut_research_h7w",
       "dimension_source": "base",
       "dimension_name": "Correctness",
-      "llm_score": 1,
-      "corrected_score": 3,
-      "comment": "someone please look into this"
+      "llm_score": 3,
+      "corrected_score": 1,
+      "comment": "Routing is correct: competingParentSets sends q_001 to hypothesis-tracking. But the reply's table is headed \"Origin in tree\" and lists James Tarrant Sr. and Jane Burch (I4/I5) as \"Set B — New York line\", when the tree has both born in Virginia; New York is the patron's framing, not the tree's. It then argues one set down before any hypothesis exists: \"All three records favor Set A (Samuel & Elizabeth)\" and \"The early evidence points firmly toward Samuel Tarrant & Elizabeth as James's actual parents\". It also plans New York searches for I4/I5. Its 1802 death-year aside relays log_006's own note, a carve leftover, so it is not counted. Favouring a set overrides the correct routing; the judge's \"did not ... argue for one over the other\" is wrong."
     },
     {
-      "test_id": "ut_research_008",
-      "dimension_source": "base",
-      "dimension_name": "Completeness",
-      "llm_score": 1,
-      "corrected_score": 3,
-      "comment": "someone please look into this"
-    },
-    {
-      "test_id": "ut_research_008",
-      "dimension_source": "base",
-      "dimension_name": "Tool Arguments",
-      "llm_score": null,
-      "corrected_score": null,
-      "comment": null
-    },
-    {
-      "test_id": "ut_research_001",
+      "test_id": "ut_research_012",
       "dimension_source": "base",
       "dimension_name": "Correctness",
       "llm_score": 3,
@@ -59,7 +43,7 @@
       "comment": null
     },
     {
-      "test_id": "ut_research_001",
+      "test_id": "ut_research_012",
       "dimension_source": "base",
       "dimension_name": "Completeness",
       "llm_score": 3,
@@ -67,7 +51,7 @@
       "comment": null
     },
     {
-      "test_id": "ut_research_001",
+      "test_id": "ut_research_012",
       "dimension_source": "base",
       "dimension_name": "Tool Arguments",
       "llm_score": 3,
@@ -75,7 +59,7 @@
       "comment": null
     },
     {
-      "test_id": "ut_research_zfp",
+      "test_id": "ut_research_013",
       "dimension_source": "base",
       "dimension_name": "Correctness",
       "llm_score": 3,
@@ -83,7 +67,7 @@
       "comment": null
     },
     {
-      "test_id": "ut_research_zfp",
+      "test_id": "ut_research_013",
       "dimension_source": "base",
       "dimension_name": "Completeness",
       "llm_score": 3,
@@ -91,23 +75,23 @@
       "comment": null
     },
     {
-      "test_id": "ut_research_zfp",
+      "test_id": "ut_research_013",
       "dimension_source": "base",
       "dimension_name": "Tool Arguments",
-      "llm_score": null,
-      "corrected_score": null,
-      "comment": null
-    },
-    {
-      "test_id": "ut_research_tsv",
-      "dimension_source": "base",
-      "dimension_name": "Correctness",
       "llm_score": 3,
       "corrected_score": 3,
       "comment": null
     },
     {
-      "test_id": "ut_research_tsv",
+      "test_id": "ut_research_011",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Routing to question-selection is right and the objective is restated accurately. Minor: the next-steps aside assumes \"Irish immigrant record sets\" for Patrick Flynn's parents, which nothing in the scenario states (only a Pennsylvania birth); it is framed as a plan lead, not a fact about the tree, so it stays a 3."
+    },
+    {
+      "test_id": "ut_research_011",
       "dimension_source": "base",
       "dimension_name": "Completeness",
       "llm_score": 3,
@@ -115,15 +99,15 @@
       "comment": null
     },
     {
-      "test_id": "ut_research_tsv",
+      "test_id": "ut_research_011",
       "dimension_source": "base",
       "dimension_name": "Tool Arguments",
-      "llm_score": null,
-      "corrected_score": null,
+      "llm_score": 3,
+      "corrected_score": 3,
       "comment": null
     },
     {
-      "test_id": "ut_research_tsi",
+      "test_id": "ut_research_014",
       "dimension_source": "base",
       "dimension_name": "Correctness",
       "llm_score": 3,
@@ -131,7 +115,7 @@
       "comment": null
     },
     {
-      "test_id": "ut_research_tsi",
+      "test_id": "ut_research_014",
       "dimension_source": "base",
       "dimension_name": "Completeness",
       "llm_score": 3,
@@ -139,7 +123,7 @@
       "comment": null
     },
     {
-      "test_id": "ut_research_tsi",
+      "test_id": "ut_research_014",
       "dimension_source": "base",
       "dimension_name": "Tool Arguments",
       "llm_score": 3,

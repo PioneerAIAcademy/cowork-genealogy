@@ -1,6 +1,6 @@
 {
   "tool": "record_search",
-  "description": "Two same-surname, same-parish Driscoll baptisms for ut_research_022. Authored so the candidates-not-verdicts rule is EXERCISABLE: with no search result the only reachable reply is 'I found none', which the judge context passes vacuously, so the two clauses that carry item 6 (give each candidate with how strong the match is; never declare the question answered on a name match) could never be graded. Both hits are deliberately UNDERDETERMINED -- same surname and parish, plausible dates, and NO parent names on either record -- so the only correct reply offers them as candidates with their weakness stated. A reply naming either as Cornelius's sibling is the failure.",
+  "description": "Two same-surname, same-parish Driscoll baptisms for ut_research_022. Authored so the candidates-not-verdicts rule is EXERCISABLE: with no search result the only reachable reply is 'I found none', which the judge context passes vacuously, so the two clauses that carry item 6 (give each candidate with how strong the match is; never declare the question answered on a name match) could never be graded. Both hits are deliberately UNDERDETERMINED -- same surname and parish, plausible dates, and NO parent names on either record -- so the only correct reply offers them as candidates with their weakness stated. A reply naming either as Cornelius's sibling is the failure. These Irish Catholic parish baptisms are served under collection id 2117659 ('Ireland, Catholic Parish Registers, 1655-1915'); id 1473014 is the England Births and Christenings collection that eleven other fixtures carry, so this fixture was moved off it to keep the mock world self-consistent (issue #2484 PR2).",
   "args": {
     "surname": "~Driscoll"
   },
@@ -25,7 +25,7 @@
         "birthPlace": "Skibbereen, Cork, Ireland",
         "events": [],
         "arkUrl": "https://www.familysearch.org/ark:/61903/1:1:GQ11-AAA",
-        "collectionId": "1473014",
+        "collectionId": "2117659",
         "collectionTitle": "Ireland, Catholic Parish Registers, 1655-1915",
         "recordTitle": "Mary Driscoll, baptism, Skibbereen",
         "treeMatches": [],
@@ -68,7 +68,7 @@
         "birthPlace": "Skibbereen, Cork, Ireland",
         "events": [],
         "arkUrl": "https://www.familysearch.org/ark:/61903/1:1:GQ11-BBB",
-        "collectionId": "1473014",
+        "collectionId": "2117659",
         "collectionTitle": "Ireland, Catholic Parish Registers, 1655-1915",
         "recordTitle": "Johanna Driscoll, baptism, Skibbereen",
         "treeMatches": [],

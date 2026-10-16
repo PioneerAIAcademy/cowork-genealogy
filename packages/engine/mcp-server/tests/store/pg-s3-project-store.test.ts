@@ -14,6 +14,7 @@ import {
   PutObjectCommand,
 } from "@aws-sdk/client-s3";
 import {
+  authorizeAttempt,
   CLAIM_FENCE_SQL,
   CLAIM_PRECHECK_SQL,
   createPgS3Backend,
@@ -759,6 +760,16 @@ describe("PgS3ProjectStore without a stack", () => {
       await fenced(r).exists(ANCHOR, "research.json");
       expect(r.pool.connect).not.toHaveBeenCalled();
       expect(r.pool.query).toHaveBeenCalledTimes(1);
+    });
+  });
+
+  describe("authorizeAttempt (U4)", () => {
+    it("rejects when the door query fails, never admits", async () => {
+      const failed = Object.assign(new Error("terminating connection"), { code: "57P01" });
+      const backend = { pool: { query: vi.fn(async () => { throw failed; }) } } as unknown as PgS3Backend;
+      await expect(
+        authorizeAttempt(backend, { projectId: "p1", fence: { turnId: randomUUID(), claimEpoch: "1" }, bearer: "tok" }),
+      ).rejects.toBe(failed);
     });
   });
 });
