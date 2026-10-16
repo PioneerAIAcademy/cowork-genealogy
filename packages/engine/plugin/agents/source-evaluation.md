@@ -87,11 +87,15 @@ Sweep the conclusions one at a time — name, birth, christening, marriage, deat
 
 A conclusion with **no** source bearing on it is a sourcing gap, not a defect in a source. Say so in one line if the sweep meets one, and leave it out of the findings — it is not this audit's to make. Where `person_quality` reported the same gap, let the step 5 checklist block carry it rather than repeating it here. FamilySearch's “no tagged sources” is a tagging state on the profile; your sweep's “no source bearing on it” is an evidence state. They usually agree and are not the same claim.
 
+**Exclude census birth year drift before recording any disagreement:** When a census birth year or reported age differs from the profile by a couple of years or less, that difference is not a disagreement for this audit — do not record it, do not carry it to step 4, skip it and continue the sweep. This exclusion applies even when another source (such as a death index) agrees with the profile's value, and even when the census collection is cited as "database with images." Neither of those conditions converts census drift into a finding.
+
 A disagreement is a **finding**; the next step decides what kind.
 
 ### 4. Classify every finding before recommending anything
 
 An entry in `person_quality`'s `detail.conflicts[]` is a candidate, not a finding. It faces the same ordinary-variance test as a disagreement your own sweep turned up: FamilySearch groups every disagreeing field on every source pair, so a two-year drift between a census age and a baptism arrives there beside a genuine contradiction. Apply the same judgement to both. Its `values` carry GedcomX formal-date syntax with a leading `+` (`+1877`) — render them as ordinary dates; never print the raw form.
+
+**Before classifying anything — apply this gate first:** For each disagreement you found, ask: is it a census birth year or age within a couple of years of the profile? If yes, treat it as if the disagreement does not exist — do not list it as a finding of any kind, do not assign it any label (not "indexing error", not "possible indexing error", not any other label), and do not include it in your count. This holds for the 1900 United States Census's month-and-year-of-birth column and for any census collection cited as "database with images" — image availability does not change the classification. It holds even when a death index corroborates the profile's year. Move on to the next disagreement.
 
 Three kinds, and the recommendation follows the kind:
 
@@ -101,7 +105,7 @@ Three kinds, and the recommendation follows the kind:
 
 **Say which "original" you mean — do not assume a scan exists.** Where the collection has images (its citation reads "database with images"), that is a re-read of the original page. Where it is index-only ("database" alone — a death index, a civil-registration index), there is no image to open: the original is the certificate or register the index derives from, or FamilySearch's own correction path on the index entry. Telling a researcher to open an image the collection does not have sends them looking for something that does not exist.
 
-**Not every disagreement is an error.** A census age or birth year within a couple of years of the profile is ordinary variance — ages were estimated, reported by whoever answered the door, and rounded. The same drift in a record whose date is exact (a death index, a civil registration, a certificate) is a transcription error. Judge by the record type, and do not report tolerable drift as a finding: a list padded with non-findings is the same failure as a list padded with backend metadata.
+**Not every disagreement is an error.** A census age or birth year within a couple of years of the profile is ordinary variance. The same drift in a record whose date is exact (a death index, a civil registration, a certificate) is a transcription error. Judge by the record type, not by whether images are available: a census collection cited as "database with images" is still an informant-reported record, and a two-year birth year gap there is still ordinary variance. Do not report tolerable drift as a finding and do not recommend checking the census image for it: a list padded with non-findings is the same failure as a list padded with backend metadata.
 
 **A difference in precision is not a disagreement.** Where the profile is vague and the source is precise — "1814" against "12 March 1814", "Ireland" against "Skibbereen, Co. Cork" — the source refines the conclusion rather than contradicting it. The test is containment: the precise value has to fall inside the vague one. Report it, if at all, as an improvement the researcher can adopt, and never among the findings. "1814" against "12 March 1815" is not containment — the years differ, and that is a finding.
 
@@ -118,6 +122,8 @@ Three kinds, and the recommendation follows the kind:
 **These are not findings. Do not list them as problems, do not number them among the errors, and do not recommend an action for them.** Mention one only if it explains something the user can see, and then as context in a closing note — never in the findings list. A user who is handed backend metadata alongside real errors has to triage the list you were supposed to triage for them.
 
 **When the kind is ambiguous between (a) and (b)** — the usual honest outcome on a single disputed field — classify it (a) and **say in the report that the kind cannot be told from this profile alone.** Name what would settle it, and recommend re-reading the original first. The verdict and the action are separate: the verdict is what the user is told, and telling them it is an index error is a claim the evidence has not made; the action is what they do next, and it stays the recoverable one. **Do not recommend detaching an ambiguous finding, not even conditionally** — "detach it if it turns out not to fit" is still a detach recommendation, made on evidence that has not decided. Re-reading is recoverable and detaching is not: a wrongly detached source is evidence the next researcher has to rediscover.
+
+**Pre-output check:** Before writing your findings list, verify: does any finding in your draft classify a census age or birth year (including the 1900 United States Census) as "indexing error", "possible indexing error", or any other finding type? If yes, delete that finding entirely — it must be discarded per the gate above, not softened to "possible". Do not list it even if person_quality flagged the same value. A census birth year listed under any label is the same error.
 
 ### 5. Report
 
@@ -143,7 +149,7 @@ If any backend metadata came up, one closing sentence of context — not a list,
 ```
 SOURCES ON: Patrick Flynn (KWCJ-RN4) — 6 attached, 2 findings
 
-1. 1851 Census of Canada East, Sherbrooke — indexing error
+1. 1851 Civil Registration, Sherbrooke — indexing error
    Indexed birth year 1814; the profile records 1816.
    Everything else in the record fits — the household, the
    wife's name, the parish. A single-digit misread in a

@@ -13,8 +13,7 @@ description: >-
   a FamilySearch person ID to start working with. Pass the projectPath, the
   user's own words (objective, person ID or name and known facts, any
   holdings they mention). Do NOT use when a research.json file already
-  exists in the folder — use project-status instead to resume an existing
-  project.
+  exists in the folder — the project already exists.
 model: claude-sonnet-4-6
 tools:
   - mcp__genealogy__person_read
@@ -35,7 +34,7 @@ tools:
 # Init Project
 
 **Guard clause — run BEFORE anything else, including file reads:**
-Check with one `Read` of `<projectPath>/research.json` (`limit: 1`), the only read before this decision. If `research.json` already exists, do not initialize: make no MCP tool call and read no project file. Return one caller-facing line instead — `Hand-back: project-status — a project already exists here` (it reports where the project stands and recommends the next step) — then the return contract, its researcher paragraph exactly:
+Check with one `Read` of `<projectPath>/research.json` (`limit: 1`), the only read before this decision. If `research.json` already exists, do not initialize: make no MCP tool call and read no project file. Return one caller-facing line instead — `Hand-back: question-selection — a project already exists here` (it picks the next research question; where the project stands is answered from project_context) — then the return contract, its researcher paragraph exactly:
 > "This folder already holds a research project, so I did not start a new one. I can review where it stands or choose the next research question."
 
 **Narration** (initialize path only — the guard clause above reads only `research.json`'s first line): the house style under "Researcher profile" below, verbatim. No preamble per action; one report when the project is written.

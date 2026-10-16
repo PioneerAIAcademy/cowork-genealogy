@@ -30,9 +30,13 @@ import {
   introducedWarnings,
   staleJustifications,
   computeTouchedPersonIds,
+  findCompetingParentage,
+  parentChildKey,
   type WarningJustificationInput,
 } from "../validation/introduced-warnings.js";
 import { dedupSourceRefs, relationshipMatches } from "../utils/merge-gedcomx.js";
+import type { ConflictSurfaced } from "../types/materialize-facts.js";
+import { getPersonName } from "./person-warnings.js";
 import { isCoupleEventFactType } from "../utils/record-persona.js";
 import { sanitizeTree } from "../validation/tree-sanitize.js";
 import {
@@ -159,17 +163,62 @@ export type TreeEditResult =
       ok: true;
       filesWritten: string[];
       validation: { valid: true; warnings: string[] };
+      conflicts_surfaced?: ConflictSurfaced[];
     } & PerOpResult)
   | {
       ok: true;
       results: PerOpResult[];
       filesWritten: string[];
       validation: { valid: true; warnings: string[] };
+      conflicts_surfaced?: ConflictSurfaced[];
     }
   // `reason: "no_project"` marks the one ok:false that is an answer rather than
   // a failure (see noProjectResult). Optional field on the existing arm, NOT a
   // third arm — every `if (!r.ok) r.errors…` keeps narrowing as it does today.
-  | { ok: false; errors: string[]; reason?: "no_project" };
+  // The warning gate's refusal rides this same arm (see WarningGateRefusal).
+  | ({ ok: false; errors: string[]; reason?: "no_project" | "unjustified_warnings" } &
+      Partial<Pick<WarningGateRefusal, "message" | "warnings" | "conflicts_surfaced">>);
+
+/** One warning a gated write introduced, as the refusal reports it. */
+export interface GateWarning {
+  warningId?: string;
+  issueType?: string;
+  severity?: string;
+  personId?: string;
+  personName?: string;
+  message: string;
+  facts?: unknown;
+  relatedPersonId?: string;
+}
+
+/** The warning gate's refusal, shared by every gated writer. `errors` carries
+ *  the same text as `message`, so a caller that reads `errors` sees it. */
+export interface WarningGateRefusal {
+  ok: false;
+  reason: "unjustified_warnings";
+  errors: string[];
+  message?: string;
+  warnings: GateWarning[];
+  /** Competing biological parentage the refused write would create (#2525). */
+  conflicts_surfaced?: ConflictSurfaced[];
+}
+
+/** What the gate hands back when the write may proceed. */
+export interface WarningGatePass {
+  justificationsPersisted: boolean;
+}
+
+const ROUTE_PARENTAGE =
+  "This write gives a child a second biological parent of one sex. That is not a warning to " +
+  "justify, and warningJustifications cannot pass it. If one of these parents is a step, " +
+  "adoptive, foster or guardian parent, add that edge with its subtype instead. Otherwise send " +
+  "each conflicts_surfaced entry to conflict-resolution as an identity question. Once it is " +
+  "resolved, remove the rejected parent's edge with tree_correct before adding the chosen one: " +
+  "this write is refused while both edges stand.";
+
+const JUSTIFY_OTHERS =
+  " Justify every other warningId: re-call with warningJustifications listing each warningId " +
+  "and a justification string.";
 
 class TreeEditError extends Error {}
 
@@ -1012,9 +1061,15 @@ export async function checkWarningGate(
   warningJustifications: WarningJustificationInput[] | undefined,
   toolName: string,
   collapseMap?: Map<string, string>,
-): Promise<{ ok: false; reason: string; message?: string; warnings: any[] } | { justificationsPersisted: boolean } | null> {
+  proposedAssertionIds?: Map<string, string>,
+): Promise<WarningGateRefusal | WarningGatePass | null> {
   const touchedIds = computeTouchedPersonIds(beforeTree, afterTree);
-  if (touchedIds.length === 0) return null;
+  // Competing biological parentage is gated on its own finding, not on whether
+  // tooManyFathers2/tooManyMothers2 is new: that warning can already stand on
+  // the child, and a parent's gender change does not touch the child at all.
+  const found = findCompetingParentage(beforeTree, afterTree, research, proposedAssertionIds, collapseMap);
+  if (touchedIds.length === 0 && found.length === 0) return null;
+  const parentage = found.map((c) => c.entry);
 
   const result = introducedWarnings(
     beforeTree,
@@ -1024,13 +1079,45 @@ export async function checkWarningGate(
     collapseMap,
   );
 
-  if (result.unjustified.length > 0) {
+  // A finding replaces the count warning for the same child and sex, so the
+  // caller is asked once, under the finding's own id.
+  const covered = new Set(
+    found.map((c) => `${c.sex === "Male" ? "tooManyFathers2" : "tooManyMothers2"}|${c.entry.personId}`),
+  );
+  const keep = (w: { issueType: string; personId: string }) => !covered.has(`${w.issueType}|${w.personId}`);
+  const nameOf = (id: string) => {
+    const p = (afterTree.persons ?? []).find((x) => x.id === id);
+    return p ? getPersonName(p) : "";
+  };
+  const parentageWarnings = found.map((c) => ({
+    warningId: c.warningId,
+    issueType: c.sex === "Male" ? "tooManyFathers2" : "tooManyMothers2",
+    severity: "implausible" as const,
+    personId: c.entry.personId,
+    personName: nameOf(c.entry.personId),
+    message:
+      `This write gives ${nameOf(c.entry.personId)} (${c.entry.personId}) two or more biological ${c.sex === "Male" ? "fathers" : "mothers"}: ` +
+      `${c.entry.values.join("; ")}.`,
+    facts: undefined,
+    relatedPersonId: undefined,
+  }));
+  const allIntroduced = result.allIntroduced.filter(keep);
+  const others = result.unjustified.filter(keep);
+  // Competing parentage refuses whatever is justified: it is routed, not justified.
+  const unjustified = [...parentageWarnings, ...others];
+
+  if (unjustified.length > 0) {
+    const message = parentage.length > 0
+      ? ROUTE_PARENTAGE + (others.length > 0 ? JUSTIFY_OTHERS : "")
+      : "This write introduces genealogical warnings that must be justified. " +
+        "Re-call with warningJustifications listing each warningId and a justification string.";
     return {
       ok: false,
       reason: "unjustified_warnings",
-      message: "This write introduces genealogical warnings that must be justified. " +
-        "Re-call with warningJustifications listing each warningId and a justification string.",
-      warnings: result.unjustified.map((w) => ({
+      errors: [message],
+      message,
+      ...(parentage.length > 0 ? { conflicts_surfaced: parentage } : {}),
+      warnings: unjustified.map((w) => ({
         warningId: w.warningId,
         issueType: w.issueType,
         severity: w.severity,
@@ -1045,19 +1132,21 @@ export async function checkWarningGate(
 
   // All introduced warnings are justified — check for stale justification ids
   if (warningJustifications && warningJustifications.length > 0) {
-    const stale = staleJustifications(result.allIntroduced, warningJustifications);
+    const stale = staleJustifications(allIntroduced, warningJustifications);
     if (stale.length > 0) {
+      const message = `Stale warningId(s) not matching any introduced warning: ${stale.join(", ")}. ` +
+        "Re-call without warningJustifications to get the current warning ids.";
       return {
         ok: false,
         reason: "unjustified_warnings",
-        warnings: [{
-          message: `Stale warningId(s) not matching any introduced warning: ${stale.join(", ")}. Re-call without warningJustifications to get the current warning ids.`,
-        }],
+        errors: [message],
+        message,
+        warnings: [{ message }],
       };
     }
 
     // Persist justifications to research.json
-    if (result.allIntroduced.length > 0) {
+    if (allIntroduced.length > 0) {
       const now = new Date().toISOString().slice(0, 10);
       const existing = Array.isArray(research.warning_justifications)
         ? research.warning_justifications
@@ -1066,7 +1155,7 @@ export async function checkWarningGate(
         warning_id: j.warningId,
         justification: j.justification,
         person_ids: [...new Set(
-          result.allIntroduced
+          allIntroduced
             .filter((w) => w.warningId === j.warningId)
             .flatMap((w) => [w.personId, ...(w.relatedPersonId ? [w.relatedPersonId] : [])]),
         )],
@@ -1079,6 +1168,18 @@ export async function checkWarningGate(
   }
 
   return null;
+}
+
+/** Each proposed ParentChild edge's `sourceAssertionId`, keyed parent|child,
+ *  so the gate can name the claim behind an edge it refuses. */
+function proposedParentAssertions(ops: Array<Partial<TreeEditOp>> | undefined): Map<string, string> {
+  const out = new Map<string, string>();
+  for (const op of ops ?? []) {
+    const rel = op.relationship;
+    if (op.operation !== "add_relationship" || !op.sourceAssertionId || rel?.type !== "ParentChild") continue;
+    if (rel.parent && rel.child) out.set(parentChildKey(rel.parent, rel.child), op.sourceAssertionId);
+  }
+  return out;
 }
 
 /** Shared core behind `tree_edit` and `tree_correct` — identical batched-op,
@@ -1151,8 +1252,9 @@ export async function executeTreeOps(input: TreeEditInput, gate: OpGate, toolNam
       const warningGateResult = await checkWarningGate(
         beforeTree, tree, research, projectPath,
         input.warningJustifications, toolName,
+        undefined, proposedParentAssertions(input.ops),
       );
-      if (warningGateResult && "ok" in warningGateResult) return warningGateResult as any;
+      if (warningGateResult && "ok" in warningGateResult) return warningGateResult;
       const justificationsPersisted = warningGateResult?.justificationsPersisted === true;
 
       // Write tree (and research if justifications were persisted)
@@ -1195,8 +1297,9 @@ export async function executeTreeOps(input: TreeEditInput, gate: OpGate, toolNam
     const singleGateResult = await checkWarningGate(
       beforeTree, tree, research, projectPath,
       input.warningJustifications, toolName,
+      undefined, proposedParentAssertions([input]),
     );
-    if (singleGateResult && "ok" in singleGateResult) return singleGateResult as any;
+    if (singleGateResult && "ok" in singleGateResult) return singleGateResult;
     const singleJustificationsPersisted = singleGateResult?.justificationsPersisted === true;
 
     // Write tree (and research if justifications were persisted)

@@ -11,8 +11,8 @@ description: >-
   summary reveals gaps. Pass the projectPath; it reads project state itself.
   Do NOT use when the user has a specific question and wants to plan it (use
   research-plan), wants to know if research is exhaustive (use
-  research-exhaustiveness), wants only a status summary (use project-status),
-  or wants to search records (use search-records or search-external-sites).
+  research-exhaustiveness), or wants to search records (use search-records
+  or search-external-sites).
 model: claude-sonnet-4-6
 tools:
   - mcp__genealogy__research_append

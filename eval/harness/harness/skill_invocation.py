@@ -1193,13 +1193,6 @@ DEDICATED_AGENT_NAMES = frozenset(
         # an unnamed-delegate bypass. Do not read its presence here as evidence
         # of a hook route.
         "question-selection",
-        # Same shape as citation (issue #2793): a converted skill, not a
-        # hook-routed pair. No hook routes anything to it, and it writes
-        # NOTHING at all -- it is read-only by contract, so it cannot produce a
-        # protected write to attribute in the first place. It is listed only
-        # because the set is asserted equal to the shipped agent files. Do not
-        # read its presence here as evidence of a hook route.
-        "project-status",
         # A converted skill that writes nothing at all (issue #2118): its only
         # MCP tool is the read-only `person_warnings`. Listed solely because the
         # set is asserted equal to the shipped agent files.
@@ -1212,6 +1205,11 @@ DEDICATED_AGENT_NAMES = frozenset(
         # is not read as an unnamed-delegate bypass. Do not read its presence
         # here as evidence of a hook route.
         "search-wikipedia",
+        # Same shape again (issue #2797): a converted skill, no hook route.
+        # It writes one `timelines` entry, which `ownership.json` names
+        # `agent:timeline` on. Listed because the set is asserted equal to
+        # the shipped agent files.
+        "timeline",
         # Same shape as search-images, and for the same reason (issue #2790):
         # a converted skill, not a hook-routed pair. It writes nothing at all,
         # so no hook routes anything to it and `ownership.json` names it on no

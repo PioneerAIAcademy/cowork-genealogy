@@ -9,11 +9,12 @@
       "timeline",
       "multi-conflict",
       "unresolved-conflict-handling",
-      "I1"
+      "I1",
+      "direct-arm"
     ]
   },
   "input": {
-    "user_message": "Build a timeline for Patrick Flynn — including how the unresolved conflicts affect the timeline.",
+    "delegation": "Build the timeline for Patrick Flynn (person I1), including how the unresolved conflicts bear on the events.\n\nprojectPath: <workspace>",
     "scenario": "flynn-multi-conflict"
   },
   "mcp_fixtures": [
