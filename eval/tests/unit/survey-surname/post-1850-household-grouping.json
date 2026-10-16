@@ -4,7 +4,7 @@
     "skill": "survey-surname",
     "name": "Post-1850 census with shared recordArk households and a slave schedule",
     "type": "positive",
-    "description": "An 1850 census where two stubs (Edmund and Mary Dixon) share a recordArk (same household) and a slave-schedule stub appears in a separate collection. The agent should group the shared-ARK stubs into one household row and put the slave schedule in its own sub-section.",
+    "description": "An 1850 census where two stubs (Edmund and Mary Dixon) share a recordArk (same household) and a slave-schedule stub appears in a separate collection. The agent should group the shared-ARK stubs into one household row, put the slave schedule in its own sub-section, and log the table as one survey_surname research-log entry with the table in notes.",
     "tags": ["survey", "post-1850", "household-grouping", "slave-schedule", "direct-arm"]
   },
   "input": {
@@ -15,6 +15,7 @@
     "place-search-virginia",
     "record-search-dixon-virginia-1850-census"
   ],
+  "judge_reads_files": true,
   "execution": {
     "max_wall_clock_seconds": 600
   },
@@ -26,7 +27,8 @@
     "William Dixon (XJQV-1850-C) and James Dixon (XJQV-1850-D) each have unique recordArks — they are separate households.",
     "Edmund Dixon (XJQV-1850-SL) is from 'United States Census (Slave Schedule), 1850' (collectionId 1420440), a non-population schedule. The agent MUST put this in its own sub-section, never merged with the population households.",
     "The table should have two sections — one for the population census and one for the slave schedule — with Edmund+Mary grouped as one household in the population section.",
-    "Should log the search with research_log_append and write the table with Write.",
+    "Should log the search with research_log_append.",
+    "The table is logged as one research-log entry (tool survey_surname, planItemId null, query {surname, place, yearSpan}, no stagedResultsRef) whose notes hold the whole table and end with the sentence 'Censuses before 1880 have no relationship column: the first person listed in a dwelling is shown as head, and relationships are not stated.' It appears in the file changes summary as a new `log` entry; grade Table structure from that entry's notes. No file is written: the agent holds no `Write`.",
     "The agent's return should end with the summary_for_user block."
   ]
 }

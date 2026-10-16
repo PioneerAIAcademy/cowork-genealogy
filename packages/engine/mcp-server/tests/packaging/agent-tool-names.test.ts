@@ -805,14 +805,18 @@ const AGENT_PERMISSIONS: Record<string, { tools: string[]; denies: string[] }> =
     denies: [],
   },
 
-  // survey-surname (issue #2065) holds three MCP tools and Write. place_search
+  // survey-surname (issue #2065) holds three MCP tools. place_search
   // resolves the state/county. record_search with projectPath stages results.
-  // research_log_append logs each search page. Write saves the markdown table.
+  // research_log_append logs each search page, and the household table as one
+  // more `log` entry (`tool: "survey_surname"`, the table in `notes`; #3244
+  // option L, issue #3414), written through the tool so it reaches the hosted
+  // ProjectStore. It once held the built-in `Write` to save a loose
+  // `surname-survey-*.md`, which the hosted worker's read-only `/project`
+  // refused (EACCES) and no store ever saw; that grant is dropped.
   // No research_append: the log section is written via research_log_append,
   // which takes no section argument. No Read: builds from inline stubs.
   "survey-surname.md": {
     tools: [
-      "Write",
       "place_search",
       "record_search",
       "research_log_append",
