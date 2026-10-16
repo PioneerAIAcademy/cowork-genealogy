@@ -1,0 +1,30 @@
+{
+ "log_id": "log_008",
+ "tool": "record_search",
+ "retrieved": "2026-10-06T15:00:00Z",
+ "returned_count": 4,
+ "payload": {
+  "results": [
+   {
+    "recordId": "https://www.familysearch.org/ark:/61903/1:1:X8ZH-MZG",
+    "imageId": "004625760_00265",
+    "transcription": "WAR OF 1812. Numbers: S.O. 21083; S.C. 15209. Soldier: Tarrent, James / Taurent, James (or). Widow: [blank]. Service: Capt. Joseph Price's Co., Tenn. Mil. Bounty land: In separate file. Residence, marriage, death: [blank]."
+   },
+   {
+    "recordId": "https://www.familysearch.org/ark:/61903/1:1:X8ZH-MY9",
+    "imageId": "004625760_00305",
+    "transcription": "Envelope: Taurent, James (or) Tarrent, James. S.C. 15209. Capt. Joseph Price's Co. Tenn. Mil."
+   },
+   {
+    "recordId": "https://www.familysearch.org/ark:/61903/1:1:X8ZH-MZV",
+    "personName": "Benjamin Tarrant",
+    "note": "not examined; different given name"
+   },
+   {
+    "recordId": "https://www.familysearch.org/ark:/61903/1:1:X8ZH-MZK",
+    "personName": "Richard Tarrant (wife Elizabeth)",
+    "note": "not examined; different given name"
+   }
+  ]
+ }
+}

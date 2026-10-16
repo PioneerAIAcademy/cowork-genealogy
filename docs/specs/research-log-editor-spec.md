@@ -146,6 +146,26 @@ caller's expressed intent. `validate_research_schema` now also enforces the
 `^pli_` prefix on a log entry's `plan_item_id`, matching the JSON Schema and the
 sibling reference fields.
 
+**A superseded plan's items are refused.** When the plan that owns `planItemId`
+has `status: "superseded"`, the op is rejected: research-plan replaced that plan,
+and a search counted toward one of its items counts toward a strategy nobody is
+running. The error names the superseded plan and, for the same question, the
+active plan and its next open item (`in_progress` before `planned`). When there
+is no active plan, or it has no open item, the error says so and points at
+`planItemId: null` or research-plan. In a batch, one such op refuses the whole
+call and writes nothing.
+
+An item on a `completed` plan is **not** refused, and neither is an id no plan
+owns (that is the validator's reference check). Over the committed e2e corpus,
+replayed against the state each call saw
+(`eval/harness/scripts/measure_superseded_log_items.py`, 2026-10-12 at
+`08e7ba018`), 696 successful calls were replayable and 1,490 were not, their
+responses stripped. Of the 1,283 replayable ops naming a plan item, 1,239 were
+on an active plan, 0 on a superseded one, and 44 on a completed one. All 44 are
+in two runs, and in both the question had no active plan, so a refusal there
+would leave the caller nowhere to log. Widening the rule to every non-active
+plan waits for a run that shows a completed-plan write is wrong.
+
 **`externalSite.urlGenerated` validation.** Must be an absolute `http(s)` URL —
 it is the string the skill presents as the clickable link and persists into
 `research.json`, the same caller-composed shape `build_external_search_url`
@@ -362,7 +382,7 @@ it searches (`applyAltNameAutoPair`), so a log naming that half is true.
 | `stagedResultsRef` does not resolve under `projectPath/results/.staging/` | input error; write nothing |
 | `stagedResultsRef` names no staged file — already logged by an earlier successful call, pruned after 24h, or never staged | input error, raised before any op is applied; write nothing. The message says each staged ref can be logged once: do not log it again if the search already has an entry, otherwise re-run the search |
 | a batch names one `stagedResultsRef` in two ops | input error `ops[j]: stagedResultsRef '…' is also ops[i]'s`, raised before any op is applied; write nothing. Compared on the resolved path, so two spellings of one file collide |
-| `notes` states the household structure of a census that carries no relationship-to-head column, without hedging it — the census the note names, or, for a `record_search` entry, the one its staged response shows | input error; write nothing, and in a batch no op's staged file is consumed. The message names the missing column and quotes a compliant rewording, so the caller can re-send. See §8.2 |
+| `notes` states the household structure of a census that carries no relationship-to-head column, without hedging it — the census the note names, or, for a `record_search` entry, the one its staged response shows; a staged `record_search` or `record_read` response whose titles are all British also supplies the jurisdiction of a census the note names without one | input error; write nothing, and in a batch no op's staged file is consumed. The message names the missing column and quotes a compliant rewording, so the caller can re-send. See §8.2 |
 | an explicit `query` on a staged `record_search` or `fulltext_search` entry names a filter key, with a value, that the staged search never sent | input error; write nothing, and in a batch no op's staged file is consumed. The message names each key and the value the call claimed, and says how to re-send: drop the key, omit `query` so the tool fills it, or re-run the search with the filter. No override. See §8.3 |
 
 ### 8.1 Non-blocking warnings (never fail the op)
@@ -444,6 +464,25 @@ Scope, and why it is this narrow:
   The jurisdiction must touch the census token: most non-US words in real notes
   are birthplaces on a US schedule ("1850 US Census, Schuylkill County ... born
   Ireland"), which stays refused.
+  **An unqualified mention takes its jurisdiction from the staged payload**
+  (decided at review-ready 2026-10-14). An unqualified census reads as US, so
+  "1851 census, Trowbridge: Job Purnell head of household, wife Ann." logged
+  against an English search was refused as a US census. When the entry's staged
+  payload (`record_search` rows' `collectionTitle`, or a `record_read` record's
+  `sd_c_` collection description) has at least one titled row and every titled
+  row starts with a British name (England, Wales, Scotland, Great Britain, United
+  Kingdom — so not "New England" or "British Columbia"), an unqualified mention
+  takes the 1851 threshold. A mention that names its own jurisdiction keeps it,
+  and "US", "U.S.", "USA", "United States", "federal", "census of the U.S." and
+  any `pre-<year>` or `before <year>` census all name the US — so "pre-1851
+  census" against English rows still reads as US, as it does on `main`. Anything else — a US row, a mixed payload,
+  another jurisdiction, no titles — changes nothing. This supplies the
+  jurisdiction; it does not skip the check, so an 1841 mention against English
+  rows stays refused ("still refuses an 1841 England census" in
+  `pre1880-census-hedge.test.ts`), now in British words. The rejected option
+  skipped the note-only path whenever no staged row was a US federal census: it
+  accepts "1841 England census … wife" and frees none of the church-records
+  notes, whose payload names no census.
 - **Undecidable inputs skip** rather than guessing: when no year binds to a
   census at all, the note-only gate does not fire — the same behaviour as an
   undocumented jurisdiction. What this gives up: an unhedged pre-1880 US census
@@ -458,10 +497,13 @@ Scope, and why it is this narrow:
   shape, never by the note's census patterns, which read an unqualified census as
   US and would take "Ecuador, Census, 1737-1990" for one), the note is judged
   whatever word it uses, provided it binds no census year of its own. A bound
-  year keeps precedence, so no note-only verdict moves. A mixed search (1850 and
+  year keeps precedence, so no note-only verdict moves on the census years (a
+  British payload can still re-jurisdiction an unqualified bound year — see the
+  jurisdiction bullet above). A mixed search (1850 and
   1880 rows) does not decide, because the note may describe the other row; nor
   does "the top-ranked row", which is the best match only when ranking ran.
-  Other search tools carry no collection title and keep the note-only rule.
+  Other search tools carry no collection title and keep the note-only rule;
+  `record_read` feeds only the jurisdiction above, never the census years.
 - **The note does not have to repeat the census year** (2026-10-02). Until then
   the payload tie also required one of its years to appear in the note text,
   which hid real misses: `ut_search_records_001` ("…in household of Thomas
@@ -695,7 +737,8 @@ is 3.4% of notes, and non-US censuses that carry the column are excluded. The
 staged search answers most of the third for `record_search`: the census is read
 from FamilySearch's response, not from the caller. What still stands is the
 reach: a note logged by any other tool, or with no staged response, is judged on
-its own text alone and keeps every limit above — chiefly that an unbound census
+its own text alone (a staged `record_read` only supplies the jurisdiction of an
+unqualified mention, never the census year) and keeps every limit above — chiefly that an unbound census
 year skips the rule. This narrows a common failure rather than closing a hole.
 
 The trigger word was the same hole, and more broadly. On note text alone the

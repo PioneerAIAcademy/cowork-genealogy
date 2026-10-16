@@ -1,5 +1,6 @@
 import { describe, it, expect } from "vitest";
 import { censusMentions, requirePre1880CensusHedge, stagedPre1880UsCensusYears } from "../../src/tools/research-log-append.js";
+import { stagedPayloadColumnFrom } from "../../src/tools/research-log-append.js";
 
 /**
  * Issue #1284's rule, enforced where it binds. Both directions matter equally:
@@ -764,5 +765,134 @@ describe("requirePre1880CensusHedge refuses a household roster and accepts the g
 
   it("does not take 'does not record' about another field as a hedge", () => {
     bad("Household lists George, wife Margaret and son Henry. The schedule does not record the street address.");
+  });
+});
+
+/**
+ * Issue #3409: a staged British payload supplies the jurisdiction of an
+ * UNQUALIFIED census mention. It never skips the check: 1841 stays refused.
+ */
+describe("the staged payload supplies an unqualified mention's jurisdiction (#3409)", () => {
+  const gate = (n: string, columnFrom?: number) => () => requirePre1880CensusHedge(n, [], columnFrom);
+  const JOB = "1851 census, Trowbridge: Job Purnell head of household, wife Ann.";
+  const BRIERLEY = "Abel Brierley, b. 1858 Cheshire (1861 census, Abel's household). Father James Brierley, mother Mary.";
+  const PURNELL_1841 =
+    "1841 census: Household of Samuell Purnell, Thomas Street, Trowbridge. Members: Elizabeth Purnell (wife), Job Purnell (son).";
+  const rows = (...titles: string[]) => titles.map((collectionTitle) => ({ collectionTitle }));
+  const read = (...sources: { id: string; title: string }[]) => [{ recordId: "ark:/61903/1:1:X", gedcomx: { sources } }];
+
+  it("accepts an unqualified 1851 mention against a British payload", () => {
+    expect(gate(JOB, 1851)).not.toThrow();
+    expect(gate(BRIERLEY, 1851)).not.toThrow();
+  });
+
+  it("still refuses the same notes with no payload", () => {
+    expect(gate(JOB)).toThrow(/pre-1880 US census.*relationship-to-head/);
+    expect(gate(BRIERLEY)).toThrow(/relationship-to-head/);
+  });
+
+  it("still refuses an unqualified 1841 mention against a British payload, in British words", () => {
+    expect(gate(PURNELL_1841, 1851)).toThrow(/pre-1851 British census.*relationship-to-head/);
+    expect(gate(PURNELL_1841, 1851)).not.toThrow(/\bUS\b/);
+  });
+
+  it("never re-jurisdictions an explicitly US mention", () => {
+    expect(gate("1860 US census, Ohio: John Smith with wife Mary.", 1851)).toThrow(/pre-1880 US census/);
+    expect(gate("1860 federal census, Ohio: John Smith with wife Mary.", 1851)).toThrow(/pre-1880 US census/);
+  });
+
+  it("names the 1841 British census in the refusal even with no payload", () => {
+    expect(gate("1841 England Census, Trowbridge: Samuel Purnall household with wife Ann and son Job.")).toThrow(
+      /pre-1851 British census/,
+    );
+  });
+
+  it("keeps the US wording when a British and a US mention both fire", () => {
+    expect(gate("1841 England census and 1860 US census: John Smith with wife Mary.")).toThrow(/pre-1880 US census/);
+  });
+
+  it("treats a non-place qualifier as unqualified", () => {
+    expect(gate("1851 population census, Trowbridge: Job Purnell with wife Ann.", 1851)).not.toThrow();
+  });
+
+  it.each([
+    ["England 1851 rows", rows("England and Wales, Census, 1851"), 1851],
+    ["England 1871 + Cheshire school records", rows("England and Wales, Census, 1871", "England, Cheshire, School Records, 1796-1950"), 1851],
+    ["Wiltshire church records", rows("England, Wiltshire, Church Records, 1518-1990"), 1851],
+    ["untitled rows beside British ones", [{}, ...rows("England and Wales, Census, 1851")], 1851],
+    ["US rows", rows("United States Census, 1850"), undefined],
+    ["mixed England + US", rows("England and Wales, Census, 1851", "United States Census, 1850"), undefined],
+    ["mixed US + England", rows("United States Census, 1850", "England and Wales, Census, 1851"), undefined],
+    ["Norway (undocumented)", rows("Norway, Census, 1865"), undefined],
+    ["Ecuador", rows("Ecuador, Census, 1737-1990"), undefined],
+    ["no titled rows", [{}, { collectionTitle: 7 }], undefined],
+    ["no rows", [], undefined],
+  ])("record_search: %s", (_l, r, want) => expect(stagedPayloadColumnFrom("record_search", r)).toBe(want));
+
+  it("record_read: reads the sd_c_ collection description", () => {
+    expect(
+      stagedPayloadColumnFrom(
+        "record_read",
+        read(
+          { id: "sd_c_1493745", title: "England and Wales, Census, 1851" },
+          { id: "sd_p_1", title: 'Job Purnell, "England and Wales, Census, 1851"' },
+        ),
+      ),
+    ).toBe(1851);
+  });
+
+  it("record_read: ignores a British title on any source other than sd_c_", () => {
+    expect(stagedPayloadColumnFrom("record_read", read({ id: "src_r_1", title: "England and Wales, Census, 1851" }))).toBe(undefined);
+    expect(
+      stagedPayloadColumnFrom(
+        "record_read",
+        read({ id: "src_r_1", title: "England and Wales, Census, 1851" }, { id: "sd_c_2", title: "United States Census, 1850" }),
+      ),
+    ).toBe(undefined);
+  });
+
+  it("record_read: no sources array, and a record_search row's collectionTitle, give nothing", () => {
+    expect(stagedPayloadColumnFrom("record_read", [{ gedcomx: { sources: { _first_n: [] } } }])).toBe(undefined);
+    expect(stagedPayloadColumnFrom("record_read", rows("England and Wales, Census, 1851"))).toBe(undefined);
+  });
+
+  it("any other tool gives nothing", () => {
+    expect(stagedPayloadColumnFrom("fulltext_search", rows("England and Wales, Census, 1851"))).toBe(undefined);
+    expect(
+      stagedPayloadColumnFrom("fulltext_search", read({ id: "sd_c_1", title: "England and Wales, Census, 1851" })),
+    ).toBe(undefined);
+  });
+
+  it.each([
+    "1860 United States census, Ohio: John Smith with wife Mary.",
+    "1860 U.S. census, Ohio: John Smith with wife Mary.",
+    "1860 census of the United States, Ohio: John Smith with wife Mary.",
+    "1860 census of the U.S. John Smith with wife Mary.",
+    "Pre-1880 census: John Smith with wife Mary.",
+    "1860 census for the USA: John Smith with wife Mary.",
+  ])("keeps a US-worded mention US against a British payload (%#)", (n) => {
+    expect(gate(n, 1851)).toThrow(/pre-1880 US census/);
+  });
+
+  it("uses the US wording when US payload rows alone fire", () => {
+    expect(() => requirePre1880CensusHedge("Household: John Smith head, wife Mary, son Tom.", [1860])).toThrow(
+      /pre-1880 US census/,
+    );
+  });
+
+  it.each([
+    ["the real title shape, no comma after Wales", "England and Wales Census, 1851", 1851],
+    ["Scotland", "Scotland Census, 1861", 1851],
+    ["a British word only after the first comma", "United States, Records of British Subjects, 1850", undefined],
+    ["New England", "New England, Births and Deaths, 1650-1880", undefined],
+    ["British Columbia", "British Columbia, Census, 1871", undefined],
+  ])("record_search title: %s", (_l, title, want) =>
+    expect(stagedPayloadColumnFrom("record_search", rows(title))).toBe(want),
+  );
+
+  it("record_read: an id-less source does not hide the sd_c_ one", () => {
+    expect(
+      stagedPayloadColumnFrom("record_read", read({ title: "x" } as never, { id: "sd_c_1", title: "England and Wales, Census, 1851" })),
+    ).toBe(1851);
   });
 });

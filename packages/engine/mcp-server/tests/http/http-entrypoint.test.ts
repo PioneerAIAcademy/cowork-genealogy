@@ -15,16 +15,24 @@ const captured = vi.hoisted(() => ({
   baseConfig: undefined as unknown,
   checkReadyOption: undefined as undefined | (() => Promise<unknown>),
   backendCheckReady: vi.fn(async () => ({ ok: true, checks: {} })),
+  authorizeOption: undefined as undefined | ((req: unknown) => Promise<unknown>),
+  backend: undefined as unknown,
+  authorizeAttempt: vi.fn(async (_backend: unknown, _req: unknown) => ({ ok: false, reason: "no_match" })),
 }));
 
 vi.mock("../../src/http-server.js", async () => {
   const { getProjectStore: read } = await import("../../src/store/project-store.js");
   return {
     MCP_PATH: "/mcp",
-    startHttpServer: async (opts: { baseConfig: unknown; checkReady?: () => Promise<unknown> }) => {
+    startHttpServer: async (opts: {
+      baseConfig: unknown;
+      checkReady?: () => Promise<unknown>;
+      authorize?: (req: unknown) => Promise<unknown>;
+    }) => {
       captured.startCalls += 1;
       captured.baseConfig = opts.baseConfig;
       captured.checkReadyOption = opts.checkReady;
+      captured.authorizeOption = opts.authorize;
       // The store as it stands when the server starts accepting requests.
       captured.storeAtListen = read();
       return {
@@ -41,8 +49,12 @@ vi.mock("../../src/auth/config.js", () => ({
 }));
 
 vi.mock("../../src/store/pg-s3-project-store.js", () => ({
-  createPgS3Backend: () => ({ close: async () => {}, checkReady: captured.backendCheckReady }),
+  createPgS3Backend: () => {
+    captured.backend = { close: async () => {}, checkReady: captured.backendCheckReady };
+    return captured.backend;
+  },
   PgS3ProjectStore: class {},
+  authorizeAttempt: captured.authorizeAttempt,
 }));
 
 // The per-user config a container receives as environment, not as a baked-in file.
@@ -113,6 +125,18 @@ describe("the HTTP entrypoint's readiness", () => {
     expect(captured.backendCheckReady).not.toHaveBeenCalled();
     await expect(captured.checkReadyOption!()).resolves.toEqual({ ok: true, checks: {} });
     expect(captured.backendCheckReady).toHaveBeenCalledTimes(1);
+  });
+});
+
+describe("the HTTP entrypoint's project check (U4)", () => {
+  it("hands startHttpServer an authorize that asks authorizeAttempt over the process backend, unconditionally", async () => {
+    expect(captured.authorizeOption).toBeTypeOf("function");
+    expect(captured.authorizeAttempt).not.toHaveBeenCalled();
+    const req = { projectId: "p1", fence: { turnId: "t1", claimEpoch: "1" }, bearer: "tok" };
+    await expect(captured.authorizeOption!(req)).resolves.toEqual({ ok: false, reason: "no_match" });
+    expect(captured.authorizeAttempt).toHaveBeenCalledTimes(1);
+    expect(captured.authorizeAttempt.mock.calls[0][0]).toBe(captured.backend);
+    expect(captured.authorizeAttempt.mock.calls[0][1]).toEqual(req);
   });
 });
 

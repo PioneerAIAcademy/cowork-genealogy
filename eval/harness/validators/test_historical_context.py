@@ -1,15 +1,18 @@
-"""Skill-specific validators for the historical-context skill.
+"""Validators for the historical-context agent.
 
-historical-context is a read-only narrative skill — it produces
-narrative analysis tying historical background to research-relevant
-record classes and shouldn't modify research.json or tree.gedcomx.json.
-Narrative-quality dimensions (Relevance to research, Source quality,
-Genealogical implications) live in the rubric — graded by the LLM judge.
+historical-context produces narrative analysis tying historical background to
+research-relevant record classes. Inside a project it writes only research-log
+entries (#3244 option L): one per wiki/Wikipedia lookup, plus one
+`historical_context` entry carrying the full overview in `notes`, which
+otherwise lived only in the chat and was lost with the session. It writes
+nothing else in research.json or tree.gedcomx.json. Narrative-quality
+dimensions (Relevance to research, Source quality, Genealogical implications)
+live in the rubric — graded by the LLM judge.
 
-The universal ownership table already enforces read-only behavior on
-research.json (historical-context owns no section, so any write fails
-test_universal.test_ownership_table). The check below makes the
-no-research-mutation expectation explicit at the per-skill level too.
+`test_universal.test_ownership_table` already confines the agent to `log`, and
+`test_universal.test_log_append_only` already keeps the log append-only; what
+only this file checks is which `tool` values the agent may log, and (tag
+`logs-overview`) that the overview entry was actually written.
 
 See test_universal.py module docstring for the validator function-
 signature contract. The `test` argument is the parsed test JSON dict
@@ -23,23 +26,75 @@ import re
 
 import pytest
 
-from validators_lib import assert_topical_fixture_used
+from validators_lib import (
+    assert_log_append_only,
+    assert_only_writes_to_sections,
+    assert_topical_fixture_used,
+    new_log_entries,
+)
 
 
-# --- No-write enforcement --------------------------------------------
+# --- Writes: reference-lookup log entries only (#3244) ----------------
 
-def test_does_not_modify_research_json(before_state, after_state, test):
-    """historical-context is read-only — it must not modify research.json.
-    The universal ownership table catches this too, but the explicit
-    per-skill check surfaces the design intent here."""
-    if test.get("type") != "positive":
-        pytest.skip("only positive tests can exercise writes")
+_LOGGABLE_TOOLS = frozenset(
+    {"wiki_search", "wiki_read", "wikipedia_search", "historical_context"}
+)
+
+#: A floor that a one- or two-sentence summary falls under and an overview with
+#: its Sources consulted list clears.
+_MIN_OVERVIEW_CHARS = 400
+
+
+def _research_states(before_state, after_state):
     before = before_state.get("research_json")
     after = after_state.get("research_json")
     if before is None or after is None:
         pytest.skip("no research.json in scenario")
-    assert before == after, (
-        "historical-context modified research.json; it is a read-only skill"
+    return before, after
+
+
+def test_writes_only_reference_log_entries(before_state, after_state, test):
+    """Only `log` changes, the old log is a prefix of the new one, and every
+    new entry's `tool` is one of the agent's lookups or its overview."""
+    if test.get("type") != "positive":
+        pytest.skip("only positive tests can exercise writes")
+    before, after = _research_states(before_state, after_state)
+    assert_only_writes_to_sections(
+        before, after, {"log"}, skill_name="historical-context"
+    )
+    assert_log_append_only(before, after)
+    stray = [
+        e.get("tool")
+        for e in new_log_entries(before_state, after_state)
+        if e.get("tool") not in _LOGGABLE_TOOLS
+    ]
+    assert not stray, (
+        f"historical-context logged tools it does not call: {stray}; "
+        f"allowed: {sorted(_LOGGABLE_TOOLS)}"
+    )
+
+
+def test_overview_logged(before_state, after_state, test):
+    """Tag `logs-overview`: exactly one new `historical_context` entry, with
+    `plan_item_id` null and the full overview (not a summary) in `notes`."""
+    if "logs-overview" not in test.get("tags", []):
+        pytest.skip("not a logs-overview test")
+    _research_states(before_state, after_state)
+    overviews = [
+        e for e in new_log_entries(before_state, after_state)
+        if e.get("tool") == "historical_context"
+    ]
+    assert len(overviews) == 1, (
+        f"expected exactly one new historical_context log entry; got {len(overviews)}"
+    )
+    entry = overviews[0]
+    assert entry.get("plan_item_id") is None, (
+        f"the overview entry's plan_item_id is {entry.get('plan_item_id')!r}, not null"
+    )
+    notes = entry.get("notes")
+    assert isinstance(notes, str) and len(notes.strip()) >= _MIN_OVERVIEW_CHARS, (
+        f"the overview entry's notes must hold the full overview "
+        f"(>= {_MIN_OVERVIEW_CHARS} chars); got {len((notes or '').strip())} chars"
     )
 
 
@@ -59,6 +114,7 @@ _TOPICAL_FIXTURE_BY_TEST_ID = {
     "ut_historical_context_005": "wiki-read-west-virginia-genealogy",
     "ut_historical_context_007": "wiki-read-england-civil-registration",
     "ut_historical_context_013": "wiki-read-germany-civil-registration",
+    "ut_historical_context_frq": "wiki-read-french-republican-calendar",
 }
 
 
