@@ -56,8 +56,9 @@ it. `image_basis` is off.
 **Why it is a match anyway.** The call rests on the identification of the
 couple and on Elio's own birth record, not on grandparents:
 
-- **One couple.** Every Elio Méndez × Domitila Castro record in the
-  Venezuelan indexes fits one family: Elia Rosa 1926, José Ildemaro 1927,
+- **One couple.** Every Elio Méndez × Domitila Castro couple among the top
+  50 hits of a spouse search (accented and accentless) and a parents search
+  across Venezuela fits one family: Elia Rosa 1926, José Ildemaro 1927,
   Ylda Antonia 1928, José Angel 1929 and Oscar Olinto 1931 baptized at
   Guaraque; Trina Libsen 1933 (`QGK6-PLNQ`), Francisco Antonio 1934
   (`QGKX-G8QV`) and María Alba 1939 (`QGKX-PRLK`) at Nuestra Señora de Regla,
@@ -73,9 +74,12 @@ couple and on Elio's own birth record, not on grandparents:
 - **The groom carries his mother's surname.** The parish index of the same
   marriage, Archdiocese of Mérida (`ark:/61903/1:1:VN5H-SFS`), names him Elio
   María Méndez Luna and her Domitila Castro Rosalez, with the same four
-  parents. It is not independent of the hint: the hint's image
-  (`3:1:3QS7-L9G1-6KWY`) is on the same parish film as the QGKF baptisms, so
-  the two are one register entry indexed twice.
+  parents. Treat it as probably not independent of the hint: both images
+  cover the same Santa Bárbara marriage span, 1918–1932, and the hint's image
+  group (DGS 100807524) sits beside the one holding Oscar Olinto's 1931
+  parish baptism (DGS 100807496), although it is indexed under the civil-registration
+  collection. The two are likely one parish entry indexed twice; nobody
+  compared the images to confirm it.
 
 The ruling was made by the assigned genealogist on the combined evidence: the
 missing grandparents limit what can be claimed about the wider ancestry but do
