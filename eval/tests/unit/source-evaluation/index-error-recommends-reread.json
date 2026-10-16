@@ -9,6 +9,7 @@
       "index-discrepancy",
       "doctrine",
       "re-read-before-detach",
+      "census-variance-trap",
       "direct-arm"
     ]
   },

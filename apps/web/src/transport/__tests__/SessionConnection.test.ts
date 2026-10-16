@@ -297,7 +297,7 @@ describe('the happy path still works', () => {
 
 })
 
-describe('a 410 from /connect (session more than 24 h old, #3406)', () => {
+describe('a 410 from /connect (session more than 72 h old, #3406)', () => {
   const expiredEvents = (seen: WsMessage[]): WsMessage[] =>
     seen.filter((m) => m.type === 'status' && m.state === 'session_expired')
 
@@ -316,7 +316,7 @@ describe('a 410 from /connect (session more than 24 h old, #3406)', () => {
     let calls = 0
     const conn = new WsSessionConnection(() => {
       calls += 1
-      return Promise.reject(new ApiError(410, 'This session is more than 24 hours old'))
+      return Promise.reject(new ApiError(410, 'This session is more than 72 hours old'))
     })
     const seen = listen(conn)
 
@@ -328,7 +328,7 @@ describe('a 410 from /connect (session more than 24 h old, #3406)', () => {
 
     expect(calls).toBe(1)
     expect(expiredEvents(seen)).toHaveLength(1)
-    expect(String(expiredEvents(seen)[0].message)).toMatch(/more than 24 hours old/)
+    expect(String(expiredEvents(seen)[0].message)).toMatch(/more than 72 hours old/)
     expect(errors(seen)).toHaveLength(0)
     expect(seen.some((m) => m.type === 'conn_state' && m.state === 'reconnecting')).toBe(false)
   })
@@ -383,7 +383,7 @@ describe('a 410 from /connect (session more than 24 h old, #3406)', () => {
 describe('a 410 that lands before anyone subscribes', () => {
   it('is replayed once to a listener that attaches later', async () => {
     const conn = new WsSessionConnection(() =>
-      Promise.reject(new ApiError(410, 'This session is more than 24 hours old'))
+      Promise.reject(new ApiError(410, 'This session is more than 72 hours old'))
     )
     conn.connect()
     await vi.advanceTimersByTimeAsync(0)

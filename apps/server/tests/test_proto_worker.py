@@ -154,6 +154,8 @@ class FakeCursor:
             return (self.conn.completed_at, self.conn.claim_epoch)
         if sql == worker.CLAIM_CURRENT_SQL:  # the epoch halt clause (U6)
             return None if self.conn.superseded else (1,)
+        if sql == worker.STAMP_BEARER_SQL:  # the bearer stamp (U4): no row once superseded
+            return None if self.conn.superseded else (1,)
         if "SELECT outcome FROM turns" in sql:
             return (self.conn.outcome,)
         if "RETURNING sdk_session_id" in sql:
@@ -290,6 +292,10 @@ def test_a_real_claim_stamps_the_web_tier_s_row_and_inserts_nothing():
     # U6: a claim of an open row mints the next epoch; a closed row keeps the closer's.
     assert ("claim_epoch = CASE WHEN turns.completed_at IS NULL THEN turns.claim_epoch + 1 "
             "ELSE turns.claim_epoch END") in sql
+    # U4: and clears an open row's bearer stamp, so the older attempt's token stops passing
+    # the tool server's door; a closed row keeps its own.
+    assert ("bearer_sha256 = CASE WHEN turns.completed_at IS NULL THEN NULL ELSE turns.bearer_sha256 END "
+            "FROM sessions") in sql
     assert sql.endswith("RETURNING turns.message, turns.claim_epoch")
     assert params == (3, "queued", "turn-1", "sess-1", "proj-1")
     assert conn.commits == 1
@@ -325,7 +331,8 @@ def test_only_a_stub_under_dev_paths_upserts_its_rows(monkeypatch, dev):
         # U6: a fresh stub row starts at epoch 1, and a re-claim of it mints like a real one.
         assert "claim_epoch) VALUES" in sqls[1] and "session_entries), 1) ON CONFLICT" in sqls[1]
         assert ("claim_epoch = CASE WHEN turns.completed_at IS NULL THEN turns.claim_epoch + 1 "
-                "ELSE turns.claim_epoch END RETURNING claim_epoch") in sqls[1]
+                "ELSE turns.claim_epoch END, bearer_sha256 = CASE WHEN turns.completed_at IS NULL THEN NULL "
+                "ELSE turns.bearer_sha256 END RETURNING claim_epoch") in sqls[1]
         assert conn.executed[1][1][-2:] == (3, "queued")
     else:
         assert [s.split(" ", 2)[:2] for s in sqls] == [["UPDATE", "turns"]]
@@ -3873,6 +3880,47 @@ def test_sweep_is_off_unless_configured():
         assert not thread.is_alive(), "the sweep stops on SHUTDOWN"
 
 
+@pytest.mark.parametrize(("raw", "value", "refused"), [
+    (None, 0, False), ("", 0, False), ("  ", 0, False), ("ninety", 0, False), ("-1", 0, False),
+    ("90", 0, True), ("604799", 0, True), ("7776000", 7776000, False), (" 604800 ", 604800, False),
+])
+def test_a_retention_period_under_the_floor_is_refused_never_clamped(monkeypatch, raw, value, refused):
+    """U19: "90" meant as days would purge every session idle 90 s; env_int's floor= would
+    instead make it a week without a word. Refused, it is off and the log says so."""
+    logged = []
+    monkeypatch.setattr(worker, "log", lambda **f: logged.append(f))
+    if raw is None:
+        monkeypatch.delenv("RETENTION_SESSION_IDLE_S", raising=False)
+    else:
+        monkeypatch.setenv("RETENTION_SESSION_IDLE_S", raw)
+    assert worker._retention_period("RETENTION_SESSION_IDLE_S") == value
+    bad = [f for f in logged if f.get("ev") == "bad_env" and f.get("name") == "RETENTION_SESSION_IDLE_S"]
+    assert bool([f for f in bad if f.get("floor") == worker.RETENTION_MIN_S]) is refused, logged
+
+
+def test_retention_is_off_unless_configured():
+    assert worker.start_retention(interval=0, idle_s=7776000) is None, "RETENTION_INTERVAL_S=0"
+    assert worker.start_retention(interval=3600, idle_s=0) is None, "no period on"
+    worker.SHUTDOWN.set()  # the thread's loop exits at once
+    try:
+        thread = worker.start_retention(interval=3600, idle_s=7776000)
+        assert thread is not None and thread.daemon
+        thread.join(2)
+        assert not thread.is_alive(), "retention stops on SHUTDOWN"
+    finally:
+        worker.SHUTDOWN.clear()
+
+
+def test_retention_keys_entries_and_events_on_the_session_never_their_own_age():
+    """session_entries and session_events are purged only through the session predicate,
+    which reads sessions.updated_at and the turns -- no per-row ts of either."""
+    for sql in (worker.RETENTION_CANDIDATE_SQL, worker.RETENTION_RECHECK_SQL):
+        assert "session_entries" not in sql and "session_events" not in sql and ".ts" not in sql
+        assert "t.completed_at IS NULL OR t.completed_at >=" in sql, "an open turn, running or held, keeps it"
+    assert "turns" not in worker.RETENTION_PURGE_TABLES
+    assert set(worker.RETENTION_PURGE_TABLES) == set(worker.grants.SESSION_TABLES) - {"turns"}
+
+
 def test_each_sweep_pass_asks_for_this_processs_long_running_delegations(monkeypatch):
     """U19: a stuck delegation never reaches PostToolUse, so the sweep's loop asks, for the
     turns this process serves only, and an error there never stops the sweep."""
@@ -5908,7 +5956,13 @@ def test_a_superseded_attempt_halts_at_its_next_tool_call_and_never_completes(tu
     logged: list[dict] = []
     monkeypatch.setattr(worker, "log", lambda **f: logged.append(f))
     conn = turn_env["conn"]
-    conn.superseded = True
+
+    def build(**kwargs):
+        conn.superseded = True  # the newer claim lands after this attempt's bearer stamp (U4)
+        turn_env["options"] = kwargs
+        return object()
+
+    monkeypatch.setattr(worker, "build_worker_options", build)
     turn_env["lock_held"] = False
     client = FakeClient([_init(), ToolCall(), _text("x"), _result()], _info(AGENTS, worker.EXPECTED_SKILLS),
                         turn_env)
@@ -5952,6 +6006,50 @@ def test_a_mirror_error_on_a_superseded_store_raises_superseded(turn_env, monkey
     with pytest.raises(error):
         _run(turn_env, [_init(), mirror, _result()])
     assert not _turn_done_payloads(turn_env["conn"]) and turn_env["client"].disconnected
+
+
+def test_the_attempt_stamps_the_sha256_of_its_bearer_before_the_cli(turn_env, monkeypatch):
+    """U4: the tool server admits only the bearer stamped on the open turn, so the stamp is
+    the sha256 of the very token the CLI is handed, at this attempt's epoch, written before
+    the options that carry it are built. The token itself never reaches the row."""
+    import hashlib
+
+    order: list[str] = []
+    conn = turn_env["conn"]
+    turn_env["grant"] = lambda: FakeHeld(turn_env, token="token-u4")
+
+    def build(**kwargs):
+        order.append("build")
+        turn_env["options"] = kwargs
+        return object()
+
+    monkeypatch.setattr(worker, "build_worker_options", build)
+    _run(turn_env, _good())
+    stamps = [(i, params) for i, (sql, params) in enumerate(conn.executed) if sql == worker.STAMP_BEARER_SQL]
+    [(index, params)] = stamps
+    assert params == (hashlib.sha256(b"token-u4").hexdigest(), "turn-1", 1)
+    assert turn_env["options"]["bearer"] == "token-u4" and order == ["build"]
+    assert not any(s.startswith("UPDATE turns SET completed_at") for s, _ in conn.executed[:index]), \
+        "stamped while the turn is still open"
+    assert worker.STAMP_BEARER_SQL.endswith("AND claim_epoch = %s AND completed_at IS NULL RETURNING 1")
+
+
+def test_a_stamp_that_matches_no_row_is_superseded_and_spawns_no_cli(turn_env, monkeypatch):
+    """U4: no open row at this epoch -- a newer claim cleared the stamp and holds the turn --
+    so the attempt raises Superseded before any CLI is configured, closes nothing and still
+    releases the grant lock; served, it is the 200 ``superseded`` of the halt path."""
+    conn = turn_env["conn"]
+    conn.superseded = True
+    with pytest.raises(worker.Superseded, match="before the bearer stamp"):
+        _run(turn_env, _good())
+    assert turn_env["options"] is None, "no CLI was configured"
+    assert any(s == worker.STAMP_BEARER_SQL for s, _ in conn.executed)
+    assert not _turn_done_payloads(conn) and not any(
+        s.startswith("UPDATE turns SET completed_at") for s, _ in conn.executed)
+    assert turn_env["events"] == ["held.close"]
+    turn_env["events"].clear()
+    status, body = _serve(turn_env, monkeypatch)
+    assert (status, body["superseded"]) == (200, True) and turn_env["options"] is None
 
 
 def test_the_attempt_s_store_and_options_carry_its_claim_epoch(turn_env, monkeypatch):

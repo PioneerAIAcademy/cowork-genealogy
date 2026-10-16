@@ -6,7 +6,7 @@ import SessionView from '../SessionView'
 import { api, ApiError, type SessionSummary } from '../../api'
 import type { SessionConnection, Listener, WsMessage } from '../../transport/SessionConnection'
 
-// Issue #3406: a session more than 24 h old can be read but not continued. The
+// Issue #3406: a session more than 72 h old can be read but not continued. The
 // transport turns /connect's 410 into one `session_expired` status; these check
 // what the user then sees.
 
@@ -48,7 +48,7 @@ describe('ChatPane on session_expired', () => {
     const conn = new FakeConn()
     render(<ChatPane conn={conn} sessionId="sess_old" isNew={false} />)
     expect(screen.getByRole('textbox')).toBeTruthy()
-    // A tab left open past 24 h: the socket dropped, so it was reconnecting.
+    // A tab left open past 72 h: the socket dropped, so it was reconnecting.
     conn.emit({ type: 'conn_state', state: 'reconnecting' })
     expect(screen.getByText(/Reconnecting/)).toBeTruthy()
 

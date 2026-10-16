@@ -25,14 +25,16 @@ import pytest
 from proto import grants
 from proto.worker import worker
 from proto.worker.session_store import PgSessionStore
-from tests._proto_pg import PROTO, AsyncPausingConn, database, dml_role, session, sql, ungranted_advisory
+from tests._proto_pg import (
+    PROTO, SUBPATHS, AsyncPausingConn, database, dml_role, populated, project_rows, session, session_rows, sql,
+    transcript, ungranted_advisory,
+)
 
 sys.path.insert(0, str(PROTO))
 
 import web.app as web_app  # noqa: E402
 from web.app import PgStore, SessionBusy  # noqa: E402
 
-SUBPATHS = ("", "subagents/agent-x", "subagents/workflows/r1/agent-y")
 WAIT_S = 10.0
 
 
@@ -48,57 +50,9 @@ def role_dsn(pg_dsn):
         yield dsn
 
 
-def assistant(tokens: int) -> dict:
-    return {"type": "assistant", "uuid": uuid.uuid4().hex,
-            "message": {"id": "msg_" + uuid.uuid4().hex,
-                        "usage": {"input_tokens": tokens, "output_tokens": tokens}}}
-
-
-async def populated(dsn: str, *, project_id: str | None = None):
-    """A session on ``project_id`` (a fresh one when None) with a transcript at every
-    subpath, an event, a tool call, and the project's document, blob and staging rows."""
-    row = session(dsn)
-    if project_id is not None:
-        sql(dsn, "UPDATE sessions SET project_id = %s WHERE session_id = %s", (project_id, row.session_id))
-        sql(dsn, "UPDATE turns SET project_id = %s WHERE session_id = %s", (project_id, row.session_id))
-        row = web_app.SessionRow(row.session_id, project_id, row.title, row.model, row.created_at, row.updated_at)
-    sdk = str(uuid.uuid4())
-    sql(dsn, "UPDATE sessions SET sdk_session_id = %s WHERE session_id = %s", (sdk, row.session_id))
-    store = PgSessionStore(dsn, row.project_id)
-    for subpath in SUBPATHS:
-        key = {"project_key": "-project", "session_id": sdk, **({"subpath": subpath} if subpath else {})}
-        await store.append(key, [assistant(1000)])
-    sql(dsn, "INSERT INTO session_events (session_id, seq, kind) VALUES (%s, 1, 'turn_done')", (row.session_id,))
-    sql(dsn, "INSERT INTO tool_calls (turn_id, session_id, tool_name, decision) VALUES ('t', %s, 'Read', 'allow')",
-        (row.session_id,))
-    for statement in (
-        "INSERT INTO documents (project_id, name, doc) VALUES (%s, 'research.json', '{}') ON CONFLICT DO NOTHING",
-        "INSERT INTO blobs (project_id, key, s3_key, bytes, sha256) VALUES (%s, 'images/a', 'k', 1, 'h') "
-        "ON CONFLICT DO NOTHING",
-        "INSERT INTO staging (project_id, staging_id, s3_key) VALUES (%s, 's1', 'k') ON CONFLICT DO NOTHING",
-        "INSERT INTO projects (project_id) VALUES (%s) ON CONFLICT DO NOTHING",
-    ):
-        sql(dsn, statement, (row.project_id,))
-    return row, sdk
-
-
-def transcript(dsn: str, sdk: str) -> list[str]:
-    return [r[0] for r in sql(dsn, "SELECT subpath FROM session_entries WHERE session_id = %s ORDER BY subpath", (sdk,))]
-
-
 def spend(dsn: str, sdk: str) -> float:
     with psycopg.connect(dsn) as conn:
         return worker.session_spend_usd(conn, sdk)
-
-
-def project_rows(dsn: str, project_id: str) -> dict[str, int]:
-    return {t: sql(dsn, f"SELECT count(*) FROM {t} WHERE project_id = %s", (project_id,))[0][0]  # noqa: S608
-            for t in ("documents", "blobs", "staging", "projects")}
-
-
-def session_rows(dsn: str, session_id: str) -> dict[str, int]:
-    return {t: sql(dsn, f"SELECT count(*) FROM {t} WHERE session_id = %s", (session_id,))[0][0]  # noqa: S608
-            for t in (*web_app.SESSION_TABLES, "sessions")}
 
 
 async def test_delete_removes_the_sdk_transcript_at_every_subpath_and_keeps_the_sibling(pg_dsn, role_dsn):
@@ -212,7 +166,7 @@ async def test_a_message_admitted_first_wins_and_the_delete_waits_then_refuses(p
 def test_every_table_with_a_session_id_column_is_one_the_delete_clears(pg_dsn):
     """A per-session table added later and missed by delete_session leaves its rows
     behind every delete. Keyed differently: session_entries (the SDK id) and sessions."""
-    cleared = set(web_app.SESSION_TABLES) | {"session_entries", "sessions"}
+    cleared = set(grants.SESSION_TABLES) | {"session_entries", "sessions"}
     found = {r[0] for r in sql(pg_dsn, "SELECT table_name FROM information_schema.columns "
                                        "WHERE table_schema = 'public' AND column_name = 'session_id'")}
     missed = sorted(found - cleared)
