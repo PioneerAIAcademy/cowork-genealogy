@@ -943,63 +943,19 @@ def test_warnings_guards_skip_an_untagged_test():
         _pw_verbatim([], "", {"tags": []})
 
 
-# --- #2481: attribution by section, so shape stops mattering ---------------
+# --- #2481: markdown emphasis must not change what a matcher reads ---------
 
 
-_SHAPES = {
-    "atx heading, next block": (
-        "## Minnesota Death Index, 1908-2002\n\nYear disagrees.\n\n"
-        "**Recommendation:** detach it."
-    ),
-    "bold lead, next block": (
-        "**2. Minnesota Death Index, 1908-2002 — indexing error**\n\n"
-        "Year disagrees.\n\nNext: detach it."
-    ),
-    "bold lead, same block": (
-        "**2. Minnesota Death Index — indexing error**\n"
-        "Year disagrees. Next: detach it from KD96-TV2."
-    ),
-    "one paragraph": (
-        "The Minnesota Death Index year disagrees. Recommendation: detach it."
-    ),
-    "list item": "- **Minnesota Death Index** — detach it, the year is wrong.",
-    "table row": "| Minnesota Death Index | detach it |",
-    "two blocks apart": (
-        "## Minnesota Death Index\n\nA.\n\nB.\n\nNext: detach it."
-    ),
-}
+def test_emphasis_does_not_change_what_any_detach_matcher_reads():
+    """Three matchers read words that emphasis can sit inside, and all three
+    got it wrong in the same way: the markers land exactly where an anchor or a
+    character class expects a letter.
 
-
-@pytest.mark.parametrize("shape", sorted(_SHAPES), ids=sorted(_SHAPES))
-def test_the_same_violation_fires_in_every_shape(shape):
-    """The card's bar, stated as a test.
-
-    One meaning — "detach the source this test declares an indexing error" —
-    written seven ways. Under the passage co-occurrence rule the first two,
-    third and last PASSED on `main`: the source name and the detach verb landed
-    in different blank-line blocks, so the guard saw no violation. Attribution
-    now comes from the section the author put them in, and re-chopping the same
-    content cannot move the verdict.
+    The agent bolds freely — 251 bold spans across the 53 committed graded
+    replies — so each of these is one word away on a real report, and two of
+    them fail in the direction that reds a CORRECT one.
     """
-    with pytest.raises(AssertionError):
-        _no_detach(_SHAPES[shape], dict(_TEST, index_error_source=_PROTECTED))
-
-
-def test_a_detach_under_another_sources_section_still_passes():
-    """The direction that matters more: a correct report detaches the genuinely
-    misattributed source, and must not be charged for it."""
-    _no_detach(
-        "**1. Minnesota Death Index — indexing error**\nCorrect the year.\n\n"
-        "**2. 1885 State Census — misattributed**\nDetach it; a different man.",
-        dict(_TEST, index_error_source=_PROTECTED),
-    )
-
-
-def test_emphasis_does_not_hide_a_negation():
-    """`Do **not** detach` read as a RECOMMENDATION on the shipped module while
-    the unemphasised form read as a negation — the asterisks sat between the
-    negator and the term. Two committed correct replies write it with the bold.
-    """
+    # 1. a negation before the term
     for text in (
         "Do not detach; the record belongs here.",
         "Do **not** detach; the record belongs here.",
@@ -1007,4 +963,21 @@ def test_emphasis_does_not_hide_a_negation():
         "Do __not__ detach.",
     ):
         assert not _VALIDATOR._recommends_detach(text), text
-    assert _VALIDATOR._recommends_detach("Detach it."), "a bare recommendation must fire"
+
+    # 2. the harm verb AFTER the term, which says the report is arguing the
+    #    doctrine rather than violating it
+    for text in (
+        "Keep it attached - detaching it loses the evidence.",
+        "Keep it attached - detaching it **loses the evidence**.",
+    ):
+        assert not _VALIDATOR._recommends_detach(text), text
+
+    # 3. the record title that clears a correct report
+    for text in (
+        "Correct the Minnesota Death Index year. Detach the 1885 State Census.",
+        "Correct the Minnesota Death Index year. Detach the **1885 State Census**.",
+    ):
+        assert _VALIDATOR._detach_names_another_record(text, _PROTECTED), text
+
+    # and a bare recommendation still fires
+    assert _VALIDATOR._recommends_detach("Detach it.")

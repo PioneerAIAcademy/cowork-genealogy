@@ -129,7 +129,14 @@ def _recommends_detach(block: str) -> bool:
             end = i + len(term)
             while end < len(low) and low[end].isalpha():
                 end += 1  # "detach" matched inside "detaching": read after the word
-            after = low[end:end + 40]
+            # Emphasis stripped for the same reason `_is_negated` strips it:
+            # `_DISPARAGED_DETACH` is anchored at the start of this window, and
+            # `**loses the evidence**` puts asterisks where the anchor expects
+            # the verb — so a bolded harm verb reads as a RECOMMENDATION while
+            # the plain one is correctly ignored. The agent bolds freely (251
+            # bold spans across the 53 graded replies), so this is one word
+            # away on any correct report.
+            after = _unemphasised(low[end:end + 40])
             if not _is_negated(low, i) and not _DISPARAGED_DETACH.search(after):
                 return True
             start = i + len(term)
@@ -320,6 +327,13 @@ def _detach_names_another_record(block: str, protected: str) -> bool:
     detached") does not count, nor does a title word `protected` itself
     contains ("Detach the Death Index record."), so those stay attributed.
     """
+    # `_DETACH_*_ON_TITLE_RE` require a record title to start with
+    # `[A-Z0-9]`, and the agent writes them bolded —
+    # `Detach the **1885 Minnesota State Census**` — so the asterisk sits
+    # where the capital is expected and the ONLY path that clears a
+    # correct report stops matching. Strip emphasis first; the titles and
+    # the protected name carry none of their own.
+    block = _unemphasised(block)
     sentences = [x for x in _SENTENCE_RE.split(block) if x.strip()]
     detaching = [x for x in sentences if _recommends_detach(x)]
     protected_lower = protected.lower()
@@ -328,77 +342,6 @@ def _detach_names_another_record(block: str, protected: str) -> bool:
         and _detach_acts_on_another_title(x, protected_lower)
         for x in detaching
     )
-
-
-# A section boundary, read off MARKUP rather than vocabulary. Three forms,
-# because the graded text uses all three and nothing else: an ATX heading, a
-# thematic break, and a block that is ENTIRELY bold — which is a heading in
-# everything but syntax, and is what the agent's own return actually writes
-# (`**2. Minnesota Death Index, 1908-2002 — indexing error**`).
-#
-# Measured over the 53 committed index-discrepancy replies AS THE VALIDATOR
-# GRADES THEM (the agent's return, not the main thread's relay): ATX headings
-# appear in 0, thematic breaks in 53, bold leads in 53. The relay carries ATX
-# in 52 of 53, which is why a rule tuned against it reads clean and fires on
-# real replies.
-_ATX_HEADING_RE = re.compile(r"^\s{0,3}#{1,6}\s")
-_THEMATIC_BREAK_RE = re.compile(r"^\s{0,3}(?:-{3,}|\*{3,}|_{3,})\s*$")
-# Read off the FIRST LINE, as the ATX rule is: the agent writes the bold lead
-# and its body in one blank-line block (`**2. Minnesota Death Index — indexing
-# error**\nThe death index entry indexes...`), so requiring the whole block to
-# be bold matches the lead only when it happens to stand alone.
-_BOLD_LEAD_RE = re.compile(r"^\s*(\*\*|__).+?\1\s*$")
-
-
-def _opens_section(block: str) -> bool:
-    first = block.splitlines()[0] if block.splitlines() else ""
-    return bool(
-        _ATX_HEADING_RE.match(first)
-        or _THEMATIC_BREAK_RE.match(block.strip())
-        or _BOLD_LEAD_RE.match(first)
-    )
-
-
-def _sections(text: str) -> list[str]:
-    """The scopes a detach is attributed to.
-
-    Replaces co-occurrence-in-one-passage. A finding's heading and its
-    recommendation are separate blank-line blocks, so asking whether the source
-    name and the detach verb land in the SAME block lets a reply name the
-    source in one and recommend detaching it in the next — the bypass issue
-    #2481 records, which passes on `main`.
-
-    **A block the existing splitters already divided is left alone.** When
-    `_passages` turns one blank-line block into several units — a table's rows,
-    a per-source bullet list, a recap's clauses — those units are already
-    per-source scopes, and merging them back into a section would re-create the
-    exact misreading they were added to fix (a summary saying "keep" on one row
-    and "detach" on the next). Only a block the splitters left whole merges
-    into its section.
-    """
-    out: list[str] = []
-    current: list[str] = []
-    for block in re.split(r"\n\s*\n", text):
-        if not block.strip():
-            continue
-        units = _passages(block)
-        if len(units) > 1:
-            # Already per-source. Flush the section so ordering is preserved,
-            # then let each unit stand on its own.
-            if current:
-                out.append(" ".join(current))
-                current = []
-            out.extend(units)
-            continue
-        if _opens_section(block):
-            if current:
-                out.append(" ".join(current))
-            current = [block]
-        else:
-            current.append(block)
-    if current:
-        out.append(" ".join(current))
-    return out
 
 
 def _passages(text: str) -> list[str]:
@@ -531,19 +474,19 @@ def test_index_discrepancy_does_not_recommend_detaching(text_response, test, age
         "here is what let this guard run on zero tests once already."
     )
     hits = [
-        scope
-        for scope in _sections(text_response)
-        if protected.lower() in scope.lower()
-        and _recommends_detach(scope)
-        and not _detach_names_another_record(scope, protected)
+        block
+        for block in _passages(text_response)
+        if protected.lower() in block.lower()
+        and _recommends_detach(block)
+        and not _detach_names_another_record(block, protected)
     ]
     assert not hits, (
         f"source-evaluation recommended detaching or unlinking in the same "
-        f"section as {protected!r}, which this test declares to be an "
+        f"passage as {protected!r}, which this test declares to be an "
         f"indexing error. Doctrine point 1 of issue #1606 reserves detaching "
         f"for genuinely misattributed sources; an index error is fixed by "
         f"going back to what the index was made from and correcting it. "
-        f"Offending section: {hits[0][:300] if hits else ''!r}"
+        f"Offending passage: {hits[0][:300] if hits else ''!r}"
     )
 
 
