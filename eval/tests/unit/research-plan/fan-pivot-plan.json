@@ -34,7 +34,14 @@
     "wiki-place-page-pennsylvania-online-records",
     "volume-search-schuylkill",
     "collections-search-us-national",
-    "wiki-read-ireland-military-records"
+    "wiki-read-ireland-military-records",
+    "place-search-any",
+    "place-search-all-any",
+    "collections-search-any",
+    "volume-search-any",
+    "external-links-search-any",
+    "wiki-read-not-found-any",
+    "person-read-empty-any"
   ],
   "judge_context": [
     "Background on what the test author was looking for. None of it is a dimension. Grade what it describes inside the dimensions you were given, and do not add one named after anything below.",

@@ -26,7 +26,14 @@
     "collections-search-pennsylvania",
     "place-search-pennsylvania",
     "external-links-search-schuylkill",
-    "collections-search-us-national"
+    "collections-search-us-national",
+    "place-search-any",
+    "place-search-all-any",
+    "collections-search-any",
+    "volume-search-any",
+    "external-links-search-any",
+    "wiki-read-not-found-any",
+    "person-read-empty-any"
   ],
   "judge_context": [
     "Should confirm pli_006 (probate, in_progress) is the right next step: probate records may name Patrick as son of Thomas, providing direct positive evidence for parentage that the census records currently establish only indirectly",

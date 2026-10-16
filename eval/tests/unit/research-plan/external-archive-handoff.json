@@ -22,7 +22,14 @@
     "place-search-all-baiersbronn",
     "collections-search-baiersbronn",
     "external-links-search-baiersbronn",
-    "volume-search-baiersbronn"
+    "volume-search-baiersbronn",
+    "place-search-any",
+    "place-search-all-any",
+    "collections-search-any",
+    "volume-search-any",
+    "external-links-search-any",
+    "wiki-read-not-found-any",
+    "person-read-empty-any"
   ],
   "execution": {
     "max_wall_clock_seconds": 600,

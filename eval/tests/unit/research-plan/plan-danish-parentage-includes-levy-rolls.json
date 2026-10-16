@@ -19,7 +19,14 @@
     "external-links-search-denmark",
     "volume-search-thisted",
     "wiki-read-denmark-military-records",
-    "wiki-read-denmark-naming-customs"
+    "wiki-read-denmark-naming-customs",
+    "place-search-any",
+    "place-search-all-any",
+    "collections-search-any",
+    "volume-search-any",
+    "external-links-search-any",
+    "wiki-read-not-found-any",
+    "person-read-empty-any"
   ],
   "judge_context": [
     "A `localities` entry (loc_001) for Denmark / Thisted is ALREADY in research.json — the orchestrator ran locality-guide before research-plan, and its quirks record the lægdsruller fact (males enrolled under the father's name from 1789 = direct parentage evidence) plus the patronymic and browse-only-register notes. The skill should READ that entry; it should NOT call wiki_search / wiki_place_page / place_population (research-plan no longer holds those tools). Do NOT fail it for not surveying.",

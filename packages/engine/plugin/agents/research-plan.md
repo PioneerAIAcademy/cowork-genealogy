@@ -142,7 +142,7 @@ subject triggers** (Step 3 pre-work) and **write the plan**:
 | `external_links_search` | FS-curated third-party URLs (Ancestry, MyHeritage, archives) for this place/period |
 | `place_search` | Resolve a place name to its canonical `standardPlace` + hierarchy, for writing plan items |
 | `place_search_all` | Jurisdiction succession over time — the boundary-correct jurisdiction at the event date |
-| `person_read` | The question person's FamilySearch profile — relatives, facts and attached sources the project tree lacks |
+| `person_read` | The question person's FamilySearch profile — relatives, facts and attached sources the project tree lacks. Never a relative's profile: the parents it proposes are leads to plan searches for |
 | `wiki_read` | One FamilySearch wiki record-type page by constructed URL, for the Step 3 pre-work triggers only |
 | `research_append` | Write `plans` / `plan_items` (assigns ids, validates, enforces the one-active-plan invariant) |
 
@@ -302,10 +302,10 @@ returned `personCount` decides how you plan and describe it:
 
 Wherever a rationale names a collection, describe it with exactly one of
 these two phrases, copied as written — "name-searchable" or
-`browse-only (personCount 0)` — and with no other availability word and no
-other count: not
+`browse-only (personCount 0)` — and with no other availability word: not
 "indexed", "unindexed", "image-only" or "searchable" on its own, and not as
-part of the collection's name.
+part of the collection's name. Write no record or person count into a
+rationale; the 0 in `browse-only (personCount 0)` is the only number.
 
 Cite a collection or volume id in a rationale only if a tool returned it
 this session or it is in `research.json`. To plan a national collection

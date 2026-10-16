@@ -16,7 +16,14 @@
     "collections-search-schuylkill",
     "collections-search-pennsylvania",
     "collections-search-us-national",
-    "place-search-united-states"
+    "place-search-united-states",
+    "place-search-any",
+    "place-search-all-any",
+    "collections-search-any",
+    "volume-search-any",
+    "external-links-search-any",
+    "wiki-read-not-found-any",
+    "person-read-empty-any"
   ],
   "judge_context": [
     "Should narrate the existing plan pl_002 and its items without creating a new plan — the active plan has pli_006 still in_progress",

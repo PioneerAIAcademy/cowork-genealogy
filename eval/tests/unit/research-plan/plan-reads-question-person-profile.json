@@ -29,7 +29,14 @@
     "collections-search-pennsylvania",
     "external-links-search-schuylkill",
     "volume-search-schuylkill",
-    "collections-search-us-national"
+    "collections-search-us-national",
+    "place-search-any",
+    "place-search-all-any",
+    "collections-search-any",
+    "volume-search-any",
+    "external-links-search-any",
+    "wiki-read-not-found-any",
+    "person-read-empty-any"
   ],
   "judge_context": [
     "GENERAL RULE UNDER TEST: the project tree is a snapshot taken at setup. A relative imported with the subject arrives without his own parents, so 'no parents documented in the tree' says nothing about FamilySearch. Before planning, the skill must read the question person's FamilySearch profile (Thomas Kerrigan, ZZKR-TH2) and plan from what it holds.",

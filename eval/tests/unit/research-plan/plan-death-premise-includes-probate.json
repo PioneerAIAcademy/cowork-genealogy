@@ -21,7 +21,14 @@
     "wiki-place-page-kentucky-online-records",
     "external-links-search-kentucky",
     "volume-search-muhlenberg",
-    "place-population-muhlenberg"
+    "place-population-muhlenberg",
+    "place-search-any",
+    "place-search-all-any",
+    "collections-search-any",
+    "volume-search-any",
+    "external-links-search-any",
+    "wiki-read-not-found-any",
+    "person-read-empty-any"
   ],
   "judge_context": [
     "The plan MUST include at least one plan item targeting probate/estate records (record_type 'probate' — administrator bonds, estate settlements, probate registers at the Muhlenberg County court), alongside any death-certificate/register items. The collections-search fixture surfaces 'Kentucky Probate Records, 1727-1990', the wiki fixtures state probate is the primary death evidence for pre-1911 Kentucky deaths, and volume_search surfaces the browse-only Muhlenberg probate volumes.",

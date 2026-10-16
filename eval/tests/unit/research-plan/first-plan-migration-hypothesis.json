@@ -20,7 +20,14 @@
     "collections-search-pennsylvania",
     "external-links-search-schuylkill",
     "volume-search-schuylkill",
-    "collections-search-us-national"
+    "collections-search-us-national",
+    "place-search-any",
+    "place-search-all-any",
+    "collections-search-any",
+    "volume-search-any",
+    "external-links-search-any",
+    "wiki-read-not-found-any",
+    "person-read-empty-any"
   ],
   "judge_context": [
     "GENERAL RULE UNDER TEST: a first plan's record-type breadth must already reflect BCG Standard 14/17 (not just census/vital, and not just the record types a literal reading of the question names) -- the plan must clear this on its own, not only after the user separately asks 'did I miss anything?'.",

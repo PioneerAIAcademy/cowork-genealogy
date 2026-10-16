@@ -24,7 +24,14 @@
     "wiki-search-death-records",
     "wiki-search-military-records",
     "wiki-search-church-records",
-    "validate-research-schema"
+    "validate-research-schema",
+    "place-search-any",
+    "place-search-all-any",
+    "collections-search-any",
+    "volume-search-any",
+    "external-links-search-any",
+    "wiki-read-not-found-any",
+    "person-read-empty-any"
   ],
   "judge_context": [
     "Must set pl_002.status to 'superseded' — never modify the existing plan items, which are the audit trail",

@@ -27,7 +27,14 @@
     "collections-search-spain",
     "volume-search-velez-malaga",
     "external-links-search-spain",
-    "wiki-read-spain-naming-customs"
+    "wiki-read-spain-naming-customs",
+    "place-search-any",
+    "place-search-all-any",
+    "collections-search-any",
+    "volume-search-any",
+    "external-links-search-any",
+    "wiki-read-not-found-any",
+    "person-read-empty-any"
   ],
   "judge_context": [
     "A `localities` entry (loc_001, Vélez-Málaga) is ALREADY in research.json. The skill should READ it; it should not survey the place.",

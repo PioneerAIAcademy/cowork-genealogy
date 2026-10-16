@@ -23,7 +23,14 @@
     "collections-search-pennsylvania",
     "place-search-pennsylvania",
     "external-links-search-schuylkill",
-    "collections-search-us-national"
+    "collections-search-us-national",
+    "place-search-any",
+    "place-search-all-any",
+    "collections-search-any",
+    "volume-search-any",
+    "external-links-search-any",
+    "wiki-read-not-found-any",
+    "person-read-empty-any"
   ],
   "judge_context": [
     "This is Dispose mode (the agent body's Step 1a): the delegation names pli_010, the item research-exhaustiveness found still `planned`. The correct outcome is pli_010 set to `skipped` with a `skip_category` and a `skip_reason` saying why it is not needed (the question's evidence is otherwise complete); no log entry names pli_010, so `completed` would claim a search that never ran.",

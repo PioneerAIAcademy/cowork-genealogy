@@ -28,7 +28,14 @@
     "collections-search-us-national",
     "external-links-search-schuylkill",
     "volume-search-schuylkill",
-    "wiki-read-ireland-military-records"
+    "wiki-read-ireland-military-records",
+    "place-search-any",
+    "place-search-all-any",
+    "collections-search-any",
+    "volume-search-any",
+    "external-links-search-any",
+    "wiki-read-not-found-any",
+    "person-read-empty-any"
   ],
   "judge_context": [
     "A `localities` entry (loc_001) for Schuylkill County / Pennsylvania is ALREADY in research.json — the orchestrator ran locality-guide before research-plan. The skill should READ that entry and use its facts/quirks; it should NOT call wiki_search / wiki_place_page / place_population (research-plan no longer holds those tools — the know-how comes from the localities entry). Do NOT fail it for not surveying.",
