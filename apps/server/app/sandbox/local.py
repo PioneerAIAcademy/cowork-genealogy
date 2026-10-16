@@ -287,21 +287,42 @@ class LocalProvider(SandboxProvider):
         except OSError:
             pass
 
-    @staticmethod
-    def _is_our_server(pid: int) -> bool:
-        """Whether `pid` is alive AND is one of our WS servers.
+    def _is_our_server(self, pid: int, sandbox_id: str) -> bool:
+        """Whether `pid` is alive AND is THIS provider's WS server for `sandbox_id`.
 
         Liveness alone is not enough: pids are reused, and killing a stranger
         because it inherited a number we wrote down weeks ago is far worse than
         leaking a process. So the command line must name the module too, and a
         platform that cannot show us one gets NO for an answer -- reaping is a
         convenience, and an unverifiable kill is not worth it.
+
+        The MODULE is not enough either, and that is the second check here. Every
+        server on the machine is spawned as `python -m <SERVER_MODULE>` with no
+        arguments, so the command line is byte-identical for all of them: two
+        control planes sharing a `sandboxes_dir` -- `make server-dev` on :8000 and
+        `make server` on :1837 is the shipped way to get two -- each see the
+        other's `server.json`, do not track it in `self._servers`, find a live pid
+        whose cmdline names the module, and killpg a sibling's live session.
+
+        `AGENT_SECRETS_PATH` is per-sandbox and already in the child's environment,
+        so it identifies the process without changing how it is spawned. An
+        environ we cannot read gets NO, for the same reason an unreadable cmdline
+        does.
         """
         try:
             cmdline = Path(f"/proc/{pid}/cmdline").read_bytes()
         except OSError:
             return False
-        return SERVER_MODULE.encode() in cmdline
+        if SERVER_MODULE.encode() not in cmdline:
+            return False
+        try:
+            environ = Path(f"/proc/{pid}/environ").read_bytes()
+        except OSError:
+            return False
+        want = f"AGENT_SECRETS_PATH={self._abs_secrets(sandbox_id)}".encode()
+        # Exact entry, not a substring of the whole blob: one sandbox id being a
+        # prefix of another would otherwise match the wrong process.
+        return want in environ.split(b"\0")
 
     def reap_orphans(self) -> list[str]:
         """Kill WS servers left behind by an earlier control plane.
@@ -324,7 +345,7 @@ class LocalProvider(SandboxProvider):
             except (OSError, ValueError, TypeError):
                 self._forget_server(child.name)
                 continue
-            if pid <= 0 or not self._is_our_server(pid):
+            if pid <= 0 or not self._is_our_server(pid, child.name):
                 # Dead, or not provably ours. Drop the stale record either way:
                 # keeping it would make every later reap re-examine a pid that
                 # will never match again.
