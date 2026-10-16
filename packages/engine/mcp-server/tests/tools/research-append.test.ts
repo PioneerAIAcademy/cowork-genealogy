@@ -11849,3 +11849,223 @@ describe("research_append — unexplained move, update path", () => {
     expect((await update(id, { rationale: "Name, household and occupation agree." })).ok).toBe(true);
   });
 });
+
+// ---------------------------------------------------------------------------
+// US 1890 census precondition (#3255)
+// The US 1890 federal census was largely destroyed; writing it into
+// `expected_events` claims a record that cannot fill the gap.
+// ---------------------------------------------------------------------------
+describe("research_append — US 1890 census precondition", () => {
+  let dir: string;
+  beforeEach(async () => {
+    dir = await mkdtemp(join(tmpdir(), "ra-1890-"));
+  });
+  afterEach(async () => {
+    await rm(dir, { recursive: true, force: true });
+  });
+
+  const usEvent = {
+    date: "1850-06-01",
+    date_certainty: "certain",
+    event_type: "census",
+    description: "1850 US Census",
+    assertion_ids: ["a_001"],
+    standard_place: "Schuylkill, Pennsylvania, United States",
+  };
+
+  const dkEvent = {
+    date: "1850-06-01",
+    date_certainty: "certain",
+    event_type: "census",
+    description: "1850 Denmark Census",
+    assertion_ids: ["a_001"],
+    standard_place: "Copenhagen, Denmark",
+  };
+
+  function timelineResearch(
+    expectedEvents: string[],
+    opts: { events?: any[]; notes?: string | null } = {},
+  ) {
+    const r = baseResearch();
+    r.timelines = [
+      {
+        id: "t_001",
+        label: "John Smith timeline",
+        person_ids: ["I1"],
+        generated: "2026-01-01T00:00:00Z",
+        events: opts.events ?? [usEvent],
+        gaps: [
+          {
+            start: "1850",
+            end: "1900",
+            expected_events: expectedEvents,
+            severity: "medium",
+            notes: opts.notes ?? null,
+          },
+        ],
+      },
+    ] as any;
+    return r;
+  }
+
+  async function writeProject(research: any = timelineResearch([]), tree: any = baseTree) {
+    await writeFile(join(dir, "research.json"), JSON.stringify(research, null, 2));
+    await writeFile(join(dir, "tree.gedcomx.json"), JSON.stringify(tree, null, 2));
+  }
+
+  // --- fire cases ---
+
+  it("(1) fire: bare 'census 1890' on a US timeline", async () => {
+    await writeProject(timelineResearch(["census 1890"]));
+    const r = await researchAppend({
+      projectPath: dir,
+      section: "timelines",
+      op: "update",
+      entryId: "t_001",
+      fields: {
+        gaps: [
+          { start: "1850", end: "1900", expected_events: ["census 1890"], severity: "medium" },
+        ],
+      },
+    });
+    expect(r.ok).toBe(false);
+    expect(failure(r).errors?.join(" ")).toMatch(/census 1890/);
+    expect(failure(r).errors?.join(" ")).toMatch(/notes/);
+  });
+
+  it("(2) fire: with a destruction caveat", async () => {
+    const text = "census_1890 — largely destroyed, not surviving for most areas";
+    await writeProject(timelineResearch([text]));
+    const r = await researchAppend({
+      projectPath: dir,
+      section: "timelines",
+      op: "update",
+      entryId: "t_001",
+      fields: {
+        gaps: [
+          { start: "1850", end: "1900", expected_events: [text], severity: "medium" },
+        ],
+      },
+    });
+    expect(r.ok).toBe(false);
+    expect(failure(r).errors?.join(" ")).toMatch(/1890/);
+  });
+
+  it("(3) fire: '1890_census_fragments'", async () => {
+    await writeProject(timelineResearch(["1890_census_fragments"]));
+    const r = await researchAppend({
+      projectPath: dir,
+      section: "timelines",
+      op: "update",
+      entryId: "t_001",
+      fields: {
+        gaps: [
+          { start: "1850", end: "1900", expected_events: ["1890_census_fragments"], severity: "medium" },
+        ],
+      },
+    });
+    expect(r.ok).toBe(false);
+    expect(failure(r).errors?.join(" ")).toMatch(/1890_census_fragments/);
+  });
+
+  // --- silent cases ---
+
+  it("(4) silent: same string in `notes`, not in `expected_events`", async () => {
+    const research = timelineResearch(["census 1900"], { notes: "census 1890 — destroyed" });
+    await writeProject(research);
+    const r = await researchAppend({
+      projectPath: dir,
+      section: "timelines",
+      op: "update",
+      entryId: "t_001",
+      fields: {
+        gaps: [
+          {
+            start: "1850",
+            end: "1900",
+            expected_events: ["census 1900"],
+            severity: "medium",
+            notes: "census 1890 — destroyed",
+          },
+        ],
+      },
+    });
+    expect(r.ok).toBe(true);
+  });
+
+  it("(5) silent: '1890 veterans schedule'", async () => {
+    await writeProject(timelineResearch(["1890 veterans schedule"]));
+    const r = await researchAppend({
+      projectPath: dir,
+      section: "timelines",
+      op: "update",
+      entryId: "t_001",
+      fields: {
+        gaps: [
+          { start: "1850", end: "1900", expected_events: ["1890 veterans schedule"], severity: "medium" },
+        ],
+      },
+    });
+    expect(r.ok).toBe(true);
+  });
+
+  it("(6) silent: 'census 1890' on a timeline whose events are in Denmark", async () => {
+    await writeProject(timelineResearch(["census 1890"], { events: [dkEvent] }));
+    const r = await researchAppend({
+      projectPath: dir,
+      section: "timelines",
+      op: "update",
+      entryId: "t_001",
+      fields: {
+        gaps: [
+          { start: "1850", end: "1900", expected_events: ["census 1890"], severity: "medium" },
+        ],
+      },
+    });
+    expect(r.ok).toBe(true);
+  });
+
+  it("(7) silent: 'census 1900'", async () => {
+    await writeProject(timelineResearch(["census 1900"]));
+    const r = await researchAppend({
+      projectPath: dir,
+      section: "timelines",
+      op: "update",
+      entryId: "t_001",
+      fields: {
+        gaps: [
+          { start: "1850", end: "1900", expected_events: ["census 1900"], severity: "medium" },
+        ],
+      },
+    });
+    expect(r.ok).toBe(true);
+  });
+
+  it("(8) silent: an update that does not touch `gaps`", async () => {
+    await writeProject(timelineResearch(["census 1890"]));
+    const r = await researchAppend({
+      projectPath: dir,
+      section: "timelines",
+      op: "update",
+      entryId: "t_001",
+      fields: { label: "Renamed timeline" },
+    });
+    expect(r.ok).toBe(true);
+  });
+
+  it("(9) silent: 'census 1890' on a timeline with empty events", async () => {
+    await writeProject(timelineResearch(["census 1890"], { events: [] }));
+    const r = await researchAppend({
+      projectPath: dir,
+      section: "timelines",
+      op: "update",
+      entryId: "t_001",
+      fields: {
+        gaps: [
+          { start: "1850", end: "1900", expected_events: ["census 1890"], severity: "medium" },
+        ],
+      },
+    });
+    expect(r.ok).toBe(true);
+  });
+});

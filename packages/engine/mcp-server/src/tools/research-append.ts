@@ -2726,6 +2726,75 @@ function planItemSkipInvariants(
   return errors;
 }
 
+// ---------------------------------------------------------------------------
+// US 1890 census — the federal census was largely destroyed; a mention in
+// `expected_events` claims a record that cannot fill the gap (ADR-0012,
+// issue #2261). The harness backstop `test_us_1890_never_expected` binds only
+// on the unit eval plane; this precondition binds everywhere.
+// ---------------------------------------------------------------------------
+function timelineCensus1890Invariants(entry: any): string[] {
+  const gaps: any[] = Array.isArray(entry?.gaps) ? entry.gaps : [];
+  const errors: string[] = [];
+
+  for (const gap of gaps) {
+    if (!gap || !Array.isArray(gap.expected_events)) continue;
+    for (const item of gap.expected_events) {
+      const text = String(item);
+      const lower = text.toLowerCase();
+      // Must mention a census AND the year 1890 as a standalone number.
+      if (!lower.includes("census")) continue;
+      if (!/(?<!\d)1890(?!\d)/.test(text)) continue;
+      // The 1890 veterans schedule partly survives — stay silent.
+      if (lower.includes("veteran")) continue;
+
+      // Condition (a): the text explicitly names the United States.
+      const namesUS =
+        lower.includes("united states") ||
+        lower.includes("u.s.") ||
+        /\bus\b/.test(lower) ||
+        lower.includes("federal");
+
+      if (namesUS) {
+        errors.push(
+          `Expected event "${text}" names the US 1890 federal census, which ` +
+            `does not survive — move the mention to that gap's \`notes\`.`,
+        );
+        continue;
+      }
+
+      // Condition (b): the text names no country AND every non-null event
+      // standard_place in the timeline ends in "United States" (at least one
+      // must exist). If the timeline has zero events with a non-null
+      // standard_place, condition (b) is not satisfied.
+      const events: any[] = Array.isArray(entry?.events) ? entry.events : [];
+      const nonNullPlaces = events
+        .filter(
+          (e: any) =>
+            e &&
+            typeof e.standard_place === "string" &&
+            e.standard_place.trim(),
+        )
+        .map((e: any) => (e.standard_place as string).trim());
+
+      if (nonNullPlaces.length === 0) continue;
+
+      const allUS = nonNullPlaces.every((p: string) =>
+        p.endsWith("United States"),
+      );
+      if (allUS) {
+        errors.push(
+          `Expected event "${text}" names a census in 1890 and this ` +
+            `timeline's events are in the United States — the US 1890 ` +
+            `federal census does not survive. Move the mention to that ` +
+            `gap's \`notes\`.`,
+        );
+      }
+    }
+  }
+
+  return errors;
+}
+
 /** The two tiers that are a final answer rather than a stalled one: `proved`
  *  establishes the claim, `disproved` affirmatively refutes it. `not_proved` is
  *  deliberately absent — it is a non-answer, so something IS holding it back. */
@@ -4567,6 +4636,19 @@ function applyOne(
     // does not satisfy this precondition. Gated only on the entry's standing
     // tier (not_proved/disproved pass), not on which fields this op touches.
     invariantErrors.push(...competingParentSetsInvariants(resultEntry, preCallResearch, tree));
+  }
+  // US 1890 census: the federal census does not survive, so 1890 must not
+  // appear as a census expected_event attributable to the United States.
+  // Gated on the ops that SET gaps, so an unrelated edit to a timeline
+  // written before this rule stays possible.
+  if (section === "timelines") {
+    const timelineFields = op.fields ?? {};
+    const gapsTouchedThisOp =
+      op.op === "append" ||
+      Object.prototype.hasOwnProperty.call(timelineFields, "gaps");
+    if (gapsTouchedThisOp) {
+      invariantErrors.push(...timelineCensus1890Invariants(resultEntry));
+    }
   }
   if (invariantErrors.length > 0) {
     throw new ResearchAppendError(invariantErrors);
