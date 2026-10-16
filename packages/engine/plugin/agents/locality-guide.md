@@ -158,8 +158,9 @@ Use the template under **Locality Guide Output Format** below. Fill every sectio
 ### 6. Persist the locality
 
 **Run this step whenever Step 1 says it runs**, whatever the project's objective and
-however the delegation is phrased. Only `research_append` answering `ok: false` means
-there is no project. Use `research_append`:
+however the delegation is phrased. Only an answer of `ok: false` with
+`reason: "no_project"` means there is no project; on any other `ok: false`, fix the
+entry and call again. Use `research_append`:
 
 ```
 research_append({

@@ -381,7 +381,8 @@ def _returns(*texts, agent="locality-guide"):
 
 
 _NO_RESPONSE = object()
-_REFUSED = {"ok": False, "errors": ["localities: write refused"]}
+_REFUSED = {"ok": False, "errors": ["no research.json at the project path"], "reason": "no_project"}
+_FIXABLE_REFUSAL = {"ok": False, "errors": ["research.json/localities[1]: unexpected property 'notes'"]}
 _LOC_OP = {"section": "localities", "op": "append", "entry": {"place": "Schuylkill"}}
 
 
@@ -613,6 +614,9 @@ def test_contract_fires_when_nothing_was_written_and_the_return_is_a_summary():
         [_append(_REFUSED, ops="not json [")],
         [_append(_REFUSED, ops=[{"section": "log", "op": "append", "entry": {}}])],
         [{"tool": "mcp__genealogy__research_log_append", "args": _LOC_OP, "response": _REFUSED}],
+        [_append(_FIXABLE_REFUSAL, **_LOC_OP)],
+        [_append({"content": [{"type": "text", "text": json.dumps(_FIXABLE_REFUSAL)}]}, **_LOC_OP)],
+        [_append({**_REFUSED, "reason": "other"}, **_LOC_OP)],
     ],
     ids=[
         "no-localities-write",
@@ -625,6 +629,9 @@ def test_contract_fires_when_nothing_was_written_and_the_return_is_a_summary():
         "ops-unparseable",
         "batch-other-section",
         "other-tool",
+        "fixable-refusal",
+        "fixable-refusal-mcp-text",
+        "refusal-other-reason",
     ],
 )
 def test_contract_fires_when_nothing_was_written_and_no_localities_write_was_refused(calls):

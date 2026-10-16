@@ -389,6 +389,7 @@ def _refused_localities_write(tool_calls):
             or any(op.get("section") == "localities" for op in research_append_ops(tc.get("args")))
         )
         and _response_body(tc.get("response")).get("ok") is False
+        and _response_body(tc.get("response")).get("reason") == "no_project"
         for tc in (tool_calls or [])
     )
 
@@ -417,9 +418,12 @@ def test_in_project_return_follows_the_contract(
     October in-project returns that followed this contract are at most 2310) and
     names every written entry's id as a whole word.
 
-    Nothing written: passes only on the write-failed fallback — a
+    Nothing written: passes only on the no-project fallback — a
     `research_append` writing `localities` whose recorded response is a refusal
-    (`ok` exactly False), and a return carrying the guide
+    (`ok` exactly False) carrying `reason: "no_project"`, the tool's one
+    refusal that is an answer rather than a fixable error
+    (`research-append.ts`, `noProjectResult` in `project-io.ts`), and a return
+    carrying the guide
     (`## Available record types`). A refused call reaches `tool_calls` with its
     response (`mock_mcp.py`, the research_append live handler); the conftest
     docstring saying `tool_calls` holds only successes is wrong for these live
@@ -451,9 +455,10 @@ def test_in_project_return_follows_the_contract(
         )
         return
     assert _refused_localities_write(tool_calls), (
-        "in a research project, nothing persisted and no localities write was refused; "
-        "the guide belongs in a localities entry, and only a refused write falls back "
-        "to returning it"
+        "in a research project, nothing persisted and no localities write was refused "
+        "with reason no_project; the guide belongs in a localities entry, a fixable "
+        "refusal must be fixed and retried, and only a no_project answer falls back "
+        "to returning the guide"
     )
     assert _RECORD_TYPES_HEADING.search(reply), (
         "a localities write was refused, so the return must carry the guide in full: "
