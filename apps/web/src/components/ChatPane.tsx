@@ -341,15 +341,30 @@ export default function ChatPane({
   const [connAttempt, setConnAttempt] = useState<{ attempt: number; max: number } | null>(null)
   // 1c: the label for how the last turn ended, or null for an ordinary finish.
   const [outcome, setOutcome] = useState<string | null>(null)
+  // The raw `ev.outcome` string behind that label, kept only to tell a `decision`
+  // turn apart from every other kind -- the label text is for display, not for
+  // branching on. Reset in lockstep with `outcome` everywhere that resets it.
+  const [outcomeKind, setOutcomeKind] = useState<string | null>(null)
   // The card replaces the one-line outcome label only for a turn that actually ended
   // waiting on the researcher AND carried its options. A `decision` turn whose payload
   // did not arrive falls through to the label, which is the honest degradation: a
   // question the reader can still see, rather than an empty card.
+  //
+  // Reads ONLY the last message, not a reverse search over the whole transcript.
+  // A search would find a PRIOR turn's decision long after it was answered: once
+  // that turn's own last message carries no `.decision` of its own (the ordinary
+  // case), scanning backward keeps going and surfaces the stale card again under
+  // a later, unrelated outcome.
   const m0Decision = useMemo(() => {
-    if (!outcome) return null
-    const last = [...messages].reverse().find((m) => m.decision && m.decision.length > 0)
-    return last?.decision ?? null
-  }, [outcome, messages])
+    if (outcomeKind !== 'decision') return null
+    const last = messages[messages.length - 1]
+    return last?.decision && last.decision.length > 0 ? last.decision : null
+  }, [outcomeKind, messages])
+  // "Something else" dismisses the card locally without answering it -- the
+  // composer is always on screen, so there is nothing else for it to reveal.
+  // Reset at every turn_done: by the time a NEW decision can show, a new turn has
+  // already ended, so a dismissal of the previous one can never leak onto it.
+  const [decisionDismissed, setDecisionDismissed] = useState(false)
   // 1b: the server is holding a message for this session. Distinct from the per-bubble
   // `queued` flag, which only the tab that sent it knows about.
   const [queuedOnServer, setQueuedOnServer] = useState(false)
@@ -368,6 +383,8 @@ export default function ChatPane({
       // indistinguishable from a finished one.
       setCompacting(false)
       setOutcome(turnOutcomeLabel(ev.outcome, ev.limit))
+      setOutcomeKind(typeof ev.outcome === 'string' ? ev.outcome : null)
+      setDecisionDismissed(false)
       setSpendStopped(ev.outcome === 'budget' && ev.limit === 'spend')
       // A task killed via TaskUpdated emits no task_done on the wire, so the
       // set is reset at turn end rather than trusted to drain itself.
@@ -466,6 +483,7 @@ export default function ChatPane({
         setBusy(false)
         setQueuedOnServer(false)
         setOutcome(null)
+        setOutcomeKind(null)
         setExpired(String(msg.message ?? SESSION_EXPIRED_TEXT))
       }
       else if (msg.type === 'status' && msg.state === 'chat_error') {
@@ -513,6 +531,7 @@ export default function ChatPane({
     // message to init-project or tree-survey on its own, so the client prefixes nothing.
     conn.send({ type: 'user_msg', text: trimmed })
     setOutcome(null) // 1c: a new message supersedes how the last turn ended
+    setOutcomeKind(null)
     setBusy(true)
     setInput('')
     // Sending is an unambiguous "I'm back at the live edge" — re-attach even if
@@ -633,19 +652,25 @@ export default function ChatPane({
             // a working pause outranks "working", which is what six minutes of silence
             // used to render as.
             <div className="typing">●●● {COMPACTING_LABEL}</div>
-          ) : m0Decision && !busy ? (
+          ) : m0Decision && !busy && !decisionDismissed ? (
             // Phase 3 item 1: a turn that ended `decision` gets the CARD, not the
             // one-line "Waiting on you" label. Answering sends the reader's choice
             // as the next message, which is what resumes the run -- the same path a
             // typed reply takes, so nothing new has to be taught to the worker.
+            //
+            // `send`, not a bare conn.send + setMessages: it also clears `outcome` /
+            // `outcomeKind` and sets `busy`, so the card itself disappears the instant
+            // it is answered rather than sitting on screen (already answered, no
+            // longer meaningful) until the next turn's outcome happens to overwrite it.
             <DecisionCard
               questions={m0Decision}
-              onAnswer={(answer) => {
-                conn.send({ type: 'user_msg', text: answer })
-                setMessages((prev) => [...prev, { role: 'user', text: answer, tools: [] }])
-              }}
+              onAnswer={send}
+              onSomethingElse={() => setDecisionDismissed(true)}
             />
-          ) : outcome && !busy ? (
+          ) : outcome && !busy && !decisionDismissed ? (
+            // `!decisionDismissed` so dismissing the card for "something else" does not
+            // fall through to the very label the card replaced -- the researcher already
+            // acted, there is nothing more to wait on them for until they type.
             <div className="turnOutcome">
               {outcome}
               {spendStopped && projectId && onContinueOnProject && (

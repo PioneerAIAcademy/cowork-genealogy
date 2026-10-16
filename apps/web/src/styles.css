@@ -992,7 +992,11 @@ button {
   margin: 8px 0;
   background: var(--bg-card, transparent);
 }
+/* A card with one question (the common case) is a single block; a card with
+   several -- AskUserQuestion allows up to four -- stacks one per question. */
+.decisionQuestionBlock + .decisionQuestionBlock { margin-top: 14px; padding-top: 14px; border-top: 1px solid var(--border, #8883); }
 .decisionQuestion { font-weight: 600; margin-bottom: 8px; }
+.decisionAnswered { font-size: 0.9em; opacity: 0.8; }
 .decisionOptions { display: flex; flex-direction: column; gap: 6px; }
 .decisionOption {
   display: flex; flex-direction: column; gap: 2px;

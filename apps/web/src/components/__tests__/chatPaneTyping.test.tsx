@@ -383,3 +383,103 @@ describe('the agent compacting its context', () => {
     expect(screen.queryByText(COMPACTING_LABEL, { exact: false })).toBeNull()
   })
 })
+
+describe('Phase 3 item 1: the decision card, through the real component', () => {
+  // `summary` is deliberately NOT the question text -- the tool chip renders
+  // `ev.summary` verbatim too, and a shared string makes `getByText` ambiguous
+  // between the chip and the card.
+  const QUESTION_EVENT = {
+    kind: 'tool_use',
+    tool: 'AskUserQuestion',
+    summary: 'asking which Mary Hales',
+    questions: [
+      {
+        question: 'Which Mary Hales?',
+        header: 'Person',
+        options: [
+          { label: 'Mary Hales of Ohio (Recommended)', description: 'b. 1832' },
+          { label: 'Mary Hales of Indiana', description: 'b. 1841' }
+        ]
+      }
+    ]
+  }
+
+  function askAndEndInDecision(conn: FakeConn): void {
+    conn.emit({ type: 'agent_event', event: QUESTION_EVENT })
+    conn.emit({ type: 'agent_event', event: { kind: 'turn_done', outcome: 'decision' } })
+  }
+
+  it('shows the card, not the one-line label, when a turn ends in decision', () => {
+    const { conn } = mount()
+    startTurn(conn)
+    askAndEndInDecision(conn)
+    expect(screen.getByText('Which Mary Hales?')).toBeTruthy()
+    expect(screen.queryByText(TURN_OUTCOME_LABELS.decision)).toBeNull()
+  })
+
+  it('answering removes the card immediately, before the next turn starts', () => {
+    const { conn } = mount()
+    startTurn(conn)
+    askAndEndInDecision(conn)
+    fireEvent.click(screen.getByRole('button', { name: /Indiana/ }))
+    expect(screen.queryByText('Which Mary Hales?')).toBeNull()
+    expect(conn.sent.at(-1)).toMatchObject({ type: 'user_msg', text: 'Mary Hales of Indiana' })
+    // Not just the card -- the one-line label it replaced must not flash back in
+    // its place. Answering goes through the same path a typed reply does, which
+    // sets `busy` and clears the old outcome right away rather than waiting for
+    // `turn_active` to arrive over the wire.
+    expect(screen.queryByText(TURN_OUTCOME_LABELS.decision)).toBeNull()
+  })
+
+  it('a later ordinary outcome does not resurrect the already-answered card', () => {
+    // The bug: `m0Decision` searched BACKWARD across the whole transcript for any
+    // message that ever carried `.decision`, so once the new turn's own last message
+    // carried none (the ordinary case), the stale prior decision reappeared under a
+    // later, unrelated outcome -- nothing had ever marked it as answered.
+    const { conn } = mount()
+    startTurn(conn)
+    askAndEndInDecision(conn)
+    fireEvent.click(screen.getByRole('button', { name: /Indiana/ }))
+    conn.emit({ type: 'agent_event', event: { kind: 'text', text: 'Found it.' } })
+    conn.emit({ type: 'agent_event', event: { kind: 'turn_done', outcome: 'completed' } })
+    expect(screen.queryByText('Which Mary Hales?')).toBeNull()
+    expect(screen.getByText(TURN_OUTCOME_LABELS.completed)).toBeTruthy()
+  })
+
+  it('"something else" dismisses the card without sending anything', () => {
+    const { conn } = mount()
+    startTurn(conn)
+    askAndEndInDecision(conn)
+    const sentBefore = conn.sent.length
+    fireEvent.click(screen.getByRole('button', { name: /something else/i }))
+    expect(screen.queryByText('Which Mary Hales?')).toBeNull()
+    expect(conn.sent).toHaveLength(sentBefore)
+    // The composer was always there; dismissing just stops hiding it behind the card.
+    expect(screen.getByRole('textbox')).toBeTruthy()
+  })
+
+  it('a fresh decision in a LATER turn still shows the card after an earlier one was dismissed', () => {
+    // The dismissal is per-turn, not permanent: it must reset once a genuinely new
+    // turn ends, or every decision for the rest of the session would render nothing.
+    const { conn } = mount()
+    startTurn(conn)
+    askAndEndInDecision(conn)
+    fireEvent.click(screen.getByRole('button', { name: /something else/i }))
+    expect(screen.queryByText('Which Mary Hales?')).toBeNull()
+
+    const box = screen.getByRole('textbox')
+    fireEvent.change(box, { target: { value: 'try the 1860 census instead' } })
+    fireEvent.keyDown(box, { key: 'Enter' })
+    conn.emit({
+      type: 'agent_event',
+      event: {
+        kind: 'tool_use',
+        tool: 'AskUserQuestion',
+        summary: 'asking which county',
+        questions: [{ question: 'Which county?', options: [{ label: 'Franklin' }] }]
+      }
+    })
+    conn.emit({ type: 'agent_event', event: { kind: 'turn_done', outcome: 'decision' } })
+    expect(screen.getByText('Which county?')).toBeTruthy()
+  })
+})
