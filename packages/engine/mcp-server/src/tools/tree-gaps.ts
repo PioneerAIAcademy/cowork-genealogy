@@ -276,7 +276,22 @@ export function hintEvents(title: string): HintEvent[] {
   return EVENT_WORDS.filter(([, re]) => re.test(title)).map(([event]) => event);
 }
 
-type PersonHints = { ark: string; events: HintEvent[] }[];
+// The years a collection title names ("United States Census, 1930", "Ohio Census
+// Index, 1900-1950"), as one span; null when it names none.
+export function hintYears(title: string): { start: number; end: number } | null {
+  const years = (title.match(/\b(?:1[5-9]|20)\d\d\b/g) ?? []).map(Number);
+  return years.length === 0 ? null : { start: Math.min(...years), end: Math.max(...years) };
+}
+
+// A census counts for a hole only if it was taken in the hole's window: a spouse's
+// own childhood census says nothing about the couple's children. A title with no
+// year, or a hole with no window, cannot be judged and is not excluded.
+function censusInWindow(g: TreeGap, years: { start: number; end: number } | null): boolean {
+  if (!years || !g.yearRange) return true;
+  return years.start <= g.yearRange.end && years.end >= g.yearRange.start;
+}
+
+type PersonHints = { ark: string; events: HintEvent[]; years: { start: number; end: number } | null }[];
 
 // People on the selected holes, each read once however many holes name them.
 function hintPeople(gaps: TreeGap[]): string[] {
@@ -306,7 +321,10 @@ async function readHints(
         principal,
         window,
       );
-      hints.set(id, res.matches.map((m) => ({ ark: m.ark, events: hintEvents(m.title) })));
+      hints.set(
+        id,
+        res.matches.map((m) => ({ ark: m.ark, events: hintEvents(m.title), years: hintYears(m.title) })),
+      );
     } catch {
       // Unread: counted with the people skipped for time by scoreHints.
     }
@@ -326,11 +344,13 @@ function scoreHints(gaps: TreeGap[], people: string[], hints: Map<string, Person
     const ids = [g.personId, g.spouseId].filter((id): id is string => !!id && id !== "UNKNOWN");
     const reads = ids.map((id) => hints.get(id));
     if (reads.length === 0 || reads.some((r) => !r)) continue;
-    const seen = new Map<string, HintEvent[]>();
-    for (const r of reads) for (const h of r!) seen.set(h.ark, h.events);
+    const seen = new Map<string, PersonHints[number]>();
+    for (const r of reads) for (const h of r!) seen.set(h.ark, h);
     g.pendingHints = {
-      fitting: [...seen.values()].filter((events) =>
-        events.some((e) => HINT_EVENTS[g.type].includes(e)),
+      fitting: [...seen.values()].filter((h) =>
+        h.events.some(
+          (e) => HINT_EVENTS[g.type].includes(e) && (e !== "census" || censusInWindow(g, h.years)),
+        ),
       ).length,
       total: seen.size,
     };

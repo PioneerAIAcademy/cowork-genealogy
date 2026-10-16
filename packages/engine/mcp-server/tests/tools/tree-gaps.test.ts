@@ -12,7 +12,7 @@ vi.mock("../../src/auth/refresh.js", () => ({
 }));
 
 import { fsFetch } from "../../src/utils/fs-fetch.js";
-import { catalogWaitMs, hintEvents, readWindow, treeGapsTool } from "../../src/tools/tree-gaps.js";
+import { catalogWaitMs, hintEvents, hintYears, readWindow, treeGapsTool } from "../../src/tools/tree-gaps.js";
 import { clearCollectionsCache } from "../../src/tools/collections-search.js";
 
 const mockFetch = vi.fn();
@@ -337,6 +337,50 @@ describe("treeGapsTool", () => {
       const ids = r.gaps.filter((g) => g.type === "no_death_date").map((g) => g.personId);
       // The mother, the farthest hole, moves first; the root and the father keep their order.
       expect(ids).toEqual(["MOTH-111", "KNDX-MKG", "FATH-111"]);
+    });
+
+    it("a census counts for a children hole only if taken in the hole's window", async () => {
+      const root = { name: "Root", gender: "Male", birthDate: "1 May 1900", deathDate: "1 May 1970", lifespan: "1900-1970" };
+      route({
+        "/tree/ancestry": () => json({ persons: [person("KNDX-MKG", { ascendancyNumber: "1", ...root })] }),
+        "/tree/descendancy": () =>
+          json({
+            persons: [
+              person("KNDX-MKG", { descendancyNumber: "1", ...root, marriageDate: "1 May 1925" }),
+              person("WIFE-111", {
+                descendancyNumber: "1-S1",
+                name: "Wife",
+                gender: "Female",
+                birthDate: "1 May 1902",
+                deathDate: "1 May 1980",
+                lifespan: "1902-1980",
+              }),
+            ],
+          }),
+        "/service/search/hr/v2/collections": () => json({ entries: [] }),
+        [MATCHES]: () =>
+          json({
+            entries: [
+              hint("AAAA-111", "United States Census, 1910"),
+              hint("BBBB-222", "United States Census, 1930"),
+              hint("CCCC-333", "Ohio Census Index, 1900-1950"),
+              hint("DDDD-444", "United States Census"),
+            ],
+          }),
+      });
+      const r = await treeGapsTool({ personId: "KNDX-MKG", ancestorGenerations: 1 }, LOCAL);
+      const hole = r.gaps.find((g) => g.type === "no_children")!;
+      expect(hole.yearRange!.start).toBeGreaterThan(1910);
+      // The 1910 census, taken before the marriage, is the spouse's own childhood census and is excluded.
+      // The 1930 census, a span that overlaps the window, and a title with no year all count.
+      expect(hole.pendingHints).toEqual({ fitting: 3, total: 4 });
+    });
+
+    it("reads the years a collection title names, as one span", () => {
+      expect(hintYears("United States Census, 1930")).toEqual({ start: 1930, end: 1930 });
+      expect(hintYears("Ohio Census Index, 1900-1950")).toEqual({ start: 1900, end: 1950 });
+      expect(hintYears("United States Census")).toBeNull();
+      expect(hintYears("Find a Grave Index")).toBeNull();
     });
 
     it("reads event words from a collection title", () => {

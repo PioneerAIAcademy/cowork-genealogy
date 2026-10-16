@@ -214,7 +214,10 @@ generic URL on every match (measured 2026-10-14), so it says nothing.
 | `no_death_date` | a death or burial (`death`, `burial`, `grave`, `cemeter…`, `obituar…`, `funeral`, `mortuar…`) |
 | `no_children`, `child_gap`, `early_last_child` | a census (`census`) |
 
-A hole about a couple's children takes only a census, which names the household.
+A hole about a couple's children takes only a census, which names the household,
+and only one taken in the hole's `yearRange`: the years in the title (`1930`, or the
+span of `1900-1950`) must overlap it, so a spouse's own childhood census does not
+count. A census title with no year, or a hole with no `yearRange`, is not excluded.
 A spouse's own baptism or death record says nothing about a child. A title that
 names no event ("Vital Records", "Church Registers") counts toward `total` only,
 so `fitting` is a floor.
