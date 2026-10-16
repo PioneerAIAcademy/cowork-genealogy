@@ -29,22 +29,55 @@ import pytest
 
 # --- Both files exist after init ---------------------------------------
 
-def test_both_project_files_created(before_state, after_state, test):
+def _paused_to_ask(builtin_tool_calls) -> bool:
+    """Whether this run stopped to ask the researcher something it cannot answer.
+
+    Originally for the namesake flood: when `person_search` could not pick between
+    tens of thousands of tied candidates, the skill asked rather than choose. That
+    path is gone -- init-project no longer searches at all, and a project always
+    starts from a FamilySearch PID (lead, 2026-10-15).
+
+    Kept because the shape still occurs, but it is no longer the only way a positive
+    run legitimately produces no project: the no-PID ask is a RETURN to the router,
+    not an `AskUserQuestion` call, and init-project does not hold that tool. Tests
+    expecting that path carry the `asks-for-pid` tag, which the rule below reads.
+
+    Narrow on purpose. A run that merely produced no files still fails; only one that
+    asked AND produced none is excused, so "did nothing" cannot pass as "asked".
+    """
+    return any(
+        (c.get("tool") or c.get("name")) == "AskUserQuestion"
+        for c in (builtin_tool_calls or [])
+        if isinstance(c, dict)
+    )
+
+
+def test_both_project_files_created(before_state, after_state, test, builtin_tool_calls):
     """init-project positive tests must produce BOTH research.json and
     tree.gedcomx.json. Either file missing is a structural failure even
     if the other validates. Per issue #1510, every opening-turn question
     (objective, experience level, access) is non-blocking and defaults
     silently if unanswered, so a positive test always completes in one
-    pass -- there is no longer a premature-write exception to gate."""
+    pass -- there is no longer a premature-write exception to gate.
+
+    THAT PREMISE NO LONGER HOLDS IN ONE CASE, 2026-09-30. Phase 4 made the person
+    pick blocking when `person_search` reports it cannot choose, so a run that
+    correctly asks has no project yet, by design."""
     if test.get("type") != "positive":
         pytest.skip("file-existence rules apply only to positive tests")
+    if "asks-for-pid" in (test.get("tags") or []) and after_state.get("research_json") is None:
+        # The no-PID path: init-project creates nothing and asks for the ID in its
+        # return. There is no project BY DESIGN, so file-existence cannot apply.
+        pytest.skip("test expects the no-PID ask; no project by design")
+    if _paused_to_ask(builtin_tool_calls) and after_state.get("research_json") is None:
+        pytest.skip("run paused to ask the researcher which person; no project yet, by design")
     if after_state.get("research_json") is None:
         assert False, "init-project did not create research.json"
     if after_state.get("tree_gedcomx_json") is None:
         assert False, "init-project did not create tree.gedcomx.json"
 
 
-_INIT_TOOLS = ("person_read", "person_search", "project_create")
+_INIT_TOOLS = ("person_read", "project_create")
 
 
 def test_existing_project_is_not_reinitialized(before_state, after_state, tool_calls, test):
@@ -327,7 +360,7 @@ def test_init_empty_sections(after_state, test, tool_calls):
 
 # --- The write PATH, not just the resulting state ----------------------
 
-def test_project_files_written_through_the_writer_tools(tool_calls, after_state, test):
+def test_project_files_written_through_the_writer_tools(tool_calls, after_state, test, builtin_tool_calls):
     """init-project must create the project by CALLING `project_create`.
 
     One assertion, on one tool, because `project_create` writes BOTH documents
@@ -359,6 +392,8 @@ def test_project_files_written_through_the_writer_tools(tool_calls, after_state,
     """
     if test.get("type") != "positive":
         pytest.skip("write-path rules apply only to positive tests")
+    if _paused_to_ask(builtin_tool_calls) and after_state.get("research_json") is None:
+        pytest.skip("run paused to ask which person; project_create legitimately not reached")
 
     called = {(call.get("tool") or "").rsplit("__", 1)[-1] for call in tool_calls or []}
 
@@ -1012,31 +1047,3 @@ def test_narration_guidance_is_the_house_style(after_state):
     )
 
 
-# --- V7: search before stubs (tag-gated) --------------------------------
-
-def test_search_before_stubs(tool_calls, after_state, test):
-    """Tag-gated on `expects-person-search`: when the premise is a named person
-    with no id supplied and no claim that they are absent from FamilySearch,
-    stubbing without searching mints the duplicate `merge_tree_persons` then has
-    to undo.
-
-    Tag-gated rather than derived from the message, and that narrowing is load
-    bearing -- see the module note above. The premise belongs to the test
-    author, who knows whether the message concedes absence; a validator parsing
-    prose would have failed `ut_init_project_002`, which the 2026-08-20
-    annotation confirmed as a pass.
-
-    Armed on `new-project-from-search` (`ut_init_project_004`): "I don't have his
-    FamilySearch ID", no claim of absence, and it does search. Every other
-    init-project test skips it.
-    """
-    if "expects-person-search" not in test.get("tags", []):
-        pytest.skip("not an expects-person-search scenario")
-    if not _written_tree(after_state).get("persons"):
-        pytest.skip("no tree person written")
-    called = {_tool(c) for c in tool_calls or []}
-    assert "person_search" in called, (
-        "a tree person was created without searching FamilySearch first; if the "
-        "person is already in the tree this mints a duplicate. Tools called: "
-        f"{sorted(called) or 'none'}"
-    )

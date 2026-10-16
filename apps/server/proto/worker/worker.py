@@ -217,6 +217,7 @@ from proto.worker.options import (  # noqa: E402
     STOP_REASON,
     STORE_UNAVAILABLE_REASON,
     TERMINAL_BUDGET,
+    TERMINAL_DECISION,
     TERMINAL_DELIVERED,
     TERMINAL_QUEUED,
     TERMINAL_STOPPED,
@@ -843,8 +844,13 @@ def choose_sdk_session_id(conn: psycopg.Connection, session_id: str, candidate: 
 def insert_tool_call(conn: psycopg.Connection, row: dict[str, Any]) -> None:
     with conn.cursor() as cur:
         cur.execute(
+            # `wrote` is appended LAST and must stay last: `_tool_call_decisions` in
+            # test_proto_worker.py reads the decision param positionally as p[6], so
+            # inserting a column before it silently corrupts that helper rather than
+            # failing.
             "INSERT INTO tool_calls (turn_id, session_id, agent_id, agent_type, tool_name, "
-            "input_path, decision, tool_use_id) VALUES (%s, %s, %s, %s, %s, %s, %s, %s)",
+            "input_path, decision, tool_use_id, wrote) "
+            "VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)",
             (
                 row["turn_id"],
                 row["session_id"],
@@ -854,6 +860,11 @@ def insert_tool_call(conn: psycopg.Connection, row: dict[str, Any]) -> None:
                 row.get("input_path"),
                 row["decision"],
                 row.get("tool_use_id"),
+                # The SHAPE of what this call wrote, for change review. None for a read,
+                # for a denied call and for a halted one -- the column is sparse by
+                # design, and the migration's index is `WHERE wrote IS NOT NULL`, so a
+                # row here IS a claim that a write was attempted.
+                Jsonb(row["wrote"]) if row.get("wrote") else None,
             ),
         )
     conn.commit()
@@ -2387,6 +2398,14 @@ async def _run_turn(
         def on_halt_failed() -> None:
             store_unavailable()
 
+        def on_decision() -> None:
+            """The agent asked the researcher something only they can answer. The turn ends
+            `decision`, not `no_progress`: the run did not stall, it is waiting on a person,
+            and the answer arrives as the next message."""
+            terminal["reason"] = TERMINAL_DECISION
+            terminal["halted"] = True
+            log(ev="decision_exit", turn_id=turn_id, session_id=session_id)
+
         def on_delivered() -> None:
             """The agent delivered what a bounded request asked for. The turn ends
             `delivered`, not `completed`: the ask was met while the PROJECT is still
@@ -2398,7 +2417,8 @@ async def _run_turn(
         hook = make_pretool_hook(
             turn_id=turn_id, session_id=session_id, cwd=WORKER_CWD,
             config_root=lambda: config_root["path"], record=record, log=log, blocked=_BLOCKED,
-            halt=halt, on_delivered=on_delivered, on_halt_failed=on_halt_failed,
+            halt=halt, on_decision=on_decision, on_delivered=on_delivered,
+            on_halt_failed=on_halt_failed,
         )
 
         def finish(tool_use_id: str) -> None:

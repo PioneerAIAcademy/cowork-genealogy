@@ -7,12 +7,14 @@ description: >-
   [person]', 'drive the workflow forward', 'answer this research question', any
   message with `--autonomous`, or any open-ended research goal that needs
   multiple steps (question selection, planning, searching, extraction, proof
-  conclusion). Choose this over any sub-skill when the user states an objective
-  rather than a specific action. Start it rather than first asking the user
-  about the person: it reads what the project already records about them.
+  conclusion). Also for 'new project', 'start research', 'begin researching' and
+  'I want to research [person]' — this is the only front door, including when the
+  folder holds no project yet: the routing table below sends a first message to
+  init-project or tree-survey. Choose this over any sub-skill when the user states
+  an objective rather than a specific action.
   Do NOT use when the user explicitly targets one step only (search-records,
-  research-plan, question-selection, etc.), wants only a status summary
-  (project-status), or has no project yet (init-project first).
+  research-plan, question-selection, etc.) or wants only a status summary
+  (project-status).
 allowed-tools:
   - validate_research_schema
   - research_query

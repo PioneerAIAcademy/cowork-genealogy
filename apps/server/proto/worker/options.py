@@ -80,6 +80,10 @@ from app.agent.spend import price_usd as shared_price_usd
 from app.agent.real_agent import direct_project_file_write
 
 from proto.worker.deny import host_path_denied, project_read_denied
+# Used at the tool_calls record below. The import was lost in the 2026-10-12 main
+# merge -- the conflicted hunk carrying it went to main's side while the call site
+# survived in an auto-merged region, leaving a NameError no import-time check sees.
+from proto.worker.writer_record import writer_record
 
 # DesignSync/Monitor/PushNotification: the CLI adds them only for a non-Bedrock base URL
 # (plan P3g), ~5k tokens per call with tool search off, and none is reachable here.
@@ -388,6 +392,52 @@ SPEND_CAP_REASON = (
 
 
 
+
+# NOTE: the DELIVERED_* and DELIVERY_GUIDANCE constants this branch defined here were
+# deduplicated into app/agent/continue_policy.py by PR #3187 and are imported above.
+# The DECISION_* exit below is this branch's and has no upstream home yet; it should
+# move to continue_policy.py the same way, so both planes share one definition.
+
+# The "I need you" exit. The router's fourth stop ("say exactly what you need … then stop")
+# and its genuine-blocker stop are both VOLUNTARY YIELDS, which phase 1's Stop hook vetoes --
+# so an agent that needs the researcher is told to carry on and the run ends `no_progress`,
+# rendering as the agent failing under its own question.
+#
+# The carrier is the model's own `AskUserQuestion`, not a new tool, and that is measured
+# rather than assumed: it is called 15 times across 6 skills in the committed unit corpus
+# (research, research-plan, question-selection, person-evidence, tree-edit, citation),
+# unprompted, with arguments exactly this shape -- "Who is the person whose parents you want
+# to research?", "Which record has two Patrick Flynns competing for it?". It is granted by
+# omission from DISALLOWED_TOOLS and handled nowhere today. On Cowork nothing intercepts it
+# and it renders natively as a question, which is what an uninter­cepted carrier must do.
+#
+# Decisions are ASYNCHRONOUS: a person answers hours later and an attempt is capped at
+# 1,800 s, so the turn ENDS here and the answer arrives as the next message.
+DECISION_REASON = (
+    "You have asked the researcher something only they can answer. Stopping here so they can "
+    "reply; everything found so far is saved and their answer arrives as the next message."
+)
+
+# The tool the exit reads. One name, so the hook and its test cannot drift.
+DECISION_TOOL = "AskUserQuestion"
+
+
+# Phase 3 item 1. R9 rules that *not sure* continues on the option the agent
+# RECOMMENDED -- and that ruling could not be honoured, because AskUserQuestion carries
+# no recommendation field and all 15 unprompted calls in the committed unit corpus mark
+# nothing. This asks for the convention the tool's OWN contract already defines, so the
+# client reader and the model are looking at the same place rather than at two.
+#
+# It says how to ask, never to ask more: the decision exit is deliberately rare, and a
+# 133-minute captured run asked nothing at all.
+DECISION_GUIDANCE = (
+    "When you ask the researcher to choose between options, put the one you recommend "
+    "first and end its label with \"(Recommended)\". Say in each option's description "
+    "what you will do if it is chosen. If the researcher answers that they are not "
+    "sure, carry on with the option you recommended rather than stopping."
+)
+
+
 def _halt(reason: str = STOP_REASON) -> dict[str, Any]:
     return {"continue_": False, "stopReason": reason, **_deny(reason)}
 
@@ -406,6 +456,7 @@ def make_pretool_hook(
     # (`halt(subagent=...)`), a contract a positional-only annotation would misstate --
     # and a conforming positional-only halt would TypeError into STORE_UNAVAILABLE.
     halt: Callable[..., str | None] | None = None,
+    on_decision: Callable[[], None] | None = None,
     on_delivered: Callable[[], None] | None = None,
     on_halt_failed: Callable[[], None] | None = None,
 ):
@@ -460,6 +511,10 @@ def make_pretool_hook(
                     "tool_name": tool_name or "unknown",
                     "input_path": input_path(tool_name, tool_input, cwd=cwd),
                     "decision": "halt", "tool_use_id": tool_use_id or data.get("tool_use_id"),
+                    # Explicitly None: this arm returns `_halt(...)` below, so the tool
+                    # body never runs. A Stop pressed while a research_append is in
+                    # flight must not leave a row claiming the append happened.
+                    "wrote": None,
                 })
             except Exception as exc:  # noqa: BLE001 - the log must not change the decision
                 if log is not None:
@@ -470,6 +525,54 @@ def make_pretool_hook(
                     reason=stop_now)
             return _halt(stop_now)
 
+        # The "I need you" exit, AFTER the halt check so Stop keeps precedence: Stop is
+        # the researcher's own instruction and an ask cannot overrule it. Decisions are
+        # ASYNCHRONOUS -- a person answers hours later and an attempt is capped -- so the
+        # turn ENDS here and the answer arrives as the next message.
+        # Main thread only, exactly as the delivered arm below: a SUBAGENT that asks a
+        # question must not end the whole turn. `agent_id` is present only on a subagent's
+        # call -- the same discriminator the shipped plugin hook uses (`owner_denied`,
+        # hooks/guard_project_files.py) -- so its absence IS the main thread. Without this
+        # a sub-agent's ask halted the run and recorded `decision`, which is how a question
+        # nobody could see ended a job (found in self-review of #3262).
+        if tool_name == DECISION_TOOL and "agent_id" not in data:
+            try:
+                record({
+                    "turn_id": turn_id, "session_id": session_id,
+                    # Recorded for the same reason the delivered arm records them: a
+                    # decision row with no caller cannot be told from a subagent's.
+                    "agent_id": data.get("agent_id"), "agent_type": data.get("agent_type"),
+                    "tool_name": tool_name,
+                    "input_path": input_path(tool_name, tool_input, cwd=cwd),
+                    # The shape of what this call wrote, for change review (None for a read).
+                    "wrote": writer_record(tool_name, tool_input),
+                    "decision": "decision",
+                    "tool_use_id": tool_use_id or data.get("tool_use_id"),
+                })
+            except Exception as exc:  # noqa: BLE001 - the log must not change the decision
+                if log is not None:
+                    log(ev="tool_call_log_failed", turn_id=turn_id, tool_name=tool_name,
+                        error=f"{type(exc).__name__}: {exc}")
+            # Tell the worker, or the turn halts on the right reason and still records
+            # `no_progress` -- the exact rendering the exit exists to remove. Mirrors the
+            # Stop hook's `on_allow`. Never raises: this hook is not the restraint, and a
+            # failing callback must not turn an ask into an errored tool call.
+            if on_decision is not None:
+                try:
+                    on_decision()
+                except Exception as exc:  # noqa: BLE001 - reporting must not fail the call
+                    if log is not None:
+                        log(ev="decision_report_failed", turn_id=turn_id,
+                            error=f"{type(exc).__name__}: {exc}")
+            if log is not None:
+                log(ev="decision", turn_id=turn_id, tool_name=tool_name,
+                    tool_use_id=tool_use_id)
+            return _halt(DECISION_REASON)
+
+        # R4: same shape as the decision arm above and for the same reason -- a bounded
+        # request that is met must not run on to the proof, the nudge cap or $35. It sits
+        # AFTER the halt check, so the researcher's own stop still outranks it.
+
         # A bounded request that is met must not run on to the proof, the nudge cap or the
         # spend bound. It sits AFTER the halt check, so the researcher's own stop still
         # outranks it.
@@ -477,12 +580,11 @@ def make_pretool_hook(
         # MAIN THREAD ONLY. The arm matches on tool NAME, and a subagent holds the
         # session's tool set, so without this a record-extractor saying "delivered" would
         # halt the extraction; the parent carries on (U23's Q2: a subagent's halt does not
-        # stop the parent, 3 of 3 on compose). `agent_id` is tested for
-        # MEMBERSHIP, not truthiness: it is absent as a KEY on the main thread, and
-        # `agent_type` alone is not sufficient because it is present on the main thread of
-        # a session started with `--agent`. That is the discriminator the shipped plugin
-        # hook already uses (`owner_denied`, hooks/guard_project_files.py), reused rather
-        # than re-derived.
+        # stop the parent, 3 of 3 on compose). `agent_id` is tested for MEMBERSHIP, not
+        # truthiness: it is absent as a KEY on the main thread, and `agent_type` alone is
+        # not sufficient because it is present on the main thread of a session started
+        # with `--agent`. That is the discriminator the shipped plugin hook already uses
+        # (`owner_denied`, hooks/guard_project_files.py), reused rather than re-derived.
         # A subagent's call falls through to ordinary handling, where the tool returns its
         # harmless acknowledgement and the run carries on.
         if tool_name == DELIVERED_TOOL and "agent_id" not in data:
@@ -493,6 +595,9 @@ def make_pretool_hook(
                     "tool_name": tool_name,
                     "input_path": input_path(tool_name, tool_input, cwd=cwd),
                     "decision": "delivered",
+                    # `research_delivered` is not a writer, so this is always None; the
+                    # key is carried so every recorded row has the same shape.
+                    "wrote": writer_record(tool_name, tool_input),
                     "tool_use_id": tool_use_id or data.get("tool_use_id"),
                 })
             except Exception as exc:  # noqa: BLE001 - the log must not change the decision
@@ -546,6 +651,12 @@ def make_pretool_hook(
                 "input_path": input_path(tool_name, tool_input, cwd=cwd),
                 "decision": decision,
                 "tool_use_id": tool_use_id or data.get("tool_use_id"),
+                # ONLY on an allow. A denied writer never runs -- `_BLOCKED` comes from
+                # BLOCKED_TOOLS and the e2e tree-read block is exactly this -- so
+                # recording a shape here would put a write that never happened into the
+                # "what changed this session" scan, which the migration's
+                # `WHERE wrote IS NOT NULL` index has no decision filter to exclude.
+                "wrote": writer_record(tool_name, tool_input) if decision == "allow" else None,
             })
         except Exception as exc:  # noqa: BLE001 - the log must not change the decision
             if log is not None:
@@ -811,7 +922,7 @@ def build_worker_options(
     # Unconditional, on the opening turn too: "start a project on X and just give me a
     # plan" is a legitimate turn-1 bounded request, so gating this on `resume` would
     # exempt the very case it exists for.
-    project_note = f"{project_note}\n\n{DELIVERY_GUIDANCE}"
+    project_note = f"{project_note}\n\n{DELIVERY_GUIDANCE}\n\n{DECISION_GUIDANCE}"
     env: dict[str, str] = {
         "ENABLE_TOOL_SEARCH": "true",
         "CLAUDE_CONFIG_DIR": config_dir,

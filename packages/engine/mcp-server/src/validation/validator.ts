@@ -205,6 +205,7 @@ export const ID_PREFIXES: Record<string, string> = {
   sources: "src_",
   assertions: "a_",
   person_evidence: "pe_",
+  rejected_links: "rj_",
   conflicts: "c_",
   hypotheses: "h_",
   timelines: "t_",
@@ -549,7 +550,7 @@ const NULLABLE_FIELDS = new Set([
 export const RESEARCH_SHAPES = {
   document: new Set([
     "project", "researcher_profile", "known_holdings", "questions", "plans",
-    "log", "sources", "assertions", "person_evidence", "conflicts",
+    "log", "sources", "assertions", "person_evidence", "rejected_links", "conflicts",
     "hypotheses", "timelines", "proof_summaries", "evaluations",
     "localities", "warning_justifications",
   ]),
@@ -613,6 +614,9 @@ export const RESEARCH_SHAPES = {
   person_evidence_entry: new Set([
     "id", "assertion_id", "person_id", "confidence", "rationale",
     "core_identifier_conflict", "move_bridge", "match_score", "created", "superseded_by",
+  ]),
+  rejected_link_entry: new Set([
+    "id", "assertion_id", "person_id", "reason", "created",
   ]),
   conflict: new Set([
     "id", "conflict_type", "description", "disputed_attribute",
@@ -1281,6 +1285,34 @@ function validateResearch(data: any, report: ValidationReport): ResearchIds {
     if (a.log_entry_id) {
       checkRefExists(a.log_entry_id, ids.log, "log entry", ap, report);
     }
+  }
+
+  // Rejected links. RESEARCH_SHAPES.rejected_link_entry existed and was referenced
+  // NOWHERE, so the section had no shape check at all: a scratch write of
+  // `{assertion_id: 42, reason: "", bogus: 1}` persisted clean. The rule it carries --
+  // a rejection is kept so a later step cannot silently re-link the same pair -- is
+  // only as good as the rows it is read back from.
+  const rejectedLinks = Array.isArray(data.rejected_links) ? data.rejected_links : [];
+  for (let i = 0; i < rejectedLinks.length; i++) {
+    const rj = rejectedLinks[i];
+    const rp = `${path}/rejected_links[${i}]`;
+    if (!isObjectEntry(rj, rp, report)) continue;
+    checkRequired(rj, ["id", "assertion_id", "person_id", "created"], rp, report, NULLABLE_FIELDS);
+    checkAllowedKeys(rj, RESEARCH_SHAPES.rejected_link_entry, "rejected_links entries", rp, report);
+    if ("id" in rj) checkIdPrefix(rj.id, ID_PREFIXES.rejected_links, rp, report);
+    for (const field of ["assertion_id", "person_id"] as const) {
+      if (field in rj && typeof rj[field] !== "string") {
+        addError(report, rp, `${field} must be a string`);
+      }
+    }
+    // Optional, and "never a demand for the right answer" -- but an empty string is
+    // not a reason, and downstream it reads as one that was given.
+    if ("reason" in rj && rj.reason != null) {
+      if (typeof rj.reason !== "string" || rj.reason.trim() === "") {
+        addError(report, rp, "reason must be a non-empty string or null");
+      }
+    }
+    if ("created" in rj) checkIsoDate(rj, "created", rp, report);
   }
 
   // Person evidence

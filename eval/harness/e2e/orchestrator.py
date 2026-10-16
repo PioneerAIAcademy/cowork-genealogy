@@ -2673,8 +2673,8 @@ async def _run_agent(
             "reason": (
                 "You are mid-run in an autonomous /research session and the "
                 "project is not yet complete (project.status is not "
-                "'completed'). Re-read research.json and invoke the next GPS "
-                "sub-skill now; keep going until project.status is "
+                "'completed'). Re-read research.json and invoke the `research` skill "
+                "now; keep going until project.status is "
                 "'completed' or you hit a genuine, logged blocker."
             ),
         }
@@ -2910,16 +2910,24 @@ async def _run_agent(
                                     "tool_calls_before": len(tool_calls),
                                     "kind": "assistant",
                                     "text": block.text,
-                                    # Which thread said it. A subagent's own
-                                    # AssistantMessages stream through this same
-                                    # branch -- `usage.thread_windows.sub` is
-                                    # non-zero in 28 of the 28 committed logs
-                                    # carrying it, reaching 223 messages in one
-                                    # run -- so without this a relay-fidelity
-                                    # reader cannot tell the main thread's words
-                                    # from the subagent's it is supposed to be
-                                    # compared against (#3188). Same test the
-                                    # usage tagger below already uses.
+                                    # Which thread said it, for two independent readers.
+                                    #
+                                    # RELAY FIDELITY (#3188): a subagent's own AssistantMessages
+                                    # stream through this same branch -- `usage.thread_windows.sub`
+                                    # is non-zero in 28 of the 28 committed logs carrying it,
+                                    # reaching 223 messages in one run -- so without this a reader
+                                    # cannot tell the main thread's words from the subagent's it is
+                                    # supposed to be compared against.
+                                    #
+                                    # NARRATION FIGURES: `foldChatEvent` drops all sub-agent prose, so
+                                    # a figure that mixes the two counts paragraphs no reader ever
+                                    # sees: on the 133-minute McAndrew capture the "opens Now/Let me"
+                                    # share is 9.2% of the feed and 3.7% of the screen, because 19 of
+                                    # its 26 openers are sub-agent.
+                                    #
+                                    # Same tag the usage accounting derives below; recorded here so the
+                                    # two cannot diverge, and so a reader of a committed log can tell
+                                    # "main thread" from "not asked".
                                     "thread": (
                                         "main"
                                         if getattr(message, "parent_tool_use_id", None)

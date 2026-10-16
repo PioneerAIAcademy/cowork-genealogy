@@ -40,6 +40,13 @@ local/
 personal/
 .tool-versions
 
+# Playwright MCP scratch output. The server writes page snapshots, console logs and
+# screenshots here on every call, so a session that drives a browser leaves dozens of
+# files behind. Note this covers the DEFAULT location only: a screenshot taken with an
+# explicit filename lands wherever the server's cwd is, which is the repo root -- two
+# stray PNGs got that far. Write those outside the repo rather than widening this.
+.playwright-mcp/
+
 # Eval CRUD UI (eval/app/) — populated by step 1 of the plan
 eval/app/lib/schema/
 

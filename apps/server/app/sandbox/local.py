@@ -167,6 +167,12 @@ class LocalSandbox(Sandbox):
         return str(self._abs("/home/user"))
 
 
+#: The module the WS-server subprocess runs. Named once: the launch argv, the
+#: on-disk record and the reaper's ownership check must all agree, and a reaper
+#: matching the wrong string silently reaps nothing.
+SERVER_MODULE = "app.sandbox_server"
+
+
 class LocalProvider(SandboxProvider):
     def __init__(self, sandboxes_dir: Path):
         self._dir = sandboxes_dir
@@ -242,11 +248,119 @@ class LocalProvider(SandboxProvider):
         env.pop("ANTHROPIC_API_KEY", None)
         log = open(self._root(sandbox_id) / "ws.log", "ab")
         proc = subprocess.Popen(
-            [sys.executable, "-m", "app.sandbox_server"],
+            [sys.executable, "-m", SERVER_MODULE],
             env=env, stdout=log, stderr=subprocess.STDOUT, start_new_session=True,
         )
         self._servers[sandbox_id] = (proc, port)
+        self._record_server(sandbox_id, proc.pid, port)
         return port
+
+    # ── orphan reaping ────────────────────────────────────────────
+    #
+    # `_servers` is in-memory and these subprocesses are launched with
+    # `start_new_session=True`, so they are in their OWN process group and
+    # survive a control plane that dies without reaching `aclose()` -- a crash,
+    # a `kill -9`, a reload. The next run then has no idea they exist. That is
+    # how nine of them were once found running, one 17 days old, and why "is my
+    # sandbox running?" had to be answered with a process table.
+    #
+    # So the pid goes on disk beside the sandbox, and startup reaps what it can
+    # PROVE is ours.
+
+    def _server_file(self, sandbox_id: str) -> Path:
+        return self._root(sandbox_id) / "server.json"
+
+    def _record_server(self, sandbox_id: str, pid: int, port: int) -> None:
+        try:
+            self._server_file(sandbox_id).write_text(
+                json.dumps({"pid": pid, "port": port, "argv": SERVER_MODULE}),
+                encoding="utf-8",
+            )
+        except OSError:
+            # Losing the record costs reaping, never correctness. A sandbox that
+            # cannot write here still runs.
+            pass
+
+    def _forget_server(self, sandbox_id: str) -> None:
+        try:
+            self._server_file(sandbox_id).unlink()
+        except OSError:
+            pass
+
+    def _is_our_server(self, pid: int, sandbox_id: str) -> bool:
+        """Whether `pid` is alive AND is THIS provider's WS server for `sandbox_id`.
+
+        Liveness alone is not enough: pids are reused, and killing a stranger
+        because it inherited a number we wrote down weeks ago is far worse than
+        leaking a process. So the command line must name the module too, and a
+        platform that cannot show us one gets NO for an answer -- reaping is a
+        convenience, and an unverifiable kill is not worth it.
+
+        The MODULE is not enough either, and that is the second check here. Every
+        server on the machine is spawned as `python -m <SERVER_MODULE>` with no
+        arguments, so the command line is byte-identical for all of them: two
+        control planes sharing a `sandboxes_dir` -- `make server-dev` on :8000 and
+        `make server` on :1837 is the shipped way to get two -- each see the
+        other's `server.json`, do not track it in `self._servers`, find a live pid
+        whose cmdline names the module, and killpg a sibling's live session.
+
+        `AGENT_SECRETS_PATH` is per-sandbox and already in the child's environment,
+        so it identifies the process without changing how it is spawned. An
+        environ we cannot read gets NO, for the same reason an unreadable cmdline
+        does.
+        """
+        try:
+            cmdline = Path(f"/proc/{pid}/cmdline").read_bytes()
+        except OSError:
+            return False
+        if SERVER_MODULE.encode() not in cmdline:
+            return False
+        try:
+            environ = Path(f"/proc/{pid}/environ").read_bytes()
+        except OSError:
+            return False
+        want = f"AGENT_SECRETS_PATH={self._abs_secrets(sandbox_id)}".encode()
+        # Exact entry, not a substring of the whole blob: one sandbox id being a
+        # prefix of another would otherwise match the wrong process.
+        return want in environ.split(b"\0")
+
+    def reap_orphans(self) -> list[str]:
+        """Kill WS servers left behind by an earlier control plane.
+
+        Returns the sandbox ids reaped, so a caller can log what it cleaned up
+        rather than doing it silently -- the point is to make the state
+        answerable, and a silent reap answers nothing.
+        """
+        reaped: list[str] = []
+        if not self._dir.is_dir():
+            return reaped
+        for child in sorted(self._dir.iterdir()):
+            if not child.is_dir() or child.name in self._servers:
+                continue
+            f = child / "server.json"
+            if not f.is_file():
+                continue
+            try:
+                pid = int(json.loads(f.read_text(encoding="utf-8")).get("pid") or 0)
+            except (OSError, ValueError, TypeError):
+                self._forget_server(child.name)
+                continue
+            if pid <= 0 or not self._is_our_server(pid, child.name):
+                # Dead, or not provably ours. Drop the stale record either way:
+                # keeping it would make every later reap re-examine a pid that
+                # will never match again.
+                self._forget_server(child.name)
+                continue
+            try:
+                if hasattr(os, "killpg"):
+                    os.killpg(os.getpgid(pid), signal.SIGTERM)
+                else:
+                    os.kill(pid, signal.SIGTERM)
+            except (ProcessLookupError, PermissionError, OSError):
+                pass
+            self._forget_server(child.name)
+            reaped.append(child.name)
+        return reaped
 
     async def _kill_server(self, proc: subprocess.Popen) -> None:
         if proc.poll() is None:
@@ -307,6 +421,9 @@ class LocalProvider(SandboxProvider):
         entry = self._servers.pop(sandbox_id, None)
         if entry is not None:
             await self._kill_server(entry[0])
+        # Unconditional: a suspend that found nothing in `_servers` may still be
+        # clearing a record this process never owned.
+        self._forget_server(sandbox_id)
 
     async def delete(self, sandbox_id: str) -> None:
         await self.suspend(sandbox_id)
@@ -326,6 +443,7 @@ class LocalProvider(SandboxProvider):
         return out
 
     async def aclose(self) -> None:
-        for entry in list(self._servers.values()):
+        for sandbox_id, entry in list(self._servers.items()):
             await self._kill_server(entry[0])
+            self._forget_server(sandbox_id)
         self._servers.clear()

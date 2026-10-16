@@ -1,0 +1,372 @@
+{
+  "captured_at": "2026-09-30",
+  "probes": [
+    {
+      "label": "hales-flood",
+      "input": {
+        "surname": "Hales",
+        "givenName": "Mary"
+      },
+      "totalMatches": 35920,
+      "pick": {
+        "decisive": false,
+        "tiedAtTop": 20,
+        "reason": "20 candidates share the top score (3.6236) — the same fields matched for all of them, so choosing between them needs a person."
+      },
+      "topFive": [
+        {
+          "personId": "LBF1-LHF",
+          "gender": "Female",
+          "factCount": 1,
+          "factTypes": [
+            "Death"
+          ],
+          "birthDate": null,
+          "birthPlace": null,
+          "deathDate": null,
+          "deathPlace": null
+        },
+        {
+          "personId": "GN8W-L97",
+          "gender": "Female",
+          "factCount": 3,
+          "factTypes": [
+            "Birth",
+            "Death",
+            "Residence"
+          ],
+          "birthDate": "1881",
+          "birthPlace": "Leighford Stafford, Staffordshire",
+          "deathDate": null,
+          "deathPlace": null
+        },
+        {
+          "personId": "L8BT-R1N",
+          "gender": "Female",
+          "factCount": 10,
+          "factTypes": [
+            "Birth",
+            "Death",
+            "Residence",
+            "Residence",
+            "Residence",
+            "Residence",
+            "Residence",
+            "Residence",
+            "Residence",
+            "Burial"
+          ],
+          "birthDate": "3 November 1854",
+          "birthPlace": "Lionville, Chester, Pennsylvania, United States",
+          "deathDate": "20 October 1931",
+          "deathPlace": "David City, Butler, Nebraska, United States"
+        },
+        {
+          "personId": "9ZVY-YS2",
+          "gender": "Female",
+          "factCount": 2,
+          "factTypes": [
+            "Birth",
+            "Death"
+          ],
+          "birthDate": "       1828",
+          "birthPlace": "Eardiston, Shropshire, England",
+          "deathDate": null,
+          "deathPlace": null
+        },
+        {
+          "personId": "G7FV-ZGD",
+          "gender": "Female",
+          "factCount": 1,
+          "factTypes": [
+            "Death"
+          ],
+          "birthDate": null,
+          "birthPlace": null,
+          "deathDate": null,
+          "deathPlace": null
+        }
+      ],
+      "withAnyFact": 5,
+      "withBirthDate": 3,
+      "withBirthPlace": 3,
+      "distinctLifeEventKeys": 4,
+      "allIdentical": false
+    },
+    {
+      "label": "smith-flood",
+      "input": {
+        "surname": "Smith",
+        "givenName": "John"
+      },
+      "totalMatches": 781745,
+      "pick": {
+        "decisive": false,
+        "tiedAtTop": 20,
+        "reason": "20 candidates share the top score (3.6236) — the same fields matched for all of them, so choosing between them needs a person."
+      },
+      "topFive": [
+        {
+          "personId": "LDQY-5WC",
+          "gender": "Male",
+          "factCount": 4,
+          "factTypes": [
+            "Birth",
+            "Death",
+            "Burial",
+            "Residence"
+          ],
+          "birthDate": "25 December 1846",
+          "birthPlace": "Ontario, Canada",
+          "deathDate": "28 February 1891",
+          "deathPlace": "Walters Falls, Grey, Ontario, Canada"
+        },
+        {
+          "personId": "MSNG-QW5",
+          "gender": "Male",
+          "factCount": 1,
+          "factTypes": [
+            "Death"
+          ],
+          "birthDate": null,
+          "birthPlace": null,
+          "deathDate": null,
+          "deathPlace": null
+        },
+        {
+          "personId": "MKLC-96C",
+          "gender": "Male",
+          "factCount": 1,
+          "factTypes": [
+            "Death"
+          ],
+          "birthDate": null,
+          "birthPlace": null,
+          "deathDate": null,
+          "deathPlace": null
+        },
+        {
+          "personId": "MDZ4-6RK",
+          "gender": "Male",
+          "factCount": 1,
+          "factTypes": [
+            "Death"
+          ],
+          "birthDate": null,
+          "birthPlace": null,
+          "deathDate": null,
+          "deathPlace": null
+        },
+        {
+          "personId": "MBSG-M61",
+          "gender": "Male",
+          "factCount": 1,
+          "factTypes": [
+            "Death"
+          ],
+          "birthDate": null,
+          "birthPlace": null,
+          "deathDate": null,
+          "deathPlace": null
+        }
+      ],
+      "withAnyFact": 5,
+      "withBirthDate": 1,
+      "withBirthPlace": 1,
+      "distinctLifeEventKeys": 2,
+      "allIdentical": false
+    },
+    {
+      "label": "hales-year-place",
+      "input": {
+        "surname": "Hales",
+        "givenName": "Mary",
+        "birthYearFrom": 1850,
+        "birthYearTo": 1860,
+        "birthPlace": "England"
+      },
+      "totalMatches": 1020,
+      "pick": {
+        "decisive": false,
+        "tiedAtTop": 16,
+        "reason": "16 candidates share the top score (5.1136003) — the same fields matched for all of them, so choosing between them needs a person."
+      },
+      "topFive": [
+        {
+          "personId": "G9LV-TRJ",
+          "gender": "Female",
+          "factCount": 4,
+          "factTypes": [
+            "Birth",
+            "Death",
+            "Residence",
+            "Residence"
+          ],
+          "birthDate": "about 1852",
+          "birthPlace": "Tipton, Staffordshire, England",
+          "deathDate": null,
+          "deathPlace": null
+        },
+        {
+          "personId": "MSYZ-5J6",
+          "gender": "Female",
+          "factCount": 3,
+          "factTypes": [
+            "Birth",
+            "Death",
+            "Christening"
+          ],
+          "birthDate": "02 JUN 1855",
+          "birthPlace": null,
+          "deathDate": null,
+          "deathPlace": null
+        },
+        {
+          "personId": "KGZ6-BRC",
+          "gender": "Female",
+          "factCount": 6,
+          "factTypes": [
+            "Birth",
+            "Death",
+            "Residence",
+            "Christening",
+            "Residence",
+            "Residence"
+          ],
+          "birthDate": "about May 1857",
+          "birthPlace": "Little Budworth, Cheshire, England, United Kingdom",
+          "deathDate": null,
+          "deathPlace": null
+        },
+        {
+          "personId": "GS56-14N",
+          "gender": "Female",
+          "factCount": 7,
+          "factTypes": [
+            "Birth",
+            "Death",
+            "Residence",
+            "Residence",
+            "Residence",
+            "Residence",
+            "Residence"
+          ],
+          "birthDate": "1855",
+          "birthPlace": "Hatfield Peverel, Essex, England, United Kingdom",
+          "deathDate": null,
+          "deathPlace": null
+        },
+        {
+          "personId": "LHX2-M9V",
+          "gender": "Female",
+          "factCount": 2,
+          "factTypes": [
+            "Birth",
+            "Death"
+          ],
+          "birthDate": "1859",
+          "birthPlace": "Liverpool, Lancashire, England",
+          "deathDate": null,
+          "deathPlace": null
+        }
+      ],
+      "withAnyFact": 5,
+      "withBirthDate": 5,
+      "withBirthPlace": 4,
+      "distinctLifeEventKeys": 5,
+      "allIdentical": false
+    },
+    {
+      "label": "flynn-qualified",
+      "input": {
+        "surname": "Flynn",
+        "givenName": "Patrick",
+        "birthYearFrom": 1840,
+        "birthYearTo": 1850,
+        "birthPlace": "Pennsylvania, United States"
+      },
+      "totalMatches": 146,
+      "pick": {
+        "decisive": true,
+        "tiedAtTop": 1,
+        "reason": "One candidate leads on score (5.1236)."
+      },
+      "topFive": [
+        {
+          "personId": "P3QM-959",
+          "gender": "Male",
+          "factCount": 4,
+          "factTypes": [
+            "Birth",
+            "Death",
+            "Residence",
+            "Ethnicity"
+          ],
+          "birthDate": "March 1845",
+          "birthPlace": "Pennsylvania, United States",
+          "deathDate": null,
+          "deathPlace": null
+        },
+        {
+          "personId": "GXGT-LM4",
+          "gender": "Male",
+          "factCount": 5,
+          "factTypes": [
+            "Birth",
+            "Death",
+            "Residence",
+            "Residence",
+            "Residence"
+          ],
+          "birthDate": "1843",
+          "birthPlace": "Lancaster, Lancaster, Pennsylvania, United States",
+          "deathDate": null,
+          "deathPlace": null
+        },
+        {
+          "personId": "96YZ-DCK",
+          "gender": "Male",
+          "factCount": 2,
+          "factTypes": [
+            "Birth",
+            "Death"
+          ],
+          "birthDate": "about 1855",
+          "birthPlace": null,
+          "deathDate": null,
+          "deathPlace": null
+        },
+        {
+          "personId": "MRGV-ZCS",
+          "gender": "Male",
+          "factCount": 2,
+          "factTypes": [
+            "Birth",
+            "Death"
+          ],
+          "birthDate": null,
+          "birthPlace": "Penn.",
+          "deathDate": null,
+          "deathPlace": null
+        },
+        {
+          "personId": "GYG6-K1W",
+          "gender": "Male",
+          "factCount": 1,
+          "factTypes": [
+            "Death"
+          ],
+          "birthDate": null,
+          "birthPlace": null,
+          "deathDate": null,
+          "deathPlace": null
+        }
+      ],
+      "withAnyFact": 5,
+      "withBirthDate": 3,
+      "withBirthPlace": 3,
+      "distinctLifeEventKeys": 5,
+      "allIdentical": false
+    }
+  ]
+}

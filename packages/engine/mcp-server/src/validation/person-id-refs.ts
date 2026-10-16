@@ -11,6 +11,7 @@ import { isObject } from "./types.js";
 
 export type PersonIdRefField =
   | "person_evidence"
+  | "rejected_links"
   | "subject_person_ids"
   | "timelines"
   | "known_holdings"
@@ -19,6 +20,7 @@ export type PersonIdRefField =
 /** The research.json fields that hold tree person-id references. */
 export const PERSON_ID_REF_FIELDS: readonly PersonIdRefField[] = [
   "person_evidence",
+  "rejected_links",
   "subject_person_ids",
   "timelines",
   "known_holdings",
@@ -68,6 +70,33 @@ export function* iteratePersonIdRefs(research: any): Generator<PersonIdRef> {
         message: `person_id '${pid}' not found in tree.gedcomx.json persons`,
         set: (newId) => {
           pe.person_id = newId;
+        },
+      };
+    }
+  }
+
+  // rejected_links[].person_id — scalar, same shape as person_evidence.
+  //
+  // Without this a merge SILENTLY VOIDS the rejection: the collapsed person id is
+  // repointed everywhere else, the rejection keeps pointing at an id no longer on the
+  // tree, and `isRejectedPair` stops matching -- so the pair a researcher rejected
+  // becomes linkable again, which is the exact failure the section exists to prevent.
+  // This module's own contract is that a field added here is checked AND remapped,
+  // never one without the other; `rejected_links` reached the schema without reaching
+  // this list.
+  const rejectedLinks = Array.isArray(research.rejected_links) ? research.rejected_links : [];
+  for (let i = 0; i < rejectedLinks.length; i++) {
+    const rj = rejectedLinks[i];
+    if (!isObject(rj)) continue;
+    const pid = rj.person_id;
+    if (pid) {
+      yield {
+        pid,
+        field: "rejected_links",
+        path: `research.json/rejected_links[${i}]`,
+        message: `person_id '${pid}' not found in tree.gedcomx.json persons`,
+        set: (newId) => {
+          rj.person_id = newId;
         },
       };
     }
