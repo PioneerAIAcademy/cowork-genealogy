@@ -1394,14 +1394,14 @@ function coerceObjectArg(value: unknown, field: string): unknown {
 const JSON_ESCAPE = /\\(u[0-9a-fA-F]{4}|[nrt"\\/])/g;
 const JSON_ESCAPE_CHAR: Record<string, string> = { n: "\n", r: "\r", t: "\t", '"': '"', "\\": "\\", "/": "/" };
 
-/** No real newline, two or more literal `\n`, and one that opens a table row or heading. */
+/** No real newline inside, two or more literal `\n`, and one that opens a table row or heading. */
 function looksJsonEscaped(notes: string): boolean {
-  return !notes.includes("\n") && (notes.match(/\\n/g)?.length ?? 0) >= 2 && /\\n\s*[|#]/.test(notes);
+  return !notes.trim().includes("\n") && (notes.match(/\\n/g)?.length ?? 0) >= 2 && /\\n\s*[|#]/.test(notes);
 }
 
 /**
  * Decode a markdown table or heading a model sent JSON-escaped (literal `\n`,
- * no real newline). Measured on #3414: 3 of 12 survey-surname tables arrived so
+ * no real newline). Measured on #3414: 4 of 12 survey-surname tables arrived so
  * and were stored as one line. Decodes only \n \r \t \" \\ \/ \uXXXX and keeps
  * any other backslash (\| \* \'); undoes at most two levels of escaping.
  */

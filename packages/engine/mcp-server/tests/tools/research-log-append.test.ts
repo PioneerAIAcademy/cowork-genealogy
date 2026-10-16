@@ -2285,6 +2285,9 @@ describe("research_log_append — wholly JSON-escaped notes are decoded (#3414)"
       ["a table escaped twice", String.raw`| a |\\n| b |\\n| c |`, "| a |\n| b |\n| c |"],
       ["the string's own closing quote, dropped", String.raw`| a |\n| \"b\" |\n${HEDGE}"`, `| a |\n| "b" |\n${HEDGE}`],
       ["a raw quote pair at the end, kept", String.raw`| a |\n|---|\n| John "Jack"`, '| a |\n|---|\n| John "Jack"'],
+      ["a table with one real trailing newline", String.raw`| a |\n| b |\n| c |` + "\n", "| a |\n| b |\n| c |\n"],
+      ["a table with one real leading newline", "\n" + String.raw`| a |\n| b |\n| c |`, "\n| a |\n| b |\n| c |"],
+      ["an escaped heading-only note", String.raw`# Dixon, Virginia\n## 1850\nOne household.`, "# Dixon, Virginia\n## 1850\nOne household."],
     ])("decodes %s", (_label, input, want) => {
       expect(unescapeJsonNotes(input)).toBe(want);
     });
@@ -2300,6 +2303,8 @@ describe("research_log_append — wholly JSON-escaped notes are decoded (#3414)"
       ["escaped prose with no table or heading", String.raw`a\nb\nc`],
       ["a single literal \\n before a pipe", String.raw`Rows were split on \n| in the export`],
       ["an escaped tab with no \\n", String.raw`a\tb`],
+      // Its only quote mark ends it, so only the escaped-table check stops the trailing-quote drop.
+      ["a plain note ending in its only quote mark", 'Edmund Dixon, height recorded as 5 ft 11"'],
       ["the empty string", ""],
     ])("leaves %s unchanged", (_label, input) => {
       expect(unescapeJsonNotes(input)).toBe(input);
@@ -2348,6 +2353,14 @@ describe("research_log_append — wholly JSON-escaped notes are decoded (#3414)"
     // the note-only gate skips. Decoded first, the gate sees the line start.
     const lineStart = TABLE.replace("\n\n1850", "\n1850");
     const r = await append(escaped(lineStart));
+    expect(r.ok).toBe(false);
+    expect((r as any).errors.join(" ")).toMatch(/relationship-to-head/);
+    expect(await storedNotes()).toEqual([]);
+  });
+
+  it("lets the census gate judge the decoded text: an unhedged table with a real trailing newline is refused", async () => {
+    const lineStart = TABLE.replace("\n\n1850", "\n1850");
+    const r = await append(escaped(lineStart) + "\n");
     expect(r.ok).toBe(false);
     expect((r as any).errors.join(" ")).toMatch(/relationship-to-head/);
     expect(await storedNotes()).toEqual([]);
