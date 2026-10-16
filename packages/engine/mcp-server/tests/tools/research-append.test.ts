@@ -2257,6 +2257,8 @@ describe("research_append (Phase 3)", () => {
       ["hyphen-joined range", "federal censuses 1870-1900"],
       ["'to'-joined range", "censuses 1880 to 1900"],
       ["range naming the US explicitly", "US census, every decade 1870-1900"],
+      ["'through'-joined range", "censuses 1880 through 1900"],
+      ["'between...and' range", "censuses between 1880 and 1900"],
     ])("refuses a census entry naming a year range that spans 1890: %s", async (_label, entry) => {
       await writeProject();
       const r = await appendWithGap([entry]);

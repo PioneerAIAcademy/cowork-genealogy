@@ -483,13 +483,23 @@ const TIMELINE_ANY_YEAR_RE = /(?<!\d)\d{4}(?!\d)/;
 // shows up written as a single range, "federal censuses 1870-1900" or
 // "censuses 1880 to 1900", which names two real years and never writes
 // "1890" literally, so `TIMELINE_1890_RE` cannot see that the range spans
-// the non-surviving year. Only a range connector ("-"/an en or em dash/"to")
-// counts -- "1880 and 1900 census" names two specific, surviving years with
-// no claim about anything in between, and must stay allowed; "and" is
-// deliberately not a range connector here.
-const TIMELINE_YEAR_SPAN_RE = /(?<!\d)(\d{4})\s*(?:-|–|—|\bto\b)\s*(\d{4})(?!\d)/i;
+// the non-surviving year. Only a range connector ("-"/an en or em dash/"to"/
+// "through"/"thru") counts -- "1880 and 1900 census" names two specific,
+// surviving years with no claim about anything in between, and must stay
+// allowed; bare "and" is deliberately not a range connector here.
+const TIMELINE_YEAR_SPAN_RE =
+  /(?<!\d)(\d{4})\s*(?:-|–|—|\bto\b|\bthrough\b|\bthru\b)\s*(\d{4})(?!\d)/i;
+// "between X and Y" -- round-10 review: this is the one shape where "and" DOES
+// act as a range connector. "1880 and 1900 census" names two specific years
+// with no claim about what lies between them (allowed, above), but "between
+// 1880 and 1900" is the range itself written out in English, so "and" here
+// carries the same meaning as "to"/"-" elsewhere. The leading "between" is
+// what distinguishes the two; this regex is checked in addition to, not
+// instead of, the connector list above.
+const TIMELINE_BETWEEN_SPAN_RE =
+  /\bbetween\b\s*(\d{4})\s*and\s*(\d{4})(?!\d)/i;
 function timelineSpanCovers1890(text: string): boolean {
-  const m = text.match(TIMELINE_YEAR_SPAN_RE);
+  const m = text.match(TIMELINE_YEAR_SPAN_RE) ?? text.match(TIMELINE_BETWEEN_SPAN_RE);
   if (!m) return false;
   const a = parseInt(m[1], 10);
   const b = parseInt(m[2], 10);
