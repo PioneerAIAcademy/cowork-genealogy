@@ -564,6 +564,14 @@ up while the body ran on the main thread, and each cost a run to find.
 
 ## What is still open
 
+- **`search-records` orientation share (baseline for the handed-state follow-up).**
+  Post-fold run `v7_2026-10-15_16-06-27` (issue #2243, ids-only delegation): tool
+  calls before the agent's first `record_search` were a median of 2 and a mean of
+  1.7 (min 1, max 3) over 26 tests. They are the `research_query` reads of the plan
+  and question and the `Read` of `tree.gedcomx.json`. The follow-up that hands the
+  plan item's state in the delegation (cost-latency plan §6) is measured against
+  this.
+
 - **Tier selection resisted every prose fix.** Three successive wordings each
   repaired one test and broke a neighbour, so the tier ladder was reverted to
   its pre-conversion text. Whether tier selection is stable in a pair at all is
