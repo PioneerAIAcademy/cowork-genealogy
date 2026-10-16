@@ -345,17 +345,15 @@ From the question, the locality survey, and the period, identify which
 record sets could answer it.
 
 **Pre-work — fetch the record-type pages the subject triggers, before
-selecting record types.** Check each condition below against the
-subject's recorded sex, birthplace and name, and fetch only the pages whose
-condition holds: `wiki_read` with
+selecting record types.** Call `wiki_read` with
 `https://www.familysearch.org/en/wiki/{Country}_{Topic}`, using the
-subject's birth country, as PARALLEL calls in one turn. A page whose
-condition holds is a member of this block, not an option: a page you did
-not fetch is a record type you will plan from memory.
+subject's birth country. Issue them as PARALLEL calls in one turn. They are
+members of this block, not options: a page you did not fetch is a record
+type you will plan from memory.
 
 - **A male subject of a parentage question, born in continental Europe
   or Scandinavia** → `{Country}_Military_Records`. REQUIRED. Not for a
-  subject born in the British Isles or the Americas.
+  female subject, nor for one born in the British Isles or the Americas.
 - **The subject carries a compound (two-surname) surname, or the second
   element of their name is their father's given name** →
   `{Country}_Naming_Customs`. REQUIRED. Judge by whether that element
