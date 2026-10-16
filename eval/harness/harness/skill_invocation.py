@@ -1268,10 +1268,12 @@ DEDICATED_AGENT_NAMES = frozenset(
         # `ownership.json` names `agent:search-external-sites` on those rows.
         # Listed because the set is asserted equal to the shipped agent files.
         "search-external-sites",
-        # Same shape as convert-dates (issue #2800): a converted skill with no
-        # hook route. It writes no project state at all -- its output is a
-        # narrative to the user -- so `ownership.json` names it on no row. Listed
-        # because the set is asserted equal to the shipped agent files.
+        # Same shape as search-wikipedia (issue #2800): a converted skill with
+        # no hook route. It writes only `log` entries through
+        # `research_log_append` (#3244 option L) -- one per wiki/Wikipedia lookup
+        # and one `historical_context` entry, the overview in `notes`. Listed
+        # because the set is asserted equal to the shipped agent files, and so a
+        # log entry arriving from it is not read as an unnamed-delegate bypass.
         "historical-context",
         # The proof-conclusion shape, claim-scoped (issue #1852): the hook
         # routes a conflict's analytical product -- a resolve, or any of
@@ -1279,10 +1281,13 @@ DEDICATED_AGENT_NAMES = frozenset(
         # resolution now arrives from it.
         "conflict-resolution",
         # Same shape as search-images (issue #2065): a new agent, not a
-        # converted skill. It writes `log` entries via `research_log_append`
-        # and one standalone markdown file via `Write`. No hook routes anything
-        # to it. Listed because the set is asserted equal to the shipped agent
-        # files. `ownership.json` names `agent:survey-surname` on the `log` row.
+        # converted skill. It writes only `log` entries through
+        # `research_log_append`: one per search page, plus one carrying the
+        # household table in `notes` (#3244 option L, issue #3414). No hook
+        # routes anything to it. Listed because the set is asserted equal to
+        # the shipped agent files, and so a log entry arriving from it is not
+        # read as an unnamed-delegate bypass. `ownership.json` names
+        # `agent:survey-surname` on the `log` row.
         "survey-surname",
         # A new agent (issue #3273): it surveys a tree before any project exists,
         # so it writes nothing and no hook routes to it. Listed because the set is
