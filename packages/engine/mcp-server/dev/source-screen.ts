@@ -20,7 +20,6 @@ import {
   existsSync,
   mkdirSync,
   readFileSync,
-  readdirSync,
   realpathSync,
   renameSync,
   rmSync,
@@ -1259,6 +1258,3 @@ if (process.argv[1]?.endsWith("source-screen.ts")) {
     },
   );
 }
-
-/** The run ledgers under `<out>/runs/`, oldest first. */
-export const listRuns = (out: string) => (existsSync(join(out, "runs")) ? readdirSync(join(out, "runs")).sort() : []);
