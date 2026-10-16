@@ -397,7 +397,7 @@ describe("materialize_facts", () => {
 
     // An assertion about a second person filed on this persona is linked to
     // that person too, so its link says nothing about who this persona is.
-    it.each(["Father", "spouse", "Couple", "mother_birthplace", "informant"])(
+    it.each(["Father", "Mother", "parents", "father_name", "mother_name", "parent_name", "father_birthplace", "mother_birthplace", "filiation", "spouse", "Couple", "informant"])(
       "refuses a persona onto another person through a link from its %s assertion",
       async (factType) => {
         const assertions = [
