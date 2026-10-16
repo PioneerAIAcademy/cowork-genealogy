@@ -5,11 +5,11 @@
     "name": "FamilySearch wiki — death records 1800s",
     "type": "positive",
     "description": "User asks how to find death records for a 19th-century ancestor. Tests that the skill handles a period-scoped how-to query correctly.",
-    "tags": ["fs-wiki", "how-to", "death-records", "vital-records", "expects-file-death-records-1800s", "direct-arm"]
+    "tags": ["fs-wiki", "how-to", "death-records", "vital-records", "direct-arm"]
   },
   "input": {
-    "delegation": "Search the FamilySearch wiki for how to find death records for someone who died in the 1800s",
-    "scenario": null
+    "delegation": "Search the FamilySearch wiki for how to find death records for someone who died in the 1800s\n\nprojectPath: <workspace>",
+    "scenario": "empty-project-just-created"
   },
   "mcp_fixtures": ["wiki-search-death-records"],
   "judge_context": [
@@ -18,6 +18,6 @@
     "No invented facts beyond what the wiki returned — no fabricated repository names or dates",
     "IMPORTANT — the second chunk explicitly provides navigation and search instructions: 'To find death records on FamilySearch, go to the Search tab and select Records. Enter the name of your ancestor and narrow by country, state, and date range. The FamilySearch catalog lists all available collections — select a state and look under Vital Records...' If the skill includes these navigation steps or paraphrases them, do NOT score them as fabricated.",
     "The second chunk also explicitly states 'Some collections are indexed and fully searchable; others are browse-only and require reviewing images page by page.' If the skill mentions indexed vs browse-only collections, score as faithful.",
-    "The Sources section is appended to the file via Edit and may not appear in the text response. Score Sources cited correctly 3 if the transcript shows the skill appending the Sources section, or if the skill's text says it is appending sources."
+    "The Sources section is part of the logged entry's notes, which appear in the file changes summary as the new `log` entry. Score Sources cited correctly from those notes; the bullets need not appear in the text response, and test_sources_section_matches_wiki_results checks them against the tool response."
   ]
 }

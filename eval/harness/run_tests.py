@@ -19,7 +19,9 @@ Exit codes:
   3  any test was aborted for an execution reason
      (max_turns / wall clock / tool calls / tokens / error).
      Also returned when the abort-storm breaker trips (--no-abort-breaker
-     to override).
+     to override), and when a suite cap (--max-cost-usd,
+     --max-wall-clock-seconds) left a skill's tests unrun: that skill's log
+     is a `scratch_<ts>.json`, never a releasable candidate.
   130  the run was interrupted with Ctrl-C (SIGINT). Completed tests are
      saved as a partial `scratch_<ts>.json` run log per skill; in-flight tests
      are NOT cancelled — the pool joins them (#1016 measured ~2 min) — and
@@ -68,6 +70,14 @@ from harness.runlog import (
     unit_dir_name,
 )
 from harness.skill_runner import DEFAULT_MODEL, QUOTA_ABORT_REASON
+from harness.instrument import (
+    CatalogUnavailable,
+    instrument_for,
+    live_modules_fingerprint,
+    live_tools_called,
+    load_tool_catalog,
+    stale_build_files,
+)
 from harness.snapshot import build_snapshot, hash_file
 from harness.review_sample import select_review_sample
 from harness.warning_kinds import JUDGE_WARNING_KINDS, iter_run_warnings
@@ -263,9 +273,9 @@ def _build_parser() -> argparse.ArgumentParser:
     parser.add_argument(
         "--max-cost-usd",
         type=float,
-        default=50.0,
+        default=None,
         help="Suite-level budget cap in USD. Remaining tests are skipped when "
-        "cumulative cost exceeds this. Default: 50.",
+        "cumulative cost exceeds this. Default: 50 per selected skill.",
     )
     parser.add_argument(
         "--max-wall-clock-seconds",
@@ -365,6 +375,10 @@ _BREAKER_RATIO = 0.20
 # is function-local; no test enforces the match — a divergence is a latent
 # bug. Promote it to module scope and import it if a third consumer appears.
 _TRANSIENT_ABORT_REASONS = frozenset({"error", "sdk_stream_silence"})
+
+# The default --max-cost-usd, per selected skill. A flat $50 for one invocation
+# of nine skills (154 tests, ~$59) skipped 22 tests on 2026-10-14.
+_DEFAULT_COST_CAP_PER_SKILL_USD = 50.0
 
 
 def _est_test_seconds(spec, actuals: dict[str, float] | None = None) -> float:
@@ -682,22 +696,10 @@ def _check_mcp_build_fresh() -> list[tuple[Path, str]]:
     Returns a list of (ts_path, reason) for stale or missing artifacts.
     Empty list means the build is fresh.
     """
-    src_root = REPO_ROOT / "packages" / "engine" / "mcp-server" / "src"
-    build_root = REPO_ROOT / "packages" / "engine" / "mcp-server" / "build"
-    if not src_root.exists():
-        return []
-
-    stale: list[tuple[Path, str]] = []
-    for ts_path in src_root.rglob("*.ts"):
-        if ts_path.name.endswith(".d.ts"):
-            continue
-        rel = ts_path.relative_to(src_root).with_suffix(".js")
-        js_path = build_root / rel
-        if not js_path.exists():
-            stale.append((ts_path, "missing"))
-        elif js_path.stat().st_mtime < ts_path.stat().st_mtime:
-            stale.append((ts_path, "outdated"))
-    return stale
+    return stale_build_files(
+        REPO_ROOT / "packages" / "engine" / "mcp-server" / "src",
+        REPO_ROOT / "packages" / "engine" / "mcp-server" / "build",
+    )
 
 
 def _classify_invocation(args) -> tuple[str, bool]:
@@ -937,6 +939,12 @@ def main(argv: list[str] | None = None) -> int:
     _COST_WINDOW = 5
     recent_costs: list[float] = []
 
+    max_cost_usd = (
+        args.max_cost_usd
+        if args.max_cost_usd is not None
+        else _DEFAULT_COST_CAP_PER_SKILL_USD * len({s.skill for s in specs})
+    )
+
     concurrency, conc_source, conc_detail = _resolve_concurrency(args.concurrency)
     concurrency = min(concurrency, len(specs))
     print(
@@ -1017,10 +1025,48 @@ def main(argv: list[str] | None = None) -> int:
     snapshot_cache: dict[str, dict] = {}
     partial_paths: dict[str, Path] = {}
 
+    # The tool catalog the `instrument` fingerprint reads (issue #2479 PR 3). Loaded
+    # once; a failure leaves the field off the log (rule 2c then warns "instrument
+    # not recorded") rather than failing a paid run at the last step.
+    try:
+        tool_catalog: dict | None = load_tool_catalog()
+    except CatalogUnavailable as e:
+        tool_catalog = None
+        print(f"WARNING: no instrument fingerprint will be recorded: {e}", file=sys.stderr)
+
+    instrument_cache: dict[str, dict | None] = {}
+
     def _snapshot_for(skill: str) -> dict:
         if skill not in snapshot_cache:
             snapshot_cache[skill] = build_snapshot(skill=skill, repo_root=REPO_ROOT)
+            # Fingerprinted at the same moment as the snapshot (when the skill's
+            # first test completes), so the two describe the same tree. A failure
+            # -- a validator mid-edit that does not parse, say -- leaves the field
+            # off this log, as the catalog failure above does; it never stops a
+            # paid run.
+            instrument_cache[skill] = None
+            if tool_catalog is not None:
+                try:
+                    instrument_cache[skill] = instrument_for(skill, REPO_ROOT, catalog=tool_catalog)
+                except Exception as e:  # noqa: BLE001 -- the fingerprint must not cost the run
+                    print(
+                        f"WARNING: no instrument fingerprint for {skill}: {e!r}",
+                        file=sys.stderr,
+                    )
         return snapshot_cache[skill]
+
+    def _instrument_for(skill: str, entries: list[dict]) -> dict | None:
+        _snapshot_for(skill)
+        base = instrument_cache.get(skill)
+        if base is None:
+            return None
+        return {
+            **base,
+            "live_modules": live_modules_fingerprint(
+                live_tools_called(entries),
+                REPO_ROOT / "packages" / "engine" / "mcp-server" / "build",
+            ),
+        }
 
     def _flush_partials() -> None:
         """(Over)write the partial scratch envelope for every skill that has
@@ -1110,9 +1156,9 @@ def main(argv: list[str] | None = None) -> int:
             saw_budget_skip = True
             return True
         projected = cumulative_cost + (spec.runs_per_test * _avg_cost())
-        if projected > args.max_cost_usd:
+        if projected > max_cost_usd:
             print(
-                f"  ! suite cost cap ${args.max_cost_usd:.2f} would be "
+                f"  ! suite cost cap ${max_cost_usd:.2f} would be "
                 f"exceeded by {spec.id} (projected ${projected:.4f}); "
                 f"not starting more tests",
                 file=sys.stderr,
@@ -1418,12 +1464,26 @@ def main(argv: list[str] | None = None) -> int:
         return 130  # interrupted
 
     # --- Write one run log per skill --------------------------------------
+    # A suite cap leaves specs unsubmitted, and a releasable log must cover its
+    # whole suite, so a skill missing any test writes scratch.
+    cut_short = Counter(
+        spec.skill for idx, spec in enumerate(specs) if idx not in results_by_index
+    )
+    if cut_short:
+        saw_exec_abort = True
     written_paths: list[Path] = []
     for skill, entries in per_skill_entries.items():
+        skill_releasable = releasable and skill not in cut_short
+        if releasable and not skill_releasable:
+            print(
+                f"  ! {skill}: {cut_short[skill]} test(s) not run under the suite "
+                f"cap, so its log is scratch; re-run it with a higher "
+                f"--max-cost-usd"
+            )
         skill_runlog_dir = paths.runlogs_root / unit_dir_name(store) / skill
         filename, version = next_filename_for(
             skill_runlog_dir=skill_runlog_dir,
-            releasable=releasable,
+            releasable=skill_releasable,
             timestamp=invocation_timestamp,
         )
         # Only a releasable run carries a review sample. A scratch run is
@@ -1433,20 +1493,21 @@ def main(argv: list[str] | None = None) -> int:
             _review_sample_for(
                 skill, entries, skill_runlog_dir, invocation_timestamp
             )
-            if releasable
+            if skill_releasable
             else None
         )
         log = build_run_log(
             skill=skill,
             version=version,
             released=False,
-            releasable=releasable,
+            releasable=skill_releasable,
             invocation=mode,
             timestamp=invocation_timestamp,
             harness_version=HARNESS_VERSION,
             model=DEFAULT_MODEL,
             judge_prompt_hash=judge_hash,
             judge_model=judge_model,
+            instrument=_instrument_for(skill, entries),
             snapshot=_snapshot_for(skill),
             tests=entries,
             review_sample=sample,

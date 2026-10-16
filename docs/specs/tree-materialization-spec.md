@@ -144,7 +144,7 @@ read as its confidence.
 
 | Skill | Responsibility | Tools |
 |---|---|---|
-| **record-extraction** *(narrows — assertion-only)* | Extract classified assertions onto `record_id`+`record_role` (personas), **including relationship-type assertions** (parent-child, spouse); create the per-record S-entry. Emits **assertions only** — `mcp__genealogy__tree_edit` is dropped from its frontmatter and it no longer writes household stubs or names. **Writes only the source S-entry** (via `research_append`'s composite `sourceDescription`); it writes no persons, facts, names, or relationships. | `research_append` (assertions + composite `sourceDescription`), `research_log_append` |
+| **extraction** — `extraction_append` *(assertion-only; replaced the record-extraction skill and record-extractor agent, since retired)* | Extract classified assertions onto `record_id`+`record_role` (personas), **including relationship-type assertions** (parent-child, spouse), with roles and classifications decided in code; create the per-record S-entry. FamilySearch records come in as `recordIds`; any other source is structured by the record-structurer agent and sent as `documents`. **Writes only the source S-entry** (through `researchAppend`'s composite `sourceDescription`); it writes no persons, facts, names, or relationships. | `extraction_append` (sources + assertions + composite `sourceDescription`; logs its own `record_read` entry per record) |
 | **person-evidence** *(grows — the fix)* | Decide identity (link persona→person, or mint a new person); **write the linked persona's assertions as sourced facts/names onto the tree person** via `materialize_facts`; own the **household skeleton** — mint each member (sibling stubs included) via `materialize_facts` create-or-enrich, and write parent-child + spouse-spouse **edges** via `tree_edit` `add_relationship`, each edge carrying a source-ref resolved from the relationship assertion's `source_id` (same resolver as `materialize_facts`). Match later personas to fact-less stubs to enrich them. Before committing a household's materialization, **dry-run `merge_warnings`** as a coherence gate (§9). **Never sets `primary`/`preferred`.** | **`materialize_facts`** (new), `research_append` (`pe_` links), `same_person`, `tree_edit` (`add_relationship`), `merge_warnings` |
 | **conflict-resolution** *(unchanged role, now fed by materialization)* | Resolve the coexisting-conflict facts materialization surfaces; write `conflicts`. | `research_append` (conflicts) |
 | **proof-conclusion** *(narrows)* | Weigh already-materialized evidence, set **`primary`/`preferred`** on the concluded value — via `tree_correct` `update_fact` when the value matches an existing evidence fact, or via `tree_edit` `add_fact` (`primary:true` + multi-refs) when the conclusion is **synthesized** and matches no single record (§7.1); write `proof_summary`+`proof_tier`; at upload copy ESM citations onto S-entries and gate upload to concluded facts; collapse duplicate tree persons. | `tree_correct` (`update_fact` → set `primary`), `tree_edit` (`add_fact`), `research_append` (`proof_summaries`), `merge_tree_persons`, `merge_warnings` |
@@ -282,6 +282,27 @@ a name, not facts, and is not gated. Replayed over the committed e2e run logs
 from links `research_append` had wrongly capped on a birthplace written without
 its country, which no longer happens.
 
+**Reuse when re-materializing without `personId`.** When `personId` is omitted,
+the persona arm scans `tree.persons` for any person whose facts carry an
+`assertion_id` matching one of this persona's assertions (same `record_id` +
+`record_role`). A candidate is reusable only if `mintedFromThisRecord` returns
+true or a live `probable`/`confident` `person_evidence` entry links one of the
+persona's assertions to it — the same eligibility predicate the explicit-personId
+gate uses. Among eligible candidates, one with a live `person_evidence` link is
+preferred; remaining ties break by lowest numeric ID. Only when no eligible
+candidate exists does the tool allocate a fresh `I` via `nextId`. This prevents
+duplicate persons when the same persona is materialized more than once without an
+explicit `personId`.
+
+Three alternatives were rejected. Matching on backlinks alone: backlinks are
+also stamped onto an existing FamilySearch person when a persona is
+materialized onto them under a confident link. Once that link is superseded, a
+no-`personId` call would put the facts straight back on that person, past the
+link gate. Plain lowest id: in an already-duplicated project it picks the
+unlinked orphan stub over the person `research.json` links to. Refusing when
+several candidates match: that costs an error round-trip on every re-run in an
+already-duplicated project, and hands the agent a choice with no rule.
+
 > Reading assertions to *instantiate* a person is still an evidence-driven
 > act (it reads assertions, not nodes), so it stays on the correct side of
 > the §3 seam. It is not a merge — nothing is collapsed.
@@ -289,9 +310,12 @@ its country, which no longer happens.
 ### 4.4 Idempotency and conflict surfacing
 
 - **Idempotent.** Re-running the same persona's materialization (retries are
-  common) duplicates neither facts nor refs — the §4.2 fact-identity test
-  (`factsEquivalent` + equal `value`) plus ref-set union makes a re-run a
-  no-op. Mirrors the idempotent-skip ratified as correct in the structured-fact model.
+  common) duplicates neither facts, refs, nor persons — when `personId` is
+  omitted, `assertion_id` backlinks on existing facts identify the person the
+  same persona was previously materialized onto (§4.3), and the §4.2
+  fact-identity test (`factsEquivalent` + equal `value`) plus ref-set union
+  makes the content a no-op. Mirrors the idempotent-skip ratified as correct
+  in the structured-fact model.
 - **Conflicts surfaced, not resolved — and only for single-valued types.**
   Conflict surfacing is **gated to single-valued / vital fact types**: reuse
   the existing `VITAL_PRIMARY_TYPES` set (`Birth`, `Death`, `Christening`,
@@ -485,7 +509,7 @@ and it is the same shape the multi-ref bound above is measured with.
 a backlinked fact and later corrects the assertion it was minted from, so the
 two populations remain disjoint and nothing on that plane can make the check
 fire. The minting is overwhelmingly `person-evidence`'s and every four-field
-assertion `update` is `record-extraction`'s, through `extraction_append`.
+assertion `update` was `record-extraction`'s (since retired), through `extraction_append`; today `extraction_append` takes no updates and `research_append` refuses every assertions write except an `informant_bias_notes`-only update, so nothing on that plane issues one.
 
 An earlier form of this paragraph pinned that with an exact call count and the
 claim that **all** of those calls were `person-evidence`'s. Both had drifted
@@ -508,7 +532,7 @@ check would ship unexecuted. The live-path twin at
 `eval/harness/tests/unit/test_post_hoc_shadow.py` does the same job for the e2e
 caller, whose own zero is likewise green by construction until a run fires.
 
-**Who may perform this write.** `record-extraction` is deliberately **not** added
+**Who may perform this write.** No skill or agent is added
 to the `tree.gedcomx.json`/`persons` row's `callers`: a skill-granular grant
 would also authorize adding an unsourced person and setting `primary`, which that
 row's `failure` line ("this file is the upload target") is precisely about.
@@ -522,9 +546,16 @@ substitution does not explain still fails.
 
 Never sets `primary`/`preferred`; never resolves conflicts; never collapses
 or merges persons; never writes relationships (those are `tree_edit`
-`add_relationship`, see §8); never materializes a `marriage` assertion as a
-person-level fact (added 2026-07-27, `SKIP_TYPES` in `materialize-facts.ts`).
-A marriage is a Couple-relationship event — per `tree_edit`'s own convention
+`add_relationship`, see §8); never materializes a **couple event** as a
+person-level fact (added 2026-07-27 as `marriage` alone, `SKIP_TYPES` in
+`materialize-facts.ts`; widened to every couple event in any spelling by
+`COUPLE_EVENT_FACT_KEYS` in `record-persona.ts`). `fact_type` is an open enum,
+so one event arrives spelled several ways — `marriage_bann`, `Marriage Banns`
+and `MarriageBanns` are one event — and the key is matched folded (lowercased,
+non-alphanumerics stripped) rather than raw. Matching the raw string skipped
+only `marriage`: three live e2e runs wrote `marriage_intention`,
+`marriage_bann` and `marriage_date` onto a person, and no fixture carries any of
+them. A marriage is a Couple-relationship event — per `tree_edit`'s own convention
 ("a Marriage/Divorce fact lives on the Couple, never duplicated onto each
 spouse"), it can never be a correct person-level write, not just usually a
 wrong one, so the tool silently skips it rather than relying on caller
@@ -721,8 +752,8 @@ materialize_facts({ projectPath, assertionId, relatedRole,
   event stays on the edge.
 - **Idempotent for a given `personId`** — a re-run unions the ref onto the
   matching name rather than duplicating it. An omitted `personId` allocates a
-  fresh `I` on every call, exactly as the persona arm does; that is allocation,
-  not a broken re-run.
+  fresh `I` on every call; the named-party arm has no `assertion_id` backlinks
+  to search for, so the persona arm's reuse rule (§4.3) does not apply here.
 
 **Why the caller supplies the name — and the alternatives this beat.** Recorded
 here so it is not re-derived. Measured 2026-09-07 by walking
@@ -751,7 +782,7 @@ rate, carries the argument below.
 - **Rejected: have the tool read a standardized `structured_value` name key.**
   The name is there 4.8% of the time under five distinct key shapes, and the shape
   this repo's own schema spec recommends (`spouse_given`/`spouse_surname`)
-  occurs in 1 of 167. Standardizing one would mean changing record-extraction's
+  occurs in 1 of 167. Standardizing one would have meant changing record-extraction's (since retired)
   prose — a second paid eval run and a second reviewer — and every project
   written before that change would stay unmintable. `structured_value` is
   `type: object` with no properties, is deliberately not deep-checked by the

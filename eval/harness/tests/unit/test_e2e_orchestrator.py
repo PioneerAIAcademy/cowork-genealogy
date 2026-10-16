@@ -995,8 +995,8 @@ def test_provenance_gap_reason_names_the_satisfiable_call_shape():
 def test_provenance_gap_reason_offers_no_escape_for_a_locally_minted_id():
     """The reason must NOT tell the agent a locally-minted id is unscorable.
 
-    person-evidence/SKILL.md says such an id returns a degenerate score to treat
-    as "no score available" (2026-07-02). That is stale: the match-engine
+    person-evidence/SKILL.md (deleted) said such an id returned a degenerate score
+    to treat as "no score available" (2026-07-02). That was stale: the match-engine
     mint-hardening (2026-07-07) made an ARK-less focus person score on document
     content. Probed live — dev/probe-same-person-local-id.ts — the tree focus
     with its ARK removed scores 0.9999484 against a 0.999967 control, identical
@@ -1521,3 +1521,132 @@ def test_wall_ts_matches_the_transcript_format_byte_for_byte():
     assert wall_ts(1_758_178_362.0, 0.0, 0.0).endswith(".000Z")
     # The monotonic offset is applied: 2.5s elapsed is 2.5s of wall clock.
     assert wall_ts(1_758_178_362.0, 10.0, 12.5).endswith(".500Z")
+
+
+# --- #3188: an Agent's return survives, and narration says which thread ------
+
+
+def test_agent_return_is_not_cut_at_the_500_char_bound():
+    """The return IS the thing #3188 measures, so a raw side cut at 500 reports
+    "the relay dropped content" for content the LOG dropped. Measured at the
+    change: 834 truncated Agent strings across the 203 committed logs, median
+    2,274 / max 21,578."""
+    from e2e.orchestrator import _summarize_tool_response
+
+    ret = "R" * 7000
+    out = _summarize_tool_response(
+        [
+            {"type": "text", "text": ret},
+            {"type": "text", "text": "agentId: x\n<usage>total_tokens: 1</usage>"},
+        ],
+        tool_name="Agent",
+    )
+    assert ret in out, "the full return must survive"
+    assert "[truncated by harness" not in out
+
+
+def test_the_agent_return_is_not_overwritten_by_the_usage_announcement():
+    """Why this is NOT done through `_RUNLOG_EXEMPT_KEYS`.
+
+    That path saves ONE value per key, last wins -- its own comment says "Safe
+    for image_transcribe (always one text block)". An Agent result is two
+    blocks, and the `agentId:/<usage>` announcement is LAST in all 845 parsed
+    corpus summaries, so exempting `text` would save the announcement and write
+    it over the return.
+    """
+    import json as _json
+
+    from e2e.orchestrator import _summarize_tool_response
+
+    ret = "R" * 7000
+    out = _summarize_tool_response(
+        [
+            {"type": "text", "text": ret},
+            {"type": "text", "text": "agentId: x\n<usage>total_tokens: 1</usage>"},
+        ],
+        tool_name="Agent",
+    )
+    blocks = _json.loads(out)  # must still be parseable JSON
+    assert blocks[0]["text"].startswith("R")
+    assert "agentId" in blocks[1]["text"]
+
+
+def test_other_tools_keep_the_old_500_char_bound():
+    """The raised bound is for one tool, not a global relaxation."""
+    from e2e.orchestrator import _summarize_tool_response
+
+    out = _summarize_tool_response(
+        [{"type": "text", "text": "R" * 3000}], tool_name="record_search"
+    )
+    assert "[truncated by harness" in out
+
+
+def test_image_transcribe_exemption_still_preserves_its_transcription():
+    """The shared-path regression check: the Agent branch must not disturb the
+    exemption that took HARNESS_SCHEMA_VERSION to 5."""
+    import json as _json
+
+    from e2e.orchestrator import _summarize_tool_response
+
+    tr = "T" * 9000
+    out = _summarize_tool_response(
+        [{"type": "text", "text": _json.dumps({"transcription": tr, "pad": "x" * 5000})}],
+        tool_name="image_transcribe",
+    )
+    assert tr in out
+
+
+def test_is_agent_tool_matches_every_server_spelling():
+    """Suffix match, as `_exempt_keys_for` does -- CLAUDE.md "Dual-spelled tool
+    names". The corpus spells it `Agent` in all 1,738 calls."""
+    from e2e.orchestrator import _is_agent_tool
+
+    assert _is_agent_tool("Agent")
+    assert _is_agent_tool("Task")
+    assert _is_agent_tool("mcp__remote-devices__Genealogy_Research__Agent")
+    assert not _is_agent_tool("record_search")
+    assert not _is_agent_tool(None)
+
+
+def test_assistant_narration_entries_carry_a_thread_key():
+    """Pinned structurally because it lives inside the SDK message loop, which a
+    unit test cannot drive.
+
+    If `thread` is dropped in a later edit of that block, every new run log is
+    written in a shape `compute_production_counts` reports as unscorable, the
+    relay-fidelity denominator silently stays 0, and the whole harness suite
+    stays green. `e2e-test-spec.md` documents the key; this is what makes the
+    documentation enforceable.
+    """
+    import ast
+    import pathlib
+
+    src = pathlib.Path(__file__).resolve().parents[2] / "e2e" / "orchestrator.py"
+    tree = ast.parse(src.read_text(encoding="utf-8"))
+
+    assistant_dicts = []
+    for node in ast.walk(tree):
+        if not isinstance(node, ast.Dict):
+            continue
+        keys = {k.value for k in node.keys if isinstance(k, ast.Constant)}
+        if "kind" not in keys or "tool_calls_before" not in keys:
+            continue
+        # The assistant append is the one whose `kind` is the literal
+        # "assistant"; the harness/blocked sites pass a variable or another
+        # literal and have no message in scope to read a thread from.
+        for k, v in zip(node.keys, node.values):
+            if (
+                isinstance(k, ast.Constant)
+                and k.value == "kind"
+                and isinstance(v, ast.Constant)
+                and v.value == "assistant"
+            ):
+                assistant_dicts.append(keys)
+
+    assert assistant_dicts, "no assistant narration entry found — did the shape move?"
+    for keys in assistant_dicts:
+        assert "thread" in keys, (
+            "an assistant narration entry lost its `thread` key; "
+            "relay fidelity cannot tell the main thread from a subagent's own "
+            "messages without it (#3188)"
+        )

@@ -269,10 +269,10 @@ describe("fulltextSearchTool param mapping", () => {
       yearFrom: 1840,
       yearTo: 1850,
       recordType: "Probate",
-      recordPlace0: "Europe",
-      recordPlace1: "Ireland",
-      recordPlace2: "Tipperary",
-      recordPlace3: "Nenagh",
+      recordPlace0: "1",
+      recordPlace1: "1,Ireland",
+      recordPlace2: "1,Ireland,Tipperary",
+      recordPlace3: "1,Ireland,Tipperary,Nenagh",
     });
     expect(url).toContain("q.text=Flynn");
     expect(url).toContain("q.fullName=Patrick%20Flynn");
@@ -282,10 +282,10 @@ describe("fulltextSearchTool param mapping", () => {
     expect(url).toContain("f.recordYear0=1840");
     expect(url).toContain("f.recordYear1=1850");
     expect(url).toContain("f.recordType0=Probate");
-    expect(url).toContain("f.recordPlace0=Europe");
-    expect(url).toContain("f.recordPlace1=Ireland");
-    expect(url).toContain("f.recordPlace2=Tipperary");
-    expect(url).toContain("f.recordPlace3=Nenagh");
+    expect(url).toContain("f.recordPlace0=1");
+    expect(url).toContain("f.recordPlace1=1%2CIreland");
+    expect(url).toContain("f.recordPlace2=1%2CIreland%2CTipperary");
+    expect(url).toContain("f.recordPlace3=1%2CIreland%2CTipperary%2CNenagh");
   });
 
   it("4. sends default count=5, offset=0 and m.queryRequireDefault=on", async () => {
@@ -372,6 +372,52 @@ describe("fulltextSearchTool input validation", () => {
     await expect(
       fulltextSearchTool({ keywords: "x", yearFrom: 1849, yearTo: 1849 }, LOCAL)
     ).resolves.toBeDefined();
+  });
+
+  it("15b. refuses plain text on recordPlace1", async () => {
+    await expect(
+      fulltextSearchTool({ keywords: "x", recordPlace1: "New Hampshire" }, LOCAL)
+    ).rejects.toThrow(/recordPlace1 value "New Hampshire" is not in the required facet form/);
+    expect(mockFetch).not.toHaveBeenCalled();
+  });
+
+  it("15c. accepts facet-form recordPlace1", async () => {
+    mockFetch.mockResolvedValueOnce(makeOk(emptyBody()));
+    await expect(
+      fulltextSearchTool({ keywords: "x", recordPlace1: "10,New Hampshire" }, LOCAL)
+    ).resolves.toBeDefined();
+    expect(String(mockFetch.mock.calls[0][0])).toContain("f.recordPlace1=10%2CNew%20Hampshire");
+  });
+
+  it("15d. refuses empty string on recordPlace1", async () => {
+    await expect(
+      fulltextSearchTool({ keywords: "x", recordPlace1: "" }, LOCAL)
+    ).rejects.toThrow(/recordPlace1 value "" is not in the required facet form/);
+  });
+
+  it("15e. refuses comma-only on recordPlace0", async () => {
+    await expect(
+      fulltextSearchTool({ keywords: "x", recordPlace0: "," }, LOCAL)
+    ).rejects.toThrow(/recordPlace0 value "," is not in the required facet form/);
+  });
+
+  it("15f. accepts bare numeric on recordPlace0", async () => {
+    mockFetch.mockResolvedValueOnce(makeOk(emptyBody()));
+    await expect(
+      fulltextSearchTool({ keywords: "x", recordPlace0: "10" }, LOCAL)
+    ).resolves.toBeDefined();
+  });
+
+  it("15g. refuses wrong level: recordPlace0 with comma segment", async () => {
+    await expect(
+      fulltextSearchTool({ keywords: "x", recordPlace0: "10,Alabama" }, LOCAL)
+    ).rejects.toThrow(/recordPlace0 value "10,Alabama" is not in the required facet form/);
+  });
+
+  it("15h. refuses wrong level: recordPlace1 with no comma segment", async () => {
+    await expect(
+      fulltextSearchTool({ keywords: "x", recordPlace1: "10" }, LOCAL)
+    ).rejects.toThrow(/recordPlace1 value "10" is not in the required facet form/);
   });
 });
 
@@ -573,7 +619,7 @@ describe("fulltextSearchTool facets", () => {
           count: 3,
           displayName: "Collection",
           facets: [
-            { count: 10, displayName: "Ireland Wills", params: "f.collectionId=111" },
+            { count: 10, displayName: "Ireland Wills", params: "c.collectionId=on&f.collectionId=111" },
             { count: 5, displayName: "" }, // no displayName -> filtered out
             { count: 2 }, // no displayName -> filtered out
           ],
@@ -647,6 +693,31 @@ describe("fulltextSearchTool facets", () => {
     mockFetch.mockResolvedValueOnce(makeOk(facetBody()));
     const result = await fulltextSearchTool({ keywords: "Flynn" }, LOCAL);
     expect(result.facets).toBeUndefined();
+  });
+
+  it("33b. extracts the f.* value from compound Place facet params", async () => {
+    mockFetch.mockResolvedValueOnce(
+      makeOk({
+        results: 1,
+        entries: [],
+        facets: [
+          {
+            count: 1,
+            displayName: "Place",
+            facets: [
+              { count: 42, displayName: "Alabama", params: "c.recordPlace1=on&f.recordPlace0=10" },
+            ],
+          },
+        ],
+      })
+    );
+    const result = await fulltextSearchTool({
+      keywords: "Flynn",
+      includeFacets: true,
+    }, LOCAL);
+    expect(result.facets![0].items).toEqual([
+      { name: "Alabama", count: 42, filterParam: "10" },
+    ]);
   });
 });
 

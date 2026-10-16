@@ -159,6 +159,19 @@ from typing import Any
 #       run as "stored N -> recomputed M" under "TODAY's detector clears a
 #       violation the run recorded" — the detector getting looser, not the run
 #       getting better. `outcome` does not move: since entry 6 it is the verdict.
+#   8 — `response_summary` for an `Agent`/`Task` call carries the subagent's
+#       full return rather than its first 500 characters. The per-string bound
+#       rises to `_RUNLOG_AGENT_STRING_MAX` (8,000) and the whole-response
+#       backstop to `_RUNLOG_AGENT_MAX_CHARS` (12,000), for that tool only.
+#       Same shape as entry 5, the `image_transcribe` exemption that took v5:
+#       the key keeps its name and type while what it holds changes, with no
+#       tell in the payload. Measured at the bump over the 203 committed logs:
+#       834 `Agent` strings were being truncated, median 2,274 / p95 7,092 /
+#       max 21,578, ~2.06 MB dropped corpus-wide. **Branch on the version
+#       before treating a v7-or-earlier `Agent` summary as complete** — a
+#       relay-fidelity reader that does not will score the log's own
+#       truncation as content the relay dropped, which is the measurement
+#       inverting the thing it measures (#3188).
 #
 # A change readers can detect from the payload itself does NOT need a bump.
 # `narration` replacing `.transcript.md` is one: the field is a dataclass
@@ -166,10 +179,12 @@ from typing import Any
 # log written since carries the key and every earlier one lacks it. Branch on
 # `"narration" in data`, not on a version. Bump only when a key keeps its name
 # and type while its MEANING changes — that is the case with no structural tell,
-# and entries 2, 4, 5, 6 and 7 above are exactly it: `response_summary` stays a
-# string, `is_error` stays a bool and `outcome` stays a string, and only what
-# each one means changes.
-HARNESS_SCHEMA_VERSION = 7
+# and entries 2, 4, 5, 6, 7 and 8 above are exactly it: `response_summary` stays
+# a string, `is_error` stays a bool and `outcome` stays a string, and only what
+# each one means changes. `narration`'s new `thread` key is the other case and
+# does NOT drive this bump: it is key-presence-detectable, exactly like
+# `narration` itself.
+HARNESS_SCHEMA_VERSION = 8
 
 
 @dataclass
@@ -252,9 +267,10 @@ class E2eResult:
 
     # Calls the per-context policy denied. TWO arms, and only `tool` tells them
     # apart — `blocked_by` is "context" for both:
-    #   - a `SUBAGENT_ONLY_TOOLS` tool on the main thread: an `extraction_append`
-    #     (the record-extractor's write, #942) or, since #1273 Item 1, an
-    #     `image_read` (whose base64 would overflow the transport). Neither has
+    #   - a `SUBAGENT_ONLY_TOOLS` tool on the main thread: today only
+    #     `image_read` (whose base64 would overflow the transport), since #1273
+    #     Item 1. `extraction_append` (the record-extractor's write, #942) was
+    #     the other member until issue #2937 removed it from the set. Neither has
     #     been observed in the committed corpus.
     #   - an owned-section `research_append` (#1273): a caller wrote a section it
     #     does not own. NOT main-thread-only — `owner_denied`'s `out_of_lane` rule

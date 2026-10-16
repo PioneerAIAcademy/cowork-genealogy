@@ -1,7 +1,8 @@
 # Cut e2e research cost and latency as far as they go
 
 **Status:** In progress — T1.3 (PR #3194), T1.4 (PR #3195), T1.11 (PR #3256) and
-T2.1 (PR #3230) landed. Owner: **Promise Igbojionu**, shepherding from 2026-09-27.
+T2.1 (PR #3230) landed; T2.3's tool half (`research_query` takes a list of ids,
+`make replay-collapse RULE=plural-id`, PR #3428) landed; agents adopting it is PR 2. Owner: **Promise Igbojionu**, shepherding from 2026-09-27.
 **No lead gates** — every ruling this plan once waited on has been
 made. Update this line as waves land; delete this file when the work ships.
 
@@ -108,14 +109,22 @@ only read one thing.** Only `source_attachments` accepts an array. `record_read`
 `person_ancestors`, `place_population`, `wiki_place_page` and `place_distance` each take
 exactly one id, url or name.
 
-**So the agent has no choice but to iterate.** Only **2.7%** of assistant messages
-emit more than one tool call — that is not the model failing to batch, it is the tool
-surface making batching impossible. The fix is a build, not a prompt.
+**So the agent has no choice but to iterate.** It already batches where it can:
+**≥ 27%** of tool-carrying assistant messages emit more than one call (472 of 1,589
+over the 8 runs whose timeline carries message ids, 2026-10-05 to 10-14; ≥ 28% of
+main-thread calls shared a message over the 28 runs carrying `usage.message_usage`).
+The "2.7%" this section once gave does not reproduce (A3 entry 22). What the agent
+cannot batch is a second id into one call — the tool surface makes that
+impossible. The fix is a build, not a prompt.
 
 MEASURED, Aug+Sep, n=56 runs: **64 singular-read calls per run**, and **52.8
 back-to-back same-tool repeats per run** — calls made consecutively against one tool
-because it could not be asked once. Against 174 model calls/run that is the largest
-identified block of avoidable turns in the system.
+because it could not be asked once. **Those are calls, not turns** (A3 entry 23):
+re-counted at 52.1/run (n=51), of which ≈ 21.8/run are consecutive in one thread and
+differ in exactly one argument, and the turns a plural would remove are ≈ 5.8/run
+(n=5 runs with message ids), because most repeats were already sent in parallel in
+one message. Against 174 model calls/run it is still the largest identified block of
+avoidable calls.
 
 | tool | median calls/run | back-to-back repeats |
 |---|---|---|
@@ -134,7 +143,11 @@ identified block of avoidable turns in the system.
    it got from the previous call. A parameter returning plan items *with* their log
    entries *with* their assertions kills the class. Today the tool **explicitly
    rejects** a plural `sections`, and its own comment says *"`sections` is the mistake
-   the model actually makes"* — the demand is already measured in the error path.
+   the model actually makes"* — but every one of the 11 recorded attempts asks for
+   several **sections** at once, the bundle ruled out on 2026-10-10, not several ids;
+   no recorded call passes a list of ids. T2.3 makes the id plural instead
+   (`research-query-tool-spec.md` §3, "Plural ids, not plural sections"): replay
+   collapses 402 recorded one-id calls to 157 over 32 runs.
    The same join should return **a question's conclusion evidence in one call**: its
    assertions with their classifications, the `person_evidence` links on them, their
    sources, the conflicts that touch it, and its stop record. That is what
@@ -199,9 +212,10 @@ the switch. n = 1 pair; the figure is the projection, not the totals. The hosted
 Two pieces of work, in order:
 
 1. **Get the gateway onto agentgateway ≥ 1.6.0, then set `GATEWAY_TOOL_SEARCH=true`.**
-   The request to FamilySearch is drafted in `search-agent-prototype.md` "Open asks"
-   and has not been sent. It is the lead's to send. Until it lands, production pays for
-   the whole schema block on every call and Wave 2's schema trim is the only relief.
+   The first half is done: our PR fs-eng/tap-gateway#46 put TAP's EKS gateway on v1.6.0,
+   merged 2026-10-12, so the drafted request was never sent. The second half waits on the
+   handoff's U14 two-turn check on that gateway; until it passes, production pays for the
+   whole schema block on every call and Wave 2's schema trim is the only relief.
 2. **Done 2026-10-09 (above). Measure one e2e panel fixture with tool search off against the same fixture with
    it on**, on the harness, so the production gap is priced on this plan's basis. Do
    this before step 1 lands, because it decides how much of the gap is this lever's.
@@ -249,9 +263,11 @@ convert the skill→agent pair into a tool pair so extraction costs a tool call 
 than a spawn. It matters to this plan for one reason: at **2.10 spawns/run × ~6
 assistant messages** it is ~12.6 of 174 model calls, and turn count is the master
 variable. Its token saving is small (all record-extractor generation is **$0.218/run**),
-so do not count it toward the cost target. The evidence, the architecture and the three
-writer-tool preconditions live on that card. Related: **issue #2818** goes the other
-direction, **issue #2475** owns the precondition join, **issue #2256** the census year.
+so do not count it toward the cost target. The evidence, the architecture and the ONE
+writer-tool precondition that lives on that card (`informant_proximity: "unknown"` implies
+`information_quality: "indeterminate"`) are there. Related: **issue #2818** goes the other
+direction, and **issue #2475** owns both the precondition join and the census-year
+refusal, which moved to it from issue #2256 on 2026-09-27.
 
 ## 7. Wave 4 — the floor search
 
@@ -478,6 +494,17 @@ variance is process waste with no quality attached.
 21. **"Agent narration never reaches the user."** Subagent text rides the same SDK
     stream tagged with `parent_tool_use_id` and did reach users until commit
     `175cded1a` (2026-09-18) started dropping it in the hosted web app.
+22. **"Only 2.7% of assistant messages emit more than one tool call."** It is
+    **≥ 27%**: 303 of 1,129 tool-carrying messages over the 5 runs of 2026-10-05
+    that record message ids, and 472 of 1,589 over the 8 tracked such runs at
+    `a9d57123d`; main-thread calls (3,925) exceed main-thread messages (2,843) over
+    the 28 runs carrying `usage.message_usage`. The agent already batches across
+    tools; it cannot batch a second id into one call.
+23. **"52.8 back-to-back same-tool repeats per run" read as turns.** They are
+    **calls**. ≈ 21.8/run collapse by one argument, and the turns a plural removes
+    are ≈ 5.8/run (n=5), because most repeats already share a message. Price a
+    plural by turns removed, not by calls: a removed parallel call is worth
+    ≈ $0.001, a removed turn ≈ $0.008–0.04 depending on the thread.
 
 ## A4. Measured dead ends — do not re-propose these
 

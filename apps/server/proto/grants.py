@@ -102,6 +102,23 @@ UNDECRYPTABLE = "undecryptable"
 
 # -- SQL ---------------------------------------------------------------------------
 
+# U19: every table keyed by the web session id that delete_session clears, here because
+# both tiers purge a session -- the web tier on delete, the worker's retention on
+# inactivity (which keeps ``turns``). session_entries is keyed by the SDK session id
+# instead (TRANSCRIPT_DELETE_SQL). A pg test fails on any table with a session_id column
+# that is in neither.
+SESSION_TABLES = ("session_events", "session_seq", "session_activity", "turns", "tool_calls")
+TRANSCRIPT_DELETE_SQL = "DELETE FROM session_entries WHERE session_id = ANY(%s)"
+
+
+def transcript_ids(session_id: str, sdk_session_id: str | None) -> list[str]:
+    """The ids a session's transcript rows can carry: the SDK session id (004), which a
+    subagent's rows share under a ``subagents/...`` subpath, and the web id (a session
+    whose worker never chose one)."""
+    return [session_id] + ([sdk_session_id] if sdk_session_id else [])
+
+
+
 OWNER_SQL = "SELECT owner_id FROM projects WHERE project_id = %s"
 ATTEMPT_LOCK_SQL = "SELECT pg_advisory_lock_shared(%s::int4, hashtext(%s))"
 ATTEMPT_UNLOCK_SQL = "SELECT pg_advisory_unlock_shared(%s::int4, hashtext(%s))"
@@ -115,6 +132,10 @@ ATTEMPT_LOCK_HELD_SQL = (
 TRY_LOCK_SQL = "SELECT pg_try_advisory_lock(%s::int4, hashtext(%s))"
 WRITE_XACT_LOCK_SQL = "SELECT pg_advisory_xact_lock(%s::int4, hashtext(%s))"
 QUEUE_LOCK_SQL = "SELECT pg_advisory_xact_lock(%s::int4, hashtext(%s))"
+# U19: retention TRIES the queue lock, never waits: admit_message and delete_session hold it
+# and then lock the sessions row retention already holds, so a wait could deadlock. The same
+# key as QUEUE_LOCK_SQL, or the exclusion is void (a test pins the two together).
+QUEUE_TRY_LOCK_SQL = "SELECT pg_try_advisory_xact_lock(%s::int4, hashtext(%s))"
 # Before QUEUE_LOCK_SQL, in the same transaction; the value is ``queue_lock_timeout(s)``.
 QUEUE_LOCK_TIMEOUT_SQL = "SELECT set_config('lock_timeout', %s, true)"
 WRITE_LOCK_TIMEOUT_SQL = f"SET LOCAL lock_timeout = '{WRITE_LOCK_TIMEOUT_S}s'"

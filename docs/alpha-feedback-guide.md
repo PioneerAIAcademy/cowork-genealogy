@@ -170,6 +170,22 @@ two people end up on the same bundle.
 The body carries the tester's own words and the zip link. Read the words first —
 you often do not need the bundle at all, and Step 2 tells you when you do.
 
+> **Prototype bundles open no issue.** The search-agent prototype's web tier
+> (`apps/server/proto/web/`, U20) stores its zip in its own S3 bucket instead of
+> posting it to Drive, and nothing opens a GitHub issue for it yet — where a
+> stored bundle goes next is an open question for the lead. Someone with access
+> to the bucket fetches it by hand and unpacks it with Step 2 as usual:
+>
+> ```bash
+> aws s3 cp s3://<bucket>/feedback/<owner>/<project>/<file> .
+> make feedback-case ZIP=<file>
+> ```
+>
+> `<owner>` is the patron's internal `usr_…` id, `<project>` the project id, and
+> `<file>` the `filename` the submit answered with. On the compose stack the
+> bucket is `projects` on the local MinIO. Bundles under `feedback/` expire after
+> 90 days.
+
 One task, one branch, always cut from an up-to-date `main` — you open a PR from
 it at the end. Name it with a few hyphenated words describing the fix — no
 slashes, no timestamps.

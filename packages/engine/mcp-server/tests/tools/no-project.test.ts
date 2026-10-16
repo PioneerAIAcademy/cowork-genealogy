@@ -45,6 +45,7 @@ import { imageTranscribeTool } from "../../src/tools/image-transcribe.js";
 import { mergeTreePersons } from "../../src/tools/merge-tree-persons.js";
 import { mergeWarnings } from "../../src/tools/merge-warnings.js";
 import { personWarningsTool } from "../../src/tools/person-warnings.js";
+import { censusChildrenGapTool } from "../../src/tools/census-children-gap.js";
 import { buildExternalSearchUrlTool } from "../../src/tools/build-external-search-url.js";
 import { validateResearchSchema } from "../../src/tools/validate-research-schema.js";
 import {
@@ -55,7 +56,7 @@ import {
 /** The five tools that are not writers. Telling someone who asked "where are
  *  we?" in a non-project folder that their work was not saved is both wrong and
  *  alarming, so these carry the read sentence. */
-const READERS = new Set(["research_query", "project_context", "person_warnings", "merge_warnings", "sidecar_read", "image_transcribe", "validate_research_schema"]);
+const READERS = new Set(["research_query", "project_context", "person_warnings", "merge_warnings", "census_children_gap", "sidecar_read", "image_transcribe", "validate_research_schema"]);
 
 /** Tools that signal the two loud path states by THROWING rather than
  *  returning `{ ok: false, errors }` — the dispatch arm's catch turns the throw
@@ -101,7 +102,18 @@ const CALLS: Array<{ tool: string; call: (projectPath: any) => Promise<any> }> =
   {
     tool: "extraction_append",
     call: (projectPath) =>
-      extractionAppend({ projectPath, section: "sources", op: "append", entry: { id: "src_001" } } as any),
+      extractionAppend({
+        projectPath,
+        documents: [{
+          recordId: "capture:no-project",
+          document: {
+            recordType: "obituary",
+            documentForm: "verbatim_transcript",
+            source: { title: "An obituary", repository: "A newspaper" },
+            persons: [{ id: "p1", principal: true, names: [{ given: "Ann", surname: "Lee" }], facts: [] }],
+          },
+        }],
+      }, LOCAL),
   },
   {
     tool: "research_log_append",
@@ -161,6 +173,15 @@ const CALLS: Array<{ tool: string; call: (projectPath: any) => Promise<any> }> =
   {
     tool: "person_warnings",
     call: (projectPath) => personWarningsTool({ projectPath, personId: "I1" } as any),
+  },
+  {
+    tool: "census_children_gap",
+    call: (projectPath) =>
+      censusChildrenGapTool({
+        projectPath,
+        motherId: "I1",
+        censuses: [{ year: 1900, childrenBorn: 1, childrenLiving: 1 }],
+      } as any),
   },
   {
     tool: "validate_research_schema",
@@ -246,7 +267,7 @@ describe("half a project — research.json present, tree.gedcomx.json missing", 
   const READS_TREE = CALLS.filter(({ tool }) =>
     ["research_append", "extraction_append", "research_log_append", "tree_edit",
      "tree_correct", "materialize_facts", "tree_forget", "project_context",
-     "merge_tree_persons", "merge_warnings"].includes(tool),
+     "merge_tree_persons", "merge_warnings", "census_children_gap"].includes(tool),
   );
   for (const { tool, call } of READS_TREE) {
     it(`${tool} stays loud`, async () => {

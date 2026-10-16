@@ -1,9 +1,9 @@
 """The real Streamable HTTP tool server (``packages/engine/mcp-server/build/http.js``) as a
 test fixture: spawned against a scratch database, called through the Python MCP client.
 
-test_proto_fencing_pg.py needs the engine's real claim fence and the worker's real claim
-SQL in one test, so it runs the built server as a process -- two of them, the way two
-instances would. Without ``node`` or the build the module skips, except under ``CI``,
+test_proto_fencing_pg.py needs the engine's real claim fence and door (U4: the bearer's
+sha256 stamped on the open turn) and the worker's real claim and stamp SQL in one test, so
+it runs the built server as a process -- two of them, the way two instances would. Without ``node`` or the build the module skips, except under ``CI``,
 where it fails, so the job cannot pass by skipping; a build older than any engine source
 always fails, because it would test code that is no longer the code.
 """
@@ -137,3 +137,24 @@ async def call_tool(server: ToolServer, headers: dict[str, str], name: str, args
 def result_text(result) -> str:
     """Every text block of a ``CallToolResult``, joined."""
     return "\n".join(getattr(block, "text", "") for block in result.content)
+
+
+def http_statuses(exc: BaseException) -> list[int]:
+    """Every HTTP status carried by an ``httpx.HTTPStatusError`` in ``exc``'s tree. The MCP
+    client raises a refused POST as one, inside its task group's ExceptionGroup -- the
+    door's 403 (U4) surfaces that way at ``initialize``, before any tool runs."""
+    import httpx
+
+    found: list[int] = []
+    stack: list[BaseException] = [exc]
+    seen: set[int] = set()
+    while stack:
+        current = stack.pop()
+        if id(current) in seen:
+            continue
+        seen.add(id(current))
+        if isinstance(current, httpx.HTTPStatusError):
+            found.append(current.response.status_code)
+        stack.extend(getattr(current, "exceptions", ()) or ())
+        stack.extend(e for e in (current.__cause__, current.__context__) if e is not None)
+    return found

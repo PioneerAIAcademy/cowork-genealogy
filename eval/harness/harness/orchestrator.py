@@ -333,7 +333,8 @@ async def _run_one_test_async(
         if n_runs > 1:
             _elapsed = time.perf_counter() - _run_start
             _skill_s = single.duration_ms / 1000.0
-            # Remainder is judge + validators + diffing (all post-skill work).
+            # Remainder is the CLI teardown, judge, validators and diffing (all
+            # post-skill work; duration_ms stops before the teardown).
             _post_s = max(0.0, _elapsed - _skill_s)
             _tag = single.aborted_reason or single.outcome
             print(
@@ -674,12 +675,6 @@ async def _execute_single_run(
             "expected_classifications": spec.raw.get(
                 "expected_classifications", []
             ),
-            # Also threaded in: `refinement_targets`, the assertion ids a
-            # classification-refinement test expects updated in place —
-            # deterministic ground truth for
-            # test_refinement_preserves_extraction_fields_and_avoids_duplication
-            # (issue #2021, F12; unit-test-spec.md's `refinement_targets`).
-            "refinement_targets": spec.raw.get("refinement_targets", []),
             # Also threaded in: `delegation`, the exact text a direct-agent test
             # hands the pair's agent (issue #2246). The direct-arm validators in
             # test_universal.py gate on it and assert the recorded spawn prompt
@@ -1077,6 +1072,7 @@ async def _execute_skill_with_retry(
                         # Direct-agent arm: agents staged, no skills. The
                         # conversion doc's acceptance check, made literal.
                         stage_skills=not spec.is_direct,
+                        suite=spec.skill,
                     )
                     seed_pg_workspace(workspace)
                     before_snapshot = snapshot_files(workspace)
