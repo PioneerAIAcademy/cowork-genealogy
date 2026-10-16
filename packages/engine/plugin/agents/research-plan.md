@@ -236,7 +236,10 @@ plan untouched as the record of what was done.
 but new information invalidates its assumptions (e.g., the subject
 turned out to be a different person, or a boundary change moved the
 records). Apply Step 6 ("Handle re-planning"): supersede the old plan,
-create a new one.
+create a new one. Name in your return the assumption that is now false and
+the fact that falsified it. A plan that is only improvable, or that a caller
+calls finished while an item is still `planned` or `in_progress`, is not
+superseded: take Review mode and put the improvements in your recap.
 
 **Dispose mode** — `research-exhaustiveness` refused a declaration
 because items on the active plan are still `planned`, and you were
