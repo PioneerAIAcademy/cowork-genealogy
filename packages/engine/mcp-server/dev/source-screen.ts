@@ -543,6 +543,8 @@ export interface SnapshotOpts {
   seed: number;
   samePerson: boolean;
   tools: Tools;
+  /** The CLI sets this: Ctrl-C writes the ledger before exiting. */
+  handleInterrupt?: boolean;
 }
 
 export async function runSnapshot(opts: SnapshotOpts): Promise<Ledger> {
@@ -563,6 +565,16 @@ export async function runSnapshot(opts: SnapshotOpts): Promise<Ledger> {
     writeJson(runPath, run);
   }
   const ctx: Ctx = { out: opts.out, tools: opts.tools, samePerson: opts.samePerson, ledger: newLedger() };
+  const ledgerPath = join(opts.out, "runs", `${ctx.ledger.started.replace(/[:.]/g, "-")}.json`);
+  // An interrupted run still leaves its ledger; the person in progress has no
+  // meta.json yet, so the next run fetches it again.
+  const onInterrupt = () => {
+    ctx.ledger.stopped = "interrupted";
+    ctx.ledger.finished = new Date().toISOString();
+    writeJson(ledgerPath, ctx.ledger);
+    process.exit(130);
+  };
+  if (opts.handleInterrupt) process.once("SIGINT", onInterrupt);
   for (const pid of run.draw) {
     const key = run.map[pid];
     if (key && existsSync(join(personsDir(opts.out, key), "meta.json"))) {
@@ -586,8 +598,9 @@ export async function runSnapshot(opts: SnapshotOpts): Promise<Ledger> {
       break;
     }
   }
+  if (opts.handleInterrupt) process.off("SIGINT", onInterrupt);
   ctx.ledger.finished = new Date().toISOString();
-  writeJson(join(opts.out, "runs", `${ctx.ledger.started.replace(/[:.]/g, "-")}.json`), ctx.ledger);
+  writeJson(ledgerPath, ctx.ledger);
   return ctx.ledger;
 }
 
@@ -1176,6 +1189,7 @@ export async function main(argv: string[], tools?: Tools): Promise<number> {
       seed: intFlag(flags, "--seed", 1)!,
       samePerson: samePersonOn,
       tools: tools ?? liveTools(),
+      handleInterrupt: true,
     });
     console.log(JSON.stringify(ledger, null, 2));
     return ledger.stopped ? 2 : 0;
