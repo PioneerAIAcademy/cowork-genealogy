@@ -2970,7 +2970,11 @@ describe("research_append (Phase 3)", () => {
         section: "proof_summaries",
         op: "update",
         entryId: "ps_001",
-        fields: { tier: "not_proved", narrative_markdown: "## Conclusion\nidentity unsettled" },
+        fields: {
+          tier: "not_proved",
+          narrative_markdown: "## Conclusion\nidentity unsettled",
+          exhaustive_search_summary: "census + vitals",
+        },
       });
       expect(r.ok, `refused: ${JSON.stringify((r as any).errors)}`).toBe(true);
     });
@@ -3155,6 +3159,144 @@ describe("research_append (Phase 3)", () => {
       if (r.ok) return;
       expect(r.errors.join(" ")).toContain("ps_001");
       expect(await readFile(join(dir, "research.json"), "utf-8")).toBe(before);
+    });
+
+    // ── narrative and search summary move together once the question is searched again ──
+    //
+    // Observed 2026-10-09 (issue #3177, G9GJ-959): each re-concluded summary was
+    // updated one field at a time after three later searches, so one proof's
+    // narrative recommended records its own summary said were searched, and the
+    // other's summary called images "Not completed" that its narrative quoted.
+    const SUMMARY_WRITTEN = "2026-10-09T10:00:00.000Z";
+    const logEntry = (id: string, planItemId: string | null, performed: string) => ({
+      id, plan_item_id: planItemId, performed, tool: "record_search", query: {},
+      outcome: "negative", results_examined: 0, external_site: null, results_ref: null,
+    });
+    const withSearchedSince = (
+      performed = "2026-10-09T12:00:00Z",
+      stamp: string | null = SUMMARY_WRITTEN,
+    ) => {
+      const state = withSummary() as any;
+      if (stamp !== null) state.proof_summaries[0].updated = stamp;
+      state.plans = [
+        {
+          id: "pl_001", question_id: "q_001", status: "active", created: "2026-10-01",
+          items: [{ id: "pli_001", sequence: 1, record_type: "census", jurisdiction: "Here",
+            date_range: "1850", repository: "FamilySearch", rationale: "r", fallback_for: null,
+            status: "completed" }],
+        },
+      ];
+      state.log = [logEntry("log_001", "pli_001", performed)];
+      return state;
+    };
+    const updatePs001 = (fields: Record<string, unknown>) =>
+      researchAppend({
+        projectPath: dir,
+        section: "proof_summaries",
+        op: "update",
+        entryId: "ps_001",
+        fields,
+      });
+
+    for (const [set, missing] of [
+      ["narrative_markdown", "exhaustive_search_summary"],
+      ["exhaustive_search_summary", "narrative_markdown"],
+    ] as const) {
+      it(`refuses an update that sets ${set} without ${missing} after a later search`, async () => {
+        await writeProject(withSearchedSince());
+        const before = await readFile(join(dir, "research.json"), "utf-8");
+        const r = await updatePs001({ [set]: "rewritten after the 1855 image was read" });
+        expect(r.ok).toBe(false);
+        if (r.ok) return;
+        const msg = r.errors.join(" ");
+        expect(msg).toContain("ps_001");
+        expect(msg).toContain(missing);
+        expect(msg).toContain("log_001");
+        expect(await readFile(join(dir, "research.json"), "utf-8")).toBe(before);
+      });
+    }
+
+    it("refuses a one-field update after a later search even when it also changes the tier", async () => {
+      await writeProject(withSearchedSince());
+      const r = await updatePs001({ tier: "not_proved", narrative_markdown: "## Not proved\n..." });
+      expect(r.ok).toBe(false);
+      if (r.ok) return;
+      expect(r.errors.join(" ")).toContain("exhaustive_search_summary");
+    });
+
+    it("counts a later search logged in the dash-separated time form", async () => {
+      await writeProject(withSearchedSince("2026-10-09T12-00-00Z"));
+      const r = await updatePs001({ narrative_markdown: "## Conclusion\nreworded" });
+      expect(r.ok).toBe(false);
+    });
+
+    it("allows a one-field update when the question has not been searched since", async () => {
+      await writeProject(withSearchedSince("2026-10-09T09:00:00Z"));
+      const r = await updatePs001({ tier: "not_proved", narrative_markdown: "## Not proved\n..." });
+      expect(r.ok, `refused: ${JSON.stringify((r as any).errors)}`).toBe(true);
+    });
+
+    it("allows a one-field update on a summary with no updated stamp", async () => {
+      await writeProject(withSearchedSince("2026-10-09T12:00:00Z", null));
+      const r = await updatePs001({ narrative_markdown: "## Conclusion\nreworded" });
+      expect(r.ok, `refused: ${JSON.stringify((r as any).errors)}`).toBe(true);
+    });
+
+    it("ignores later searches attributed to another question or to no plan item", async () => {
+      const state = withSearchedSince("2026-10-09T09:00:00Z");
+      state.questions.push({ id: "q_002", question: "birth?", status: "open" });
+      state.plans.push({
+        ...state.plans[0], id: "pl_002", question_id: "q_002",
+        items: [{ ...state.plans[0].items[0], id: "pli_002" }],
+      });
+      state.log.push(logEntry("log_002", "pli_002", "2026-10-09T12:00:00Z"));
+      state.log.push(logEntry("log_003", null, "2026-10-09T12:00:00Z"));
+      await writeProject(state);
+      const r = await updatePs001({ narrative_markdown: "## Conclusion\nreworded" });
+      expect(r.ok, `refused: ${JSON.stringify((r as any).errors)}`).toBe(true);
+    });
+
+    it("allows an update that rewrites both fields together, and restamps updated", async () => {
+      await writeProject(withSearchedSince());
+      const r = await updatePs001({
+        narrative_markdown: "## Conclusion\nNow cites the 1855 image.",
+        exhaustive_search_summary: "census; 1855 image read",
+      });
+      expect(r.ok, `refused: ${JSON.stringify((r as any).errors)}`).toBe(true);
+      const ps = (await readResearch()).proof_summaries[0];
+      expect(ps.exhaustive_search_summary).toBe("census; 1855 image read");
+      expect(Date.parse(ps.updated)).toBeGreaterThan(Date.parse("2026-10-09T12:00:00Z"));
+      // The search is now behind the stamp, so a one-field follow-up passes.
+      const r2 = await updatePs001({ narrative_markdown: "## Conclusion\nreworded again" });
+      expect(r2.ok, `refused: ${JSON.stringify((r2 as any).errors)}`).toBe(true);
+    });
+
+    it("allows re-passing one field's current text beside a rewritten other", async () => {
+      await writeProject(withSearchedSince());
+      const r = await updatePs001({
+        narrative_markdown: "## Conclusion\nreworded",
+        exhaustive_search_summary: "census",
+      });
+      expect(r.ok, `refused: ${JSON.stringify((r as any).errors)}`).toBe(true);
+    });
+
+    it("stamps updated on append and overwrites a caller-supplied value on update", async () => {
+      const state = withSummary() as any;
+      state.questions.push({ id: "q_002", question: "birth?", status: "open" });
+      await writeProject(state);
+      const r = await researchAppend({
+        projectPath: dir,
+        section: "proof_summaries",
+        op: "append",
+        entry: { ...entry("probable"), question_id: "q_002", updated: "2020-01-01T00:00:00Z" },
+      });
+      expect(r.ok, `refused: ${JSON.stringify((r as any).errors)}`).toBe(true);
+      const appended = (await readResearch()).proof_summaries[1];
+      expect(Date.parse(appended.updated)).toBeGreaterThan(Date.parse("2026-01-01T00:00:00Z"));
+      const r2 = await updatePs001({ tier: "not_proved", updated: "2020-01-01T00:00:00Z" });
+      expect(r2.ok, `refused: ${JSON.stringify((r2 as any).errors)}`).toBe(true);
+      const updated = (await readResearch()).proof_summaries[0].updated;
+      expect(Date.parse(updated)).toBeGreaterThan(Date.parse("2026-01-01T00:00:00Z"));
     });
 
     it("allows updating the existing summary", async () => {
@@ -3344,7 +3486,10 @@ describe("research_append (Phase 3)", () => {
       section: "proof_summaries",
       op: "update",
       entryId: "ps_001",
-      fields: { narrative_markdown: "## Conclusion\nRevised wording." },
+      fields: {
+        narrative_markdown: "## Conclusion\nRevised wording.",
+        exhaustive_search_summary: "Searched census + vitals",
+      },
     });
     expect(r.ok).toBe(true);
   });
