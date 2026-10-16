@@ -2732,6 +2732,36 @@ function planItemSkipInvariants(
 // issue #2261). The harness backstop `test_us_1890_never_expected` binds only
 // on the unit eval plane; this precondition binds everywhere.
 // ---------------------------------------------------------------------------
+
+/** Common English words that appear in census event descriptions and
+ *  destruction caveats. Used by `timelineCensus1890Invariants` to detect
+ *  "names no country" in condition (b): after stripping "census" and
+ *  "1890", any remaining token not in this set, not a number, and not a
+ *  component of the timeline's event `standard_place` values is treated
+ *  as a potential jurisdiction name. Not a country table — a noise filter
+ *  so that "Largely Destroyed" does not read as a country while "Denmark"
+ *  does. */
+const CENSUS_1890_NOISE = new Set([
+  // "census" itself: the \bcensus\b regex does not strip it from
+  // underscored compounds (census_1890) because JS treats _ as \w.
+  "census",
+  // articles, prepositions, conjunctions
+  "the", "a", "an", "of", "for", "in", "by", "at", "to", "from",
+  "and", "or", "but", "on", "with", "not", "no",
+  // destruction context
+  "largely", "destroyed", "surviving", "fire", "lost", "burned",
+  "missing", "available", "damaged", "fragments", "fragmentary",
+  "presumed", "incomplete", "extant", "remaining",
+  // scope/quantity
+  "most", "all", "some", "few", "part", "parts", "only", "except",
+  "partial", "areas",
+  // administrative (not country names)
+  "records", "record", "schedule", "schedules",
+  "county", "city", "town", "state", "district", "township",
+  // verbs/auxiliary
+  "was", "were", "is", "are", "be", "been",
+]);
+
 function timelineCensus1890Invariants(entry: any): string[] {
   const gaps: any[] = Array.isArray(entry?.gaps) ? entry.gaps : [];
   const errors: string[] = [];
@@ -2746,6 +2776,18 @@ function timelineCensus1890Invariants(entry: any): string[] {
         e.standard_place.trim(),
     )
     .map((e: any) => (e.standard_place as string).trim());
+
+  // Build a set of lowercase place-name tokens from the timeline's events.
+  // On a US timeline these are state/county names like "pennsylvania",
+  // "schuylkill" — used by the "names no country" check below.
+  const placeTokens = new Set<string>();
+  for (const p of nonNullPlaces) {
+    for (const segment of p.split(",")) {
+      for (const word of segment.trim().toLowerCase().split(/\s+/)) {
+        if (word) placeTokens.add(word);
+      }
+    }
+  }
 
   for (const gap of gaps) {
     if (!gap || !Array.isArray(gap.expected_events)) continue;
@@ -2779,18 +2821,22 @@ function timelineCensus1890Invariants(entry: any): string[] {
       // standard_place, condition (b) is not satisfied.
       //
       // "Names no country": after stripping "census", the standalone year,
-      // and punctuation, any remaining word starting with an uppercase letter
-      // (≥3 chars) is treated as a jurisdiction name. Since condition (a)
-      // already ruled out US-naming, a remaining proper noun is likely a
-      // non-US jurisdiction — stay silent. A false positive (e.g. a proper
-      // noun that is not a country) is a false allow, which ADR-0011
-      // limit 1 prefers over a false deny.
+      // and punctuation, every remaining token must be accounted for by
+      // CENSUS_1890_NOISE (common English words), a number, or a component
+      // of the timeline's event standard_places (known US locations). Any
+      // unaccounted token is treated as a possible jurisdiction name. Since
+      // condition (a) already ruled out US-naming, an unaccounted token
+      // likely names a non-US jurisdiction — stay silent. A false positive
+      // is a false allow, which ADR-0011 limit 1 prefers.
       const stripped = text
         .replace(/\bcensus\b/gi, "")
         .replace(/(?<!\d)1890(?!\d)/g, "")
-        .replace(/[_\-—–,.:;()\[\]"']/g, " ")
-        .trim();
-      if (/\b[A-Z][a-zA-Z]{2,}\b/.test(stripped)) continue;
+        .replace(/[_\-—–,.:;()\[\]"']/g, " ");
+      const tokens = stripped.toLowerCase().split(/\s+/).filter((t) => t.length > 0);
+      const unaccounted = tokens.filter(
+        (t) => !CENSUS_1890_NOISE.has(t) && !placeTokens.has(t) && !/^\d+$/.test(t),
+      );
+      if (unaccounted.length > 0) continue;
 
       if (nonNullPlaces.length === 0) continue;
 

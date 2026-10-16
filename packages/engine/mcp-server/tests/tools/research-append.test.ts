@@ -12084,4 +12084,78 @@ describe("research_append — US 1890 census precondition", () => {
     });
     expect(r.ok).toBe(true);
   });
+
+  // --- additional fire cases: capitalized US entries (review round 1) ---
+
+  it("(11) fire: '1890 Census (Largely Destroyed)' — title case with caveat", async () => {
+    const text = "1890 Census (Largely Destroyed)";
+    await writeProject(timelineResearch([text]));
+    const r = await researchAppend({
+      projectPath: dir,
+      section: "timelines",
+      op: "update",
+      entryId: "t_001",
+      fields: {
+        gaps: [
+          { start: "1850", end: "1900", expected_events: [text], severity: "medium" },
+        ],
+      },
+    });
+    expect(r.ok).toBe(false);
+    expect(failure(r).errors?.join(" ")).toMatch(/1890/);
+  });
+
+  it("(12) fire: 'Census 1890 - Destroyed by fire in 1921'", async () => {
+    const text = "Census 1890 - Destroyed by fire in 1921";
+    await writeProject(timelineResearch([text]));
+    const r = await researchAppend({
+      projectPath: dir,
+      section: "timelines",
+      op: "update",
+      entryId: "t_001",
+      fields: {
+        gaps: [
+          { start: "1850", end: "1900", expected_events: [text], severity: "medium" },
+        ],
+      },
+    });
+    expect(r.ok).toBe(false);
+    expect(failure(r).errors?.join(" ")).toMatch(/1890/);
+  });
+
+  it("(13) fire: '1890 census, Schuylkill County' — US county in text", async () => {
+    const text = "1890 census, Schuylkill County";
+    await writeProject(timelineResearch([text]));
+    const r = await researchAppend({
+      projectPath: dir,
+      section: "timelines",
+      op: "update",
+      entryId: "t_001",
+      fields: {
+        gaps: [
+          { start: "1850", end: "1900", expected_events: [text], severity: "medium" },
+        ],
+      },
+    });
+    expect(r.ok).toBe(false);
+    expect(failure(r).errors?.join(" ")).toMatch(/1890/);
+  });
+
+  it("(14) fire: '1890 Pennsylvania census' — US state in text", async () => {
+    const text = "1890 Pennsylvania census";
+    await writeProject(timelineResearch([text]));
+    const r = await researchAppend({
+      projectPath: dir,
+      section: "timelines",
+      op: "update",
+      entryId: "t_001",
+      fields: {
+        gaps: [
+          { start: "1850", end: "1900", expected_events: [text], severity: "medium" },
+        ],
+      },
+    });
+    expect(r.ok).toBe(false);
+    expect(failure(r).errors?.join(" ")).toMatch(/1890/);
+  });
 });
