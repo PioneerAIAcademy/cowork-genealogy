@@ -49,15 +49,15 @@ marriage, and the indexes give years only:
 
 | Child | Baptism | Ark | Tree |
 |---|---|---|---|
-| János | 1877 | `ark:/61903/1:1:XZ9V-TVZ` | not in tree |
-| Sándor | 1880 | `ark:/61903/1:1:XZ9V-R5L` | not in tree |
-| István | 1881 | `ark:/61903/1:1:XZ9V-T1C` | `G549-2W7`, born 1881 |
-| Teréz | 1884 | `ark:/61903/1:1:XZ9V-TRT` | `G549-3PV` Terézia, born 1884 |
-| Julianna | 1886 | `ark:/61903/1:1:XZ9V-JY3` | `G549-KL1`, born 1886 |
-| Ferencz | 1889 | `ark:/61903/1:1:XZ9V-VM4` | `G54S-9HJ` Ferenc, born 1889 |
-| Anna | 1891 | `ark:/61903/1:1:XZ9V-P9Q` | `G549-NBC`, born 1891 |
-| Anna | 1893 | `ark:/61903/1:1:XZ9V-PLH` | `G549-TCX`, undated |
-| Szidonia | 1895 | `ark:/61903/1:1:XZ9V-V62` | `G549-BM3`, undated |
+| János | 1877 | `ark:/61903/1:1:XZ9V-TVD` | not in tree |
+| Sándor | 1880 | `ark:/61903/1:1:XZ9V-R5P` | not in tree |
+| István | 1881 | `ark:/61903/1:1:XZ9V-T18` | `G549-2W7`, born 1881 |
+| Teréz | 1884 | `ark:/61903/1:1:XZ9V-TRB` | `G549-3PV` Terézia, born 1884 |
+| Julianna | 1886 | `ark:/61903/1:1:XZ9V-JY7` | `G549-KL1`, born 1886 |
+| Ferencz | 1889 | `ark:/61903/1:1:XZ9V-VMC` | `G54S-9HJ` Ferenc, born 1889 |
+| Anna | 1891 | `ark:/61903/1:1:XZ9V-P9W` | `G549-NBC`, born 1891 |
+| Anna | 1893 | `ark:/61903/1:1:XZ9V-PLZ` | `G549-TCX`, undated |
+| Szidonia | 1895 | `ark:/61903/1:1:XZ9V-V6G` | `G549-BM3`, undated |
 
 Every dated tree child matches a baptism by name and year in the parish where the marriage was
 recorded. In order they run from 1877 to 1895, which fits a mother born about 1858: about 19 at the
@@ -73,12 +73,11 @@ record links the tree's form of the name to this Vas family.
 
 **Anna 1891 and Anna 1893 are two daughters, not a discrepancy.** The tree has an Anna born 1891
 (`G549-NBC`) and an undated Anna (`G549-TCX`). The index has a separate baptism for each: 1891
-(`XZ9V-P9Q`, film image 423) and 1893 (film images 428–429). The 1891 Anna was presumably dead by the
+(`XZ9V-P9W`, film image 423) and 1893 (film images 428–429). The 1891 Anna was presumably dead by the
 time the 1893 child was given the same name, but no burial for her was found. The 1893 baptism appears
-as **four** index records (`XZ9V-PLH` and `XZ9V-PLZ` on image `ark:/61903/3:1:939J-V28N-2`;
-`XZ9V-VCF` and `XZ9V-VCJ` on image `ark:/61903/3:1:939J-V282-Z`), and they are one entry. The two
-consecutive film images are the same register page photographed twice, and each image was indexed
-twice. Both images carry the same run of neighbouring 1893 entries in the same order (Szombat Katalin
+as two index records, Anna `XZ9V-PLZ` on image `ark:/61903/3:1:939J-V28N-2` and Anna
+`XZ9V-VCJ` on image `ark:/61903/3:1:939J-V282-Z`, and they are one entry. The two consecutive film
+images are the same register page photographed twice, and each was indexed once. Both images carry the same run of neighbouring 1893 entries in the same order (Szombat Katalin
 `XZ9V-PL4`/`XZ9V-VCX`, then Anna Szöke, then Takács Mária `XZ9V-PL6`/`XZ9V-VC2`). Earlier in the 1893
 listing the same duplication repeats under other series (Horváth Lajos `XZ9V-P29`/`XZ9V-PL5`, Kovács
 József `XZ9V-P2Q`/`XZ9V-PLY`). So the repeated Annas do not point to twins or a second couple.
