@@ -3,15 +3,16 @@
     {
       "id": "f1",
       "type": "fact",
-      "description": "Konrad Grubenmann was buried on 17 March 1787 in Teufen, Appenzell Ausserrhoden, Switzerland; the burial entry indexes him as Conrad Grubenmann, born 1699, with Anna Reff as his wife.",
+      "description": "Konrad Grubenmann was buried on 17 March 1787; the burial is entered in both the Teufen and the Stein (Appenzell Ausserrhoden) burial registers, each indexing him as Conrad Grubenmann aged 88, so a report naming either Teufen or Stein as the burial place is correct. The wife named in those entries (Anna Reff in Teufen, Anna Väfin in Stein) is an unproven second wife and must not be presented as established.",
       "details": {
         "subject_person": "Konrad Grubenmann (KP47-72Q)",
         "fact_type": "Burial",
         "date": "17 March 1787",
-        "place": "Teufen, Appenzell Ausserrhoden, Switzerland"
+        "place": "Teufen or Stein, Appenzell Ausserrhoden, Switzerland"
       },
       "supporting_sources": [
-        "Schweiz, Katholische und Reformiert Kirchenbücher, 1418-1996 — burial entry for Conrad Grubenmann and Anna Reff, 17 Mar 1787"
+        "Schweiz, Katholische und Reformiert Kirchenbücher, 1418-1996 — Teufen burial entry for Conrad Grubenmann, aged 88, and Anna Reff, 17 Mar 1787 (ark:/61903/1:1:6FZ1-148K)",
+        "Schweiz, Katholische und Reformiert Kirchenbücher, 1418-1996 — Stein burial entry for Conrad Grubenmann, aged 88, and Anna Väfin, 17 Mar 1787 (ark:/61903/1:1:6F88-WZBR)"
       ],
       "required": true
     }
