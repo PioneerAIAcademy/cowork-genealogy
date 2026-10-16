@@ -2687,6 +2687,48 @@ describe("tree_edit — warning gate integration (issue #2840)", () => {
     expect(await readTree()).toEqual(treeBefore);
   });
 
+  it("still refuses the chosen father once the conflict is resolved, naming the way through", async () => {
+    const resolved = {
+      ...parentageResearch,
+      conflicts: [
+        {
+          id: "c_001",
+          conflict_type: "identity",
+          description: "Two candidate fathers for I1",
+          disputed_attribute: "father",
+          identity_question: "Is I1's father I2 or I3?",
+          competing_assertion_ids: ["a_001", "a_002"],
+          independence_analysis: "x",
+          weighing_analysis: "x",
+          preferred_assertion_id: "a_002",
+          resolution_rationale: "x",
+          status: "resolved",
+          blocks_question_ids: [],
+        },
+      ],
+    };
+    await writeProject(parentage(), resolved);
+
+    const r = await addParentFrom("I3", "a_002");
+
+    expect(r.ok).toBe(false);
+    if (r.ok) return;
+    expect(r.message).toContain("remove the rejected parent's edge with tree_correct before adding the chosen one");
+    expect(r.message).not.toContain("until it is resolved");
+  });
+
+  it("lands the chosen father once the rejected father's edge is gone", async () => {
+    const t = parentage();
+    t.relationships = (t.relationships as any[]).filter(
+      (rel) => !(rel.type === "ParentChild" && rel.parent === "I2" && rel.child === "I1"),
+    ) as any;
+    await writeProject(t, parentageResearch);
+
+    const r = await addParentFrom("I3", "a_002");
+
+    expect(r.ok, JSON.stringify((r as any).errors)).toBe(true);
+  });
+
   it("asks to justify the other warnings only when the refusal carries some", async () => {
     const t = parentage();
     t.persons[2].facts[0].date = "1840";

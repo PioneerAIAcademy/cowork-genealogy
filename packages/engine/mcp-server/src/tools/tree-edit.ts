@@ -212,8 +212,9 @@ const ROUTE_PARENTAGE =
   "This write gives a child a second biological parent of one sex. That is not a warning to " +
   "justify, and warningJustifications cannot pass it. If one of these parents is a step, " +
   "adoptive, foster or guardian parent, add that edge with its subtype instead. Otherwise send " +
-  "each conflicts_surfaced entry to conflict-resolution as an identity question, and do not " +
-  "write this edge until it is resolved.";
+  "each conflicts_surfaced entry to conflict-resolution as an identity question. Once it is " +
+  "resolved, remove the rejected parent's edge with tree_correct before adding the chosen one: " +
+  "this write is refused while both edges stand.";
 
 const JUSTIFY_OTHERS =
   " Justify every other warningId: re-call with warningJustifications listing each warningId " +

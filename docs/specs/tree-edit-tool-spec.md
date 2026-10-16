@@ -573,8 +573,10 @@ Sequence (validate-before-persist, tree-only):
   second biological parent of one sex is refused by the warning gate under a
   `competingParentage` id, so the refusal is the detector: it
   carries `conflicts_surfaced` and tells the caller to send the disagreement to
-  `conflict-resolution` as an identity question, not to justify it, and not to
-  write the edge until it is resolved. The disputed edge stays out of the tree
+  `conflict-resolution` as an identity question, not to justify it, and, once
+  it is resolved, to remove the rejected parent's edge with `tree_correct` before
+  writing the chosen one: the gate refuses while both edges stand, resolved or
+  not, because it reads the trees, not `conflicts`. The disputed edge stays out of the tree
   meanwhile; the entry names each parent's assertion so the conflict can be
   recorded without it. **It cannot be justified**: a re-call that justifies
   the warning is refused like the first call. Only a biological parent is
