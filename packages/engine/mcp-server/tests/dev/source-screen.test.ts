@@ -268,6 +268,8 @@ describe("error classes", () => {
     }
     expect(Object.fromEntries(Object.entries(got).map(([k, v]) => [k, v.split(" <- ")[0]])), JSON.stringify(got, null, 2)).toEqual(want);
     expect(classifyError("something nobody has seen before")).toBe("transient");
+    expect(classifyError("Record 4X7Q-429 was not found in FamilySearch historical records.")).toBe("permanent");
+    expect(classifyError("Person KWCB-429 not found in the FamilySearch Family Tree.")).toBe("permanent");
   }, 30_000);
 
   it("stops the run on a 429 from every one of the five tools", async () => {

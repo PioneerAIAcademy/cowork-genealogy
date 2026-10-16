@@ -160,7 +160,7 @@ export function buildAuditList(read: PersonReadResult): AuditList {
 
 export type ErrorClass = "transient" | "permanent" | "stop";
 
-const STOP_PATTERNS = [/rate limit/i, /Retry-After/i, /login tool/i, /\b429\b/];
+const STOP_PATTERNS = [/rate limit/i, /Retry-After/i, /login tool/i, /API error: 429\b/];
 const PERMANENT_PATTERNS = [
   /was not found in FamilySearch historical records/i,
   /is restricted and cannot be viewed/i,
