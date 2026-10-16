@@ -43,8 +43,9 @@ BUILD_VERSION_RE = re.compile(r"^\d+\.\d+\.\d+\+(dev|\d{4}-\d{2}-\d{2}\.[0-9a-f]
 
 COMMON_REQUIRED = ("Procfile", "BUILD-INFO.json", "certs/rds-global-bundle.pem")
 REQUIRED = {
-    "web": COMMON_REQUIRED + ("requirements.txt", "web/app.py", "web/auth.py", "web/spa.py", "enqueue.py", "grants.py",
-                              "migrate.py", "config/familysearch.json", "web-dist/index.html"),
+    "web": COMMON_REQUIRED + ("requirements.txt", "web/app.py", "web/auth.py", "web/spa.py", "web/feedback.py",
+                              "web/blobstore.py", "enqueue.py", "grants.py", "migrate.py", "config/familysearch.json",
+                              "web-dist/index.html"),
     "worker": COMMON_REQUIRED + ("requirements.txt", "app/__init__.py", "app/agent/__init__.py",
                                  "app/agent/real_agent.py", "proto/enqueue.py", "proto/grants.py", "proto/migrate.py",
                                  "proto/worker/worker.py", "proto/worker/options.py",

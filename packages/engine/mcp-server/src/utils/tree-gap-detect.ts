@@ -20,6 +20,8 @@ export const FERTILE_MAX_AGE = 45;
 export const CHILD_GAP_YEARS = 4;
 /** A gap is only reported when the mother was at most this old at the earlier birth. */
 export const CHILD_GAP_MAX_MOTHER_AGE = 40;
+/** A lone child born more than this many years before the marriage almost always belongs to other parents. */
+export const CHILD_BEFORE_MARRIAGE_YEARS = 1;
 /** A last child born when the mother was younger than this is "early". */
 export const EARLY_LAST_CHILD_AGE = 34;
 /** ...and only when she is recorded as living to at least this age. */
@@ -380,6 +382,14 @@ function familyHoles(model: GapModel, out: TreeGap[]): void {
       const a = births[i];
       const b = births[i + 1];
       const ageAtA = a - mb;
+      if (
+        f.spouseIds.size === 1 &&
+        p.marriageYear != null &&
+        a < p.marriageYear - CHILD_BEFORE_MARRIAGE_YEARS &&
+        births.filter((y) => y < p.marriageYear! - CHILD_BEFORE_MARRIAGE_YEARS).length === 1
+      ) {
+        continue;
+      }
       if (b - a > CHILD_GAP_YEARS && ageAtA >= FERTILE_MIN_AGE && ageAtA <= CHILD_GAP_MAX_MOTHER_AGE) {
         add(
           gap(

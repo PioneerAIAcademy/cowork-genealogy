@@ -12,7 +12,7 @@ description: >-
   are extracted and need person assignment, or evaluate whether two records are
   the same individual using records in hand — never searching new ones. Do NOT
   use to find or gather more records (use search-records); extract assertions
-  (use record-extraction); resolve a conflict where multiple candidates compete
+  (use extraction_append); resolve a conflict where multiple candidates compete
   (use conflict-resolution); or merge confirmed-identical persons (use tree-edit
   after proof-conclusion).
 model: claude-sonnet-4-6
@@ -99,7 +99,7 @@ to the same person. If assertions were attached to a person ID at
 extraction time, you'd either force premature identity decisions or
 corrupt data when persons get merged. Instead:
 
-1. **record-extraction** attaches assertions to `record_id` +
+1. **Extraction** attaches assertions to `record_id` +
    `record_role` (the persona)
 2. **person-evidence** (this skill) evaluates whether each persona
    is the same as a known GedcomX person, and creates a revisable
@@ -267,7 +267,7 @@ the same response.
 ### 1. Identify unlinked assertions
 
 Find the assertions that have no corresponding `person_evidence` entry
-(or whose existing links need revision). If record-extraction just ran
+(or whose existing links need revision). If extraction just ran
 in this same continuous run and you already hold the new `a_` ids and the
 current `person_evidence` set in context, work from that — don't re-read
 `research.json` "to be safe"; the writer tools validate the whole project
@@ -285,11 +285,7 @@ grows all session):
 - `research_query({ section: "person_evidence", personId })` — the existing
   links for a candidate person, when checking for revisions.
 
-**`assertionId` is NOT a valid filter on the `assertions` section.** The
-`assertions` section accepts only `recordId`, `recordRole`, `sourceId`, and
-`questionId`. If you need to check whether an assertion is already linked,
-query `section: "person_evidence"` with `assertionId` — that is where the
-filter lives. Do not guess; a wrong-section filter errors out.
+**Link status lives only in `person_evidence`.** `research_query({ section: "assertions", assertionId })` returns the assertion itself, never whether it is linked; a hit there does not mean "already linked". To check linkage, query `section: "person_evidence"` with `assertionId`.
 
 An assertion is "unlinked" if no `pe_` entry references its `a_` ID.
 Group unlinked assertions by `record_id` + `record_role` — all
@@ -817,7 +813,7 @@ rationale so proof-conclusion sees it.
 
 **person-evidence owns the household skeleton.** Building the household
 structure — the member persons and the edges between them — is now this
-skill's job, not record-extraction's (which emits assertions only).
+skill's job, not extraction's (which emits assertions only).
 person-evidence materializes the household **directly**; it no longer
 hands a merge set to proof-conclusion to fold. For a household record:
 
@@ -961,8 +957,7 @@ No closing essay.
 ## Example: Linking probate record assertions
 
 **Context:** Thomas Flynn's 1881 will names "my son Patrick Flynn"
-and "my daughter Margaret Flynn." Three assertions were extracted by
-record-extraction:
+and "my daughter Margaret Flynn." Three assertions were extracted:
 
 - a_020: testator name "Thomas Flynn" (record_role: testator)
 - a_021: bequest naming "my son Patrick" (record_role: heir_1)

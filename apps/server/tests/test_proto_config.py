@@ -712,6 +712,18 @@ def test_base_profile_disables_the_sweep():
             assert int(_compose_default(env["SWEEP_INTERVAL_S"])[1]) == 0, f"{name}: the sweep must stay off"
 
 
+def test_base_profile_disables_retention():
+    """U19: retention purges idle sessions' transcripts for good; the compose volume holds the
+    ones the acceptance tools read, so every service that sets it defaults it off."""
+    found = []
+    for name, service in _load(COMPOSE)["services"].items():
+        env = _env(service)
+        if "RETENTION_INTERVAL_S" in env:
+            found.append(name)
+            assert int(_compose_default(env["RETENTION_INTERVAL_S"])[1]) == 0, f"{name}: retention must stay off"
+    assert found == ["worker"], found
+
+
 def test_smoke_error_visibility_exceeds_shutdown_grace():
     """The smoke's `sigterm` case restarts the worker mid-turn; its redelivery must arrive
     after the old process is gone, whether it exited on its own or was SIGKILLed."""
@@ -1211,6 +1223,18 @@ def test_011_is_idempotent_and_not_unique():
     assert re.match(r"CREATE INDEX IF NOT EXISTS session_entries_uuid_idx ON session_entries "
                     r"\(project_key, session_id, subpath, \(entry->>'uuid'\)\)$", statements[0]), statements[0]
 
+
+
+# ── U4: the tool server's door ───────────────────────────────────────────────────
+
+
+def test_012_is_idempotent_and_nullable():
+    """012 re-runs on an unledgered database (U9), so its one statement is an IF NOT EXISTS
+    add; nullable with no default, so the ADD is metadata-only and an unstamped turn -- a
+    fresh claim, or every row from before 012 -- matches no bearer at the tool server's door."""
+    statements = _statements(SQL_DIR / "012_turn_bearer.sql")
+    assert len(statements) == 1, statements
+    assert re.match(r"ALTER TABLE turns ADD COLUMN IF NOT EXISTS bearer_sha256 text$", statements[0]), statements[0]
 
 def _proto_imports(source: str, *, packaged: bool) -> set[str]:
     """The proto/<name>.py modules a source imports. ``packaged`` (the worker's layout):

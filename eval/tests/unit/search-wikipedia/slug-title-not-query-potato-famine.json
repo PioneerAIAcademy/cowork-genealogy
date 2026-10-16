@@ -2,31 +2,31 @@
   "test": {
     "id": "ut_search_wikipedia_p4t",
     "skill": "search-wikipedia",
-    "name": "Slug comes from the returned title, not the query — potato famine",
+    "name": "Logged title comes from the returned title, not the query — potato famine",
     "type": "positive",
-    "description": "The researcher uses the colloquial name ('the potato famine'); Wikipedia's summary endpoint follows the redirect and returns the article titled 'Great Famine (Ireland)'. SKILL.md step 4 says to build the slug from the article title, so the file must be great-famine-ireland.md, not potato-famine.md. This is the only test in the suite where the query slug and the title slug differ: in all seven other positive tests both routes produce the identical string, so none of them — including the two labelled slug regression checks — can detect a slug derived from the query. Filed from the #1662 deep dive.",
+    "description": "The researcher uses the colloquial name ('the potato famine'); Wikipedia's summary endpoint follows the redirect and returns the article titled 'Great Famine (Ireland)'. The agent body says the template's title is the article title the tool returned, never the query, so the logged notes' H1 must be '# Great Famine (Ireland)', not '# the potato famine'. This is the only test in the suite where the query and the returned title differ. Filed from the #1662 deep dive.",
     "tags": [
       "wikipedia",
-      "slug",
+      "title",
       "regression",
       "irish",
-      "slug-great-famine-ireland",
+      "title-great-famine-ireland",
       "direct-arm"
     ]
   },
   "input": {
-    "delegation": "Look up the potato famine on Wikipedia\n\ntopic: the potato famine",
-    "scenario": null
+    "delegation": "Look up the potato famine on Wikipedia\n\ntopic: the potato famine\nprojectPath: <workspace>",
+    "scenario": "empty-project-just-created"
   },
   "mcp_fixtures": [
     "wikipedia-search-potato-famine",
     "wikipedia-search-great-famine-ireland"
   ],
   "judge_context": [
-    "Two fixtures are declared so either query phrasing resolves to the same article: 'wikipedia-search-potato-famine' matches a query containing 'potato', 'wikipedia-search-great-famine-ireland' matches one containing 'Great Famine'. Both return the title 'Great Famine (Ireland)'. Whichever the skill sent, the returned title is the same and the expected slug is the same.",
-    "The saved file must be named from the RETURNED TITLE ('Great Famine (Ireland)' -> great-famine-ireland.md), not from the query the skill sent. A file named potato-famine.md means the slug was built from the query, which SKILL.md step 4 prohibits — it says to build the slug from the article title.",
-    "Do not treat the difference between the user's wording and the article title as an error to flag or a disambiguation to raise with the user. Following a redirect to the formal title is the expected behavior; the only thing under test is which of the two strings the filename came from.",
-    "IMPORTANT — file visibility: this skill writes a standalone markdown file to the working folder, and that file does NOT appear in the file changes summary (which tracks only research.json and tree.gedcomx.json). Judge file creation from the text response and the tool call. Do not penalize Correctness or Completeness for '(no file changes)'. The saved file's contents are checked deterministically by test_saved_file_matches_template, not by you.",
-    "IMPORTANT — brief response is correct: SKILL.md step 5 says one sentence naming the file. 'Saved the Wikipedia summary to great-famine-ireland.md.' is the CORRECT and COMPLETE response. Do not penalize brevity or the absence of article content."
+    "Two fixtures are declared so either query phrasing resolves to the same article: 'wikipedia-search-potato-famine' matches a query containing 'potato', 'wikipedia-search-great-famine-ireland' matches one containing 'Great Famine'. Both return the title 'Great Famine (Ireland)'. Whichever the agent sent, the returned title is the same and the expected H1 is the same.",
+    "The logged notes' H1 must be the RETURNED TITLE ('# Great Famine (Ireland)'), not the query the agent sent. An H1 of the query means the title was taken from the query, which the agent body prohibits.",
+    "Do not treat the difference between the user's wording and the article title as an error to flag or a disambiguation to raise with the user. Following a redirect to the formal title is the expected behavior; the only thing under test is which of the two strings the H1 came from.",
+    "The summary is logged as one research-log entry (tool wikipedia_search) and appears in the file changes summary as a new `log` entry; its `notes` hold the filled template. Grade the entry from that diff. Its byte-for-byte match to the tool response is checked by test_log_notes_match_template, not by you.",
+    "Brief response is correct: the agent's return contract is one line, 'Saved the Wikipedia summary to the research log.' The agent must NOT restate, summarize, or display the article content in its reply. Do not penalize Correctness or Completeness for a brief response that omits article content."
   ]
 }
