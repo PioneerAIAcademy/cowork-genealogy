@@ -190,7 +190,7 @@ specified in [specs/e2e-test-spec.md](specs/e2e-test-spec.md).
 
 ## Agents
 
-The plugin ships twenty-eight Cowork agents. Unlike skills, an agent runs in
+The plugin ships twenty-seven Cowork agents. Unlike skills, an agent runs in
 fresh context and is invoked by the Cowork orchestrator, by `/research`
 when you ask for a second opinion, or by the skill that delegates to it — you
 don't load it explicitly.
@@ -213,7 +213,6 @@ don't load it explicitly.
 | **check-warnings** | Flags genealogical impossibilities and implausible patterns in one person's own data (married before 12, died after 120, child born after parent's death), deterministically from your local tree. Given a mother's 1900 or 1910 US census counts of children born and living, it also reports which of her children the tree is missing and when each was born. With no project yet, it hands you to project creation first. Writes nothing. The tree writers refuse a write that introduces an unjustified warning, so it is no longer a step after every edit. | "Check for warnings" / "Any problems with his dates?" / "The 1900 census says she had 6 children, 5 living — who is missing?" |
 | **locality-guide** | Produces a structured research guide for a place/time — what records exist and where they're held — and, inside a project, saves it so the research plan can use it. `/research` calls it when a question's place has not been surveyed yet. | "What records exist for Schuylkill County?" |
 | **historical-context** | Explains boundary changes, naming conventions, migration patterns, and cultural context affecting records. Returns narrative context and, inside a project, logs it to the research log: one entry per wiki/Wikipedia lookup and one `historical_context` entry carrying the full overview, plus a Search implications block handed back to hypothesis-tracking and research-plan. Asked for a locality records survey, a record search, a translation, a date conversion, or a formal conflict resolution, it hands the request back by name. | "Why does the birthplace differ?" |
-| **project-status** | Reads the whole project and reports where the research stands — a plain-language story for the user and a detailed GPS-state summary, integrity warnings first, plus the recommended next step. Read-only: it never writes to either project file. It is the "resume project" path when you come back to existing work. | "Where are we?" / "What's next?" / "Status" |
 | **image-reader** | Reads **one** FamilySearch image scan and returns a full text transcription (fast, cheap — hosted Gemini Flash OCR). Used when browsing unindexed volumes or extracting from a page image; it keeps the image data out of the main conversation. | (not invoked directly — `search-records` and `search-full-text` delegate) |
 | **search-familysearch-wiki** | Searches the FamilySearch Research Wiki for **one** genealogy how-to question and records the guidance, citing the wiki pages it came from, as one entry in the project's research log (an empty search is logged as a nil entry). With no project it returns the guidance in the reply instead. Asked for Wikipedia, a locality records survey or narrative history, it does no search and hands the request back by name. | "Search the FamilySearch wiki for how to find Italian birth records" |
 | **search-wikipedia** | Looks **one** topic up on Wikipedia — the general-purpose encyclopedia — and records the article summary as one entry in the project's research log. One lookup, a template it carries in its own body, one log entry. With no project it returns the filled template in the reply instead. Asked for narrative history, a locality records survey or the FamilySearch wiki, it does no lookup and hands the request back by name. | "Look up Albert Einstein on Wikipedia" |
@@ -248,7 +247,7 @@ don't load it explicitly.
                              (FAN pivot). If exhaustive, advance.
 11. proof-conclusion         Write the GPS conclusion
     tree-edit (agent)        Merge persons, correct facts
-12. project-status (agent)   "Where are we? What's next?"
+12. Ask "where are we?"      Answered by the main thread from the project state
 ```
 
 This is the ideal GPS cycle. In practice you can invoke any skill at

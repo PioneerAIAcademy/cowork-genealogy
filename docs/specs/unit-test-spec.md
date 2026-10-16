@@ -1202,7 +1202,7 @@ Every skill's SKILL.md has "Do NOT use when" clauses that name confusable skills
 | search-records | `extraction_append` / `record-structurer` (an agent) | record data in context vs not |
 | question-selection | research-plan | "what question next" vs "how to answer this question" |
 | conflict-resolution | `extraction_append` (a tool) | conflicting facts vs classifying evidence type (classification is set in code at extraction and is not refined per assertion afterward) |
-| proof-conclusion | project-status (an agent, not a skill — its side of the pair is reached by auto-delegation from its own `description`, not by a routing row) | "write the proof" vs "where are we" |
+| proof-conclusion | the main-thread status answer (no skill; the `project_context` tool's description instructs the main thread to answer "where are we?" from the projection) | "write the proof" vs "where are we" |
 
 For each confusable pair, create tests from both directions: a test in skill A's directory with `correct_skill: ["B"]`, and a corresponding test in skill B's directory with `correct_skill: ["A"]`.
 
