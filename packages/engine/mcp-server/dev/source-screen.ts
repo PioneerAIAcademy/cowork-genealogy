@@ -878,7 +878,13 @@ export async function runPlant(spec: FixtureSpec, out: string, tools: Tools, sam
       registerCopy(out, key, { host });
     }
     for (const f of spec.fixtures) {
-      if ((MUST_NOT_FLAG as readonly string[]).includes(f.type)) continue;
+      if ((MUST_NOT_FLAG as readonly string[]).includes(f.type)) {
+        const audit: AuditList = readJson(join(personsDir(out, unplantedKey(f.host)), "audit.json"));
+        if (!audit.entries.some((e) => e.ark === toArk(f.source_ark!))) {
+          throw new Error(`fixture ${f.id}: ${f.source_ark} is not attached to host ${f.host}`);
+        }
+        continue;
+      }
       await plantOne(ctx, f);
       registerCopy(out, f.id, { fixture_id: f.id, host: f.host, type: f.type });
     }
@@ -909,6 +915,9 @@ async function plantOne(ctx: Ctx, f: FixtureSpecEntry): Promise<void> {
 
   if (WRONG_PERSON.has(f.type)) {
     const donorArk = toArk(f.donor_ark!);
+    if (audit.entries.some((e) => e.ark === donorArk)) {
+      throw new Error(`fixture ${f.id}: donor ${donorArk} is already attached to host ${f.host}, so planting it plants nothing`);
+    }
     const id = arkToBareId(donorArk);
     let record = readRecord(ctx.out, f.id, id);
     if (!record) {
@@ -992,6 +1001,8 @@ export interface TypeScore {
   by_construction?: number;
   false_alarms?: number;
   false_alarm_ids?: string[];
+  /** Must-not-flag: how many flagged fixtures each signal flagged. */
+  false_alarm_signals?: Record<string, number>;
 }
 
 /** Whether a copy has its step's output: a baseline person dir, or a judge file. */
@@ -1021,6 +1032,7 @@ export function scoreFindings(spec: FixtureSpec, file: FindingsFile, presence = 
     if (mustNot) {
       s.false_alarms = 0;
       s.false_alarm_ids = [];
+      s.false_alarm_signals = {};
     }
     for (const f of fixtures) {
       const copy = scoredCopy(f);
@@ -1037,9 +1049,11 @@ export function scoreFindings(spec: FixtureSpec, file: FindingsFile, presence = 
       const rows = byCopy.get(copy) ?? [];
       if (mustNot) {
         const named = toArk(f.source_ark!);
-        if (rows.some((r) => r.ark === named && r.kind !== "unchecked")) {
+        const flagged = rows.filter((r) => r.ark === named && r.kind !== "unchecked");
+        if (flagged.length > 0) {
           s.false_alarms! += 1;
           s.false_alarm_ids!.push(f.id);
+          for (const sig of new Set(flagged.map((r) => r.signal))) s.false_alarm_signals![sig] = (s.false_alarm_signals![sig] ?? 0) + 1;
         }
         continue;
       }
@@ -1087,6 +1101,9 @@ export function formatScores(file: FindingsFile, scores: TypeScore[]): string {
     const extra = [
       s.misses.length ? `misses: ${s.misses.join(", ")}` : "",
       s.false_alarm_ids?.length ? `flagged: ${s.false_alarm_ids.join(", ")}` : "",
+      Object.keys(s.false_alarm_signals ?? {}).length
+        ? `by signal: ${Object.entries(s.false_alarm_signals!).map(([k, v]) => `${k} ${v}`).join(", ")}`
+        : "",
       s.missing.length ? `missing: ${s.missing.join(", ")}` : "",
       s.harness_miss.length ? `harness_miss (excluded): ${s.harness_miss.join(", ")}` : "",
       s.confounded?.length ? `confounded: ${s.confounded.join(", ")}` : "",

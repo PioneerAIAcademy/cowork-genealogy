@@ -492,6 +492,18 @@ describe("plant", () => {
     expect(existsSync(join(out, "persons", "fx_i", "records", "P1.json"))).toBe(true);
   });
 
+  it("refuses a donor already on the host and a must-not-flag source the host does not carry", async () => {
+    await expect(
+      runPlant(spec([{ id: "fx_a", type: "easy_wrong_person", host: "HOST-111", donor_ark: ark("P1") }]), mkTmp(), fakeTools(plantWorld())),
+    ).rejects.toThrow(/already attached to host/);
+    await expect(
+      runPlant(spec([{ id: "ok_a", type: "nickname", host: "HOST-111", source_ark: ark("NOPE-111") }]), mkTmp(), fakeTools(plantWorld())),
+    ).rejects.toThrow(/not attached to host/);
+    const out = mkTmp();
+    await runPlant(spec([{ id: "ok_b", type: "nickname", host: "HOST-111", source_ark: ark("P1") }]), out, fakeTools(plantWorld()));
+    expect(Object.keys(readJson(join(out, "run.json")).plants)).toEqual(["HOST-111.unplanted"]);
+  });
+
   it("applyIndexingPlant refuses an edit that changes nothing", () => {
     expect(() => applyIndexingPlant(record("P1"), { persona_ark: ark("P1"), field: "Birth.date", value: "1850" })).toThrow(/already reads/);
   });
@@ -568,7 +580,7 @@ describe("score", () => {
         present(),
       ),
     );
-    expect(s.nickname).toMatchObject({ false_alarms: 1, scored: 2, false_alarm_ids: ["nf1"], rate: 0.5 });
+    expect(s.nickname).toMatchObject({ false_alarms: 1, scored: 2, false_alarm_ids: ["nf1"], rate: 0.5, false_alarm_signals: { person_quality_conflict: 1 } });
   });
 
   it("scores a must-not-flag fixture on <host_id>.unplanted even when identical .unplanted rows are present", () => {
