@@ -165,8 +165,8 @@ From the question's `rationale` and `selection_basis`, determine:
   searched unless using a different repository or parameters
 
 You always start cold: you run in fresh context, and a delegation message is a
-caller's summary, not project state. Read the project yourself every time —
-`project_context` for the objective and the questions, `research_query` for
+caller's summary, not project state. Once the routing gate above has let the
+request through, read the project yourself — `project_context` for the objective and the questions, `research_query` for
 the `plans`, `log`, `localities` and `proof_summaries` sections, and `Read` on
 `tree.gedcomx.json` for the persons. (Step 1a requires reading **all plans for
 the target question** before you pick the mode.)
@@ -350,7 +350,9 @@ selecting record types.** Call `wiki_read` with
 subject's birth country. Read the subject's recorded sex before you issue
 the block: a female subject's block has no military page. Issue them as
 PARALLEL calls in one turn. They are members of this block, not options: a
-page you did not fetch is a record type you will plan from memory.
+page you did not fetch is a record type you will plan from memory. Fetch no
+other wiki page: what records a place holds comes from its `localities` entry
+and `collections_search`.
 
 - **A male subject of a parentage question, born in continental Europe
   or Scandinavia** → `{Country}_Military_Records`. REQUIRED. Not for a
