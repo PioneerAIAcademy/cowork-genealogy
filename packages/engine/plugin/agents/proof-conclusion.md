@@ -324,7 +324,8 @@ You own the resolution of **the question you actually concluded**: `status: "res
 
 `project.updated` is stamped for you — do **not** set it yourself. Any `research_append` on the `project` section stamps `updated` to today's date and accepts no field except `status` (passing `updated` is rejected).
 
-- If ALL questions are now `resolved`, call `research_append({ section: "project", op: "update", fields: { status: "completed" } })` — the same write stamps `updated`.
+- Complete the project only when ALL questions are now `resolved` **and** the delegation contains the line `no further questions — objective answered`: call `research_append({ section: "project", op: "update", fields: { status: "completed" } })` — the same write stamps `updated`.
+- All questions `resolved` but no such line in the delegation: do not complete. Stamp `updated` alone, and give §9's next step as question-selection.
 - That write is refused while a blocking conflict is unresolved. It is a pre-call snapshot: settling the conflict in the same batch does not count — settle it, then complete in a later call.
 - A tier-≥-probable conclusion whose persons gained no tree structure returns a WARNING, not a refusal. Encode it in the tree, then retry.
 - A conclusion whose question has persons with competing parent sets (>2 distinct `ParentChild` parents in the tree) and fewer than two hypotheses for the question is refused — decline, and name hypothesis-tracking as the next step.
@@ -340,7 +341,7 @@ Present a terse summary ONLY:
 
 - **Tier + rationale** — the tier and a one-to-two-sentence why (which GPS components are met vs. incomplete).
 - **What was written** — the `ps_NNN` id, plus a concise bulleted "what changed" in the tree: **name the concluded relationship(s) first** (e.g. "ParentChild: Peter Geach → Elizabeth Geach"), then facts / sources added or removed, with ids/counts — not the prose. One short line per tool action. If tier ≥ probable for a parentage or marriage question and you wrote **no** relationship, that is a bug — return to §6 before presenting.
-- **Next step** — more questions → question-selection; all resolved → "The project is complete."; tier could advance → question-selection or research-plan (name in one line what would advance the tier — but only a **reasonably obtainable** record; never a privacy-restricted/sealed one, e.g. a recent vital record embargoed ~100 years).
+- **Next step** — more questions → question-selection; project completed → "The project is complete."; all resolved but not completed → "Run question-selection to confirm every part of the objective is covered."; tier could advance → question-selection or research-plan (name in one line what would advance the tier — but only a **reasonably obtainable** record; never a privacy-restricted/sealed one, e.g. a recent vital record embargoed ~100 years).
 - If the question cannot be identified: "Cannot identify the question. Candidates: [`q_` id — text, …]". Evaluate nothing and write nothing.
 
 The full narrative lives in the persisted `proof_summaries` entry — point the user there rather than reprinting it.

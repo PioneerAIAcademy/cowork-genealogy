@@ -1,0 +1,30 @@
+{
+  "test": {
+    "id": "ut_proof_conclusion_s4g",
+    "skill": "proof-conclusion",
+    "name": "Resolving the last question without question-selection's objective-answered line does not complete the project (direct-agent arm)",
+    "type": "positive",
+    "description": "Same scenario and delegation as ut_proof_conclusion_c3s, minus question-selection's `no further questions — objective answered` line. Concluding q_001 still resolves the project's last question, but proof-conclusion must not set project.status to completed: only question-selection judges whether every part of the objective has a question, and §8 completes the project only on its line. project.status stays active and the next step names question-selection. Reproduces, at the proof-conclusion end, the shape of the Ann Lyons Thompson alpha feedback (issue #3240), where proof-conclusion closed a 'parents and siblings' project with the siblings never researched.",
+    "tags": [
+      "proof",
+      "marriage",
+      "completion-withheld-without-objective-signal",
+      "direct-arm"
+    ]
+  },
+  "input": {
+    "delegation": "Run your preconditions gate and then conclude question q_001 — when and where Anders Monsen married Unna Halsteinsdatter — at whatever tier the evidence supports, declining only if the gate itself fails.\n\nquestionId: q_001\nprojectPath: <workspace>",
+    "scenario": "anders-unna-marriage-proof"
+  },
+  "judge_context": [
+    "Ground truth: q_001 is the only question, but the delegation does NOT carry question-selection's `no further questions — objective answered` line. Concluding q_001 should resolve it, and project.status must stay `active`. A deterministic validator (test_completion_withheld_without_objective_signal) checks the status and that the next step names question-selection. Do not re-grade those.",
+    "Grade the conclusion itself as in ut_proof_conclusion_c3s: probable is the appropriate tier (single derivative source with primary information, no conflicts). Do not penalize for not reaching proved.",
+    "Do not penalize the reply for not offering a second opinion: that sentence belongs only to an invocation that completes the project, and this one must not."
+  ],
+  "judge_reads_files": true,
+  "execution": {
+    "max_turns": 40,
+    "max_wall_clock_seconds": 600,
+    "sdk_message_silence_seconds": 300
+  }
+}
