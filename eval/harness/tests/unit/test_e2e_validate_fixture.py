@@ -112,6 +112,58 @@ def test_an_avoid_finding_still_flags_but_carries_its_polarity():
     assert "must NOT" in warn
 
 
+# --- non-ASCII names (issue #3490) -----------------------------------
+
+def test_cyrillic_unstripped_target_flags_suspect():
+    """An all-Cyrillic answer left in the tree is caught. With an ASCII-only
+    letter class every Cyrillic name tokenized to nothing and never matched."""
+    expected = {"findings": [_rel_finding("Григорий Захаров Кокоша")]}
+    tree = {"persons": [
+        _person("I1", "Захар Иванов", "Кокошенко"),
+        _person("I9", "Григорий Захаров", "Кокоша"),  # the un-stripped answer
+    ]}
+    suspects = check_stripping(expected, tree)
+    assert [s.person_id for s in suspects] == ["I9"]
+    assert {"кокоша", "захаров"} <= suspects[0].shared
+
+
+def test_cyrillic_surname_only_overlap_does_not_flag():
+    expected = {"findings": [_rel_finding("Григорий Кокоша")]}
+    tree = {"persons": [_person("I2", "Илья", "Кокоша")]}
+    assert check_stripping(expected, tree) == []
+
+
+def test_accented_name_is_one_token_and_matches_its_unaccented_spelling():
+    """"João" must not split into "jo" + "o"; folding lets it match "Joao"."""
+    assert vf._tokens("João Gomes") == {"joao", "gomes"}
+    expected = {"findings": [_rel_finding("João Gomes de Sousa")]}
+    tree = {"persons": [_person("I9", "Joao", "Gomes de Souza")]}
+    assert [s.person_id for s in check_stripping(expected, tree)] == ["I9"]
+
+
+def test_cli_prints_a_cyrillic_warn_on_a_cp1252_console(tmp_path):
+    """The WARN line now carries Cyrillic tokens; on a Windows console
+    (cp1252) printing it must not raise UnicodeEncodeError."""
+    import os
+    import subprocess
+    import sys
+
+    _write_fixture(
+        tmp_path,
+        _valid_tree(_valid_person("I9", "Григорий", "Кокоша")),
+        findings={"findings": [_rel_finding("Григорий Кокоша")]},
+    )
+    proc = subprocess.run(
+        [sys.executable, "-m", "e2e.validate_fixture", str(tmp_path)],
+        cwd=Path(vf.__file__).resolve().parents[1],
+        env={**os.environ, "PYTHONIOENCODING": "cp1252"},
+        capture_output=True,
+        encoding="utf-8",
+    )
+    assert proc.returncode == 0, proc.stderr
+    assert "кокоша" in proc.stdout
+
+
 # --- subject-person leak regression (spriggs-parents-1898) -----------
 
 def _rel_finding_with_subject(target_name, subject_name, fid="f1"):
