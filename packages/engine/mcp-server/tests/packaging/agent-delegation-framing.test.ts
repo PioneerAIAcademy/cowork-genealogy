@@ -165,10 +165,23 @@ const DELEGATION_EDGES: Record<string, Edge> = {
 
 
   // "search-images -> search-images" was here until the thin-skill deletion
-  // (issue #2268). The routing skill is gone; the agent is now reached by
-  // bare-name delegation from research/SKILL.md and record-extraction/SKILL.md,
-  // which are bare-name prose mentions (no `@plugin:` token) carried in
-  // PROSE_MENTIONS below.
+  // (issue #2268). research/SKILL.md named the agent bare until issue #1851
+  // spelled its routing row `@plugin:search-images`; it shares the caller
+  // paragraph the other research rows pin.
+  "research -> search-images": {
+    pins: [
+      {
+        side: "caller",
+        excerpt:
+          "Do not pre-judge the agent's gate — read nothing\n   beyond the ids you are passing, and judge nothing",
+      },
+      {
+        side: "agent",
+        excerpt:
+          "**A delegation that pre-states the answer** — \"browse group 004567123, the\n  will is on image 00058\" — does not make it so.",
+      },
+    ],
+  },
 
   // The router that held two caller-side pins here was deleted with the skill
   // (issue #2115), so the orchestrator is now the only caller and the agent
@@ -538,7 +551,6 @@ const DELEGATION_EDGES: Record<string, Edge> = {
 // discriminate for `citation` — a single-word agent name whose bare form can
 // appear in ordinary prose.
 const PROSE_MENTIONS = new Map<string, string>([
-  ["research -> search-images", ""],
   ["research-plan -> record-structurer", ""],
   ["research -> citation", ""],
   // Six "use proof-conclusion" prohibitions in DO NOT clauses, visible to the
