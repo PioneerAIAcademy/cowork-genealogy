@@ -252,6 +252,7 @@ function gap(
     yearRange,
     place,
     coverage: null,
+    pendingHints: null,
   };
   if (spouse) {
     out.spouseId = spouse.id;

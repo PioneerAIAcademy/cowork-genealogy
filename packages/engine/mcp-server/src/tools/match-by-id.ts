@@ -32,6 +32,12 @@ const PID_RE = /^[A-Z0-9]{3,5}-[A-Z0-9]{3,5}$/;
 const ARK_RE = /^ark:\/61903\/(\d:\d):([A-Z0-9-]+)$/;
 const ENTRY_ARK_RE = /ark:\/61903\/(\d:\d):([A-Z0-9-]+)/;
 
+// An optional time limit for the one request: its timeout and its retry budget.
+export interface ReadWindow {
+  timeoutMs: number;
+  budgetMs: number;
+}
+
 interface MatchByIdConfig {
   toolName: string;
   collection: "records" | "tree";
@@ -43,6 +49,7 @@ async function matchById(
   input: MatchByIdInput,
   cfg: MatchByIdConfig,
   principal: Principal,
+  window?: ReadWindow,
 ): Promise<MatchByIdResult> {
   const queryArk = normalizeId(input.id, cfg);
   const { minConfidence, status, includeSummary, count } = validateOptions(input);
@@ -71,12 +78,18 @@ async function matchById(
 
   let response: Response;
   try {
-    response = await fsFetch(principal, url.toString(), {
-      headers: {
-        Accept: "application/json",
-        "User-Agent": BROWSER_USER_AGENT,
+    response = await fsFetch(
+      principal,
+      url.toString(),
+      {
+        headers: {
+          Accept: "application/json",
+          "User-Agent": BROWSER_USER_AGENT,
+        },
       },
-    });
+      window?.timeoutMs,
+      window ? { budgetMs: window.budgetMs } : undefined,
+    );
   } catch (err) {
     throw new Error(
       `Could not reach FamilySearch match API: ${describeFetchError(err)}.`,
@@ -294,8 +307,8 @@ const CFG_RR: MatchByIdConfig = {
   siblingTool: "person_record_matches",
 };
 
-export function personRecordMatches(input: MatchByIdInput, principal: Principal): Promise<MatchByIdResult> {
-  return matchById(input, CFG_PR, principal);
+export function personRecordMatches(input: MatchByIdInput, principal: Principal, window?: ReadWindow): Promise<MatchByIdResult> {
+  return matchById(input, CFG_PR, principal, window);
 }
 export function recordPersonMatches(input: MatchByIdInput, principal: Principal): Promise<MatchByIdResult> {
   return matchById(input, CFG_RP, principal);
