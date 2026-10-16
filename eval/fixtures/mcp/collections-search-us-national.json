@@ -1,6 +1,6 @@
 {
   "tool": "collections_search",
-  "description": "collections_search — nation-level FamilySearch record collections (United States). Returned when a plan searches a national collection (e.g. the US Federal Census, which is indexed nationally rather than per-county). Because every standardPlace ends in 'United States', this fixture's '~United States' predicate matches any place, so it must be ordered AFTER the county/state collections fixtures in a test's mcp_fixtures list — it acts as the broadest-jurisdiction fallback when no narrower fixture matched. The decennial census collections span 1860-1910; a plan scoped to a subset of years selects the ones it needs.",
+  "description": "collections_search — nation-level FamilySearch record collections (United States). Returned when a plan searches a national collection (e.g. the US Federal Census, which is indexed nationally rather than per-county). Because every standardPlace ends in 'United States', this fixture's '~United States' predicate matches any place, so it must be ordered AFTER the county/state collections fixtures in a test's mcp_fixtures list — it acts as the broadest-jurisdiction fallback when no narrower fixture matched. The decennial census collections span 1860-1910; a plan scoped to a subset of years selects the ones it needs. The Civil War entry here is served as FamilySearch collection id 1910717 with its live title and counts ('United States, Civil War Soldiers Index, 1861-1865'; 6,282,360 records/persons, 0 images), which matches what this entry models. Live FamilySearch confirms id 2078654 is 'New York, Land Records, 1630-1975' (as collections-search-new-york.json already serves it), so the entry was moved off 2078654; it was placed on 1910717 (not 1932430, which is live 'United States, Civil War Service Records of Union Soldiers, 1864-1866' with only 119,672 records) so that the id, title and counts all agree with live FamilySearch and no contradiction is recreated against FS itself (issue #2484 PR2).",
   "args": {
     "standardPlace": "~United States"
   },
@@ -57,13 +57,13 @@
         "url": "https://www.familysearch.org/search/collection/1488411"
       },
       {
-        "id": "2078654",
-        "title": "United States, Civil War Service Records, 1861-1865",
+        "id": "1910717",
+        "title": "United States, Civil War Soldiers Index, 1861-1865",
         "dateRange": "1861-1865",
-        "recordCount": 6443102,
-        "personCount": 6443102,
+        "recordCount": 6282360,
+        "personCount": 6282360,
         "imageCount": 0,
-        "url": "https://www.familysearch.org/search/collection/2078654"
+        "url": "https://www.familysearch.org/search/collection/1910717"
       }
     ]
   }

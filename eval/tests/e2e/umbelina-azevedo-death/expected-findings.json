@@ -4,7 +4,7 @@
       "id": "f1",
       "type": "fact",
       "polarity": "avoid",
-      "description": "The agent must NOT assert that Umbelina Maria Azevedo (PID GXSQ-V3L), wife of Francisco Antônio Pariz, died on 14 November 1910 in the city of Rio de Janeiro. That death entry indexes an Umbelina Azevedo Da Silva (born about 1879) with no spouse or parents named, and it cannot be her: the indexed death entries of three of her children each name her as their mother and give birth years after November 1910 — Maria Glória in 1912, Florita Umbelina in 1915 and Maura Umbelina in 1918. Pass = the final tree/research carries no 14 November 1910 death (or any 1910 Rio de Janeiro death) for Umbelina Maria Azevedo, or carries it only as an explicitly rejected candidate.",
+      "description": "The agent must NOT assert that Umbelina Maria Azevedo (PID GXSQ-V3L), wife of Francisco Antônio Pariz, died on 14 November 1910 in the city of Rio de Janeiro. That death entry indexes an Umbelina Azevedo Da Silva (born about 1879) with no spouse or parents named, and it cannot be her: the indexed death entries of three of her children each name her as their mother and give birth years after November 1910 — Maria Glória in 1912, Florita Umbelina in 1915 and Maura Umbelina in 1918. Pass = the final `tree.gedcomx.json` carries no 14 November 1910 death (or any 1910 Rio de Janeiro death) for Umbelina Maria Azevedo. A rejected candidate may be documented in `research.json`; writing one into the tree \u2014 even annotated as rejected \u2014 fails this finding.",
       "details": {
         "subject_person": "Umbelina Maria Azevedo (GXSQ-V3L)",
         "fact_type": "Death",

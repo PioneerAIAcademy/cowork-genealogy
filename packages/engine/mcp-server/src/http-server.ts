@@ -5,12 +5,19 @@
 // arrive differs. Both are per request, never process state: the
 // `Authorization: Bearer` header names the principal, the
 // `X-Genealogy-Project-Id` header names the project whose store the request
-// runs against, and the optional `X-Genealogy-Turn-Id` /
-// `X-Genealogy-Claim-Epoch` pair names the worker attempt (U6) whose claim that
-// store fences its commits on. Which backend that store is comes from the caller's
-// `bindStore` factory — this module imports no backend, so the unit test
-// supplies a double and never loads `pg`/`@aws-sdk`. Readiness is injected the
-// same way: `/healthz` maps the caller's `checkReady` report to 200 or 503.
+// runs against, and the `X-Genealogy-Turn-Id` / `X-Genealogy-Claim-Epoch` pair
+// names the worker attempt (U6) whose claim that store fences its commits on.
+// A request that names a project must also pass the caller's `authorize` (U4)
+// before any store or transport exists: the bearer has to be the grant of an
+// open attempt on that project, so the fence is required there (the turn id is
+// the check's key). A refusal is a 403 with one message whatever the reason,
+// and one `ev=tool_refused` stderr line that never carries the bearer; an
+// `authorize` that throws is a 503, never an admission. A request with no
+// project header skips the check and runs store-less tools only. Which backend
+// the store and the check use comes from the caller's `bindStore` and
+// `authorize` — this module imports no backend, so the unit test supplies
+// doubles and never loads `pg`/`@aws-sdk`. Readiness is injected the same way:
+// `/healthz` maps the caller's `checkReady` report to 200 or 503.
 import http, { type IncomingHttpHeaders, type RequestListener } from "node:http";
 import { StreamableHTTPServerTransport } from "@modelcontextprotocol/sdk/server/streamableHttp.js";
 import { bearerPrincipal, type Principal } from "./auth/principal.js";
@@ -55,10 +62,15 @@ export function principalFromHeaders(
   headers: IncomingHttpHeaders,
   baseConfig: AppConfig,
 ): Principal {
+  return bearerPrincipal(bearerFromHeaders(headers), baseConfig);
+}
+
+/** The `Authorization: Bearer <token>` token, or `""` when the header is
+ *  missing or malformed. The principal and the project check read the same one. */
+function bearerFromHeaders(headers: IncomingHttpHeaders): string {
   const raw = headers.authorization;
   const match = typeof raw === "string" ? /^bearer\s+(.+)$/i.exec(raw.trim()) : null;
-  const token = match ? match[1].trim() : "";
-  return bearerPrincipal(token, baseConfig);
+  return match ? match[1].trim() : "";
 }
 
 export type ProjectIdFromHeaders =
@@ -149,10 +161,38 @@ const INVALID_CLAIM_FENCE = {
   id: null,
 };
 
+/** The same body for every refusal reason, so a caller learns nothing about
+ *  which check failed. */
+const FORBIDDEN_ATTEMPT = {
+  jsonrpc: "2.0",
+  error: { code: -32600, message: "This bearer is not the grant of an open attempt on this project." },
+  id: null,
+};
+
+const AUTHORIZATION_UNAVAILABLE = {
+  jsonrpc: "2.0",
+  error: { code: -32603, message: "Project authorization is unavailable." },
+  id: null,
+};
+
 function sendJson(res: http.ServerResponse, status: number, body: unknown): void {
   res.writeHead(status, { "Content-Type": "application/json" });
   res.end(JSON.stringify(body));
 }
+
+/** What a project request presents to `authorize`: the project it names, its
+ *  claim fence when it sent one, and its bearer token (`""` when absent). */
+export interface AuthorizeRequest {
+  projectId: string;
+  fence?: ClaimFence;
+  bearer: string;
+}
+
+/** Why `authorize` refused: no fence to key the check on, no bearer, or no open
+ *  attempt on the project whose grant is this bearer. */
+export type AuthorizeRefusal = "no_fence" | "empty_bearer" | "no_match";
+
+export type AuthorizeResult = { ok: true } | { ok: false; reason: AuthorizeRefusal };
 
 export interface ToolServerOptions {
   /** The process-wide config (~/.familysearch-mcp/config.json or the hosted
@@ -164,6 +204,11 @@ export interface ToolServerOptions {
    *  `fence` is the request's claim (U6), absent on an unfenced request; a
    *  store given one commits only while that claim is current. */
   bindStore: (projectId: string, signal: AbortSignal, fence?: ClaimFence) => ProjectStore;
+  /** Whether this request's bearer may act on the project it names (U4). Called
+   *  for every request with a project header, before `bindStore`; never for one
+   *  without. Required, so no caller can leave the door open by omission; a
+   *  throw is answered 503. */
+  authorize: (req: AuthorizeRequest) => Promise<AuthorizeResult>;
   /** Whether the stores behind `bindStore` can serve a call. Absent, `/healthz`
    *  answers 200 without `checks`. */
   checkReady?: () => Promise<ReadyReport>;
@@ -214,6 +259,26 @@ async function handleMcpPost(
   if (claim.kind === "malformed") {
     sendJson(res, 400, INVALID_CLAIM_FENCE);
     return;
+  }
+  if (projectId.kind === "present") {
+    const fence = claim.kind === "present" ? claim.fence : undefined;
+    let verdict: AuthorizeResult;
+    try {
+      verdict = await options.authorize({ projectId: projectId.id, fence, bearer: bearerFromHeaders(req.headers) });
+    } catch (error) {
+      const err = error as { code?: unknown; name?: unknown };
+      const label = typeof err?.code === "string" ? err.code : typeof err?.name === "string" ? err.name : "Error";
+      process.stderr.write(`ev=tool_authorize_failed error=${label} project_id=${projectId.id}\n`);
+      sendJson(res, 503, AUTHORIZATION_UNAVAILABLE);
+      return;
+    }
+    if (!verdict.ok) {
+      process.stderr.write(
+        `ev=tool_refused reason=${verdict.reason} project_id=${projectId.id} turn_id=${fence?.turnId ?? "-"}\n`,
+      );
+      sendJson(res, 403, FORBIDDEN_ATTEMPT);
+      return;
+    }
   }
   // A killed worker closes its socket but sends nothing; without this its
   // in-flight write would commit after the caller that could read the result
@@ -301,6 +366,7 @@ export function startHttpServer(options: StartHttpServerOptions): Promise<http.S
       createToolServer({
         baseConfig: options.baseConfig,
         bindStore: options.bindStore,
+        authorize: options.authorize,
         checkReady: options.checkReady,
       }),
     );

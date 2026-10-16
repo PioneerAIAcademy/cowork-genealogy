@@ -19,10 +19,34 @@ vi.mock("../../src/utils/place-resolver.js", async (importOriginal) => {
         return "West Bromwich, Staffordshire, England, United Kingdom";
       return null;
     }),
+    // The birthplace cap's distance test (#3390). Unknown names resolve to null,
+    // so no test reaches the live Places API.
+    standardPlaceToCoords: vi.fn(async (name: string) => {
+      // Types as the Places API returns them (probed 2026-10-15).
+      const coords: Record<string, { latitude: number; longitude: number; type: string }> = {
+        "Nueva Italia, Parácuaro, Michoacán, Mexico": { latitude: 19.0167, longitude: -102.1, type: "City" },
+        "La Unión de Isidoro Montes de Oca, Guerrero, Mexico":
+          { latitude: 17.9833, longitude: -101.8167, type: "Municipality" },
+        "Pittsburgh, Allegheny, Pennsylvania, United States":
+          { latitude: 40.4406, longitude: -79.9959, type: "City" },
+        "Chicago, Cook, Illinois, United States": { latitude: 41.8781, longitude: -87.6298, type: "City" },
+        "New Jersey, United States": { latitude: 40.1907, longitude: -74.6728, type: "State" },
+        "Massachusetts, United States": { latitude: 42.3689, longitude: -71.9677, type: "State" },
+        "Boston, Suffolk, Massachusetts, United States":
+          { latitude: 42.3601, longitude: -71.0589, type: "City" },
+      };
+      return coords[name] ?? null;
+    }),
   };
 });
 
-import { researchAppend, countryConsistency, mintedFromThisRecord, personaReachable } from "../../src/tools/research-append.js";
+import {
+  researchAppend,
+  countryConsistency,
+  mintedFromThisRecord,
+  personaReachable,
+  coreIdentifierContradictionInvariants,
+} from "../../src/tools/research-append.js";
 import { validateProject } from "../../src/validation/validator.js";
 import { recordMatchScore } from "../../src/utils/match-scores.js";
 import {
@@ -32,7 +56,7 @@ import {
 } from "../../src/utils/image-store.js";
 import { extractionAppend } from "../../src/tools/extraction-append.js";
 import { __testing, exampleHints } from "../../src/tools/research-append-examples.js";
-import { resolveStandardPlace } from "../../src/utils/place-resolver.js";
+import { resolveStandardPlace, standardPlaceToCoords } from "../../src/utils/place-resolver.js";
 
 const citationDetail = {
   who: "Census enumerator",
@@ -337,7 +361,7 @@ describe("research_append (Phase 1)", () => {
       const f = await factF4();
       expect(f.place).toBe("West Bromwich, England");
       expect(f.standard_place).toBeUndefined();
-      expect(r.validation.warnings.join(" ")).toMatch(/cleared \(left unset\)/);
+      expect(r.validation.warnings.join(" ")).toMatch(/cleared standard_place/);
     });
 
     it("(5) `place: null` clears the fact's place rather than writing a null", async () => {
@@ -484,10 +508,31 @@ describe("research_append (Phase 1)", () => {
       expect(r.validation.warnings.join(" ")).toMatch(/non-string 'value'/);
     });
 
-    it("(12) warns when a place correction leaves an un-corrected standard_place", async () => {
-      // The card's own harm one level down: the display string reads corrected
-      // while the place-AUTHORITY value still names the old jurisdiction. Both
-      // the assertion and the fact carry it, so the agreement guard cannot see it.
+    it("(12) re-resolves standard_place when a place correction leaves it out", async () => {
+      // Kept, the old value would name the old jurisdiction while the display
+      // string reads corrected, and the birthplace cap would measure distance
+      // from it. Resolved, the new value lands on the assertion and the fact.
+      await writeProject(withAssertion(backlinkAssertion()), treeWithBacklink());
+
+      const r = await researchAppend({
+        projectPath: dir,
+        section: "assertions",
+        op: "update",
+        entryId: "a_011",
+        fields: { place: "West Bromwich, Staffordshire, England" },
+      });
+      expect(r.ok).toBe(true);
+      if (!r.ok) return;
+
+      const f = await factF4();
+      expect(f.place).toBe("West Bromwich, Staffordshire, England");
+      expect(f.standard_place).toBe("West Bromwich, Staffordshire, England, United Kingdom");
+      const research = JSON.parse(await readFile(join(dir, "research.json"), "utf-8"));
+      const a = research.assertions.find((x: any) => x.id === "a_011");
+      expect(a.standard_place).toBe("West Bromwich, Staffordshire, England, United Kingdom");
+    });
+
+    it("(12b) clears standard_place when the corrected place resolves to nothing", async () => {
       await writeProject(withAssertion(backlinkAssertion()), treeWithBacklink());
 
       const r = await researchAppend({
@@ -502,8 +547,8 @@ describe("research_append (Phase 1)", () => {
 
       const f = await factF4();
       expect(f.place).toBe("Odessa, Francis No. 127, Saskatchewan, Canada");
-      expect(f.standard_place).toBe("Thames Centre Township, Middlesex, Ontario, Canada");
-      expect(r.validation.warnings.join(" ")).toMatch(/place authority value was not part of this correction/);
+      expect(f.standard_place).toBeUndefined();
+      expect(r.validation.warnings.join(" ")).toMatch(/cleared standard_place 'Thames Centre Township/);
     });
 
     it("(13) warns loudly when the rewritten fact is a concluded (primary) value", async () => {
@@ -7502,6 +7547,319 @@ describe("research_append — detected core-identifier contradiction", () => {
       { place: "Bath, Somerset, England" },
     );
     expect((await researchAppend(link("probable"))).ok).toBe(false);
+  });
+
+  // ── distance (#3390) ──────────────────────────────────────────────────────
+  // cruz-corona-ancestry: the tree birth is the question's premise, the record
+  // is the answer, 85 mi apart in 1910 -- inside the 250 mi band for 1850-1949.
+  const NUEVA_ITALIA = "Nueva Italia, Parácuaro, Michoacán, Mexico";
+  const LA_UNION = "La Unión de Isidoro Montes de Oca, Guerrero, Mexico";
+  const cruzRecord = { place: LA_UNION, standard_place: LA_UNION };
+  const cruzTree = { date: "Abt 1910", place: NUEVA_ITALIA, standard_place: NUEVA_ITALIA };
+
+  beforeEach(() => {
+    vi.mocked(standardPlaceToCoords).mockClear();
+  });
+
+  it("does NOT cap two same-country places inside the era's distance band", async () => {
+    await write(cruzRecord, cruzTree);
+    expect((await researchAppend(link("confident"))).ok).toBe(true);
+    expect(vi.mocked(standardPlaceToCoords)).toHaveBeenCalled();
+  });
+
+  it("still caps the same pair under the pre-1850 band", async () => {
+    await write(cruzRecord, { ...cruzTree, date: "Abt 1830" });
+    const r = await researchAppend(link("confident"));
+    expect(r.ok).toBe(false);
+    expect(failure(r).errors?.join(" ")).toMatch(/La Unión/);
+  });
+
+  it("caps two different countries with no coordinate lookup", async () => {
+    await write(
+      { standard_place: "Trier, Rheinland-Pfalz, Germany" },
+      { standard_place: "Ireland" },
+    );
+    expect((await researchAppend(link("confident"))).ok).toBe(false);
+    expect(vi.mocked(standardPlaceToCoords)).not.toHaveBeenCalled();
+  });
+
+  // Six miles apart, but a border between them: the country arm alone caps it,
+  // even with both coordinates in hand. Called directly, because the prefetch
+  // never looks up a pair whose countries already differ.
+  it("caps a border pair inside the band because the countries differ", () => {
+    const elPaso = "El Paso, El Paso, Texas, United States";
+    const juarez = "Ciudad Juárez, Chihuahua, Mexico";
+    const research = { assertions: [{
+      ...validAssertion("a_050"), record_id: "rec_bapt", place: juarez, standard_place: juarez,
+      information_quality: "indeterminate", informant_proximity: "official_duty",
+    }] };
+    const tree = { persons: [{ id: "I1", facts: [
+      { id: "F1", type: "Birth", date: "~1905", place: elPaso, standard_place: elPaso },
+    ] }] };
+    const coords = new Map([
+      [elPaso, { latitude: 31.7619, longitude: -106.485 }],
+      [juarez, { latitude: 31.6904, longitude: -106.4245 }],
+    ]);
+    const entry = { assertion_id: "a_050", person_id: "I1", confidence: "confident" };
+    expect(coreIdentifierContradictionInvariants(entry, research, tree, [], undefined, coords)).toHaveLength(1);
+    // The same coordinates on a Mexican place: inside the band, so no cap.
+    const nearby = "Samalayuca, Juárez, Chihuahua, Mexico";
+    coords.set(nearby, coords.get(elPaso)!);
+    const sameCountry = { persons: [{ id: "I1", facts: [
+      { id: "F1", type: "Birth", date: "~1905", place: nearby, standard_place: nearby },
+    ] }] };
+    expect(coreIdentifierContradictionInvariants(entry, research, sameCountry, [], undefined, coords)).toEqual([]);
+  });
+
+  // Ten miles apart across the border: Scotland against England is two
+  // countries, so it caps offline, coordinates or not.
+  it("caps Scotland against England however close", () => {
+    const gretna = "Gretna, Dumfriesshire, Scotland, United Kingdom";
+    const carlisle = "Carlisle, Cumberland, England, United Kingdom";
+    const research = { assertions: [{
+      ...validAssertion("a_050"), record_id: "rec_bapt", place: gretna, standard_place: gretna,
+      information_quality: "indeterminate", informant_proximity: "official_duty",
+    }] };
+    const tree = { persons: [{ id: "I1", facts: [
+      { id: "F1", type: "Birth", date: "1820", place: carlisle, standard_place: carlisle },
+    ] }] };
+    const coords = new Map([
+      [gretna, { latitude: 55.0, longitude: -3.0667 }],
+      [carlisle, { latitude: 54.8925, longitude: -2.9329 }],
+    ]);
+    const entry = { assertion_id: "a_050", person_id: "I1", confidence: "confident" };
+    expect(coreIdentifierContradictionInvariants(entry, research, tree, [], undefined, coords)).toHaveLength(1);
+  });
+
+  /** The gate called directly with both coordinates in hand, so only the
+   *  country reading decides. */
+  const direct = (
+    record: Record<string, unknown>,
+    treeBirth: Record<string, unknown>,
+    coords: [string, number, number, string?][],
+  ) =>
+    coreIdentifierContradictionInvariants(
+      { assertion_id: "a_050", person_id: "I1", confidence: "confident" },
+      { assertions: [{
+        ...validAssertion("a_050"), record_id: "rec_bapt",
+        information_quality: "indeterminate", informant_proximity: "official_duty", ...record,
+      }] },
+      { persons: [{ id: "I1", facts: [{ id: "F1", type: "Birth", ...treeBirth }] }] },
+      [],
+      undefined,
+      new Map(coords.map(([n, latitude, longitude, type]) => [n, { latitude, longitude, type: type ?? "City" }])),
+    );
+
+  // Two cities 78 mi apart: inside the 1850-1949 band, outside the pre-1850 one.
+  const kyoto = "Kyoto, Kyoto, Japan", nagoya = "Nagoya, Aichi, Japan";
+  const kyotoNagoya: [string, number, number, string?][] = [[kyoto, 35.0116, 135.7681], [nagoya, 35.1815, 136.9066]];
+
+  // Every year on either side spans the era: a tree birth of 1848 against a
+  // record dated 1851 touches 1850-1949, so the wider band applies.
+  it("takes the era band over the years of both sides", () => {
+    expect(direct({ place: kyoto, standard_place: kyoto }, { date: "1848", place: nagoya, standard_place: nagoya },
+      kyotoNagoya)).toHaveLength(1);
+    expect(direct({ place: kyoto, standard_place: kyoto, date: "1851" },
+      { date: "1848", place: nagoya, standard_place: nagoya }, kyotoNagoya)).toEqual([]);
+  });
+
+  // A prefecture, and a type the API qualifies ("State (Top level)"), are whole
+  // regions: their coordinates are a centre, so the pair caps.
+  it("reads region types the way Places writes them", () => {
+    for (const type of ["Prefecture", "State (Top level)", "Principality or Emirate"]) {
+      expect(direct({ place: kyoto, standard_place: kyoto, date: "1880" },
+        { date: "1880", place: nagoya, standard_place: nagoya },
+        [[kyoto, 35.0116, 135.7681, type], [nagoya, 35.1815, 136.9066]])).toHaveLength(1);
+    }
+  });
+
+  // Two counties named as a birthplace are two places, whatever their centres'
+  // distance; a county against a town inside the band still gets a distance.
+  it("caps two counties against each other inside the band", () => {
+    const perth = "Perthshire, Scotland, United Kingdom", angus = "Angus, Scotland, United Kingdom";
+    const kirriemuir = "Kirriemuir, Forfarshire, Scotland, United Kingdom";
+    const coords: [string, number, number, string?][] = [
+      [perth, 56.5, -3.75, "County (Top level)"], [angus, 56.7, -2.9, "County (Top level)"],
+      [kirriemuir, 56.6738, -3.0043, "Town"],
+    ];
+    expect(direct({ place: perth, standard_place: perth }, { date: "1865", place: angus, standard_place: angus },
+      coords)).toHaveLength(1);
+    expect(direct({ place: angus, standard_place: angus }, { date: "1832", place: kirriemuir, standard_place: kirriemuir },
+      coords)).toEqual([]);
+  });
+
+  // Ireland under a trailing United Kingdom is still Ireland, not England's
+  // country: 135 mi in 1880 is inside the band, and the countries differ.
+  it("reads a country named before a trailing United Kingdom", () => {
+    const dublin = "Dublin, Ireland, United Kingdom", liverpool = "Liverpool, Lancashire, England";
+    expect(direct({ place: dublin, standard_place: "Dublin, Dublin, Ireland" },
+      { date: "1880", place: liverpool, standard_place: liverpool },
+      [["Dublin, Dublin, Ireland", 53.3498, -6.2603], [liverpool, 53.4084, -2.9916]])).toHaveLength(1);
+  });
+
+  // "CA" is Canada as often as California: the standard place names the
+  // country, so Windsor, Ontario against Detroit caps.
+  it("does not read a trailing CA as California", () => {
+    const windsor = "Windsor, Essex, Ontario, Canada", detroit = "Detroit, Wayne, Michigan, United States";
+    expect(direct({ place: "Windsor, Essex, Ontario, CA", standard_place: windsor },
+      { date: "1880", place: "Detroit, Wayne, Michigan", standard_place: detroit },
+      [[windsor, 42.3149, -83.0364], [detroit, 42.3314, -83.0458]])).toHaveLength(1);
+  });
+
+  // Croatia is not in canonicalCountry's table, but a standard place always
+  // ends at its country: 185 mi apart in 1880, inside the band, and two
+  // countries, so it caps.
+  it("reads a standard place's last segment as its country even when unlisted", () => {
+    const zagreb = "Zagreb, Croatia", budapest = "Budapest, Hungary";
+    expect(direct(
+      { place: "Zagreb", standard_place: zagreb },
+      { date: "1880", place: "Budapest", standard_place: budapest },
+      [[zagreb, 45.815, 15.9819], [budapest, 47.4979, 19.0402]],
+    )).toHaveLength(1);
+  });
+
+  // "Delaware" is a US state, but here it is a town in Ontario: a state counts
+  // only as the place's last segment.
+  it("does not read a US state name inside a non-US place", () => {
+    const delaware = "Delaware, Middlesex, Ontario, Canada";
+    const detroit = "Detroit, Wayne, Michigan, United States";
+    expect(direct(
+      { place: "Delaware, Middlesex, Ontario", standard_place: delaware },
+      { date: "1890", place: "Detroit, Wayne, Michigan", standard_place: detroit },
+      [[delaware, 42.9131, -81.4167], [detroit, 42.3314, -83.0458]],
+    )).toHaveLength(1);
+  });
+
+  // A bare "UK" names no constituent, so it is not a different country from
+  // England: 12 mi apart, the distance decides.
+  it("does not read a bare United Kingdom as differing from England", () => {
+    const bathUk = "Bath, Somerset, UK", bristol = "Bristol, Gloucestershire, England";
+    expect(direct(
+      { place: bathUk, standard_place: bathUk },
+      { date: "1820", place: bristol, standard_place: bristol },
+      [[bathUk, 51.3811, -2.359], [bristol, 51.4545, -2.5879]],
+    )).toEqual([]);
+  });
+
+  // One side written with "England", the other with "England, United Kingdom":
+  // one country, so the distance decides, and 12 mi is inside even the 25 mi band.
+  it("reads England and England, United Kingdom as one country", () => {
+    const bath = "Bath, Somerset, England";
+    const bristol = "Bristol, Gloucestershire, England, United Kingdom";
+    const research = { assertions: [{
+      ...validAssertion("a_050"), record_id: "rec_bapt", place: bath, standard_place: bath,
+      information_quality: "indeterminate", informant_proximity: "official_duty",
+    }] };
+    const tree = { persons: [{ id: "I1", facts: [
+      { id: "F1", type: "Birth", date: "1820", place: bristol, standard_place: bristol },
+    ] }] };
+    const coords = new Map([
+      [bath, { latitude: 51.3811, longitude: -2.359 }],
+      [bristol, { latitude: 51.4545, longitude: -2.5879 }],
+    ]);
+    const entry = { assertion_id: "a_050", person_id: "I1", confidence: "confident" };
+    expect(coreIdentifierContradictionInvariants(entry, research, tree, [], undefined, coords)).toEqual([]);
+  });
+
+  it("caps a same-country pair beyond its band", async () => {
+    const pittsburgh = "Pittsburgh, Allegheny, Pennsylvania, United States";
+    const chicago = "Chicago, Cook, Illinois, United States";
+    await write(
+      { place: pittsburgh, standard_place: pittsburgh },
+      { date: "~1880", place: chicago, standard_place: chicago },
+    );
+    expect((await researchAppend(link("probable"))).ok).toBe(false);
+  });
+
+  // A state's coordinates are its centre, not a birthplace: New Jersey and
+  // Massachusetts centres are 212 mi apart, inside the band, but two births in
+  // them can be 400 mi apart. A region-level side caps.
+  it("caps a same-country pair when a side is a whole state", async () => {
+    await write(
+      { place: "New Jersey", standard_place: "New Jersey, United States" },
+      { date: "1875", place: "Massachusetts", standard_place: "Massachusetts, United States" },
+    );
+    expect((await researchAppend(link("confident"))).ok).toBe(false);
+    expect(vi.mocked(standardPlaceToCoords)).toHaveBeenCalled();
+    // The tree side alone at state level: Boston to New Jersey's centre is
+    // about 200 mi, inside the band, and still caps.
+    await write(
+      { place: "Boston", standard_place: "Boston, Suffolk, Massachusetts, United States" },
+      { date: "1875", place: "New Jersey", standard_place: "New Jersey, United States" },
+    );
+    expect((await researchAppend(link("confident"))).ok).toBe(false);
+    // And the record side alone.
+    await write(
+      { place: "New Jersey", standard_place: "New Jersey, United States" },
+      { date: "1875", place: "Boston", standard_place: "Boston, Suffolk, Massachusetts, United States" },
+    );
+    expect((await researchAppend(link("confident"))).ok).toBe(false);
+  });
+
+  it("caps a same-country pair when the tree birth carries no standard_place", async () => {
+    await write(cruzRecord, { date: "Abt 1910", place: NUEVA_ITALIA });
+    expect((await researchAppend(link("confident"))).ok).toBe(false);
+  });
+
+  it("caps a same-country pair whose coordinates cannot be found", async () => {
+    await write(
+      { place: "Zirándaro, Guerrero, Mexico", standard_place: "Zirándaro, Guerrero, Mexico" },
+      cruzTree,
+    );
+    expect((await researchAppend(link("confident"))).ok).toBe(false);
+  });
+
+  it("caps a same-country pair with no year on either side", async () => {
+    await write(cruzRecord, { place: NUEVA_ITALIA, standard_place: NUEVA_ITALIA, date: undefined });
+    expect((await researchAppend(link("confident"))).ok).toBe(false);
+  });
+
+  // A place-only update must not leave the old standard_place standing for the
+  // new place: Tijuana is about 1,300 mi from Nueva Italia.
+  it("caps when a place-only update leaves a stale standard_place near the tree birth", async () => {
+    await write(cruzRecord, cruzTree);
+    const upd = await researchAppend({ projectPath: dir, section: "assertions", op: "update" as const,
+      entryId: "a_050", fields: { place: "Tijuana, Baja California, Mexico" } } as any);
+    expect(upd.ok).toBe(true);
+    expect((await researchAppend(link("confident"))).ok).toBe(false);
+  });
+
+  it("does NOT cap a birth place that is a non-place phrase", async () => {
+    await write({ place: "Same House" });
+    expect((await researchAppend(link("confident"))).ok).toBe(true);
+  });
+
+  // An update's link is its post-merge one, so the prefetch must read the
+  // target entry's assertion and person, not only the op's fields.
+  it("reads the distance for an update that raises a link's tier", async () => {
+    const raise = async (treeBirth: Record<string, unknown>) => {
+      await write(cruzRecord, treeBirth);
+      const appended = await researchAppend(link("speculative"));
+      expect(appended.ok).toBe(true);
+      const id = singleOk(appended).entryId;
+      vi.mocked(standardPlaceToCoords).mockClear();
+      return researchAppend({
+        projectPath: dir, section: "person_evidence", op: "update" as const,
+        entryId: id, fields: { confidence: "confident" },
+      });
+    };
+    expect((await raise(cruzTree)).ok).toBe(true);
+    expect(vi.mocked(standardPlaceToCoords)).toHaveBeenCalled();
+    expect((await raise({ ...cruzTree, date: "Abt 1830" })).ok).toBe(false);
+  });
+
+  // The prefetch replays the call's own ops: an assertion whose place an
+  // earlier op in the call corrects is compared as corrected.
+  it("reads the distance for an assertion whose place this same call corrects", async () => {
+    await write({ place: "Trier, Rhine Province, Germany", standard_place: null }, cruzTree);
+    const r = await researchAppend({
+      projectPath: dir,
+      ops: [
+        { section: "assertions", op: "update" as const, entryId: "a_050", fields: cruzRecord },
+        { section: "person_evidence", op: "append" as const, entry: link("confident").entry },
+      ],
+    } as any);
+    expect(r.ok ? [] : failure(r).errors).toEqual([]);
   });
 });
 

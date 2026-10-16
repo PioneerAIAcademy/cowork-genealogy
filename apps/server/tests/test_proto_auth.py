@@ -554,7 +554,7 @@ def _store(conn: ScriptedConn) -> app.PgStore:
 
 T0 = datetime(2026, 9, 29, tzinfo=timezone.utc)
 SESSION_ROW = {"session_id": "sess_1", "project_id": "proj_1", "title": "t", "model": "m",
-               "created_at": T0, "updated_at": T0, "owner_id": "usr_a"}
+               "created_at": T0, "updated_at": T0, "owner_id": "usr_a", "retired_at": None}
 
 
 def _answer(project_owner: object, claim_hits: bool = True, insert_hits: bool = True):
