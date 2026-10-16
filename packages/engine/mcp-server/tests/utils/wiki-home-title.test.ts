@@ -65,6 +65,28 @@ describe("homeTitleShape", () => {
     ).toBe(false);
   });
 
+  it("rejects a same-named city's page for a county, and accepts it for the city", () => {
+    const title = "Los Angeles, Los Angeles County, California Genealogy";
+    expect(homeTitleShape(title, parts("Los Angeles, California, United States")).ok).toBe(false);
+    expect(homeTitleShape(title, parts("Los Angeles, Los Angeles, California, United States"))).toEqual({
+      ok: true,
+      typeWord: null,
+      head: "Los Angeles, Los Angeles County, California",
+    });
+  });
+
+  it("accepts the county's own page, whose first container is the state", () => {
+    expect(
+      homeTitleShape("Los Angeles County, California Genealogy", parts("Los Angeles, California, United States"))
+    ).toEqual({ ok: true, typeWord: "county", head: "Los Angeles County, California" });
+  });
+
+  it("rejects a parent that only prefixes a longer container name", () => {
+    expect(
+      homeTitleShape("Springfield, Sangamonville, Illinois Genealogy", parts("Springfield, Sangamon, Illinois, United States")).ok
+    ).toBe(false);
+  });
+
   it("rejects a same-named place in another state", () => {
     expect(
       homeTitleShape("Springfield, Massachusetts Genealogy", parts("Springfield, Sangamon, Illinois, United States")).ok

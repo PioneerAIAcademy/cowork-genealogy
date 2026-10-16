@@ -33,18 +33,18 @@ export function decodeWikiTitle(title: string): string {
   }
 }
 
-const eq = (a: string, b: string) =>
-  a.normalize("NFC").toLowerCase() === b.normalize("NFC").toLowerCase();
-
 /**
  * The shape check, before any type lookup. `parts` is the standardPlace split
  * on commas. Accepted only when the title:
  *  - is a home page (`... Genealogy`);
  *  - starts with the leaf at a word boundary (`Gloucester` must not match
  *    `Gloucestershire`), with at most a type phrase after it;
- *  - names an INTERMEDIATE jurisdiction of the place — for three or more parts,
- *    the country alone is not enough, because `Washington, United States
- *    Genealogy` is the state's page and never a Washington County's.
+ *  - names the place's DIRECT PARENT as its first container, with at most a
+ *    type word after it (`Ulster County`). Any intermediate jurisdiction is not
+ *    enough: `Los Angeles, Los Angeles County, California Genealogy` is the
+ *    city's page and names the state, but its parent is the county, so it is
+ *    never taken for Los Angeles County. Nor is `Washington, United States
+ *    Genealogy`, the state's page, taken for a Washington County.
  */
 export function homeTitleShape(title: string, parts: string[]): HomeTitleShape {
   const t = decodeWikiTitle(title).trim();
@@ -60,8 +60,11 @@ export function homeTitleShape(title: string, parts: string[]): HomeTitleShape {
   const remainder = after.trim();
   if (remainder && !/^\(?[A-Za-z ]+\)?$/.test(remainder)) return { ok: false };
 
-  const context = parts.length >= 3 ? parts.slice(1, -1) : parts.slice(1);
-  if (!rest.some((r) => context.some((c) => eq(r, c.trim())))) return { ok: false };
+  const parent = (parts[1] ?? "").trim().normalize("NFC").toLowerCase();
+  const container = (rest[0] ?? "").normalize("NFC");
+  if (!parent || !container.toLowerCase().startsWith(parent)) return { ok: false };
+  const tail = container.slice(parent.length);
+  if (tail && !/^\s+\(?[A-Za-z ]+\)?$/.test(tail)) return { ok: false };
 
   const typeWord = remainder
     ? remainder.replace(/[()]/g, " ").trim().split(/\s+/).pop()!.toLowerCase()

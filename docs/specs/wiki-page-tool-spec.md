@@ -109,10 +109,12 @@ anything below that.
    `POST /search` with `"{leaf} {parent} genealogy"`, then the first ranked
    `page_title` that `homeTitleShape` (`src/utils/wiki-home-title.ts`) accepts is
    fetched by `GET /page/{title}`. A title is accepted only when it is a home
-   page (`... Genealogy`), starts with the leaf at a word boundary, and names an
-   intermediate jurisdiction of the place — with three or more parts the
-   country alone is not enough, because `Washington, United States Genealogy` is
-   the state's page and never a Washington County's. A type word after the leaf
+   page (`... Genealogy`), starts with the leaf at a word boundary, and names the
+   place's direct parent as its first container (a type word may follow it, as
+   in `Ulster County`), so `Los Angeles, Los Angeles County, California
+   Genealogy`, the city's page, is not taken for Los Angeles County, and
+   `Washington, United States Genealogy`, the state's page, is not taken for a
+   Washington County. A type word after the leaf
    must fit the Places API `type` (`typeWordFits`): `St. Louis City` and
    `St. Louis County` rank together for "St. Louis, Missouri", and only the type
    (`Independent City`) separates them. `County` also admits the wiki's `Parish`
