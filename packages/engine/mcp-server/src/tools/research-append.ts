@@ -2736,6 +2736,17 @@ function timelineCensus1890Invariants(entry: any): string[] {
   const gaps: any[] = Array.isArray(entry?.gaps) ? entry.gaps : [];
   const errors: string[] = [];
 
+  // Precompute once — entry.events is constant across all gaps and items.
+  const events: any[] = Array.isArray(entry?.events) ? entry.events : [];
+  const nonNullPlaces = events
+    .filter(
+      (e: any) =>
+        e &&
+        typeof e.standard_place === "string" &&
+        e.standard_place.trim(),
+    )
+    .map((e: any) => (e.standard_place as string).trim());
+
   for (const gap of gaps) {
     if (!gap || !Array.isArray(gap.expected_events)) continue;
     for (const item of gap.expected_events) {
@@ -2766,15 +2777,20 @@ function timelineCensus1890Invariants(entry: any): string[] {
       // standard_place in the timeline ends in "United States" (at least one
       // must exist). If the timeline has zero events with a non-null
       // standard_place, condition (b) is not satisfied.
-      const events: any[] = Array.isArray(entry?.events) ? entry.events : [];
-      const nonNullPlaces = events
-        .filter(
-          (e: any) =>
-            e &&
-            typeof e.standard_place === "string" &&
-            e.standard_place.trim(),
-        )
-        .map((e: any) => (e.standard_place as string).trim());
+      //
+      // "Names no country": after stripping "census", the standalone year,
+      // and punctuation, any remaining word starting with an uppercase letter
+      // (≥3 chars) is treated as a jurisdiction name. Since condition (a)
+      // already ruled out US-naming, a remaining proper noun is likely a
+      // non-US jurisdiction — stay silent. A false positive (e.g. a proper
+      // noun that is not a country) is a false allow, which ADR-0011
+      // limit 1 prefers over a false deny.
+      const stripped = text
+        .replace(/\bcensus\b/gi, "")
+        .replace(/(?<!\d)1890(?!\d)/g, "")
+        .replace(/[_\-—–,.:;()\[\]"']/g, " ")
+        .trim();
+      if (/\b[A-Z][a-zA-Z]{2,}\b/.test(stripped)) continue;
 
       if (nonNullPlaces.length === 0) continue;
 

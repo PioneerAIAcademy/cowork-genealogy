@@ -12068,4 +12068,20 @@ describe("research_append — US 1890 census precondition", () => {
     });
     expect(r.ok).toBe(true);
   });
+
+  it("(10) silent: 'Denmark census 1890' on a US timeline (names a non-US jurisdiction)", async () => {
+    await writeProject(timelineResearch(["Denmark census 1890"]));
+    const r = await researchAppend({
+      projectPath: dir,
+      section: "timelines",
+      op: "update",
+      entryId: "t_001",
+      fields: {
+        gaps: [
+          { start: "1850", end: "1900", expected_events: ["Denmark census 1890"], severity: "medium" },
+        ],
+      },
+    });
+    expect(r.ok).toBe(true);
+  });
 });
