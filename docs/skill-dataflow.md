@@ -11,9 +11,9 @@ persisted state comes from [`specs/schemas/ownership.json`](specs/schemas/owners
 This file maps the two onto each other so you can see a whole run at once; where it
 disagrees with either, they win.
 
-There are 5 skills and 28 agents. Besides the `research` orchestrator itself, its routing
+There are 5 skills and 27 agents. Besides the `research` orchestrator itself, its routing
 table names 14 of them, and 4 more are reached by delegation from a skill the table does
-name. The remaining 6 fire only when the user asks — see
+name. The remaining 5 fire only when the user asks — see
 [Reachable only by asking](#reachable-only-by-asking), which is the part of this doc most
 likely to surprise you.
 
@@ -202,7 +202,6 @@ sibling skill.
 
 | Skill | Triggered by | Owns | Reads | Writes |
 |---|---|---|---|---|
-| **`project-status`** (an AGENT since issue #2793, not a skill) | "where are we", opening an existing project | The resume summary — plain-language first, then GPS state — plus broken-foreign-key detection | Whole-file `Read` of both project files, deliberately | Nothing |
 | **`timeline`** | "build a timeline"; handoffs from `person-evidence`, `conflict-resolution`, `hypothesis-tracking` | `timelines` — regenerated wholesale, never edited entry by entry — with gaps and geographic feasibility | `research.json` `person_evidence`, `assertions`, `hypotheses`, `timelines`, `conflicts` by whole-file `Read`; `place_search`, `place_distance` | `timelines[]` — `research_append` |
 | **`citation`** (an AGENT since issue #2799, not a skill) | "fix this citation", "format to Evidence Explained" | Refining `citation` and the six `citation_detail` fields on a source that already exists. **Never creates one**. Fetches the creating office for a probate record from `{State}_Probate_Records` rather than carrying one jurisdiction's offices in its body | Whole-file `Read` of `research.json` `sources` and `log`; tree source descriptions; `wiki_read` | `sources[].citation`, `.citation_detail`, `.notes` — `research_append` `op: "update"` only |
 | **`check-warnings`** (an AGENT since issue #2118, not a skill) | "Check for problems". **Not** on import, and **not** after every tree edit or merge any more — the writers refuse a write that introduces an unjustified warning | Running the offline impossibility check and interpreting it for a single person's own data. Hands a source conflict, a source audit or a schema check back to its owner instead of doing it. Never fixes anything | `person_warnings` (deterministic and offline, except one check that looks up place coordinates and is skipped when the lookup fails) for the person ids the caller names; no file reads | Nothing |
@@ -214,8 +213,8 @@ sibling skill.
 | **`search-familysearch-wiki`** (an AGENT since issue #2794, not a skill) | Any "how do I find [record type]" question | Wiki guidance, synthesized only from returned chunks | `wiki_search` (hosted wiki API), `research_log_append` | `log`: one entry, the summary in `notes` (an empty search: one `negative` entry, `notes` null). Nothing with no project |
 | **`search-wikipedia`** (an AGENT since issue #2795, not a skill) | A single-article encyclopedia lookup | The verbatim article extract — no paraphrase | `wikipedia_search`, `research_log_append` | `log`: one entry, the summary in `notes`. Nothing with no project |
 | **`validate-schema`** (an AGENT since issue #2798, not a skill) | "validate", "check the files" | Relaying validator errors in plain terms with a non-regressing fix each | `validate_research_schema` | Nothing. Never edits a file to fix an error |
-| **`survey-surname`** (an AGENT, issue #2065) | "find every Dixon family in Virginia censuses", tabulate a surname across censuses | Per-year `record_search` sweep, grouped by `recordArk`, sectioned by year and collection, with non-population schedules separate | `place_search`, `record_search` (with `projectPath`), `research_log_append` | `log[]` — `research_log_append`; writes `surname-survey-*.md` via `Write` |
-| **`tree-survey`** (an AGENT, issue #3273) | "what should I research in my tree?", "find gaps in my tree" — only when no project exists; `/research`'s first routing row also spawns it when there is no project and no stated objective | The holes `tree_gaps` computed, ranked by what FamilySearch has for them (pending hints, search results, census issue, collections floor); 3-5 suggestions, one question each | `tree_gaps`, `person_record_matches`, `person_quality`, `record_search`, `collections_search`, `place_search` | nothing — writes no project state by design |
+| **`survey-surname`** (an AGENT, issue #2065) | "find every Dixon family in Virginia censuses", tabulate a surname across censuses | Per-year `record_search` sweep, grouped by `recordArk`, sectioned by year and collection, with non-population schedules separate | `place_search`, `record_search` (with `projectPath`), `research_log_append` | `log[]` — `research_log_append`: one entry per search page, plus one `survey_surname` entry with the household table in `notes` |
+| **`tree-survey`** (an AGENT, issue #3273) | "what should I research in my tree?", "find gaps in my tree" — only when no project exists; `/research`'s first routing row also spawns it when there is no project and no stated objective | The holes `tree_gaps` computed, ranked by what FamilySearch has for them (`pendingHints`, `coverage`); 3-5 suggestions, one question each | `tree_gaps` | nothing — writes no project state by design |
 | **`forget-and-rederive`** | Practice mode — the researcher asks for a known answer to be stripped | Removing a tree slice with cascade so it must be re-derived from records, and holding the rederivation to account | `project_context`; a `dryRun` read-back. **Forbidden** from reading `tree.gedcomx.json` | Tree slice removed and `.tree-before-forget.gedcomx.json` written — `tree_forget`. Touches no `research.json` |
 
 ---
@@ -255,7 +254,7 @@ Two consequences worth holding onto:
   and the `PreToolUse` hook. (`disallowedTools:` was deleted from every agent
   on 2026-08-30 — it only restated the `tools:` omission.)
 - **Only two skills hold `research_query`** — `research` and `search-records` — and eight
-  of the twenty-eight agents, `search-external-sites` among them. Everything else that needs project
+  of the twenty-seven agents, `search-external-sites` among them. Everything else that needs project
   state does a whole-file `Read`, which is the thing the orchestrator forbids for itself
   because `research.json` reaches 100+ assertions by late run.
 - **The hook carries exactly five rules**, in
