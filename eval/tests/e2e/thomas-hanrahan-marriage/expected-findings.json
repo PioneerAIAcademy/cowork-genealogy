@@ -3,7 +3,8 @@
     {
       "id": "f1",
       "type": "fact",
-      "description": "Thomas Hanrahan married Johanna Ryan on 1 February 1868 in the Catholic parish of Ballylooby, County Tipperary, Ireland.",
+      "polarity": "avoid",
+      "description": "The agent must NOT conclude that Thomas Hanrahan (KHGX-XWG) of Saratoga, New York, and his wife Johanna married on 1 February 1868 in the Catholic parish of Ballylooby, County Tipperary, Ireland. That marriage (parish: Thomam Hanrahan and Johan Ryan; civil return: Thomas Hanrahan and Judy Ryan) belongs to an Irish couple of the same names whose children Mary (17 February 1871) and John (28 November 1872) were registered in the Ardfinnan district. The Saratoga couple were in Northumberland, Saratoga County, New York, with their daughter Mary in 1865, and the 1880 household gives every child, Mary (1865), Elizabeth (1869), Thomas (1870) and John (1872), as a native of New York. Pass = the final `tree.gedcomx.json` carries no Marriage fact dated 1 February 1868 or placed at Ballylooby for Thomas Hanrahan (KHGX-XWG) or on his couple relationship. A rejected candidate may be documented in `research.json`; writing it into the tree, even annotated as rejected, fails this finding.",
       "details": {
         "subject_person": "Thomas Hanrahan (KHGX-XWG)",
         "fact_type": "Marriage",
@@ -11,8 +12,24 @@
         "place": "Ballylooby, County Tipperary, Ireland"
       },
       "supporting_sources": [
-        "Ireland, Catholic Parish Registers, 1740-1900 — marriage entry for Thomam Hanrahan and Johan Ryan, 1 Feb 1868, Ballylooby (ark:/61903/1:1:6267-W22Q)",
-        "Ireland, Civil Registration, 1845-1913 — civil marriage of Thomas Hanrahan and Judy Ryan, 1 Feb 1868, Roman Catholic chapel of Ballylooby, Clogheen registration district; fathers John Hanrahan and Thomas Ryan (ark:/61903/1:1:QGV8-PQK7)"
+        "New York, State Census, 1865 — household of Thomas Hanrahan (about 1843), Joanna (about 1846) and Mary (1865), Northumberland, Saratoga, New York (ark:/61903/1:1:QVNN-7MNR) — the disproving record",
+        "United States, Census, 1880 — household of Thomas Hanrahan, Saratoga, New York: Johannah, and children Mary (1865), Elizabeth (1869), Thomas (1870) and John (1872), all given as born in New York (ark:/61903/1:1:MZF2-Y55) — the disproving record",
+        "United States, Census, 1900 — Thomas Hanrahan (b. Mar 1843, immigrated 1860) and Johanna (b. Nov 1844, immigrated 1853), Saratoga, New York (ark:/61903/1:1:MSG7-614)",
+        "The rejected records: Ireland, Catholic Parish Registers — Thomam Hanrahan and Johan Ryan, 1 Feb 1868, Ballylooby (ark:/61903/1:1:6267-W22Q); Ireland, Civil Registration — Thomas Hanrahan and Judy Ryan, 1 Feb 1868, Ballylooby (ark:/61903/1:1:QGV8-PQK7)",
+        "The Irish couple's children: Mary Hanrahan, 17 Feb 1871 (ark:/61903/1:1:F5GR-QBN); John Hanrahan, 28 Nov 1872, Ardfinnan (ark:/61903/1:1:F5YK-84C; civil ark:/61903/1:1:QPJL-5TVM)"
+      ],
+      "required": true
+    },
+    {
+      "id": "f2",
+      "type": "fact",
+      "description": "The report must reject the 1 February 1868 Ballylooby marriage for the Saratoga couple on the strength of the New York records that place them in Saratoga County in 1865 and 1880 with New York-native children from 1865 to 1872, and must state that the Saratoga couple's marriage has not been identified. A conclusion resting only on the Irish record's lack of ages or other failure to confirm does not satisfy this finding. The report must not claim the couple never married, and must not present Ryan as Johanna's established maiden surname: that surname rests only on the Irish records.",
+      "details": {
+        "subject_person": "Thomas Hanrahan (KHGX-XWG)",
+        "relation": "research conclusion"
+      },
+      "supporting_sources": [
+        "No marriage of Thomas Hanrahan and Johanna appears in the FamilySearch United States marriage indexes, 1858-1872 (record search with the spouse anchored as Johanna or Joanna); the Saratoga couple's marriage remains unidentified, which does not establish that none took place"
       ],
       "required": true
     }
