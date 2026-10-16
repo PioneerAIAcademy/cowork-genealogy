@@ -631,8 +631,8 @@ research_append({
   which records why the item was planned.
 
 **Field-value rules (strict).** Use only schema-defined fields and
-values. A plan's `status` is one of `active`, `superseded`,
-`completed`, or `exhausted`. There is no `supersedes` field — record
+values. A plan's `status` is one of `active`, `superseded` or
+`completed`. There is no `supersedes` field — record
 supersession only by updating the prior plan's `status` to
 `superseded` (Step 6). **research-plan writes only the `plans` and
 `plan_items` sections** — never `conflicts`, `hypotheses`,
@@ -673,15 +673,18 @@ made by the executing skills (search-records, search-external-sites),
 not here — except in Dispose mode.
 
 **Termination (BCG Standard 18):** If all identified sources are
-exhausted or inaccessible and the question remains unresolved, set the
-plan status to `exhausted` with an update:
+exhausted or inaccessible and the question remains unresolved, skip each
+item still `planned` or `in_progress` that cannot run, with its
+`skip_category`, then set the plan status to `completed` with an update.
+Why the search stopped is research-exhaustiveness's to record, in the
+question's `search_stop`:
 
 ```
 research_append({
   section: "plans",
   op: "update",
   entryId: "pl_003",
-  fields: { status: "exhausted" }
+  fields: { status: "completed" }
 })
 ```
 
@@ -741,7 +744,7 @@ Ancestry (fallback), land records (fallback).
 |-----------|--------|
 | No `localities` entry exists for the jurisdiction you need to plan | Stop and return to the orchestrator noting the jurisdiction needs a locality survey — do **not** invoke `locality-guide` yourself. The orchestrator runs it, then re-invokes you |
 | Question is too vague to plan for | Return to `question-selection` to refine it |
-| All plan items exhausted, question unresolved | Set plan to `exhausted`; exhaustiveness must be evaluated against the GPS stop criteria before this question is answered — a direct user runs `research-exhaustiveness`; an orchestrator routes there by the call its own routing row names. If exhaustiveness returns "not yet exhaustive," follow its recommendation — extend the plan here, or hand back naming `question-selection` for a FAN pivot |
+| All plan items exhausted, question unresolved | Set plan to `completed` (Termination, Step 6); exhaustiveness must be evaluated against the GPS stop criteria before this question is answered — a direct user runs `research-exhaustiveness`; an orchestrator routes there by the call its own routing row names. If exhaustiveness returns "not yet exhaustive," follow its recommendation — plan the gaps here as a new plan (Add-new mode), or hand back naming `question-selection` for a FAN pivot |
 | User says "start searching" | Hand back naming `search-records` (FamilySearch items) or `search-external-sites` (other repositories) |
 | The invoking message already authorizes continuing (e.g. "...and start executing," "...and continue with exhaustive research") | Hand execution back as authorized, in this same return — do not ask "would you like me to start?" first |
 
@@ -1004,7 +1007,7 @@ claim a conclusion is proved when the underlying research was
 terminated prematurely.
 
 **Implementation:** When all plan items are exhausted without a
-defensible answer, set the plan status to `exhausted` and say in
+defensible answer, set the plan status to `completed` and say in
 your return that the GPS has not been met (the question's own record is
 not yours to write). Suggest whether
 future research (new record availability, new repositories, DNA
