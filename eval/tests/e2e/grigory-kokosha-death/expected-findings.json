@@ -3,15 +3,20 @@
     {
       "id": "f1",
       "type": "fact",
-      "description": "Григорий Захаров Кокоша died on 18 September 1846 in Zhydivska Hreblia, Tarashcha, Kiev; the death is recorded in the metric book of the church of St John the Theologian (Иоанно-Богословская церковь) there, which gives his birth as about 1821.",
+      "description": "The death of a Григорий Кокоша, aged 25, on 18 September 1846, recorded in the 1846 death register of the church of St John the Theologian (Иоанно-Богословская церковь), Жидовская Гребля, Tarashcha, Kiev (index ark:/61903/1:1:KX55-44K), is a genuine entry in Григорий Захаров Кокоша's own parish, where his daughter Анна was baptised in February 1844, but it cannot be assigned to him with confidence. The index gives only a given name, surname and age: no patronymic (his marriage and his daughter's baptism both name him Григорий Захариев) and no widow (his wife was Татьяна Иванова). The register page could not be read reliably, and the Kokosha family was numerous in the parish, so a namesake cannot be excluded. Pass = the report engages the 18 September 1846 death entry and presents it as a probable or possible death for Григорий Захаров Кокоша, leaving the identification explicitly qualified because the entry names no patronymic or spouse. Fail = it states as established that Григорий Захаров Кокоша died on 18 September 1846 without qualifying the identification. A report that leaves the death undated without engaging the 18 September 1846 entry does not pass: failing to find or confirm a death is not this finding.",
       "details": {
-        "subject_person": "Григорий Захаров Кокоша (GSTD-C4H)",
+        "subject_person": "Григорий Захаров Кокоша (GSTD-C4H), born about 1818",
         "fact_type": "Death",
-        "date": "18 September 1846",
-        "place": "Zhydivska Hreblia, Tarashcha, Kiev, Russian Empire"
+        "date": "unresolved — 18 September 1846 is the candidate entry; identification qualified",
+        "place": "Zhydivska Hreblia, Tarashcha, Kiev, Russian Empire",
+        "target_person": {
+          "name": "unresolved identity: the decedent of the 18 September 1846 death entry"
+        }
       },
       "supporting_sources": [
-        "Ukraine, Kyiv, Orthodox Consistory Church Book Duplicates, 1723-1931 — death entry for Григорий Кокоша, 18 Sep 1846"
+        "Ukraine, Kyiv, Orthodox Consistory Church Book Duplicates, 1723-1931 — 1846 death register, St John the Theologian church, Жидовская Гребля: Григорий Кокоша, died 18 Sep 1846, age 25 (born about 1821); no patronymic or spouse indexed (ark:/61903/1:1:KX55-44K, image ark:/61903/3:1:33SQ-GPQ7-HSWV)",
+        "Ukraine, Kyiv, Orthodox Consistory Church Book Duplicates, 1723-1931 — marriage of Григорий Захариев and Татианна Ивановна Гейпонка, 24 Jan 1843, Pokrova church, Попружная, Tarashcha (ark:/61903/1:1:FNGV-JL3)",
+        "Ukraine, Kyiv, Orthodox Consistory Church Book Duplicates, 1723-1931 — baptism of Анна Кокоша, born 2 Feb 1844, St John the Theologian church, Жидовская Гребля, father Григорий Захариев Кокоша, mother Татияна Иванова (ark:/61903/1:1:KXPB-DG6)"
       ],
       "required": true
     }

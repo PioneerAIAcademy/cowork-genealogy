@@ -2267,4 +2267,204 @@ describe("materialize_facts", () => {
       expect(birth.assertion_id).toBeUndefined();
     });
   });
+
+  // ── no-personId persona reuse (#3416) ───────────────────────────────────────
+
+  describe("no-personId persona reuse (#3416)", () => {
+    it("re-materializing the same persona without personId reuses the existing person", async () => {
+      await writeProject(tree(), research({ sources: [S1], assertions: enrichPersona() }), { link: false });
+
+      const first = single(await materializeFacts({ projectPath: dir, recordId: "REC-SON", recordRole: "child" }));
+      expect(first.ok).toBe(true);
+      if (!first.ok) return;
+      expect(first.created).toBe(true);
+      const mintedId = first.personId;
+
+      const second = single(await materializeFacts({ projectPath: dir, recordId: "REC-SON", recordRole: "child" }));
+      expect(second.ok).toBe(true);
+      if (!second.ok) return;
+      expect(second.personId).toBe(mintedId);
+      expect(second.created).toBe(false);
+      expect(second.factsAdded).toBe(0);
+
+      const t = await readTree();
+      // I1 (subject) + the one minted person = 2
+      expect(t.persons).toHaveLength(2);
+    });
+
+    it("different recordRole on the same record mints a separate person", async () => {
+      const fatherAssertions = [
+        assertion("a_010", { record_id: "REC-SON", record_role: "father", fact_type: "name", value: "James Smith" }),
+        assertion("a_011", { record_id: "REC-SON", record_role: "father", fact_type: "gender", value: "Male" }),
+        assertion("a_012", { record_id: "REC-SON", record_role: "father", fact_type: "birth", date: "1830" }),
+      ];
+      const allAssertions = [...enrichPersona(), ...fatherAssertions];
+      await writeProject(tree(), research({ sources: [S1], assertions: allAssertions }), { link: false });
+
+      const first = single(await materializeFacts({ projectPath: dir, recordId: "REC-SON", recordRole: "child" }));
+      expect(first.ok).toBe(true);
+      if (!first.ok) return;
+
+      const second = single(await materializeFacts({ projectPath: dir, recordId: "REC-SON", recordRole: "father" }));
+      expect(second.ok).toBe(true);
+      if (!second.ok) return;
+      expect(second.personId).not.toBe(first.personId);
+      expect(second.created).toBe(true);
+    });
+
+    it("a persona whose first mint wrote no facts (name/gender only) has no backlinks, so a second call mints fresh", async () => {
+      const nameOnly = [
+        assertion("a_040", { record_id: "REC-NO", record_role: "spouse", fact_type: "name", value: "Jane Doe" }),
+        assertion("a_041", { record_id: "REC-NO", record_role: "spouse", fact_type: "gender", value: "Female" }),
+      ];
+      await writeProject(tree(), research({ sources: [S1], assertions: nameOnly }), { link: false });
+
+      const first = single(await materializeFacts({ projectPath: dir, recordId: "REC-NO", recordRole: "spouse" }));
+      expect(first.ok).toBe(true);
+      if (!first.ok) return;
+      expect(first.created).toBe(true);
+      expect(first.factsAdded).toBe(0);
+
+      const second = single(await materializeFacts({ projectPath: dir, recordId: "REC-NO", recordRole: "spouse" }));
+      expect(second.ok).toBe(true);
+      if (!second.ok) return;
+      // No assertion_id backlinks on facts to find, so it mints fresh
+      expect(second.created).toBe(true);
+      expect(second.personId).not.toBe(first.personId);
+    });
+
+    it("a candidate whose only person_evidence link is superseded and who was not minted from this record is not reused", async () => {
+      // I2 has facts with assertion_id backlinks AND refs from two different records,
+      // so mintedFromThisRecord returns false. Its only pe link is superseded.
+      const S2 = source("src_002", "S2");
+      const otherRecordAssertion = assertion("a_050", {
+        source_id: "src_002", record_id: "REC-OTHER", record_role: "principal",
+        fact_type: "residence", date: "1860", place: "Salt Lake City",
+      });
+      const existingPerson = {
+        id: "I2", gender: "Male",
+        names: [{ id: "N2", given: "Robert", surname: "Smith" }],
+        facts: [
+          { id: "F1", type: "Birth", date: "1855", assertion_id: "a_003", sources: [{ ref: "S1", quality: 3 }] },
+          { id: "F2", type: "Residence", date: "1860", assertion_id: "a_050", sources: [{ ref: "S2" }] },
+        ],
+        sources: [],
+      };
+      const r = research({ sources: [S1, S2], assertions: [...enrichPersona(), otherRecordAssertion] });
+      // Superseded link — the only pe link for I2
+      r.person_evidence = [{
+        id: "pe_001", assertion_id: "a_003", person_id: "I2", confidence: "confident",
+        rationale: "test", match_score: null, created: "2026-01-01", superseded_by: "pe_002",
+      }];
+      await writeProject(
+        tree({ persons: [existingPerson], sources: [{ id: "S1", title: "1850 Census" }, { id: "S2", title: "1860 Census" }] }),
+        r,
+        { link: false },
+      );
+
+      const result = single(await materializeFacts({ projectPath: dir, recordId: "REC-SON", recordRole: "child" }));
+      expect(result.ok).toBe(true);
+      if (!result.ok) return;
+      // I2 is ineligible (superseded link, not minted from this record alone), so a new person is minted
+      expect(result.personId).not.toBe("I2");
+      expect(result.created).toBe(true);
+    });
+
+    it("among two eligible candidates, the one with a live person_evidence link is preferred over the lower-numbered one", async () => {
+      // Both I2 and I3 were minted from REC-SON (mintedFromThisRecord returns true
+      // for both because all their refs trace back to REC-SON). Only I3 has a live pe link.
+      const existingI2 = {
+        id: "I2", gender: "Male",
+        names: [{ id: "N2", given: "Robert", surname: "Smith" }],
+        facts: [{ id: "F1", type: "Birth", date: "1855", assertion_id: "a_003", sources: [{ ref: "S1", quality: 3 }] }],
+        sources: [],
+      };
+      const existingI3 = {
+        id: "I3", gender: "Male",
+        names: [{ id: "N3", given: "Robert", surname: "Smith" }],
+        facts: [{ id: "F2", type: "Birth", date: "1855", assertion_id: "a_003", sources: [{ ref: "S1", quality: 3 }] }],
+        sources: [],
+      };
+      const r = research({ sources: [S1], assertions: enrichPersona() });
+      // Only I3 has a live pe link
+      r.person_evidence = [{
+        id: "pe_001", assertion_id: "a_003", person_id: "I3", confidence: "probable",
+        rationale: "test", match_score: null, created: "2026-01-01", superseded_by: null,
+      }];
+      await writeProject(tree({ persons: [existingI2, existingI3] }), r, { link: false });
+
+      const result = single(await materializeFacts({ projectPath: dir, recordId: "REC-SON", recordRole: "child" }));
+      expect(result.ok).toBe(true);
+      if (!result.ok) return;
+      // I3 is preferred because it has the live link, even though I2 is lower-numbered
+      expect(result.personId).toBe("I3");
+      expect(result.created).toBe(false);
+    });
+
+    it("a starting-tree person with a superseded link is not reused even when all resolvable refs trace back to this record", async () => {
+      // I9 is in the starting tree (a FamilySearch person assigned an I id by
+      // project_create). Its FamilySearch source ref ("FS-SD-1") is not in
+      // research.sources, so the ref walk in mintedFromThisRecord skips it.
+      // After the persona's Birth fact was materialized onto I9 (via an earlier
+      // explicit-personId call), the only ref that resolves is S1→REC-SON, which
+      // would make mintedFromThisRecord return true — unless startingPersonIds
+      // blocks it.
+      const startingI9 = {
+        id: "I9", gender: "Male",
+        names: [{ id: "N9", given: "Robert", surname: "Smith" }],
+        facts: [],
+        sources: [{ ref: "FS-SD-1" }],
+      };
+      await writeFile(join(dir, "starting-tree.gedcomx.json"), JSON.stringify({
+        persons: [startingI9],
+        relationships: [],
+        source_descriptions: [{ id: "FS-SD-1", about: "https://familysearch.org/ark:/...", title: "FS Person" }],
+      }), "utf-8");
+
+      // Current tree: I9 now also has the persona's Birth fact (from a previous
+      // materialization with explicit personId).
+      const currentI9 = {
+        ...startingI9,
+        facts: [{ id: "F1", type: "Birth", date: "1855", assertion_id: "a_003", sources: [{ ref: "S1", quality: 3 }] }],
+      };
+      const r = research({ sources: [S1], assertions: enrichPersona() });
+      // The only person_evidence link for I9 is superseded.
+      r.person_evidence = [{
+        id: "pe_001", assertion_id: "a_003", person_id: "I9", confidence: "confident",
+        rationale: "test", match_score: null, created: "2026-01-01", superseded_by: "pe_002",
+      }];
+      await writeProject(tree({ persons: [currentI9] }), r, { link: false });
+
+      const result = single(await materializeFacts({ projectPath: dir, recordId: "REC-SON", recordRole: "child" }));
+      expect(result.ok).toBe(true);
+      if (!result.ok) return;
+      // I9 is in the starting tree, so mintedFromThisRecord returns false;
+      // the pe link is superseded, so isEligibleTarget returns false;
+      // a new person is minted.
+      expect(result.personId).not.toBe("I9");
+      expect(result.created).toBe(true);
+    });
+
+    it("batch: same persona twice without personId produces one person, both results share the id", async () => {
+      await writeProject(tree(), research({ sources: [S1], assertions: enrichPersona() }), { link: false });
+
+      const result = await materializeFacts({
+        projectPath: dir,
+        ops: [
+          { recordId: "REC-SON", recordRole: "child" },
+          { recordId: "REC-SON", recordRole: "child" },
+        ],
+      });
+      expect(result.ok).toBe(true);
+      if (!result.ok || !("results" in result)) return;
+      expect(result.results).toHaveLength(2);
+      expect(result.results[0].created).toBe(true);
+      expect(result.results[1].created).toBe(false);
+      expect(result.results[0].personId).toBe(result.results[1].personId);
+
+      const t = await readTree();
+      // I1 (subject) + the one minted person = 2
+      expect(t.persons).toHaveLength(2);
+    });
+  });
 });

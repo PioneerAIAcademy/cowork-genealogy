@@ -188,7 +188,7 @@ Being straight with you, so you don't waste time:
 - **The cost figure restarts when you reload the page.** It's per page-load, not
   per session.
 - **You can't reset a project.** To start over, create a new session.
-- **A session can be continued for 24 hours after you create it.** After that it
+- **A session can be continued for 72 hours after you create it.** After that it
   shows as "ended": you can still see its research (the tree and findings), but
   not its chat, and you need a new session to keep researching.
 - **Living people:** please don't enter information about anyone living. Nothing
@@ -203,7 +203,7 @@ Being straight with you, so you don't waste time:
 |---|---|
 | "Your address isn't permitted" | We allowlisted a different address. Send us the one on the page — it's the email on your FamilySearch account. |
 | The agent says it can't reach FamilySearch | Start a new session; tell us if it keeps happening. |
-| "This session is more than 24 hours old and can't be continued" | Sessions can be continued for 24 hours. Start a new session to keep researching; the old one's research is still there to read. |
+| "This session is more than 72 hours old and can't be continued" | Sessions can be continued for 72 hours. Start a new session to keep researching; the old one's research is still there to read. |
 | It stops mid-research | Say "continue". If it stalls again, that's worth reporting. |
 | It's slow | Real research is genuinely slow — it reads records one at a time. Minutes is normal. |
 | It asks who you want to research after you already said | It missed your first message. Repeat it with the details. |
