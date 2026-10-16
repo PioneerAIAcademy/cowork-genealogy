@@ -281,7 +281,7 @@ and web (WebSocket transport).
 > 3. **The chat WS is not proxied.** The browser opens **one authenticated WSS
 >    straight to the sandbox** — `POST /api/sessions/{id}/connect` resumes it,
 >    exposes port 8080, mints a per-sandbox HMAC token, and returns
->    `{wssUrl, token, familysearch}` — except for a session more than 24 h past
+>    `{wssUrl, token, familysearch}` — except for a session more than 72 h past
 >    `projects.created`, which it refuses with 410 before resuming
 >    (`SESSION_MAX_AGE` in `app/sessions.py`; `/resume` and the read endpoints
 >    stay open, so an ended session's research can still be read); the control plane is then out of the
@@ -571,6 +571,15 @@ server → client:  {type:"agent_event", event}        # streamed Agent SDK mess
 >   protocol pings are not reliably counted as activity by the edge proxy, and a
 >   silent long turn was getting the socket dropped), and a capped replay buffer
 >   so a reconnect or a second tab rebuilds the chat history.
+> - **`seq` + `epoch` on recorded frames:** every frame that enters the replay
+>   buffer (`agent_event`, `user_msg`) is stamped with a per-session monotonic
+>   `seq` (from 1) and a per-server-process random `epoch` before it is sent.
+>   The client keeps a `lastSeq` cursor, drops any stamped frame at or below it
+>   — so the whole-history replay on a silent reconnect no longer re-folds the
+>   transcript — and resets the cursor when `epoch` changes, because a
+>   replacement server process counts from 1 again. Frames without a `seq`
+>   (`status`, the snapshot frames, `ping`, and everything from a pre-stamp
+>   server) are never deduped and pass through unchanged.
 > - `research_updated`/`gedcomx_updated` always carry the **full** document; the
 >   "or patch" option was never taken.
 > - **Lay mode: the server answers the hand-back itself (lead

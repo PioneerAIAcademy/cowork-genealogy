@@ -1,6 +1,6 @@
 {
   "tool": "record_read",
-  "description": "Full record for Anders (Christening of Anders, son of Hans Olsen and Marit Pedersdatter), Norway, Church Books, 1815-1930. Mirrors the gedcomx already embedded in record-search-anders-patronymic-hit — same persons, same relationships, no new genealogical claims. record_read is in search-records' allowed-tools and the skill sometimes reads a record it has just found before reporting on it, which is sound practice. Without a stocked fixture the tool is never registered in the mock, so that call aborts the whole run as an unregistered tool (Type 1) even when the search work was correct and validators passed — observed on 019, 023 and 014. Coverage for record_read used to be ut_search_records_006, deleted 2026-06-18 as a side effect of a runlog commit.",
+  "description": "Full record for Anders (Christening of Anders, son of Hans Olsen and Marit Pedersdatter), Norway, Church Books, 1797-1958. Mirrors the gedcomx already embedded in record-search-anders-patronymic-hit — same persons, same relationships, no new genealogical claims. record_read is in search-records' allowed-tools and the skill sometimes reads a record it has just found before reporting on it, which is sound practice. Without a stocked fixture the tool is never registered in the mock, so that call aborts the whole run as an unregistered tool (Type 1) even when the search work was correct and validators passed — observed on 019, 023 and 014. Coverage for record_read used to be ut_search_records_006, deleted 2026-06-18 as a side effect of a runlog commit. Collection 4237104's title was reconciled from 'Norway, Church Books, 1815-1930' to the live FamilySearch title 'Norway, Church Books, 1797-1958' (confirmed by collections_search, and already carried by collections-search-kongsberg.json and collections-search-trysil.json) to keep the mock world self-consistent (issue #2484 PR2).",
   "args": {
     "recordId": "~9XKT-M2P"
   },
@@ -35,7 +35,7 @@
         "sources": [
           {
             "id": "S1",
-            "title": "Norway, Church Books, 1815-1930"
+            "title": "Norway, Church Books, 1797-1958"
           }
         ]
       },
@@ -55,7 +55,7 @@
         "sources": [
           {
             "id": "S1",
-            "title": "Norway, Church Books, 1815-1930"
+            "title": "Norway, Church Books, 1797-1958"
           }
         ]
       },
@@ -75,7 +75,7 @@
         "sources": [
           {
             "id": "S1",
-            "title": "Norway, Church Books, 1815-1930"
+            "title": "Norway, Church Books, 1797-1958"
           }
         ]
       }
@@ -97,7 +97,7 @@
     "sources": [
       {
         "id": "S1",
-        "title": "Norway, Church Books, 1815-1930",
+        "title": "Norway, Church Books, 1797-1958",
         "collectionId": "4237104",
         "ark": "ark:/61903/1:1:9XKT-M2P"
       }

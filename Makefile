@@ -503,7 +503,7 @@ proto-smoke: proto-up-core ## D3 acceptance, no model cost: ok / fail / crash / 
 
 .PHONY: proto-test
 proto-test: ## Prototype offline tests: compose/conf/schema shape, the shim's decide(), the web tier, the worker
-	cd apps/server && uv run pytest -q tests/test_proto_config.py tests/test_proto_decide.py tests/test_proto_enqueue.py tests/test_proto_web.py tests/test_proto_feedback.py tests/test_proto_worker.py tests/test_proto_worker_start.py tests/test_proto_shutdown.py tests/test_proto_d17.py tests/test_proto_demo.py tests/test_proto_kill.py tests/test_proto_d18.py tests/test_proto_auth.py tests/test_proto_bundles.py tests/test_eb_bundles.py tests/test_proto_grants.py tests/test_proto_grants_pg.py tests/test_proto_turn_users.py tests/test_proto_migrate.py tests/test_proto_migrate_pg.py tests/test_proto_bounds.py tests/test_proto_queue_pg.py tests/test_proto_fencing_pg.py tests/test_proto_session_store_pg.py tests/test_proto_delete_pg.py tests/test_proto_alarms.py tests/test_proto_alarms_pg.py tests/test_proto_feedback_pg.py tests/test_proto_rehearsal.py tests/test_proto_target.py
+	cd apps/server && uv run pytest -q tests/test_proto_config.py tests/test_proto_decide.py tests/test_proto_enqueue.py tests/test_proto_web.py tests/test_proto_feedback.py tests/test_proto_worker.py tests/test_proto_worker_start.py tests/test_proto_shutdown.py tests/test_proto_d17.py tests/test_proto_demo.py tests/test_proto_kill.py tests/test_proto_d18.py tests/test_proto_auth.py tests/test_proto_bundles.py tests/test_eb_bundles.py tests/test_proto_grants.py tests/test_proto_grants_pg.py tests/test_proto_turn_users.py tests/test_proto_migrate.py tests/test_proto_migrate_pg.py tests/test_proto_bounds.py tests/test_proto_queue_pg.py tests/test_proto_fencing_pg.py tests/test_proto_session_store_pg.py tests/test_proto_delete_pg.py tests/test_proto_alarms.py tests/test_proto_alarms_pg.py tests/test_proto_feedback_pg.py tests/test_proto_retention_pg.py tests/test_proto_rehearsal.py tests/test_proto_target.py
 
 # U3: the grant-lock tests against real Postgres -- the lock semantics are the point, and no
 # fake can prove pg_try_advisory_lock. U9's migration runner the same way: its lock, its
@@ -512,13 +512,14 @@ proto-test: ## Prototype offline tests: compose/conf/schema shape, the shim's de
 # worker writes, transcript append and tool-server commit (two `build/http.js` processes,
 # hence the build first) are no-ops, and its transcript append dedupes a retried batch by
 # uuid. U19's delete_session the same way: the SDK-keyed transcript, its busy refusal under
-# the queue lock. A fresh database per test or module, dropped at teardown.
+# the queue lock; its retention, keyed on session inactivity, against admit and delete. A
+# fresh database per test or module, dropped at teardown.
 # CI runs the same files against a postgres:16 container (server-tests.yml).
 .PHONY: proto-grants-test
 proto-grants-test: ## U3 + U6 + U9 + U23: the grant-lock interleavings, the claim fence, the migration runner and the held-message claim against the compose postgres (real advisory locks)
 	npm --prefix packages/engine/mcp-server run build
 	$(PROTO_COMPOSE) up -d --wait postgres
-	cd apps/server && PROTO_TEST_PG_DSN=postgresql://postgres:proto@localhost:5434/postgres uv run pytest -q tests/test_proto_grants_pg.py tests/test_proto_migrate_pg.py tests/test_proto_queue_pg.py tests/test_proto_fencing_pg.py tests/test_proto_session_store_pg.py tests/test_proto_delete_pg.py tests/test_proto_alarms_pg.py tests/test_proto_feedback_pg.py
+	cd apps/server && PROTO_TEST_PG_DSN=postgresql://postgres:proto@localhost:5434/postgres uv run pytest -q tests/test_proto_grants_pg.py tests/test_proto_migrate_pg.py tests/test_proto_queue_pg.py tests/test_proto_fencing_pg.py tests/test_proto_session_store_pg.py tests/test_proto_delete_pg.py tests/test_proto_alarms_pg.py tests/test_proto_feedback_pg.py tests/test_proto_retention_pg.py
 
 # U3: store an encrypted FamilySearch grant for the dev-login patron (EMAIL, default
 # dev@localhost, who owns every seeded project): a PKCE sign-in on the dev key through a
@@ -804,9 +805,12 @@ engine-smoke-stdio: $(ENGINE_BUILD) ## Drive the built engine over stdio and cal
 # the duration of the run, killed by the trap on every exit path, with the compose store's
 # GENEALOGY_* values; its base config is this host's config.json, hence
 # --host-config. BASE=http://127.0.0.1:8787 runs the same smoke against the compose `tools`
-# service instead (proto-drive's BASE= switch), whose config.json is {"hosted": true}. Both
-# arms print the per-table psql counts for the project id, even when the smoke fails; the
-# target's exit status is the smoke's.
+# service instead (proto-drive's BASE= switch), whose config.json is {"hosted": true}. The
+# tool server admits a project request only for the bearer stamped on an open turn of that
+# project (U4), so both arms pass --pg-dsn and the smoke seeds (then deletes) a stamped
+# turns row there: PROTO_PG_DSN, or NODE_PG_DSN (URL form, for node-postgres) on the BASE= arm. Both arms print the per-table
+# psql counts for the project id, even when the smoke fails; the target's exit status is
+# the smoke's.
 SMOKE_PROJECT_ID ?=
 # One fresh id per run unless SMOKE_PROJECT_ID names one. Shell, not $(shell): a make-time
 # uuid would be fixed for the whole invocation, including `make -n`.
@@ -815,7 +819,8 @@ smoke_http_pg_counts = docker exec proto-postgres psql -U postgres proto -c \
 	    "SELECT 'projects' AS tbl, count(*) FROM projects WHERE project_id = '$$id' \
 	     UNION ALL SELECT 'documents', count(*) FROM documents WHERE project_id = '$$id' \
 	     UNION ALL SELECT 'blobs', count(*) FROM blobs WHERE project_id = '$$id' \
-	     UNION ALL SELECT 'staging', count(*) FROM staging WHERE project_id = '$$id'"; \
+	     UNION ALL SELECT 'staging', count(*) FROM staging WHERE project_id = '$$id' \
+	     UNION ALL SELECT 'turns (0: seeded row deleted)', count(*) FROM turns WHERE project_id = '$$id'"; \
 	  docker exec proto-postgres psql -U postgres proto -c \
 	    "SELECT name, version, updated_at FROM documents WHERE project_id = '$$id' ORDER BY name"
 
@@ -823,7 +828,7 @@ smoke_http_pg_counts = docker exec proto-postgres psql -U postgres proto -c \
 engine-smoke-http: $(ENGINE_BUILD) proto-up-store ## Drive the built engine over Streamable HTTP against the compose postgres + minio and call every tool but the three auth exclusions (BASE=http://127.0.0.1:8787 runs against the compose tools service; SMOKE_PROJECT_ID overrides the fresh id)
 ifdef BASE
 	@$(smoke_http_id); status=0; \
-	  ( cd $(ENGINE_DIR) && npx tsx dev/smoke-http.ts --base '$(BASE)' --project-id "$$id" --project-path /project ) || status=$$?; \
+	  ( cd $(ENGINE_DIR) && npx tsx dev/smoke-http.ts --base '$(BASE)' --project-id "$$id" --project-path /project --pg-dsn '$(or $(NODE_PG_DSN),$(PROTO_PG_DSN))' ) || status=$$?; \
 	  $(smoke_http_pg_counts); \
 	  exit $$status
 else
@@ -837,7 +842,7 @@ else
 	  trap 'kill $$pid 2>/dev/null; wait $$pid 2>/dev/null' EXIT; \
 	  for i in $$(seq 1 30); do kill -0 $$pid 2>/dev/null || break; curl -sf --max-time 0.5 "http://127.0.0.1:$$port/healthz" >/dev/null && break; sleep 0.5; done; \
 	  curl -sf --max-time 2 "http://127.0.0.1:$$port/healthz" >/dev/null || { echo "engine-smoke-http: build/http.js did not answer /healthz on :$$port within 30 s" >&2; exit 1; }; \
-	  npx tsx dev/smoke-http.ts --base "http://127.0.0.1:$$port" --project-id "$$id" --project-path /project --host-config || status=$$?; \
+	  npx tsx dev/smoke-http.ts --base "http://127.0.0.1:$$port" --project-id "$$id" --project-path /project --host-config --pg-dsn '$(PROTO_PG_DSN)' || status=$$?; \
 	  $(smoke_http_pg_counts); \
 	  exit $$status
 endif
@@ -1041,6 +1046,29 @@ e2e-login: $(ENGINE_DEPS) ## Log in to FamilySearch (opens a browser; token last
 	# client ID, so you don't have to open a Claude session to log in.
 	# Login is host-global and ~24h-lived — a once-per-day act, not per run.
 	cd $(ENGINE_DIR) && npx tsx dev/e2e-login.ts
+
+# ── Source screen (issue #3408) ──
+# Every path is outside the repo: the truth set is restricted. Report counts only.
+.PHONY: source-screen-snapshot source-screen-baseline source-screen-plant source-screen-judge source-screen-score
+source-screen-snapshot: $(ENGINE_DEPS) ## Snapshot tree persons for the source screen: make source-screen-snapshot PIDS=<file> OUT=<dir> [SAMPLE=100] [SEED=1]
+	@test -n "$(PIDS)" -a -n "$(OUT)" || { echo "ERROR: set PIDS and OUT (both outside the repo)" >&2; exit 1; }
+	cd $(ENGINE_DIR) && npx tsx dev/source-screen.ts snapshot --pids "$(abspath $(PIDS))" --out "$(abspath $(OUT))" $(if $(SAMPLE),--sample $(SAMPLE)) $(if $(SEED),--seed $(SEED))
+
+source-screen-baseline: $(ENGINE_DEPS) ## Score a snapshot with the existing checks, offline: make source-screen-baseline SNAPSHOT=<dir> [THRESHOLD=0.5]
+	@test -n "$(SNAPSHOT)" || { echo "ERROR: set SNAPSHOT" >&2; exit 1; }
+	cd $(ENGINE_DIR) && npx tsx dev/source-screen.ts baseline --snapshot "$(abspath $(SNAPSHOT))" $(if $(THRESHOLD),--threshold $(THRESHOLD))
+
+source-screen-plant: $(ENGINE_DEPS) ## Build the planted-error fixture copies: make source-screen-plant OUT=<dir>
+	@test -n "$(OUT)" || { echo "ERROR: set OUT (outside the repo)" >&2; exit 1; }
+	cd $(ENGINE_DIR) && npx tsx dev/source-screen.ts plant --spec dev/source-screen-fixtures.json --out "$(abspath $(OUT))"
+
+source-screen-judge: $(ENGINE_BUILD) ## Run the source-evaluation agent over a snapshot, on your Claude subscription: make source-screen-judge SNAPSHOT=<dir>
+	@test -n "$(SNAPSHOT)" || { echo "ERROR: set SNAPSHOT" >&2; exit 1; }
+	cd eval/harness && uv run python source_screen_judge.py --snapshot "$(abspath $(SNAPSHOT))"
+
+source-screen-score: $(ENGINE_DEPS) ## Score findings against the fixture spec: make source-screen-score FINDINGS="<dir>/baseline.jsonl <dir>/judge.jsonl"
+	@test -n "$(FINDINGS)" || { echo "ERROR: set FINDINGS" >&2; exit 1; }
+	cd $(ENGINE_DIR) && npx tsx dev/source-screen.ts score --spec dev/source-screen-fixtures.json $(foreach f,$(FINDINGS),--findings "$(abspath $(f))")
 
 .PHONY: e2e-run
 e2e-run: $(ENGINE_BUILD) ## Run ONE e2e benchmark fixture against live FamilySearch (expensive): make e2e-run TEST=kenneth-quass-death

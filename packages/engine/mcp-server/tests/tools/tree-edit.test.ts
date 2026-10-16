@@ -618,6 +618,115 @@ describe("tree_edit", () => {
     return t;
   };
 
+  // ── a couple event belongs on the Couple edge, never on a person ──────
+  //
+  // Replayed over the committed corpus this fires 6 times in 4 runs. The
+  // clearest is wilkins-marriage: in one batch the agent wrote the same
+  // "December 1834" Marriage onto BOTH spouses, then added the Couple edge
+  // between them carrying NO facts — the edge left factless and the event
+  // duplicated, which is exactly what this refuses.
+
+  it.each([
+    "Marriage", "Divorce", "MarriageBanns", "Annulment",
+    // spellings only the folded matcher knows; an exact six-name list misses them
+    "marriage_banns", "MarriageLicense", "Marriage Intention",
+  ])(
+    "add_fact refuses a %s on a person and names the Couple route",
+    async (type) => {
+      await writeProject(twoPersons());
+      const r = await treeEdit({
+        projectPath: dir, operation: "add_fact", personId: "I1",
+        fact: { type, date: "1850", sources: [{ ref: "S1" }] },
+      } as any);
+      expect(r.ok).toBe(false);
+      if (!r.ok) {
+        expect(JSON.stringify(r)).toMatch(/belongs on the Couple relationship/);
+        expect(JSON.stringify(r)).toMatch(/add_relationship/);
+      }
+    },
+  );
+
+  it("must not fire: the same Marriage on the Couple edge is where it belongs", async () => {
+    const t = twoPersons();
+    (t as any).relationships = [{ id: "R1", type: "Couple", person1: "I1", person2: "I2", sources: [{ ref: "S1" }] }];
+    await writeProject(t);
+    const r = await treeEdit({
+      projectPath: dir, operation: "add_fact", relationshipId: "R1",
+      fact: { type: "Marriage", date: "1850", sources: [{ ref: "S1" }] },
+    } as any);
+    expect(r.ok).toBe(true);
+  });
+
+  it("must not fire: update_fact retyping a Couple edge's fact into a Marriage", async () => {
+    const t = twoPersons();
+    (t as any).relationships = [{
+      id: "R1", type: "Couple", person1: "I1", person2: "I2", sources: [{ ref: "S1" }],
+      facts: [{ id: "F9", type: "Residence", date: "1850", sources: [{ ref: "S1" }] }],
+    }];
+    await writeProject(t);
+    const r = await treeCorrect({
+      projectPath: dir, operation: "update_fact", relationshipId: "R1", factId: "F9",
+      fact: { type: "Marriage" },
+    } as any);
+    expect(r.ok).toBe(true);
+  });
+
+  it("add_person refuses a non-array `facts` by name, single and batched", async () => {
+    await writeProject(twoPersons());
+    const person = { names: [{ given: "Bridget", surname: "Doyle" }], facts: { type: "Birth" } };
+    const single = await treeEdit({ projectPath: dir, operation: "add_person", person } as any);
+    expect(single.ok).toBe(false);
+    if (!single.ok) expect(JSON.stringify(single)).toMatch(/`person.facts` must be an array/);
+    const batch = await treeEdit({ projectPath: dir, ops: [{ operation: "add_person", person }] } as any);
+    expect(batch.ok).toBe(false);
+    if (!batch.ok) expect(JSON.stringify(batch)).toMatch(/ops\[0\]: add_person `person.facts` must be an array/);
+    expect((await readTree()).persons).toHaveLength(2);
+  });
+
+  it("add_person refuses an inline couple event", async () => {
+    await writeProject(twoPersons());
+    const r = await treeEdit({
+      projectPath: dir, operation: "add_person",
+      person: {
+        names: [{ given: "Bridget", surname: "Doyle" }],
+        facts: [{ type: "Marriage", date: "1850", sources: [{ ref: "S1" }] }],
+      },
+    } as any);
+    expect(r.ok).toBe(false);
+    if (!r.ok) expect(JSON.stringify(r)).toMatch(/belongs on the Couple relationship/);
+  });
+
+  it("update_fact refuses RETYPING a person's fact into a couple event", async () => {
+    await writeProject(twoPersons());
+    const r = await treeCorrect({
+      projectPath: dir, operation: "update_fact", personId: "I1", factId: "F1",
+      fact: { type: "Marriage" },
+    } as any);
+    expect(r.ok).toBe(false);
+    if (!r.ok) expect(JSON.stringify(r)).toMatch(/belongs on the Couple relationship/);
+  });
+
+  // 14 person-level couple-event facts sit in 9 committed e2e starting trees.
+  // Legacy documents are read, never repaired, and refusing their correction
+  // would strand data the agent is meant to be able to fix, so an edit to one
+  // already there is admitted.
+  it("update_fact ADMITS editing a person-level couple event that is already there", async () => {
+    const t = twoPersons();
+    (t as any).persons[0].facts = [{ id: "F1", type: "Marriage", date: "1850", sources: [{ ref: "S1" }] }];
+    await writeProject(t);
+    // `type` is RE-STATED, not omitted. Omitting it leaves the guard unengaged
+    // (it keys on `input.fact.type !== undefined`), so a test without it passes
+    // whether or not the already-there exemption exists — it would prove nothing.
+    const r = await treeCorrect({
+      projectPath: dir, operation: "update_fact", personId: "I1", factId: "F1",
+      fact: { type: "Marriage", date: "1851" },
+    } as any);
+    expect(r.ok).toBe(true);
+    const f = ((await readTree()) as any).persons[0].facts[0];
+    expect(f.date).toBe("1851");
+    expect(f.type).toBe("Marriage");
+  });
+
   it("add_relationship refuses a Couple whose two persons are the same", async () => {
     await writeProject(twoPersons());
     const r = await treeEdit({

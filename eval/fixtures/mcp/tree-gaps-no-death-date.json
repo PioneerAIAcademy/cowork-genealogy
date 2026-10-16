@@ -30,6 +30,10 @@
           ],
           "censusYears": [],
           "placeLevel": "region"
+        },
+        "pendingHints": {
+          "fitting": 0,
+          "total": 0
         }
       }
     ],

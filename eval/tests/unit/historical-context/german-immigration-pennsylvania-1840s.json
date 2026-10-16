@@ -11,6 +11,9 @@
     "delegation": "My ancestor immigrated from Germany to Pennsylvania around 1845. What historical context should I know about German immigration during that period, and how does it affect my research?",
     "scenario": null
   },
+  "execution": {
+    "max_wall_clock_seconds": 600
+  },
   "mcp_fixtures": [
     "wiki-search-german-ancestors",
     "wiki-search-german-church-records",
@@ -20,7 +23,7 @@
     "wiki-search-any"
   ],
   "judge_context": [
-    "This test's primary purpose is the Citation completeness dimension: the response must end with a \"Sources consulted\"-style list naming every wiki/Wikipedia page it actually drew from, each with its real URL (`source_url` on `wiki_search` results, `url` from `wiki_read`/`wikipedia_search`) — not just the article title. Grade that end-of-response list, not scattered inline citation. Do not let an unrelated Source quality concern (e.g. a claim stated too confidently) pull this dimension down.",
+    "This test's primary purpose is the Citation completeness dimension: the narrative must end with a \"Sources consulted\"-style list (directly above the Search implications block) naming every wiki/Wikipedia page it actually drew from, each with its real URL (`source_url` on `wiki_search` results, `url` from `wiki_read`/`wikipedia_search`) — not just the article title. Grade that end-of-response list, not scattered inline citation. Do not let an unrelated Source quality concern (e.g. a claim stated too confidently) pull this dimension down.",
     "Should connect the historical context to research-useful facts — for example, that German civil registration was not national and church records (Kirchenbücher) are the primary pre-civil-registration source, or that identifying the specific German town/parish of origin is essential before searching German archives.",
     "Should not just summarize 'many Germans immigrated in the 1840s' — the value of this skill is in surfacing context the genealogist can act on, not general encyclopedia content."
   ]

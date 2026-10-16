@@ -4,6 +4,7 @@ import { getValidToken } from "../auth/refresh.js";
 import { parseUpstreamErrorBody } from "../utils/search-helpers.js";
 import { mapWithConcurrency } from "../utils/place-resolver.js";
 import { collectionCoverage, fetchAllCollections } from "./collections-search.js";
+import { personRecordMatches } from "./match-by-id.js";
 import {
   addAncestry,
   addDescendancy,
@@ -43,6 +44,8 @@ const DEADLINE_MS = 50_000;
 const MIN_READ_MS = 2_000;
 const MAX_DESCENDANCY_READS = 60;
 const CONCURRENCY = 6;
+// The match API's per-call maximum; a person with more pending hints is counted up to it.
+const MAX_HINTS_PER_PERSON = 50;
 
 // Record-type facets (collections searchMetadata.typeFacet) that could hold the
 // record each hole needs.
@@ -75,7 +78,10 @@ export const treeGapsToolSchema = {
     "or place, a deceased person with no death date. Each hole gives the " +
     "person's ID, name, life years, the year range and place to search, and " +
     "`coverage`: catalog collections that could hold the record, census " +
-    "years inside the window, and how specific the place is. Living " +
+    "years inside the window, and how specific the place is, and " +
+    "`pendingHints`: how many of FamilySearch's pending record hints for " +
+    "the person are about the event the hole is missing; holes with such a " +
+    "hint come first, then the rest nearest the root first. Living " +
     "people never carry a " +
     "hole. If personId is omitted it uses the logged-in user; for anyone " +
     "else, call person_search first. Reads only; writes nothing. Requires " +
@@ -239,6 +245,119 @@ function score(gaps: TreeGap[], catalog: FSCollectionEntry[]): void {
   }
 }
 
+// What a pending hint must be about to count for a hole: the event the hole is
+// missing. A broad record-type facet cannot say it (VITAL covers births,
+// marriages and deaths alike), so the event is read from the match's collection
+// title ("Pennsylvania, Births and Christenings, 1700-1900"). A title that names
+// no event ("Vital Records") counts toward `total` only. A census names the whole
+// household, so it is the only record a hint on a spouse can bring to a hole about
+// the couple's children.
+export type HintEvent = "birth" | "marriage" | "death" | "census";
+
+const HINT_EVENTS: Record<TreeGapType, readonly HintEvent[]> = {
+  missing_parents: ["birth"],
+  no_birth_info: ["birth"],
+  no_spouse: ["marriage"],
+  missing_surname: ["marriage"],
+  no_death_date: ["death"],
+  no_children: ["census"],
+  child_gap: ["census"],
+  early_last_child: ["census"],
+};
+
+const EVENT_WORDS: [HintEvent, RegExp][] = [
+  ["birth", /birth|christening|baptis/i],
+  ["marriage", /marriage|wedding|banns/i],
+  ["death", /death|burial|grave|cemeter|obituar|funeral|mortuar/i],
+  ["census", /census/i],
+];
+
+export function hintEvents(title: string): HintEvent[] {
+  return EVENT_WORDS.filter(([, re]) => re.test(title)).map(([event]) => event);
+}
+
+// The years a collection title names ("United States Census, 1930", "Ohio Census
+// Index, 1900-1950"), as one span; null when it names none.
+export function hintYears(title: string): { start: number; end: number } | null {
+  const years = (title.match(/\b(?:1[5-9]|20)\d\d\b/g) ?? []).map(Number);
+  return years.length === 0 ? null : { start: Math.min(...years), end: Math.max(...years) };
+}
+
+// A census counts for a hole only if it was taken in the hole's window: a spouse's
+// own childhood census says nothing about the couple's children. A title with no
+// year, or a hole with no window, cannot be judged and is not excluded.
+function censusInWindow(g: TreeGap, years: { start: number; end: number } | null): boolean {
+  if (!years || !g.yearRange) return true;
+  return years.start <= g.yearRange.end && years.end >= g.yearRange.start;
+}
+
+type PersonHints = { ark: string; events: HintEvent[]; years: { start: number; end: number } | null }[];
+
+// People on the selected holes, each read once however many holes name them.
+function hintPeople(gaps: TreeGap[]): string[] {
+  const people = new Set<string>();
+  for (const g of gaps) {
+    for (const id of [g.personId, g.spouseId]) if (id && id !== "UNKNOWN") people.add(id);
+  }
+  return [...people];
+}
+
+// Pending matches per person, six at a time. Each read gets what is left of the
+// deadline as its own timeout and retry budget, so none outlives the response; a
+// person not started by the time budget, or with under 2 s left, is not in the map.
+async function readHints(
+  people: string[],
+  principal: Principal,
+  started: number,
+): Promise<Map<string, PersonHints>> {
+  const hints = new Map<string, PersonHints>();
+  await mapWithConcurrency(people, CONCURRENCY, async (id) => {
+    const elapsed = Date.now() - started;
+    const window = elapsed > TIME_BUDGET_MS ? null : readWindow(elapsed);
+    if (!window) return;
+    try {
+      const res = await personRecordMatches(
+        { id, status: ["pending"], count: MAX_HINTS_PER_PERSON },
+        principal,
+        window,
+      );
+      hints.set(
+        id,
+        res.matches.map((m) => ({ ark: m.ark, events: hintEvents(m.title), years: hintYears(m.title) })),
+      );
+    } catch {
+      // Unread: counted with the people skipped for time by scoreHints.
+    }
+  });
+  return hints;
+}
+
+function hasFittingHint(g: TreeGap): boolean {
+  return (g.pendingHints?.fitting ?? 0) > 0;
+}
+
+// A hole's count pools its person and, on a couple-level hole, the spouse, each
+// match once. If any person on the hole is unread the count is null, never a
+// partial number the agent would rank on. Returns how many people were unread.
+function scoreHints(gaps: TreeGap[], people: string[], hints: Map<string, PersonHints>): number {
+  for (const g of gaps) {
+    const ids = [g.personId, g.spouseId].filter((id): id is string => !!id && id !== "UNKNOWN");
+    const reads = ids.map((id) => hints.get(id));
+    if (reads.length === 0 || reads.some((r) => !r)) continue;
+    const seen = new Map<string, PersonHints[number]>();
+    for (const r of reads) for (const h of r!) seen.set(h.ark, h);
+    g.pendingHints = {
+      fitting: [...seen.values()].filter((h) =>
+        h.events.some(
+          (e) => HINT_EVENTS[g.type].includes(e) && (e !== "census" || censusInWindow(g, h.years)),
+        ),
+      ).length,
+      total: seen.size,
+    };
+  }
+  return people.filter((id) => !hints.has(id)).length;
+}
+
 export async function treeGapsTool(
   input: TreeGapsInput,
   principal: Principal,
@@ -346,6 +465,10 @@ export async function treeGapsTool(
   }
 
   const gaps = selectGaps(detectGaps(model), maxHoles);
+  // Started now, not after the catalog wait: the people are known and the reads
+  // do not need the catalog.
+  const people = hintPeople(gaps);
+  const hintReads = readHints(people, principal, started);
 
   let waitTimer: ReturnType<typeof setTimeout> | undefined;
   const catalog = await Promise.race([
@@ -359,6 +482,16 @@ export async function treeGapsTool(
     score(gaps, catalog);
   } else {
     notes.push("Collection coverage was unavailable; `coverage` is null on every hole.");
+  }
+  const unreadHints = scoreHints(gaps, people, await hintReads);
+  // A hole with a fitting pending hint comes first; the order within each group,
+  // nearest the root first, is kept (Array.prototype.sort is stable).
+  gaps.sort((a, b) => Number(hasFittingHint(b)) - Number(hasFittingHint(a)));
+  if (unreadHints > 0) {
+    notes.push(
+      `Pending hints were not read for ${unreadHints} person${unreadHints === 1 ? "" : "s"} ` +
+        "(a read failed, or time ran out); `pendingHints` is null on their holes.",
+    );
   }
   if (failedReads > 0) {
     notes.push(

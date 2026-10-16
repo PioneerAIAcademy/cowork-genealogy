@@ -190,7 +190,8 @@ tree_edit({
   `fact.standard_place` was supplied, resolve it via `resolveStandardPlace` (null
   when nothing resolves), passing the places of the holder's other facts as
   context for a bare single-segment place (see research-append-tool-spec
-  §3.6, lever B).
+  §3.6, lever B). A `personId` target whose `fact.type` is a couple event
+  (`isCoupleEventFactType`) is refused, naming the Couple route (§7).
 - **`update_fact`** `{ personId | relationshipId, factId, fact }` — shallow-merge
   the provided `fact` fields onto the existing fact (id immutable) on the same
   exactly-one-target contract as `add_fact`; the `factId` must live on the named
@@ -199,7 +200,8 @@ tree_edit({
   same-type swap on that holder. `primary: false` deletes the key on **that fact
   only**, leaving other facts of the type untouched — so a vital type may end
   with no primary at all, which is the point: it is the only way to retire a
-  concluded value while a conflict is open.
+  concluded value while a conflict is open. A `personId` target that retypes a
+  fact into a couple event is refused (§7); editing one already there is not.
   `add_person` and `add_relationship` apply the same `primary: false` deletion
   to each inline fact they author.
 - **`add_name`** `{ personId, name }` — append, assign next `N`. If
@@ -212,7 +214,8 @@ tree_edit({
   nested fact (reported as `assignedIds.facts`). Inline facts follow the same rules
   as `add_fact`: a caller-supplied fact `id` is rejected ("add_person facts must not
   carry ids — the tool assigns them"), and each fact's `standard_place` is resolved
-  from `place` when unset. Synthesized stubs omit `ark`
+  from `place` when unset. `person.facts` must be an array, and an inline couple
+  event is refused as on `add_fact`. Synthesized stubs omit `ark`
   (`simplified-gedcomx-spec.md` §4.6). **Name-shape tolerance:** a caller that
   supplies a singular `name: { given, surname, preferred? }` object where the
   schema expects a `names: [...]` array (a common model slip — observed on ~15% of
@@ -614,6 +617,9 @@ Sequence (validate-before-persist, tree-only):
 | `add_fact` / `update_fact` targeting a `ParentChild` relationship, or `add_relationship` with facts on a `ParentChild` | input error — facts live only on Couple relationships |
 | A fact payload (any write path) with a non-string `date` / `standard_date` / `place` / `standard_place` / `value` — e.g. a nested `{ original, formal }` date object | input error naming the field and expected shape; write nothing (§4.1 "Fact payload shape") |
 | `add_person` inline fact / `add_relationship` fact carries an `id` | input error — the tool assigns `F` ids |
+| `add_fact` with a `personId`, or an `add_person` inline fact, whose `type` is a couple event — any type `isCoupleEventFactType` (`record-persona.ts`) accepts | input error naming the Couple route; write nothing |
+| `update_fact` with a `personId` that RETYPES a fact into a couple event | input error naming the Couple route. Editing a fact that is **already** a person-level couple event, by the same test, is admitted: legacy documents are read, never repaired |
+| `add_person` whose `person.facts` is present and not an array | input error naming the op; write nothing |
 | `remove` with a `personId` and no `factId` (attempt to delete a person) | input error — use `merge_tree_persons` |
 | `remove` of a `factId` more than one holder carries, unscoped | input error naming every holder — pass `personId` or `relationshipId` |
 | `remove` with both `personId` and `relationshipId` | input error — one or the other scopes a `factId` |
@@ -657,16 +663,20 @@ The caller (`tree-edit` skill) still:
   Relationship-targeted: `relationshipId` appends to the Couple's own `facts`
   (same F id / primary swap / place resolution; nothing lands on either spouse);
   both/neither of `personId`/`relationshipId` rejected; `ParentChild` target
-  rejected; stale `relationshipId` rejected.
+  rejected; stale `relationshipId` rejected. A couple event on a `personId`
+  is refused in every spelling the matcher folds, and accepted on the Couple.
 - **update_fact** — field merge by `factId`; a place change re-resolves
   `standard_place`; id unchanged. Also merges by `relationshipId` + `factId` on a
-  Couple-held fact; a `factId` not on the named holder errors.
+  Couple-held fact; a `factId` not on the named holder errors. Retyping a
+  person's fact into a couple event is refused; editing one already there, or
+  retyping a Couple-held fact, is admitted.
 - **add_name / update_name** — `N` id assigned; `preferred: true` clears other
   preferred; exactly one preferred remains.
 - **update_person** — gender/ark set; nothing else changed.
 - **add_person** — `I` id + `N` ids assigned; stub omits `ark`; inline facts get
   `F` ids (surfaced as `assignedIds.facts`) with `standard_place` resolution; an
-  inline fact carrying an id is rejected.
+  inline fact carrying an id is rejected; an inline couple event and a
+  non-array `facts` are refused, single and batched.
 - **add_relationship** — `R` id assigned; endpoints validated; `ParentChild` with
   `person1` rejected; Couple facts get `F` ids, caller-supplied fact ids rejected.
   A matching edge is corroborated: its id comes back, the caller's sources and
