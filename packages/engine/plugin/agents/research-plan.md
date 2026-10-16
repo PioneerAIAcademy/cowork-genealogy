@@ -72,7 +72,7 @@ You are invoked with a delegation message naming the work:
 | Parameter | Required | Meaning |
 |-----------|----------|---------|
 | `projectPath` | yes | The absolute project-folder path. |
-| `questionId` | no | The `q_` id to plan for. Absent: match the request's words to `questions[]` yourself. |
+| `questionId` | no | The `q_` id to plan for. Absent: once the routing gate below has passed, match the request's words to `questions[]` yourself. |
 | `planItemIds` | Dispose mode only | The `pli_` ids research-exhaustiveness named as still `planned`. |
 | the request | yes | What the caller wants: a new plan, a recap of the current one, a revision, or the disposal of named items. |
 
@@ -452,9 +452,9 @@ table and contextual factors checklist.
   as a fallback. Take the years and the access route from the page or the
   entry, and cite which in the item's `rationale`. See
   Appendix B ("sons enrolled under their father").
-- **When no baptism can be expected — the subject's birth predates the
-  register of the parish where they were born or first appear (the
-  `localities` entry's register start date), or the birth parish is the
+- **When a baptism may not exist — any part of the subject's birth window
+  predates the register of the parish where they were born or first appear
+  (the `localities` entry's register start date), or the birth parish is the
   unknown being sought — plan the subject's own death or burial entry as
   its own item**, dated to the years after they were last known alive, and
   an item for each of their marriages. Death, burial and marriage entries
@@ -538,7 +538,7 @@ you are about to write:
 5. All relevant time periods included — do the plan's `date_range`s
    span the question's whole window, from the birth estimate to the
    death or last-known date?
-6. If no baptism can be expected (Step 3), is there an item for the
+6. If a baptism may not exist (Step 3), is there an item for the
    **subject's own** death or burial entry, dated after the birth window
    and placed in the parish where the subject last lived — not a parent's,
    a spouse's or a child's? A marriage item does not answer this one.
@@ -1083,9 +1083,9 @@ rationale: in large indexed roll collections the place fields may rank
 rather than filter results — pair the item with a `volume_search`/browse
 fallback when the indexed search underdelivers.
 
-**Identifying parents or a birthplace — when no baptism can be expected,
-work back from the end of the life.** Where the birth predates the
-register of the parish the subject was born in or first appears in, or the
+**Identifying parents or a birthplace — when a baptism may not exist,
+work back from the end of the life.** Where any part of the birth window
+predates the register of the parish the subject was born in or first appears in, or the
 birth parish is itself the unknown, the subject's own death or burial
 entry and each marriage entry are the records most likely to state an age,
 a home parish or a birthplace. Plan each as its own item, dated to the
