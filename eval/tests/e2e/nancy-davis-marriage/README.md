@@ -28,17 +28,72 @@ match strength.
 
 ## Notes for reviewers
 
-**DRAFT PENDING ADJUDICATION.** This fixture comes from a hint batch
-(`filtered-list-samples-3.csv` row 27, `hint-samples.csv` row 896,
-flag `adds_marriage`, confidence 3) in which roughly half the hint records are
-**false matches**, and the authors do not know which.
-`expected-findings.json` was transcribed from the hint record — "Missouri, Marriages, 1750-1920", a marriage entry for William Bremer and Nancy Angeline Davis on 12 May 1868 in Newton County, Missouri.
-The genealogist + developer teams must decide (a) true match — keep the
-findings; (b) different answer — edit `expected-findings.json`; or (c) no
-findable answer — replace the findings with a `"polarity": "avoid"` guard
-naming the May 1868 Newton County marriage, plus a `required` finding that the report documents
-the rejection.
+**Resolved: OUTCOME 2 (the answer is something else — the tree links the wrong
+woman to Brewer).** The hint is a real 1868 marriage, but it does not belong to
+the tree person `LJK2-JBH`. **`LJK2-JBH` and Brewer's actual wife are two
+distinct people**; the hint is a **false match** for `LJK2-JBH`, and the correct
+person is identifiable. The findings reward recovering that distinction,
+following the `adelaida-martinez-mother` precedent (two `required` findings).
 
-A true match to the husband, and a conflict over which Nancy the tree person is. "Bremer" is a misreading of Brewer, and the tree's William James Brewer already cites two indexes of this same 1868 marriage: the groom's persona in "Missouri, Marriages, 1750-1920" (`ark:/61903/1:1:V28T-J7R`) and an entry in "Missouri, County Marriage, Naturalization, and Court Records, 1800-1991" (`ark:/61903/1:1:6XNV-J1Z3`). His 1870 census (`ark:/61903/1:1:MXLB-P95`, Hood, Cooke County, Texas) and 1900 census (`ark:/61903/1:1:M3L5-BTV`, Eastland County, Texas, married 32 years) both show a wife Nancy A., so the bride Nancy Angeline Davis is certainly Brewer's wife. Nancy herself cites none of this; the couple carries no marriage fact.
+**The two people:**
 
-The problem is that the tree's Nancy looks like two women. Her only own source is the 1850 census (`ark:/61903/1:1:MDZF-Q7C`, household of Thomas J. and Elizabeth Davis at Neosho, Newton County), which gives a Nancy born about 1837 in Tennessee, and that is where the tree's 1837 Bradley County birth comes from. Brewer's wife Nancy A. is born about 1853 in Missouri in 1870 and May 1853 in Missouri in 1900, so she could not be in that 1850 household. The Moreland daughters born in Tennessee in 1858 and 1860 fit neither a bride of 1868 born in 1853 nor the Brewer household. The marriage in Newton County, where the 1837 Nancy lived, is the only thing tying the two together. Accepting the hint is right if LJK2-JBH is Brewer's wife; it is wrong for the 1837 daughter of Thomas J. Davis. The discriminating check is the bride's age or parents on the 1868 Newton County marriage register page: a bride of about 15 belongs with Brewer and means the 1850 census and the Tennessee birth should come off this person, while a bride of about 31 would make her the 1837 Nancy and leave the census birthplaces unexplained.
+- **`LJK2-JBH` — Nancy Davis, born about 1837 in Tennessee.** Her only own
+  source is the 1850 census (`ark:/61903/1:1:MDZF-Q7C`, household of Thomas J.
+  Davis at Neosho, Newton County) — the origin of the tree's 1837 Bradley
+  County birth. The Moreland daughters on her (Mary 1858, Sarah 1860, both born
+  Tennessee) fit this 1837-Tennessee woman and a non-Brewer (Moreland) husband.
+  She is **wrongly coupled to William James Brewer** in the tree and carries no
+  1853-Missouri evidence of her own.
+- **Brewer's actual wife — Nancy Angelina Davis (`L8YY-CBX`), born 4 May 1853
+  in Missouri.** A distinct, well-sourced tree person who **already holds** the
+  12 May 1868 Newton County marriage (`ark:/61903/1:1:V28T-J7T`,
+  `ark:/61903/1:1:6XNV-J1ZQ`), the Brewer children, and Brewer's 1870
+  (`ark:/61903/1:1:MXLB-P95`; wife Nancy A. b. 1853 Missouri) and 1900
+  (`ark:/61903/1:1:M3L5-BTV`; wife Nancy A. b. May 1853 Missouri, marriage
+  1868) censuses, the 1880 census (`ark:/61903/1:1:M66Z-BVH`, indexed "Lina
+  Brewer"), and her 1904 death records (e.g. `ark:/61903/1:1:K3SF-DKR`; she
+  died 9 January 1904 in Eastland, Texas). Her parents are Phillip Rayburn
+  Davis and Mary Ann Ingram, not Thomas J. Davis.
+
+**What decided it (index + census, not the register).** Neither marriage index
+(`ark:/61903/1:1:V28T-J7T` / `ark:/61903/1:1:V28T-J7R`,
+`ark:/61903/1:1:6XNV-J1Z3`) carries the bride's age or parents. Brewer's
+censuses give his wife as born about 1853 in Missouri, and a woman born about
+1853 cannot be the Nancy born about 1837 in Tennessee enumerated in the 1850
+census — so these are two people. The 1868 marriage and the whole Brewer
+household are already attached to `L8YY-CBX`, confirming she — not `LJK2-JBH` —
+is Brewer's 1868 bride. This is **not** outcome 1 (the hint is not
+`LJK2-JBH`'s) and **not** outcome 3 (the marriage is real and its true owner,
+`L8YY-CBX`, is findable).
+
+**The original register entry could not be examined (`image_basis: false`).**
+The original 1868 Newton County marriage-register entry — reportedly in
+volume 2-A — is unavailable for examination: its FamilySearch page image
+(`ark:/61903/3:1:3QS7-998M-Y8G2`, Newton County 1867–1872) returned **HTTP
+403** on every authorized fetch (`image_transcribe` with the FamilySearch
+token), and that access problem is **not resolved**. No archive or county
+office was contacted, so this records only that the image route was
+inaccessible — not that the original is lost. **No original-register field was
+inspected**, and nothing here claims the register records the bride's age,
+parental consent, or any other decisive detail. The identification instead
+rests on the marriage **index** (Nancy Angeline Davis and William James
+Brewer — also recorded as William Bremer — married 12 May 1868, Newton
+County) together with the corroborating **1870, 1880, and 1900 censuses and
+Nancy Angelina Davis's 1904 death records** attached to `L8YY-CBX`, which
+identify `L8YY-CBX` (b. ~1853 Missouri) as Brewer's wife rather than
+`LJK2-JBH` (b. ~1837 Tennessee). `image_basis` stays **false**, and no Step 1a
+image calibration was performed or is relied upon.
+
+**Acceptance-criteria resolution.** Issue #3347's "Done when" asks that the
+README say "which register field decided it." The register image is
+access-restricted (403, unresolved), so no register field could be inspected
+and none was verified. **The issue owner accepted the alternative evidence** —
+the marriage index plus the 1870, 1880, and 1900 censuses and Nancy Angelina
+Davis's 1904 death records — as the basis for the identification in place of a
+register field. The image-access limitation stands and was **not** fixed; the
+acceptance is of the alternative evidence, not a claim that the register was
+read or that any register field was verified.
+
+**Retrieval** was read-only via the MCP `record_read` and `person_read` tools
+(and an `image_transcribe` attempt on the register image, which returned 403)
+against live FamilySearch; the identity judgement is the genealogist's.
