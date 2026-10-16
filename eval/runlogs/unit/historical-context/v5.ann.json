@@ -1,0 +1,398 @@
+{
+  "run_log": "v5.json",
+  "annotator": "eruth937@gmail.com",
+  "corrections": [
+    {
+      "test_id": "ut_historical_context_frq",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_historical_context_frq",
+      "dimension_source": "rubric",
+      "dimension_name": "Relevance to research",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_historical_context_frq",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_historical_context_frq",
+      "dimension_source": "rubric",
+      "dimension_name": "Citation completeness",
+      "llm_score": null,
+      "corrected_score": null,
+      "comment": null
+    },
+    {
+      "test_id": "ut_historical_context_frq",
+      "dimension_source": "rubric",
+      "dimension_name": "Genealogical implications",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_historical_context_frq",
+      "dimension_source": "rubric",
+      "dimension_name": "Source quality",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_historical_context_frq",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": null,
+      "corrected_score": null,
+      "comment": null
+    },
+    {
+      "test_id": "ut_historical_context_013",
+      "dimension_source": "rubric",
+      "dimension_name": "Genealogical implications",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_historical_context_013",
+      "dimension_source": "rubric",
+      "dimension_name": "Citation completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_historical_context_013",
+      "dimension_source": "rubric",
+      "dimension_name": "Relevance to research",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_historical_context_013",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_historical_context_013",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_historical_context_013",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 2,
+      "corrected_score": 2,
+      "comment": "I checked the historical claims against the tool results. The response is mostly accurate, but the specific claim about potato blight in southwestern German states and the named Pennsylvania destination counties were not directly supported by the retrieved sources. These claims should be qualified or verified."
+    },
+    {
+      "test_id": "ut_historical_context_013",
+      "dimension_source": "rubric",
+      "dimension_name": "Source quality",
+      "llm_score": 2,
+      "corrected_score": 2,
+      "comment": "I checked whether the historical claims were adequately supported. The civil registration timeline and the importance of church records are supported by the FamilySearch wiki results. However, the potato blight claim and the WWI-era concealment discussion lack explicit support from the retrieved sources and should be qualified or independently verified."
+    },
+    {
+      "test_id": "ut_historical_context_hbt",
+      "dimension_source": "rubric",
+      "dimension_name": "Citation completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_historical_context_hbt",
+      "dimension_source": "rubric",
+      "dimension_name": "Genealogical implications",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_historical_context_hbt",
+      "dimension_source": "rubric",
+      "dimension_name": "Source quality",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_historical_context_hbt",
+      "dimension_source": "rubric",
+      "dimension_name": "Relevance to research",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_historical_context_hbt",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_historical_context_hbt",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_historical_context_hbt",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_historical_context_u4k",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_historical_context_u4k",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_historical_context_u4k",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_historical_context_u4k",
+      "dimension_source": "rubric",
+      "dimension_name": "Relevance to research",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_historical_context_u4k",
+      "dimension_source": "rubric",
+      "dimension_name": "Citation completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_historical_context_u4k",
+      "dimension_source": "rubric",
+      "dimension_name": "Genealogical implications",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_historical_context_u4k",
+      "dimension_source": "rubric",
+      "dimension_name": "Source quality",
+      "llm_score": 2,
+      "corrected_score": 2,
+      "comment": "I agree with the score of 2. The FamilySearch guardianship lesson was verified, but the explanations of common-law surname retention, inheritance rights, and guardianship procedures were not directly supported by the retrieved sources. These claims should have been identified as general historical knowledge requiring further verification rather than presented entirely as established facts."
+    },
+    {
+      "test_id": "ut_historical_context_001",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_historical_context_001",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_historical_context_001",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_historical_context_001",
+      "dimension_source": "rubric",
+      "dimension_name": "Relevance to research",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_historical_context_001",
+      "dimension_source": "rubric",
+      "dimension_name": "Source quality",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_historical_context_001",
+      "dimension_source": "rubric",
+      "dimension_name": "Citation completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_historical_context_001",
+      "dimension_source": "rubric",
+      "dimension_name": "Genealogical implications",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_historical_context_k7p",
+      "dimension_source": "rubric",
+      "dimension_name": "Genealogical implications",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_historical_context_k7p",
+      "dimension_source": "rubric",
+      "dimension_name": "Citation completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_historical_context_k7p",
+      "dimension_source": "rubric",
+      "dimension_name": "Source quality",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_historical_context_k7p",
+      "dimension_source": "rubric",
+      "dimension_name": "Relevance to research",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_historical_context_k7p",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_historical_context_k7p",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_historical_context_k7p",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_historical_context_005",
+      "dimension_source": "rubric",
+      "dimension_name": "Citation completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_historical_context_005",
+      "dimension_source": "rubric",
+      "dimension_name": "Source quality",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_historical_context_005",
+      "dimension_source": "rubric",
+      "dimension_name": "Relevance to research",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_historical_context_005",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_historical_context_005",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 2,
+      "corrected_score": 2,
+      "comment": "I checked the explanation against the test requirements. The 1863 statehood explanation is correct, but the response does not explicitly explain that county boundaries also changed over time, independently of state boundaries. This omission limits the completeness of the historical explanation."
+    },
+    {
+      "test_id": "ut_historical_context_005",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 2,
+      "corrected_score": 2,
+      "comment": "The response explains why the ancestor's birthplace changed from Virginia to West Virginia without requiring a physical move. However, it omits the required discussion of changing county boundaries and does not direct the researcher to historical boundary maps, such as Historical Map Works or FamilySearch locality guides, to identify the correct county before searching records."
+    },
+    {
+      "test_id": "ut_historical_context_005",
+      "dimension_source": "rubric",
+      "dimension_name": "Genealogical implications",
+      "llm_score": 2,
+      "corrected_score": 2,
+      "comment": "The response recommends identifying the original Virginia county and searching the appropriate state and county repositories. However, it does not explicitly address frequent county-boundary changes or recommend consulting historical boundary maps and FamilySearch locality guides before selecting a record repository. These omissions leave the research plan incomplete."
+    }
+  ]
+}
