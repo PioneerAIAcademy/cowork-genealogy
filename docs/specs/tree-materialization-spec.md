@@ -275,20 +275,27 @@ them. A `speculative` link is a candidate, not an identity, so it does not
 qualify.
 
 - **Persona arm (`personaTargetRefusal`):** one of the persona's own one-party
-  assertions (`record_id` + `record_role`). A two-party assertion names two
-  people: a `marriage`, `relationship`, `parentage` or `parentchild` assertion,
-  or a couple event in any spelling (`marriage_bann`, `marriage_intention`,
-  `marriage_date`, a divorce). The person-evidence agent links it to both
-  parties, so its link to the other party says nothing about this persona:
-  counting it let the groom's name and birth be copied onto the bride. A persona
-  with no one-party assertion writes nothing person-level and is not checked.
+  assertions (`record_id` + `record_role`). An assertion that names a second
+  person does not count: a `marriage`, `relationship`, `parentage` or
+  `parentchild` assertion, a couple event in any spelling (`marriage_bann`,
+  `marriage_intention`, `marriage_date`, a divorce), or a fact about another
+  person filed on this persona (a father, mother, parents, spouse, couple,
+  filiation or informant, or a parent's birthplace). The person-evidence agent
+  links such an assertion to that person too, so its link says nothing about
+  which of them this persona is: counting it let the groom's name and birth be
+  copied onto the bride. The agent also links a one-party assertion to every
+  person it bears on, so the wife's own name can be linked to her husband. When
+  another persona of the record holds the target through one of its own
+  one-party assertions linked to them alone, the target is that persona, and
+  only an assertion of this persona's linked to them alone counts. A persona
+  whose assertions write nothing onto a person is not checked.
 - **Named-party arm (`namedPartyTargetRefusal`, §4.6):** judged on the tree as it
   stood before the op, because the op's own name write attaches this record's
-  ref, after which a person the run added whose refs reach no other record reads
-  as the record's stub. In order:
-  1. A target that one of the own role's one-party assertions is linked to is
-     that persona, never the party the assertion names, so it is refused. The
-     own persona is read at its strongest level: a `speculative` link marks a
+  ref, after which a person the run added, not shaped like a FamilySearch id,
+  whose refs reach no other record reads as the record's stub. In order:
+  1. A target that one of the own persona's one-party assertions is linked to
+     is that persona, never the party the assertion names, so it is refused.
+     That persona is read at its strongest level: a `speculative` link marks a
      candidate only while no `probable` or `confident` one names someone, so a
      same-named father stays writable when the groom's name is probable to the
      son.
@@ -296,44 +303,56 @@ qualify.
      passes is refused.
   3. Otherwise the link rule above, through the naming assertion or one of the
      related role's own one-party assertions on the record. Once those own
-     assertions are linked to anyone, only they qualify: they say who she is,
-     and the naming assertion is linked to both parties.
+     assertions carry a `probable` or `confident` link to anyone, only they
+     qualify: they say who she is, and the naming assertion's link may be about
+     either party.
 
-Known let-throughs, neither with an executed op in the corpus:
+Known let-throughs, none with an executed op in the corpus:
 
 - A person minted from one persona of a record still accepts another persona of
   the same record, because `mintedFromThisRecord` is judged per record, not per
   role.
-- A named-party op onto the naming assertion's own party passes when that
-  persona has no one-party assertion, the named role's own assertions are
-  linked to no one, and the op passes no gender the target contradicts: nothing
-  in the documents then says which party the naming assertion's link to the
-  target is about. A same-gender pair, such as a father named in his son's
-  baptism, is the shape that remains. §4.6 counts 29 of 311 personas that carry
-  nothing but `relationship` or `marriage`.
+- On the persona arm, a one-party assertion the agent linked to both people
+  still carries the persona onto the other one when no other persona of the
+  record holds that person through an assertion linked to them alone, for
+  instance before the groom's own assertions are linked.
+- On the named-party arm, a party still lands on the naming assertion's own
+  party when no one-party assertion of the own persona is linked to the target
+  at its strongest level (it has none, or they are linked to no one or only to
+  someone else), the named role's own one-party assertions carry no `probable`
+  or `confident` link, and the gender check cannot tell them apart: the op
+  passes no gender, the target's gender is `Unknown` (which the op's gender then
+  fills), or the two match. Nothing in the documents says which party the
+  naming assertion's link to the target is about.
 
 Minting needs no link (the link to a new person is written after it exists),
 and neither does re-running a record onto the stub it minted
-(`mintedFromThisRecord`), judged against the write-once starting tree so that a
-person the project began with is never taken for a stub, even when their only
-refs reach this record. Persons are checked as the tree stands at each op, so a
-batch that mints a person from one record cannot copy a second record onto them
-without a link. Both arms rest on one decision, `existingPersonLinkRefusal`. The
-refusals read:
+(`mintedFromThisRecord`: a person the run added, not shaped like a FamilySearch
+id, whose refs reach only this record), judged against the write-once starting
+tree so that a person the project began with is never taken for a stub, even
+when their only refs reach this record. Persons are checked as the tree stands
+at each op, so a batch that mints a person from one record cannot copy a second
+record onto them without a link. Both arms rest on one decision,
+`existingPersonLinkRefusal`. The refusals read:
 
 - Persona arm: "'<id>' was already in the tree, and no 'probable' or 'confident'
   person_evidence link ties one of record '<record>' role '<role>''s own
-  assertions (not a marriage, relationship, parentage or other two-party
-  assertion, whose link may be about the other party) to them. Write that link
-  with research_append first; a 'speculative' link does not qualify. If this
-  persona is someone else, omit personId: the tool then reuses the person this
-  persona was already materialized onto, or mints a new one."
+  assertions (not one that names a second person too, such as a marriage,
+  relationship or parentage, a parent or a spouse, whose link may be about that
+  person) to them. Write that link with research_append first; a 'speculative'
+  link does not qualify. If this persona is someone else, omit personId: the
+  tool then reuses the person this persona was already materialized onto, or
+  mints a new one." When another persona holds the target, the parenthesis
+  names it instead: "one of record '<record>' role '<role>''s own assertions
+  linked to them alone (an assertion of role '<other role>' on that record is
+  linked to them alone, so they are that persona, and a link of this one's that
+  also reaches someone else does not count)".
 - Named-party arm, no link: the same first two sentences, naming "assertion
   '<id>' or one of the '<role>' persona's own one-party assertions on record
   '<record>'", or once those are linked "one of the '<role>' persona's own
   assertions on record '<record>' (they are linked to '<ids>', so assertion
-  '<id>', which is linked to both parties, no longer counts)", and ending "If
-  this party is someone else, omit personId to mint a new person."
+  '<id>', whose link may be about either party, no longer counts)", and ending
+  "If this party is someone else, omit personId to mint a new person."
 - Named-party arm, own party: "'<id>' is linked to record '<record>' role
   '<own role>', the persona assertion '<assertion>' belongs to, so it is not the
   '<role>' that assertion names. Pass the person who is that party, or omit
@@ -347,26 +366,34 @@ Replayed over the committed e2e run logs (2026-10-12), 52 writes onto existing
 persons lacked such a link; about 30 came from links `research_append` had
 wrongly capped on a birthplace written without its country, which no longer
 happens. Replayed again against each run's final state, the persona arm refuses
-29 of the 509 successful persona ops onto a `personId` in 208 runs. All 29 are in
-9 runs dated 2026-09-16 to 2026-10-05, before the rule shipped on 2026-10-12: 6
-copy onto a person the persona has no link to, and 23 onto one it is linked to
-only `speculative`. The one-party rule and the starting-tree baseline add none of
-the 29, and no successful named-party op in the corpus carries a `personId`, so
-that arm has no executed population (measured at dca878201 by
-`packages/engine/mcp-server/dev/replay-materialize-link.ts`). A final state
-stands in for the state at call time, so either figure can be off in either
-direction.
+29 of the 509 persona ops onto a `personId` in calls recorded as successful, in
+9 of 208 runs, all dated 2026-09-16 to 2026-10-05, before the rule shipped on
+2026-10-12. Read one by one: 16 copy onto a person whose link the writer's old
+birthplace cap held at `speculative` (their rationales say so), so today's writer
+would store that link `probable` and the copy would pass; 7 onto a person the
+agent itself linked only `speculative` (a surname that differs, an 8 year gap,
+an unreadable name, a birthplace that still differs); and 6 onto a person the
+persona has no link to. Calls whose outcome the run log did not record carry
+491 more such ops, of which 29 are refused: 22 repeat 11 of the copies above in
+two further calls, and 7 are July copies, 5 with no link and 2 linked only
+`speculative` on the agent's own doubt. The one-party rule and the starting-tree
+baseline add none of these refusals, and no named-party op in the corpus carries
+a `personId`, so that arm has no executed population (measured at 0985737d3
+by `packages/engine/mcp-server/dev/replay-materialize-link.ts`). A final state
+stands in for the state at call time, so any of these figures can be off in
+either direction.
 
 **Reuse when re-materializing without `personId`.** When `personId` is omitted,
 the persona arm scans `tree.persons` for any person whose facts carry an
 `assertion_id` matching one of this persona's assertions (same `record_id` +
 `record_role`). A candidate is reusable only where the explicit-personId gate
-would accept it (`existingPersonLinkRefusal` on the persona's own one-party
-assertions): it was minted from this record (`mintedFromThisRecord`), or a live
-`probable`/`confident` `person_evidence` entry links one of those assertions to
-it. Among eligible candidates, one with such a link is preferred; a link through
-the persona's marriage or relationship assertion does not count, since it may
-be to the other party. Remaining ties break by lowest numeric ID. Only when no eligible
+would accept it (`existingPersonLinkRefusal` on the assertions the persona arm
+counts, above): it was minted from this record (`mintedFromThisRecord`), or a
+live `probable`/`confident` `person_evidence` entry links one of those
+assertions to it. Among eligible candidates, one with a link from the persona's
+own one-party assertions is preferred; a link through an assertion that names a
+second person does not count, since it may be to that person. Remaining ties
+break by lowest numeric ID. Only when no eligible
 candidate exists does the tool allocate a fresh `I` via `nextId`. This prevents
 duplicate persons when the same persona is materialized more than once without an
 explicit `personId`.
