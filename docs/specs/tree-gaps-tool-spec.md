@@ -84,6 +84,7 @@ raising the timeout:
   wait is the lesser of 15 s and the time left.
 - The catalog is fetched in parallel from the start and waited on for at most
   15 s; if it is late the holes are returned with `coverage: null` and a note.
+  `pendingHints` does not need it.
 - **Early exit.** Waves run nearest the root first. The **near tier** — the root's
   descendants and every couple within 4 generations — always runs: its holes
   outrank anything farther out, and a pedigree edge alone can hold `maxHoles`
@@ -111,7 +112,7 @@ genealogist sets them**. Reviewed and accepted by a senior genealogist on 2026-1
 |---|---|---|---|
 | `missing_parents` | A deceased ancestor **short of the cap** has no father and/or no mother in the pedigree. At the cap the endpoint never returns parents, so absence there is unknowable and is not reported. | birth year −1 … +3 | birthplace |
 | `no_children` | A deceased couple (exactly one spouse) whose children were read, with none. Needs the mother's birth year, or a marriage year. The window must be ≥ `MIN_WINDOW_YEARS` (4). | the mother's fertile window: `max(mb+15, marriage)` … `min(mb+45, her death, his death+1)` | marriage place, else mother's birthplace |
-| `child_gap` | Consecutive known births more than `CHILD_GAP_YEARS` (4) apart while the mother was 15–40 at the earlier one. | earlier+1 … later−1 | marriage place, else mother's birthplace |
+| `child_gap` | Consecutive known births more than `CHILD_GAP_YEARS` (4) apart while the mother was 15–40 at the earlier one. Not reported when the family has exactly one spouse, the couple's marriage year is known, and exactly one child was born more than `CHILD_BEFORE_MARRIAGE_YEARS` (1) before it: a lone earlier child almost always belongs to other parents. Two or more such children are the couple's own (a late-registered marriage), and their gaps stay. | earlier+1 … later−1 | marriage place, else mother's birthplace |
 | `early_last_child` | The last known child was born when the mother was under `EARLY_LAST_CHILD_AGE` (34), she lived to ≥ 40, and the window to age 45 / her death / his death is ≥ 4 years. | last+1 … end of window | as above |
 | `missing_surname` | A **deceased wife** (a mother in the pedigree, or a woman who is a spouse in a family read) whose name parts carry no surname, or only a placeholder (`Unknown`, `[unknown]`, empty). Judged from `names[].nameForms[].parts`; a response with no `names` block is treated as having one. | her marriage year −1 … +1; else her first child's birth −1 … +1; else her birth+15 … +35 | marriage place, else husband's marriage place, else her birthplace |
 | `no_birth_info` | A deceased person with **no birth date, or no birth place, or neither**. The detail says which. | birth −1 … +3 when a year is known; else death − 90 … death; else none | birthplace, else death place, else marriage place |
@@ -144,7 +145,8 @@ them. A living root whose descendants are all living yields no holes.
     detail,                     // plain words
     yearRange: {start,end}|null,
     place: string|null,
-    coverage: {collections, records, recordTypes[], censusYears[], placeLevel}|null
+    coverage: {collections, records, recordTypes[], censusYears[], placeLevel}|null,
+    pendingHints: {fitting, total}|null
   }],
   scanned: { ancestorGenerations, descendantGenerations, persons,
              descendancyReads, stoppedEarly, stopReason },
@@ -157,7 +159,9 @@ the root's sibling is `0`, the root's child is `−1`.
 
 **Selection.** A couple-level hole (`no_children`, `child_gap`, `early_last_child`) found from both spouses, or from a mother's own read, is reported once, keyed on the mother. Holes are sorted nearest the root first, then picked
 **round-robin across types** so one common type (`no_spouse`) cannot fill the
-answer; `maxHoles` of them are returned, nearest first.
+answer; `maxHoles` of them are returned, nearest first. After the pending hints are counted, a hole whose
+`pendingHints.fitting` is above 0 moves ahead of the rest, and the order within each group is
+unchanged (a stable sort). A hole with `pendingHints: null` stays in the second group.
 
 ## Coverage
 
@@ -190,6 +194,46 @@ catalog was unavailable. **It is a floor, not a verdict:** the catalog counts
 collections that exist for the jurisdiction, not records indexed for this
 person. The agent confirms with per-person checks (hints, `record_search`).
 
+## Pending hints
+
+Right after the holes are selected, `pendingHints` counts, per hole,
+FamilySearch's **pending** record matches (`person_record_matches`,
+`status: ["pending"]`) for the hole's person and, on a couple-level hole, the
+spouse, each match counted once. `total` is all of them; `fitting` is those about
+the event the hole is missing.
+
+The event is read from the match's `title`, the collection name. A record type
+cannot say it: `VITAL` covers births, marriages and deaths alike, so a birth hint
+would fit a missing death date. A match's own `collection` field is the same
+generic URL on every match (measured 2026-10-14), so it says nothing.
+
+| Hole | Title must name |
+|---|---|
+| `missing_parents`, `no_birth_info` | a birth, christening or baptism (`birth`, `christening`, `baptis…`) |
+| `no_spouse`, `missing_surname` | a marriage (`marriage`, `wedding`, `banns`) |
+| `no_death_date` | a death or burial (`death`, `burial`, `grave`, `cemeter…`, `obituar…`, `funeral`, `mortuar…`) |
+| `no_children`, `child_gap`, `early_last_child` | a census (`census`) |
+
+A hole about a couple's children takes only a census, which names the household,
+and only one taken in the hole's `yearRange`: the years in the title (`1930`, or the
+span of `1900-1950`) must overlap it, so a spouse's own childhood census does not
+count. A census title with no year, or a hole with no `yearRange`, is not excluded.
+A spouse's own baptism or death record says nothing about a child. A title that
+names no event ("Vital Records", "Church Registers") counts toward `total` only,
+so `fitting` is a floor.
+
+`pendingHints` is `null` when any person on the hole could not be read: the match
+service answers "no tree person" for some valid ids, a read can fail, and a read
+is not started once the 40 s time budget has passed or under 2 s remain. A
+partial count is never returned. Each person is read once however many holes
+name them, six at a time. Every read gets what is left of the 50 s deadline as
+its own timeout and retry budget, so none outlives the response. The reads start
+as soon as the holes are selected and do not wait for the catalog. Unread people
+are counted in `notes`. Each read asks for the API maximum of 50 matches, so
+`total` stops at 50 per person.
+
+The agent ranks on `fitting`; it does not call `person_record_matches` itself.
+
 **Not done:** the lead's example URL filters by `placeId`. The catalog carries
 `searchMetadata.placeIds`, but matching them needs the place's ancestry chain
 (county → state → country), so v1 reuses the title-scope match. A placeId
@@ -215,6 +259,6 @@ holes); a failed read of the root's own descendancy fails the call.
 
 `src/tools/tree-gaps.ts` (fetch, budget, coverage), `src/utils/tree-gap-detect.ts`
 (pure detection), `src/types/tree-gaps.ts`, `src/tools/collections-search.ts`
-(`collectionCoverage`), `dev/probe-descendancy.ts`, `dev/try-tree-gaps.ts`,
+(`collectionCoverage`), `src/tools/match-by-id.ts` (the per-read window), `dev/probe-descendancy.ts`, `dev/try-tree-gaps.ts`,
 `tests/utils/tree-gap-detect.test.ts`, `tests/tools/tree-gaps.test.ts`,
 `eval/fixtures/mcp/tree-gaps-*.json`.

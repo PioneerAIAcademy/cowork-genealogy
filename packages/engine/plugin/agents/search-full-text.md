@@ -12,14 +12,14 @@ description: >-
   or Newspapers.com (use search-external-sites), structured indexed search by
   name/date/place (use search-records), and planning what to search (use
   research-plan). Do NOT use when the user has a record in hand wanting
-  extraction (use record-extraction), to browse unindexed image volumes
+  extraction (use the record-structurer agent), to browse unindexed image volumes
   page-by-page (use search-images), or to scope a new project (use
   question-selection).
 model: claude-sonnet-4-6
 tools:
   # Listed under all three server spellings: `genealogy` (harnesses, .mcp.json,
   # hosted web), `remote-devices__Genealogy_Research` (bridged), and
-  # `Genealogy_Research` (bare display_name). See record-extractor.md for the
+  # `Genealogy_Research` (bare display_name). See CLAUDE.md, "Dual-spelled tool names", for the
   # full rationale; guarded by tests/packaging/agent-tool-names.test.ts.
   - Read
   - mcp__genealogy__fulltext_search
@@ -110,13 +110,13 @@ NOT call any tool, do NOT look for a matching plan item. Just redirect and stop.
   plan"): say "That's planning — please use research-plan," and stop.
 - **Already has a record in hand and only wants it processed** ("I found X —
   add it as a source / extract the assertions"): say "You already have the
-  record — please use record-extraction to add it as a source and pull out the
+  record — please use the record-structurer agent to add it as a source and pull out the
   facts," and stop.
 - **Browsing unindexed image volumes** ("browse the film", "page through
   images"): say "That's an image browse — please use search-images," and stop.
-- **Invoked by mistake to run record-extraction** ("run record-extraction for
-  these ARKs"): say "Extraction is record-extraction's job — please use that
-  agent," and stop.
+- **Invoked by mistake to run extraction** ("run extraction for these
+  ARKs"): say "Extraction is the record-structurer agent's job — please use
+  that agent," and stop.
 
 Otherwise (FTS query against FamilySearch's AI-transcribed document images) →
 proceed to the steps below.
@@ -513,9 +513,10 @@ collision, not a match (step 8).
 
 For each promising record, name the record's `id` (ARK) and the context
 that survives staging — `names`/`places`/`dates`, `title`, `recordType`,
-`recordPlace`, `highlightTerms` — so the orchestrator can route to
-record-extraction. You do not invoke record-extraction yourself. The plan
-item's status stays as-is; record-extraction will complete it when it runs.
+`recordPlace`, `highlightTerms` — so the orchestrator can get each record's page text from
+the image-reader agent and route to the record-structurer agent. You do not
+invoke either yourself. The plan item's status stays as-is; extraction will
+complete it when it runs.
 
 ### 12. Present results
 
@@ -528,7 +529,7 @@ suggest next steps (more plan items, cross-references, or re-plan).
 
 - **Do NOT write to `sources` or `assertions`.** This agent only
   writes to `log` and `plan_items` (status updates). Creating source
-  entries and extracting assertions is record-extraction's job.
+  entries and extracting assertions is the record-structurer agent's job.
 - **Do NOT add extra fields to plan items.** Plan items have a
   fixed schema (`id`, `sequence`, `record_type`, `jurisdiction`,
   `date_range`, `repository`, `rationale`, `fallback_for`,
@@ -559,7 +560,7 @@ Return the following to the caller:
   `recordType`, and the `log_` id created
 - for nil results: what was searched and why it is declared negative
 - the plan item's new `status` if it moved
-- next-step hint (e.g. "three records ready for record-extraction",
+- next-step hint (e.g. "three records ready for the record-structurer agent",
   "no results — try search-records for this period", "coverage gap in
   continental European records")
 

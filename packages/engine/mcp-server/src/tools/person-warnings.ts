@@ -50,15 +50,18 @@ import {
   latestYearOfChildFacts,
   latestYearOfPersonFacts,
   latestYearOfSelfFacts,
+  latestYearOfFacts,
+  earliestYearOfFacts,
   perfectDaysOfSelfFacts,
 } from "../utils/fact-helpers.js";
 import { nameSimilarity, normalizeString } from "../utils/string-similarity.js";
 import {
   countryConsistency,
-  mapWithConcurrency,
   placeSegments,
   standardPlaceToCoords,
+  type PlaceCoords,
 } from "../utils/place-resolver.js";
+import { birthThresholdMiles, lookupPlaceCoords, type PlaceCoordsResolver } from "../utils/place-coords.js";
 import { earliestIsUnbounded, earliestYear, latestIsUnbounded, latestYear } from "../utils/date-helpers.js";
 import { haversineDistance } from "./distance.js";
 import { preferredName } from "../utils/name-helpers.js";
@@ -129,7 +132,7 @@ async function loadAnchor(
  * FamilySearch id still reaches them. Two persons linked to the same id is a
  * pending merge, not a choice to make silently.
  */
-function findAnchor(persons: SimplifiedPerson[], personId: string): SimplifiedPerson {
+export function findAnchor(persons: SimplifiedPerson[], personId: string): SimplifiedPerson {
   const byId = persons.find((p) => p.id === personId);
   if (byId) return byId;
   const wanted = personId.trim().toUpperCase();
@@ -487,7 +490,14 @@ export function deathRangeGreaterThan(mob: Mob, years: number): boolean {
  */
 export function hasLateMarriage(mob: Mob, years: number): boolean {
   const latestBirth = latestYearOfSelfFacts(mob, BIRTHLIKE_FACT_TYPES);
-  const latestMarriage = latestYearOfSelfFacts(mob, MARRIAGELIKE_FACT_TYPES);
+  // The marriage is read from the anchor's facts AND its Couple edges. A
+  // Marriage lives on the edge, so a person-only read saw 96 of the corpus's
+  // 675 marriage-like facts and missed 579 — the warning could fire only on a
+  // tree where a couple event had been mis-materialized onto the person.
+  const latestMarriage = latestYearOfFacts(
+    mob.factsWithCoupleFacts(),
+    MARRIAGELIKE_FACT_TYPES,
+  );
   if (latestBirth === null || latestMarriage === null) return false;
   return latestMarriage - latestBirth > years;
 }
@@ -500,14 +510,17 @@ export function hasLateMarriage(mob: Mob, years: number): boolean {
  * the tag `hasEarlyMarriage14` — married before age 14 is unusual.
  */
 export function hasEarlyMarriage(mob: Mob, years: number): boolean {
-  const age = factYearsDiffEarliestEarliest(
-    mob,
-    BIRTHLIKE_FACT_TYPES,
-    null,
+  // Not factYearsDiffEarliestEarliest: that reads both sides from the anchor's
+  // own facts, and the marriage side lives on the Couple edge (see
+  // hasLateMarriage).
+  const earliestBirth = earliestYearOfSelfFacts(mob, BIRTHLIKE_FACT_TYPES);
+  const earliestMarriage = earliestYearOfFacts(
+    mob.factsWithCoupleFacts(),
     MARRIAGELIKE_FACT_TYPES,
-    null,
   );
-  return age !== null && age < years;
+  if (earliestBirth === null || earliestMarriage === null) return false;
+  const age = earliestMarriage - earliestBirth;
+  return age < years;
 }
 
 /**
@@ -557,7 +570,7 @@ const NON_BIOLOGICAL_PARENT_SUBTYPES: ReadonlySet<string> = new Set([
  *  and the upstream `…Parent` suffix. An unrecognized value counts as
  *  biological: it may mean anything, and assuming otherwise would silently
  *  drop a real second-father from the count. */
-function isNonBiologicalSubtype(sub: unknown): boolean {
+export function isNonBiologicalSubtype(sub: unknown): boolean {
   if (typeof sub !== "string") return false;
   const normalized = sub.trim().replace(/parent$/i, "").toLowerCase();
   return NON_BIOLOGICAL_PARENT_SUBTYPES.has(normalized);
@@ -1643,7 +1656,15 @@ function checkHasLateMarriage90(mob: Mob): PersonWarning | null {
     severity: "implausible",
     personId: mob.anchorId,
     personName: getPersonName(mob.getPerson()),
-    facts: selfFactIds(mob, BIRTHLIKE_FACT_TYPES, MARRIAGELIKE_FACT_TYPES),
+    // The marriage that fired this is on the Couple edge, so cite it too.
+    // These tags refuse writes, and a refusal hands the agent this list: being
+    // told "married more than 90 years after birth" while shown only a birth
+    // leaves nothing to check. Citing it changes the warning id, which is built
+    // from the fact ids — the same way a person-level marriage already behaves.
+    facts: unionFactIds(
+      selfFactIds(mob, BIRTHLIKE_FACT_TYPES, MARRIAGELIKE_FACT_TYPES),
+      warningFactsOfPerson({ facts: mob.coupleFacts() }, MARRIAGELIKE_FACT_TYPES),
+    ),
     message:
       "This person appears to have married more than 90 years after their birth, which is biologically unusual.",
   };
@@ -1657,7 +1678,15 @@ function checkHasEarlyMarriage14(mob: Mob): PersonWarning | null {
     severity: "implausible",
     personId: mob.anchorId,
     personName: getPersonName(mob.getPerson()),
-    facts: selfFactIds(mob, BIRTHLIKE_FACT_TYPES, MARRIAGELIKE_FACT_TYPES),
+    // The marriage that fired this is on the Couple edge, so cite it too.
+    // These tags refuse writes, and a refusal hands the agent this list: being
+    // told "married before age 14" while shown only a birth leaves nothing to
+    // check. Citing it changes the warning id, which is built from the fact
+    // ids — the same way a person-level marriage already behaves.
+    facts: unionFactIds(
+      selfFactIds(mob, BIRTHLIKE_FACT_TYPES, MARRIAGELIKE_FACT_TYPES),
+      warningFactsOfPerson({ facts: mob.coupleFacts() }, MARRIAGELIKE_FACT_TYPES),
+    ),
     message:
       "This person appears to have married before age 14, which is unusual.",
   };
@@ -4297,10 +4326,6 @@ export function calculateWarnings(
 // coordinates, a network lookup, and calculateWarnings stays synchronous and
 // offline for the write gate and merge_warnings.
 
-export type PlaceCoordsResolver = (
-  standardPlace: string,
-) => Promise<{ latitude: number; longitude: number } | null>;
-
 export interface PersonWarningsOptions {
   /** Coordinates for a standard place name; null when unknown. Default: Places lookup. */
   placeCoords?: PlaceCoordsResolver;
@@ -4309,7 +4334,6 @@ export interface PersonWarningsOptions {
 }
 
 export const PLACE_LOOKUP_BUDGET_MS = 30_000;
-const PLACE_LOOKUP_CONCURRENCY = 4;
 const BIRTH_RESIDENCE_WINDOW_YEARS = 20;
 const BIRTH_ANCHOR_TYPES = ["Birth", "Christening", "Baptism"] as const;
 
@@ -4334,15 +4358,6 @@ function boundedYears(fact: SimplifiedFact): { minYear: number; maxYear: number 
   const minYear = earliestYear(std);
   const maxYear = latestYear(std);
   return minYear === null || maxYear === null ? null : { minYear, maxYear };
-}
-
-/** The era threshold; a range touching more than one era gets the most generous. */
-function birthThresholdMiles(minYear: number, maxYear: number): number {
-  let miles = 0;
-  if (minYear < 1850) miles = Math.max(miles, 25);
-  if (minYear <= 1949 && maxYear >= 1850) miles = Math.max(miles, 250);
-  if (maxYear >= 1950) miles = Math.max(miles, 500);
-  return miles;
 }
 
 /**
@@ -4380,46 +4395,11 @@ export function birthResidencePairs(mob: Mob): BirthResidencePair[] {
   return pairs;
 }
 
-/** Look up every distinct place once; a name not resolved within the budget stays null. */
-export async function lookupPlaceCoords(
-  names: string[],
-  resolver: PlaceCoordsResolver,
-  budgetMs: number,
-): Promise<Map<string, { latitude: number; longitude: number } | null>> {
-  const coords = new Map<string, { latitude: number; longitude: number } | null>();
-  const distinct = [...new Set(names)];
-  for (const name of distinct) coords.set(name, null);
-  let timer: ReturnType<typeof setTimeout> | undefined;
-  let expired = false;
-  const lookups = mapWithConcurrency(distinct, PLACE_LOOKUP_CONCURRENCY, async (name) => {
-    if (expired) return;
-    let found: { latitude: number; longitude: number } | null = null;
-    try {
-      found = await resolver(name);
-    } catch {
-      found = null;
-    }
-    if (!expired) coords.set(name, found);
-  });
-  const cap = new Promise<void>((resolve) => {
-    timer = setTimeout(() => {
-      expired = true;
-      resolve();
-    }, budgetMs);
-  });
-  try {
-    await Promise.race([lookups, cap]);
-  } finally {
-    clearTimeout(timer);
-  }
-  return coords;
-}
-
 /** The first pair farther apart than its era allows, as a warning; pairs with an unknown place are skipped. */
 export function checkBirthFarFromParentsResidence(
   mob: Mob,
   pairs: BirthResidencePair[],
-  coords: Map<string, { latitude: number; longitude: number } | null>,
+  coords: Map<string, PlaceCoords | null>,
 ): PersonWarning | null {
   for (const pair of pairs) {
     const a = coords.get(pair.birth.place);

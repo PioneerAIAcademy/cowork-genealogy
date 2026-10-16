@@ -89,7 +89,8 @@ NEWLY_ENFORCED = {"localities"}
 WIDENED: dict[str, set[str]] = {
     "questions": {"proof-conclusion"},
     #: `log` gains `survey-surname`. The agent calls `research_log_append` to log
-    #: each census-year search page. The `agent:survey-surname` caller was added to
+    #: each census-year search page, and its household table as one more entry
+    #: (issue #3414). The `agent:survey-surname` caller was added to
     #: ownership.json's `callers` so the ownership validator resolves it when the
     #: agent is the suite subject.
     #:
@@ -98,7 +99,18 @@ WIDENED: dict[str, set[str]] = {
     #: hint to record-extraction, and before it a hint review persisted nothing. The
     #: agent writes only through `research_log_append`, which takes no `section`, so
     #: the widening adds a writer to an append-only, multi-writer section.
-    "log": {"survey-surname", "search-hints"},
+    #:
+    #: `log` gains `search-wikipedia` and `search-familysearch-wiki` (#3244
+    #: option L, U20). Both agents delivered a loose `.md` through `Write`, which
+    #: never reaches the hosted ProjectStore; each now logs its lookup through
+    #: `research_log_append`, the article or guidance in the entry's `notes`.
+    #:
+    #: `log` gains `historical-context` (#3244 option L). Its overview lived only
+    #: in the chat and was lost with the session; inside a project it now logs its
+    #: wiki/Wikipedia lookups and one `historical_context` entry carrying the full
+    #: overview in `notes`.
+    "log": {"survey-surname", "search-hints", "search-wikipedia", "search-familysearch-wiki",
+            "historical-context"},
     #: `sources` gains `init-project` (issue #2122). The skill always wrote one
     #: `sources` entry per transcribed memory through `research_append` (its
     #: Step 4a) with no row naming it; the agent's hook lane makes that write
@@ -135,6 +147,21 @@ NARROWED: dict[str, set[str]] = {
     "assertions": {"convert-dates"},
     "person_evidence": {"person-evidence"},
 }
+
+
+#: `record-extraction` is retired from every row it held. The skill and its
+#: `record-extractor` agent were deleted: a FamilySearch record is extracted by
+#: `extraction_append({ recordIds })` and any other source by the
+#: record-structurer agent's one `extraction_append({ documents })` call. The
+#: sections it wrote are authorized by tool identity (`toolAuthorized`), so no
+#: caller replaces it. `plans` loses it outright: extraction updates no plan item.
+RETIRED: dict[str, set[str]] = {
+    "plans": {"record-extraction"},
+    "log": {"record-extraction"},
+    "sources": {"record-extraction"},
+    "assertions": {"record-extraction"},
+}
+TREE_RETIRED: dict[str, set[str]] = {"sources": {"record-extraction"}}
 
 
 # The suite subject the research.json rows need to resolve (issue #2799). The
@@ -213,6 +240,8 @@ def expected_tree_owners() -> dict[str, set[str]]:
         expected[section] |= added
     for section, removed in TREE_NARROWED.items():
         expected[section] -= removed
+    for section, removed in TREE_RETIRED.items():
+        expected[section] -= removed
     return expected
 
 
@@ -221,6 +250,8 @@ def expected_research_owners() -> dict[str, set[str]]:
     for section, added in WIDENED.items():
         expected[section] |= added
     for section, removed in NARROWED.items():
+        expected[section] -= removed
+    for section, removed in RETIRED.items():
         expected[section] -= removed
     return expected
 
@@ -269,7 +300,7 @@ def test_a_converted_agent_still_owns_its_sections_as_subject(agent, sections):
         assert agent in actual.get(section, set()), section
 
 
-def test_no_owner_was_dropped_except_the_declared_one():
+def test_no_owner_was_dropped_except_the_declared_ones():
     """Every writer the literals named is still a writer, bar `NARROWED`.
 
     Redundant with the mapping equality above only while that assertion holds
@@ -279,18 +310,20 @@ def test_no_owner_was_dropped_except_the_declared_one():
     allow-list, which is a place a reviewer can look.
     """
     actual = _union_writer_sets(RESEARCH_JSON)
+    allowed = {s: NARROWED.get(s, set()) | RETIRED.get(s, set()) for s in FROZEN_OWNERSHIP_TABLE}
     dropped = {
-        section: sorted((frozen - actual.get(section, set())) - NARROWED.get(section, set()))
+        section: sorted((frozen - actual.get(section, set())) - allowed[section])
         for section, frozen in FROZEN_OWNERSHIP_TABLE.items()
-        if (frozen - actual.get(section, set())) - NARROWED.get(section, set())
+        if (frozen - actual.get(section, set())) - allowed[section]
     }
     assert dropped == {}
 
     tree_actual = _union_writer_sets(TREE_GEDCOMX_JSON)
+    tree_allowed = {s: TREE_NARROWED.get(s, set()) | TREE_RETIRED.get(s, set()) for s in FROZEN_TREE_OWNERSHIP_TABLE}
     tree_dropped = {
-        section: sorted((frozen - tree_actual.get(section, set())) - TREE_NARROWED.get(section, set()))
+        section: sorted((frozen - tree_actual.get(section, set())) - tree_allowed[section])
         for section, frozen in FROZEN_TREE_OWNERSHIP_TABLE.items()
-        if (frozen - tree_actual.get(section, set())) - TREE_NARROWED.get(section, set())
+        if (frozen - tree_actual.get(section, set())) - tree_allowed[section]
     }
     assert tree_dropped == {}
 

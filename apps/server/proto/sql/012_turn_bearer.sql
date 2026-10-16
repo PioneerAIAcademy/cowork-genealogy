@@ -1,0 +1,12 @@
+-- U4: the attempt's bearer, as the tool server's door checks it. The worker stamps the
+-- sha256 (hex) of the grant token it hands the CLI on the turn row it holds, right after
+-- acquire_grant and before any CLI exists (worker.STAMP_BEARER_SQL, matched on turn and
+-- claim_epoch, open rows only). Every claim of an OPEN turn clears it in the same UPDATE
+-- that mints the epoch (worker.CLAIM_TURN_SQL, the DEV_PATHS upsert), so an older
+-- attempt's token stops passing the door once a newer claim exists, and a re-claimed
+-- attempt passes only once it has stamped its own grant. The door query lives in the tool
+-- server (authorizeAttempt, pg-s3-project-store.ts): an open turn of this project whose
+-- stamp is the request bearer's hash. Only the hash of a live bearer is kept at rest --
+-- never the token -- and it is not cleared on close; the token itself expires within 24 h.
+-- Nullable with no default, so the ADD is metadata-only. Additive and idempotent like 001-011.
+ALTER TABLE turns ADD COLUMN IF NOT EXISTS bearer_sha256 text;

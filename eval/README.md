@@ -137,7 +137,7 @@ Then open <http://127.0.0.1:3000>. The CRUD UI reads + writes the same `eval/` t
 - `--list-skills` — list every skill directory that has at least one runnable test JSON, then exit.
 - `--runlogs-root <dir>` — write run logs somewhere other than the default. Useful for one-off experiments that shouldn't pollute the committed tree.
 - `--tests-dir <dir>` — point the harness at a non-default test corpus.
-- `--max-cost-usd <n>` — suite-wide spend cap. Default 50. When projected cost exceeds it the remaining tests are skipped; the run still exits on the outcomes seen so far, so a capped run can exit 0 without covering the whole suite.
+- `--max-cost-usd <n>` — suite-wide spend cap. Default 50 per selected skill. When projected cost exceeds it the remaining tests are skipped, the run exits 3, and every skill left with an unrun test writes a `scratch_` log rather than a releasable candidate.
 - `--max-wall-clock-seconds <n>` — suite-wide wall-clock cap. Default 14400 (4 hours). Same skip-the-rest behavior as the cost cap.
 
 ### Harness exit codes
@@ -196,6 +196,7 @@ Run logs are JSON envelopes validated against [`docs/specs/schemas/run-log.schem
 
 - `schema_version` (currently `3`), `skill`, `version`, `released`, `releasable`, `invocation`, `timestamp`, `model`, `harness_version`.
 - `judge_prompt_hash` — SHA-256 of the normalized `eval/harness/judge/prompt.md` at run time (NOT in the snapshot — the judge prompt is project-global, so it's tracked separately so judge edits don't clobber every skill on activate).
+- `instrument` — what produced and graded the run, beside the skill-side `snapshot`: `validators.{suite,shared}` (normalised AST of the validator files), `tools.{fixture,live}` (the advertised tool schemas) and `live_modules` (the compiled module of each live tool the run called). Optional; read by check_runlogs rule 2c, which blocks on the suite-specific halves and warns on the rest.
 - `snapshot` — `{repo-relative-path: sha256-of-normalized-content}` of every skill-side file used to produce this run (`packages/engine/plugin/skills/<skill>/**`, `eval/tests/unit/<skill>/**`, referenced scenarios + fixtures). Values are digests, not content: git already holds the bytes, and the active-state check only has to compare. MCP source (`packages/engine/mcp-server/src/**`) is **not** tracked — the harness serves tool calls from mock fixtures, so a `src/` change does not make prior run logs inactive.
 - `tests[]` — per-test entries:
   - `outcome` (`pass | partial | fail | aborted`; suppression of a declared-xfail failure is read from the `expected_outcome` marker beside it)
@@ -242,6 +243,8 @@ That edit changes the skill-side snapshot, which flips the latest run log
 (~$1–3) *and* a complete re-grade, even though the behavior can't have
 changed. A senior can waive that for a genuinely behavior-neutral edit by
 applying a **PR label** — no branch checkout, no commands, nothing to install.
+
+The same label waives rule 2c for that skill, so a typo fix in an advertised tool description does not owe a paid re-run either.
 
 **The waiver is per skill.** The label is `eval-cosmetic-skip:<skill>`, where
 `<skill>` is the name in `eval/runlogs/unit/<skill>/` — the name rule 2's error

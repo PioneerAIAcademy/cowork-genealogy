@@ -210,6 +210,8 @@ services:
       SQSD_MAX_RETRIES: "${SQSD_MAX_RETRIES:-0}"
       SQSD_VISIBILITY_TIMEOUT_S: "${SQSD_VISIBILITY_TIMEOUT_S:-0}"
       SWEEP_INTERVAL_S: "${SWEEP_INTERVAL_S:-0}"
+      # U19: off. This volume holds the transcripts compare.py, grade.py and export.py read.
+      RETENTION_INTERVAL_S: "${RETENTION_INTERVAL_S:-0}"
       ENGINE_PLUGIN_DIR: /opt/genealogy/plugin
       WORKER_CWD: /project
       TMPDIR: /tmp
@@ -290,6 +292,12 @@ services:
       # regime. The cap is not the spend control either; 1e's per-session bound is.
       # test_proto_config re-derives the p99 from the corpus and fails if this drops below it.
       AUTONOMOUS_MAX_NUDGES: ${AUTONOMOUS_MAX_NUDGES:-60}
+      # U20: POST /api/feedback stores its zip under feedback/ in the projects bucket and
+      # reads blob bytes from it (web/blobstore.py); the same four as the tools service.
+      GENEALOGY_S3_ENDPOINT: http://minio:9000
+      GENEALOGY_S3_BUCKET: projects
+      GENEALOGY_S3_ACCESS_KEY: proto
+      GENEALOGY_S3_SECRET_KEY: protoproto
     depends_on:
       postgres:
         condition: service_healthy
@@ -297,6 +305,8 @@ services:
         condition: service_completed_successfully
       elasticmq:
         condition: service_healthy
+      minio-init:
+        condition: service_completed_successfully
 
   # D16 tool server: the genealogy engine (build/http.js) on Streamable HTTP at /mcp,
   # /healthz for the wait. Context is the repo root so the engine's src/ compiles inside

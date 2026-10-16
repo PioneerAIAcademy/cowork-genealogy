@@ -222,23 +222,24 @@ describe("plugin agent tool names", () => {
     expect(LOCAL_PREFIX).toBe("mcp__Genealogy_Research__");
   });
 
-  it("record-extractor cannot reach the broad writer", () => {
-    // The lane ADR-0006 defines. It used to be asserted on record-extractor's
-    // `disallowedTools:` block; that block is gone, because the deny only ever
-    // restated the omission (see the header). So assert the thing that actually
-    // binds: `research_append` is absent from the agent's `tools:`.
+  it("record-structurer cannot reach the broad writer", () => {
+    // The lane ADR-0006 defines, carried from record-extractor (deleted
+    // 2026-09-30) to the agent that replaced it. It used to be asserted on
+    // record-extractor's `disallowedTools:` block; that block is gone, because
+    // the deny only ever restated the omission (see the header). So assert the
+    // thing that actually binds: `research_append` is absent from `tools:`.
     //
     // This is not redundant with AGENT_PERMISSIONS below. That snapshot fails on
     // ANY change to the list and says only "the surface moved"; this one names
     // the invariant, so a reviewer reading a red suite is told which rule broke.
     const granted = extractList(
-      readFileSync(join(agentsDir, "record-extractor.md"), "utf8"),
+      readFileSync(join(agentsDir, "record-structurer.md"), "utf8"),
       "tools",
     ).map(bareOrBuiltin);
     expect(
       granted,
-      `record-extractor must not hold the broad research_append — it writes only ` +
-        `sources + assertions, through extraction_append (ADR-0006). A tool omitted ` +
+      `record-structurer must not hold the broad research_append — it writes only ` +
+        `through extraction_append's documents input (ADR-0006). A tool omitted ` +
         `from tools: is absent from the agent even under bypassPermissions ` +
         `(measured 2026-08-30, \`make probe-agent-binding\`); adding it here is what ` +
         `would hand this agent every section.`,
@@ -477,17 +478,11 @@ const AGENT_PERMISSIONS: Record<string, { tools: string[]; denies: string[] }> =
     tools: ["image_transcribe"],
     denies: [],
   },
-  "record-extractor.md": {
-    tools: [
-      "extraction_append",
-      "place_search",
-      "place_search_all",
-      "project_context",
-      "record_person_matches",
-      "record_read",
-      "record_record_matches",
-      "research_log_append",
-    ],
+  // Reads text and writes it through extraction_append's `documents` input,
+  // which classifies in code and refuses any classification field (spec §11.7).
+  // No research_log_append: extraction_append writes the log entry itself.
+  "record-structurer.md": {
+    tools: ["extraction_append", "sidecar_read"],
     denies: [],
   },
   // The only caller permitted to set `search_stop.stopped_because` to a stop-gate value;
@@ -549,7 +544,7 @@ const AGENT_PERMISSIONS: Record<string, { tools: string[]; denies: string[] }> =
   },
   // The grant is the folded skill's own former allowed-tools plus
   // `image_transcribe` and `Read`. It holds the BROAD `research_append` — unlike
-  // record-extractor above, which is pinned OFF it — and nothing narrows that
+  // record-structurer above, which is pinned OFF it — and nothing narrows that
   // here: this agent writes no hook-routed section, so `AGENT_WRITABLE_SECTIONS`
   // returns None for it and the hook's out-of-lane check never fires. What keeps
   // it to a plan item's `status` is its body's lane rule and this snapshot, which
@@ -652,21 +647,15 @@ const AGENT_PERMISSIONS: Record<string, { tools: string[]; denies: string[] }> =
   },
 
   // search-familysearch-wiki (issue #2794) holds the one tool the skill it
-  // replaced declared, `wiki_search`, plus two built-ins it relied on from the
-  // main thread. `Write`: the deliverable IS a markdown file, and handing the
-  // save back to the main thread would take it out of the graded subject, so
-  // the file validators could no longer tell the agent failed. It follows
-  // `search-wikipedia` (issue #2795) as the precedent for `Write`; the plugin
-  // hook's `Write` matcher still keeps research.json and tree.gedcomx.json
-  // off-limits to any caller. `Read`:
-  // `Write` refuses to overwrite a file it has not read, and a repeat
-  // invocation overwrites the topic file in place.
+  // replaced declared, `wiki_search`, plus `research_log_append` (#3244 option
+  // L, U20): its deliverable is one `log` entry carrying the guidance in
+  // `notes`, written through the tool so it reaches the hosted ProjectStore.
+  // It once held `Write` and `Read` to save a loose `.md` in the project
+  // folder, which the hosted worker's read-only `/project` refused (EACCES) and
+  // which no store ever saw; both are dropped, and the omission is the
+  // restriction. `log` is its only ownership row (`agent:search-familysearch-wiki`).
   "search-familysearch-wiki.md": {
-    tools: [
-      "Read",
-      "Write",
-      "wiki_search",
-    ],
+    tools: ["research_log_append", "wiki_search"],
     denies: [],
   },
 
@@ -695,16 +684,20 @@ const AGENT_PERMISSIONS: Record<string, { tools: string[]; denies: string[] }> =
 
   // The folded historical-context skill (issue #2800) holds the six tools that
   // skill declared, plus the built-in `Read` for research.json's
-  // narration_guidance. No `Write` and no project-state tool: this agent writes
-  // nothing. No spawn tool: a request belonging to locality-guide,
-  // search-records, translation, convert-dates or conflict-resolution is handed
-  // BACK by name for the main thread to spawn (lead ruling 2026-09-23).
+  // narration_guidance, plus `research_log_append` (#3244 option L): inside a
+  // project it logs its lookups and one `historical_context` entry carrying the
+  // full overview, which otherwise lived only in the chat. No `Write` and no
+  // other project-state tool. No spawn tool: a request belonging to
+  // locality-guide, search-records, translation, convert-dates or
+  // conflict-resolution is handed BACK by name for the main thread to spawn
+  // (lead ruling 2026-09-23).
   "historical-context.md": {
     tools: [
       "Read",
       "place_population",
       "place_search",
       "place_search_all",
+      "research_log_append",
       "wiki_read",
       "wiki_search",
       "wikipedia_search",
@@ -715,14 +708,10 @@ const AGENT_PERMISSIONS: Record<string, { tools: string[]; denies: string[] }> =
   // New agent (issue #3273), not a conversion, no hook route. It surveys before a
   // project exists, so it holds no `Read`, no `project_context` and no writer:
   // there is no research.json to read or write. `tree_gaps` finds the holes;
-  // the other five check what FamilySearch has for them.
+  // The pending hints and the collection coverage arrive on each hole as
+  // `pendingHints` and `coverage`; the agent calls nothing else.
   "tree-survey.md": {
     tools: [
-      "collections_search",
-      "person_quality",
-      "person_record_matches",
-      "place_search",
-      "record_search",
       "tree_gaps",
     ],
     denies: [],
@@ -812,14 +801,18 @@ const AGENT_PERMISSIONS: Record<string, { tools: string[]; denies: string[] }> =
     denies: [],
   },
 
-  // survey-surname (issue #2065) holds three MCP tools and Write. place_search
+  // survey-surname (issue #2065) holds three MCP tools. place_search
   // resolves the state/county. record_search with projectPath stages results.
-  // research_log_append logs each search page. Write saves the markdown table.
+  // research_log_append logs each search page, and the household table as one
+  // more `log` entry (`tool: "survey_surname"`, the table in `notes`; #3244
+  // option L, issue #3414), written through the tool so it reaches the hosted
+  // ProjectStore. It once held the built-in `Write` to save a loose
+  // `surname-survey-*.md`, which the hosted worker's read-only `/project`
+  // refused (EACCES) and no store ever saw; that grant is dropped.
   // No research_append: the log section is written via research_log_append,
   // which takes no section argument. No Read: builds from inline stubs.
   "survey-surname.md": {
     tools: [
-      "Write",
       "place_search",
       "record_search",
       "research_log_append",
@@ -830,9 +823,13 @@ const AGENT_PERMISSIONS: Record<string, { tools: string[]; denies: string[] }> =
   // The folded check-warnings skill (issue #2118). `person_quality` is absent by
   // lead ruling 2026-09-27. No `Read`: with it the agent read research.json and
   // the tree and reported what it found there instead of the tool's answer (4
-  // of 39 confirmation runs, 2026-09-28); callers pass person ids. Writes nothing.
+  // of 39 confirmation runs, 2026-09-28); callers pass person ids. Still no
+  // `Read` after issue #3260: `census_children_gap` reads the mother's children
+  // from the tree itself (tree mode), and an empty folder is detected from
+  // `person_warnings`' own `no_project` answer, so neither needs a file read.
+  // Writes nothing.
   "check-warnings.md": {
-    tools: ["person_warnings"],
+    tools: ["person_warnings", "census_children_gap"],
     denies: [],
   },
 
@@ -845,15 +842,13 @@ const AGENT_PERMISSIONS: Record<string, { tools: string[]; denies: string[] }> =
   },
 
   // search-wikipedia (issue #2795) holds the one tool the skill it replaced
-  // declared — `wikipedia_search` — plus the built-in `Write`, decided by
-  // review-ready on 2026-09-24 and accepted by the lead the same day, on the
-  // reasoning issue #2794 settled for the same grant: the deliverable of this
-  // agent IS a file, and moving the save out to the main thread would take it
-  // out of the graded subject, so `test_wrote_one_markdown_file` could no
-  // longer tell that the agent failed to save. The grant reaches no project
-  // state — the plugin PreToolUse hook's Write matcher still protects
-  // research.json and tree.gedcomx.json, and this agent's body writes one
-  // standalone markdown file in the working folder and nothing else.
+  // declared — `wikipedia_search` — plus `research_log_append` (#3244 option L,
+  // U20): its deliverable is one `log` entry carrying the article summary in
+  // `notes`, written through the tool so it reaches the hosted ProjectStore and
+  // stays inside the graded subject, where `test_one_log_entry_appended` sees
+  // it. It once held the built-in `Write` (review-ready 2026-09-24) to save a
+  // loose `.md`, which the hosted worker's read-only `/project` refused (EACCES)
+  // and no store ever saw; that grant is dropped.
   //
   // Nothing else is granted, and the omissions are the restriction: no `Read`
   // (the body inlines its own template rather than reading one — the skill's
@@ -868,7 +863,7 @@ const AGENT_PERMISSIONS: Record<string, { tools: string[]; denies: string[] }> =
     denies: [],
   },
   "search-wikipedia.md": {
-    tools: ["Write", "wikipedia_search"],
+    tools: ["research_log_append", "wikipedia_search"],
     denies: [],
   },
 
@@ -878,8 +873,7 @@ const AGENT_PERMISSIONS: Record<string, { tools: string[]; denies: string[] }> =
   // #2942) runs the impossible-date check over the project tree when it holds
   // the audited person; it reads the tree and writes nothing. Writes nothing,
   // so no hook route. A request belonging to conflict-resolution,
-  // check-warnings or record-extraction is handed back by name, so no spawn
-  // tool.
+  // check-warnings or extraction is handed back by name, so no spawn tool.
   "source-evaluation.md": {
     tools: [
       "Read",

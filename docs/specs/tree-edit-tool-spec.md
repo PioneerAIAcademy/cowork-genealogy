@@ -61,22 +61,23 @@ In scope — the `tree-edit` ad-hoc operations (`packages/engine/plugin/agents/t
 | `update_person` | `tree_correct` | gender/ark correction |
 | `add_person` | `tree_edit` | "Adding a person" |
 | `add_relationship` | `tree_edit` | "Adding a relationship" |
+| `update_relationship` | `tree_correct` | retype a ParentChild edge's subtype |
 | `add_source` / `update_source` | `tree_edit` / `tree_correct` | source-description (`S` entry) add/correct — ad-hoc/manual source work and proof-conclusion step 6. (Record-extraction's per-record `S` entry is created by `research_append`'s composite `sourceDescription` instead — see §4.3 cross-tool ordering.) |
 | `remove` | `tree_correct` | "Removing concluded data (tier downgrade)" — facts/relationships only |
 
 ### 2.1 The `tree_edit` / `tree_correct` split
 
-The ten operations are advertised as **two tools** over one shared
+The eleven operations are advertised as **two tools** over one shared
 implementation core (`src/tools/tree-edit.ts` `executeTreeOps`;
 `src/tools/tree-correct.ts` is a thin gate module over it):
 
 | Tool | Admitted ops |
 |------|--------------|
 | `tree_edit` | `add_fact`, `add_name`, `add_person`, `add_relationship`, `add_source` — **additive only** |
-| `tree_correct` | `update_fact`, `update_name`, `update_person`, `update_source`, `remove` — **corrections/removals only** |
+| `tree_correct` | `update_fact`, `update_name`, `update_person`, `update_source`, `update_relationship`, `remove` — **corrections/removals only** |
 
 **Rationale:** extraction must be **structurally unable to rewrite identity**.
-The record-extractor agent holds `tree_edit` to write sibling stubs and
+The record-extractor agent (since retired) held `tree_edit` to write sibling stubs and
 alternate names, and in the ut_013 rename incident (2026-07-12 runlog) it used
 `update_name` to rename an existing tree person it judged misnamed — an
 identity-resolution act that belongs to person-evidence, hypothesis-tracking,
@@ -145,16 +146,18 @@ tree_edit({
   operation:
     | "add_fact" | "update_fact"
     | "add_name" | "update_name" | "update_person"
-    | "add_person" | "add_relationship"
+    | "add_person" | "add_relationship" | "update_relationship"
     | "add_source" | "update_source" | "remove",
 
   // ── targeting (per operation) ──
   personId?: string,          // add_fact/update_fact (person-held facts — exactly one of
-                              //   personId | relationshipId), add_name, update_name, update_person
+                              //   personId | relationshipId), add_name, update_name, update_person,
+                              //   remove (scopes a shared factId to this person's copy)
   factId?: string,            // update_fact, remove
   nameId?: string,            // update_name
   relationshipId?: string,    // add_fact/update_fact (Couple-held facts — exactly one of
-                              //   personId | relationshipId), remove
+                              //   personId | relationshipId), update_relationship,
+                              //   remove (the edge itself, or scopes a shared factId to it)
   sourceId?: string,          // update_source
 
   // ── payloads (snake_case, NO id — the tool assigns) ──
@@ -164,6 +167,7 @@ tree_edit({
   relationship?: SimplifiedRelationship, // add_relationship (full)
   source?: SimplifiedSourceDescription,  // add_source (full) / update_source (fields to set)
   gender?: string, ark?: string,    // update_person
+  subtype?: string,                 // update_relationship
 
   resolveStandardPlace?: boolean,   // default true: auto-resolve standard_place when place is set
 })
@@ -186,7 +190,8 @@ tree_edit({
   `fact.standard_place` was supplied, resolve it via `resolveStandardPlace` (null
   when nothing resolves), passing the places of the holder's other facts as
   context for a bare single-segment place (see research-append-tool-spec
-  §3.6, lever B).
+  §3.6, lever B). A `personId` target whose `fact.type` is a couple event
+  (`isCoupleEventFactType`) is refused, naming the Couple route (§7).
 - **`update_fact`** `{ personId | relationshipId, factId, fact }` — shallow-merge
   the provided `fact` fields onto the existing fact (id immutable) on the same
   exactly-one-target contract as `add_fact`; the `factId` must live on the named
@@ -195,7 +200,8 @@ tree_edit({
   same-type swap on that holder. `primary: false` deletes the key on **that fact
   only**, leaving other facts of the type untouched — so a vital type may end
   with no primary at all, which is the point: it is the only way to retire a
-  concluded value while a conflict is open.
+  concluded value while a conflict is open. A `personId` target that retypes a
+  fact into a couple event is refused (§7); editing one already there is not.
   `add_person` and `add_relationship` apply the same `primary: false` deletion
   to each inline fact they author.
 - **`add_name`** `{ personId, name }` — append, assign next `N`. If
@@ -208,7 +214,8 @@ tree_edit({
   nested fact (reported as `assignedIds.facts`). Inline facts follow the same rules
   as `add_fact`: a caller-supplied fact `id` is rejected ("add_person facts must not
   carry ids — the tool assigns them"), and each fact's `standard_place` is resolved
-  from `place` when unset. Synthesized stubs omit `ark`
+  from `place` when unset. `person.facts` must be an array, and an inline couple
+  event is refused as on `add_fact`. Synthesized stubs omit `ark`
   (`simplified-gedcomx-spec.md` §4.6). **Name-shape tolerance:** a caller that
   supplies a singular `name: { given, surname, preferred? }` object where the
   schema expects a `names: [...]` array (a common model slip — observed on ~15% of
@@ -216,7 +223,8 @@ tree_edit({
   validation. This is pure shape normalization (the object already matches a
   `names[]` element; no name content is parsed or invented). Supplying **both**
   `name` and `names` is rejected as ambiguous.
-- **`add_relationship`** `{ relationship }` — append, assign next `R`. Facts
+- **`add_relationship`** `{ relationship }` — append, assign next `R`, **or
+  corroborate an edge that already says this.** Facts
   supplied on a new **Couple** relationship (e.g. its Marriage) get the same
   treatment as `add_fact`: tool-assigned `F` ids (caller-supplied ids rejected),
   `standard_place` resolution, `assignedIds.facts`. Facts on a `ParentChild` are an
@@ -226,6 +234,37 @@ tree_edit({
   `person1` on a `ParentChild`) are enforced by the final whole-tree validation pass
   (§4.3, §5), not by an inline check in the apply step — so within a batch an endpoint
   added by an earlier op is accepted.
+  - **A matching edge is corroborated, not duplicated.** When the tree already
+    holds an edge `relationshipMatches` accepts — same `type` and endpoints (a
+    Couple's two persons in either order), and subtypes that agree or either
+    absent — the new `sources`, `notes` and any inline Couple facts land on **that** edge
+    and `assignedIds.relationship` returns **its** id. The first match in tree
+    order wins. A refusal was considered and rejected: it leaves the writer to
+    re-route the same evidence by hand through `add_fact` with a
+    `relationshipId`, which drops the new edge's own sources, and a retried call
+    would leave two edges.
+    - An inline Couple fact **equal to one already on the edge** in type, date,
+      place and value is not added again; its sources merge into the fact
+      already there, so a retried call is idempotent, and `assignedIds.facts`
+      reports **that** fact's id — the same way the corroborated edge reports
+      its own. Equality compares **type, date, place and value**: strict, not
+      the merge tool's `factsEquivalent` compatibility test, which treats an
+      absent date as matching any date and would silently discard the date a new
+      record supplied. `standard_place` is deliberately NOT compared — the twin
+      lookup runs before place resolution, so the stored fact carries a resolved
+      value and the retried one does not, and comparing it wrote a second fact
+      on exactly the retry this exists to absorb.
+    - **The matched edge's subtype never changes.** Retyping is
+      `update_relationship`'s job. When the new edge carries a subtype the
+      matched one does not share, the result warns and names
+      `update_relationship`; silently adopting it would turn an untyped import
+      into a biological claim with nothing behind it.
+    - A **Step** edge added beside a **Biological** one on the same pair is a
+      second edge, not a corroboration: two different explicit subtypes are two
+      relationships.
+  - **A self-Couple is refused** — a person cannot be their own spouse, and the
+    pair would survive every downstream rule that reads the two endpoints as
+    different people.
   - **`sourceAssertionId` (source-ref resolution).** The edge requires a
     non-null source-ref (§6/§8 of `tree-materialization-spec.md`). Rather than
     the caller hand-walking `assertion.source_id → research source → tree
@@ -271,9 +310,29 @@ tree_edit({
 - **`update_source`** `{ sourceId, source }` — shallow-merge the provided `source`
   fields onto the existing source (`id` immutable). Errors if `sourceId` is not found
   in the on-disk tree.
+- **`update_relationship`** `{ relationshipId, subtype }` — set the subtype of an
+  existing ParentChild edge. It sets **only** the subtype, never the endpoints:
+  re-pointing an edge makes it a different relationship (remove it and add the
+  right one). Refuses an empty or whitespace `subtype` (it would match an
+  untyped edge but no typed one); refuses a Couple, which carries no `subtype`
+  (`TREE_COUPLE_FIELDS`; the simplified-GedcomX `parent_subtype` enum is
+  ParentChild's); and refuses a retype that would make the edge match another
+  edge already on the pair (`relationshipMatches`), naming that edge. This is the
+  op `add_relationship`'s corroboration warning names, so a subtype only ever
+  moves on an explicit correction.
 - **`remove`** `{ factId }` **or** `{ relationshipId }` — delete that entry. **Only
-  facts and relationships** — a `personId` here is an error (person removal is
-  `merge_tree_persons`).
+  facts and relationships** — a `personId` **on its own** is an error (person
+  removal is `merge_tree_persons`).
+  - **A `factId` names a fact, not a holder, and holders share ids.** FamilySearch
+    reuses fact ids across the persons an import touches: 65 of the 136 committed
+    e2e starting trees carry one id on two or more holders, one of them on 15. An
+    unscoped remove of a shared id is **refused**, naming every holder, because
+    deleting one person's disproved imported Birth would otherwise delete it for
+    all fifteen.
+  - **`personId` or `relationshipId` beside a `factId` scopes the removal** to that
+    holder's copy; the other holders keep theirs. Both together is an error. A
+    `factId` whose id only one holder carries needs no scope.
+  - `{ relationshipId }` with no `factId` still removes the edge itself.
 
 **Fact payload shape (all fact write paths).** On every path that writes a fact —
 `add_fact`, `update_fact`, `add_person` inline facts, `add_relationship` facts —
@@ -373,9 +432,9 @@ Semantics (decision from the e2e research-runtime speedup review, §6 Q1):
   tools/calls; an `add_person` here assigns the `I` id that a later
   `research_append` `person_evidence` op references, so a `tree_edit` batch must
   commit before a `research_append` batch that references its new ids. The one
-  exception is the record-extraction **source** flow: `research_append`'s
-  composite persist (`sourceDescription`, research-append spec §3.4) creates the
-  tree `S` entry itself via the shared write layer, so there is **no
+  exception is the extraction **source** flow: `extraction_append` writes through
+  `research_append`'s composite persist (`sourceDescription`, research-append spec
+  §3.4), which creates the tree `S` entry itself via the shared write layer, so there is **no
   tree_edit-first step for a new record's source description** — `add_source`
   here remains for ad-hoc/manual source work and proof-conclusion's own
   source-writing path, not for the extraction persist.
@@ -478,7 +537,7 @@ Sequence (validate-before-persist, tree-only):
 - **Generic tools with an `operation` discriminator, not one tool per edit.**
   Follows this repo's "don't create one MCP tool per endpoint — use generic
   tools with parameters" rule (CLAUDE.md) and keeps Claude's tool list lean.
-  The ten operations share the entire read → apply → validate → backup → write
+  The eleven operations share the entire read → apply → validate → backup → write
   pipeline; only the in-memory mutation differs. *Rejected:* `tree_add_fact`,
   `tree_add_person`, … (ten near-identical tools, ten schema entries, more
   context for no behavioral gain). The merge tools are two tools only because they
@@ -513,7 +572,17 @@ Sequence (validate-before-persist, tree-only):
 | `add_fact` / `update_fact` targeting a `ParentChild` relationship, or `add_relationship` with facts on a `ParentChild` | input error — facts live only on Couple relationships |
 | A fact payload (any write path) with a non-string `date` / `standard_date` / `place` / `standard_place` / `value` — e.g. a nested `{ original, formal }` date object | input error naming the field and expected shape; write nothing (§4.1 "Fact payload shape") |
 | `add_person` inline fact / `add_relationship` fact carries an `id` | input error — the tool assigns `F` ids |
-| `remove` with a `personId` (attempt to delete a person) | input error — use `merge_tree_persons` |
+| `add_fact` with a `personId`, or an `add_person` inline fact, whose `type` is a couple event — any type `isCoupleEventFactType` (`record-persona.ts`) accepts | input error naming the Couple route; write nothing |
+| `update_fact` with a `personId` that RETYPES a fact into a couple event | input error naming the Couple route. Editing a fact that is **already** a person-level couple event, by the same test, is admitted: legacy documents are read, never repaired |
+| `add_person` whose `person.facts` is present and not an array | input error naming the op; write nothing |
+| `remove` with a `personId` and no `factId` (attempt to delete a person) | input error — use `merge_tree_persons` |
+| `remove` of a `factId` more than one holder carries, unscoped | input error naming every holder — pass `personId` or `relationshipId` |
+| `remove` with both `personId` and `relationshipId` | input error — one or the other scopes a `factId` |
+| `update_relationship` with no `relationshipId` or no `subtype` | input error |
+| `update_relationship` with an empty or whitespace `subtype` | input error; write nothing |
+| `update_relationship` on a `relationshipId` not in the tree | staleness error; write nothing |
+| `update_relationship` on a Couple | input error — only a ParentChild edge carries a subtype |
+| `update_relationship` retype that would duplicate an edge already on the pair | input error naming that edge; write nothing |
 | `resolveStandardPlace` network call fails | best-effort: set `standard_place: null`, add a warning; never fail the edit on a place-resolution miss |
 | `projectPath` is a real directory holding **neither** project file | write nothing; `{ ok: false, reason: "no_project", errors }` — the user is not in a research project, so this is an answer rather than a failure and is **not** marked `isError`. A directory holding exactly one of the two files is a *broken* project and stays loud. Applies to `tree_correct` identically. See the write-boundary invariants in `guardrail-enforcement-spec.md` |
 | Resulting tree carries a **call-introduced** validation error | write nothing; return `{ ok: false, errors }`. A pre-existing error rides as a warning |
@@ -549,18 +618,28 @@ The caller (`tree-edit` skill) still:
   Relationship-targeted: `relationshipId` appends to the Couple's own `facts`
   (same F id / primary swap / place resolution; nothing lands on either spouse);
   both/neither of `personId`/`relationshipId` rejected; `ParentChild` target
-  rejected; stale `relationshipId` rejected.
+  rejected; stale `relationshipId` rejected. A couple event on a `personId`
+  is refused in every spelling the matcher folds, and accepted on the Couple.
 - **update_fact** — field merge by `factId`; a place change re-resolves
   `standard_place`; id unchanged. Also merges by `relationshipId` + `factId` on a
-  Couple-held fact; a `factId` not on the named holder errors.
+  Couple-held fact; a `factId` not on the named holder errors. Retyping a
+  person's fact into a couple event is refused; editing one already there, or
+  retyping a Couple-held fact, is admitted.
 - **add_name / update_name** — `N` id assigned; `preferred: true` clears other
   preferred; exactly one preferred remains.
 - **update_person** — gender/ark set; nothing else changed.
 - **add_person** — `I` id + `N` ids assigned; stub omits `ark`; inline facts get
   `F` ids (surfaced as `assignedIds.facts`) with `standard_place` resolution; an
-  inline fact carrying an id is rejected.
+  inline fact carrying an id is rejected; an inline couple event and a
+  non-array `facts` are refused, single and batched.
 - **add_relationship** — `R` id assigned; endpoints validated; `ParentChild` with
   `person1` rejected; Couple facts get `F` ids, caller-supplied fact ids rejected.
+  A matching edge is corroborated: its id comes back, the caller's sources and
+  notes land on it, and an inline primary fact takes `primary` from the edge's
+  existing one of that type (no swap on a newly created edge).
+- **update_relationship** — retypes a ParentChild edge; refuses an empty or
+  whitespace subtype, a Couple, an unknown id, and a retype that would duplicate
+  an edge already on the pair, writing nothing in each case.
 - **fact payload shape** — a nested `{ original }` date (or non-string
   place/standard_date/…) is rejected on every fact write path (add_fact person +
   relationship, update_fact, add_person inline, add_relationship facts) with an
@@ -570,7 +649,7 @@ The caller (`tree-edit` skill) still:
   round-trip into the written `S` entry; `update_source` merges by `sourceId` (id
   immutable), errors on an unknown `sourceId`; missing-payload guards return
   `{ ok: false }`; a titleless `add_source` fails validation and writes nothing.
-- **remove** — fact/relationship deleted by id; `remove` with `personId` rejected.
+- **remove** — fact/relationship deleted by id; `remove` with a bare `personId` rejected; a shared `factId` refused unscoped and removed from only the scoped holder.
 - **staleness** — an unknown `factId` returns an error, writes nothing.
 - **validate-before-persist** — an edit that would invalidate the project writes
   nothing and returns `{ ok: false, errors }`; no `.bak` written.

@@ -57,6 +57,7 @@ class ProjectOut(BaseModel):
     created: datetime
     updated: datetime
     last_active: datetime
+    continuable: bool
 
     @classmethod
     def of(cls, p: Project) -> "ProjectOut":
@@ -64,6 +65,7 @@ class ProjectOut(BaseModel):
             id=p.id, title=p.title, model=p.model, status=p.status,
             sandbox_id=p.sandbox_id, agent_session_id=p.agent_session_id,
             created=p.created, updated=p.updated, last_active=p.last_active,
+            continuable=_continuable(p),
         )
 
 
@@ -78,6 +80,25 @@ class CreateSessionBody(BaseModel):
 class PatchSessionBody(BaseModel):
     title: str | None = None
     model: str | None = None
+
+
+# A sandbox keeps running the agent code it was created with, so an old one
+# drifts from the current control plane (issue #3406). Lead ruling 2026-10-13:
+# past this age a session can be read but not continued.
+SESSION_MAX_AGE = timedelta(hours=72)
+
+_EXPIRED_DETAIL = (
+    "This session is more than 72 hours old and can't be continued. "
+    "Start a new session."
+)
+
+
+def _continuable(project: Project) -> bool:
+    created = project.created
+    # SQLite reads DateTime(timezone=True) back naive; Postgres keeps tzinfo.
+    if created.tzinfo is None:
+        created = created.replace(tzinfo=timezone.utc)
+    return utcnow() - created < SESSION_MAX_AGE
 
 
 def _owned(session: Session, user: User, session_id: str) -> Project:
@@ -141,8 +162,10 @@ async def push_token_to_live_sandboxes(
     /connect via sync_fs_token.
 
     Uses provider.get() -- not resume() -- so the running timeout is not
-    extended. Both auto-resume a paused VM via _connect(), but only resume()
-    calls set_timeout(). The last_active filter means targeted sandboxes are
+    extended; only resume() calls set_timeout(). A paused target wakes either
+    way: _connect() calls connect(), which auto-resumes, only on a cache miss,
+    and on a cached handle the token write is itself inbound traffic, which
+    auto_resume answers. The last_active filter means targeted sandboxes are
     likely still running, so the auto-resume is a no-op in practice.
 
     Failures are swallowed and logged per sandbox: a failed push to one sandbox
@@ -490,6 +513,10 @@ async def connect_session(
     of the streaming path. Identical for both providers (E2B microVM / local
     subprocess); each returns its own wss:// or ws:// URL."""
     project = _owned(session, user, session_id)
+    # Refuse before resume, so this call does not wake the sandbox. Viewing an
+    # ended session still does: /resume and /state resume it to read files.
+    if not _continuable(project):
+        raise HTTPException(status_code=410, detail=_EXPIRED_DETAIL)
     sandbox = await provider.resume(project.sandbox_id)
     # Refresh the operator secrets BEFORE the agent can be handed a turn, so a
     # rotated Anthropic key reaches sandboxes created under the old one.

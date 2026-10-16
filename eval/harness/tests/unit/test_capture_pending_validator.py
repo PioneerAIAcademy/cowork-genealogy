@@ -33,10 +33,16 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[2] / "validators"))
 from validators_lib import assert_capture_pending_item_not_terminal  # noqa: E402
 
 
-def _states(final_status: str, capture_received: bool = False, *, item_id: str = "pli_001"):
+def _states(
+    final_status: str,
+    capture_received: bool = False,
+    *,
+    item_id: str = "pli_001",
+    skip_category: str | None = None,
+):
     """A before/after pair where this run moved `item_id` planned → final_status."""
-    def item(status):
-        return {
+    def item(status, *, with_category: bool = False):
+        d = {
             "id": item_id,
             "sequence": 1,
             "record_type": "census",
@@ -47,11 +53,14 @@ def _states(final_status: str, capture_received: bool = False, *, item_id: str =
             "fallback_for": None,
             "status": status,
         }
+        if with_category and skip_category is not None:
+            d["skip_category"] = skip_category
+        return d
 
     before = {"research_json": {"plans": [{"id": "pl_001", "items": [item("planned")]}], "log": []}}
     after = {
         "research_json": {
-            "plans": [{"id": "pl_001", "items": [item(final_status)]}],
+            "plans": [{"id": "pl_001", "items": [item(final_status, with_category=True)]}],
             "log": [
                 {
                     "id": "log_004",
@@ -81,6 +90,27 @@ def test_fires_on_skipped_with_capture_pending():
     """`skipped` is terminal too — the same defect through the new skip path."""
     before, after = _states("skipped")
     with pytest.raises(AssertionError):
+        assert_capture_pending_item_not_terminal(before, after, {"tags": []})
+
+
+def test_passes_on_skipped_inaccessible_the_documented_autonomous_path():
+    """search-external-sites.md step 4 marks the item `skipped` with
+    skip_category `inaccessible` when no user can make the capture — matching the
+    writer-tool exemption, the validator must let it through."""
+    before, after = _states("skipped", skip_category="inaccessible")
+    assert_capture_pending_item_not_terminal(before, after, {"tags": []})
+
+
+def test_passes_on_skipped_user_declined():
+    """The second documented exempt skip."""
+    before, after = _states("skipped", skip_category="user_declined")
+    assert_capture_pending_item_not_terminal(before, after, {"tags": []})
+
+
+def test_fires_on_skipped_with_a_non_exempt_category():
+    """A skip with any other category is still the pending-capture defect."""
+    before, after = _states("skipped", skip_category="answered")
+    with pytest.raises(AssertionError, match="capture never arrived"):
         assert_capture_pending_item_not_terminal(before, after, {"tags": []})
 
 
