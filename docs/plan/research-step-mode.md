@@ -168,7 +168,8 @@ send the exact phrase; Cowork's reply lists the phrases:
       (`app/sessions.py`). So step mode reaches the alpha over about three days.
 - **A job-mode turn at the exhaustiveness choice** takes the recommended default once. A second
   "not exhaustive" verdict in the same job concludes, so "Keep going" cannot loop the way #3475
-  did.
+  did. **The same bound holds for a conflict that needs new evidence** (section E): one
+  research-plan round per conflict per job, and a second request concludes.
 - **Outcomes:**
   - A step turn ends `ok`, which renders no label. No `continue_policy.py` change is needed:
     at cap 0 no plane binds the Stop hook.
@@ -372,7 +373,8 @@ send the exact phrase; Cowork's reply lists the phrases:
   input, and answers each yield with a real user message:
   - **"Continue."** to every prompt, which accepts the agent's own default;
   - **at the exhaustiveness choice,** the default once, then "Wrap it up." on a second decline
-    for the same question (the same bound as job mode);
+    for the same question (the same bound as job mode). A conflict's second request for new
+    evidence gets "Wrap it up." too;
   - **the fixture's own question** when asked for a single one.
 - **The run ends** when the question is `resolved`. A cap on harness answers replaces
   `max_continue_nudges` (a Stop-veto counter today), and the no-progress stop remains. Both are
