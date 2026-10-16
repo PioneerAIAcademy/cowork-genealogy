@@ -301,8 +301,9 @@ returned `personCount` decides how you plan and describe it:
 - **0:** browse-only images. Plan an image browse, not a name search.
 
 Wherever a rationale names a collection, describe it with exactly one of
-these two phrases, copied as written — `name-searchable (personCount N)` or
-`browse-only (personCount 0)` — and with no other availability word: not
+these two phrases, copied as written — "name-searchable" or
+`browse-only (personCount 0)` — and with no other availability word and no
+other count: not
 "indexed", "unindexed", "image-only" or "searchable" on its own, and not as
 part of the collection's name.
 
