@@ -819,32 +819,36 @@ def test_no_warnings_without_tree_person(tool_calls, test):
 # not a civil registration, so a two-year drift there is ordinary variance too.
 #
 # _find_census_year_error_line checks each line that contains "indexing error"
-# and asks whether "1900" appears within a two-line window around it.  The
-# window catches both same-line findings ("1900 — indexing error") and
-# split-line headings ("United States Census, 1900\nThis is an indexing error").
+# and asks whether "census" and "1900" co-appear on the same line within a
+# two-line backward window.  Requiring both words on the same line avoids
+# false positives from incidental "1900" mentions (e.g. "solid evidence of
+# the 1900 residence") appearing near a death-index "indexing error" line.
+# The window catches split-line headings like:
+#   United States Census, 1900
+#   This is an indexing error
 # A negation within the same window ("not an indexing error") passes.
 # A forward dismissal — "ordinary variance" in the next 8 lines — also passes,
 # covering agents that write a draft heading then immediately reject it.
-# Death-index lines (1954 / 1945 in this corpus) never co-appear with "1900"
-# in any window, so they are never flagged.
 # ---------------------------------------------------------------------------
 
 _CENSUS_INDEX_ERROR_RE = re.compile(r"\bindex(?:ing)?\s+error\b", re.IGNORECASE)
 _CENSUS_NEGATION_RE = re.compile(
     r"\bnot(?:\s+\w+){0,3}\s+(?:an?\s+)?index(?:ing)?\s+error\b", re.IGNORECASE
 )
-_CENSUS_1900_RE = re.compile(r"\b1900\b", re.IGNORECASE)
+_CENSUS_1900_RE = re.compile(
+    r"(?:\bcensus\b[^\n]*\b1900\b|\b1900\b[^\n]*\bcensus\b)", re.IGNORECASE
+)
 _CENSUS_DISMISSAL_RE = re.compile(r"\bordinary\s+(?:census\s+)?variance\b", re.IGNORECASE)
 
 
 def _find_census_year_error_line(reply: str) -> str | None:
-    """Return the first line pairing '1900' with 'indexing error', or None.
+    """Return the first line pairing a census-1900 reference with 'indexing error'.
 
     Checks each "indexing error" line and the two lines immediately before it
-    for "1900" — covering same-line findings and split-line headings where the
-    collection name (with the year) appears on its own line above the verdict.
-    Looking only backward avoids picking up "1900" from the census line that
-    follows a separate death-index "indexing error" line.
+    for a line that contains BOTH "census" and "1900" (in any order on the
+    same line).  Requiring co-occurrence prevents false positives from
+    incidental "1900" mentions (e.g. "1900 residence") near a death-index
+    "indexing error" line.
 
     Also checks the next 8 lines forward for "ordinary variance" dismissal
     language: an agent may draft a heading then immediately reject the

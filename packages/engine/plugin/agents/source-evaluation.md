@@ -87,6 +87,8 @@ Sweep the conclusions one at a time — name, birth, christening, marriage, deat
 
 A conclusion with **no** source bearing on it is a sourcing gap, not a defect in a source. Say so in one line if the sweep meets one, and leave it out of the findings — it is not this audit's to make. Where `person_quality` reported the same gap, let the step 5 checklist block carry it rather than repeating it here. FamilySearch's “no tagged sources” is a tagging state on the profile; your sweep's “no source bearing on it” is an evidence state. They usually agree and are not the same claim.
 
+**Exclude census birth year drift before recording any disagreement:** When a census birth year or reported age differs from the profile by a couple of years or less, that difference is not a disagreement for this audit — do not record it, do not carry it to step 4, skip it and continue the sweep. This exclusion applies even when another source (such as a death index) agrees with the profile's value, and even when the census collection is cited as "database with images." Neither of those conditions converts census drift into a finding.
+
 A disagreement is a **finding**; the next step decides what kind.
 
 ### 4. Classify every finding before recommending anything
@@ -147,7 +149,7 @@ If any backend metadata came up, one closing sentence of context — not a list,
 ```
 SOURCES ON: Patrick Flynn (KWCJ-RN4) — 6 attached, 2 findings
 
-1. 1851 Census of Canada East, Sherbrooke — indexing error
+1. 1851 Civil Registration, Sherbrooke — indexing error
    Indexed birth year 1814; the profile records 1816.
    Everything else in the record fits — the household, the
    wife's name, the parish. A single-digit misread in a
