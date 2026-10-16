@@ -1438,8 +1438,8 @@ the args of every live call (`matched.kind == "live"`, which is how every writer
 runs) replaced by a short omission marker, because the agent's own write is
 output, not evidence: a locality guide persisted through `research_append`
 carries the whole guide in its args, and counting it dropped the earliest
-survey calls, so the judge called their correctly cited values fabricated
-(#3442). The kept calls are then rendered with their real args, held under
+survey calls, so the judge called their correctly cited values fabricated.
+The kept calls are then rendered with their real args, held under
 `_TOOL_CALLS_HARD_MAX_CHARS` (twice the budget) by cutting live args, first their
 strings to the per-string cap and then the args whole to that marker, never by
 dropping more evidence.
