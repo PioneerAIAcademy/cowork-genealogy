@@ -225,7 +225,10 @@ def test_the_record_read_fixture_for_an_indexing_plant_copy_serves_its_own_recor
 def test_refuses_to_run_under_api_key_auth(tmp_path, monkeypatch):
     with pytest.raises(judge.JudgeError, match="subscription"):
         judge.require_subscription(AuthConfig(skill_runner_mode="api_key", api_key="k", detail="t"))
-    judge.require_subscription(AuthConfig(skill_runner_mode="subscription", api_key=None, detail="t"))
+    judge.require_subscription(AuthConfig(skill_runner_mode="subscription", api_key=None, detail="t"), environ={})
+    for var in judge.OFF_SUBSCRIPTION_ENV:
+        with pytest.raises(judge.JudgeError, match=var):
+            judge.require_subscription(AuthConfig(skill_runner_mode="subscription", api_key=None, detail="t"), environ={var: "1"})
     snap = make_snapshot(tmp_path / "s", "KWCB-QZ3", "KWCB-QZ3", ["AAAA-111"])
     import harness.auth
 
@@ -236,14 +239,24 @@ def test_refuses_to_run_under_api_key_auth(tmp_path, monkeypatch):
 
 
 def test_parses_the_closing_json_block_and_records_a_malformed_one_as_a_parse_failure(tmp_path):
-    found, err = judge.parse_findings('```json\n[1]\n```\nlater\n' + FINDINGS)
-    assert err is None and found == [{"source_url": "https://www.familysearch.org/ark:/61903/1:1:AAAA-111", "kind": "misattributed", "fact": "birth"}]
+    found, err, rejected = judge.parse_findings('```json\n[1]\n```\nlater\n' + FINDINGS)
+    assert err is None and rejected == [] and found == [{"source_url": "https://www.familysearch.org/ark:/61903/1:1:AAAA-111", "kind": "misattributed", "fact": "birth"}]
     assert judge.parse_findings("no block")[1]
     assert judge.parse_findings("```json\n[{\"kind\": \"misattributed\"\n```")[1]
-    assert judge.parse_findings('```json\n[{"source_url": "x", "kind": "wrong"}]\n```')[1]
+    found, err, rejected = judge.parse_findings(
+        '```json\n[{"source_url": "x", "kind": "wrong"}, {"source_url": null, "kind": "unchecked", "fact": "a book"}, {"source_url": "ark:/61903/1:1:B", "kind": "indexing"}]\n```'
+    )
+    assert err is None and len(found) == 2 and rejected == [{"source_url": "x", "kind": "wrong"}]
     snap = make_snapshot(tmp_path / "s", "KWCB-QZ3", "KWCB-QZ3", ["AAAA-111"])
     rec = _judge(snap, "KWCB-QZ3", FakeRunner([], "report without a block"))
     assert rec["parse_error"] and rec["findings"] == []
+
+
+def test_an_empty_agent_return_is_a_parse_failure_not_the_dispatcher_text(tmp_path):
+    snap = make_snapshot(tmp_path / "s", "KWCB-QZ3", "KWCB-QZ3", ["AAAA-111"])
+    runner = FakeRunner([], "")
+    rec = _judge(snap, "KWCB-QZ3", runner)
+    assert rec["parse_error"] == "the agent returned no text" and rec["findings"] == []
 
 
 def test_skips_a_finished_copy_and_retries_an_aborted_one(tmp_path):

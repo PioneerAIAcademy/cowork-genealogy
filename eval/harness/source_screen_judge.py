@@ -21,6 +21,7 @@ import argparse
 import asyncio
 import hashlib
 import json
+import os
 import re
 import shutil
 import sys
@@ -91,13 +92,27 @@ def guard_path(path: str | Path, flag: str = "--snapshot") -> Path:
     return p.resolve()
 
 
-def require_subscription(auth: Any) -> None:
+# Each of these routes the CLI off the subscription even when ~/.claude exists:
+# env_for_sdk blanks only ANTHROPIC_API_KEY, and the rest of os.environ reaches the CLI.
+OFF_SUBSCRIPTION_ENV = ("ANTHROPIC_AUTH_TOKEN", "ANTHROPIC_BASE_URL", "CLAUDE_CODE_USE_BEDROCK", "CLAUDE_CODE_USE_VERTEX")
+
+
+def require_subscription(auth: Any, environ: dict[str, str] | None = None) -> None:
     mode = getattr(auth, "skill_runner_mode", None)
     if mode != "subscription":
         raise JudgeError(
             f"the judge runs only on a Claude subscription (got {mode!r}); "
             "it never bills the API key for restricted data"
         )
+    env = os.environ if environ is None else environ
+    set_vars = [k for k in OFF_SUBSCRIPTION_ENV if env.get(k)]
+    if set_vars:
+        raise JudgeError(f"unset {', '.join(set_vars)}: each sends the run off the Claude subscription")
+
+
+def require_temp_outside_repo() -> None:
+    if is_inside_repo(Path(tempfile.gettempdir())):
+        raise JudgeError(f"the temp directory {tempfile.gettempdir()} is inside the repo; point TMPDIR elsewhere")
 
 
 def _read_json(path: Path) -> Any:
@@ -200,23 +215,32 @@ def generate_fixtures(snapshot: Path, copy: str, fixtures_dir: Path) -> tuple[li
 _FENCE = re.compile(r"```json\s*(.*?)```", re.DOTALL | re.IGNORECASE)
 
 
-def parse_findings(text: str) -> tuple[list[dict[str, Any]], str | None]:
-    """The closing ```json block, as findings. Returns (findings, parse_error)."""
+def parse_findings(text: str) -> tuple[list[dict[str, Any]], str | None, list[Any]]:
+    """The closing ```json block. Returns (findings, parse_error, rejected items).
+
+    One malformed entry is set aside, not allowed to void the rest. An
+    `unchecked` entry may name no URL: a memory or a book has none.
+    """
     blocks = _FENCE.findall(text or "")
     if not blocks:
-        return [], "no closing ```json block"
+        return [], "no closing ```json block", []
     try:
         data = json.loads(blocks[-1])
     except json.JSONDecodeError as e:
-        return [], f"closing json block does not parse: {e}"
+        return [], f"closing json block does not parse: {e}", []
     if not isinstance(data, list):
-        return [], "closing json block is not a list"
+        return [], "closing json block is not a list", []
     findings: list[dict[str, Any]] = []
-    for i, item in enumerate(data):
-        if not isinstance(item, dict) or item.get("kind") not in KINDS or not isinstance(item.get("source_url"), str):
-            return [], f"finding {i} is not {{source_url, kind, fact}} with a known kind: {item!r}"
+    rejected: list[Any] = []
+    for item in data:
+        ok = isinstance(item, dict) and item.get("kind") in KINDS and (
+            isinstance(item.get("source_url"), str) or (item.get("kind") == "unchecked" and item.get("source_url") is None)
+        )
+        if not ok:
+            rejected.append(item)
+            continue
         findings.append({"source_url": item["source_url"], "kind": item["kind"], "fact": item.get("fact")})
-    return findings, None
+    return findings, None, rejected
 
 
 def delegation_for(subject_id: str, workspace: Path) -> str:
@@ -287,9 +311,13 @@ async def judge_copy(
             )
         finally:
             cleanup_session_store(workspace)
-        text = agent_return_text(getattr(result, "agent_returns", None), AGENT) or getattr(result, "text_response", "") or ""
+        # Only the agent's own return: the dispatcher's paraphrase is not its findings.
+        text = agent_return_text(getattr(result, "agent_returns", None), AGENT) or ""
         calls, harness_miss = summarize_calls(getattr(result, "tool_calls", []))
-        findings, parse_error = parse_findings(text)
+        if text:
+            findings, parse_error, rejected = parse_findings(text)
+        else:
+            findings, parse_error, rejected = [], "the agent returned no text", []
         record = {
             "copy_key": copy,
             "subject_id": facts["subject_id"],
@@ -298,6 +326,7 @@ async def judge_copy(
             "text": text,
             "findings": findings,
             "parse_error": parse_error,
+            "rejected_findings": rejected,
             "harness_miss": harness_miss,
             "not_audited": facts["not_audited"],
             "calls": calls,
@@ -353,7 +382,7 @@ def write_judge_jsonl(snapshot: Path) -> int:
             rows.append(
                 {
                     "copy_key": copy,
-                    "ark": to_ark(f["source_url"]),
+                    "ark": to_ark(f["source_url"]) if f["source_url"] else None,
                     "source_url": f["source_url"],
                     "kind": f["kind"],
                     "fact": f.get("fact"),
@@ -392,6 +421,7 @@ def main(argv: list[str] | None = None) -> int:
 
     auth = resolve_auth()
     require_subscription(auth)
+    require_temp_outside_repo()
     copies = pending_copies(snapshot, args.only)
     if args.only:
         unknown = sorted(set(args.only) - set(list_copies(snapshot)))
