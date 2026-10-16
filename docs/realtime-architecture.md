@@ -166,7 +166,11 @@ today); reconnect re-syncs via `GET /state`.
   `/ping` timer are removed.
 - **Reconnect-on-resume:** on socket close (a pause), the client re-`POST /connect`
   (which auto-resumes in ~1 s) and reconnects, showing a brief "resuming…" state.
-  This is E2B's prescribed reconnect pattern, not an error path.
+  This is E2B's prescribed reconnect pattern, not an error path. The server
+  replays its whole transcript buffer to every (re)connect; recorded frames
+  carry `seq`/`epoch` stamps and `WsSessionConnection` keeps a `lastSeq` cursor
+  so the replay is deduped instead of re-folded (issue #3387 — the wire contract
+  is in `docs/specs/hosted-web-workbench-spec.md` §6.2).
 - `SessionView.tsx` already constructs the connection async; shape unchanged.
   `ChatPane` and `WsResearchTransport` consume the `SessionConnection` interface
   and are untouched.
