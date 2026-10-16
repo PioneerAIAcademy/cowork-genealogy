@@ -214,7 +214,8 @@
         "agent:search-hints",
         "agent:survey-surname",
         "agent:search-wikipedia",
-        "agent:search-familysearch-wiki"
+        "agent:search-familysearch-wiki",
+        "agent:historical-context"
       ],
       "agentCallers": [
         {
@@ -256,6 +257,12 @@
         },
         {
           "agent": "agent:search-familysearch-wiki",
+          "tools": [
+            "research_log_append"
+          ]
+        },
+        {
+          "agent": "agent:historical-context",
           "tools": [
             "research_log_append"
           ]

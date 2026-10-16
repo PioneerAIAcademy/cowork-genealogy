@@ -1,6 +1,6 @@
 {
   "id": "inocente-lopez-death",
-  "name": "Inocente Lopez — death in January 1906, Suchitoto, El Salvador",
+  "name": "Inocente Lopez — death in September 1916, Suchitoto, El Salvador",
   "genre": "record-hint",
   "source_pid": "L8GW-R6Y",
   "captured": "2026-10-12",
@@ -15,5 +15,6 @@
     "judge": "claude-haiku-4-5-20251001"
   },
   "difficulty": "medium",
-  "notes": "Record-hint fixture (filtered-list-samples-3.csv row 8, hint-samples.csv row 331, flags adds_mother/adds_death, confidence 3). Draft transcribed from a 1906 Suchitoto civil death registration; unverified."
+  "notes": "Record-hint fixture (filtered-list-samples-3.csv row 8, hint-samples.csv row 331, flags adds_mother/adds_death, confidence 3). Resolved 2026-10-14 (#3331): answerable, but differently. The hinted 13 Jan 1906 Suchitoto death (ark:/61903/1:1:QP7Z-BTQK) is an eighteen-day-old infant, son of Santos López; L8GW-R6Y died 22 Sep 1916 at Suchitoto (ark:/61903/1:1:QPHJ-JVY1, spouse Virginia Mendoza, parents Matías López and Mauricia Carpio). The rejection rests partly on the genealogist's reading of the 1906 register image, so image_basis is on.",
+  "image_basis": true
 }
