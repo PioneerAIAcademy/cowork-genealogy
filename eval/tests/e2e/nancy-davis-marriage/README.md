@@ -46,14 +46,17 @@ following the `adelaida-martinez-mother` precedent (two `required` findings).
   1853-Missouri evidence of her own.
 - **Brewer's actual wife — Nancy Angelina Davis (`L8YY-CBX`), born 4 May 1853
   in Missouri.** A distinct, well-sourced tree person who **already holds** the
-  12 May 1868 Newton County marriage (`ark:/61903/1:1:V28T-J7T`,
-  `ark:/61903/1:1:6XNV-J1ZQ`), the Brewer children, and Brewer's 1870
-  (`ark:/61903/1:1:MXLB-P95`; wife Nancy A. b. 1853 Missouri) and 1900
-  (`ark:/61903/1:1:M3L5-BTV`; wife Nancy A. b. May 1853 Missouri, marriage
-  1868) censuses, the 1880 census (`ark:/61903/1:1:M66Z-BVH`, indexed "Lina
-  Brewer"), and her 1904 death records (e.g. `ark:/61903/1:1:K3SF-DKR`; she
-  died 9 January 1904 in Eastland, Texas). Her parents are Phillip Rayburn
-  Davis and Mary Ann Ingram, not Thomas J. Davis.
+  12 May 1868 Newton County marriage (bride personas `ark:/61903/1:1:V28T-J7T`,
+  `ark:/61903/1:1:6XNV-J1ZQ`), the Brewer children, and her own census personas
+  — the 1860 census (`ark:/61903/1:1:MHZ1-XC1`, indexed "Angeline Davis"), the
+  1870 census (`ark:/61903/1:1:MXLB-P9R`; Nancy A. b. 1853 Missouri), the 1880
+  census (`ark:/61903/1:1:M66Z-BVH`, indexed "Lina Brewer"), and the 1900 census
+  (`ark:/61903/1:1:M3L5-BTK`; Nancy A. b. May 1853 Missouri, marriage 1868) —
+  plus her 1904 death records (e.g. `ark:/61903/1:1:K3SF-DKR`; she died
+  9 January 1904 in Eastland, Texas). Her parents are Phillip Rayburn Davis and
+  Mary Ann Ingram, not Thomas J. Davis. (The household/head personas of those
+  censuses — e.g. `MXLB-P95` in 1870, `M3L5-BTV` in 1900 — belong to William
+  James Brewer, not to Nancy.)
 
 **What decided it (index + census, not the register).** Neither marriage index
 (`ark:/61903/1:1:V28T-J7T` / `ark:/61903/1:1:V28T-J7R`,
@@ -78,21 +81,19 @@ inspected**, and nothing here claims the register records the bride's age,
 parental consent, or any other decisive detail. The identification instead
 rests on the marriage **index** (Nancy Angeline Davis and William James
 Brewer — also recorded as William Bremer — married 12 May 1868, Newton
-County) together with the corroborating **1870, 1880, and 1900 censuses and
-Nancy Angelina Davis's 1904 death records** attached to `L8YY-CBX`, which
+County) together with the corroborating **1860, 1870, 1880, and 1900 censuses
+and Nancy Angelina Davis's 1904 death records** attached to `L8YY-CBX`, which
 identify `L8YY-CBX` (b. ~1853 Missouri) as Brewer's wife rather than
 `LJK2-JBH` (b. ~1837 Tennessee). `image_basis` stays **false**, and no Step 1a
 image calibration was performed or is relied upon.
 
-**Acceptance-criteria resolution.** Issue #3347's "Done when" asks that the
-README say "which register field decided it." The register image is
-access-restricted (403, unresolved), so no register field could be inspected
-and none was verified. **The issue owner accepted the alternative evidence** —
-the marriage index plus the 1870, 1880, and 1900 censuses and Nancy Angelina
-Davis's 1904 death records — as the basis for the identification in place of a
-register field. The image-access limitation stands and was **not** fixed; the
-acceptance is of the alternative evidence, not a claim that the register was
-read or that any register field was verified.
+**Acceptance-criteria note.** Issue #3347's "Done when" asks that the README say
+"which register field decided it." The register image
+(`ark:/61903/3:1:3QS7-998M-Y8G2`) returned **HTTP 403** and was not examined, so
+no register field was inspected or verified. The resolution instead relies on
+the marriage index and the corroborating census and death records above. The
+literal register-field criterion therefore **remains unmet, pending code-owner
+review and sign-off** — it is neither waived nor treated as satisfied here.
 
 **Retrieval** was read-only via the MCP `record_read` and `person_read` tools
 (and an `image_transcribe` attempt on the register image, which returned 403)

@@ -14,7 +14,7 @@
       },
       "supporting_sources": [
         "Missouri, Marriages, 1750-1920 and Missouri, County Marriage, Naturalization, and Court Records, 1800-1991 — the 12 May 1868 Newton County, Missouri marriage of William Bremer (Brewer) and Nancy Angeline Davis (ark:/61903/1:1:V28T-J7T, ark:/61903/1:1:V28T-J7R, ark:/61903/1:1:6XNV-J1Z3). The index carries no bride age and no parents; this marriage is already attached to Nancy Angelina Davis (L8YY-CBX) via her bride personas V28T-J7T and 6XNV-J1ZQ",
-        "United States Census, 1870 (ark:/61903/1:1:MXLB-P95, Hood, Cooke County, Texas) and 1900 (ark:/61903/1:1:M3L5-BTV, Eastland County, Texas) — William J. Brewer's wife Nancy A. born about 1853 / May 1853 in Missouri, marriage recorded as 1868 — establishing Brewer's 1868 bride as born about 1853 in Missouri, far too late to be the 1837-Tennessee Nancy of the 1850 census"
+        "United States Census, 1870 (William J. Brewer's household/head persona ark:/61903/1:1:MXLB-P95, Hood, Cooke County, Texas) and 1900 (Brewer's household/head persona ark:/61903/1:1:M3L5-BTV, Eastland County, Texas) — these are Brewer's own personas, and their household entries enumerate his wife Nancy A. born about 1853 / May 1853 in Missouri, marriage recorded as 1868 — establishing Brewer's 1868 bride as born about 1853 in Missouri, far too late to be the 1837-Tennessee Nancy of the 1850 census"
       ],
       "required": true
     },
@@ -32,7 +32,7 @@
       },
       "supporting_sources": [
         "United States Census, 1850 — Nancy Davis born about 1837 in Tennessee in the household of Thomas J. Davis at Neosho, Newton County, Missouri (ark:/61903/1:1:MDZF-Q7C). This is LJK2-JBH's only own source and the origin of the tree's 1837 Tennessee birth; this woman is not the Missouri-born ~1853 wife Brewer married in 1868",
-        "United States Census, 1870 (ark:/61903/1:1:MXLB-P95) and 1900 (ark:/61903/1:1:M3L5-BTV) — Brewer's wife Nancy A. born about 1853 in Missouri, marriage 1868; these records, the 1868 marriage, and the Brewer children are already attached to the distinct person Nancy Angelina Davis (L8YY-CBX, born 4 May 1853 in Missouri), confirming she — not LJK2-JBH — is Brewer's wife"
+        "United States Census, 1870 and 1900 — Brewer's wife Nancy A. born about 1853 in Missouri, marriage 1868 (the census household/head arks ark:/61903/1:1:MXLB-P95 and ark:/61903/1:1:M3L5-BTV are Brewer's). Nancy's own census personas (1870 ark:/61903/1:1:MXLB-P9R, 1900 ark:/61903/1:1:M3L5-BTK, plus the 1860 ark:/61903/1:1:MHZ1-XC1), the 1868 marriage, and the Brewer children are attached to the distinct person Nancy Angelina Davis (L8YY-CBX, born 4 May 1853 in Missouri), confirming she — not LJK2-JBH — is Brewer's wife"
       ],
       "required": true
     }
