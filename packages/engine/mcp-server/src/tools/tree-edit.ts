@@ -33,6 +33,7 @@ import {
   type WarningJustificationInput,
 } from "../validation/introduced-warnings.js";
 import { dedupSourceRefs, relationshipMatches } from "../utils/merge-gedcomx.js";
+import { isCoupleEventFactType } from "../utils/record-persona.js";
 import { sanitizeTree } from "../validation/tree-sanitize.js";
 import {
   atomicWriteJson,
@@ -215,6 +216,26 @@ function requirePerson(tree: SimplifiedGedcomX, personId: string | undefined): S
 
 /** Anything that holds a `facts` array: a person or a Couple relationship. */
 type FactHolder = SimplifiedPerson | SimplifiedRelationship;
+
+/**
+ * A couple event belongs on the Couple relationship's `facts[]`, never on a
+ * person — `tree_edit`'s own convention ("a Marriage/Divorce fact lives on the
+ * Couple, never duplicated onto each spouse"). Writing one onto a person leaves
+ * the Couple edge factless, which is the shape the materialize-facts skip
+ * already refuses to create on the extraction side.
+ *
+ * Matched with `isCoupleEventFactType`, so every spelling it lists is caught —
+ * `marriage_banns`, `MarriageLicense` and `Marriage Intention` alike — rather
+ * than only the exact strings someone happened to list here.
+ */
+function refuseCoupleEventOnPerson(type: unknown, op: string): void {
+  if (!isCoupleEventFactType(type)) return;
+  throw new TreeEditError(
+    `${op}: '${String(type)}' is a couple event and belongs on the Couple relationship, ` +
+      "not on a person. Add it with `add_relationship` carrying the fact inline, or with " +
+      "`add_fact` naming the Couple edge in `relationshipId`",
+  );
+}
 
 /**
  * Resolve the target of add_fact/update_fact: exactly one of `personId` or
@@ -453,6 +474,9 @@ async function applyOperation(
       // fact lives on the Couple, not duplicated onto each spouse).
       const holder = requireFactHolder(tree, input, "add_fact");
       if (!input.fact) throw new TreeEditError("add_fact requires a `fact`");
+      // Only when the target is a PERSON: the same fact on a Couple edge is
+      // exactly where it belongs.
+      if (input.personId) refuseCoupleEventOnPerson(input.fact.type, "add_fact");
       if (input.fact.id) throw new TreeEditError("add_fact `fact` must not carry an id — the tool assigns it");
       requireFactShape(input.fact, "add_fact");
       const fact: SimplifiedFact = { ...input.fact, id: nextId(tree, "F") };
@@ -473,6 +497,17 @@ async function applyOperation(
       if (!existing) {
         const where = input.personId ? `person '${input.personId}'` : `relationship '${input.relationshipId}'`;
         throw new TreeEditError(`fact '${input.factId}' not found on ${where}`);
+      }
+      // Refuse only an op that MAKES a person-level couple event. Editing one
+      // already there is admitted: legacy documents are read, never repaired,
+      // 14 such facts sit in 9 committed e2e starting trees, and refusing their
+      // correction would strand data the agent is supposed to be able to fix.
+      if (
+        input.personId &&
+        input.fact.type !== undefined &&
+        !isCoupleEventFactType(existing.type)
+      ) {
+        refuseCoupleEventOnPerson(input.fact.type, "update_fact");
       }
       // Delta-scoped provenance rule (§6): an update may not REMOVE an existing
       // ref (e.g. clear a populated `sources`). It is NOT "the result must have a
@@ -602,6 +637,15 @@ async function applyOperation(
         }
         rawPerson.names = [rawPerson.name];
         delete rawPerson.name;
+      }
+      // Inline facts take the same rule as add_fact: a new person is a person.
+      // Checked as an array first, so a malformed `facts` is a refusal naming
+      // the op rather than a TypeError escaping the batch loop.
+      if (input.person.facts != null && !Array.isArray(input.person.facts)) {
+        throw new TreeEditError("add_person `person.facts` must be an array of facts");
+      }
+      for (const f of input.person.facts ?? []) {
+        refuseCoupleEventOnPerson(f.type, "add_person");
       }
       const personId = nextId(tree, "I");
       const nMax = maxIdNum(tree, "N");

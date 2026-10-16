@@ -254,6 +254,10 @@ def gateway_agent_models(agents: Mapping[str, Any]) -> dict[str, Any]:
 # both or neither, else a 400 -- and the store refuses to commit a write once a newer claim
 # of that turn holds it. They are fixed per attempt (one mcp.json per attempt), which is
 # exactly an epoch's scope. The CLI opens the MCP session once per process, once per turn.
+# U4: the door is owner-checked. A request naming a project must also carry the fence, and
+# the server answers 403 before any transport unless the bearer's sha256 is the one this
+# attempt stamped on that open turn of that project (worker.STAMP_BEARER_SQL); a request
+# with no project header is not checked.
 # TOOL_SERVER_URL has no default (U11): a guessed host would be handed the patron's bearer.
 PROJECT_ID_HEADER = "X-Genealogy-Project-Id"
 TURN_ID_HEADER = "X-Genealogy-Turn-Id"

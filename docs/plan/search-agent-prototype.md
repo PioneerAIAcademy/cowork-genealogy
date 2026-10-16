@@ -2223,7 +2223,7 @@ without whichever Bedrock refuses.
   | | bagley harness, 07-31 | **bagley harness, 09-24** | bagley proto | paerai harness, 09-21 | paerai proto |
   |---|---|---|---|---|---|
   | judge: verdict, f1 | pass, true | pass, true | pass, true | pass, true | pass, true |
-  | human blind grade: f1, proof quality | true, 2 | **partial**, 3 | — | true, 2 | — |
+  | human blind grade: f1, proof quality | true, 2 | **partial**, 3 | true, 2 (PR #3358) | true, 2 | — |
   | cost | $5.29 | **$11.85** | $16.29 | $4.94 | ~$32.21 (list, off the transcript) |
   | wall clock | 2,147 s | 4,544 s | 5,151 s, 1 attempt | 1,903 s | >14,400 s, 3 attempts |
   | tool calls / delegations | 93 / 4 | 336 / 13 | 317 / 21 | 140 / 8 | 517 / 46 |
