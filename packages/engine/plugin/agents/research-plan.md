@@ -192,8 +192,8 @@ the subject and every other person in scope for this question, read
 source is attached to it.** For every one you find, **write down its date,
 place, and value (for a source, what it records) before deciding what to
 plan for that person** —
-literally state what the fact records, in the plan's rationale,
-before the plan item. "Person X is already in the tree" is
+literally state what the fact records, in the `rationale` of the item
+it bears on (a plan has no `rationale` of its own), before that item. "Person X is already in the tree" is
 noticing they exist; it is not the survey. Neither is "review this
 first" as a note to yourself for later — if you wrote that, go read it
 now, in this same pass, before the plan item for that person, not as a
@@ -206,8 +206,8 @@ sitting on a recorded fact — a stated residence, a death date, a
 place named in passing — that bears on the question even though it
 isn't what that fact was originally recorded for. If the survey itself
 answers part of the question or changes what still needs searching,
-say so in the plan's rationale, stating the fact's content, rather
-than silently planning around it — and rather than planning a new
+say so in the `rationale` of the item it changes, stating the fact's
+content, rather than silently planning around it — and rather than planning a new
 search for something a fact the tree already holds already states.
 
 ### 1a. Decide the planning mode
@@ -661,7 +661,8 @@ supersede mode):
 
 2. Create a new plan (Step 5) targeting what the old missed —
    different repositories, jurisdictions, record types, FAN or
-   contextual sources. Reference the old plan in the rationale. When
+   contextual sources. Reference the old plan in the first new item's
+   `rationale`. When
    superseding a plan with unfinished items, **carry forward every
    `planned` item the new information does not invalidate**: an item left
    behind on the superseded plan is never executed again.
