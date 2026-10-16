@@ -2304,6 +2304,11 @@ describe("research_append (Phase 3)", () => {
       ["range naming the US explicitly", "US census, every decade 1870-1900"],
       ["'through'-joined range", "censuses 1880 through 1900"],
       ["'between...and' range", "censuses between 1880 and 1900"],
+      // Round-10 review: every range in the entry is read, not just the first,
+      // and a two-digit end year is read in the century of the first.
+      ["second of two ranges", "federal censuses 1850-1860 and 1880-1900"],
+      ["'between' after a range that misses 1890", "censuses 1850-1860, between 1880 and 1900"],
+      ["abbreviated end year", "US census 1880-90"],
     ])("refuses a census entry naming a year range that spans 1890: %s", async (_label, entry) => {
       await writeProject();
       const r = await appendWithGap([entry]);
@@ -2313,6 +2318,15 @@ describe("research_append (Phase 3)", () => {
     it("still allows two specific years joined by 'and', which is not a range", async () => {
       await writeProject();
       const r = await appendWithGap(["1880 and 1900 census"]);
+      expect(r.ok, `refused: ${JSON.stringify((r as any).errors)}`).toBe(true);
+    });
+
+    it.each([
+      ["abbreviated range after 1890", "censuses 1900-10"],
+      ["abbreviated range crossing a century", "censuses 1895-05"],
+    ])("allows an abbreviated year range that misses 1890: %s", async (_label, entry) => {
+      await writeProject();
+      const r = await appendWithGap([entry]);
       expect(r.ok, `refused: ${JSON.stringify((r as any).errors)}`).toBe(true);
     });
 

@@ -499,7 +499,7 @@ const TIMELINE_ANY_YEAR_RE = /(?<!\d)\d{4}(?!\d)/;
 // surviving years with no claim about anything in between, and must stay
 // allowed; bare "and" is deliberately not a range connector here.
 const TIMELINE_YEAR_SPAN_RE =
-  /(?<!\d)(\d{4})\s*(?:-|–|—|\bto\b|\bthrough\b|\bthru\b)\s*(\d{4})(?!\d)/i;
+  /(?<!\d)(\d{4})\s*(?:-|–|—|\bto\b|\bthrough\b|\bthru\b)\s*(\d{4}|\d{2})(?!\d)/gi;
 // "between X and Y" -- round-9 review: this is the one shape where "and" DOES
 // act as a range connector. "1880 and 1900 census" names two specific years
 // with no claim about what lies between them (allowed, above), but "between
@@ -508,13 +508,24 @@ const TIMELINE_YEAR_SPAN_RE =
 // what distinguishes the two; this regex is checked in addition to, not
 // instead of, the connector list above.
 const TIMELINE_BETWEEN_SPAN_RE =
-  /\bbetween\b\s*(\d{4})\s*and\s*(\d{4})(?!\d)/i;
+  /\bbetween\b\s*(\d{4})\s*and\s*(\d{4}|\d{2})(?!\d)/gi;
+// Round-10 review: every range in the entry is read, not just the first
+// ("federal censuses 1850-1860 and 1880-1900" spans 1890 in its second), and
+// a two-digit end year is read in the century of the first, rolling over
+// when it would fall before it ("1880-90" is 1880-1890, "1895-05" 1895-1905).
 function timelineSpanCovers1890(text: string): boolean {
-  const m = text.match(TIMELINE_YEAR_SPAN_RE) ?? text.match(TIMELINE_BETWEEN_SPAN_RE);
-  if (!m) return false;
-  const a = parseInt(m[1], 10);
-  const b = parseInt(m[2], 10);
-  return Math.min(a, b) <= 1890 && 1890 <= Math.max(a, b);
+  for (const re of [TIMELINE_YEAR_SPAN_RE, TIMELINE_BETWEEN_SPAN_RE]) {
+    for (const m of text.matchAll(re)) {
+      const a = parseInt(m[1], 10);
+      let b = parseInt(m[2], 10);
+      if (m[2].length === 2) {
+        b += Math.floor(a / 100) * 100;
+        if (b < a) b += 100;
+      }
+      if (Math.min(a, b) <= 1890 && 1890 <= Math.max(a, b)) return true;
+    }
+  }
+  return false;
 }
 const TIMELINE_VETERAN_RE = /veteran/i;
 const TIMELINE_NAMES_US_RE = /united states|u\.s\./i;
