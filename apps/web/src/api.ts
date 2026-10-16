@@ -21,7 +21,7 @@ export interface SessionSummary {
   created: string
   updated: string
   last_active: string
-  // false: more than 24 h old, so it can be read but not continued (#3406).
+  // false: more than 72 h old, so it can be read but not continued (#3406).
   // Optional on purpose: the prototype server never sends it, and absent means
   // not ended.
   continuable?: boolean
@@ -73,6 +73,9 @@ export const api = {
   listSessions: () => req<SessionSummary[]>('/api/sessions'),
   createSession: (body: { title?: string; model?: string; sample?: boolean; project_id?: string }) =>
     req<SessionSummary>('/api/sessions', { method: 'POST', body: JSON.stringify(body) }),
+  // The prototype backend only: a new session on a retired session's project.
+  continueSession: (id: string) =>
+    req<SessionSummary>(`/api/sessions/${id}/continue`, { method: 'POST' }),
   resumeSession: (id: string) =>
     req<SessionSummary>(`/api/sessions/${id}/resume`, { method: 'POST' }),
   patchSession: (id: string, body: { title?: string; model?: string }) =>

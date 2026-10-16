@@ -218,10 +218,8 @@ TURN_LIVE_SQL = (
     "OR t.claimed_at > now() - make_interval(secs => %s) "
     "OR (t.claimed_at IS NULL AND t.enqueued_at > now() - make_interval(secs => %s)))) AS live"
 )
-# Every table delete_session clears by the web session id. session_entries is keyed by
-# the SDK session id instead and is deleted separately; a pg test fails on any table with
-# a session_id column that is in neither.
-SESSION_TABLES = ("session_events", "session_seq", "session_activity", "turns", "tool_calls")
+RETIRED_SQL = "SELECT retired_at IS NOT NULL AS retired FROM sessions WHERE session_id = %s"
+RETIRED_DETAIL = "This session has expired; continue in a new session on this project"
 FAIL_TURN_SQL = (
     "UPDATE turns SET outcome = %s, completed_at = now(), claim_epoch = claim_epoch + 1 "
     "WHERE turn_id = %s AND completed_at IS NULL"
@@ -264,6 +262,9 @@ class SessionRow:
     turn_in_flight: bool = False
     project_completed: bool = False
     has_queued: bool = False
+    # U19 (013): set by the worker's retention when it purged this idle session's
+    # transcript, events and tool calls. A retired session takes no new message.
+    retired_at: datetime | None = None
 
 
 @dataclass(frozen=True)
@@ -277,6 +278,11 @@ class User:
 class ProjectNotOwned(Exception):
     """create_session was handed a project the caller may not open. The route answers
     404, the same as for a project that does not exist, so the answer leaks nothing."""
+
+
+class SessionRetired(Exception):
+    """admit_message found the session retired (013): its transcript is gone, so a new turn
+    would resume nothing and start its spend cap at zero. post_message answers 410."""
 
 
 class SessionBusy(Exception):
@@ -435,7 +441,7 @@ def queue_body(turn_id: str, session: SessionRow, text: str, enqueued_at: str, n
 
 
 def session_out(row: SessionRow) -> dict[str, Any]:
-    """Every required key of api.ts's SessionSummary (`continuable` is optional and omitted, which reads as not ended); SessionList dereferences model/last_active."""
+    """Every key of api.ts's SessionSummary; SessionList dereferences model/last_active."""
     return {
         "id": row.session_id,
         # The client cannot open a new session ON this project without it, which is
@@ -443,7 +449,8 @@ def session_out(row: SessionRow) -> dict[str, Any]:
         "project_id": row.project_id,
         "title": row.title,
         "model": row.model,
-        "status": "active",
+        "status": "retired" if row.retired_at is not None else "active",
+        "continuable": row.retired_at is None,
         # The four states the session list shows. `status` above is the legacy field
         # every existing client reads; this is additive beside it.
         "job_state": job_state(
@@ -683,7 +690,7 @@ class PgStore:
             session_id=r["session_id"], project_id=r["project_id"],
             title=r["title"] or DEFAULT_TITLE, model=r["model"] or DEFAULT_MODEL,
             created_at=r["created_at"], updated_at=r["updated_at"] or r["created_at"],
-            owner_id=r["owner_id"],
+            owner_id=r["owner_id"], retired_at=r["retired_at"],
             latest_outcome=r.get("latest_outcome"),
             turn_in_flight=bool(r.get("turn_in_flight")),
             has_queued=bool(r.get("has_queued")),
@@ -705,7 +712,7 @@ class PgStore:
     # `continue_policy.project_completed`'s `project.status == "completed"`.
     _SELECT = (
         "SELECT s.session_id, s.project_id, s.title, s.model, s.created_at, s.updated_at, "
-        "p.owner_id, "
+        "p.owner_id, s.retired_at, "
         "(SELECT t.outcome FROM turns t "
         " WHERE t.session_id = s.session_id AND t.completed_at IS NOT NULL "
         " ORDER BY t.completed_at DESC LIMIT 1) AS latest_outcome, "
@@ -824,13 +831,13 @@ class PgStore:
                 )
                 if (await cur.fetchone())["live"]:
                     raise SessionBusy(session_id)
-                for table in SESSION_TABLES:
+                for table in grants.SESSION_TABLES:
                     await conn.execute(f"DELETE FROM {table} WHERE session_id = %s", (session_id,))  # noqa: S608 - fixed names
                 # The transcript is keyed by the SDK session id (004), not this one, and a
                 # subagent's rows share it under a `subagents/...` subpath: this removes
                 # exactly what the spend meter (worker SESSION_USAGE_SQL) counts.
-                transcript_ids = [session_id] + ([row["sdk_session_id"]] if row["sdk_session_id"] else [])
-                await conn.execute("DELETE FROM session_entries WHERE session_id = ANY(%s)", (transcript_ids,))
+                await conn.execute(grants.TRANSCRIPT_DELETE_SQL,
+                                   (grants.transcript_ids(session_id, row["sdk_session_id"]),))
                 await conn.execute("DELETE FROM sessions WHERE session_id = %s", (session_id,))
                 # The project goes only with its LAST session. A project another session
                 # still opens must keep its documents -- and must keep its projects row,
@@ -903,6 +910,11 @@ class PgStore:
             async with conn.transaction():
                 await conn.execute(grants.QUEUE_LOCK_TIMEOUT_SQL, (grants.queue_lock_timeout(),))
                 await conn.execute(grants.QUEUE_LOCK_SQL, (grants.QUEUE_LOCK_NS, session.session_id))
+                # U19: under the lock retention retires under, so a session retired after
+                # the route read its row is still refused.
+                cur = await conn.execute(RETIRED_SQL, (session.session_id,))
+                if (await cur.fetchone())["retired"]:
+                    raise SessionRetired(session.session_id)
                 held = (await self._exists(conn, TURN_ACTIVE_SQL, session.session_id, "active")
                         or await self._exists(conn, HAS_QUEUED_SQL, session.session_id, "queued"))
                 turn = await self._insert_turn(conn, session, text, queued=held)
@@ -1720,6 +1732,18 @@ def create_app(
             raise HTTPException(status_code=404, detail="Project not found") from exc
         return session_out(row)
 
+    @app.post("/api/sessions/{session_id}/continue")
+    async def continue_session(session_id: str, request: Request, user: User = Depends(current_user)) -> dict:
+        """U19: a new session on a retired session's project, so its research goes on."""
+        row = await _session(request, session_id, user)
+        if row.retired_at is None:
+            raise HTTPException(status_code=409, detail="This session has not expired")
+        try:
+            new = await _store(request).create_session(row.title, row.model, row.project_id, user.id, False)
+        except ProjectNotOwned as exc:
+            raise HTTPException(status_code=404, detail="Project not found") from exc
+        return session_out(new)
+
     @app.get("/api/sessions/{session_id}")
     async def get_session(session_id: str, request: Request, user: User = Depends(current_user)) -> dict:
         return session_out(await _session(request, session_id, user))
@@ -1914,7 +1938,12 @@ def create_app(
         # session, two CLIs appending to one transcript. Hold it instead: the row is
         # written now (the patron sees their message immediately) and the worker enqueues
         # it when the turn holding it ends.
-        turn, held, rescued = await store.admit_message(row, body.text)
+        if row.retired_at is not None:
+            raise HTTPException(status_code=410, detail=RETIRED_DETAIL)
+        try:
+            turn, held, rescued = await store.admit_message(row, body.text)
+        except SessionRetired:
+            raise HTTPException(status_code=410, detail=RETIRED_DETAIL) from None
         if held:
             # A held message with no turn running would wait for a release that never
             # comes, so admit_message claimed the oldest held row (the worker's own

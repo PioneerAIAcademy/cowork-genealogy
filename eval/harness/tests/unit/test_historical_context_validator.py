@@ -1,5 +1,6 @@
-"""Direct tests for the historical-context no-results-attribution validator
-(report_confident_no_results_attribution, issue #2331).
+"""Direct tests for the historical-context validators: no-results attribution
+(report_confident_no_results_attribution, issue #2331) and the log writes
+(test_writes_only_reference_log_entries, test_overview_logged, #3244).
 
 Same reason as test_search_full_text_validator.py: pyproject.toml sets
 testpaths = ["tests"], so nothing under validators/ is collected by
@@ -18,6 +19,8 @@ sys.path.insert(0, str(_VALIDATORS_DIR))
 
 from test_historical_context import (  # noqa: E402
     report_confident_no_results_attribution as check_confident_attribution,
+    test_overview_logged as check_overview,
+    test_writes_only_reference_log_entries as check_writes,
 )
 
 
@@ -160,3 +163,82 @@ def test_stays_silent_on_hedged_response():
         "It is also possible that a courthouse fire destroyed the records."
     )
     check_confident_attribution(hedged, NO_RESULTS_TEST)
+
+
+# --- Log writes (#3244 option L) ------------------------------------------
+
+POSITIVE = {"type": "positive", "tags": []}
+LOGS_OVERVIEW = {"type": "positive", "tags": ["logs-overview"]}
+OVERVIEW = "Irish famine emigration to Schuylkill County. " * 12
+
+_OLD_LOG = [{"id": "log_001", "tool": "record_search", "outcome": "positive"}]
+
+
+def _state(log, **extra):
+    return {"research_json": {"log": log, "questions": [], "sources": [], **extra}}
+
+
+def _logged_run(notes=OVERVIEW):
+    return _state(_OLD_LOG + [
+        {"id": "log_002", "tool": "wiki_search", "plan_item_id": None, "notes": None},
+        {"id": "log_003", "tool": "wiki_read", "plan_item_id": None, "notes": None},
+        {"id": "log_004", "tool": "historical_context", "plan_item_id": None, "notes": notes},
+    ])
+
+
+def test_writes_passes_on_a_logged_run():
+    check_writes(_state(_OLD_LOG), _logged_run(), POSITIVE)
+
+
+def test_writes_passes_when_nothing_is_written():
+    check_writes(_state(_OLD_LOG), _state(_OLD_LOG), POSITIVE)
+
+
+def test_writes_fires_on_a_write_to_another_section():
+    after = _logged_run()
+    after["research_json"]["questions"] = [{"id": "q_001"}]
+    with pytest.raises(AssertionError, match="questions"):
+        check_writes(_state(_OLD_LOG), after, POSITIVE)
+
+
+def test_writes_fires_on_a_rewritten_old_entry():
+    after = _logged_run()
+    after["research_json"]["log"][0] = {**_OLD_LOG[0], "outcome": "negative"}
+    with pytest.raises(AssertionError):
+        check_writes(_state(_OLD_LOG), after, POSITIVE)
+
+
+def test_writes_fires_on_a_stray_tool():
+    after = _logged_run()
+    after["research_json"]["log"].append({"id": "log_005", "tool": "record_search"})
+    with pytest.raises(AssertionError, match="record_search"):
+        check_writes(_state(_OLD_LOG), after, POSITIVE)
+
+
+def test_overview_passes_on_one_full_entry():
+    check_overview(_state(_OLD_LOG), _logged_run(), LOGS_OVERVIEW)
+
+
+def test_overview_skips_without_the_tag():
+    with pytest.raises(pytest.skip.Exception):
+        check_overview(_state(_OLD_LOG), _state(_OLD_LOG), POSITIVE)
+
+
+def test_overview_fires_when_nothing_is_logged():
+    with pytest.raises(AssertionError, match="got 0"):
+        check_overview(_state(_OLD_LOG), _state(_OLD_LOG), LOGS_OVERVIEW)
+
+
+def test_overview_fires_on_two_entries():
+    after = _logged_run()
+    after["research_json"]["log"].append(
+        {"id": "log_005", "tool": "historical_context", "plan_item_id": None, "notes": OVERVIEW}
+    )
+    with pytest.raises(AssertionError, match="got 2"):
+        check_overview(_state(_OLD_LOG), after, LOGS_OVERVIEW)
+
+
+@pytest.mark.parametrize("notes", [None, "", "Irish famine drove emigration."])
+def test_overview_fires_on_a_missing_or_summary_note(notes):
+    with pytest.raises(AssertionError, match="full overview"):
+        check_overview(_state(_OLD_LOG), _logged_run(notes), LOGS_OVERVIEW)

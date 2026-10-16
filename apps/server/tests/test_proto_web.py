@@ -14,6 +14,7 @@ imports ``enqueue`` as a top-level module because that is how the container lays
 from __future__ import annotations
 
 import asyncio
+import dataclasses
 import json
 import re
 import socket
@@ -43,6 +44,7 @@ from web.app import (  # noqa: E402
     IdentityMismatch,
     ProjectNotOwned,
     SessionBusy,
+    SessionRetired,
     SessionRow,
     Turn,
     User,
@@ -58,8 +60,6 @@ from web.app import (  # noqa: E402
 T0 = datetime(2026, 9, 14, 12, 0, tzinfo=timezone.utc)
 
 # api.ts SessionSummary -- every key the SPA types (SessionList dereferences model and last_active).
-# `continuable` is left out on purpose: it is optional in api.ts, and the prototype omits it
-# (absent means not ended).
 SESSION_SUMMARY_KEYS = {
     "id", "title", "model", "status", "sandbox_id", "agent_session_id", "created", "updated", "last_active",
     # The session list's four job states. `status` above is the legacy field every
@@ -69,6 +69,7 @@ SESSION_SUMMARY_KEYS = {
     # session on the SAME project, which is what a spend-bound stop needs to
     # continue "in one action".
     "project_id",
+    "continuable",
 }
 
 
@@ -173,6 +174,8 @@ class FakeStore:
         message holds this one too), so a test can still patch a step to open a window.
         The lock it holds is test_proto_queue_pg.py's to prove."""
         sid = session.session_id
+        if self.sessions[sid].retired_at is not None:  # re-read under the lock, as PgStore does
+            raise SessionRetired(sid)
         held = await self.turn_active(sid) or await self.has_queued(sid)
         turn = await self.begin_turn(session, text, queued=held)
         rescued = None if not held or await self.turn_active(sid) else await self.claim_queued_turn(sid)
@@ -766,7 +769,7 @@ class RecordingConn:
         # `queued`, turn_active reads `active`, request_stop only checks for a row.
         if "RETURNING message" in self.sql[-1]:  # the 1b claim
             return {"message": self.message} if self.message is not None else None
-        return {"seq": 1, "queued": self.queued, "active": self.active, "stop_requested_at": "now"}
+        return {"seq": 1, "queued": self.queued, "active": self.active, "stop_requested_at": "now", "retired": False}
 
     def transaction(self):
         conn = self
@@ -1397,9 +1400,9 @@ async def _call(c: httpx.AsyncClient, method: str, path: str, session_id: str) -
 
 
 def test_the_route_sweep_sees_every_per_session_route():
-    # 13 routes: get, patch, delete, resume, state, sidecar, image, logs, files,
+    # 14 routes: get, patch, delete, resume, continue, state, sidecar, image, logs, files,
     # interrupt, messages, events, events/stream. A new one must be decided on, not missed.
-    assert len(_per_session_routes()) == 13, _per_session_routes()
+    assert len(_per_session_routes()) == 14, _per_session_routes()
 
 
 @pytest.mark.parametrize(("method", "path"), _per_session_routes())
@@ -1475,6 +1478,54 @@ async def test_deleting_a_session_with_a_running_turn_answers_409_and_keeps_it()
         resp = await c.delete(f"/api/sessions/{row.session_id}")
     assert resp.status_code == 409 and "press Stop" in resp.json()["detail"]
     assert row.session_id in store.sessions
+
+
+def retire(store: FakeStore, session_id: str) -> SessionRow:
+    row = dataclasses.replace(store.sessions[session_id], retired_at=T0)
+    store.sessions[session_id] = row
+    return row
+
+
+@pytest.mark.parametrize("when", ["before the request", "between the read and the admit"])
+async def test_a_retired_session_refuses_a_message_with_410_and_sends_nothing(when):
+    store, queue = FakeStore(), FakeQueue()
+    row = store.seed_session()
+    if when == "before the request":
+        retire(store, row.session_id)
+    else:
+        real = store.get_session
+
+        async def get_then_retire(session_id):
+            got = await real(session_id)
+            retire(store, session_id)
+            return got
+
+        store.get_session = get_then_retire  # type: ignore[method-assign]
+    async with make_client(store, queue) as c:
+        resp = await c.post(f"/api/sessions/{row.session_id}/messages", json={"text": "hi"})
+    assert resp.status_code == 410 and "continue in a new session" in resp.json()["detail"]
+    assert queue.sent == [] and store.turns == []
+
+
+async def test_a_retired_session_reads_as_retired_and_continues_on_its_project():
+    store, queue = FakeStore(), FakeQueue()
+    row = retire(store, store.seed_session().session_id)
+    async with make_client(store, queue) as c:
+        old = (await c.get(f"/api/sessions/{row.session_id}")).json()
+        assert old["status"] == "retired" and old["continuable"] is False
+        resp = await c.post(f"/api/sessions/{row.session_id}/continue")
+        assert resp.status_code == 200, resp.text
+        new = resp.json()
+        assert new["id"] != row.session_id and new["status"] == "active" and new["continuable"] is True
+    assert store.sessions[new["id"]].project_id == row.project_id
+
+
+async def test_an_active_session_cannot_be_continued():
+    store, queue = FakeStore(), FakeQueue()
+    row = store.seed_session()
+    async with make_client(store, queue) as c:
+        assert (await c.post(f"/api/sessions/{row.session_id}/continue")).status_code == 409
+    assert list(store.sessions) == [row.session_id]
 
 
 async def test_deleting_one_of_two_sessions_keeps_the_other_visible():
@@ -1857,7 +1908,7 @@ async def test_spa_mount_leaves_every_api_status_unchanged(dist, monkeypatch, me
 
 def test_spa_mount_leaves_the_per_session_route_sweep_unchanged(dist):
     mounted = _per_session_routes()
-    assert len(mounted) == 13 and any(isinstance(r, Mount) for r in create_app(FakeStore(), FakeQueue()).routes)
+    assert len(mounted) == 14 and any(isinstance(r, Mount) for r in create_app(FakeStore(), FakeQueue()).routes)
     with pytest.MonkeyPatch.context() as mp:
         mp.delenv(spa.ENV_VAR)
         assert _per_session_routes() == mounted

@@ -58,6 +58,17 @@ export default function SessionList({
     }
   }
 
+  const continueIn = async (id: string, e: React.MouseEvent): Promise<void> => {
+    e.stopPropagation()
+    setError(null)
+    try {
+      const s = await api.continueSession(id)
+      onOpen(s.id)
+    } catch (err) {
+      setError(err instanceof ApiError ? err.message : 'Failed to continue the session')
+    }
+  }
+
   const remove = async (id: string, e: React.MouseEvent): Promise<void> => {
     e.stopPropagation()
     if (!confirm('Delete this session and its sandbox? This cannot be undone.')) return
@@ -140,14 +151,19 @@ export default function SessionList({
                       want me, did it finish, or did it stop? */}
                   <JobStateBadge state={s.job_state} />
                   <span className="pill">{s.model.replace('claude-', '')}</span>
-                  {/* Strictly false: the prototype omits the field, and absent is not ended. */}
+                  {/* Strictly false: the field is optional, and absent is not ended. */}
                   {s.continuable === false && (
-                    <span className="pill pillEnded" title="More than 24 hours old: you can read it, but not continue it">
+                    <span className="pill pillEnded" title="This session can't be continued">
                       ended
                     </span>
                   )}
                   <span className="muted">active {relativeTime(s.last_active)}</span>
                 </div>
+                {s.status === 'retired' && (
+                  <button className="btnSecondary" onClick={(e) => void continueIn(s.id, e)}>
+                    Continue in a new session
+                  </button>
+                )}
                 <button
                   className="cardDelete"
                   title="Delete session"

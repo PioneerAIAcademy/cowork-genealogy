@@ -112,7 +112,13 @@ WIDENED: dict[str, set[str]] = {
     #: option L, U20). Both agents delivered a loose `.md` through `Write`, which
     #: never reaches the hosted ProjectStore; each now logs its lookup through
     #: `research_log_append`, the article or guidance in the entry's `notes`.
-    "log": {"survey-surname", "search-hints", "search-wikipedia", "search-familysearch-wiki"},
+    #:
+    #: `log` gains `historical-context` (#3244 option L). Its overview lived only
+    #: in the chat and was lost with the session; inside a project it now logs its
+    #: wiki/Wikipedia lookups and one `historical_context` entry carrying the full
+    #: overview in `notes`.
+    "log": {"survey-surname", "search-hints", "search-wikipedia", "search-familysearch-wiki",
+            "historical-context"},
     #: `sources` gains `init-project` (issue #2122). The skill always wrote one
     #: `sources` entry per transcribed memory through `research_append` (its
     #: Step 4a) with no row naming it; the agent's hook lane makes that write

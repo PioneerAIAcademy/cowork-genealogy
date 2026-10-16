@@ -213,6 +213,8 @@ services:
       SQSD_MAX_RETRIES: "${SQSD_MAX_RETRIES:-0}"
       SQSD_VISIBILITY_TIMEOUT_S: "${SQSD_VISIBILITY_TIMEOUT_S:-0}"
       SWEEP_INTERVAL_S: "${SWEEP_INTERVAL_S:-0}"
+      # U19: off. This volume holds the transcripts compare.py, grade.py and export.py read.
+      RETENTION_INTERVAL_S: "${RETENTION_INTERVAL_S:-0}"
       ENGINE_PLUGIN_DIR: /opt/genealogy/plugin
       WORKER_CWD: /project
       TMPDIR: /tmp

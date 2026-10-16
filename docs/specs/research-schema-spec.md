@@ -639,7 +639,7 @@ Array of plan objects. When a plan fails and is re-planned for the same question
 
 Array of log entry objects. **Append-only — entries are never modified or deleted.** This is the core GPS audit trail. Every tool call that searches for records must produce a log entry, including searches that return no results.
 
-Reference-lookup entries (`tool` is `wikipedia_search`, `wiki_search` or `historical_context`) record a looked-up article, wiki guidance or overview rather than a record search: the reference text itself is carried in `notes`, and `outcome` / `results_examined` hold stand-in values (`positive` and the pages read; a `wiki_search` that returned nothing is `negative` with `results_examined: 0` and `notes` null). These entries hold no evidence to persist, so `research_log_append`'s logging-without-persistence nudge does not count them; its pre-1880 census hedge still applies to their `notes`.
+Reference-lookup entries (`tool` is `wikipedia_search`, `wiki_search`, `wiki_read` or `historical_context`) record a looked-up article, wiki guidance or overview rather than a record search: the reference text itself is carried in `notes` (historical-context's per-lookup entries carry `notes: null`, its overview being in its one `historical_context` entry), and `outcome` / `results_examined` hold stand-in values (`positive` and the pages read; a `wiki_search` that returned nothing is `negative` with `results_examined: 0` and `notes` null). These entries hold no evidence to persist, so `research_log_append`'s logging-without-persistence nudge does not count them; its pre-1880 census hedge still applies to their `notes`.
 
 | Field | Type | Required | Description |
 |-------|------|----------|-------------|

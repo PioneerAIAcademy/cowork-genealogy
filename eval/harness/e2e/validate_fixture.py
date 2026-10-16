@@ -65,6 +65,7 @@ import argparse
 import json
 import re
 import sys
+import unicodedata
 from collections import Counter
 from dataclasses import dataclass
 from pathlib import Path
@@ -87,14 +88,22 @@ _STOPWORDS = frozenset(
     }
 )
 
-_WORD = re.compile(r"[A-Za-z]+")
+# Any Unicode letter run, so Cyrillic names tokenize and "João" stays whole.
+_WORD = re.compile(r"[^\W\d_]+")
+
+
+def _fold(text: str) -> str:
+    """Strip diacritics so "João" and "Joao" share a token."""
+    return "".join(
+        c for c in unicodedata.normalize("NFKD", text) if not unicodedata.combining(c)
+    )
 
 
 def _tokens(text: str) -> set[str]:
     """Lowercased alphabetic word tokens, minus stopwords and 1-char noise."""
     return {
         w
-        for w in (m.group(0).lower() for m in _WORD.finditer(text or ""))
+        for w in (m.group(0).lower() for m in _WORD.finditer(_fold(text or "")))
         if len(w) > 1 and w not in _STOPWORDS
     }
 
@@ -826,6 +835,9 @@ def _resolve_target(arg: Path) -> Path:
 
 
 def main(argv: list[str] | None = None) -> int:
+    if hasattr(sys.stdout, "reconfigure"):
+        sys.stdout.reconfigure(encoding="utf-8")
+        sys.stderr.reconfigure(encoding="utf-8")
     parser = argparse.ArgumentParser(
         prog="e2e.validate_fixture",
         description="Lint e2e fixtures for stripping completeness.",

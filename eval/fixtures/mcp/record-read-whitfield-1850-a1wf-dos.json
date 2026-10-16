@@ -1,6 +1,6 @@
 {
   "tool": "record_read",
-  "description": "The 1850 Pike County household behind A1WF-DOS, for ut_search_records_h4k: the same persons, sources and places as record-search-whitfield-1850-household's gedcomx, and no relationships, because the 1850 schedule states none. Stocked to stop an ABORT: record_read is not a LIVE_TOOL, so a sidecar read of this record (Step 6) with no fixture is a Type 1 uncovered call that aborts the run, observed on a v4 candidate run.",
+  "description": "The 1850 Pike County household behind A1WF-DOS, for ut_search_records_h4k: the same persons, sources and places as record-search-whitfield-1850-household's gedcomx, and no relationships, because the 1850 schedule states none. Stocked to stop an ABORT: record_read is not a LIVE_TOOL, so a sidecar read of this record (Step 6) with no fixture is a Type 1 uncovered call that aborts the run, observed on a v4 candidate run. Collection 1401638's title was reconciled to the majority mock-world spelling 'United States Census, 1850' (no comma) carried by the nine other fixtures naming this id (issue #2484 PR2); the live FamilySearch title carries a comma, but the point here is a self-consistent mock world, not live spelling.",
   "args": {
     "recordId": "~A1WF-DOS"
   },
@@ -185,13 +185,13 @@
     "sources": [
       {
         "id": "src_r_1",
-        "title": "Household of Nancy Doss, \"United States, Census, 1850\"",
-        "citation": "\"United States, Census, 1850\", FamilySearch (https://www.familysearch.org/ark:/61903/1:1:A1WF-DO2 : accessed 2026), Entry for Nancy Doss and Amos Whitfield, 1850.",
+        "title": "Household of Nancy Doss, \"United States Census, 1850\"",
+        "citation": "\"United States Census, 1850\", FamilySearch (https://www.familysearch.org/ark:/61903/1:1:A1WF-DO2 : accessed 2026), Entry for Nancy Doss and Amos Whitfield, 1850.",
         "url": "https://www.familysearch.org/ark:/61903/1:2:A1WF-HH1"
       },
       {
         "id": "sd_c_1401638",
-        "title": "United States, Census, 1850",
+        "title": "United States Census, 1850",
         "url": "https://www.familysearch.org/service/cds/recapi/collections/1401638"
       },
       {

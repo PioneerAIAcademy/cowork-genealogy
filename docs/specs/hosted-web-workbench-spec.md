@@ -287,7 +287,7 @@ and web (WebSocket transport).
 > 3. **The chat WS is not proxied.** The browser opens **one authenticated WSS
 >    straight to the sandbox** — `POST /api/sessions/{id}/connect` resumes it,
 >    exposes port 8080, mints a per-sandbox HMAC token, and returns
->    `{wssUrl, token, familysearch}` — except for a session more than 24 h past
+>    `{wssUrl, token, familysearch}` — except for a session more than 72 h past
 >    `projects.created`, which it refuses with 410 before resuming
 >    (`SESSION_MAX_AGE` in `app/sessions.py`; `/resume` and the read endpoints
 >    stay open, so an ended session's research can still be read); the control plane is then out of the
