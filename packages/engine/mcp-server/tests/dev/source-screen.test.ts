@@ -158,6 +158,8 @@ describe("audit list", () => {
     read.sources.push({ id: "s_book", title: "A book" });
     read.sources.push({ id: "s_mem", title: "A memory", url: "https://www.familysearch.org/photos/artifacts/1", artifact_url: "https://x/1" });
     read.persons[0].sources.push({ ref: "s_rec" }, { ref: "s_book" });
+    read.sources.push({ id: "c_K2", title: "Kin marriage", url: url("K2") });
+    read.relationships.push({ type: "Couple", person1: "KIN1-111", person2: "KIN2-111", sources: [{ ref: "c_K2" }] });
     const audit = buildAuditList(read);
     const by = Object.fromEntries(audit.entries.map((e) => [e.source_ids[0], [e.level, e.class]]));
     expect(by).toEqual({
@@ -167,14 +169,15 @@ describe("audit list", () => {
       r_E1: ["relationship", "persona"],
       s_mem: ["subject", "no_index"],
     });
-    expect(audit.entries.some((e) => e.source_ids.includes("k_K1"))).toBe(false);
+    expect(audit.entries.some((e) => e.source_ids.includes("k_K1") || e.source_ids.includes("c_K2"))).toBe(false);
   });
 
   it("a source cited by the subject and a relationship is level subject", () => {
     const read = person("AAAA-111", { personas: ["P1"], relSources: ["P1"] });
     const audit = buildAuditList(read);
     expect(audit.entries).toHaveLength(1);
-    expect(audit.entries[0]).toMatchObject({ ark: ark("P1"), level: "subject", source_ids: ["s_P1", "r_P1"] });
+    expect(audit.entries[0]).toMatchObject({ ark: ark("P1"), level: "subject" });
+    expect(audit.entries[0].source_ids.sort()).toEqual(["r_P1", "s_P1"]);
   });
 
   it("counts a living subject", async () => {
@@ -534,8 +537,8 @@ describe("score", () => {
           path: "judge.jsonl",
           step: "judge",
           rows: [
-            row("wp1", ark("HOSTOWN"), "misattributed"),
-            row("H1.unplanted", ark("HOSTOWN"), "misattributed"),
+            row("wp1", ark("DON1"), "misattributed"),
+            row("H1.unplanted", ark("DON1"), "misattributed"),
             row("ix1", ark("REC2"), "indexing"),
             row("H2.unplanted", ark("REC2"), "indexing"),
             row("ix2", ark("REC3"), "indexing"),
@@ -559,6 +562,7 @@ describe("score", () => {
             row("H4.unplanted", ark("NICK"), "source_conflict", "person_quality_conflict"),
             row("H4.unplanted", ark("ELSEWHERE"), "misattributed", "same_person_low"),
             row("H5.unplanted", ark("NICK5"), "unchecked"),
+            row("H5.unplanted", ark("ELSEWHERE"), "misattributed", "same_person_low"),
           ],
         },
         present(),

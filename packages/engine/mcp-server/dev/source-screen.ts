@@ -132,7 +132,7 @@ export function buildAuditList(read: PersonReadResult): AuditList {
   }
   const memoryIds = (read.sources ?? []).filter((s) => s.artifact_url).map((s) => s.id);
   const entries = new Map<string, AuditEntry>();
-  for (const id of new Set([...subjectRefs, ...relRefs, ...memoryIds])) {
+  for (const id of new Set([...relRefs, ...subjectRefs, ...memoryIds])) {
     const src: TreeSource | undefined = byId.get(id);
     if (!src) continue;
     const ark = src.url ? toArk(src.url) : "";
@@ -1047,7 +1047,6 @@ export function scoreFindings(spec: FixtureSpec, file: FindingsFile, presence = 
       let counted = rows.filter((r) => !base.has(rowSig(r)));
       if (file.step === "baseline") {
         s.blind! += counted.filter((r) => BLIND_SIGNALS.has(r.signal)).length;
-        counted = counted.filter((r) => !BLIND_SIGNALS.has(r.signal));
         if (WRONG_PERSON.has(type)) {
           s.by_construction! += counted.filter((r) => BY_CONSTRUCTION_SIGNALS.has(r.signal)).length;
           counted = counted.filter((r) => !BY_CONSTRUCTION_SIGNALS.has(r.signal));
