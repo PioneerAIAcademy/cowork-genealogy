@@ -784,6 +784,9 @@ the caller, in this order:
 - the plan's `pl_` id and its items in execution order, one line each: `pli_`
   id, record type, jurisdiction, repository, fallback relationship, and the
   rationale in one clause
+- when a baptism may not exist (Step 3), the `pli_` id of the item for the
+  subject's own death or burial entry; if the plan has none, append it before
+  you return
 - for a review, the next item and why; when nothing was written, the one-line
   reason
 - the hand-back: search-records for FamilySearch items, search-external-sites
