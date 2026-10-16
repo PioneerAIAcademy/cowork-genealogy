@@ -71,6 +71,15 @@ research-plan does not call those three.
 
 ### 1. Understand the question's context
 
+**Read the question person's FamilySearch profile first.** For each
+person the question is about whose tree entry has an `ark`, call
+`person_read({ personId, projectPath })` with the id after the ark's last `:`, before
+writing any plan item. Whatever it holds that the project tree lacks —
+parents, spouses, facts, attached sources — is a lead: state it in the
+rationale and plan items that test it, never searches that treat it as
+unknown. Say "project tree" or "FamilySearch tree" when saying something is
+missing. If the call fails, say so and plan from the tree.
+
 From the question's `rationale` and `selection_basis`, determine:
 - **Who** — the subject and what is known (tree.gedcomx.json, assertions)
 - **What** — the event or relationship under investigation
@@ -90,15 +99,6 @@ mode, not a defensive re-read.)
 check whether starting-point facts are documented or merely assumed.
 Flag unsupported assumptions (e.g., "widow = mother of all children")
 and add plan items to verify them before relying on them.
-
-**Read the question person's FamilySearch profile first.** For each
-person the question is about whose tree entry has an `ark`, call
-`person_read({ personId, projectPath })` with the id after the ark's last `:`, before
-writing any plan item. Whatever it holds that the project tree lacks —
-parents, spouses, facts, attached sources — is a lead: state it in the
-rationale and plan items that test it, never searches that treat it as
-unknown. Say "project tree" or "FamilySearch tree" when saying something is
-missing. If the call fails, say so and plan from the tree.
 
 **Survey what the tree already holds, before planning new searches.** For
 the subject and every other person in scope for this question, read
@@ -133,7 +133,8 @@ second, write last.
 
 **Review mode** — An `active` plan still has `planned`/`in_progress`
 items, and the user wants a recap. Narrate which item is next, why,
-and what follows — **do not create a new plan or modify items.** The
+and what follows it — a named record set or search with its reason, not a
+hand-off to another skill — **do not create a new plan or modify items.** The
 active plan is the audit trail; review is explanatory only. If the
 item you confirm as the next step names no specific collection, run a
 quick `collections_search` at its jurisdiction to confirm the source
