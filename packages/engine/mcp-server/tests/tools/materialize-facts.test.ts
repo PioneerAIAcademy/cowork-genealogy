@@ -352,6 +352,92 @@ describe("materialize_facts", () => {
       },
     );
 
+    // The agent links an assertion to every person it bears on, so the wife's
+    // own name is linked to her husband too. He is held by the groom's own
+    // name alone, so only a link of hers that names him alone could count.
+    const ferber = () => [
+      assertion("a_031", { record_id: "REC-MARR", record_role: "wife", fact_type: "name", value: "Emma Ferber" }),
+      assertion("a_032", { record_id: "REC-MARR", record_role: "wife", fact_type: "birth", date: "1871" }),
+      assertion("a_033", { record_id: "REC-MARR", record_role: "groom", fact_type: "name", value: "William Ferber" }),
+    ];
+    const WILLIAM = { id: "I3", gender: "Male", names: [{ id: "N3", given: "William", surname: "Ferber" }] };
+    const EMMA = { id: "I5", gender: "Female", names: [{ id: "N5", given: "Emma", surname: "Ferber" }] };
+    const ferberLinks = () => [
+      pe("probable", { id: "pe_001", assertion_id: "a_033", person_id: "I3" }),
+      pe("probable", { id: "pe_002", assertion_id: "a_031", person_id: "I5" }),
+      pe("probable", { id: "pe_003", assertion_id: "a_031", person_id: "I3" }),
+      pe("probable", { id: "pe_004", assertion_id: "a_032", person_id: "I5" }),
+    ];
+    const copyWife = async (personId: string) =>
+      single(await materializeFacts({ projectPath: dir, personId, recordId: "REC-MARR", recordRole: "wife" }));
+
+    it("refuses the wife persona onto her husband through her name's link to him, while the groom's name holds him alone", async () => {
+      const r = research({ sources: [S1], assertions: ferber() });
+      r.person_evidence = ferberLinks();
+      await writeProject(tree({ persons: [WILLIAM, EMMA] }), r, { link: false });
+      const out = await copyWife("I3");
+      expect(out.ok).toBe(false);
+      if (!out.ok) expect(out.errors[0]).toContain("linked to them alone");
+      expect(findPerson(await readTree(), "I3").names).toHaveLength(1);
+      expect((await copyWife("I5")).ok).toBe(true);
+    });
+
+    it("still copies a persona onto a person another role holds, through a link of its own that names them alone", async () => {
+      const r = research({
+        sources: [S1],
+        assertions: [...ferber(), assertion("a_034", { record_id: "REC-MARR", record_role: "witness", fact_type: "name", value: "William Ferber" })],
+      });
+      r.person_evidence = [...ferberLinks(), pe("probable", { id: "pe_005", assertion_id: "a_034", person_id: "I3" })];
+      await writeProject(tree({ persons: [WILLIAM, EMMA] }), r, { link: false });
+      const out = single(
+        await materializeFacts({ projectPath: dir, personId: "I3", recordId: "REC-MARR", recordRole: "witness" }),
+      );
+      expect(out.ok).toBe(true);
+    });
+
+    // An assertion about a second person filed on this persona is linked to
+    // that person too, so its link says nothing about who this persona is.
+    it.each(["Father", "spouse", "Couple", "mother_birthplace", "informant"])(
+      "refuses a persona onto another person through a link from its %s assertion",
+      async (factType) => {
+        const assertions = [
+          ...marriageRecord().slice(0, 2),
+          assertion("a_015", { record_id: "REC-MARR", record_role: "groom", fact_type: factType, value: "Jane Roe" }),
+        ];
+        const r = research({ sources: [S1], assertions });
+        r.person_evidence = [pe("probable", { assertion_id: "a_015" })];
+        await writeProject(tree({ persons: [BRIDE] }), r, { link: false });
+        const out = single(
+          await materializeFacts({ projectPath: dir, personId: "I2", recordId: "REC-MARR", recordRole: "groom" }),
+        );
+        expect(out.ok).toBe(false);
+        expect(findPerson(await readTree(), "I2").names).toHaveLength(1);
+      },
+    );
+
+    it("checks a persona that writes only facts about its parents", async () => {
+      const r = research({
+        sources: [S1],
+        assertions: [
+          assertion("a_016", { record_id: "REC-SON", record_role: "child", fact_type: "Father", value: "John Smith" }),
+          assertion("a_017", { record_id: "REC-SON", record_role: "child", fact_type: "Mother", value: "Ann Smith" }),
+        ],
+      });
+      await writeProject(tree({ persons: [I2] }), r, { link: false });
+      expect((await copy()).ok).toBe(false);
+      expect(findPerson(await readTree(), "I2").facts ?? []).toHaveLength(0);
+    });
+
+    it("checks a persona whose two party assertion is spelled with stray whitespace, which the fact pass writes", async () => {
+      const r = research({
+        sources: [S1],
+        assertions: [assertion("a_018", { record_id: "REC-SON", record_role: "child", fact_type: "parentage ", value: "child of John Smith" })],
+      });
+      await writeProject(tree({ persons: [I2] }), r, { link: false });
+      expect((await copy()).ok).toBe(false);
+      expect(findPerson(await readTree(), "I2").facts ?? []).toHaveLength(0);
+    });
+
     it("copies the groom persona onto him through a link from his own name", async () => {
       const r = research({ sources: [S1], assertions: marriageRecord() });
       r.person_evidence = [pe("probable", { assertion_id: "a_011", person_id: "I2" })];
@@ -623,6 +709,32 @@ describe("materialize_facts", () => {
       ];
       await writeProject(tree({ persons: [MARY, GROOM] }), r, { link: false });
       expect((await nameBrideOnto("I2")).ok).toBe(true);
+    });
+
+    it("does not read the child's Father assertion as the child's own, so the father it names stays writable", async () => {
+      const r = research({
+        sources: [S1],
+        assertions: [
+          assertion("a_081", { record_id: "REC-BAPT", record_role: "child", fact_type: "name", value: "Robert Smith" }),
+          assertion("a_082", { record_id: "REC-BAPT", record_role: "child", fact_type: "Father", value: "John Smith" }),
+          assertion("a_083", { record_id: "REC-BAPT", record_role: "child", fact_type: "relationship", structured_value: { related_person_role: "father" } }),
+        ],
+      });
+      r.person_evidence = [
+        pe("probable", { id: "pe_001", assertion_id: "a_081", person_id: "I2" }),
+        pe("probable", { id: "pe_002", assertion_id: "a_082", person_id: "I2" }),
+        pe("probable", { id: "pe_003", assertion_id: "a_082", person_id: "I3" }),
+        pe("probable", { id: "pe_004", assertion_id: "a_083", person_id: "I3" }),
+      ];
+      const JOHN = { id: "I3", gender: "Male", names: [{ id: "N3", given: "John", surname: "Smith" }] };
+      await writeProject(tree({ persons: [I2, JOHN] }), r, { link: false });
+      const out = single(
+        await materializeFacts({
+          projectPath: dir, personId: "I3", assertionId: "a_083", relatedRole: "father",
+          name: { given: "John", surname: "Smith" },
+        }),
+      );
+      expect(out.ok).toBe(true);
     });
 
     it("refuses when the naming assertion's link names someone else", async () => {
