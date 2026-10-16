@@ -4894,6 +4894,19 @@ describe("research_append (batch ops)", () => {
     expect(r.ok).toBe(true);
   });
 
+  // ── issue #3259: the person_warnings-contradiction exception ──
+  // Unlike the conflict exception, not scoped to `unblocks` naming the
+  // in-flight question -- a contradiction found this call need not be about
+  // whatever is already in progress.
+  it("(in-flight) allows the person_warnings-contradiction exception: selection_basis unresolved_conflict, no unblocks, no conflicts[] entry at all", async () => {
+    await writeProject(running());
+    const r = await researchAppend(newQ({ selection_basis: "unresolved_conflict", depends_on: [], unblocks: [] }));
+    expect(r.ok, `refused: ${JSON.stringify((r as any).errors)}`).toBe(true);
+  });
+  it("(in-flight) still refuses an ordinary objective_decomposition question while an item is in-flight", async () => {
+    await refusedFor(running(), { selection_basis: "objective_decomposition", depends_on: [], unblocks: [] });
+  });
+
   // BREAK IT MORE THAN ONE WAY. Each of these is a different shape of "no entry
   // names it", and each reaches the helper down a different path.
   it("(d4-logattr) refuses when log[] is empty", async () => {

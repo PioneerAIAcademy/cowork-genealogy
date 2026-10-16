@@ -24,6 +24,12 @@ tools:
   - mcp__genealogy__project_context
   - mcp__remote-devices__Genealogy_Research__project_context
   - mcp__Genealogy_Research__project_context
+  - mcp__genealogy__person_warnings
+  - mcp__remote-devices__Genealogy_Research__person_warnings
+  - mcp__Genealogy_Research__person_warnings
+  - mcp__genealogy__census_children_gap
+  - mcp__remote-devices__Genealogy_Research__census_children_gap
+  - mcp__Genealogy_Research__census_children_gap
   - Read
 ---
 
@@ -67,6 +73,19 @@ sources. Do not `Read` `research.json`: take every section from
   `project_context` returns none of them. Concluding there is no gap, no
   conflict, or no hypothesis without having queried that section is
   fabrication, not absence of evidence.
+- **Tree errors.** Call `person_warnings({ projectPath, personId })` once on
+  the objective's subject. The tool also checks their parents, spouses and
+  children; call it again only for an in-scope person more than one hop
+  from the subject. Keep only warnings whose `personId` is inside the
+  objective's scope (Step 1c). If the tool reports itself unavailable, say
+  so — never treat silence as a clean result.
+- **Census children gap.** When the request, or a 1900/1910 census record
+  already read, gives a mother's children-born and children-living counts,
+  call `census_children_gap({ censuses: [{ year, childrenBorn,
+  childrenLiving }], projectPath, motherId })` once for that mother. Never
+  pass `knownChildren`. Never bracket a missing child between siblings'
+  birth years, and never work out the arithmetic yourself, even when the
+  tool errors.
 
 ### 1a. Finish what's already open before selecting a new question
 
@@ -99,6 +118,14 @@ to Step 2 (Priority 1 `unresolved_conflict` will fire), and set the new
 question's `unblocks` to include the in-flight question. A conflict blocking
 some other question does not lift the block. Every question with an in-flight
 item must be covered this way, or `research_append` refuses the write.
+
+**Exception — a `person_warnings` contradiction.** A `contradiction`
+`person_warnings` returns on an in-scope person also lifts the in-progress
+block, the same way an unresolved conflict does — proceed to Step 2 (Priority
+1 will fire) and write the question with `selection_basis:
+"unresolved_conflict"`. Unlike the conflict exception above, the new
+question's `unblocks` need not name the in-flight question: a contradiction
+found this call is not necessarily about whatever is already in progress.
 
 ### 1b. Stop when the objective is already answered at a defensible tier
 
@@ -166,13 +193,18 @@ priority level, prefer the one that unblocks the most downstream questions.
 
 | Priority | Trigger | `selection_basis` |
 |----------|---------|-------------------|
-| 1 | A conflict has `blocks_question_ids` entries | `unresolved_conflict` |
+| 1 | A conflict has `blocks_question_ids` entries, or `person_warnings` returns a `contradiction` on an in-scope person | `unresolved_conflict` |
 | 2 | The objective maps to an active hypothesis needing test | `hypothesis_test` |
 | 3 | Timeline has high-severity gaps spanning census/vital years | `timeline_gap` |
 | 4 | Objective not yet decomposed into sub-questions | `objective_decomposition` |
-| 5 | Pedigree analysis reveals missing key data or inconsistencies **within the objective's scope** | `objective_decomposition` |
+| 5 | Pedigree analysis reveals missing key data or inconsistencies **within the objective's scope** — including an `implausible` `person_warnings` result, or a missing-child group from `census_children_gap` | `objective_decomposition` |
 | 6 | Direct evidence exhausted; pivot to Family/Associates/Neighbors | `fan_pivot` |
 | 7 | A recently extracted assertion opens a new line of inquiry | `new_evidence` |
+
+**Priority 1 detail:** A `contradiction` does not fire Priority 1 when an
+existing question of any status already targets the facts it names (the
+warning's `facts[]`). An `implausible` warning never fires Priority 1 — it
+maps to Priority 5.
 
 **Priority 3 detail:** Only fires when `severity == "high"`. Low-severity
 timeline gaps do not trigger it. When it fires, the question targets the
@@ -344,8 +376,6 @@ pursued next.
   `proof-conclusion`'s — so there is no way to retire a question here, and none
   is needed: an overtaken question stays as it is. Never write a second `q_` for
   a question that already exists.
-- **Historical context matters.** Factor in jurisdictional boundary changes,
-  migration, wars, and record availability for the time and place.
 
 ## Edge cases
 
@@ -577,8 +607,8 @@ indirect or circumstantial evidence chains.
 ---
 
 # Appendix B — Pedigree Analysis for Gap Detection
-Guidance for evaluating pedigree data to identify research gaps,
-errors, and candidates for new research questions.
+Guidance for evaluating pedigree data to identify research gaps
+and candidates for new research questions.
 
 The sweep below covers the whole tree. Only gaps the research
 objective covers are question candidates; the rest are context.
@@ -586,10 +616,9 @@ objective covers are question candidates; the rest are context.
 ## Purpose
 
 Pedigree analysis is the process of systematically reviewing the
-individuals in a family tree to detect missing information, logical
-errors, and inconsistencies. It is a critical first step before
-selecting new research questions — it reveals where the gaps are
-and which gaps are most significant.
+individuals in a family tree to detect missing information. It is a
+critical first step before selecting new research questions — it
+reveals where the gaps are and which gaps are most significant.
 
 ## Minimum Data Requirements
 
@@ -616,63 +645,6 @@ Evaluate the pedigree for structural gaps:
 - Which individuals appear only once (no connecting records)?
 - Are there entire branches with no dates or places?
 
-## Logical Consistency Checks
-
-Dates and relationships must be internally consistent. Flag any of
-these impossibilities or implausibilities:
-
-### Date logic
-- Birth date after death date
-- Marriage before age 12 (or before birth)
-- Death after age 120
-- Child born after mother's death
-- Child born when mother was under 12 or over 50
-- Child born after father's death by more than 9 months
-
-### Parent-child relationships
-- Parent-child age difference less than 15 years
-- Parent-child age difference greater than 70 years
-- Sibling born less than 9 months after previous sibling
-  (if same mother)
-
-### Geographic consistency
-- Children born in places where parents were not residing
-- Events in places that did not exist at the stated date
-  (jurisdictions were created, split, and renamed over time)
-- Migration timelines that are physically implausible for the
-  period's transportation technology
-
-## Historical Context Awareness
-
-Dates and places carry historical significance beyond identification.
-When analyzing a pedigree, consider:
-
-- **Wars and military service**: Was the person of military age
-  during a conflict? Military records may exist.
-- **Migration patterns**: Were there major migration events affecting
-  this area and time period? (Gold rushes, land openings, famine
-  emigration, religious migrations.)
-- **Jurisdictional existence**: Did the named county, parish, or
-  town exist at the stated date? Many boundary changes occurred as
-  populations grew.
-- **Record availability**: What records would have been created for
-  this person given their time, place, religion, and social status?
-  Records start at different dates in different jurisdictions.
-
-## Source Quality Assessment
-
-For each fact in the pedigree, evaluate:
-
-- Is the fact supported by a citation?
-- Is the cited source an original record or a derivative?
-- Do multiple sources agree, or is there conflicting information?
-- Are any facts sourced only from unverified online family trees?
-
-Facts backed only by compiled sources (online trees, undocumented
-genealogies, derivative indexes) should be treated as unverified
-leads, not established facts. They may be starting points for
-research but cannot support a proved conclusion.
-
 ## Prioritizing Gaps for Research
 
 First discard gaps outside the objective's scope — they are context,
@@ -685,9 +657,7 @@ important. Prioritize based on:
    downstream questions.
 3. **Likelihood of success**: Records are known to exist for the
    jurisdiction and time period.
-4. **Error risk**: An inconsistency suggests misidentification —
-   resolving it prevents building on a false foundation.
-5. **Generation depth**: Earlier generations (closer to the subject)
+4. **Generation depth**: Earlier generations (closer to the subject)
    generally take priority over more distant ancestors, since errors
    compound with each generation.
 
@@ -696,13 +666,11 @@ important. Prioritize based on:
 After completing pedigree analysis, feed the findings into the
 question selection priority system:
 
-- Logical impossibilities map to `unresolved_conflict` (Priority 1)
-  if they block other questions
+- A `person_warnings` contradiction on an in-scope person maps to
+  `unresolved_conflict` (Priority 1); see Step 2
 - Missing key data for the research subject maps to Priority 5, whose
   `selection_basis` is `objective_decomposition` (same enum value as
   Priority 4 — there is no separate `pedigree_gap` value)
-- Unverified claims from compiled sources may trigger new questions
-  to verify them before building further
 
 The pedigree analysis does not itself produce questions — it
 identifies where questions are needed. The question formulation
