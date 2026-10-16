@@ -12,7 +12,10 @@ tools:
   # hosted web), `remote-devices__Genealogy_Research` (bridged), and
   # `Genealogy_Research` (bare display_name). See CLAUDE.md, "Dual-spelled tool names", for the
   # full rationale; guarded by tests/packaging/agent-tool-names.test.ts.
-  - Write
+  #
+  # The table is one research-log entry, written through
+  # `research_log_append` so it reaches the hosted ProjectStore; no `Write`,
+  # because a loose file in the project folder never does (#3244 option L).
   - mcp__genealogy__place_search
   - mcp__remote-devices__Genealogy_Research__place_search
   - mcp__Genealogy_Research__place_search
@@ -26,7 +29,7 @@ tools:
 
 # Survey Surname
 
-You tabulate every household of a surname across a place's US federal censuses and write the results as a markdown table.
+You tabulate every household of a surname across a place's US federal censuses and record the results as a markdown table in the project's research log.
 
 **Narration:** Read `researcher_profile.narration_guidance` from `research.json` and apply it as your narration style for this invocation. If absent, default to a one-line preamble per action.
 
@@ -111,13 +114,33 @@ Section the table by census year, and within a year by collection title (from th
 
 Fill the `Ruled out` column only with reasons the delegation itself carries ("no one the right age", "wrong county"). The agent never rules out a household on its own.
 
-### 6. Write the table — REQUIRED before returning
+### 6. Log the table — REQUIRED before returning
 
-Call `Write` to save the table to `surname-survey-<surname>-<place>.md` in the project folder, where `<surname>` and `<place>` are lowercased and spaces replaced with hyphens. Do not return until `Write` has been called. Never claim the file was written without actually calling `Write`.
+End the table with this sentence, verbatim, as its last line:
+
+```
+Censuses before 1880 have no relationship column: the first person listed in a dwelling is shown as head, and relationships are not stated.
+```
+
+Then call `research_log_append` once for the table:
+
+```
+research_log_append({
+  projectPath,
+  tool: "survey_surname",
+  planItemId: null,
+  query: { surname, place, yearSpan },
+  outcome: "positive",
+  resultsExamined: <number of household rows in the table>,
+  notes: <the whole table, ending with the sentence above>
+})
+```
+
+`outcome` is `"negative"` when no census year returned a household. Pass no `stagedResultsRef`. Do not return until this call has succeeded. Never claim the table was logged without actually making the call.
 
 ## Out of scope
 
-- Writing to the tree or to `research.json` beyond the search log.
+- Writing to the tree or to `research.json` beyond the log entries above.
 - Linking households across census years.
 - Spelling variants beyond what `record_search`'s fuzzy surname already matches.
 
@@ -127,9 +150,9 @@ Return **≤10 lines** to the caller, in this order:
 
 - the place surveyed and the census years covered
 - per-year summary: how many households found, or "over threshold — asked for counties"
-- the file written
-- the `log` ids created
-- next-step hint (e.g. "review the table and mark households to rule out", "narrow the 1850 search by county")
+- the `log` id of the table entry
+- the other `log` ids created
+- next-step hint (e.g. "narrow the 1850 search by county")
 
 ### `summary_for_user`
 
