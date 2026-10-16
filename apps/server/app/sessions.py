@@ -162,8 +162,10 @@ async def push_token_to_live_sandboxes(
     /connect via sync_fs_token.
 
     Uses provider.get() -- not resume() -- so the running timeout is not
-    extended. Both auto-resume a paused VM via _connect(), but only resume()
-    calls set_timeout(). The last_active filter means targeted sandboxes are
+    extended; only resume() calls set_timeout(). A paused target wakes either
+    way: _connect() calls connect(), which auto-resumes, only on a cache miss,
+    and on a cached handle the token write is itself inbound traffic, which
+    auto_resume answers. The last_active filter means targeted sandboxes are
     likely still running, so the auto-resume is a no-op in practice.
 
     Failures are swallowed and logged per sandbox: a failed push to one sandbox
