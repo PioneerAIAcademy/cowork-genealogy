@@ -141,9 +141,9 @@
     {
       "artifact": "research.json",
       "section": "plans",
-      "owner": "skill:research-plan",
+      "owner": "agent:research-plan",
       "callers": [
-        "skill:research-plan",
+        "agent:research-plan",
         "skill:search-records",
         "agent:search-external-sites",
         "agent:search-full-text",
@@ -155,17 +155,17 @@
       "enforceableAt": [
         "unit"
       ],
-      "requires": "research-plan owns plan and item structure. The search skills, the search-images, search-external-sites and search-full-text agents may update only `items[].status` after executing an item.",
+      "requires": "The research-plan agent owns plan and item structure. The search skills, the search-images, search-external-sites and search-full-text agents may update only `items[].status` after executing an item.",
       "failure": "A search skill rewrites the plan it was handed, and the plan stops being a record of what was intended versus what was done.",
-      "remedy": "Update the item's status; route a change to the plan itself through research-plan.",
+      "remedy": "Update the item's status; route a change to the plan itself through the research-plan agent.",
       "override": "none"
     },
     {
       "artifact": "research.json",
       "section": "plan_items",
-      "owner": "skill:research-plan",
+      "owner": "agent:research-plan",
       "callers": [
-        "skill:research-plan",
+        "agent:research-plan",
         "skill:search-records",
         "agent:search-external-sites",
         "agent:search-full-text",

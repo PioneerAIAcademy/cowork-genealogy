@@ -255,6 +255,11 @@ AGENT_WRITABLE_SECTIONS = {
     # agent. It leaves out `questions`, which question-selection owns
     # (issue #2122).
     "init-project": frozenset({"project", "researcher_profile", "known_holdings", "sources"}),
+    # research-plan writes plans and their items and nothing else in
+    # research.json. A lane, not a route: tests/packaging/plugin-hooks.test.ts
+    # requires one for every agent granted research_append, and nothing is
+    # routed to this agent (issue #2116).
+    "research-plan": frozenset({"plans", "plan_items"}),
 }
 
 # The deny NAMES THE ROUTE OUT, and that is load-bearing rather than polite.

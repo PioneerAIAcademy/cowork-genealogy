@@ -277,3 +277,137 @@ describe("plugin prose names only skills and agents that ship", () => {
     ).toEqual([]);
   });
 });
+
+/**
+ * research/SKILL.md states its routing table's dispatch rule in words: "An entry
+ * spelled `@plugin:<name>` is an `Agent` spawn of that agent; every other entry
+ * is a `Skill` call." So a bare Invoke cell naming an agent that ships no skill
+ * directory routes production research to a skill that does not exist, and the
+ * test above stays green on it, because a bare token resolves against skills
+ * and agents alike. That happened: the browse row kept a bare `search-images`
+ * after issue #2268 deleted that skill, until issue #2116 flipped it while
+ * flipping its own research-plan cells (docs/skill-to-agent-pair-conversion.md
+ * §0: a conversion that deletes the skill flips the cell in the same PR).
+ */
+const ROUTING_HEADER = /^\s*\|\s*If research\.json has\.\.\.\s*\|\s*Invoke\s*\|\s*$/;
+const BACKTICKED_NAME = /`(@plugin:)?([a-z][a-z0-9-]*)`/g;
+
+function routingInvokeCells(text: string): string[] {
+  const lines = text.split(/\r?\n/);
+  const start = lines.findIndex((l) => ROUTING_HEADER.test(l));
+  if (start < 0) return [];
+  const cells: string[] = [];
+  for (const line of lines.slice(start + 1)) {
+    const trimmed = line.trim();
+    if (!trimmed.startsWith("|")) break;
+    if (/^\|[\s|:-]+\|?$/.test(trimmed)) continue; // the |---|---| separator
+    // GFM allows a row without its trailing pipe; the Invoke cell is then the
+    // last piece rather than the one before the empty tail.
+    const parts = trimmed.split("|");
+    cells.push((trimmed.endsWith("|") ? parts[parts.length - 2] : parts[parts.length - 1]) ?? "");
+  }
+  return cells;
+}
+
+describe("research's routing table spawns every agent it names", () => {
+  const text = readFileSync(join(pluginRoot, "skills", "research", "SKILL.md"), "utf8");
+  const cells = routingInvokeCells(text);
+
+  it("finds the routing table", () => {
+    // A renamed header would leave the check below green over zero rows.
+    expect(cells.length, "routing table not found under its header").toBeGreaterThan(15);
+    expect(cells.join("\n")).toContain("`@plugin:research-exhaustiveness`");
+  });
+
+  it("spells every agent-only name in an Invoke cell as @plugin:<name>", () => {
+    const skills = new Set(
+      readdirSync(join(pluginRoot, "skills")).filter((n) =>
+        statSync(join(pluginRoot, "skills", n)).isDirectory(),
+      ),
+    );
+    const agents = new Set(
+      readdirSync(join(pluginRoot, "agents"))
+        .filter((n) => n.endsWith(".md"))
+        .map((n) => n.slice(0, -3)),
+    );
+    const agentOnly = (name: string) => agents.has(name) && !skills.has(name);
+    const offenders: string[] = [];
+    for (const cell of cells) {
+      for (const m of cell.matchAll(BACKTICKED_NAME)) {
+        const [, plugin, name] = m;
+        if (!plugin && agentOnly(name)) offenders.push(name);
+      }
+      // A cell that is nothing but an unbackticked name is an entry too. Prose
+      // naming an agent inside a longer cell is not checked: entries here are
+      // backticked, and policing every prose mention would force spawn
+      // spellings into sentences that dispatch nothing.
+      const whole = cell.replace(/[*_\s.]/g, "");
+      if (agentOnly(whole)) offenders.push(whole);
+    }
+    expect(
+      offenders,
+      "a bare Invoke-cell name is a Skill call by the table's own rule; these " +
+        "ship only as agents, so spell them `@plugin:<name>`",
+    ).toEqual([]);
+  });
+});
+
+/**
+ * `Skill("<name>")` loads a skill. Naming an agent that ships no skill directory
+ * fails at runtime and stays green above, because a bare token resolves against
+ * agents too (#2116's issue body: "a leftover `Skill("research-plan")` stays
+ * green and fails at runtime"). Checked in every skill body, not only research's.
+ */
+const SKILL_CALL = /Skill\(\s*["']([a-z0-9-]+)["']\s*\)/g;
+// Shrink-only. Each entry is a body that spells the call on purpose: how many
+// times, and why. A count, not a flag, so a new call on an allowed edge fails.
+const SKILL_CALLS_TO_AGENTS_ALLOWED = new Map<string, { count: number; why: string }>([
+  [
+    "search-records -> project-status",
+    {
+      count: 2,
+      why:
+        "two prohibitions ('do NOT call `Skill(\"project-status\")`', '❌ WRONG'), not calls; " +
+        "PR #3289 deletes both lines",
+    },
+  ],
+]);
+
+describe("no skill calls an agent as a skill", () => {
+  const skills = readdirSync(join(pluginRoot, "skills")).filter((n) =>
+    statSync(join(pluginRoot, "skills", n)).isDirectory(),
+  );
+  const agents = new Set(
+    readdirSync(join(pluginRoot, "agents"))
+      .filter((n) => n.endsWith(".md"))
+      .map((n) => n.slice(0, -3)),
+  );
+  const found = new Map<string, number>();
+  for (const skill of skills) {
+    const text = readFileSync(join(pluginRoot, "skills", skill, "SKILL.md"), "utf8");
+    for (const [, name] of text.matchAll(SKILL_CALL)) {
+      if (agents.has(name) && !skills.includes(name)) {
+        const edge = `${skill} -> ${name}`;
+        found.set(edge, (found.get(edge) ?? 0) + 1);
+      }
+    }
+  }
+
+  it("names no agent-only name in a Skill(...) call", () => {
+    expect(
+      [...found]
+        .filter(([e, n]) => SKILL_CALLS_TO_AGENTS_ALLOWED.get(e)?.count !== n)
+        .map(([e, n]) => `${e} (${n})`),
+      "a Skill() call naming an agent with no skill directory fails at runtime; " +
+        "spawn it as `@plugin:<name>`. An allowed edge must appear exactly its " +
+        "allowed count: lower the count when one of its lines goes",
+    ).toEqual([]);
+  });
+
+  it("has no stale allowance", () => {
+    expect(
+      [...SKILL_CALLS_TO_AGENTS_ALLOWED.keys()].filter((e) => !found.has(e)),
+      "an allowed Skill() call no longer appears: drop its entry",
+    ).toEqual([]);
+  });
+});

@@ -221,16 +221,16 @@ are relative to `packages/engine/mcp-server/` unless shown otherwise.)*
 | Component | Count | Where | What it is for |
 |---|---|---|---|
 | **MCP tools** — `src/tools/`, advertised via `allToolSchemas` in `src/tool-schemas.ts` | every tool in `allToolSchemas` | host | Network access (FamilySearch, the wiki sidecar, OpenRouter OCR) and **validate-before-persist** writes to project state. Invariants live here because a tool contract cannot be argued past. |
-| **Skills** — `packages/engine/plugin/skills/<name>/SKILL.md` | **5** | VM, in the session's own context | Judgment and procedure: GPS doctrine, routing, when-to-stop criteria. A skill folder may also carry `references/` (§3.3) and `templates/`. |
-| **Plugin agents** — `packages/engine/plugin/agents/*.md` | **28** | VM, **fresh context** | Heavy or capability-restricted work delegated off the main thread. Each spawns with **no session state** — only its own `tools:` allow-list and its `model:` pin. (`disallowedTools:` was deleted from all five on 2026-08-30 — §5.2.) |
+| **Skills** — `packages/engine/plugin/skills/<name>/SKILL.md` | **4** | VM, in the session's own context | Judgment and procedure: GPS doctrine, routing, when-to-stop criteria. A skill folder may also carry `references/` (§3.3) and `templates/`. |
+| **Plugin agents** — `packages/engine/plugin/agents/*.md` | **29** | VM, **fresh context** | Heavy or capability-restricted work delegated off the main thread. Each spawns with **no session state** — only its own `tools:` allow-list and its `model:` pin. (`disallowedTools:` was deleted from all five on 2026-08-30 — §5.2.) |
 
-The twenty-eight agents are `gps-mentor`, `record-structurer`, `image-reader`,
+The twenty-nine agents are `gps-mentor`, `record-structurer`, `image-reader`,
 `proof-conclusion`, `research-exhaustiveness`, `person-evidence`,
 `search-full-text`, `search-images`, `citation`, `question-selection`, `search-wikipedia`, `convert-dates`,
 `search-familysearch-wiki`, `check-warnings`, `translation`, `tree-edit`, `validate-schema`,
 `hypothesis-tracking`, `locality-guide`, `historical-context`, `project-status`,
 `search-external-sites`, `source-evaluation`, `survey-surname`, `search-hints`, `conflict-resolution`,
-`init-project` and `tree-survey`.
+`init-project`, `tree-survey` and `research-plan`.
 
 > Plugin agents (`packages/engine/plugin/agents/`) are consumed by the **Cowork
 > runtime** and are a different thing from Claude Code subagents
@@ -355,7 +355,7 @@ descriptions because a user may still invoke any of them directly.
 
 ### 3.3 `references/` — the fourth artifact, duplicated on purpose
 
-3 of the 5 skills carry a `references/` folder, loaded on demand, in-session,
+2 of the 4 skills carry a `references/` folder, loaded on demand, in-session,
 for material too long to sit in the skill body.
 
 **A reference is loaded deliberately only if its own `SKILL.md` names it** — or if
@@ -510,7 +510,7 @@ names a step it no longer takes (`project_create` carries the
 — but pinned to a **sha256 of its own content**, so an edit inside it fails CI
 until the hash moves in the same diff. `research-plan` carried a specialized
 copy too until it was deleted under the lead's 2026-08-31 ruling and the two
-rules it needed were inlined into its `SKILL.md`. **Copy that shape, not a bare
+rules it needed were inlined into its body (now `agents/research-plan.md`). **Copy that shape, not a bare
 exemption**, when a fourth family gets a lint: every skill must land in exactly
 one of the two lists, and the test asserts that too.
 
@@ -803,7 +803,7 @@ There **is** an orchestrator, and it is a skill:
    reads `research.json` through `research_query` and derives where the project
    is: which questions have plans, which log entries lack assertions, which
    conflicts are open, which proofs lack verdicts.
-2. **A 17-row routing table maps state → next sub-skill** — in
+2. **A 21-row routing table maps state → next sub-skill** — in
    `research/SKILL.md` under `## What to do`, the table whose header row reads
    `| If research.json has... | Invoke |`. The table is the source of truth and
    is not duplicated here. Its `Invoke` column is a **literal tool call, by the
@@ -1513,7 +1513,7 @@ document** — never mixing them across the repo, which is intentional.
 
 ### 6.5 State reaches the prompt too
 
-All 5 skills carry a `**Narration:**` line as the first line of the body,
+All 4 skills carry a `**Narration:**` line as the first line of the body,
 instructing Claude to read
 `researcher_profile.narration_guidance` from `research.json` and apply it as that
 invocation's narration style. The `init-project` agent writes the profile at
