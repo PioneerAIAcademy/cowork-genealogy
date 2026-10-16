@@ -89,7 +89,7 @@ export async function mergeTreePersons(
       input.warningJustifications, "merge_tree_persons",
       collapseMap,
     );
-    if (mergeGateResult && "ok" in mergeGateResult) return mergeGateResult as any;
+    if (mergeGateResult && "ok" in mergeGateResult) return mergeGateResult;
 
     // 6. Derive the compact summary.
     const pairs = derivePairSummaries(merges, preSurvivors, preCollapsed, merged);
