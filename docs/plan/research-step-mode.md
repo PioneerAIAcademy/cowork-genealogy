@@ -190,6 +190,9 @@ send the exact phrase; Cowork's reply lists the phrases:
     round, which must not happen. The deny reason: "This 'Keep going' turn has had its extra
     search round. Wrap up now: close the open items, link, settle what the evidence allows,
     record the stop and write the conclusion."
+  - **The host records the switch in the turn's step sequence,** and the wrap-up order counts
+    only the steps after it. The Stop veto stays armed, so the turn ends on one of its end
+    states: `completed`, or the conflict end state below.
   - **One counter bounds both loops,** a second "not exhaustive" round and a conflict's second
     evidence round, because both pass through research-plan. The two allowances merge into
     one: a turn that spent its round on "not exhaustive" wraps up when a conflict then asks for
