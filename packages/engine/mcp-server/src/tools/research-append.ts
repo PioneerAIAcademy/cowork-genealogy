@@ -500,7 +500,7 @@ const TIMELINE_ANY_YEAR_RE = /(?<!\d)\d{4}(?!\d)/;
 // allowed; bare "and" is deliberately not a range connector here.
 const TIMELINE_YEAR_SPAN_RE =
   /(?<!\d)(\d{4})\s*(?:-|–|—|\bto\b|\bthrough\b|\bthru\b)\s*(\d{4})(?!\d)/i;
-// "between X and Y" -- round-10 review: this is the one shape where "and" DOES
+// "between X and Y" -- round-9 review: this is the one shape where "and" DOES
 // act as a range connector. "1880 and 1900 census" names two specific years
 // with no claim about what lies between them (allowed, above), but "between
 // 1880 and 1900" is the range itself written out in English, so "and" here
