@@ -518,9 +518,11 @@ def test_status_question_answered_from_project_context_only(
       3. No subagent spawn (`Agent` or `Task`): the status answer is the main
          thread's own paragraph.
       4. No `research_append` call: a status question writes nothing.
-      5. The reply is one plain paragraph: no line break (so no lead-in line
-         and no second paragraph), no heading, list or table line, no bold,
-         and no closing question.
+      5. The main thread's text is one plain paragraph: no line break (so no
+         lead-in line and no second paragraph), no heading, list or table line,
+         no bold, and no closing question. `text_response` joins every
+         main-thread turn, so a narration line before the `project_context`
+         call fails this check exactly as a lead-in line does.
       6. No identifier in the reply: no research.json id (`<prefix>_<digits>`
          for any prefix the schema defines) and no tree id (`I1`, `S3`).
 

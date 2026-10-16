@@ -168,6 +168,16 @@ def test_the_recorded_multi_paragraph_reply_fails():
         _run(text=RECORDED_SHAPED_REPLY)
 
 
+@pytest.mark.parametrize(
+    "tool",
+    ["mcp__genealogy__research_append", "mcp__remote-devices__Genealogy_Research__research_append"],
+    ids=["harness-spelling", "cowork-spelling"],
+)
+def test_a_research_append_write_fails(tool):
+    with pytest.raises(AssertionError, match="must not write"):
+        _run(tool_calls=PC_CALL + [{"tool": tool, "args": {}}])
+
+
 def test_no_project_context_call_fails():
     with pytest.raises(AssertionError, match="must call project_context"):
         _run(tool_calls=[])
