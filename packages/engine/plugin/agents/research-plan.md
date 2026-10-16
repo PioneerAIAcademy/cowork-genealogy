@@ -347,9 +347,10 @@ record sets could answer it.
 **Pre-work — fetch the record-type pages the subject triggers, before
 selecting record types.** Call `wiki_read` with
 `https://www.familysearch.org/en/wiki/{Country}_{Topic}`, using the
-subject's birth country. Issue them as PARALLEL calls in one turn. They are
-members of this block, not options: a page you did not fetch is a record
-type you will plan from memory.
+subject's birth country. Read the subject's recorded sex before you issue
+the block: a female subject's block has no military page. Issue them as
+PARALLEL calls in one turn. They are members of this block, not options: a
+page you did not fetch is a record type you will plan from memory.
 
 - **A male subject of a parentage question, born in continental Europe
   or Scandinavia** → `{Country}_Military_Records`. REQUIRED. Not for a
