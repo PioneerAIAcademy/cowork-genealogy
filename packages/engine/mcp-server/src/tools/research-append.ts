@@ -500,7 +500,7 @@ const TIMELINE_ANY_YEAR_RE = /(?<!\d)\d{4}(?!\d)/;
 // surviving years with no claim about anything in between, and must stay
 // allowed; bare "and" is deliberately not a range connector here.
 const TIMELINE_YEAR_SPAN_RE =
-  /(?<!\d)(\d{4})\s*(?:-|–|—|\bto\b|\bthrough\b|\bthru\b)\s*(\d{4}|\d{2})(?!\d)/gi;
+  /(?<!\d)(\d{4})\s*(?:-|–|—|\bto\b|\bthrough\b|\bthru\b)\s*(\d{4}|\d{2})(?!\d)(?![-/.]\d)/gi;
 // "between X and Y" -- round-9 review: this is the one shape where "and" DOES
 // act as a range connector. "1880 and 1900 census" names two specific years
 // with no claim about what lies between them (allowed, above), but "between
@@ -509,7 +509,9 @@ const TIMELINE_YEAR_SPAN_RE =
 // what distinguishes the two; this regex is checked in addition to, not
 // instead of, the connector list above.
 const TIMELINE_BETWEEN_SPAN_RE =
-  /\bbetween\b\s*(\d{4})\s*and\s*(\d{4}|\d{2})(?!\d)/gi;
+  /\bbetween\b\s*(\d{4})\s*and\s*(\d{4}|\d{2})(?!\d)(?![-/.]\d)/gi;
+// The end year must not be followed by another separator and digit: in a date
+// ("1880-06-01") the month is not a two-digit end year.
 // Round-10 review: every range in the entry is read, not just the first
 // ("federal censuses 1850-1860 and 1880-1900" spans 1890 in its second), and
 // a two-digit end year is read in the century of the first, rolling over

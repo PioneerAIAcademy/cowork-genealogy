@@ -2330,6 +2330,16 @@ describe("research_append (Phase 3)", () => {
       expect(r.ok, `refused: ${JSON.stringify((r as any).errors)}`).toBe(true);
     });
 
+    it.each([
+      ["ISO enumeration date", "1880 census (enumerated 1880-06-01)"],
+      ["state census with its date", "1885 state census, taken 1885-03-01"],
+      ["slash date", "1880 census, 1880/06/01"],
+    ])("does not read a date's month as a two-digit end year: %s", async (_label, entry) => {
+      await writeProject();
+      const r = await appendWithGap([entry]);
+      expect(r.ok, `refused: ${JSON.stringify((r as any).errors)}`).toBe(true);
+    });
+
     it("allows the same sentence when it is in `notes`, not `expected_events`", async () => {
       await writeProject();
       const r = await researchAppend({
