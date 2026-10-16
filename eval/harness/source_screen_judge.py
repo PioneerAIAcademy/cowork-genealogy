@@ -301,6 +301,10 @@ async def judge_copy(
             "harness_miss": harness_miss,
             "not_audited": facts["not_audited"],
             "calls": calls,
+            "tool_args": [
+                {"tool": str(c.get("tool", "")).split("__")[-1], "args": c.get("args"), "matched": (c.get("matched") or {}).get("kind")}
+                for c in getattr(result, "tool_calls", []) or []
+            ],
             "usage": getattr(result, "usage", {}) or {},
             "wall_seconds": round(time.time() - started, 1),
             "turns": (getattr(result, "usage", {}) or {}).get("num_turns"),
