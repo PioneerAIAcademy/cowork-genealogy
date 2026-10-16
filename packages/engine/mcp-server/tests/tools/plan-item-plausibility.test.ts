@@ -41,6 +41,29 @@ describe("planItemFlags — jurisdiction", () => {
     const flags = planItemFlags(item, [loc("Wayne, Michigan, United States"), loc("Baltimore, Maryland, United States")]);
     expect(flags).toEqual([]);
   });
+
+  // Found in #3262's self-review: `jurisdiction` and a recorded locality are populated
+  // by different callers, and only one routinely carries a trailing country. The same
+  // place then compared as unrelated because the tail comparison no longer lined up.
+  it("is quiet when the jurisdiction carries a country the recorded locality omits", () => {
+    const item = { jurisdiction: "Detroit, Wayne, Michigan, United States", date_range: "1880-1880" };
+    expect(planItemFlags(item, [loc("Wayne, Michigan")])).toEqual([]);
+  });
+
+  it("is quiet when the recorded locality carries a country the jurisdiction omits", () => {
+    const item = { jurisdiction: "Detroit, Wayne, Michigan", date_range: "1880-1880" };
+    expect(planItemFlags(item, [loc("Wayne, Michigan, United States")])).toEqual([]);
+  });
+
+  it("still flags a genuinely wrong county on either side of a country mismatch", () => {
+    // The fix above must not turn ANY mismatch into a match -- only one that fails
+    // solely on an extra outermost segment. A wrong county sits at the county/city
+    // level, which stripping one OUTERMOST segment never reaches.
+    const item = { jurisdiction: "Baltimore County, Maryland, United States", date_range: "1908-1908" };
+    expect(
+      planItemFlags(item, [loc("Baltimore, Maryland")]).some((f) => f.kind === "jurisdiction")
+    ).toBe(true);
+  });
 });
 
 describe("planItemFlags — years", () => {

@@ -29,14 +29,42 @@ export interface PlanItemFlag {
   message: string;
 }
 
+/** The two strings, each with its own trailing (outermost) segment removed —
+ *  `"Wayne, Michigan"` for `"Wayne, Michigan, United States"`. `""` when there is
+ *  no comma to cut at. */
+function stripOutermost(s: string): string {
+  const i = s.lastIndexOf(",");
+  return i === -1 ? "" : s.slice(0, i).trim();
+}
+
+function tailMatch(a: string, b: string): boolean {
+  return !!a && !!b && (a === b || a.endsWith(`, ${b}`));
+}
+
 /** `"Detroit, Wayne, Michigan"` sits inside `"Wayne, Michigan"`. Compared on the
  *  place-string TAIL, which is how the corpus writes nesting, and case-folded so a
- *  capitalisation difference is not read as a different place. */
+ *  capitalisation difference is not read as a different place.
+ *
+ *  Tolerates a COUNTRY-level segment present on only ONE side: `jurisdiction` and
+ *  a recorded locality are populated by different callers, and one routinely
+ *  carries a trailing "United States" (or another country) that the other omits
+ *  — found against a real project where `jurisdiction` ("Detroit, Wayne,
+ *  Michigan, United States") and the matching recorded locality ("Wayne,
+ *  Michigan") were the SAME place and still read as unrelated. Dropping exactly
+ *  one trailing segment from exactly one side and retrying the same tail check
+ *  catches that without loosening anything else: it can only turn a match that
+ *  failed solely on an extra outermost segment into a match, never a genuinely
+ *  different county into one — that mismatch sits at the county/city level,
+ *  which this never touches. */
 function isInside(item: string, locality: string): boolean {
   const a = item.trim().toLowerCase();
   const b = locality.trim().toLowerCase();
   if (!a || !b) return false;
-  return a === b || a.endsWith(`, ${b}`);
+  return (
+    tailMatch(a, b) ||
+    tailMatch(stripOutermost(a), b) ||
+    tailMatch(a, stripOutermost(b))
+  );
 }
 
 function parseRange(value: string): [number, number] | null {
