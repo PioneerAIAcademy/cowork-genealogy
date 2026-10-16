@@ -4,7 +4,7 @@
 (`docs/plan/research-as-a-job-later.md`, PR #3262); see "Integrating with research-as-a-job".
 Phase 0 (a probe) comes first and changes no product code. This merges two drafts: a
 single-pass plan drawn from feedback issue #3475, and a one-step-per-turn draft. plan-critic
-has reviewed this merged version twice, and its findings are folded in.
+has reviewed this merged version three times, and its findings are folded in.
 
 ## Decisions taken (lead, 2026-10-16)
 1. **Step mode on every production plane:** Cowork, the hosted web app (the alpha) and the
@@ -30,6 +30,9 @@ has reviewed this merged version twice, and its findings are folded in.
    (section D).
 10. **e2e continues on its own by auto-answering.** A recalibration period is accepted.
 11. **The reply phrases can change** after implementation, on user feedback.
+12. **A conflict that cannot be settled stays `unresolved`,** rather than being recorded as
+    `resolved` with kind `tree`. The run ends on the conclusion it leaves open (section A, the
+    Stop veto's end state).
 
 ## Evidence
 **#3475.** Proxy-exact, after question selection: $49.84 over about 361 live minutes. Each
@@ -97,14 +100,22 @@ send the exact phrase; Cowork's reply lists the phrases:
     - **research-plan after research-exhaustiveness, only while the active plan has open
       items.** That is dispose's precondition (`skills/research/SKILL.md:226`). So a decline
       turn cannot start a new plan.
-  - **`ctx` carries the one fact the turn's steps cannot show:** whether the open question's
-    active plan still has an open item.
-    - **Each host reads it from `research.json`** when it checks the call: the prototype worker
-      with `read_research` (`worker.py`), the alpha and both harnesses from the project folder,
-      and Cowork from the hook's working directory if phase 0 shows it is readable.
+  - **`ctx` carries what the turn's steps cannot show,** read from `research.json` when a
+    research-plan call is checked:
+    - **`open_items`:** whether the active plan of the most recently created unresolved question
+      has a `planned` or `in_progress` item. Under E's rule that is the question the run is on,
+      including a concluded one whose conflict is getting its evidence round.
+    - **`plan_items` and `has_plan`:** the total count of plan items, and whether any unresolved
+      question has a plan. The job round count below uses both.
+    - **Each host reads it** with what it already holds: the prototype worker with
+      `read_research` (`worker.py`), the alpha with `read_research_json(project_dir)`, both
+      harnesses from the workspace, and Cowork from the hook's working directory if phase 0
+      shows it is readable. The alpha's `count_only` hook does no I/O today (`real_agent.py`),
+      so it reads `ctx` only for a research-plan call.
     - **A host that cannot read it passes nothing, and the follower is denied.** The cost is one
       needless pause, never an unasked plan.
-  - **Mode `job`** allows every step. **Mode `wrapup`** allows, in order:
+  - **Mode `job`** allows every step, within its planning rounds (below). **Mode `wrapup`**
+    allows, in order:
     1. `research-plan` (dispose), only while `ctx` shows an open item;
     2. `person-evidence`;
     3. `conflict-resolution`;
@@ -126,7 +137,7 @@ send the exact phrase; Cowork's reply lists the phrases:
 
   | Plane | Hook | Turn steps from | Notes |
   |---|---|---|---|
-  | Prototype worker | `PreToolUse` in `apps/server/proto/worker/options.py` (sees every call) | the claimed turn | The hook is rebuilt per attempt, and redelivery is the normal resume path. So the turn's first step is stored in `turns.step`, and a redelivered attempt (`receive_count > 1`) seeds from it, as the Stop hook's count is seeded |
+  | Prototype worker | `PreToolUse` in `apps/server/proto/worker/options.py` (sees every call) | the claimed turn | The hook is rebuilt per attempt, and redelivery is the normal resume path. So the worker stores the turn's mode and step sequence in `turns.mode` and `turns.steps`, each research-plan entry with its `ctx`, and a redelivered attempt (`receive_count > 1`) seeds from them, as the Stop hook's count is seeded |
   | Alpha | `apps/server/app/agent/real_agent.py` | `handle_turn(text)`, reset in `_begin_turn_hook_state` | The main hook's matcher omits `Skill`. Put the step check in the `count_only` hook, or widen the matcher and update `test_write_lockdown.py`. No redelivery |
   | Unit harness | `eval/harness/harness/skill_runner.py`'s `pretool_hook` | the one turn | Run the step check **before** the stub, so a stub's canned reply never replaces the step denial |
   | e2e harness | `eval/harness/e2e/orchestrator.py`'s `PreToolUse` | the user messages it sends (section F) | The resume-on-stall prompt is not a new turn |
@@ -140,16 +151,17 @@ send the exact phrase; Cowork's reply lists the phrases:
     - Neither harness loads the plugin's `hooks.json`.
   - **Mode detection is exact-phrase only:** "keep going." → `job`, "wrap it up." → `wrapup`,
     case and trailing punctuation ignored. Anything else is `step`. **One normalizer,**
-    `step_mode(text)` in `step_boundary.py`, is used by every plane, including the prototype's
-    web tier when it stamps the job cap. So a typed "Keep going!" gets the same mode and the
+    `step_mode(text)` in `step_boundary.py`, is used by every plane, including the prototype
+    worker when it sets the job cap. So a typed "Keep going!" gets the same mode and the
     same Stop veto everywhere.
   - **A host-sent prompt is never a new turn.**
 - **The Stop veto is armed only for a job-mode turn,** where each plane already sets its cap:
-  - **Prototype:** the web tier already stamps `max_nudges` on each queue body in `_insert_turn`
-    (`apps/server/proto/web/app.py`), with the message text in hand.
-    - **The change is only what it stamps:** the existing `AUTONOMOUS_MAX_NUDGES` (default 60)
-      when `step_mode(text)` is `job`, otherwise 0. The worker already takes the per-message
-      cap (`turn_max_nudges` in `worker.py`) and binds no Stop hook at 0.
+  - **Prototype:** `turn_max_nudges` (`worker.py`) already reads the queue body, which carries
+    the message text.
+    - **The change:** it returns the stamped cap (`AUTONOMOUS_MAX_NUDGES`, default 60) only when
+      `step_mode(text)` is `job`, and 0 otherwise. The worker binds no Stop hook at 0.
+    - **The web tier is unchanged,** so it never needs the plugin: neither its Dockerfile nor its
+      bundle rules ship `step_boundary.py`.
     - **No new environment variable,** so the compose, Beanstalk and bundle settings that carry
       `AUTONOMOUS_MAX_NUDGES` stay as they are; it now means the job cap.
     - **Recipes that send a fixture prompt** and rely on a nonzero cap send "keep going." or are
@@ -166,13 +178,40 @@ send the exact phrase; Cowork's reply lists the phrases:
       today), and its per-session-count and `auto_continue`-off cases are rewritten.
     - Existing alpha sandboxes keep their creation-time code until the 72-hour cutoff
       (`app/sessions.py`). So step mode reaches the alpha over about three days.
-- **A job-mode turn at the exhaustiveness choice** takes the recommended default once. A second
-  "not exhaustive" verdict in the same job concludes, so "Keep going" cannot loop the way #3475
-  did. **The same bound holds for a conflict that needs new evidence** (section E): one
-  research-plan round per conflict per job, and a second request concludes.
+- **"Keep going" is bounded by the predicate,** so it cannot loop the way #3475 did:
+  - **A planning round** is a research-plan call that adds plan items. Only research-plan adds
+    them; the search steps update only an item's status (`docs/specs/schemas/ownership.json`).
+    So when a research-plan call is checked, a `plan_items` count above the one recorded at the
+    turn's previous research-plan call means that call was a round.
+  - **A job-mode turn gets one round,** or two when no unresolved question had a plan at the
+    turn's first research-plan call: its first plan, then one more.
+  - **The next research-plan call is denied, and the turn continues in mode `wrapup`.** After
+    the extra round, a research-plan call is either cleanup, which wrap-up does first, or a new
+    round, which must not happen. The deny reason: "This 'Keep going' turn has had its extra
+    search round. Wrap up now: close the open items, link, settle what the evidence allows,
+    record the stop and write the conclusion."
+  - **One counter bounds both loops,** a second "not exhaustive" round and a conflict's second
+    evidence round, because both pass through research-plan. The two allowances merge into
+    one: a turn that spent its round on "not exhaustive" wraps up when a conflict then asks for
+    evidence. The researcher can still reply "Search more" afterwards.
+  - **The router keeps one line of job prose:** at the exhaustiveness choice, a job-mode turn
+    takes the ladder's default.
+- **The Stop veto gains one end state** (`should_continue_run`,
+  `apps/server/app/agent/continue_policy.py`): it allows the stop when every unresolved question
+  has a proof summary and no open plan item, and an unresolved conflict remains.
+  - **Why:** a conflict that cannot be settled would otherwise keep a job running to its nudge
+    cap. proof-conclusion writes `not_proved` but cannot resolve the question
+    (`agents/proof-conclusion.md:144-153`), the completion gate refuses `project.status:
+    completed` while the conflict stands (`research-append.ts`, near `:3951-3990`), and the
+    nudge tells the model to re-read `research.json`, a tool call, so the no-progress escape
+    never fires.
+  - **A question with a summary and no conflict is still nudged,** so its resolve write is not
+    skipped.
+  - **The copies:** `terminal_reason` mirrors the arm and returns `ok`;
+    `eval/harness/e2e/stop_checker.py` mirrors it too, and `test_continue_policy_parity.py`
+    keeps them in step.
 - **Outcomes:**
-  - A step turn ends `ok`, which renders no label. No `continue_policy.py` change is needed:
-    at cap 0 no plane binds the Stop hook.
+  - A step turn ends `ok`, which renders no label: at cap 0 no plane binds the Stop hook.
   - A turn whose step completed the project has no Stop verdict to report that, so the worker
     sets `completed` at turn close from `project_completed(read_research(...))` when no Stop
     verdict was recorded. The honest `completed` label (section C) then shows on step turns
@@ -267,9 +306,14 @@ send the exact phrase; Cowork's reply lists the phrases:
        and proof-conclusion (`agents/proof-conclusion.md:101-113`) refuse while a person the
        question depends on is unidentified.
      - **In a wrap-up it resolves weak matches downward.** Its pause rows resolve downward only
-       in an autonomous run (`agents/person-evidence.md:547-558`), so it gains one line: a
-       "Keep going" or "Wrap it up" turn counts as autonomous, because the researcher chose not
-       to be asked.
+       in an autonomous run (`agents/person-evidence.md:547-558`), and it learns that from its
+       delegation, which today carries only assertion ids.
+       - **The router passes `userPresent: no`** to person-evidence in job, wrap-up and
+         `--autonomous` turns, as it already does for search-external-sites
+         (`skills/research/SKILL.md:282`).
+       - **`person-evidence.md:547-552` is reworded** to key on that field. It now says the rule
+         applies "only … where no user can ever confirm", and a wrap-up has the researcher
+         present.
   3. conflict-resolution settles any unresolved conflict that blocks the question from the
      evidence in hand. Otherwise proof-conclusion's conflict check (`:122-150`) would stop at
      `not_proved`.
@@ -323,11 +367,17 @@ send the exact phrase; Cowork's reply lists the phrases:
 ### E. One question per run
 - **One writer rule replaces the existing in-flight gate.** `newQuestionWhileSearchInFlightInvariants`
   (`research-append.ts:2455`) becomes: `research_append` refuses a `questions` append while
-  another question is `open`, `in_progress` or `exhaustive_declared` **and has no proof
-  summary**.
-  - **Why the summary exemption:** a question that proof-conclusion concluded but had to leave
-    open (an identity conflict at `not_proved`, `agents/proof-conclusion.md:144-150`) must not
-    lock the project against every new question.
+  another question is `open`, `in_progress` or `exhaustive_declared`, **unless that question has
+  a proof summary and no `planned` or `in_progress` item on an active plan**. `activePlanItems`
+  (`research-append.ts:2408`) already computes the second half.
+  - **Why the exemption:** a question that proof-conclusion concluded but had to leave open (an
+    identity conflict at `not_proved`, `agents/proof-conclusion.md:144-150`) must not lock the
+    project against every new question.
+  - **Why it needs both halves:** E's own route can give that concluded question new searches
+    (conflict-resolution, then research-plan). While they are open, a second question waits, as
+    today's gate already requires for an `in_progress` item. A wrap-up still unlocks the
+    project, because dispose closes every open item.
+  - **`agents/question-selection.md:80-91`** states today's gate. Rewrite it to this rule.
   - **Test blast radius:** 11 tests in `research-append.test.ts`, measured with the rule
     patched in. They are all nine in-flight tests, "(Phase 2) appends a question and stamps
     created", and "the 'questions' example validates". Rewrite them, plus the spec line and
@@ -338,21 +388,31 @@ send the exact phrase; Cowork's reply lists the phrases:
   - an objective-level sub-question.
 - **research-plan writes those items** (its edit or add-new mode), from the record types
   conflict-resolution records in `resolution_rationale` (`agents/conflict-resolution.md:353-357`).
-- **Three bodies that route this work to question-selection now route it to research-plan:**
-  `agents/conflict-resolution.md:358-359` and `:495-497`, and `agents/hypothesis-tracking.md:451`.
+- **Four sites that route this work to question-selection now route it to research-plan:**
+  `agents/conflict-resolution.md:358-359` and `:495-497`, `agents/hypothesis-tracking.md:451`,
+  and `skills/timeline/SKILL.md:433-434` (high-severity gaps). timeline is reachable from
+  `agents/conflict-resolution.md:498-500`.
   - The conflict step then ends "Continue with planning a search for <the decisive record>?".
-  - No unit test or validator pins the old route. PR 2 adds one test for the new route in each
-    agent.
+  - No unit test or validator pins the old route. PR 2 adds one test for the new route in
+    conflict-resolution, hypothesis-tracking and timeline.
 - **The ladder needs one more rule** (`question-state.ts`), or its unresolved-conflict arm
   (`:417-418`) sends every pass back to conflict-resolution before the new items can run.
-  - **The rule:** an unresolved conflict that already carries `independence_analysis`, on a
-    question whose active plan has open items, routes to search-records. It sits above that
-    arm.
+  - **The rule:** when every conflict in `openConflictIds` already carries
+    `independence_analysis` and the question's active plan has open items, the next step is
+    search-records. It sits above that arm. A conflict not yet analysed still goes to
+    conflict-resolution first, even beside an analysed one.
   - **Why that marker:** conflict-resolution fills `independence_analysis` on every analysis,
-    resolved or not (`agents/conflict-resolution.md:348-352`). A conflict not yet analysed
-    still goes to conflict-resolution first.
+    resolved or not (`agents/conflict-resolution.md:348-352`).
   - **Once the items close,** the arm fires again and conflict-resolution weighs the new
     evidence.
+- **After the round settles the conflict,** the ladder's "concluded; mark the question
+  resolved" arm (`question-state.ts:429-434`) would send the question to question-selection,
+  which writes no resolution. It routes to proof-conclusion instead, which refreshes the summary
+  in place and resolves (`agents/proof-conclusion.md:152-153`, `:313-317`). Update
+  `question-state.test.ts:68` and `:91`.
+- **`docs/specs/project-context-tool-spec.md`** documents the ladder's order (`:187-189`, "an
+  unresolved conflict outranks…") and the concluded arm (`:252-257`). Update both for B's
+  branch, E's rule and this arm.
 - **question-selection changes** (`agents/question-selection.md`):
   - delete or rewrite priorities 1, 3, 6 and 7 (`:169-175`, `:201-206`);
   - delete or rewrite the conflict-unblocking question (`:95-101`) and the sub-question
@@ -376,7 +436,8 @@ send the exact phrase; Cowork's reply lists the phrases:
     for the same question (the same bound as job mode). A conflict's second request for new
     evidence gets "Wrap it up." too;
   - **the fixture's own question** when asked for a single one.
-- **The run ends** when the question is `resolved`. A cap on harness answers replaces
+- **The run ends** when the question is `resolved`, or on the Stop veto's new end state
+  (section A), using `stop_checker.py`'s copy of it. A cap on harness answers replaces
   `max_continue_nudges` (a Stop-veto counter today), and the no-progress stop remains. Both are
   runaway guards only.
 - **Production's mechanism runs unchanged** inside the harness.
@@ -439,11 +500,12 @@ records the measure.
   redelivery is the normal resume path, so `completed_at − claimed_at` measures only the last
   attempt. Either record a first-claim timestamp or leave redelivered turns out of run-time
   figures.
-- **Leave out of the per-step figures** any turn that ran several steps: job-mode turns
-  (`message->>'max_nudges' > 0`) and wrap-up turns.
-- **To break it down by step,** PR 1 adds a nullable `turns.step` column in a new migration
-  under `apps/server/proto/sql/`. The worker fills it with the turn's first step, and it also
-  seeds a redelivered attempt (section A). "p90 by step" becomes one `GROUP BY`.
+- **Leave out of the per-step figures** any turn that ran several steps: job-mode and wrap-up
+  turns, read from `turns.mode`.
+- **To break it down by step,** PR 1 adds nullable `turns.mode` and `turns.steps` columns in a
+  new migration under `apps/server/proto/sql/`. The worker fills them with the turn's mode and
+  step sequence, which also seed a redelivered attempt (section A). "p90 by step" becomes one
+  `GROUP BY` on the first step.
 - **e2e reports the same figure** from per-turn timing (`make e2e-latency`, section F), so a
   change's effect on wait time is visible before it ships.
 - **The baseline** comes from the #3475 and #3459 bundles: person-evidence took 5–56 minutes,
@@ -464,10 +526,10 @@ file's own sections, top to bottom.
 | Ruling: the prototype is production; the alpha is backported to and retired; Cowork may be degraded | **Unaffected.** Cowork's enforcement waits on phase 0 |
 | Ruling: the spend bound continues in a new session | **Unaffected;** it matters only in "Keep going" turns |
 | Ruling: an errand pauses the job and waits (2026-09-27) | **Kept by the open decision below:** an errand is a step that ends naming what to fetch |
-| "The Stop hook binds on every browser turn"; nudge cap 60; the alpha's `auto_continue` | **Changes:** armed only for a "Keep going" turn. The prototype's web tier stamps the job cap per message; the alpha keeps `auto_continue` on and arms per turn |
+| "The Stop hook binds on every browser turn"; nudge cap 60; the alpha's `auto_continue` | **Changes:** armed only for a "Keep going" turn. The prototype worker sets the job cap from the message text; the alpha keeps `auto_continue` on and arms per turn |
 | `turns.outcome` values | **Mostly unchanged.** A step turn ends `ok` (no label); the worker sets `completed` at turn close when the step finished the project; `delivered` goes in phase 2 |
 | "`decision` and `mcp_unavailable` cannot fire" | **Unaffected;** step mode needs no `decision` exit |
-| person-evidence's weak-match pause and its autonomous-only resolve-downward rule | **The pause becomes the link step's closing question,** asked with the researcher present. Resolve-downward still applies in "Keep going" and "Wrap it up" turns and e2e (section B2) |
+| person-evidence's weak-match pause and its autonomous-only resolve-downward rule | **The pause becomes the link step's closing question,** asked with the researcher present. Resolve-downward applies in "Keep going", "Wrap it up" and `--autonomous` turns, from the router's `userPresent: no` (section B2) |
 
 **"Before phase 2 — what continuous work changed"**
 
@@ -520,7 +582,7 @@ file's own sections, top to bottom.
 | Item | Under step mode |
 |---|---|
 | No proof export; nothing writes to the FamilySearch tree; no numeric confidence meter | **Unaffected** |
-| No leaf-skill changes beyond the listed ones | **Plus** this plan's research-exhaustiveness, proof-conclusion, question-selection, research-plan, conflict-resolution, hypothesis-tracking and person-evidence changes |
+| No leaf-skill changes beyond the listed ones | **Plus** this plan's research-exhaustiveness, proof-conclusion, question-selection, research-plan, conflict-resolution, hypothesis-tracking, person-evidence and timeline changes |
 | No further cost bounding | **Step mode bounds every turn to one step.** The $35 spend bound remains for "Keep going" turns |
 | Nothing Cowork-specific | **Except** the plugin hook's Cowork entry point (section A) |
 
@@ -549,35 +611,40 @@ file's own sections, top to bottom.
 
 **Phase 1.**
 - **PR 1 — code and CI tests:**
-  - `step_boundary.py` (the predicate and the Cowork entry point), its `hooks.json` entry after
-    the guard, `plugin-hooks.test.ts` cases, a matcher-coverage test, the guardrail-spec row,
-    and `make hook-smoke` with the step arm;
+  - `step_boundary.py` (the predicate, the job round count and the Cowork entry point), its
+    `hooks.json` entry after the guard, `plugin-hooks.test.ts` cases, a matcher-coverage test,
+    the guardrail-spec row, and `make hook-smoke` with the step arm;
   - **the host integrations:**
-    - the worker's `PreToolUse`, with `turns.step` and the redelivery seed;
+    - the worker's `PreToolUse`, with `turns.mode`, `turns.steps` and the redelivery seed;
     - the alpha's hooks, with the `Skill` coverage;
     - the unit harness, with the check before the stubs;
     - the e2e orchestrator;
     - `GENEALOGY_STEP_HOST` in `build_worker_options` and `_sdk_env()`;
     - each host's `ctx` read;
-  - **the per-message job cap:** the prototype web tier stamping `AUTONOMOUS_MAX_NUDGES` from
-    `step_mode(text)`, with the recipe and docstring sites, and the alpha's per-turn armed flag;
+  - **the per-message job cap:** the worker's `turn_max_nudges` applying `step_mode(text)`, with
+    the recipe and docstring sites, and the alpha's per-turn armed flag;
+  - **the Stop veto's end state:** `should_continue_run` and `terminal_reason`, the copy in
+    `stop_checker.py`, and `test_continue_policy_parity.py`;
   - the worker's turn-close `completed`;
   - **writer and ladder rules:** E's rule replacing `newQuestionWhileSearchInFlightInvariants`,
-    with its proof-summary exemption and the 11 rewritten tests; the two `question-state.ts`
-    branches (B's choice and E's conflict evidence);
+    with its two-part exemption and the 11 rewritten tests; three `question-state.ts` changes
+    (B's choice, E's conflict evidence, and the concluded arm routing to proof-conclusion), with
+    `question-state.test.ts`;
   - **web:** the buttons and the `completed` string;
   - **viewer:** the `resources_spent` label;
   - **schema and docs:** the `deferred` enum and the contract docs; `docs/architecture.md:859-860`;
+    `docs/specs/project-context-tool-spec.md`;
   - **the e2e harness** per F.
 - **PR 2 — prose; paid `research`, `research-exhaustiveness`, `proof-conclusion`,
-  `question-selection`, `research-plan`, `conflict-resolution`, `hypothesis-tracking` and
-  `person-evidence` runs:**
+  `question-selection`, `research-plan`, `conflict-resolution`, `hypothesis-tracking`,
+  `person-evidence` and `timeline` runs:**
   - **the router:** A's deletions; the step report and replies; the search fan-out (D); the
-    choice replacing the loop row (`:225`); wrap-up (B2); the objective row (E) and the
-    deleted "return to question-selection" line;
+    choice replacing the loop row (`:225`); wrap-up (B2) and `userPresent` for person-evidence;
+    the objective row (E) and the deleted "return to question-selection" line;
   - **the agents:** research-exhaustiveness (B, B2), proof-conclusion (C), question-selection
-    (E), conflict-resolution and hypothesis-tracking (E's route to research-plan), and
-    person-evidence (B2's autonomous line);
+    (E, including its gate text), conflict-resolution and hypothesis-tracking (E's route to
+    research-plan), and person-evidence (B2's reworded autonomy rule);
+  - **timeline:** its route to research-plan (E);
   - **research-plan:** the edit mode (G), the wrap-up dispose wording, and the FAN pivot and a
     conflict's decisive records as plan items (E). This lands after PR #3479 merges;
   - **tests:**
@@ -591,8 +658,8 @@ file's own sections, top to bottom.
     - the five question-selection tests (E);
     - `ut_research_plan_q7m`, which calls ending on an execution question non-compliant, and
       that is how step mode ends;
-    - new tests: conflict-resolution's and hypothesis-tracking's route to research-plan, and
-      person-evidence resolving downward in a wrap-up.
+    - new tests: the route to research-plan in conflict-resolution, hypothesis-tracking and
+      timeline, and person-evidence resolving downward under `userPresent: no`.
 - **Prerequisites, staffed separately:** issue #2243 for the fan-out; its handed-state follow-up
   for D's handed state.
 
@@ -617,34 +684,44 @@ file's own sections, top to bottom.
      and denied when `ctx` is absent;
    - a turn opened by research-plan uses the plan group, so research-exhaustiveness after it is
      denied;
-   - job mode allows everything;
+   - job mode allows everything but a research-plan call past its round allowance: one round,
+     or two when no unresolved question had a plan at the turn's first research-plan call;
+   - that call is denied, and the turn continues in `wrapup`;
+   - a research-plan call that adds no items, such as dispose, is not a round; one that adds
+     items to an existing plan is;
    - wrap-up allows only dispose → person-evidence → conflict-resolution → exhaustiveness →
-     conclusion;
+     conclusion, and denies research-plan when `ctx` shows no open item;
    - `step_mode` maps "Keep going!", "keep going" and "KEEP GOING." to `job`, and "keep going
      but skip the census" to `step`;
    - a host-sent prompt does not open a turn;
    - a corrupt input is allowed.
-2. **Host-hook tests** on the worker (including the redelivery seed from `turns.step`), the
-   alpha (including `Skill`), the unit harness and the e2e paths. `GENEALOGY_STEP_HOST` is in
+2. **Host-hook tests** on the worker (including the redelivery seed from `turns.steps`, with a
+   job's round count), the alpha (including `Skill`), the unit harness and the e2e paths.
+   `GENEALOGY_STEP_HOST` is in
    each hosted plane's CLI environment, and the plugin entry point does nothing when it is set.
 3. **The job cap:**
-   - the prototype web tier stamps `AUTONOMOUS_MAX_NUDGES` for a typed "Keep going!" and 0 for
+   - the worker's `turn_max_nudges` returns the stamped cap for a typed "Keep going!" and 0 for
      any other message;
    - the alpha's hook vetoes only in an armed turn;
+   - `should_continue_run` allows the stop when every unresolved question has a summary and no
+     open item and an unresolved conflict remains, and still blocks a concluded question with
+     no conflict; `terminal_reason` and `stop_checker.py` agree (the parity test);
    - the worker sets `completed` at turn close when a step finished the project.
-4. **`research_append`** refuses a second open question, but accepts one while the other open
-   question has a proof summary. The 11 old-gate tests are rewritten.
-5. **The two `question-state` branches:**
-   - B's fires with `resources_spent`, no summary, no open item and full log coverage;
-   - it does not fire when the stop lists only the first plan's log entries and a second plan
-     has entries;
-   - an out-of-date stop after "Search more" routes to research-exhaustiveness;
+4. **`research_append`** refuses a second open question. It accepts one while the other has a
+   proof summary and no open item, and refuses it while that question still has a `planned` or
+   `in_progress` item. The 11 old-gate tests are rewritten.
+5. **The `question-state` changes:**
+   - B's branch fires with `resources_spent`, no summary, no open item and full log coverage;
    - a `justification` with no "Overturn risk:" prefix defaults to research-plan;
-   - E's: an unresolved conflict with `independence_analysis` and an open plan item routes to
-     search-records, and one without `independence_analysis` still routes to
+   - E's rule: when every open conflict carries `independence_analysis` and a plan item is
+     open, the next step is search-records; with one of two open conflicts unanalysed, it is
      conflict-resolution;
-   - a `blocked_by_conflict` stop with no open item routes to conflict-resolution. This one is a
-     regression guard and passes today.
+   - a concluded, unresolved question with no open conflict routes to proof-conclusion;
+   - **regression guards, which pass today:** B's branch does not fire when the stop lists only
+     the first plan's log entries; an out-of-date stop after "Search more" routes to
+     research-exhaustiveness; a conflict without `independence_analysis` routes to
+     conflict-resolution; a `blocked_by_conflict` stop with no open item routes to
+     conflict-resolution.
 6. **Web:** the buttons appear and send their phrases; `completed` renders the new string.
 7. **Unit (paid):**
    - one step, then "Continue with";
@@ -656,7 +733,13 @@ file's own sections, top to bottom.
    - a plan of five or more items runs its independent searches as parallel tool calls. The
      4-spawn width test moves to issue #2243's PR (section D);
    - an unresolved conflict that needs new evidence ends offering a research-plan step, not a
-     new question;
+     new question, and hypothesis-tracking and timeline route a needed search the same way;
+   - a "Keep going." turn on a conflict that cannot be settled ends after one evidence round
+     with a `not_proved` summary, well under the nudge cap;
+   - in a wrap-up, research-exhaustiveness records the (b) path's alternative as `deferred`, and
+     person-evidence resolves a weak match downward;
+   - the router declines "Wrap it up" before any evidence and "Search more" away from the
+     choice;
    - a two-question message gets the ask;
    - a plan edit is applied.
 8. **Phase 0's hosted arm on the phase 1 build:** the second step is denied on both planes.
@@ -664,9 +747,12 @@ file's own sections, top to bottom.
    (`feedback-2026-10-08T12-32-23-007161Z.zip`, `feedback-2026-10-05T17-53-26-347549Z.zip`)
    ends after one step with "Continue with …?".
 10. **One e2e panel fixture runs to a proof on auto-answer.** Its runlog carries per-turn steps,
-    times and the Continue count, and `make e2e-latency` reports per-step p50/p90.
-11. **The prototype's `turns.step`** is filled for every step turn and survives redelivery, and
-    a per-step p50/p90 query over `turns` returns figures.
+    times and the Continue count, and `make e2e-latency` reports per-step p50/p90. A fixture on
+    a conflict that cannot be settled ends after one evidence round with a `not_proved` summary,
+    well under the harness-answer cap.
+11. **The prototype's `turns.mode` and `turns.steps`** are filled for every turn and survive
+    redelivery, a job's round count with them, and a per-step p50/p90 query over `turns`
+    returns figures.
 
 ## Open decisions
 - **Errands in step mode.** An errand is a step that ends naming what to fetch, which keeps the
@@ -675,7 +761,8 @@ file's own sections, top to bottom.
   and a sub-question become plan items on the main question instead of new questions (section
   E). Recommended: yes.
 - **`deferred` as an enum value or prose.** Recommended: the enum value.
-- **Retire `--autonomous`** once F is proven. Recommended: yes.
+- **Retire `--autonomous`** once F is proven. Recommended: yes, once e2e has another way to
+  send person-evidence `userPresent: no` (section B2).
 - **Whether the `AskUserQuestion` decision carrier is still needed** once step mode ends every
   turn (see the integration table).
 
@@ -697,6 +784,7 @@ file's own sections, top to bottom.
   tokens.
 - **Offset:** the researcher stops passes like #3475's $26 of extra ones.
 - **Paid eval runs:** `research`, `research-exhaustiveness`, `proof-conclusion`,
-  `question-selection`, `research-plan`, `conflict-resolution`, `hypothesis-tracking` and
-  `person-evidence` in PR 2, and `search-records` in phase 2, plus `make hook-smoke`.
+  `question-selection`, `research-plan`, `conflict-resolution`, `hypothesis-tracking`,
+  `person-evidence` and `timeline` in PR 2, and `search-records` in phase 2, plus
+  `make hook-smoke`.
 - **The biggest single build** is the e2e persistent session.
