@@ -2943,7 +2943,7 @@ async function readJson(projectPath: string, filename: string): Promise<any> {
  *  absent or unreadable. Fail-open by design: legacy projects created before the
  *  baseline shipped have no such file, and a tree-encoding WARNING must never
  *  block a completion for a project that simply predates it. */
-async function readStartingTree(projectPath: string): Promise<SimplifiedGedcomX | null> {
+export async function readStartingTree(projectPath: string): Promise<SimplifiedGedcomX | null> {
   try {
     const raw = await getProjectStore().readText(projectPath, "starting-tree.gedcomx.json");
     const parsed = JSON.parse(raw);
