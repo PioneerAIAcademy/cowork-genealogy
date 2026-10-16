@@ -299,26 +299,79 @@ records the measure.
   locality-guide 6–9, and a plan item's searches about 9.
 
 ## Integrating with research-as-a-job
-For Praise. This plan replaces research-as-a-job's continuous-job core: a job becomes the
-researcher's sequence of one-step turns. Most of the rest survives.
+For Praise, and covering both `docs/plan/research-as-a-job-later.md` and PR #3262, which
+built most of it. This plan replaces research-as-a-job's continuous-job core: a job becomes
+the researcher's sequence of one-step turns. Most of the rest survives. The tables follow that
+file's own sections, top to bottom.
 
-| research-as-a-job piece | Under step mode |
+**"What phases 0 and 1 leave for these phases"**
+
+| Item | Under step mode |
 |---|---|
-| Phases 0–1 on main (Stop veto, nudge cap, Stop button, spend bound, mid-turn composer) | **Keep the machinery.** The veto is off by default and re-armed only for a "Keep going" turn |
-| *Before phase 2:* router re-entry through the nudge text (PR #3262) | **Keep:** serves job-mode turns |
-| *Before phase 2:* `research` as the only front door (PR #3262) | **Keep:** section H depends on it |
-| *Before phase 2:* "Not every turn is a job", the `research_delivered` finish line (PR #3187, PR #3286, PR #3235) | **Superseded:** every turn is one step. Keep the bounded routing list and "name what was saved"; delete `research_delivered` in phase 2 |
-| *Before phase 2:* "Never ask a question you will not wait for" | **Keep:** step mode applies it to every step |
-| *Before phase 2:* the "I need you" exit (`AskUserQuestion` carrier, `pending_decision`, `DecisionCard`) | **Change.** The step boundary already ends every turn; `DecisionCard` becomes the home for the reply buttons. The carrier is needed only if a decision must interrupt a step, and none is planned |
-| *Before phase 2:* capture a real feed | **Keep:** it now shows the step reports |
-| Phase 2: the step as the chat's unit; one view of job state; chips in FamilySearch's words; ids as links | **Keep.** The session list's "needs you" state is a step waiting on a reply |
-| Phase 2: three kinds of nothing (`not_searched`) | **Keep;** align its naming with the `deferred` kind |
-| Phase 2: the job outlives the tab | **Changes:** a job pauses between steps; a "Keep going" turn still outlives the tab |
-| Phase 3: decision cards | **Keep** as the reply UI |
-| Phase 3: errands (blocked on issue #1830) | **An errand is a step that ends naming what to fetch** (open decision below) |
-| Phase 3: corrections as recorded state (`rejected_links`), change review, dead ends as next actions | **Keep.** Dead ends match the deferred list and the choice |
-| Phase 4: the cold start (person pick, offered gaps, what to expect) | **Keep:** the pick and the offers become the setup step's report |
-| Phase 5: narration guidance | **Change:** "do not narrate between actions" becomes the step-report rule |
+| Ruling: "No plan-approval gate — Stop is the control surface" (2026-09-21) | **Reversed for step turns** (lead, 2026-10-16): each step ends waiting on the researcher. It still holds inside a "Keep going" turn |
+| Ruling: `q_`/`ps_` allowed in user-facing text (2026-09-20) | **Unaffected** |
+| Ruling: the prototype is production; the alpha is backported to and retired; Cowork may be degraded | **Unaffected.** Cowork's enforcement waits on phase 0 |
+| Ruling: the spend bound continues in a new session | **Unaffected;** it matters only in "Keep going" turns |
+| Ruling: an errand pauses the job and waits (2026-09-27) | **Kept by the open decision below:** an errand is a step that ends naming what to fetch |
+| "The Stop hook binds on every browser turn"; nudge cap 60; the alpha's `auto_continue` | **Changes:** the veto is off by default (nudges 0, `auto_continue` off) and re-armed only for a "Keep going" turn |
+| `turns.outcome` values | **Mostly unchanged.** A step turn ends `ok` (no label); `completed` gets the honest label (section C); `delivered` goes in phase 2 |
+| "`decision` and `mcp_unavailable` cannot fire" | **Unaffected;** step mode needs no `decision` exit |
+| person-evidence's weak-match pause and its autonomous-only resolve-downward rule | **The pause becomes the link step's closing question,** asked with the researcher present. Resolve-downward still applies in "Keep going" turns and e2e |
+
+**"Before phase 2 — what continuous work changed"**
+
+| Item | Under step mode |
+|---|---|
+| "The default web path never enters the router"; re-entry through the nudge text (PR #3262) | **Router entry comes from two carriers:** the front door below on every researcher message, and the nudge text in "Keep going" turns |
+| `research` as the only front door (PR #3262's frontmatter) | **Keep:** section H depends on it |
+| "Not every turn is a job"; the `research_delivered` finish line (PR #3187, PR #3286, PR #3235) | **Superseded:** every turn is one step. Keep the bounded routing list and "name what was saved"; delete `research_delivered` in phase 2 |
+| "Never ask a question you will not wait for" | **Keep, applied to every step.** Offers at the **end** of a step become its "Continue with X?". Offers **mid-step** become statements, because nothing stops mid-step: for example search-records' "Let the user confirm before extraction", now that extraction is inside the search step |
+| "Give 'I need you' an exit" (`AskUserQuestion` carrier, `pending_decision`, `DecisionCard`) | **Change.** The step boundary already ends every turn, so a question is just a step's ending. `DecisionCard` becomes the home for the reply buttons. The carrier is needed only if a decision must interrupt a step, and none is planned |
+| The fourth stop's clauses: unreachable records end `completed`; a blocking conflict "is a decision" | **Unreachable records:** unchanged (the proof at the tier reached, `completed`). **A blocking conflict:** ends the conflict step with the question to the researcher, no `decision` exit needed |
+| "Capture a real feed before specifying phase 2" | **Keep:** it now shows the step reports |
+| *Before phase 2*'s acceptance list | **Replaced** by this plan's acceptance items 8–9 (a fresh session ends after one step) and item 7 (one-shot and plan-only asks end after their step) |
+
+**Phase 2 — the reading experience**
+
+| Item | Under step mode |
+|---|---|
+| The step as the chat's unit; one view of job state; chips in FamilySearch's words; identifiers as links | **Keep.** The session list's "needs you" state is a step waiting on a reply |
+| Three kinds of nothing (`not_searched`) | **Keep;** align its naming with the `deferred` kind |
+| Show the scans, and let documents in | **Keep:** an errand closes when the document comes back |
+| The job outlives the tab | **Changes:** a job pauses between steps; a "Keep going" turn still outlives the tab |
+
+**Phase 3 — the loop**
+
+| Item | Under step mode |
+|---|---|
+| Decisions: one card kind | **Keep,** as the reply UI |
+| Handed to you (errands; blocked on issue #1830) | **An errand is a step that ends naming what to fetch** (open decision below) |
+| Corrections as recorded state (`rejected_links`); change review | **Keep** |
+| Dead ends become next actions | **Keep;** they match the deferred list and the choice (section B) |
+
+**Phase 4 — the cold start**
+
+| Item | Under step mode |
+|---|---|
+| The person pick, "a decision, so this phase follows phase 3" | **The pick is the setup step's report:** candidate cards, then the researcher's reply. It no longer waits on phase 3's exit |
+| Offer the gaps; say what to expect | **Keep,** as part of the setup step's report |
+
+**Phase 5 — the remaining prose**
+
+| Item | Under step mode |
+|---|---|
+| S1 (`init-project`), S5 (`record-extraction`) | **Unchanged in scope** |
+| The narration guidance's "do not narrate between actions" | **Becomes the step-report rule:** one paragraph per step, what was found and what comes next |
+| "The literal is gone from every body"; the web Continue button removed | **A new literal and button return:** "Continue with …?", distinct from the retired "Next: <step>. Continue?". A test keeps `hand_back.py`'s regex from matching it (section A) |
+
+**"What this design does not do, at any phase"**
+
+| Item | Under step mode |
+|---|---|
+| No proof export; nothing writes to the FamilySearch tree; no numeric confidence meter | **Unaffected** |
+| No leaf-skill changes beyond the listed ones | **Plus** this plan's research-exhaustiveness, proof-conclusion and question-selection changes |
+| No further cost bounding | **Step mode bounds every turn to one step.** The $35 spend bound remains for "Keep going" turns |
+| Nothing Cowork-specific | **Except** the plugin hook's Cowork entry point (section A) |
 
 **Suggested order:**
 1. Split PR #3262. Land what survives (the front door, `rejected_links`, phase 2's reading
