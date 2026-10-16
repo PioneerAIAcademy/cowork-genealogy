@@ -69,8 +69,9 @@ class Settings(BaseSettings):
     # records what each call cost (`api_calls`) but never stops one (lead ruling
     # 2026-09-25, pinned by `test_the_alpha_carries_no_spend_limit`). Short of the
     # researcher or the model ending such a run, its only automatic halt is the E2B
-    # sandbox pausing about an hour after `LIVE_WINDOW_S` (`sandbox_heartbeat.py`: 4 h
-    # since the browser last attached), and a reconnect restarts that clock.
+    # sandbox pausing an hour after it started or last resumed (the Hobby cap,
+    # `_RUNNING_TIMEOUT_S` in `sandbox/e2b.py`), which a reconnect to a running sandbox
+    # does not extend (#3305).
     #
     # NOT the prototype's cap. `proto/web/app.py`'s DEFAULT_MAX_NUDGES and the Beanstalk
     # template both stay at 60 on purpose: that is a separate deployment with its own

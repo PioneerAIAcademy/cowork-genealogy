@@ -384,6 +384,7 @@ it searches (`applyAltNameAutoPair`), so a log naming that half is true.
 | a batch names one `stagedResultsRef` in two ops | input error `ops[j]: stagedResultsRef '…' is also ops[i]'s`, raised before any op is applied; write nothing. Compared on the resolved path, so two spellings of one file collide |
 | `notes` states the household structure of a census that carries no relationship-to-head column, without hedging it — the census the note names, or, for a `record_search` entry, the one its staged response shows; a staged `record_search` or `record_read` response whose titles are all British also supplies the jurisdiction of a census the note names without one | input error; write nothing, and in a batch no op's staged file is consumed. The message names the missing column and quotes a compliant rewording, so the caller can re-send. See §8.2 |
 | an explicit `query` on a staged `record_search` or `fulltext_search` entry names a filter key, with a value, that the staged search never sent | input error; write nothing, and in a batch no op's staged file is consumed. The message names each key and the value the call claimed, and says how to re-send: drop the key, omit `query` so the tool fills it, or re-run the search with the filter. No override. See §8.3 |
+| `notes` (single-entry, or any op's) arrives JSON-escaped: no real newline once leading and trailing whitespace is ignored, at least two literal `\n`, and at least one literal `\n` that opens a table row (`\|`) or heading (`#`) | decoded, then handled as if sent decoded, with no warning. It decodes only `\n \r \t \" \\ \/ \uXXXX`; any other backslash (`\|`, `\*`, `\'`) is kept as sent. A second pass runs if the result still looks escaped, and no more than two. A trailing `"` is dropped first when it is the only unescaped quote in the note, since it is the escaped string's own closing quote. The decode runs before every precondition and before persistence, so the census check (§8.2) and validation judge the stored text. `unescapeJsonNotes` |
 
 ### 8.1 Non-blocking warnings (never fail the op)
 
@@ -852,6 +853,17 @@ recorded for different arguments.
   that echoes the call, an omitted `query` (filled, plumbing stripped), no staged
   handle, a staged payload with no `query`, and an `external_links_search`
   handle.
+- **JSON-escaped notes (§8)** — decoded and stored with real newlines, single
+  and batched: `\n`, `\"`, `\t` and `\uXXXX` escapes, a whole household table, a
+  table escaped twice, one with a single real leading or trailing newline, an
+  escaped heading-only note, and a leaked closing quote (dropped). Partly
+  escaped tables decode around a raw quote or tab and keep `\|`, `\'`, `\*`,
+  `\_` and a lone trailing backslash. Left unchanged: a note with a real newline
+  inside, Windows paths and prose that name `\n`, escaped prose with no table or
+  heading, a single literal `\n|`, a plain note whose only quote mark ends it,
+  and the empty string. The census check judges the decoded text: a hedged
+  escaped table passes and an unhedged one is refused, with or without a
+  trailing real newline.
 
 ---
 

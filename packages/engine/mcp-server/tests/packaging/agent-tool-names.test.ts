@@ -684,16 +684,20 @@ const AGENT_PERMISSIONS: Record<string, { tools: string[]; denies: string[] }> =
 
   // The folded historical-context skill (issue #2800) holds the six tools that
   // skill declared, plus the built-in `Read` for research.json's
-  // narration_guidance. No `Write` and no project-state tool: this agent writes
-  // nothing. No spawn tool: a request belonging to locality-guide,
-  // search-records, translation, convert-dates or conflict-resolution is handed
-  // BACK by name for the main thread to spawn (lead ruling 2026-09-23).
+  // narration_guidance, plus `research_log_append` (#3244 option L): inside a
+  // project it logs its lookups and one `historical_context` entry carrying the
+  // full overview, which otherwise lived only in the chat. No `Write` and no
+  // other project-state tool. No spawn tool: a request belonging to
+  // locality-guide, search-records, translation, convert-dates or
+  // conflict-resolution is handed BACK by name for the main thread to spawn
+  // (lead ruling 2026-09-23).
   "historical-context.md": {
     tools: [
       "Read",
       "place_population",
       "place_search",
       "place_search_all",
+      "research_log_append",
       "wiki_read",
       "wiki_search",
       "wikipedia_search",
@@ -801,14 +805,18 @@ const AGENT_PERMISSIONS: Record<string, { tools: string[]; denies: string[] }> =
     denies: [],
   },
 
-  // survey-surname (issue #2065) holds three MCP tools and Write. place_search
+  // survey-surname (issue #2065) holds three MCP tools. place_search
   // resolves the state/county. record_search with projectPath stages results.
-  // research_log_append logs each search page. Write saves the markdown table.
+  // research_log_append logs each search page, and the household table as one
+  // more `log` entry (`tool: "survey_surname"`, the table in `notes`; #3244
+  // option L, issue #3414), written through the tool so it reaches the hosted
+  // ProjectStore. It once held the built-in `Write` to save a loose
+  // `surname-survey-*.md`, which the hosted worker's read-only `/project`
+  // refused (EACCES) and no store ever saw; that grant is dropped.
   // No research_append: the log section is written via research_log_append,
   // which takes no section argument. No Read: builds from inline stubs.
   "survey-surname.md": {
     tools: [
-      "Write",
       "place_search",
       "record_search",
       "research_log_append",
