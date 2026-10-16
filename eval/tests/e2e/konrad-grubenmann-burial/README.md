@@ -91,8 +91,8 @@ attached to nobody, so it does not re-index anything the tree already holds.
 entry Anna Väfin. No marriage of a Conrad Grubenmann to either name is indexed
 for 1742–1790, and no baptism of a child to that couple was found. She would
 be a second wife married after Barbara Oberteufer's death on 18 Feb 1742, and
-the evidence does not establish that marriage. f1 tells the judge not to
-credit a report that presents it as established.
+the evidence does not establish that marriage. f1 records her as named in the
+entries and does not grade her: only the burial is scored.
 
 **What an agent must find.** The burial on 17 March 1787, from either register
 entry above, with Teufen or Stein as the place.
