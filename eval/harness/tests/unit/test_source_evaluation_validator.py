@@ -65,6 +65,8 @@ _SUMMARY_LEAD = _VALIDATOR._SUMMARY_LEAD_RE
 _recommends_reread = _VALIDATOR.test_index_discrepancy_recommends_reread
 _no_detach = _VALIDATOR.test_index_discrepancy_does_not_recommend_detaching
 
+from harness.skill_runner import subject_reply_text  # noqa: E402
+
 _REPO = Path(__file__).resolve().parents[4]
 _PROTECTED = "Minnesota Death Index"
 _TEST = {
@@ -380,9 +382,13 @@ def test_both_guards_pass_on_every_committed_positive_run():
     agree with the corpus. A future widening that breaks a real reply fails
     here rather than inside the next paid run.
     """
+    # `v1_*` skipped `v1.json` and `v2.json` — 16 of the 53 index-discrepancy
+    # runs, and the two that carry the only false positives a wrong scope rule
+    # produces. A replay that cannot see a third of the corpus is how a clean
+    # number survives a broken guard.
     logs = sorted(
         p for p in glob.glob(
-            str(_REPO / "eval/runlogs/unit/source-evaluation/v1_*.json")
+            str(_REPO / "eval/runlogs/unit/source-evaluation/v*.json")
         )
         if not p.endswith(".ann.json")
     )
@@ -395,7 +401,19 @@ def test_both_guards_pass_on_every_committed_positive_run():
                 continue
             for run in entry.get("runs") or []:
                 output = run.get("output") or {}
-                reply = (output.get("text_response") or "").strip()
+                # GRADE WHAT THE VALIDATOR GRADES. `subject_reply_text` returns
+                # the agent's OWN return whenever it is non-empty, and on all 53
+                # committed index-discrepancy runs that text DIFFERS from the
+                # main thread's relay — the relay carries `##` headings in 52 of
+                # 53 and the agent's return in 0 of 53. Replaying the relay
+                # measures the dispatcher, not the subject, and a scope rule
+                # tuned against it reads clean while firing on real replies.
+                reply = subject_reply_text(
+                    output.get("agent_returns"),
+                    output.get("text_response"),
+                    "source-evaluation",
+                    _TEST,
+                ).strip()
                 if not reply:
                     continue
                 protected = _PROTECTED if "Hole" in reply else "Drouin Collection"
@@ -923,3 +941,43 @@ def test_warnings_guards_skip_an_untagged_test():
             fn([], {"tags": []})
     with pytest.raises(pytest.skip.Exception):
         _pw_verbatim([], "", {"tags": []})
+
+
+# --- #2481: markdown emphasis must not change what a matcher reads ---------
+
+
+def test_emphasis_does_not_change_what_any_detach_matcher_reads():
+    """Three matchers read words that emphasis can sit inside, and all three
+    got it wrong in the same way: the markers land exactly where an anchor or a
+    character class expects a letter.
+
+    The agent bolds freely — 251 bold spans across the 53 committed graded
+    replies — so each of these is one word away on a real report, and two of
+    them fail in the direction that reds a CORRECT one.
+    """
+    # 1. a negation before the term
+    for text in (
+        "Do not detach; the record belongs here.",
+        "Do **not** detach; the record belongs here.",
+        "Do *not* detach yet.",
+        "Do __not__ detach.",
+    ):
+        assert not _VALIDATOR._recommends_detach(text), text
+
+    # 2. the harm verb AFTER the term, which says the report is arguing the
+    #    doctrine rather than violating it
+    for text in (
+        "Keep it attached - detaching it loses the evidence.",
+        "Keep it attached - detaching it **loses the evidence**.",
+    ):
+        assert not _VALIDATOR._recommends_detach(text), text
+
+    # 3. the record title that clears a correct report
+    for text in (
+        "Correct the Minnesota Death Index year. Detach the 1885 State Census.",
+        "Correct the Minnesota Death Index year. Detach the **1885 State Census**.",
+    ):
+        assert _VALIDATOR._detach_names_another_record(text, _PROTECTED), text
+
+    # and a bare recommendation still fires
+    assert _VALIDATOR._recommends_detach("Detach it.")

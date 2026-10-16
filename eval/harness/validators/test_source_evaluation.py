@@ -76,14 +76,30 @@ _CLAUSE_BREAKS = (
 )
 
 
+# Markdown emphasis around a word is not a word boundary to a human and must
+# not be one here. `Do **not** detach` read as a RECOMMENDATION on the shipped
+# module while the unemphasised `Do not detach` read as a negation, because the
+# asterisks sat between the negator and the term. Stripping the markers is not
+# a text-shape heuristic: it removes markup so the words underneath can be read.
+_EMPHASIS = re.compile(r"(\*\*|\*|__|_|`)")
+
+
+def _unemphasised(text: str) -> str:
+    return _EMPHASIS.sub("", text)
+
+
 def _is_negated(text: str, at: int) -> bool:
     """True when the detach term at `at` is being ruled out rather than urged.
 
     Scoped to the term's OWN clause: the window is cut at the nearest preceding
     clause break, so a negation belonging to an earlier clause cannot license a
     recommendation in this one.
+
+    The window is read with emphasis stripped — see `_EMPHASIS`. The offset
+    cannot shift the term out of view: stripping only ever SHORTENS the prefix,
+    so the negator stays inside the window it was already inside.
     """
-    before = text[max(0, at - _NEG_WINDOW):at].lower()
+    before = _unemphasised(text[max(0, at - _NEG_WINDOW):at]).lower()
     cut = max((before.rfind(b) + len(b) for b in _CLAUSE_BREAKS if b in before), default=0)
     return bool(_NEGATED_TERM.search(before[cut:]))
 
@@ -113,7 +129,14 @@ def _recommends_detach(block: str) -> bool:
             end = i + len(term)
             while end < len(low) and low[end].isalpha():
                 end += 1  # "detach" matched inside "detaching": read after the word
-            after = low[end:end + 40]
+            # Emphasis stripped for the same reason `_is_negated` strips it:
+            # `_DISPARAGED_DETACH` is anchored at the start of this window, and
+            # `**loses the evidence**` puts asterisks where the anchor expects
+            # the verb — so a bolded harm verb reads as a RECOMMENDATION while
+            # the plain one is correctly ignored. The agent bolds freely (251
+            # bold spans across the 53 graded replies), so this is one word
+            # away on any correct report.
+            after = _unemphasised(low[end:end + 40])
             if not _is_negated(low, i) and not _DISPARAGED_DETACH.search(after):
                 return True
             start = i + len(term)
@@ -304,6 +327,13 @@ def _detach_names_another_record(block: str, protected: str) -> bool:
     detached") does not count, nor does a title word `protected` itself
     contains ("Detach the Death Index record."), so those stay attributed.
     """
+    # `_DETACH_*_ON_TITLE_RE` require a record title to start with
+    # `[A-Z0-9]`, and the agent writes them bolded —
+    # `Detach the **1885 Minnesota State Census**` — so the asterisk sits
+    # where the capital is expected and the ONLY path that clears a
+    # correct report stops matching. Strip emphasis first; the titles and
+    # the protected name carry none of their own.
+    block = _unemphasised(block)
     sentences = [x for x in _SENTENCE_RE.split(block) if x.strip()]
     detaching = [x for x in sentences if _recommends_detach(x)]
     protected_lower = protected.lower()

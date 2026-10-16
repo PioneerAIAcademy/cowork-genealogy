@@ -1171,6 +1171,14 @@ recap — the shape the skill actually uses. Gated on the `index-discrepancy` ta
 that tag and no `index_error_source` fails rather than skipping, so the guard
 cannot be disarmed by omission.
 
+**What the guard reads is the agent's own return, not the main thread's
+reply.** `subject_reply_text` returns the subject's words whenever it made a
+return, and on a direct test it returns nothing else. The two texts differ on
+every committed `index-discrepancy` run, and differ structurally: the relay
+carries markdown headings on 52 of 53 and the agent's own return on 0 of 53.
+A check tuned against the relay therefore measures the dispatcher, and reads
+clean while the guard it is meant to validate has a live gap.
+
 A reply-wide check cannot express this rule. A correct audit of the same
 person also reports a genuinely *misattributed* source, for which detaching
 **is** the right recommendation — so any reply-wide licence for the word
