@@ -134,7 +134,13 @@ Concretely:
   jurisdiction-shaped fact may not. "Pre-1880 census" is a fact about one
   country's schedule and is written as such or fetched. A small wiki-carried
   residue may also stay inline when fetching the page would be out of all
-  proportion to the residue it would replace (issue #2259).
+  proportion to the residue it would replace (issue #2259). A single,
+  already-documented record-survival fact — "the US 1890 federal census does
+  not survive" — may be enforced as a `research_append` write-boundary
+  precondition rather than left to prose, since a harness check already
+  encodes it (`test_us_1890_never_expected`); this does not license a
+  per-country census-survival table, which stays a jurisdiction-shaped fact
+  and is written to the wiki or fetched (issue #3255).
 - **Where the wiki is wrong or thin, fix the wiki.** The genealogist's path is
   to find the page for the country and record type and request a specific change
   to it. The plugin does not keep a corrected local copy.

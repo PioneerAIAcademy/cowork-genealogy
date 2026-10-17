@@ -37,7 +37,11 @@
           "placeLevel": "locality"
         },
         "spouseId": "TGAP-GM3",
-        "spouseName": "Ida Marsh"
+        "spouseName": "Ida Marsh",
+        "pendingHints": {
+          "fitting": 0,
+          "total": 0
+        }
       }
     ],
     "scanned": {

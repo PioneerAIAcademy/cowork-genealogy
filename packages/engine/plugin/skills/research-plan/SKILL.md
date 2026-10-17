@@ -11,7 +11,7 @@ description: Creates, reviews, and revises a sequenced research plan (in researc
   to extract records already found (extraction_append, or the record-structurer agent),
   or — after a search comes back
   empty — to judge whether research is done ("are we done", "what's the next step" →
-  research-exhaustiveness or project-status).
+  research-exhaustiveness).
 allowed-tools:
   - collections_search
   - volume_search
