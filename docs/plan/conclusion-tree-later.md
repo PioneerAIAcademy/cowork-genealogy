@@ -39,7 +39,7 @@ unchanged.
   [`single-asks-router-batch.md`](single-asks-router-batch.md) quotes it too. If U24 has landed by
   then, this is its own PR after Stage 1b, editing the text U24 settled; U24 does not wait for it.
 - No new routing row in `packages/engine/plugin/skills/research/SKILL.md`.
-- project-status leads a resumed project with its first owed item that is not advisory, in plain words. This is
+- The status answer (per `project_context`'s description) leads a resumed project with its first owed item that is not advisory, in plain words. This is
   Cowork's lever: 10 deeply linked Cowork projects ended with no proof.
 - After an unrecorded answer about a project person, the agent offers in one line to save it as a
   finding. On yes, the light path runs and the finding may stand at `possible`. `DELIVERY_GUIDANCE`
