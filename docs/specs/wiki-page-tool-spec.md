@@ -87,25 +87,60 @@ Behavior:
 
 ### `wiki_place_page` (`src/tools/wiki-place-page.ts`)
 
-Input + behavior unchanged from the caller's perspective, except that a
-missing or out-of-set `section` is rejected before any network call (error
-table below); only the internal `tryNames`/`tryReadFile` is rewritten:
+Input unchanged. A missing or out-of-set `section` is rejected before any
+network call (error table below).
 
-1. For each candidate slug (from the section + name-variant
-   enumeration that already exists), `GET /page/{slug}`.
-2. **404 is "try the next candidate"**, not a hard error — exactly
-   what the file-not-found case does today.
-3. First 200 wins, return its content.
-4. If all candidates miss (404 on every one, after both the leaf-name
-   pass and the places-API alternate-names pass), throw the existing
-   `No wiki page found for "<standardPlace>".` error.
-5. Network failure or 5xx bubbles up immediately (same as
-   `wiki-search`); a transient server error must not be treated as
-   "page not found."
+Resolution depends on the place's level. A `standardPlace` with one or two
+comma-separated parts is a country or a state/province; three or more is
+anything below that.
 
-The candidate-slug enumeration (`candidateSlugsFor`), the
-place-resolver fallback to `getPlaceCandidateNames`, and the
-`WikiPlacePageResult` shape are all unchanged.
+1. **Country or state/province — the leaf-name grammar** (`candidateSlugsFor`).
+   For each candidate slug, `GET /page/{slug}`; a 404 is "try the next
+   candidate", the first 200 wins. `home` tries `{leaf}_Genealogy`,
+   `{leaf},_Canada_Genealogy` and `{leaf},_United_States_Genealogy`; the other
+   three sections try `{leaf}_Getting_Started`, `{leaf}_Online_Genealogy_Records`
+   and `{leaf}_Research_Tips_and_Strategies`. When every leaf slug misses, the
+   places-API alternate names (`getPlaceCandidateNames`) are tried through the
+   same grammar — for `home`, only after step 2 misses.
+2. **`home` for anything but a bare country, once the leaf grammar misses — the
+   page's real title.** A two-part place outside the US and Canada (`Malmöhus,
+   Sweden`, `Jalisco, Mexico`) reaches its page only this way. The wiki names a
+   sub-state page with its parent and usually a type word
+   (`Schuylkill_County,_Pennsylvania_Genealogy`), which no grammar built from the
+   leaf can produce, so the title comes from the wiki's own ranking:
+   `POST /search` with `"{leaf} {parent} genealogy"`, then the first ranked
+   `page_title` that `homeTitleShape` (`src/utils/wiki-home-title.ts`) accepts is
+   fetched by `GET /page/{title}`. A title is accepted only when it is a home
+   page (`... Genealogy`), starts with the leaf at a word boundary, and names the
+   place's direct parent as its first container (a type word may follow it, as
+   in `Ulster County`), so `Los Angeles, Los Angeles County, California
+   Genealogy`, the city's page, is not taken for Los Angeles County, and
+   `Washington, United States Genealogy`, the state's page, is not taken for a
+   Washington County. A type word after the leaf
+   must fit the Places API `type` (`typeWordFits`): `St. Louis City` and
+   `St. Louis County` rank together for "St. Louis, Missouri", and only the type
+   (`Independent City`) separates them. `County` also admits the wiki's `Parish`
+   (Louisiana) and `Borough`. An unresolved or failed type lookup rejects every
+   typed title, so it can cost a page but never return the wrong jurisdiction's.
+3. **Below state level, the other three sections return no page at once.** They
+   exist only for a country or a state/province (measured 2026-10-01: every
+   county-level section page 404s while the state's 200s), and the leaf grammar
+   applied to a county can only 404 or hit a same-named larger place with a 200.
+   The caller broadens one jurisdiction level and calls again.
+4. If nothing resolves, throw the existing `No wiki page found for
+   "<standardPlace>".` error.
+5. A network failure or 5xx from either `/page` or `/search` bubbles up
+   immediately (same as `wiki-search`); a transient server error must not be
+   treated as "page not found."
+
+**Diacritics are preserved, never folded.** `Västra_Karaby_Parish,_Malmöhus,_Sweden_Genealogy`
+returns 200 and the ASCII-folded spelling returns 404, so folding is a measured
+failure, not a fallback. Ranked titles arrive percent-encoded for non-ASCII names
+and are decoded before the slug is built.
+
+The `WikiPlacePageResult` shape is unchanged; `placeName` is the name that
+resolved — the leaf or alternate name for a country or state, the title's
+jurisdiction (`Schuylkill County, Pennsylvania`) for a page resolved by title.
 
 ---
 
