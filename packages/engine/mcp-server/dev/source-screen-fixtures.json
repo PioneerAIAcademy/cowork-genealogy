@@ -1,0 +1,38 @@
+{
+  "about": "Planted-error fixtures for dev/source-screen.ts (issue #3408). Public, deceased Family Tree persons and public record ARKs only, drawn from the e2e fixtures adelaida-martinez-mother, joao-sousa-death, hole-parents-negative and ogletree-children. Every host and donor was read live on 2026-10-16. Errors are planted in snapshot copies, never on the live tree.",
+  "shortfalls": {
+    "latin_given_name": "0 of 2: no host in the donor pool carries a source that indexes a Latin given name.",
+    "relative_clash": "2 of 3: only the adelaida-martinez-mother conflation documents records naming a different mother."
+  },
+  "fixtures": [
+    { "id": "easy_hole_uruguay_baptism", "type": "easy_wrong_person", "host": "KD96-TV2", "donor_ark": "ark:/61903/1:1:F2BL-3XN", "note": "1872 Uruguayan baptism of Adela Natividad Martinez on a Norwegian-born man of 1876." },
+    { "id": "easy_ogletree_madeira_baptism", "type": "easy_wrong_person", "host": "GW4W-DTG", "donor_ark": "ark:/61903/1:1:6NGD-BL9Q", "note": "1852 Madeira baptism of João Gomes de Souza on a Georgia-born man of 1882." },
+    { "id": "easy_martinez_hole_draft", "type": "easy_wrong_person", "host": "GRS9-MCH", "donor_ark": "ark:/61903/1:1:K875-CDJ", "note": "Christian Peder Hole's WWI draft card on a Uruguayan woman of 1871." },
+
+    { "id": "hard_martinez_other_adelaida_marriage", "type": "hard_wrong_person", "host": "GRS9-MCH", "donor_ark": "ark:/61903/1:1:XS6N-1GXK", "note": "The 1896 civil marriage of Valentina Adelaida Martines (9NDQ-JQ7), a different Adelaida Martínez of Dolores, Soriano." },
+    { "id": "hard_sousa_elder_brother_baptism", "type": "hard_wrong_person", "host": "GLRZ-VRK", "donor_ark": "ark:/61903/1:1:F2W4-HXP", "note": "The 1839 baptism of the elder namesake brother (L2B6-R63): same name, same parents, same parish, twelve years earlier." },
+    { "id": "hard_ogletree_namesake_1900", "type": "hard_wrong_person", "host": "L5D9-KXT", "donor_ark": "ark:/61903/1:1:M3JL-C7D", "note": "The 1900 census of Lewis Ogletree born 1815 (GJZW-FL1), a namesake of the host in the same county." },
+
+    { "id": "srjr_son_father_wwi_draft", "type": "sr_jr_swap", "host": "GJZH-9TW", "donor_ark": "ark:/61903/1:1:K686-3N7", "note": "The father's (GW4W-DTG, b. 1882) WWI draft card on the son, b. 1914." },
+    { "id": "srjr_grandfather_son_wwi_draft", "type": "sr_jr_swap", "host": "L5D9-KXT", "donor_ark": "ark:/61903/1:1:QRP3-T2N2", "note": "The son's (GW4W-DTG, b. 1882) second WWI draft card on the father, b. 1856." },
+    { "id": "srjr_son_father_1930_census", "type": "sr_jr_swap", "host": "GJZH-9TW", "donor_ark": "ark:/61903/1:1:XST7-D3X", "note": "The father's 1930 Chicago census entry (b. 1885) on the son, who has his own 1930 census." },
+
+    { "id": "clash_martinez_dolores_mother", "type": "relative_clash", "host": "GRS9-MCH", "donor_ark": "ark:/61903/1:1:FLSQ-1NP", "note": "Valentina Adelaida's 1876 baptism names her mother Dolores Milan; the host's mother is Josefa Segovia." },
+    { "id": "clash_valentina_segovia_mother", "type": "relative_clash", "host": "9NDQ-JQ7", "donor_ark": "ark:/61903/1:1:F2BL-3XN", "note": "Adela Natividad's 1872 baptism names her mother Josefa Segovia; the host's mother is Dolores Milan." },
+
+    { "id": "index_hole_death_index_birth", "type": "indexing_error", "host": "KD96-TV2", "edit": { "persona_ark": "ark:/61903/1:1:V4ZD-F6F", "field": "Birth.date", "value": "02 Oct 1867" }, "note": "Minnesota Death Index birth date 02 Oct 1876 with two digits swapped." },
+    { "id": "index_ogletree_ssdi_birth", "type": "indexing_error", "host": "GJZH-9TW", "edit": { "persona_ark": "ark:/61903/1:1:JYXL-QQ7", "field": "Birth.date", "value": "16 Apr 1941" }, "note": "SSDI birth date 16 Apr 1914 with two digits swapped." },
+    { "id": "index_valentina_baptism_birth", "type": "indexing_error", "host": "9NDQ-JQ7", "edit": { "persona_ark": "ark:/61903/1:1:FLSQ-1NP", "field": "Birth.date", "value": "15 Dec 1857" }, "note": "Baptism-index birth date 15 Dec 1875 with two digits swapped." },
+
+    { "id": "ok_spelling_ogetree_1870", "type": "spelling_variant", "host": "L5D9-KXT", "source_ark": "ark:/61903/1:1:MC3F-25B", "note": "1870 census indexes the surname Ogetree." },
+    { "id": "ok_spelling_lowis_death_index", "type": "spelling_variant", "host": "L5D9-KXT", "source_ark": "ark:/61903/1:1:V436-QKX", "note": "Georgia Death Index indexes the given name Lowis." },
+    { "id": "ok_nickname_christ_1930", "type": "nickname", "host": "KD96-TV2", "source_ark": "ark:/61903/1:1:X38P-QR8", "note": "1930 census indexes Christian as Christ." },
+    { "id": "ok_nickname_christ_wwii", "type": "nickname", "host": "KD96-TV2", "source_ark": "ark:/61903/1:1:QLF3-C2TY", "note": "WWII draft card indexes Christian as Christ." },
+    { "id": "ok_married_martinez_de_moreira", "type": "maiden_married", "host": "GRS9-MCH", "source_ark": "ark:/61903/1:1:XSX3-1LMQ", "note": "Civil registration indexes her as Adelaida Martinez de Moreira." },
+    { "id": "ok_married_mathea_hole", "type": "maiden_married", "host": "GT7C-5XZ", "source_ark": "ark:/61903/1:1:WPKG-WMW2", "note": "Minnesota death record indexes Mathea Pedersdatter under her married surname Hole." },
+    { "id": "ok_drift_hole_1910", "type": "census_age_drift", "host": "KD96-TV2", "source_ark": "ark:/61903/1:1:M2P3-L4L", "note": "1910 census gives birth year 1877 against the profile's 1876." },
+    { "id": "ok_drift_ogletree_1910", "type": "census_age_drift", "host": "GW4W-DTG", "source_ark": "ark:/61903/1:1:MLLW-J7F", "note": "1910 census gives birth year 1884 against the profile's 1882." },
+    { "id": "ok_patronymic_mathea_pedersdtr", "type": "patronymic", "host": "GT7C-5XZ", "source_ark": "ark:/61903/1:1:683X-BPRQ", "note": "Norwegian church book indexes her by patronymic alone, Mathea Pedersdtr." },
+    { "id": "ok_patronymic_benjamin_christofersen", "type": "patronymic", "host": "KG3Q-68W", "source_ark": "ark:/61903/1:1:687F-WNVD", "note": "Norwegian church book indexes him by patronymic, Benjamin Christofersen, without the farm name Hole." }
+  ]
+}
