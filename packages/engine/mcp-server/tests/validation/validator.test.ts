@@ -3048,6 +3048,7 @@ describe("Research closed shapes", () => {
     { why: "a null place", plant: (r) => (r.namesakes[0].place = null), message: "required field 'place' is null" },
     { why: "an empty name", plant: (r) => (r.namesakes[0].name = ""), message: "'name' must be a non-empty string" },
     { why: "a section that is not an array", plant: (r) => (r.namesakes = { id: "ns_001" }), message: "namesakes must be an array" },
+    { why: "a null section", plant: (r) => (r.namesakes = null), message: "namesakes must be an array" },
     { why: "an unknown log id", plant: (r) => (r.namesakes[0].log_entry_ids = ["log_999"]), message: "references log entry 'log_999'" },
     { why: "a wrong id prefix", plant: (r) => (r.namesakes[0].id = "n_001"), message: "should start with 'ns_'" },
     { why: "a number in notes", plant: (r) => (r.namesakes[0].notes = 7), message: "'notes' must be a string or null" },
@@ -3508,7 +3509,7 @@ describe("a malformed element is reported, never thrown", () => {
   const ARRAYS = [
     "questions", "plans", "log", "sources", "assertions", "person_evidence",
     "conflicts", "hypotheses", "timelines", "proof_summaries", "evaluations",
-    "known_holdings", "localities",
+    "known_holdings", "localities", "namesakes", "warning_justifications",
   ];
 
   for (const section of ARRAYS) {

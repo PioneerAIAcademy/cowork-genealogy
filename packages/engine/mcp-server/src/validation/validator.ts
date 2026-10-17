@@ -1714,7 +1714,7 @@ function validateResearch(data: any, report: ValidationReport): ResearchIds {
  */
 function validateNamesakes(data: any, ids: ResearchIds, path: string, report: ValidationReport): void {
   const rows = data.namesakes;
-  if (rows === null || rows === undefined) return;
+  if (rows === undefined) return;
   if (!Array.isArray(rows)) {
     addError(report, `${path}/namesakes`, "namesakes must be an array");
     return;

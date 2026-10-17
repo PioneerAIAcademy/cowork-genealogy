@@ -16,6 +16,8 @@ One JSON line per run, then one per call the measurement reads:
           applied: its ops, and person_evidence before and after it.
   merge   a merge_tree_persons call: its merges, its outcome, and
           person_evidence and assertion ids at the call.
+  shapes  the call shapes the namesake register rows quote, over every
+          committed run whatever each call's outcome.
 
 `append` and `merge` lines also carry the relationships at the call (the
 starting tree's, plus tree_edit add_relationship with the ref a
@@ -125,14 +127,81 @@ def _pairing(e: dict) -> tuple:
     return (e.get("id"), e.get("assertion_id"), e.get("person_id"))
 
 
+RANK = {"speculative": 0, "possible": 1, "probable": 2, "confident": 3}
+
+
+def _shapes(calls: list, starting: dict, run_ref: str, counts: collections.Counter, runs: dict) -> None:
+    """Count, over every call whatever its outcome: speculative person_evidence
+    appends; person_evidence updates, those naming superseded_by and those
+    clearing it; confidence updates that lower a link (its confidence before
+    the call from harness.replay); tree_correct relationship removes; and
+    merge_tree_persons calls with more than one pair."""
+    for i, call in enumerate(calls):
+        if not isinstance(call, dict):
+            continue
+        name = bare_tool_name(str(call.get("tool") or ""))
+        args = call.get("args") if isinstance(call.get("args"), dict) else {}
+        if name == "merge_tree_persons":
+            merges = args.get("merges")
+            if isinstance(merges, str):
+                try:
+                    merges = json.loads(merges)
+                except ValueError:
+                    merges = None
+            if isinstance(merges, list) and len(merges) > 1:
+                counts["merge calls with more than one pair"] += 1
+        elif name == "tree_correct":
+            for op in _ops(args):
+                if op.get("operation") == "remove" and op.get("relationshipId") and not op.get("factId"):
+                    counts["relationship removes"] += 1
+                    runs["runs with a relationship remove"].add(run_ref)
+        elif name == "research_append":
+            for op in _ops(args):
+                if op.get("section") != "person_evidence":
+                    continue
+                if op.get("op", "append") == "append":
+                    entry = op.get("entry") if isinstance(op.get("entry"), dict) else {}
+                    if entry.get("confidence") == "speculative":
+                        counts["speculative person_evidence appends"] += 1
+                        counts[f"speculative person_evidence appends, {_outcome(call)}"] += 1
+                        runs["runs with a speculative person_evidence append"].add(run_ref)
+                    continue
+                if op.get("op") != "update":
+                    continue
+                fields = op.get("fields") if isinstance(op.get("fields"), dict) else {}
+                counts["person_evidence updates"] += 1
+                if "superseded_by" in fields:
+                    counts["person_evidence updates naming superseded_by"] += 1
+                    if not fields.get("superseded_by"):
+                        counts["person_evidence updates clearing superseded_by"] += 1
+                if "confidence" in fields:
+                    counts["person_evidence confidence updates"] += 1
+                    prior = next(
+                        (e for e in replay(calls, starting, upto=i).research.get("person_evidence") or []
+                         if isinstance(e, dict) and e.get("id") == op.get("entryId")),
+                        None,
+                    )
+                    was, now = RANK.get((prior or {}).get("confidence")), RANK.get(fields.get("confidence"))
+                    if prior is None:
+                        counts["person_evidence confidence updates on an entry the replay lacks"] += 1
+                    elif was is not None and now is not None and now < was:
+                        counts["person_evidence confidence lowerings"] += 1
+
+
 def dump(out_path: Path) -> collections.Counter:
     counts: collections.Counter = collections.Counter()
+    shapes: collections.Counter = collections.Counter()
+    shape_runs: dict = collections.defaultdict(set)
     with out_path.open("w", encoding="utf-8") as out:
         for path in sorted(E2E_RUNLOGS.glob("*/run-*.json")):
             if path.name.endswith(SIDECAR_SUFFIXES):
                 continue
             slug = path.parent.name
             run_ref = f"{slug}/{path.name}"
+            whole_log = _load(path)
+            if whole_log and isinstance(whole_log.get("tool_calls"), list):
+                shapes["runs"] += 1
+                _shapes(whole_log["tool_calls"], _load(E2E_TESTS / slug / "starting-research.json") or {}, run_ref, shapes, shape_runs)
             if not (E2E_TESTS / slug / "fixture.json").exists():
                 counts["skipped: no fixture"] += 1
                 continue
@@ -154,6 +223,7 @@ def dump(out_path: Path) -> collections.Counter:
             counts["runs"] += 1
             counts["runs whose person_evidence the replay rebuilds exactly"] += fidelity
             counts["unparseable calls"] += whole.unparseable
+            counts["unmodelled calls"] += sum(whole.unmodelled.values())
             out.write(json.dumps({
                 "kind": "run", "run": run_ref, "slug": slug, "fidelity": fidelity,
                 "captures_stripped": bool(log.get("captures_stripped")),
@@ -181,8 +251,11 @@ def dump(out_path: Path) -> collections.Counter:
                         "pe_before": before.get("person_evidence") or [],
                     }
                     if name == "research_append":
+                        after = replay(calls, starting, upto=i + 1).research
                         line["ops"] = pe_ops
-                        line["pe_after"] = replay(calls, starting, upto=i + 1).research.get("person_evidence") or []
+                        line["pe_after"] = after.get("person_evidence") or []
+                        line["source_ids_after"] = [x.get("id") for x in after.get("sources") or [] if isinstance(x, dict)]
+                        line["assertion_ids_after"] = [x.get("id") for x in after.get("assertions") or [] if isinstance(x, dict)]
                         counts["append calls dumped"] += 1
                     else:
                         line["merges"] = args.get("merges")
@@ -204,6 +277,9 @@ def dump(out_path: Path) -> collections.Counter:
                             rels.append(rel)
                         elif name == "tree_correct" and op.get("operation") == "remove" and op.get("relationshipId") and not op.get("factId"):
                             rels = [r for r in rels if r.get("id") != op["relationshipId"]]
+        for key, runs in shape_runs.items():
+            shapes[key] = len(runs)
+        out.write(json.dumps({"kind": "shapes", **dict(sorted(shapes.items()))}, ensure_ascii=False) + "\n")
     return counts
 
 

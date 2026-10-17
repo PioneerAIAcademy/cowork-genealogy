@@ -12,16 +12,22 @@
 //   §1  static: each committed e2e final state, a row planted on every person
 //       holding a live probable or confident link, each link judged by
 //       `namesakeVerdicts` with every other such link as a voucher. Relatives
-//       come from the starting tree (TS, the upper bracket on refusals) and from
-//       the final tree (TF, the lower one).
+//       come from the starting tree (TS) and from the final tree (TF). Neither
+//       bounds the other link by link: a relationship the run removed ties in TS
+//       what TF refuses, so §1 prints how many each refuses that the other
+//       allows. Each link is judged twice more, with the two-party set before
+//       item 14b and with one source per record (R = record), to count what
+//       those two choices clear and add.
 //   §2  write time: each research_append call with person_evidence ops in the
 //       runs whose person_evidence the replay rebuilds exactly, with a row
 //       planted before the first call on every person holding a probable or
 //       confident link at the end of the run. Each link the call ASSERTS is
 //       judged by `assertedNamesakeVerdicts`, the function the tool calls, on
 //       the call's state as eval/harness/scripts/dump_namesake_call_states.py
-//       rebuilds it with harness.replay. Relatives come from the relationships
-//       the run had recorded by the call (TR) and from the final tree (TF).
+//       rebuilds it with harness.replay. Relatives come from the relationships,
+//       refs and sources the run had recorded by the call (TR) and from the
+//       final tree (TF). The dump's shapes line counts, over every committed
+//       run, the call shapes the namesake register rows quote.
 //   §3  merges: each committed merge_tree_persons call, rows planted on the
 //       survivors (A), the folded persons (B) and both (C), judged by
 //       `mergeNamesakeRefusals`, `mergeCarryRefusals` and the pair checks on the
@@ -43,8 +49,10 @@ import {
   mergeDirections,
   mergeNamesakeRefusals,
   namesakeVerdicts,
+  RELATIONAL_FACT_TYPES,
   unexplainedMoveInvariants,
 } from "../src/tools/research-append.js";
+import { isTwoParty } from "../src/utils/record-persona.js";
 import { joinedPairRefusals, survivorOrderRefusals } from "../src/tools/merge-tree-persons.js";
 import { startingPersonIdsOf } from "../src/utils/starting-tree.js";
 import { repoRoot } from "./runlog-calls.js";
@@ -190,26 +198,70 @@ function linkedPersons(research: any): string[] {
   return [...out].sort();
 }
 
+/** The project with every two-party assertion outside the set the cap read
+ *  before item 14b (`RELATIONAL_FACT_TYPES`) made one-party. */
+function beforeItem14b(research: any): any {
+  return {
+    ...research,
+    assertions: (research.assertions ?? []).map((a: any) =>
+      a && isTwoParty(a.fact_type) && !RELATIONAL_FACT_TYPES.has(String(a.fact_type ?? "").toLowerCase())
+        ? { ...a, fact_type: "other" }
+        : a,
+    ),
+  };
+}
+
+/** The project with one source per record (R = record): each assertion moves
+ *  to a copy of its source keyed on its record id, citing the same S entry. */
+function onePerRecord(research: any): any {
+  const sourceById = new Map<string, any>(((research.sources ?? []) as any[]).map((x) => [x?.id, x]));
+  const copies = new Map<string, any>();
+  const assertions = ((research.assertions ?? []) as any[]).map((a) => {
+    if (!a || typeof a.source_id !== "string" || typeof a.record_id !== "string") return a;
+    const id = `${a.source_id}#${arkToBareId(a.record_id)}`;
+    if (!copies.has(id)) copies.set(id, { ...(sourceById.get(a.source_id) ?? {}), id });
+    return { ...a, source_id: id };
+  });
+  return { ...research, assertions, sources: [...(research.sources ?? []), ...copies.values()] };
+}
+
 function section1(states: FinalState[]): void {
   console.log(
     "\n§1  static: a row planted on every person holding a live probable or confident link; each such link judged " +
       "with every other as a voucher; TS = relatives from the starting tree, TF = from the final tree",
   );
+  const allowedIn: Record<string, Map<string, boolean>> = { TS: new Map(), TF: new Map() };
   for (const bracket of ["TS", "TF"] as const) {
     const c = {
       judged: 0, refused: 0, subject: 0, subjectRefused: 0,
       byLabel: { true: 0, false: 0, unlabelled: 0 } as Record<string, number>,
       mustFire: 0, mustFireRefused: 0,
       tieBOnly: 0, occupationOnly: 0, crossRecordOnly: 0, crossRecordAny: 0, twoDocOnly: 0, twoDocAny: 0,
+      clears14b: 0, adds14b: 0, clearsR: 0, addsR: 0, selfTieOnly: 0,
     };
     const crossRecordOnly: string[] = [];
+    const crossByLabel: Record<string, number> = { true: 0, false: 0, unlabelled: 0 };
+    const crossFalseBySlug = new Map<string, number>();
+    const crossSubjectByLabel: Record<string, number> = { true: 0, false: 0, unlabelled: 0 };
     for (const s of states) {
       const persons = linkedPersons(s.research);
       const planted = plantRows(s.research, persons);
       const tree = bracket === "TS" ? s.startTree : s.finalTree;
+      const assertionOfLink = new Map<string, unknown>(((planted.person_evidence ?? []) as any[]).map((e) => [e?.id, e?.assertion_id]));
+      const old14b = beforeItem14b(planted);
+      const byRecord = onePerRecord(planted);
       for (const p of persons) {
         const v = namesakeVerdicts(p, planted, tree, { startingPersonIds: s.startingIds });
+        const v14b = namesakeVerdicts(p, old14b, tree, { startingPersonIds: s.startingIds });
+        const vR = namesakeVerdicts(p, byRecord, tree, { startingPersonIds: s.startingIds });
         for (const [id, verdict] of v?.verdicts ?? []) {
+          allowedIn[bracket].set(`${s.slug}/${s.run}/${id}`, verdict.allowed);
+          const was14b = v14b?.verdicts.get(id)?.allowed;
+          if (verdict.allowed && was14b === false) c.clears14b += 1;
+          if (!verdict.allowed && was14b === true) c.adds14b += 1;
+          const wasR = vR?.verdicts.get(id)?.allowed;
+          if (verdict.allowed && wasR === false) c.clearsR += 1;
+          if (!verdict.allowed && wasR === true) c.addsR += 1;
           const isSubject = p === s.subject;
           c.judged += 1;
           if (isSubject) c.subject += 1;
@@ -226,6 +278,8 @@ function section1(states: FinalState[]): void {
           const a = verdict.ties.filter((t) => t.kind === "a");
           const b = verdict.ties.filter((t) => t.kind === "b");
           if (a.length === 0) c.tieBOnly += 1;
+          const own = assertionOfLink.get(id);
+          if (b.length === 0 && a.length > 0 && a.every((t) => t.kind === "a" && assertionOfLink.get(t.link) === own)) c.selfTieOnly += 1;
           if (a.length === 0 && b.every((t) => t.kind === "b" && t.field === "occupation")) c.occupationOnly += 1;
           if (a.some((t) => t.kind === "a" && t.crossRecord)) c.crossRecordAny += 1;
           if (TWO_DOCUMENT_SOURCES.has(`${s.slug}/${s.run}/${verdict.source}`) && a.some((t) => t.kind === "a" && t.crossRecord)) {
@@ -235,6 +289,10 @@ function section1(states: FinalState[]): void {
           if (b.length === 0 && a.every((t) => t.kind === "a" && t.crossRecord)) {
             c.crossRecordOnly += 1;
             crossRecordOnly.push(`${s.slug} ${s.run} ${id} on ${p}`);
+            const label = labelOf(s.slug);
+            crossByLabel[label] += 1;
+            if (label === "false") crossFalseBySlug.set(s.slug, (crossFalseBySlug.get(s.slug) ?? 0) + 1);
+            if (isSubject) crossSubjectByLabel[label] += 1;
           }
         }
       }
@@ -250,9 +308,29 @@ function section1(states: FinalState[]): void {
         `(with any such tie ${c.crossRecordAny}); of those, on a source holding two documents read as one record: ` +
         `${c.twoDocOnly} (with any such tie ${c.twoDocAny})`,
     );
+    console.log(
+      `      of the links allowed only through a co-party on another record id, by fixture: hint the subject's own ` +
+        `${crossByLabel.true}, a namesake's ${crossByLabel.false}` +
+        (crossFalseBySlug.size > 0 ? ` (${[...crossFalseBySlug].map(([k, n]) => `${k} ${n}`).join(", ")})` : "") +
+        `, unlabelled ${crossByLabel.unlabelled}; subject links among them: hint the subject's own ` +
+        `${crossSubjectByLabel.true}, a namesake's ${crossSubjectByLabel.false}, unlabelled ${crossSubjectByLabel.unlabelled}`,
+    );
+    console.log(
+      `      item 14b (the two-party set) clears ${c.clears14b} and adds ${c.adds14b} refusals; ` +
+        `R = source rather than one source per record clears ${c.clearsR} and adds ${c.addsR}; ` +
+        `allowed only through the link's own assertion linked to a relative ${c.selfTieOnly}`,
+    );
     if (VERBOSE) for (const l of crossRecordOnly) console.log(`      cross-record only: ${l}`);
     floor(c.judged > 0 && c.refused > 0, `§1 ${bracket} judged ${c.judged} and refused ${c.refused}`);
   }
+  let tfOnly = 0;
+  let tsOnly = 0;
+  for (const [k, allowed] of allowedIn.TF) {
+    const ts = allowedIn.TS.get(k);
+    if (!allowed && ts === true) tfOnly += 1;
+    if (allowed && ts === false) tsOnly += 1;
+  }
+  console.log(`  links TF refuses that TS allows: ${tfOnly}; links TS refuses that TF allows: ${tsOnly}`);
 }
 
 // ─── §2 ─────────────────────────────────────────────────────────────────────
@@ -294,6 +372,26 @@ function dumpCallStates(): any[] {
   }
 }
 
+function shapesLine(lines: any[]): void {
+  const sh = lines.find((l) => l.kind === "shapes") ?? {};
+  const n = (k: string) => sh[k] ?? 0;
+  console.log(`\nshapes  every call of the ${n("runs")} committed e2e runs, whatever its outcome`);
+  console.log(
+    `  speculative person_evidence appends ${n("speculative person_evidence appends")} in ` +
+      `${n("runs with a speculative person_evidence append")} runs (applied ${n("speculative person_evidence appends, applied")}, ` +
+      `refused ${n("speculative person_evidence appends, rejected")}, response stripped ${n("speculative person_evidence appends, unknown")})`,
+  );
+  console.log(
+    `  person_evidence updates ${n("person_evidence updates")}: naming superseded_by ${n("person_evidence updates naming superseded_by")}, ` +
+      `clearing it ${n("person_evidence updates clearing superseded_by")}; setting a confidence ${n("person_evidence confidence updates")}, ` +
+      `lowering one ${n("person_evidence confidence lowerings")} (${n("person_evidence confidence updates on an entry the replay lacks")} on an entry the replay lacks)`,
+  );
+  console.log(
+    `  tree_correct relationship removes ${n("relationship removes")} in ${n("runs with a relationship remove")} runs; ` +
+      `merge_tree_persons calls with more than one pair ${n("merge calls with more than one pair")}`,
+  );
+}
+
 function section2(lines: any[], states: FinalState[]): void {
   console.log(
     "\n§2  write time: rows planted before the first call on every person holding a probable or confident " +
@@ -305,7 +403,7 @@ function section2(lines: any[], states: FinalState[]): void {
   const calls = lines.filter((l) => l.kind === "append" && rebuilt.has(l.run) && byRun.has(l.run));
   console.log(`  population: ${rebuilt.size} runs whose person_evidence the replay rebuilds exactly; ${calls.length} calls with person_evidence ops`);
   for (const bracket of ["TR", "TF"] as const) {
-    const c = { asserted: 0, refused: 0, callsRefused: 0, byLabel: { true: 0, false: 0, unlabelled: 0 } as Record<string, number>, other: 0 };
+    const c = { asserted: 0, refused: 0, callsAsserting: 0, callsRefused: 0, byLabel: { true: 0, false: 0, unlabelled: 0 } as Record<string, number>, other: 0 };
     const mustFire = new Map<string, { judged: number; refused: number }>();
     const mustFireJudged = new Set<string>();
     const perRun = new Map<string, { asserted: number; refused: number; subject: number }>();
@@ -317,14 +415,33 @@ function section2(lines: any[], states: FinalState[]): void {
       for (const e of (s.research.person_evidence ?? []) as any[]) {
         if (e && STRONG.has(e.confidence) && typeof e.person_id === "string") rowed.add(e.person_id);
       }
-      const base = plantRows(s.research, [...rowed].sort());
-      const tree = bracket === "TF" ? s.finalTree : { persons: s.finalTree.persons ?? [], relationships: call.relationships };
+      let base = plantRows(s.research, [...rowed].sort());
+      let tree: any = s.finalTree;
+      if (bracket === "TR") {
+        const sourceIds = new Set<string>(call.source_ids_after ?? call.source_ids);
+        const assertionIds = new Set<string>(call.assertion_ids_after ?? []);
+        const sources = ((s.research.sources ?? []) as any[]).filter((x) => sourceIds.has(x?.id));
+        const sIds = new Set<string>([
+          ...call.starting_s_ids,
+          ...sources.map((x) => x?.gedcomx_source_description_id).filter((id: unknown) => typeof id === "string"),
+        ]);
+        base = {
+          ...base,
+          sources,
+          assertions: assertionIds.size > 0 ? ((base.assertions ?? []) as any[]).filter((a) => assertionIds.has(a?.id)) : base.assertions,
+        };
+        tree = {
+          persons: ((s.finalTree.persons ?? []) as any[]).map((p) => keepRefs(structuredClone(p), sIds)),
+          relationships: call.relationships,
+        };
+      }
       const asserted = assertedNamesakeVerdicts(
         { research: { ...base, person_evidence: call.pe_before } },
         { research: { ...base, person_evidence: call.pe_after }, tree },
         new Set<string>(call.starting_ids),
       );
       let refusedHere = false;
+      if (asserted.length > 0) c.callsAsserting += 1;
       const assertionById = new Map(((s.research.assertions ?? []) as any[]).map((a) => [a?.id, a]));
       for (const { entry, verdict } of asserted) {
         c.asserted += 1;
@@ -350,7 +467,7 @@ function section2(lines: any[], states: FinalState[]): void {
     }
     const mf = [...mustFire.values()].reduce((t, m) => ({ judged: t.judged + m.judged, refused: t.refused + m.refused }), { judged: 0, refused: 0 });
     console.log(
-      `  ${bracket}: asserted links ${c.asserted}, refused ${c.refused} in ${c.callsRefused} calls (subject: hint the subject's own ` +
+      `  ${bracket}: asserted links ${c.asserted} in ${c.callsAsserting} calls, refused ${c.refused} in ${c.callsRefused} calls (subject: hint the subject's own ` +
         `${c.byLabel.true}, a namesake's ${c.byLabel.false}, unlabelled ${c.byLabel.unlabelled}; other people ${c.other}) | ` +
         `must-fire records refused ${mf.refused} of ${mf.judged}`,
     );
@@ -362,6 +479,7 @@ function section2(lines: any[], states: FinalState[]): void {
       }
     }
     floor(c.asserted > 0 && c.refused > 0, `§2 ${bracket} asserted ${c.asserted} and refused ${c.refused}`);
+    floor(mf.refused > 0, `§2 ${bracket} refused ${mf.refused} of the ${mf.judged} must-fire subject links`);
     const lost = [...MUST_FIRE_LINKS].filter((k) => !mustFireJudged.has(k));
     floor(lost.length === 0, `§2 ${bracket} judged ${MUST_FIRE_LINKS.size - lost.length} of the ${MUST_FIRE_LINKS.size} must-fire links; not judged: ${lost.join(", ")}`);
   }
@@ -465,6 +583,8 @@ function section3(lines: any[], states: FinalState[]): void {
       "the survivors (A), on the folded persons (B), and on both (C), all of a call's rows at once",
   );
   const byRun = new Map(states.map((s) => [`${s.slug}/run-${s.run}.json`, s]));
+  const stripped = new Set(lines.filter((l) => l.kind === "run" && l.captures_stripped).map((l) => l.run));
+  const unmeasured = (w: MergeWorld) => stripped.has(w.line.run) && (w.line.pe_before ?? []).length === 0;
   const worlds = lines
     .filter((l) => l.kind === "merge" && byRun.has(l.run))
     .map((l) => mergeWorld(l, byRun.get(l.run)!));
@@ -473,7 +593,8 @@ function section3(lines: any[], states: FinalState[]): void {
   for (const w of worlds) {
     console.log(
       `    ${w.line.run} #${w.line.call} ${JSON.stringify(w.merges)} outcome ${w.line.outcome}` +
-        (w.rebuilt.length > 0 ? `; folded ${w.rebuilt.join(", ")} rebuilt from the final tree` : ""),
+        (w.rebuilt.length > 0 ? `; folded ${w.rebuilt.join(", ")} rebuilt from the final tree` : "") +
+        (unmeasured(w) ? "; unmeasured: its captures were stripped, so the replay rebuilds no person_evidence at this call" : ""),
     );
   }
   const joined = worlds.reduce((n, w) => n + joinedPairRefusals(w.tree, w.merges).filter((l) => l.startsWith("relationship")).length, 0);
@@ -506,7 +627,7 @@ function section3(lines: any[], states: FinalState[]): void {
             console.log(`      ${scenario} ${w.line.run} ${d.G}->${d.T} ${id} refused (${mark})`);
           }
         }
-        const triggers = carryTriggerSources(before, d, w.startingIds);
+        const triggers = carryTriggerSources(before, d);
         if (triggers.size > 0) triggering += 1;
         for (const reasons of triggers.values()) {
           if (reasons.every((r) => r.endsWith("withdrawn") || r.endsWith("speculative"))) rev5 += 1;
@@ -578,10 +699,13 @@ function section3(lines: any[], states: FinalState[]): void {
       }
     }
   }
-  console.log(`  unmoved probable or confident links: ${unmoved}; allowed before the merge and refused after: ${flips}`);
+  const measured = worlds.filter((w) => !unmeasured(w)).length;
+  console.log(
+    `  unmoved probable or confident links, in the ${measured} measured calls: ${unmoved}; ` +
+      `allowed before the merge and refused after: ${flips}`,
+  );
 
-  // Brackets: relatives from the starting tree (upper bound) and from the
-  // final tree (lower bound), A and B.
+  // Brackets: relatives from the starting tree and from the final tree, A and B.
   for (const bracket of ["starting", "final"] as const) {
     const out: Record<string, number> = {};
     for (const scenario of ["A", "B"] as const) {
@@ -652,7 +776,7 @@ function section3(lines: any[], states: FinalState[]): void {
     const after = plantOn(w, rowsOn, lowered);
     const directions = mergeDirections(after, w.merges, w.startingIds);
     const judged = directions.reduce((n, d) => n + d.moved.size, 0);
-    const triggers = directions.flatMap((d) => [...carryTriggerSources(after, d, w.startingIds).keys()]);
+    const triggers = directions.flatMap((d) => [...carryTriggerSources(after, d).keys()]);
     const items = mergeCarryRefusals(after, w.merges, w.startingIds).filter((l) => !l.startsWith("Nothing was written"));
     console.log(
       `  lowering replay at ${w.line.run} #${w.line.call}: ${refusedIds.size} links lowered; part 1 judges ${judged}; ` +
@@ -672,6 +796,7 @@ const { states, skipped } = finalStates();
 console.log(`\nfinal states: ${states.length} (skipped ${skipped}: no fixture subject, or a document missing)`);
 section1(states);
 const lines = dumpCallStates();
+shapesLine(lines);
 section2(lines, states);
 section3(lines, states);
 if (floorsFailed > 0) {

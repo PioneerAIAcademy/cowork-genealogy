@@ -85,7 +85,7 @@ import {
   factTypeKey,
   isTwoParty,
 } from "../utils/record-persona.js";
-import { gatherRelatives, hasRealGivenName } from "../utils/relatives.js";
+import { gatherRelatives, isRealGivenName, PLACEHOLDER_GIVEN } from "../utils/relatives.js";
 import { factsEquivalent, namesEquivalent, relationshipMatches } from "../utils/merge-gedcomx.js";
 import type { SimplifiedGedcomX, SimplifiedFact } from "../types/gedcomx.js";
 import { recordBasisOf } from "../utils/record-basis.js";
@@ -1101,7 +1101,7 @@ function personEvidenceInvariants(entry: any, research: any): string[] {
 /** Assertions naming two people. The link may be about either side, so the
  *  assertion's own party identifiers cannot be assumed to describe the person
  *  being linked. */
-const RELATIONAL_FACT_TYPES: ReadonlySet<string> = new Set([
+export const RELATIONAL_FACT_TYPES: ReadonlySet<string> = new Set([
   "relationship", "parentage", "parentchild", "marriage",
 ]);
 
@@ -2201,28 +2201,92 @@ function relativesById(tree: any, personId: string): Map<string, { relation: Nam
   return out;
 }
 
+/** The words of a given name that name someone: lower case, dots and brackets
+ *  dropped, placeholder words ("Mrs.", "Wife", "Unknown") and "of" left out. */
+function ownGivenWords(given: unknown): string[] {
+  if (typeof given !== "string") return [];
+  return given
+    .toLowerCase()
+    .replace(/[.[\]]/g, " ")
+    .split(/\s+/)
+    .filter((w) => w !== "" && w !== "of" && /\p{L}/u.test(w) && !PLACEHOLDER_GIVEN.has(w));
+}
+
+/** Why a relative's names cannot separate namesakes, or null when one can. A
+ *  relative separates them only through a given name of their own: not a
+ *  placeholder, and not one that only repeats the given name of the relative's
+ *  own spouse, the way an unnamed wife is recorded ({prefix "Mrs.", given
+ *  "James"}, "Mrs. James", "Wife of James", "Mrs. J." for the wife of James). */
+function givenNameProblem(person: any, tree: any): string | null {
+  const names = (Array.isArray(person?.names) ? person.names : []) as any[];
+  if (!names.some((n) => isRealGivenName(n?.given))) return "has no given name";
+  const spouseGiven = new Set<string>();
+  for (const s of gatherRelatives(tree ?? {}, String(person?.id)).spouse) {
+    for (const n of (Array.isArray(s?.names) ? s.names : []) as any[]) {
+      const words = ownGivenWords(n?.given);
+      if (words.length > 0) spouseGiven.add(words.join(" "));
+    }
+  }
+  const own = names.some((n) => {
+    const words = ownGivenWords(n?.given);
+    if (!isRealGivenName(n?.given) || words.length === 0 || spouseGiven.has(words.join(" "))) return false;
+    const marked =
+      PLACEHOLDER_GIVEN.has(String(n?.prefix ?? "").toLowerCase().replace(/\./g, "").trim()) ||
+      String(n?.given).toLowerCase().replace(/[.[\]]/g, " ").split(/\s+/).some((w) => PLACEHOLDER_GIVEN.has(w));
+    return !(marked && words.length === 1 && words[0].length === 1 && [...spouseGiven].some((g) => g.startsWith(words[0])));
+  });
+  return own ? null : "has no given name of their own, only their spouse's";
+}
+
 function capNorm(v: unknown): string {
   return String(v ?? "").trim().toLowerCase().replace(/\s+/g, " ");
 }
 
-/** A house number: `#12`, `house 12`, `no. 12`, or a number before a street
- *  word. A number from 1000 to 2200 reads as a year unless a street suffix is
- *  present, and a month, census, district or ward word after the number is not
- *  a street. */
-const HOUSE_TOKEN =
-  /(?:#\s?(\d+))|(?:(?<![\p{L}\p{N}_])(?:house|no\.?|nr\.?)\s?#?\s?(\d+))|(?:(?<![\p{L}\p{N}_#])(\d{1,5})[a-z]?\s+(\p{L}\p{L}+))/giu;
+/** A house number: `#12`, `house 12`, `no. 12`; a number before a street name,
+ *  past a direction letter or as an ordinal street (`530 Baldwin`, `6906 W.
+ *  Lloyd`, `350 12th Street`); or a number after a street word (`Hauptstraße
+ *  12`, `Via Roma 12`). A number from 1000 to 2200 before a name reads as a
+ *  year unless a street suffix is present; a month, census or measure word
+ *  after the number is not a street; and a number after a division word
+ *  (`District No. 7`, `Ward 12`, `Route 2`, `Dwelling 45`) is the division's. */
+const HOUSE_TOKEN = new RegExp(
+  [
+    String.raw`(?:#\s?(\d+))`,
+    String.raw`(?:(?<![\p{L}\p{N}_])(?:house|no\.?|nr\.?)\s?#?\s?(\d+))`,
+    String.raw`(?:(?<![\p{L}\p{N}_#])(\d{1,5})[a-z]?\s+(?:(?:n|s|e|w|ne|nw|se|sw|north|south|east|west)\.?\s+)?(\p{L}\p{L}+|\d+(?:st|nd|rd|th)))`,
+    String.raw`(?:(?<![\p{L}\p{N}_])(?:\p{L}*(?:strasse|straße|gasse|straat|weg|laan|gracht|platz|allee)|(?:via|viale|calle|rue|rua|avenida|piazza|plaza|ulica)\s+\p{L}[\p{L}'.-]*(?:\s+\p{L}[\p{L}'.-]*){0,3})\s+(\d{1,4})[a-z]?(?![\p{L}\p{N}]))`,
+  ].join("|"),
+  "giu",
+);
 const NOT_A_STREET: ReadonlySet<string> = new Set([
   "jan", "january", "feb", "february", "mar", "march", "apr", "april", "may", "jun", "june", "jul",
   "july", "aug", "august", "sep", "sept", "september", "oct", "october", "nov", "november", "dec",
   "december", "census", "district", "precinct", "ward", "militia", "township", "beat", "federal",
-  "national", "state", "and", "in", "of", "years", "yrs", "age",
+  "national", "state", "and", "in", "of", "years", "yrs", "age", "ed", "ad", "mile", "miles", "mi",
+  "km", "dwelling", "dwellings", "family", "families", "line", "sheet", "page", "lot", "lots",
+  "block", "acre", "acres", "rods", "chains", "feet", "ft", "persons", "children", "index",
+]);
+/** A division whose number is not a house's: `District No. 7`, `Ward #3`,
+ *  `R.F.D. No. 2`, `Route 2`, `Ward 12 ED 83`, `Sheet 4A line 12`. */
+const DIVISION_WORDS: ReadonlySet<string> = new Set([
+  "district", "dist", "precinct", "pct", "ward", "militia", "township", "twp", "beat", "route", "rt",
+  "rte", "rfd", "rr", "box", "ed", "ad", "enumeration", "dwelling", "family", "line", "sheet", "page",
+  "lot", "block", "section", "sec", "range", "tract", "plat", "parish", "apt", "apartment", "unit",
+  "suite", "room",
 ]);
 const STREET_SUFFIX =
   /\b(?:st|street|ave|avenue|rd|road|lane|ln|blvd|boulevard|court|ct|row|terrace|square|sq|way|drive|dr|strasse|gasse|calle|rue)\b/;
 
+/** The word just before `index`, dots dropped (`r.f.d.` reads `rfd`). */
+function wordBefore(v: string, index: number): string {
+  const m = /([\p{L}.]+)[\s,;:]*$/u.exec(v.slice(0, index));
+  return m ? m[1].replace(/\./g, "").toLowerCase() : "";
+}
+
 function hasHouseNumber(v: string): boolean {
   for (const m of v.matchAll(HOUSE_TOKEN)) {
-    if (m[1] !== undefined || m[2] !== undefined) return true;
+    if (DIVISION_WORDS.has(wordBefore(v, m.index ?? 0))) continue;
+    if (m[1] !== undefined || m[2] !== undefined || m[5] !== undefined) return true;
     if (NOT_A_STREET.has(m[4].toLowerCase())) continue;
     const n = Number(m[3]);
     if (n >= 1000 && n <= 2200 && !STREET_SUFFIX.test(v)) continue;
@@ -2280,7 +2344,12 @@ export function namesakeVerdicts(
   personId: string,
   research: any,
   tree: any,
-  opts: { startingPersonIds?: ReadonlySet<string>; voucherPairs?: ReadonlySet<string> } = {},
+  opts: {
+    startingPersonIds?: ReadonlySet<string>;
+    voucherPairs?: ReadonlySet<string>;
+    /** Judge only these links; every strong link still counts as a voucher. */
+    only?: ReadonlySet<string>;
+  } = {},
 ): NamesakeVerdicts | null {
   const rows = (Array.isArray(research?.namesakes) ? research.namesakes : []).filter(
     (r: any) => r && r.person_id === personId,
@@ -2318,7 +2387,7 @@ export function namesakeVerdicts(
   );
 
   const verdicts = new Map<string, NamesakeVerdict>();
-  for (const e of judged) {
+  for (const e of opts.only ? judged.filter((m) => opts.only!.has(m.id)) : judged) {
     const a = assertionById.get(e.assertion_id);
     const source = capSource(a);
     // The record parties this link speaks for: its own, unless its assertion
@@ -2353,11 +2422,14 @@ export function namesakeVerdicts(
         reasons.push(`${who}, who is not a spouse, parent or child of '${personId}' in the tree.`);
       } else if (mintedFromThisSource(l.person_id, String(source), research, tree, opts.startingPersonIds)) {
         reasons.push(`${who}, '${personId}''s ${rel.relation}, but '${l.person_id}' was created from this source alone.`);
-      } else if (!hasRealGivenName(rel.person)) {
-        reasons.push(`${who}, '${personId}''s ${rel.relation}, but '${l.person_id}' has no given name.`);
       } else {
-        const crossRecord = arkToBareId(String(al.record_id ?? "")) !== arkToBareId(String(a.record_id ?? ""));
-        ties.push({ kind: "a", link: String(l.id), relative: l.person_id, relation: rel.relation, crossRecord });
+        const problem = givenNameProblem(rel.person, tree);
+        if (problem) {
+          reasons.push(`${who}, '${personId}''s ${rel.relation}, but '${l.person_id}' ${problem}.`);
+        } else {
+          const crossRecord = arkToBareId(String(al.record_id ?? "")) !== arkToBareId(String(a.record_id ?? ""));
+          ties.push({ kind: "a", link: String(l.id), relative: l.person_id, relation: rel.relation, crossRecord });
+        }
       }
     }
     if (!strongCoParty) {
@@ -2451,7 +2523,8 @@ export function namesakeTieInvariants(
 /** The links one research_append call ASSERTS to a person with a namesake row
  *  after the call, each with the cap's verdict: a link live and probable or
  *  confident after the call whose pairing was not before, or whose confidence
- *  rose (an append, a re-point, an un-supersede, a raise). Vouchers are the
+ *  is above that pairing's strongest live link before the call (an append, a
+ *  re-point, an un-supersede, a raise). Only those links are judged. Vouchers are the
  *  pairings live and probable or better both before and after the call, so a
  *  link cannot vouch in the call that writes it. Links the call did not assert
  *  are not returned. */
@@ -2462,29 +2535,37 @@ export function assertedNamesakeVerdicts(
 ): Array<{ entry: any; rows: any[]; verdict: NamesakeVerdict }> {
   const rows = Array.isArray(after.research?.namesakes) ? after.research.namesakes : [];
   if (rows.length === 0) return [];
+  const holders = new Set(rows.map((r: any) => r?.person_id).filter((p: unknown) => typeof p === "string"));
+  // The strongest live entry of each pairing before the call, so a weaker
+  // duplicate of a standing link never makes it read as raised.
   const strongBefore = new Map<string, any>();
   for (const e of (Array.isArray(before.research?.person_evidence) ? before.research.person_evidence : []) as any[]) {
-    if (isLiveStrong(e)) strongBefore.set(pairingKey(e), e);
+    if (!isLiveStrong(e)) continue;
+    const prev = strongBefore.get(pairingKey(e));
+    if (!prev || CONFIDENCE_RANK[e.confidence] > CONFIDENCE_RANK[prev.confidence]) strongBefore.set(pairingKey(e), e);
   }
   const strongAfter = new Set<string>();
+  const assertedBy = new Map<string, Set<string>>();
   for (const e of (Array.isArray(after.research?.person_evidence) ? after.research.person_evidence : []) as any[]) {
-    if (isLiveStrong(e)) strongAfter.add(pairingKey(e));
+    if (!isLiveStrong(e)) continue;
+    strongAfter.add(pairingKey(e));
+    if (!holders.has(e.person_id) || typeof e.id !== "string") continue;
+    const prev = strongBefore.get(pairingKey(e));
+    if (prev && CONFIDENCE_RANK[e.confidence] <= CONFIDENCE_RANK[prev.confidence]) continue;
+    const ids = assertedBy.get(e.person_id);
+    if (ids) ids.add(e.id);
+    else assertedBy.set(e.person_id, new Set([e.id]));
   }
+  if (assertedBy.size === 0) return [];
   const voucherPairs = new Set([...strongBefore.keys()].filter((k) => strongAfter.has(k)));
   const entryById = new Map<string, any>();
   for (const e of (after.research.person_evidence ?? []) as any[]) if (e && typeof e.id === "string") entryById.set(e.id, e);
 
   const out: Array<{ entry: any; rows: any[]; verdict: NamesakeVerdict }> = [];
-  const people = [...new Set(rows.map((r: any) => r?.person_id).filter((p: unknown) => typeof p === "string"))] as string[];
-  for (const p of people.sort()) {
-    const v = namesakeVerdicts(p, after.research, after.tree, { startingPersonIds, voucherPairs });
+  for (const p of [...assertedBy.keys()].sort()) {
+    const v = namesakeVerdicts(p, after.research, after.tree, { startingPersonIds, voucherPairs, only: assertedBy.get(p) });
     if (!v) continue;
-    for (const [id, verdict] of v.verdicts) {
-      const e = entryById.get(id);
-      const prev = strongBefore.get(pairingKey(e));
-      const asserted = !prev || CONFIDENCE_RANK[e.confidence] > CONFIDENCE_RANK[prev.confidence];
-      if (asserted) out.push({ entry: e, rows: v.rows, verdict });
-    }
+    for (const [id, verdict] of v.verdicts) out.push({ entry: entryById.get(id), rows: v.rows, verdict });
   }
   return out;
 }
@@ -2542,6 +2623,9 @@ export interface MergeDirection {
   /** The cap's verdict on each of G's live probable or confident links,
    *  judged as a link to T on the project before the merge. */
   moved: Map<string, NamesakeVerdict>;
+  /** The same for T's own live probable or confident links, on the same
+   *  projection, so part 3 reads T's links as part 1 does. */
+  own: Map<string, NamesakeVerdict>;
 }
 
 function namesakeRowsOf(research: any, personId: string): any[] {
@@ -2551,9 +2635,11 @@ function namesakeRowsOf(research: any, personId: string): any[] {
 }
 
 /** Every direction of every pair in which a member holds a row, with G's links
- *  judged on T: G's links point at T, a link to someone the call merges with
- *  one of T's spouses, parents or children points at that relative, and only
- *  T's own links from before the merge can vouch. */
+ *  judged on T: G's links point at T, and only T's own links from before the
+ *  merge can vouch. A spouse, parent or child of T whom this call merges with
+ *  someone is judged as the person the merge makes, the way it will stand after
+ *  the merge: the survivor's id, both copies' names and refs, and each copy's
+ *  links pointed at it. */
 export function mergeDirections(
   before: { research: any; tree: any },
   merges: ReadonlyArray<readonly [string, string]>,
@@ -2569,28 +2655,79 @@ export function mergeDirections(
     for (const [T, G] of [[s, c], [c, s]] as const) {
       const rows = namesakeRowsOf(before.research, T);
       if (rows.length === 0) continue;
-      const relatives = [...relativesById(before.tree, T).keys()];
+      // Each member of a merge group holding one of T's relatives, keyed to the
+      // group's survivor.
+      const merged = new Map<string, string>();
+      for (const r of relativesById(before.tree, T).keys()) {
+        const g = group(r);
+        if (r === s || r === c || g === T || g === G) continue;
+        const members = [g, ...[...survivorOf].filter(([, sv]) => sv === g).map(([m]) => m)];
+        if (members.length < 2) continue;
+        for (const m of members) merged.set(m, g);
+      }
+      const tree = merged.size === 0 ? before.tree : mergedPersonsTree(before.tree, merged);
       const projected = {
         ...before.research,
         person_evidence: evidence.map((e) => {
           if (!e || e.superseded_by || typeof e.person_id !== "string") return e;
           if (e.person_id === G) return { ...e, person_id: T };
-          if (e.person_id === T) return e;
-          const r = relatives.find((r) => r !== e.person_id && r !== s && r !== c && group(r) === group(e.person_id));
-          return r === undefined ? e : { ...e, person_id: r };
+          const g = merged.get(e.person_id);
+          return g === undefined || g === e.person_id ? e : { ...e, person_id: g };
         }),
       };
       const voucherPairs = new Set(evidence.filter((e) => isLiveStrong(e) && e.person_id === T).map(pairingKey));
-      const v = namesakeVerdicts(T, projected, before.tree, { startingPersonIds, voucherPairs });
+      const v = namesakeVerdicts(T, projected, tree, { startingPersonIds, voucherPairs });
       const moved = new Map<string, NamesakeVerdict>();
+      const own = new Map<string, NamesakeVerdict>();
       for (const e of evidence) {
-        const verdict = e && !e.superseded_by && e.person_id === G ? v?.verdicts.get(e.id) : undefined;
-        if (verdict) moved.set(e.id, verdict);
+        const verdict = e && !e.superseded_by ? v?.verdicts.get(e.id) : undefined;
+        if (!verdict) continue;
+        if (e.person_id === G) moved.set(e.id, verdict);
+        else if (e.person_id === T) own.set(e.id, verdict);
       }
-      out.push({ survivor: s, folded: c, T, G, rows, moved });
+      out.push({ survivor: s, folded: c, T, G, rows, moved, own });
     }
   }
   return out;
+}
+
+/** The tree with each merge group in `merged` (member id to survivor id) made
+ *  one person under the survivor's id, holding every member's names, facts and
+ *  person-level sources, with every relationship pointed at it. */
+function mergedPersonsTree(tree: any, merged: ReadonlyMap<string, string>): any {
+  const persons = (Array.isArray(tree?.persons) ? tree.persons : []) as any[];
+  const members = new Map<string, any[]>();
+  for (const p of persons) {
+    const g = typeof p?.id === "string" ? merged.get(p.id) : undefined;
+    if (g === undefined) continue;
+    const list = members.get(g) ?? [];
+    if (p.id === g) list.unshift(p);
+    else list.push(p);
+    members.set(g, list);
+  }
+  const all = (list: any[], field: string) => list.flatMap((m) => (Array.isArray(m?.[field]) ? m[field] : []));
+  const outPersons: any[] = [];
+  for (const p of persons) {
+    const g = typeof p?.id === "string" ? merged.get(p.id) : undefined;
+    if (g === undefined) outPersons.push(p);
+    else if (p.id === g) {
+      const list = members.get(g) ?? [p];
+      outPersons.push({ ...p, names: all(list, "names"), facts: all(list, "facts"), sources: all(list, "sources") });
+    }
+  }
+  const map = (id: unknown) => (typeof id === "string" ? (merged.get(id) ?? id) : id);
+  const relationships = ((Array.isArray(tree?.relationships) ? tree.relationships : []) as any[]).map((r) =>
+    r
+      ? {
+          ...r,
+          ...(r.parent !== undefined ? { parent: map(r.parent) } : {}),
+          ...(r.child !== undefined ? { child: map(r.child) } : {}),
+          ...(r.person1 !== undefined ? { person1: map(r.person1) } : {}),
+          ...(r.person2 !== undefined ? { person2: map(r.person2) } : {}),
+        }
+      : r,
+  );
+  return { ...tree, persons: outPersons, relationships };
 }
 
 const MERGE_LINK_ROUTING =
@@ -2737,18 +2874,16 @@ function carriedItems(tree: any, d: MergeDirection, survivorOf: ReadonlyMap<stri
 
 /** Part 3's trigger for one direction: each research source that some link of
  *  G or T comes from, at any confidence, live or withdrawn, and whose live
- *  probable or confident links to them are all refused (G's by part 1, T's own
- *  by the cap on T), with the reason for each link. A link from an
+ *  probable or confident links to them are all refused (both judged as part 1
+ *  judges them, in `d`), with the reason for each link. A link from an
  *  absent-basis assertion is ignored both ways, and a source with no link to
  *  either never triggers, which covers a relative's records. */
 export function carryTriggerSources(
   before: { research: any; tree: any },
   d: MergeDirection,
-  startingPersonIds?: ReadonlySet<string>,
 ): Map<string, string[]> {
   const assertionById = new Map<string, any>();
   for (const a of (before.research?.assertions ?? []) as any[]) if (a && typeof a.id === "string") assertionById.set(a.id, a);
-  const own = namesakeVerdicts(d.T, before.research, before.tree, { startingPersonIds });
   const bySource = new Map<string, any[]>();
   for (const e of (before.research?.person_evidence ?? []) as any[]) {
     if (!e || (e.person_id !== d.G && e.person_id !== d.T)) continue;
@@ -2761,7 +2896,7 @@ export function carryTriggerSources(
   const out = new Map<string, string[]>();
   for (const [sourceId, named] of bySource) {
     const allowed = named.some(
-      (e) => isLiveStrong(e) && (e.person_id === d.G ? d.moved.get(e.id)?.allowed : own?.verdicts.get(e.id)?.allowed),
+      (e) => isLiveStrong(e) && (e.person_id === d.G ? d.moved : d.own).get(e.id)?.allowed,
     );
     if (allowed) continue;
     out.set(
@@ -2795,7 +2930,7 @@ export function mergeCarryRefusals(
   for (const [s, c] of merges) survivorOf.set(c, s);
   const out: string[] = [];
   for (const d of directions) {
-    const triggers = carryTriggerSources(before, d, startingPersonIds);
+    const triggers = carryTriggerSources(before, d);
     const lines: string[] = [];
     for (const item of carriedItems(before.tree, d, survivorOf)) {
       for (const ref of item.refs) {

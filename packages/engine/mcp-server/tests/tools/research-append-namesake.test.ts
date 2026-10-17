@@ -193,6 +193,21 @@ function noId<T extends Record<string, unknown>>(e: T): Omit<T, "id"> {
 }
 const addAssertion = (entry: Record<string, unknown>) => ({ section: "assertions", op: "append", entry: noId(entry) });
 
+/** A pre-call voucher tied by family: P is the son on his father's census,
+ *  whose head is linked to his father, and the son's `factType` there is
+ *  `value`; the census head of src_001 carries the same value. */
+function tiedVoucher(factType: "occupation" | "residence", value: string): Record<string, any> {
+  const extra = factType === "residence" ? { place: NILES } : {};
+  return research({
+    assertions: [
+      ...baseAssertions().filter((a) => a.id !== (factType === "residence" ? "a_005" : "a_004")),
+      assertion(factType === "residence" ? "a_005" : "a_004", "src_001", REC.census, "head", factType, value, extra),
+      assertion("a_032", "src_004", REC.fatherCensus, "son", factType, value, extra),
+    ],
+    person_evidence: [standing("pe_001", "a_032", P), standing("pe_002", "a_030", F)],
+  });
+}
+
 describe("namesake cap", () => {
   let dir: string;
   beforeEach(async () => {
@@ -436,12 +451,120 @@ describe("namesake cap", () => {
       ["the town its place names", "Niles, Trumbull, Ohio", "Niles, Trumbull, Ohio", "Niles, Trumbull, Ohio"],
       ["a village name with differing places", "Lidečko", "Lidečko, Zlín, Czech Republic", "Vsetín, Zlín, Czech Republic"],
       ["a town, a county and a year", "Niles, Trumbull, 1880", NILES, NILES],
+      ["a date in another language", "15 Mai 1880", NILES, NILES],
+      ["a street address equal to its own place", ADDRESS, ADDRESS, ADDRESS],
+      ["a year before a town", "1880 Niles, Trumbull", NILES, NILES],
+      ["a militia district number", "Militia District No. 588, Hall, Georgia", NILES, NILES],
+      ["a ward and enumeration district", "Rochester Ward 12 ED 83, Monroe County, New York, 1900", NILES, NILES],
+      ["a rural route", "R.F.D. No. 2, Niles, Ohio", NILES, NILES],
+      ["a dwelling and family number", "Dwelling 45 family 47", NILES, NILES],
     ])("refuses a residence tie on %s", async (_label, value, censusPlace, voterPlace) => {
       await setup(residencePair(value, censusPlace, voterPlace));
       await attest(["a_001", P]);
       const r = await call(link("a_001", P));
       expect(r.ok).toBe(false);
       expect(capErrors(r)).toHaveLength(1);
+    });
+
+    it("refuses a voucher on the link's own source", async () => {
+      await setup(research({ person_evidence: [standing("pe_001", "a_011", P)] }));
+      await attest(["a_010", P]);
+      const r = await call(link("a_010", P));
+      expect(r.ok).toBe(false);
+      expect(errs(r)).toContain("nothing in source 'src_002' ties assertion 'a_010'");
+    });
+
+    it("refuses a link whose only other party is linked through an absent-basis assertion", async () => {
+      await setup(
+        research({
+          assertions: [
+            ...baseAssertions(),
+            assertion("a_093", "src_001", REC.census, "wife", "birth", "Birthplace not stated", { record_basis: "absent" }),
+          ],
+        }),
+      );
+      await attest(["a_093", W], ["a_001", P]);
+      const r = await call(link("a_093", W), link("a_001", P));
+      expect(r.ok).toBe(false);
+      expect(errs(r)).toContain("No other party of this source is linked at 'probable' or better to anyone else in the tree.");
+    });
+
+    it("refuses an occupation tie read from an absent-basis assertion", async () => {
+      await setup(
+        research({
+          assertions: [
+            ...baseAssertions(),
+            assertion("a_094", "src_001", REC.census, "head", "occupation", "None", { record_basis: "absent" }),
+            assertion("a_095", "src_002", REC.voter, "principal", "occupation", "None"),
+          ],
+          person_evidence: [standing("pe_001", "a_095", P)],
+        }),
+      );
+      await attest(["a_001", P]);
+      const r = await call(link("a_001", P));
+      expect(r.ok).toBe(false);
+      expect(capErrors(r)).toHaveLength(1);
+    });
+
+    it("puts the refusal ahead of a validation error in the same call", async () => {
+      await setup();
+      await attest(["a_020", P]);
+      const r = await call(link("a_020", P), {
+        section: "namesakes",
+        op: "append",
+        entry: { person_id: P, name: "John Smith", place: "", time_period: null, record_ids: [], notes: null },
+      });
+      expect(r.ok).toBe(false);
+      const errors = (r as any).errors as string[];
+      expect(errors[0]).toMatch(/^ops\[0\]: confidence 'probable' is not available on link 'pe_001'/);
+      expect(errors.some((e) => /^ops\[1\]: .*namesakes\[1\].*'place'/.test(e))).toBe(true);
+    });
+
+    it("keys the refusal to the last op that wrote the link", async () => {
+      await setup(research({ person_evidence: [standing("pe_001", "a_020", N, "speculative")] }));
+      await attest(["a_020", P]);
+      const r = await call(update("pe_001", { person_id: P }), update("pe_001", { confidence: "probable" }));
+      expect(r.ok).toBe(false);
+      expect(capErrors(r)).toHaveLength(1);
+      expect(capErrors(r)[0]).toMatch(/^ops\[1\]: confidence 'probable' is not available on link 'pe_001'/);
+    });
+
+    it.each([
+      ["a prefix 'Mrs.' and his given name", { prefix: "Mrs.", given: "John" }],
+      ["'Mrs. John'", { given: "Mrs. John" }],
+      ["'Wife of John'", { given: "Wife of John" }],
+      ["'Mrs. J.'", { given: "Mrs. J." }],
+    ])("refuses a link tied only through a wife recorded by %s", async (_label, name) => {
+      const t = tree();
+      t.persons[1] = { id: W, gender: "Female", names: [{ id: `${W}-n1`, surname: "Smith", ...name }] };
+      await setup(research(), t);
+      await attest(["a_003", W], ["a_001", P]);
+      const r = await call(link("a_003", W), link("a_001", P));
+      expect(r.ok).toBe(false);
+      expect(errs(r)).toContain(`but '${W}' has no given name of their own, only their spouse's.`);
+    });
+
+    it("refuses a link tied only through a mother recorded by her husband's given name", async () => {
+      const M = "KWCB-666";
+      const t = tree();
+      t.persons.push({ id: M, gender: "Female", names: [{ id: `${M}-n1`, prefix: "Mrs.", given: "Thomas", surname: "Smith" }] });
+      t.relationships.push({ id: "R5", type: "Couple", person1: F, person2: M }, { id: "R6", type: "ParentChild", parent: M, child: P });
+      await setup(research({ assertions: [...baseAssertions(), assertion("a_023", "src_003", REC.death, "mother", "name", "Sarah Smith")] }), t);
+      await attest(["a_020", P]);
+      await recordMatchScore(dir, {
+        record_id: REC.death,
+        record_persona_id: null,
+        record_role: "mother",
+        tree_person_id: M,
+        score: 0.9,
+        matched: true,
+        assertion_id: "a_023",
+        record_source: "record_read",
+        computed: "2026-10-17T00:00:00Z",
+      });
+      const r = await call(link("a_023", M), link("a_020", P));
+      expect(r.ok).toBe(false);
+      expect(errs(r)).toContain(`but '${M}' has no given name of their own, only their spouse's.`);
     });
 
     it("refuses an occupation tie read from an unlinked assertion of the voucher's persona", async () => {
@@ -549,16 +672,74 @@ describe("namesake cap", () => {
       await ok(await call(link("a_020", P), link("a_022", F)));
     });
 
-    it("on a street address a link written before this call already carries", async () => {
-      await setup(research({ person_evidence: [standing("pe_001", "a_012", P)] }));
+    it("on a street address a link written before this call already carries, itself tied by family", async () => {
+      await setup(tiedVoucher("residence", ADDRESS));
       await attest(["a_001", P]);
       await ok(await call(link("a_001", P)));
     });
 
-    it("S10 on an occupation a link written before this call already carries", async () => {
-      await setup(research({ person_evidence: [standing("pe_001", "a_011", P)] }));
+    it("S10 on an occupation a pre-call voucher tied by family already carries", async () => {
+      await setup(tiedVoucher("occupation", "Clerk"));
       await attest(["a_001", P]);
       await ok(await call(link("a_001", P)));
+    });
+
+    it.each([
+      "6906 W. Lloyd St., Milwaukee, Wisconsin",
+      "350 12th Street, Oakland, California",
+      "Hauptstraße 12, Zürich",
+      "Via Roma 12, Napoli",
+      "liskova, house #65",
+    ])("on the street address %s", async (value) => {
+      await setup(tiedVoucher("residence", value));
+      await attest(["a_001", P]);
+      await ok(await call(link("a_001", P)));
+    });
+
+    it("a call that asserts nothing, beside a standing link with a weaker duplicate after it", async () => {
+      await setup(
+        research({ person_evidence: [standing("pe_001", "a_020", P, "confident"), standing("pe_002", "a_020", P, "probable")] }),
+      );
+      await ok(await researchAppend({ projectPath: dir, section: "namesakes", op: "update", entryId: "ns_001", fields: { notes: "seen again" } } as any));
+      await ok(
+        await researchAppend({
+          projectPath: dir,
+          section: "namesakes",
+          op: "append",
+          entry: { person_id: P, name: "John Smith", place: "Oakland, California", time_period: null, record_ids: [], notes: null },
+        } as any),
+      );
+    });
+
+    it("through a father's name linked only at 'speculative', whose occupation a standing link carries", async () => {
+      await setup(
+        research({
+          assertions: [...baseAssertions(), assertion("a_043", "src_005", REC.baptism, "father", "occupation", "Clerk")],
+          person_evidence: [standing("pe_001", "a_011", P)],
+        }),
+      );
+      await attest(["a_041", P], ["a_042", P]);
+      await ok(await call(link("a_041", P, "speculative"), link("a_042", P)));
+    });
+
+    it("through the child's own address, when nothing one-party of the baptism is linked to him", async () => {
+      await setup(
+        research({
+          assertions: [
+            ...baseAssertions(),
+            assertion("a_044", "src_005", REC.baptism, "child", "residence", ADDRESS, { place: NILES }),
+          ],
+          person_evidence: [standing("pe_001", "a_012", P)],
+        }),
+      );
+      await attest(["a_042", P]);
+      await ok(await call(link("a_042", P)));
+    });
+
+    it("known let-through: his marriage assertion linked to him and to his wife, nothing else of his party linked", async () => {
+      await setup();
+      await attest(["a_053", P], ["a_053", W]);
+      await ok(await call(link("a_053", P), link("a_053", W)));
     });
 
     it("S9 a raise on an untied link that a tied link at the same address vouches for", async () => {

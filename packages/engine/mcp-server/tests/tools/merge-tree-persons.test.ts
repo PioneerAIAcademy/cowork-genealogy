@@ -558,38 +558,137 @@ describe("merge_tree_persons: pair and namesake checks", () => {
     await merged([["I30", "I31"]], widow(true), widowBaseline);
   });
 
-  // MS19 is a known let-through (R7): the wife merged in the same call is judged
-  // by her own id and refs, so the merged wife, who reaches only the census, ties
-  // it. MF22 is the accepted false deny of the same rule.
-  const r7 = (falseDeny: boolean) =>
+  // A spouse, parent or child merged in the same call is judged as the person
+  // the merge makes (lead item 13's default): the survivor's id with both
+  // copies' names and refs. A wife who reaches only the census her duplicate
+  // was made from cannot tie it (MF23); one who also reaches another record can
+  // (MS22).
+  const sameCallWife = (otherRecord: boolean) =>
     project({
       persons: [
         person(T, "John", "Smith"),
         person("I7", "John", "Smith"),
-        falseDeny ? cited("I5", "Mary", "Smith", ["S41"], "Female") : person("I5", "Mary", "Smith", "Female"),
-        falseDeny
+        otherRecord ? cited("I5", "Mary", "Smith", ["S41"], "Female") : person("I5", "Mary", "Smith", "Female"),
+        otherRecord
           ? { id: "I6", gender: "Female", names: [{ id: "N-I6", given: "Mary", surname: "Smith", sources: [{ ref: "S41" }, { ref: "S42" }] }] }
           : cited("I6", "Mary", "Smith", ["S40"], "Female"),
       ],
       relationships: [couple("R1", T, "I5")],
-      sources: falseDeny ? [41, 42] : [40],
-      assertions: falseDeny
+      sources: otherRecord ? [41, 42] : [40],
+      assertions: otherRecord
         ? [assertion("a_411", 41, "head", "name", "John Smith"), assertion("a_412", 41, "wife", "name", "Mary Smith"), assertion("a_421", 42, "principal", "name", "Mary Smith")]
         : [assertion("a_401", 40, "head", "name", "John Smith"), assertion("a_402", 40, "wife", "name", "Mary Smith")],
-      links: falseDeny
+      links: otherRecord
         ? [link("pe_001", "a_411", "I7"), link("pe_002", "a_412", "I6")]
         : [link("pe_001", "a_401", "I7"), link("pe_002", "a_402", "I6")],
       namesakes: [row("ns_001", T)],
     });
 
-  it("MS19 known let-through: a ref-less wife merged in the same call ties a link her duplicate's census holds", async () => {
-    await merged([[T, "I7"], ["I5", "I6"]], r7(false));
+  it("MF23 refuses a link tied only through a ref-less wife merged in the same call with a copy made from that census", async () => {
+    let m = await refusedText([[T, "I7"], ["I5", "I6"]], sameCallWife(false));
+    expect(m).toContain("person_evidence 'pe_001' on 'I7'");
+    expect(m).toContain("'pe_002' links another party ('wife') to 'I5', 'KWCB-111''s spouse, but 'I5' was created from this source alone.");
+    m = await refusedText([["I6", "I5"], [T, "I7"]], sameCallWife(false));
+    expect(m).toContain("but 'I6' was created from this source alone.");
   });
 
-  it("MF22 accepted false deny: a wife made from that census, merged with a duplicate that has another record", async () => {
-    const m = await refusedText([[T, "I7"], ["I5", "I6"]], r7(true));
-    expect(m).toContain("person_evidence 'pe_001' on 'I7'");
-    expect(m).toContain("but 'I5' was created from this source alone.");
+  it("MS22 merges a wife made from that census when the copy merged with her in the same call has another record", async () => {
+    await merged([[T, "I7"], ["I5", "I6"]], sameCallWife(true));
+    await merged([[T, "I7"], ["I6", "I5"]], sameCallWife(true));
+  });
+
+  // Both copies of the row holder's wife attached to him, merged in the same
+  // call: each copy's links point at the wife the merge makes, never at the
+  // other copy.
+  const twoWives = (fsWife: boolean) =>
+    project({
+      persons: [
+        person(T, "John", "Smith"),
+        cited("I7", "John", "Smith", ["S40"], "Male", { facts: [fact("F7", "Residence", "1880", ["S40"])] }),
+        fsWife ? person(W, "Mary", "Smith", "Female") : person("I5", "Mary", "Smith", "Female"),
+        cited("I6", "Mary", "Smith", ["S40"], "Female"),
+      ],
+      relationships: [couple("R1", T, fsWife ? W : "I5"), couple("R2", T, "I6")],
+      sources: [40],
+      assertions: [assertion("a_401", 40, "head", "name", "John Smith"), assertion("a_402", 40, "wife", "name", "Mary Smith")],
+      links: [link("pe_001", "a_401", "I7"), link("pe_002", "a_402", fsWife ? W : "I6")],
+      namesakes: [row("ns_001", T)],
+    });
+
+  it("MF24 refuses a link tied only through two copies of his wife merged in the same call that reach only that census", async () => {
+    for (const merges of [
+      [[T, "I7"], ["I5", "I6"]],
+      [[T, "I7"], ["I6", "I5"]],
+      [["I5", "I6"], [T, "I7"]],
+    ] as Array<Array<[string, string]>>) {
+      const m = await refusedText(merges, twoWives(false));
+      expect(m).toContain("person_evidence 'pe_001' on 'I7'");
+      expect(m).toContain("was created from this source alone.");
+    }
+  });
+
+  it("MS23 merges when the census wife is linked to his FamilySearch wife and her run-made copy is merged in the same call", async () => {
+    await merged([[T, "I7"], [W, "I6"]], twoWives(true));
+    await merged([[W, "I6"], [T, "I7"]], twoWives(true));
+  });
+
+  it("MS24 judges a placeholder father merged in the same call by the named copy's name and records", async () => {
+    const fathers = project({
+      persons: [
+        person(T, "John", "Smith"),
+        person("I7", "John", "Smith"),
+        person("I8", "Unknown", "Smith"),
+        { id: "I9", gender: "Male", names: [{ id: "N-I9", given: "Thomas", surname: "Smith", sources: [{ ref: "S50" }, { ref: "S51" }] }] },
+      ],
+      relationships: [parentChild("R1", "I8", T), parentChild("R2", "I9", "I7")],
+      sources: [50, 51],
+      assertions: [
+        assertion("a_501", 50, "child", "name", "John Smith"),
+        assertion("a_502", 50, "father", "name", "Thomas Smith"),
+        assertion("a_511", 51, "principal", "name", "Thomas Smith"),
+      ],
+      links: [link("pe_050", "a_501", "I7"), link("pe_051", "a_502", "I9")],
+      namesakes: [row("ns_001", T)],
+    });
+    await merged([[T, "I7"], ["I9", "I8"]], fathers);
+    await merged([[T, "I7"], ["I8", "I9"]], fathers);
+    const m = await refusedText([[T, "I7"]], fathers);
+    expect(m).toContain("'pe_051' links another party ('father') to 'I9', who is not a spouse, parent or child of 'KWCB-111' in the tree.");
+  });
+
+  it("MS25 reads the row holder's own link through a wife merged in the same call, so part 3 carries the giver's fact", async () => {
+    const p = project({
+      persons: [
+        person(T, "John", "Smith"),
+        { id: "I7", gender: "Male", names: [{ id: "N-I7", given: "John", surname: "Smith" }], facts: [fact("F1", "Residence", "1880", ["S60"])] },
+        person(W, "Mary", "Smith", "Female"),
+        person("I6", "Mary", "Smith", "Female"),
+      ],
+      relationships: [couple("R1", T, W)],
+      sources: [60],
+      assertions: [assertion("a_601", 60, "head", "name", "John Smith"), assertion("a_602", 60, "wife", "name", "Mary Smith")],
+      links: [link("pe_060", "a_601", T), link("pe_061", "a_602", "I6")],
+      namesakes: [row("ns_001", T)],
+    });
+    await merged([[T, "I7"], [W, "I6"]], p);
+    await merged([[W, "I6"], [T, "I7"]], p);
+    const m = await refusedText([[T, "I7"]], p);
+    expect(m).toContain("fact 'F1' (Residence) on 'I7' cites 'S60' (research source 'src_060')");
+    expect(m).toContain("('pe_060' untied on 'KWCB-111')");
+  });
+
+  it("MF25 refuses a person-level source the row holder lacks, from a record linked to the giver only at speculative", async () => {
+    const m = await refusedText([[T, "I7"]], project({
+      persons: [person(T, "John", "Smith"), person("I7", "John", "Smith", "Male", { sources: [{ ref: "S5" }] })],
+      sources: [5],
+      assertions: [assertion("a_051", 5, "principal", "name", "John Smith")],
+      links: [link("pe_001", "a_051", "I7", "speculative")],
+      namesakes: [row("ns_001", T)],
+    }));
+    expect(m).toContain(
+      "source ref 'S5' on 'I7' cites 'S5' (research source 'src_005'), and no probable or confident link from that record " +
+        "to 'I7' or 'KWCB-111' passes the namesake cap ('pe_001' speculative).",
+    );
   });
 
   it("MS1 ignores a row on someone outside the pair", async () => {
@@ -696,9 +795,9 @@ describe("merge_tree_persons: pair and namesake checks", () => {
 
   const ms9 = () =>
     project({
-      persons: [person("I20", "John", "Smith"), person("I21", "John", "Smith"), person("I5", "Mary", "Smith", "Female"), cited("I6", "Mary", "Smith", ["S20"], "Female")],
+      persons: [person("I20", "John", "Smith"), person("I21", "John", "Smith"), cited("I5", "Mary", "Smith", ["S21"], "Female"), cited("I6", "Mary", "Smith", ["S20"], "Female")],
       relationships: [couple("R1", "I20", "I5"), couple("R2", "I21", "I6")],
-      sources: [20],
+      sources: [20, 21],
       assertions: [assertion("a_201", 20, "head", "name", "John Smith"), assertion("a_202", 20, "wife", "name", "Mary Smith")],
       links: [link("pe_020", "a_201", "I21"), link("pe_021", "a_202", "I6")],
       namesakes: [row("ns_001", "I20")],
