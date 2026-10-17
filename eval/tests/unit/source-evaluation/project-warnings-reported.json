@@ -7,6 +7,7 @@
     "description": "Issue #2942. The project tree holds the audited person under the local id I1 with ark ark:/61903/4:1:KD96-TV2 -- the shape every init-project tree has -- and that tree carries a Residence dated 1950, after his 10 June 1945 death. person_warnings runs live over the workspace tree and returns exactly one warning for I1: hasEventAfterDeath1, a contradiction (measured 2026-10-09). The tool resolves the FamilySearch id KD96-TV2 to I1 through that ark, so the agent passes the id person_read returned; any other id answers 'not found'. The person_read fixture is FamilySearch's profile and deliberately lacks the 1950 residence: the warning comes from the project tree, not from any attached source, so it is reported in its own block outside the findings count and is not a finding about a source. The rest of the audit is the shipped Hole corpus.",
     "tags": [
       "project-warnings",
+      "census-variance-trap",
       "direct-arm"
     ]
   },

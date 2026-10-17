@@ -22,6 +22,7 @@ sys.path.insert(0, str(_VALIDATORS_DIR))
 # collect the imported validator as a test of this module and error on its
 # harness-supplied fixtures. Same pattern as the sibling validator tests.
 from test_timeline import (  # noqa: E402
+    _census_year_of_entry,
     test_census_years_read_from_wiki as check_census_from_wiki,
     test_us_1890_never_expected as check_us_1890_backstop,
 )
@@ -85,6 +86,46 @@ def test_passes_on_wiki_derived_non_us_years():
     check_census_from_wiki(BEFORE, _after(ENGLAND_GAPS), [_wiki_call()], TAGGED)
 
 
+def test_passes_when_the_census_year_lives_only_inside_the_parenthetical():
+    """Regression for the paid run of #2797: the agent named the gaps
+    `census (1841, England & Wales)` — putting the year, and the jurisdiction
+    this validator checks it against, both inside the parenthetical.
+
+    The #2261 fix blanked parenthesised asides before scanning for years, so an
+    entry whose ONLY year sits inside them read as naming no census year at all,
+    and a correct timeline failed the gate with "produced no census gap naming a
+    year". Parenthesised years are now deprioritised rather than erased: an
+    outside year still wins — `test_fires_on_a_us_year_hidden_behind_a_short_parenthetical`
+    pins that direction — and an inside year is still found when it is the only
+    one. Must NOT raise."""
+    gaps = [
+        {"start": "~1838", "end": "1841", "severity": "medium",
+         "expected_events": ["census (1841, England & Wales)"]},
+        {"start": "1851", "end": "1861", "severity": "high",
+         "expected_events": ["census (1861, England & Wales)"]},
+        {"start": "1859", "end": "1874", "severity": "high",
+         "expected_events": ["census (1871, England & Wales)", "burial"]},
+    ]
+    check_census_from_wiki(BEFORE, _after(gaps), [_wiki_call()], TAGGED)
+
+
+def test_passes_when_the_parenthetical_names_jurisdiction_before_year():
+    """An independent review of PR #3231 found the year-opens-the-parenthetical
+    check only covers one token order. `census (England & Wales, 1861)` -- the
+    jurisdiction first, a comma, then the year -- is just as plausible a
+    phrasing of the same fact as `census (1861, England & Wales)`, which the
+    prior regression pins. The year-first check alone reads this as a bounding
+    span (no word opens it with a year) and discards its year entirely, which
+    reproduces #2797's "produced no census gap naming a year" failure for a
+    different token order, on a gap whose only year sits inside the
+    parenthetical. Must NOT raise."""
+    gaps = [
+        {"start": "1851", "end": "1861", "severity": "high",
+         "expected_events": ["census (England & Wales, 1861)"]},
+    ]
+    check_census_from_wiki(BEFORE, _after(gaps), [_wiki_call()], TAGGED)
+
+
 def test_passes_on_underscore_joined_census_year_tokens():
     """Regression for the second paid run of #2261: the skill named the gaps
     `census_1841` / `census_1861` / `census_1871` (year joined to the record type
@@ -125,6 +166,96 @@ def test_passes_on_single_entry_with_bounding_years():
             "expected_events": ["1861 England census enumeration (married 1859, died 1874)"],
             "severity": "high"}]
     check_census_from_wiki(BEFORE, _after(gap), [_wiki_call()], TAGGED)
+
+
+def test_passes_when_a_sibling_entry_names_only_a_bounding_year():
+    """Finding #4: a bounding year that is the ONLY year in its own
+    `expected_events` entry — no census year named in that entry at all — must
+    not be picked up as a false census year. `"England census (married 1859)"`
+    has nothing outside the parenthetical for the entry's own census word to
+    pair with, so the old code fell back to the parenthetical's 1859 (a
+    marriage year, not a census year) and flagged it absent from the England
+    page. A sibling entry naming the real year, `"England census 1861"`, must
+    still be counted and verified."""
+    gap = [{"start": "1859", "end": "1861",
+            "expected_events": ["England census (married 1859)", "England census 1861"],
+            "severity": "high"}]
+    check_census_from_wiki(BEFORE, _after(gap), [_wiki_call()], TAGGED)
+
+
+def test_passes_on_the_abbreviated_marriage_form():
+    """Finding #4 (review round 2): `m.` is how most genealogists abbreviate
+    "married", and a word-list fix that only recognised the spelled-out forms
+    let `(m. 1859)` through as a census year. The structural fix — a
+    parenthetical names the census year only when the year opens it — closes
+    this without needing to enumerate every abbreviation a genealogist might
+    use."""
+    gap = [{"start": "1859", "end": "1861",
+            "expected_events": ["England census (m. 1859)", "England census 1861"],
+            "severity": "high"}]
+    check_census_from_wiki(BEFORE, _after(gap), [_wiki_call()], TAGGED)
+
+
+def test_passes_when_a_vital_event_aside_also_carries_a_comma():
+    """Round 5 review: the comma-before-year check the prior fix used read
+    `(m. Margaret Hayes, 1849)` and `(bapt. Skibbereen, 1814)` as naming the
+    census year, because both happen to carry a comma before their year for
+    reasons unrelated to naming a census -- separating a name, or a baptism
+    place, from its own date. Both open with a vital-event marker ("m.",
+    "bapt.") and must still be excluded; the real census year, 1861, is named
+    plainly elsewhere in the same gap. Must NOT raise."""
+    gap = [{"start": "1849", "end": "1861",
+            "expected_events": [
+                "England census (m. Margaret Hayes, 1849)",
+                "England census (bapt. Skibbereen, 1814)",
+                "England census 1861",
+            ],
+            "severity": "high"}]
+    check_census_from_wiki(BEFORE, _after(gap), [_wiki_call()], TAGGED)
+
+
+def test_passes_on_a_vital_event_marker_outside_the_old_hand_written_list():
+    """Two independent self-reviews found the round-5 fix's hand-enumerated
+    marker list ("married"/"m.", "bapt.", "born"/"b.", ...) was itself a
+    closed vocabulary list of the kind issue #2797 already learned not to
+    rely on for "does this open with a year" -- any genealogical vital-event
+    marker NOT on that list ("christened", "naturalized", "confirmed",
+    "res.") read as naming the census year, reproducing finding #4's exact
+    bug for a word the list happened to omit. The fix generalizes from a
+    word list to the parenthetical's opening letter CASE -- lowercase is a
+    marker/verb, capitalized is a jurisdiction name -- which needs no
+    enumeration and closes every marker, known or not. The real census
+    year, 1861, is named plainly elsewhere in the same gap. Must NOT raise."""
+    gap = [{"start": "1850", "end": "1861",
+            "expected_events": [
+                "England census (christened 1850)",
+                "England census (naturalized 1859)",
+                "England census (confirmed 1855)",
+                "England census 1861",
+            ],
+            "severity": "high"}]
+    check_census_from_wiki(BEFORE, _after(gap), [_wiki_call()], TAGGED)
+
+
+def test_a_capitalized_marker_paired_with_its_own_date_reads_as_the_census_year():
+    """Round 6 review corrected a wrong claim in the code comment: a
+    vital-event marker is NOT "always written lowercase in this corpus" --
+    capitalized markers do appear in running prose. Round 7 review found the
+    corpus count cited for the narrower claim unreliable on re-measurement,
+    and corrected it to the structural argument alone: no committed
+    `expected_events` entry pairs a marker with its own date either way, so
+    the design rests on jurisdiction names being proper nouns (always
+    capitalized) versus markers being common nouns/verbs (conventionally
+    lowercase-abbreviated here), not a corpus count. This test pins the
+    accepted residual gap that follows from checking only the opening
+    letter's case: a capitalized marker immediately followed by a year reads
+    as naming the census year, exactly as a real jurisdiction name would --
+    this is NOT a case the rule is expected to get right, and nothing in the
+    committed corpus exercises it."""
+    assert _census_year_of_entry("census (Married 1859)") == 1859
+    assert _census_year_of_entry("census (M. 1859)") == 1859
+    assert _census_year_of_entry("census (Bapt. 1814)") == 1814
+    assert _census_year_of_entry("census (Born 1861)") == 1861
 
 
 def test_fires_on_cross_country_page_contamination():

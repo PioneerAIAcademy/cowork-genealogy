@@ -2194,6 +2194,395 @@ describe("research_append (Phase 3)", () => {
     expect(t.generated).toMatch(/T.*:/); // ISO datetime, not a bare date
   });
 
+  // The US 1890 federal census does not survive and can never fill a gap
+  // (ADR-0012, issue #2261). Issue #3255: prose alone let an agent write it 4
+  // times across 3 unit tests; this is the write-boundary backstop.
+  describe("US 1890 census backstop (#3255)", () => {
+    const usEvents = [
+      { date: "1880", date_certainty: "exact", event_type: "census", description: "enumerated", place: "Pennsylvania", standard_place: "Schuylkill, Pennsylvania, United States", assertion_ids: ["a_001"], distance_from_previous_km: null },
+    ];
+    const denmarkEvents = [
+      { date: "1880", date_certainty: "exact", event_type: "census", description: "enumerated", place: "Denmark", standard_place: "Copenhagen, Denmark", assertion_ids: ["a_001"], distance_from_previous_km: null },
+    ];
+    // An ordinary immigrant's own timeline: born outside the US, enumerated
+    // and died inside it. Found by the `--runs-per-test 3` stability check
+    // (ut_timeline_005, 2026-10-09): an `every` test over `standard_place`
+    // stayed silent here because the birth event alone broke unanimity.
+    const mixedEvents = [
+      { date: "~1845", date_certainty: "estimated", event_type: "birth", description: "born", place: "Ireland", standard_place: "Ireland", assertion_ids: ["a_000"], distance_from_previous_km: null },
+      { date: "1880", date_certainty: "exact", event_type: "census", description: "enumerated", place: "Pennsylvania", standard_place: "Schuylkill, Pennsylvania, United States", assertion_ids: ["a_001"], distance_from_previous_km: null },
+    ];
+    const appendWithGap = (expectedEvents: string[], events: any[] = usEvents) =>
+      researchAppend({
+        projectPath: dir,
+        section: "timelines",
+        op: "append",
+        entry: {
+          label: "test timeline",
+          person_ids: ["I1"],
+          events,
+          gaps: [{ start: "1880", end: "1900", expected_events: expectedEvents, severity: "high" }],
+        },
+      } as never);
+
+    it.each([
+      ["bare 1890", "census 1890"],
+      ["with a destruction caveat", "census_1890 — largely destroyed, not surviving for most areas"],
+      ["underscore-joined fragments phrasing", "1890_census_fragments"],
+    ])("refuses an expected_events entry naming the US 1890 census: %s", async (_label, entry) => {
+      await writeProject();
+      const r = await appendWithGap([entry]);
+      expect(r.ok).toBe(false);
+      if (r.ok) return;
+      const msg = r.errors.join(" ");
+      expect(msg).toContain(entry);
+      expect(msg).toContain("notes");
+    });
+
+    // Round-7 review: `ut_timeline_001` wrote `expected_events: ["census",
+    // "census", "census", "census"]` for a gap whose own notes call
+    // 1870/1880/1890/1900 "four surviving federal census years" and then say
+    // the 1890 schedules did not survive -- so the run counted the
+    // non-surviving 1890 census as a census to go and search, the exact
+    // thing this guard exists to stop, and it got through only because no
+    // entry named its year at all. `TIMELINE_1890_RE` can only see the
+    // literal digits "1890"; a bare "census" is invisible to it by
+    // construction, not a bug in that regex -- the fix is a separate,
+    // earlier check that a census-type entry must name SOME year before the
+    // 1890-specific logic ever runs.
+    it.each([
+      ["the ut_timeline_001 shape, repeated with no year each time", "census"],
+      ["a vaguer phrasing, still no year", "census of some kind"],
+    ])("refuses a census entry naming no year at all: %s", async (_label, entry) => {
+      await writeProject();
+      const r = await appendWithGap([entry]);
+      expect(r.ok).toBe(false);
+      if (r.ok) return;
+      const msg = r.errors.join(" ");
+      expect(msg).toContain(entry);
+      expect(msg).toContain("no year");
+    });
+
+    it("still allows a census entry naming a real, non-1890 year with no jurisdiction trouble", async () => {
+      await writeProject();
+      const r = await appendWithGap(["1870 census"]);
+      expect(r.ok, `refused: ${JSON.stringify((r as any).errors)}`).toBe(true);
+    });
+
+    it("the veteran exemption still applies to a census entry naming no year at all", async () => {
+      await writeProject();
+      const r = await appendWithGap(["veterans census schedule"]);
+      expect(r.ok, `refused: ${JSON.stringify((r as any).errors)}`).toBe(true);
+    });
+
+    // Round-8 review: the round-7 no-year check only recognized 18xx/19xx
+    // years, so a census-type entry naming a real, surviving year OUTSIDE
+    // that window -- the 1790 US federal census, Denmark's 1787, Norway's
+    // 1769 -- was wrongly refused for "naming no year", despite naming one.
+    it.each([
+      ["a real pre-1800 US year", "1790 census", usEvents],
+      ["the same year, underscore-joined", "census_1790", usEvents],
+      ["a foreign pre-1800 year", "1787 Denmark census", denmarkEvents],
+      ["a different foreign pre-1800 year", "1769 census of Norway", denmarkEvents],
+    ])("allows a census entry naming a real year outside 1800-1999: %s", async (_label, entry, events) => {
+      await writeProject();
+      const r = await appendWithGap([entry], events);
+      expect(r.ok, `refused: ${JSON.stringify((r as any).errors)}`).toBe(true);
+    });
+
+    // Round-8 review: a year RANGE that spans 1890 is the same ut_timeline_001
+    // bug (four surviving census years folded into one entry) written as a
+    // single string instead of a bare placeholder -- "federal censuses
+    // 1870-1900" names two real years and never writes "1890" literally, so
+    // TIMELINE_1890_RE cannot see that the range covers the non-surviving
+    // year. Only a range connector counts: "1880 and 1900 census" names two
+    // SPECIFIC years with no claim about what lies between them and must
+    // stay allowed.
+    it.each([
+      ["hyphen-joined range", "federal censuses 1870-1900"],
+      ["'to'-joined range", "censuses 1880 to 1900"],
+      ["range naming the US explicitly", "US census, every decade 1870-1900"],
+      ["'through'-joined range", "censuses 1880 through 1900"],
+      ["'between...and' range", "censuses between 1880 and 1900"],
+      // Round-10 review: every range in the entry is read, not just the first,
+      // and a two-digit end year is read in the century of the first.
+      ["second of two ranges", "federal censuses 1850-1860 and 1880-1900"],
+      ["'between' after a range that misses 1890", "censuses 1850-1860, between 1880 and 1900"],
+      ["abbreviated end year", "US census 1880-90"],
+    ])("refuses a census entry naming a year range that spans 1890: %s", async (_label, entry) => {
+      await writeProject();
+      const r = await appendWithGap([entry]);
+      expect(r.ok).toBe(false);
+    });
+
+    it("still allows two specific years joined by 'and', which is not a range", async () => {
+      await writeProject();
+      const r = await appendWithGap(["1880 and 1900 census"]);
+      expect(r.ok, `refused: ${JSON.stringify((r as any).errors)}`).toBe(true);
+    });
+
+    it.each([
+      ["abbreviated range after 1890", "censuses 1900-10"],
+      ["abbreviated range crossing a century", "censuses 1895-05"],
+    ])("allows an abbreviated year range that misses 1890: %s", async (_label, entry) => {
+      await writeProject();
+      const r = await appendWithGap([entry]);
+      expect(r.ok, `refused: ${JSON.stringify((r as any).errors)}`).toBe(true);
+    });
+
+    it.each([
+      ["ISO enumeration date", "1880 census (enumerated 1880-06-01)"],
+      ["state census with its date", "1885 state census, taken 1885-03-01"],
+      ["slash date", "1880 census, 1880/06/01"],
+    ])("does not read a date's month as a two-digit end year: %s", async (_label, entry) => {
+      await writeProject();
+      const r = await appendWithGap([entry]);
+      expect(r.ok, `refused: ${JSON.stringify((r as any).errors)}`).toBe(true);
+    });
+
+    it("allows the same sentence when it is in `notes`, not `expected_events`", async () => {
+      await writeProject();
+      const r = await researchAppend({
+        projectPath: dir,
+        section: "timelines",
+        op: "append",
+        entry: {
+          label: "test timeline",
+          person_ids: ["I1"],
+          events: usEvents,
+          gaps: [{
+            start: "1880", end: "1900", expected_events: ["census_1900"], severity: "high",
+            notes: "The 1890 federal census would have covered this span but did not survive.",
+          }],
+        },
+      } as never);
+      expect(r.ok, `refused: ${JSON.stringify((r as any).errors)}`).toBe(true);
+    });
+
+    it("allows the 1890 veterans schedule, which partly survives", async () => {
+      await writeProject();
+      const r = await appendWithGap(["1890 veterans schedule"]);
+      expect(r.ok, `refused: ${JSON.stringify((r as any).errors)}`).toBe(true);
+    });
+
+    it("allows an unattributed 1890 census entry when the timeline's events are not US-placed", async () => {
+      await writeProject();
+      const r = await appendWithGap(["census 1890"], denmarkEvents);
+      expect(r.ok, `refused: ${JSON.stringify((r as any).errors)}`).toBe(true);
+    });
+
+    it("refuses an unattributed 1890 census entry on an immigrant's timeline (only SOME events are US-placed)", async () => {
+      await writeProject();
+      const r = await appendWithGap(["census 1890"], mixedEvents);
+      expect(r.ok).toBe(false);
+      if (r.ok) return;
+      expect(r.errors.join(" ")).toContain("census 1890");
+    });
+
+    it("allows a bare '1890 federal census' with no country named, on a non-US timeline (bare 'federal' is not a US signal)", async () => {
+      await writeProject();
+      const r = await appendWithGap(["1890 federal census"], denmarkEvents);
+      expect(r.ok, `refused: ${JSON.stringify((r as any).errors)}`).toBe(true);
+    });
+
+    // The lead's #3255 ruling requires this arm, and round-3 review found it
+    // missing entirely: an entry naming some OTHER country must stay silent
+    // regardless of the timeline's own places -- an emigrant's timeline (the
+    // shape this guard exists for) routinely has both a US-placed event AND
+    // a gap entry naming the origin country's own, surviving census.
+    it.each([
+      ["Denmark census 1890", "Denmark census 1890"],
+      ["Sweden census 1890", "Sweden census 1890"],
+      ["Prussia census 1890", "Prussia census 1890"],
+    ])("allows an entry naming another country's 1890 census on the immigrant's mixed timeline: %s", async (_label, entry) => {
+      await writeProject();
+      const r = await appendWithGap([entry], mixedEvents);
+      expect(r.ok, `refused: ${JSON.stringify((r as any).errors)}`).toBe(true);
+    });
+
+    it("does not read the ordinary pronoun \"us\" as naming the United States", async () => {
+      await writeProject();
+      const r = await appendWithGap(["1890 census (not available to us)"], denmarkEvents);
+      expect(r.ok, `refused: ${JSON.stringify((r as any).errors)}`).toBe(true);
+    });
+
+    it("still fires on an entry naming the US explicitly, on a non-US timeline", async () => {
+      await writeProject();
+      const r = await appendWithGap(["United States census 1890"], denmarkEvents);
+      expect(r.ok).toBe(false);
+    });
+
+    // An open-ended review found "USA" recognized by neither TIMELINE_NAMES_US_RE
+    // nor the bare-"US" abbreviation check, so it fell through every arm unflagged.
+    it("fires on the abbreviation \"USA\", on a non-US timeline", async () => {
+      await writeProject();
+      const r = await appendWithGap(["USA census 1890"], denmarkEvents);
+      expect(r.ok).toBe(false);
+    });
+
+    // Round-5 review: arm 2's exclusion list stopped at "Census"/"Federal",
+    // so every other word in the census's own FORMAL name -- its bureau
+    // name, its common descriptive name, its own ordinal -- was captured as
+    // a candidate jurisdiction word and silenced it, on the exact timeline
+    // this guard exists for.
+    it.each([
+      ["the bureau's own name", "1890 Federal Population Census"],
+      ["the common descriptive name", "1890 Population Census"],
+      ["another common descriptive name", "1890 Decennial Census"],
+      ["the census's own ordinal name", "Eleventh Census, 1890"],
+      ["a jurisdiction LEVEL word, not a name", "Schuylkill County census 1890"],
+    ])("still fires on the census's own formal name, on the mixed timeline: %s", async (_label, entry) => {
+      await writeProject();
+      const r = await appendWithGap([entry], mixedEvents);
+      expect(r.ok).toBe(false);
+    });
+
+    // Two independent self-reviews found the round-5 exclusion words above
+    // also work as FILLER between a real foreign jurisdiction and "census",
+    // not just as the word adjacent to it: "Essex County census" and "Danish
+    // Population Census" each had their actual jurisdiction word captured by
+    // nothing (the word immediately before "census" is excluded), fell
+    // through to arm 3, and were wrongly refused on this mixed timeline even
+    // though neither names the US. Pins the opposite direction from the
+    // block above -- a real jurisdiction two words from "census", separated
+    // by one of the same exclusion words -- so a future narrowing of this
+    // regex cannot reopen it silently.
+    it.each([
+      ["a US-style county name on a foreign jurisdiction", "Essex County census 1890"],
+      ["an Irish county name", "Cork County census 1890"],
+      ["an English county name", "Yorkshire County census 1890"],
+      ["a nationality adjective before the bureau descriptor", "Danish Population Census 1890"],
+      ["a nationality adjective before the other descriptor", "Swedish Decennial Census 1890"],
+    ])("allows a foreign jurisdiction separated from 'census' by a descriptor word, on the mixed timeline: %s", async (_label, entry) => {
+      await writeProject();
+      const r = await appendWithGap([entry], mixedEvents);
+      expect(r.ok, `refused: ${JSON.stringify((r as any).errors)}`).toBe(true);
+    });
+
+    // Round-7 review: the SAME adjacency/filler mechanism that correctly
+    // finds a real jurisdiction two words from "census" cannot tell one from
+    // an ordinary capitalized word that is neither an article/determiner nor
+    // a census-descriptive word -- "Missing"/"Expected" are captured exactly
+    // like "Essex"/"Danish" above, read as a non-US jurisdiction, and
+    // wrongly ALLOWED on this mixed timeline. This is the documented
+    // false-allow from the code comment and both spec rows (ADR-0011 limit
+    // 1 prefers it over a false refusal) -- pinned here, beside the Denmark
+    // and Essex true-positive cases, so a future narrowing of this regex
+    // cannot silently close it without a test noticing either way.
+    it.each([
+      ["an ordinary adjective bridged by the Population filler", "Missing Population Census 1890"],
+      ["an ordinary adjective directly before the County filler", "Expected County census 1890"],
+      ["an ordinary adjective bridged by the Decennial filler", "Missing Decennial Census 1890"],
+      ["an ordinary adjective directly adjacent to Census, no filler at all", "Missing Census 1890"],
+    ])("still wrongly allows an ordinary capitalized word mistaken for a jurisdiction, on the mixed timeline: %s", async (_label, entry) => {
+      await writeProject();
+      const r = await appendWithGap([entry], mixedEvents);
+      expect(r.ok, `refused: ${JSON.stringify((r as any).errors)}`).toBe(true);
+    });
+
+    // Round-6 review: the filler mechanism above let an ORDINARY capitalized
+    // word that starts the entry -- not a jurisdiction at all -- get
+    // captured as the "foreign jurisdiction" whenever a filler word sat
+    // between it and "census". None of these name a country, so all three
+    // must still fire via arm 3 on the mixed timeline, exactly like the
+    // round-4 stray-capital block below, but reached through the filler
+    // path the round-5 fix added rather than direct adjacency.
+    it.each([
+      ["a determiner bridged to 'census' by the now-removed Federal filler", "The Federal Census 1890"],
+      ["an ordinary adjective bridged by the now-removed Federal filler", "Missing Federal Census 1890"],
+      ["a determiner bridged by the Population filler, same shape as the Danish case", "The Population Census of 1890"],
+    ])("still refuses on the mixed timeline despite a filler-bridged stray capital: %s", async (_label, entry) => {
+      await writeProject();
+      const r = await appendWithGap([entry], mixedEvents);
+      expect(r.ok).toBe(false);
+    });
+
+    // Round-4 review: arm 2's first cut matched ANY capitalized word anywhere
+    // in the entry, which wrongly silenced every one of these on the exact
+    // immigrant timeline this guard exists for -- none names a jurisdiction
+    // at all, so each must still fire via arm 3.
+    it.each([
+      ["sentence-initial capital", "The 1890 census"],
+      ["a US place name after 'census of'", "1890 census of Schuylkill County"],
+      ["a capitalized word inside a parenthetical", "1890 census (Destroyed in 1921 fire)"],
+      ["a capitalized word far from 'census'", "Household listing in 1890 census"],
+    ])("still refuses on the mixed timeline despite a stray capital: %s", async (_label, entry) => {
+      await writeProject();
+      const r = await appendWithGap([entry], mixedEvents);
+      expect(r.ok).toBe(false);
+    });
+
+    // Resolves the limitation the first cut of arm 2 knowingly accepted: a
+    // literal US state or county name immediately before "census" is
+    // recognized against the timeline's own US-placed events, not read as
+    // naming a foreign country.
+    it.each([
+      ["the state", "Pennsylvania census 1890"],
+      ["the county", "Schuylkill census 1890"],
+    ])("fires on a literal US place name immediately before 'census', matched against the timeline's own places: %s", async (_label, entry) => {
+      await writeProject();
+      const r = await appendWithGap([entry], mixedEvents);
+      expect(r.ok).toBe(false);
+    });
+
+    // An independent review found arm 2's jurisdiction regex hard-coded a
+    // lowercase "census" with no /i, so capitalizing "Census" as a
+    // record-title convention skipped the regex match entirely and fell to
+    // arm 3's fallback, silently losing the "names another country" silence
+    // this arm exists to provide -- identical to the allowed lowercase form
+    // in every way except capitalization.
+    it.each([
+      ["Denmark, capitalized", "Denmark Census 1890"],
+      ["Sweden, capitalized", "Sweden Census 1890"],
+    ])("still allows a capitalized 'Census' naming another country, on the mixed timeline: %s", async (_label, entry) => {
+      await writeProject();
+      const r = await appendWithGap([entry], mixedEvents);
+      expect(r.ok, `refused: ${JSON.stringify((r as any).errors)}`).toBe(true);
+    });
+
+    // Documents, rather than hides, the structural cost of matching against
+    // only THIS timeline's own recorded places (no wider US-geography
+    // reference, which would be the per-jurisdiction table ADR-0012 forbids
+    // in different clothing): a real US state or county this specific
+    // timeline has never mentioned is indistinguishable from a foreign one,
+    // so arm 2 silences it -- a false allow, not a false refusal, which is
+    // the direction ADR-0011 limit 1 prefers. Pottsville is literally the
+    // Schuylkill County seat for this same fixture's subject; the guard has
+    // no way to know that from this one timeline entry alone.
+    it.each([
+      ["a different US state", "New York census 1890"],
+      ["the county seat, not yet on this timeline", "Pottsville census 1890"],
+    ])("knowingly allows an unrecorded US place name immediately before 'census': %s", async (_label, entry) => {
+      await writeProject();
+      const r = await appendWithGap([entry], mixedEvents);
+      expect(r.ok, `refused: ${JSON.stringify((r as any).errors)}`).toBe(true);
+    });
+
+    it("allows a non-1890 census year", async () => {
+      await writeProject();
+      const r = await appendWithGap(["census 1900"]);
+      expect(r.ok, `refused: ${JSON.stringify((r as any).errors)}`).toBe(true);
+    });
+
+    it("does not refuse an update that leaves `gaps` untouched", async () => {
+      await writeProject();
+      const appended = await appendWithGap(["census 1900"]);
+      expect(appended.ok).toBe(true);
+      if (!appended.ok) return;
+      const tId = singleOk(appended).entryId;
+      // A later update that writes 1890 into `gaps` would be refused (covered
+      // above); this update never touches `gaps` at all.
+      const r = await researchAppend({
+        projectPath: dir,
+        section: "timelines",
+        op: "update",
+        entryId: tId,
+        fields: { label: "renamed timeline" },
+      } as never);
+      expect(r.ok, `refused: ${JSON.stringify((r as any).errors)}`).toBe(true);
+    });
+  });
+
   // `shortfall` vs the tier is a single-object rule, so ADR-0011's first
   // question puts it at the write boundary rather than in prose. Until
   // 2026-09-21 it lived only in the agent body and the eval validator, and
@@ -11847,315 +12236,5 @@ describe("research_append — unexplained move, update path", () => {
     research.person_evidence.find((e: any) => e.id === id).person_id = "I1";
     await writeFile(join(dir, "research.json"), JSON.stringify(research, null, 2));
     expect((await update(id, { rationale: "Name, household and occupation agree." })).ok).toBe(true);
-  });
-});
-
-// ---------------------------------------------------------------------------
-// US 1890 census precondition (#3255)
-// The US 1890 federal census was largely destroyed; writing it into
-// `expected_events` claims a record that cannot fill the gap.
-// ---------------------------------------------------------------------------
-describe("research_append — US 1890 census precondition", () => {
-  let dir: string;
-  beforeEach(async () => {
-    dir = await mkdtemp(join(tmpdir(), "ra-1890-"));
-  });
-  afterEach(async () => {
-    await rm(dir, { recursive: true, force: true });
-  });
-
-  const usEvent = {
-    date: "1850-06-01",
-    date_certainty: "certain",
-    event_type: "census",
-    description: "1850 US Census",
-    assertion_ids: ["a_001"],
-    standard_place: "Schuylkill, Pennsylvania, United States",
-  };
-
-  const dkEvent = {
-    date: "1850-06-01",
-    date_certainty: "certain",
-    event_type: "census",
-    description: "1850 Denmark Census",
-    assertion_ids: ["a_001"],
-    standard_place: "Copenhagen, Denmark",
-  };
-
-  function timelineResearch(
-    expectedEvents: string[],
-    opts: { events?: any[]; notes?: string | null } = {},
-  ) {
-    const r = baseResearch();
-    r.timelines = [
-      {
-        id: "t_001",
-        label: "John Smith timeline",
-        person_ids: ["I1"],
-        generated: "2026-01-01T00:00:00Z",
-        events: opts.events ?? [usEvent],
-        gaps: [
-          {
-            start: "1850",
-            end: "1900",
-            expected_events: expectedEvents,
-            severity: "medium",
-            notes: opts.notes ?? null,
-          },
-        ],
-      },
-    ] as any;
-    return r;
-  }
-
-  async function writeProject(research: any = timelineResearch([]), tree: any = baseTree) {
-    await writeFile(join(dir, "research.json"), JSON.stringify(research, null, 2));
-    await writeFile(join(dir, "tree.gedcomx.json"), JSON.stringify(tree, null, 2));
-  }
-
-  // --- fire cases ---
-
-  it("(1) fire: bare 'census 1890' on a US timeline", async () => {
-    await writeProject(timelineResearch(["census 1890"]));
-    const r = await researchAppend({
-      projectPath: dir,
-      section: "timelines",
-      op: "update",
-      entryId: "t_001",
-      fields: {
-        gaps: [
-          { start: "1850", end: "1900", expected_events: ["census 1890"], severity: "medium" },
-        ],
-      },
-    });
-    expect(r.ok).toBe(false);
-    expect(failure(r).errors?.join(" ")).toMatch(/census 1890/);
-    expect(failure(r).errors?.join(" ")).toMatch(/notes/);
-  });
-
-  it("(2) fire: with a destruction caveat", async () => {
-    const text = "census_1890 — largely destroyed, not surviving for most areas";
-    await writeProject(timelineResearch([text]));
-    const r = await researchAppend({
-      projectPath: dir,
-      section: "timelines",
-      op: "update",
-      entryId: "t_001",
-      fields: {
-        gaps: [
-          { start: "1850", end: "1900", expected_events: [text], severity: "medium" },
-        ],
-      },
-    });
-    expect(r.ok).toBe(false);
-    expect(failure(r).errors?.join(" ")).toMatch(/1890/);
-  });
-
-  it("(3) fire: '1890_census_fragments'", async () => {
-    await writeProject(timelineResearch(["1890_census_fragments"]));
-    const r = await researchAppend({
-      projectPath: dir,
-      section: "timelines",
-      op: "update",
-      entryId: "t_001",
-      fields: {
-        gaps: [
-          { start: "1850", end: "1900", expected_events: ["1890_census_fragments"], severity: "medium" },
-        ],
-      },
-    });
-    expect(r.ok).toBe(false);
-    expect(failure(r).errors?.join(" ")).toMatch(/1890_census_fragments/);
-  });
-
-  // --- silent cases ---
-
-  it("(4) silent: same string in `notes`, not in `expected_events`", async () => {
-    const research = timelineResearch(["census 1900"], { notes: "census 1890 — destroyed" });
-    await writeProject(research);
-    const r = await researchAppend({
-      projectPath: dir,
-      section: "timelines",
-      op: "update",
-      entryId: "t_001",
-      fields: {
-        gaps: [
-          {
-            start: "1850",
-            end: "1900",
-            expected_events: ["census 1900"],
-            severity: "medium",
-            notes: "census 1890 — destroyed",
-          },
-        ],
-      },
-    });
-    expect(r.ok).toBe(true);
-  });
-
-  it("(5) silent: '1890 veterans schedule'", async () => {
-    await writeProject(timelineResearch(["1890 veterans schedule"]));
-    const r = await researchAppend({
-      projectPath: dir,
-      section: "timelines",
-      op: "update",
-      entryId: "t_001",
-      fields: {
-        gaps: [
-          { start: "1850", end: "1900", expected_events: ["1890 veterans schedule"], severity: "medium" },
-        ],
-      },
-    });
-    expect(r.ok).toBe(true);
-  });
-
-  it("(6) silent: 'census 1890' on a timeline whose events are in Denmark", async () => {
-    await writeProject(timelineResearch(["census 1890"], { events: [dkEvent] }));
-    const r = await researchAppend({
-      projectPath: dir,
-      section: "timelines",
-      op: "update",
-      entryId: "t_001",
-      fields: {
-        gaps: [
-          { start: "1850", end: "1900", expected_events: ["census 1890"], severity: "medium" },
-        ],
-      },
-    });
-    expect(r.ok).toBe(true);
-  });
-
-  it("(7) silent: 'census 1900'", async () => {
-    await writeProject(timelineResearch(["census 1900"]));
-    const r = await researchAppend({
-      projectPath: dir,
-      section: "timelines",
-      op: "update",
-      entryId: "t_001",
-      fields: {
-        gaps: [
-          { start: "1850", end: "1900", expected_events: ["census 1900"], severity: "medium" },
-        ],
-      },
-    });
-    expect(r.ok).toBe(true);
-  });
-
-  it("(8) silent: an update that does not touch `gaps`", async () => {
-    await writeProject(timelineResearch(["census 1890"]));
-    const r = await researchAppend({
-      projectPath: dir,
-      section: "timelines",
-      op: "update",
-      entryId: "t_001",
-      fields: { label: "Renamed timeline" },
-    });
-    expect(r.ok).toBe(true);
-  });
-
-  it("(9) silent: 'census 1890' on a timeline with empty events", async () => {
-    await writeProject(timelineResearch(["census 1890"], { events: [] }));
-    const r = await researchAppend({
-      projectPath: dir,
-      section: "timelines",
-      op: "update",
-      entryId: "t_001",
-      fields: {
-        gaps: [
-          { start: "1850", end: "1900", expected_events: ["census 1890"], severity: "medium" },
-        ],
-      },
-    });
-    expect(r.ok).toBe(true);
-  });
-
-  it("(10) silent: 'Denmark census 1890' on a US timeline (names a non-US jurisdiction)", async () => {
-    await writeProject(timelineResearch(["Denmark census 1890"]));
-    const r = await researchAppend({
-      projectPath: dir,
-      section: "timelines",
-      op: "update",
-      entryId: "t_001",
-      fields: {
-        gaps: [
-          { start: "1850", end: "1900", expected_events: ["Denmark census 1890"], severity: "medium" },
-        ],
-      },
-    });
-    expect(r.ok).toBe(true);
-  });
-
-  // --- additional fire cases: capitalized US entries (review round 1) ---
-
-  it("(11) fire: '1890 Census (Largely Destroyed)' — title case with caveat", async () => {
-    const text = "1890 Census (Largely Destroyed)";
-    await writeProject(timelineResearch([text]));
-    const r = await researchAppend({
-      projectPath: dir,
-      section: "timelines",
-      op: "update",
-      entryId: "t_001",
-      fields: {
-        gaps: [
-          { start: "1850", end: "1900", expected_events: [text], severity: "medium" },
-        ],
-      },
-    });
-    expect(r.ok).toBe(false);
-    expect(failure(r).errors?.join(" ")).toMatch(/1890/);
-  });
-
-  it("(12) fire: 'Census 1890 - Destroyed by fire in 1921'", async () => {
-    const text = "Census 1890 - Destroyed by fire in 1921";
-    await writeProject(timelineResearch([text]));
-    const r = await researchAppend({
-      projectPath: dir,
-      section: "timelines",
-      op: "update",
-      entryId: "t_001",
-      fields: {
-        gaps: [
-          { start: "1850", end: "1900", expected_events: [text], severity: "medium" },
-        ],
-      },
-    });
-    expect(r.ok).toBe(false);
-    expect(failure(r).errors?.join(" ")).toMatch(/1890/);
-  });
-
-  it("(13) fire: '1890 census, Schuylkill County' — US county in text", async () => {
-    const text = "1890 census, Schuylkill County";
-    await writeProject(timelineResearch([text]));
-    const r = await researchAppend({
-      projectPath: dir,
-      section: "timelines",
-      op: "update",
-      entryId: "t_001",
-      fields: {
-        gaps: [
-          { start: "1850", end: "1900", expected_events: [text], severity: "medium" },
-        ],
-      },
-    });
-    expect(r.ok).toBe(false);
-    expect(failure(r).errors?.join(" ")).toMatch(/1890/);
-  });
-
-  it("(14) fire: '1890 Pennsylvania census' — US state in text", async () => {
-    const text = "1890 Pennsylvania census";
-    await writeProject(timelineResearch([text]));
-    const r = await researchAppend({
-      projectPath: dir,
-      section: "timelines",
-      op: "update",
-      entryId: "t_001",
-      fields: {
-        gaps: [
-          { start: "1850", end: "1900", expected_events: [text], severity: "medium" },
-        ],
-      },
-    });
-    expect(r.ok).toBe(false);
-    expect(failure(r).errors?.join(" ")).toMatch(/1890/);
   });
 });

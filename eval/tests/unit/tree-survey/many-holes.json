@@ -15,23 +15,15 @@
     "delegation": "What should I research in my tree?\n\npersonId: TGAP-ROT"
   },
   "mcp_fixtures": [
-    "tree-gaps-many-holes",
-    "person-record-matches-tgap-h3a",
-    "collections-search-any",
-    "place-search-any",
-    "record-search-any",
-    "record-search-any-parents",
-    "record-search-any-country",
-    "person-record-matches-any",
-    "person-quality-any"
+    "tree-gaps-many-holes"
   ],
   "execution": {
     "max_wall_clock_seconds": 300
   },
   "judge_context": [
     "This is the direct-agent arm: no routing skill is staged, and the delegation is relayed verbatim. No project exists in this test, so the agent must not look for research.json, create a project, or call any writer tool (it holds none).",
-    "tree_gaps returns SIX holes, nearest the root first: TGAP-H1A (no death date), TGAP-H1B (no spouse), TGAP-H2A and TGAP-H3A (missing parents), TGAP-H4A (no birth info), TGAP-H5A (missing surname). Only TGAP-H3A has a pending hint, and its record type fits (a birth and christening collection for a missing-parents hole). The other checks return empty results.",
-    "The first suggestion must be TGAP-H3A's person, however far from the root. At most five people are suggested and no person is suggested twice; a deterministic validator checks all three, so do not re-grade the order yourself. Grade the questions: each must be a single fact, name the person, and scope place and years.",
+    "tree_gaps returns SIX holes, a hole with a fitting pending hint first and the rest nearest the root first: TGAP-H3A (missing parents, `pendingHints` fitting 1), then TGAP-H1A (no death date), TGAP-H1B (no spouse), TGAP-H2A (missing parents), TGAP-H4A (no birth info), TGAP-H5A (missing surname). Only TGAP-H3A has a pending hint. The other checks return empty results.",
+    "The first suggestion must be TGAP-H3A's person, the hole tree_gaps lists first because it has a fitting hint, however far from the root. At most five people are suggested and no person is suggested twice; a deterministic validator checks all three, so do not re-grade the order yourself. Grade the questions: each must be a single fact, name the person, and scope place and years.",
     "The agent's return should end with the summary_for_user block: a `---` line followed by plain prose with no label, and no identifiers, file names, tool names or field names in it."
   ]
 }
