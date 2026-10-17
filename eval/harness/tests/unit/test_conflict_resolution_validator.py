@@ -73,8 +73,10 @@ check_naming_from_wiki = _VALIDATOR.test_naming_system_read_from_wiki
 check_calendar_from_tool = _VALIDATOR.test_calendar_regime_read_from_tool
 
 _REPO = Path(__file__).resolve().parents[4]  # eval/harness/tests/unit -> repo root
+# Every version, not only v1 candidates: the harness's keep-newest-5 prune
+# deletes old v1 logs, and a v1-only corpus emptied a field these tests count.
 _CORPUS = sorted(
-    p for p in glob.glob(str(_REPO / "eval/runlogs/unit/conflict-resolution/v1_*.json"))
+    p for p in glob.glob(str(_REPO / "eval/runlogs/unit/conflict-resolution/v*.json"))
     if not p.endswith(".ann.json")
 )
 

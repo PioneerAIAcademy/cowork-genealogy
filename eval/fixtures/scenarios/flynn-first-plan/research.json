@@ -466,7 +466,7 @@
           "start": "1851-01-01",
           "end": "1860-12-31",
           "expected_events": [
-            "census",
+            "1860 census",
             "other residence"
           ],
           "severity": "medium",
