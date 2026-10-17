@@ -179,7 +179,7 @@ it, you do not invoke `locality-guide`.** The orchestrator runs
 `locality-guide` before handing off to you when a jurisdiction hasn't
 been surveyed, so by the time you plan, `research.json` should already
 hold a `localities` entry for the target place (`jurisdictions`,
-`quirks`, `guide`). **Read it.** If it is **missing** for a place you
+`quirks`, `guide_markdown`). **Read it.** If it is **missing** for a place you
 need to plan — a first plan, a fallback jurisdiction, a FAN-cluster
 place — do **not** survey it yourself and do **not** invoke
 locality-guide. **Stop and return to the orchestrator, noting that the

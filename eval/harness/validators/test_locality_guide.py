@@ -1,11 +1,13 @@
 """Skill-specific validators for the locality-guide skill.
 
 locality-guide consults the place_search, collections_search,
-external_links_search, wiki, and wikipedia MCP tools and outputs the
-locality research guide to the user. When invoked inside a research
-project it ALSO persists one `localities` entry via research_append —
-it owns the `localities` section in the ownership manifest. Standalone
-Q&A (no research.json to write to) persists nothing. It never writes
+external_links_search, wiki, and wikipedia MCP tools and compiles a
+locality research guide. When invoked inside a research project it
+persists the guide in one `localities` entry via research_append — it
+owns the `localities` section in the ownership manifest — and returns
+only the entry's `loc_` id and its summary, not the guide (issue #3442).
+Standalone Q&A (no research.json to write to) persists nothing and
+returns the guide itself. It never writes
 tree.gedcomx.json — enforced by
 `test_universal.py::test_tree_ownership_table` (locality-guide is on no
 tree row, so any tree write triggers a violation).
@@ -28,6 +30,10 @@ guard the structural properties a validator can settle without judgment
     so VR1 does not re-check them.
   - test_survey_run_calls_both_collections_and_volume_search (VR4) — gating:
     a records survey that called one Step-3 search must have called both.
+  - test_persisted_guide_is_the_guide, test_in_project_return_follows_the_contract
+    and test_no_project_return_carries_guide — the guide is written exactly once
+    (issue #3442): into `guide_markdown` inside a project, into the return
+    outside one. Rationale in each docstring.
 
 Of the two other checks the deep dive proposed, VR3 was dropped and VR2 is held
 (NOT shipped here, and NOT dropped on the reasons first given — those don't hold):
@@ -69,9 +75,12 @@ criteria-demotion rollout.
 
 from __future__ import annotations
 
+import re
+
 import pytest
 
-from validators_lib import bare_tool_name, new_section_entries
+from harness.skill_runner import agent_return_text
+from validators_lib import as_mapping, bare_tool_name, new_section_entries, research_append_ops
 
 REQUIRED_WIKI_SECTIONS = {"home", "getting_started", "online_records", "research_tips"}
 
@@ -279,3 +288,198 @@ def test_single_jurisdiction_enforced(before_state, after_state, tool_calls, tes
             f"volume_search called for multiple counties: {sorted(county_firsts)} — "
             "the agent should survey only one jurisdiction per call"
         )
+
+
+# --- The guide is written once (issue #3442) ---------------------------------
+
+
+def _heading(title):
+    """A level-two template heading: line-anchored, case-insensitive, suffix allowed
+    (`## Jurisdiction overview (1840s)` counts; `### Jurisdiction overview` and the
+    words mid-line do not)."""
+    return re.compile(rf"^##[ \t]+{re.escape(title)}", re.IGNORECASE | re.MULTILINE)
+
+
+_GUIDE_HEADINGS = {
+    title: _heading(title)
+    for title in ("Jurisdiction overview", "Available record types", "Research tips")
+}
+_RECORD_TYPES_HEADING = _GUIDE_HEADINGS["Available record types"]
+_POINTER = re.compile(
+    r"\bsee\s+(the\s+)?(full\s+guide|research\s+log)\b"
+    r"|\bfull\s+guide\s+(text\s+)?(as\s+)?presented\b",
+    re.IGNORECASE,
+)
+_IN_PROJECT_RETURN_LIMIT = 3000
+
+
+def test_persisted_guide_is_the_guide(before_state, after_state):
+    """Presence-gated: every localities[] entry this run wrote holds the guide
+    itself in `guide_markdown` — a non-empty string carrying the template's
+    `## Jurisdiction overview`, `## Available record types` and `## Research tips`
+    sections, and no pointer to a guide kept somewhere else.
+
+    Why the stub guard exists: inside a project the persisted entry is now the
+    only copy of the guide. The return carries the `loc_` id instead (see
+    `test_in_project_return_follows_the_contract`), and research-plan reads the
+    guide back from `guide_markdown`. While the return also carried the guide, a
+    `guide_markdown` of "See full guide in research session output." lost
+    nothing anyone read; once the return stops carrying it, that stub loses the
+    guide outright. It is the live failure, not a hypothetical: replayed over the
+    five run logs on main on 2026-10-15, 20 of the 80 persisting runs wrote a
+    stub and 5 more a guide cut off before a required section
+    (`scripts/replay_locality_guide_validators.py` reproduces the count).
+
+    Skips when the run wrote no entry. Persistence itself is asserted by
+    `test_localities_persisted_with_full_page_coverage` (tag-gated) and by the
+    contract validator's nothing-written branch.
+    """
+    written = _written_localities(before_state, after_state)
+    if not written:
+        pytest.skip("no localities entry created or modified this run")
+    problems = []
+    for loc in written:
+        lid = loc.get("id")
+        guide = loc.get("guide_markdown")
+        if not isinstance(guide, str) or not guide.strip():
+            problems.append(
+                f"localities[{lid}].guide_markdown must hold the whole guide; got {guide!r:.80}"
+            )
+            continue
+        missing = [title for title, pattern in _GUIDE_HEADINGS.items() if not pattern.search(guide)]
+        if missing:
+            problems.append(
+                f"localities[{lid}].guide_markdown is missing the `## ` heading(s) {missing}"
+            )
+        pointer = _POINTER.search(guide)
+        if pointer:
+            problems.append(
+                f"localities[{lid}].guide_markdown points elsewhere ({pointer.group(0)!r}) "
+                "instead of holding the guide"
+            )
+    assert not problems, (
+        "the persisted guide is not the guide:\n  - " + "\n  - ".join(problems)
+    )
+
+
+def _response_body(response):
+    """A recorded tool response as a mapping: the dict the mock logs, or MCP text
+    content holding JSON, or a JSON string. Anything else reads as `{}`, so a
+    missing or unparseable response is never taken for a refusal."""
+    if (
+        isinstance(response, dict)
+        and "ok" not in response
+        and isinstance(response.get("content"), list)
+    ):
+        texts = [
+            item.get("text")
+            for item in response["content"]
+            if isinstance(item, dict) and item.get("type") == "text"
+        ]
+        return as_mapping(texts[0]) if texts else {}
+    return as_mapping(response)
+
+
+def _refused_localities_write(tool_calls):
+    return any(
+        isinstance(tc, dict)
+        and bare_tool_name(tc.get("tool")) == "research_append"
+        and (
+            as_mapping(tc.get("args")).get("section") == "localities"
+            or any(op.get("section") == "localities" for op in research_append_ops(tc.get("args")))
+        )
+        and _response_body(tc.get("response")).get("ok") is False
+        and _response_body(tc.get("response")).get("reason") == "no_project"
+        for tc in (tool_calls or [])
+    )
+
+
+def _names_id(reply, lid):
+    return re.search(rf"(?<!\w){re.escape(lid)}(?!\w)", reply) is not None
+
+
+def test_in_project_return_follows_the_contract(
+    before_state, after_state, tool_calls, agent_returns=None
+):
+    """Inside a research project the agent writes the guide once, into
+    `guide_markdown`, and its return is one line naming the `loc_` id written or
+    updated plus `summary_for_user` — never the guide again.
+
+    Why the return omits the guide: the guide runs to 20k characters and more.
+    Writing it into `guide_markdown` and then restating it as the return made the
+    agent emit it twice, roughly doubling its output tokens and wall clock (the
+    live Freeborn County run behind issue #3442), and the dispatcher relayed a
+    return nothing downstream reads — research-plan reads the persisted entry.
+
+    Skips with no project (`before_state["research_json"]` is None):
+    `test_no_project_return_carries_guide` grades that return.
+
+    Entry written: the return is non-empty, at most 3000 characters (all 32
+    October in-project returns that followed this contract are at most 2310) and
+    names every written entry's id as a whole word.
+
+    Nothing written: passes only on the no-project fallback — a
+    `research_append` writing `localities` whose recorded response is a refusal
+    (`ok` exactly False) carrying `reason: "no_project"`, the tool's one
+    refusal that is an answer rather than a fixable error
+    (`research-append.ts`, `noProjectResult` in `project-io.ts`), and a return
+    carrying the guide
+    (`## Available record types`). A refused call reaches `tool_calls` with its
+    response (`mock_mcp.py`, the research_append live handler); the conftest
+    docstring saying `tool_calls` holds only successes is wrong for these live
+    handlers. `attempted_mcp_calls` is not read: its entries carry no response,
+    include successes, and no run log persists it. Anything else fails: every
+    in-project no-write run in the October logs is a survey that should have
+    persisted. Known edge, exercised by no test: a legitimate in-project hand-back
+    that writes nothing would fail here; such a test needs a tag exemption.
+    """
+    if before_state.get("research_json") is None:
+        pytest.skip("no research project: test_no_project_return_carries_guide grades the return")
+    reply = agent_return_text(agent_returns, "locality-guide")
+    written = _written_localities(before_state, after_state)
+    if written:
+        ids = [loc.get("id") for loc in written if isinstance(loc.get("id"), str)]
+        assert reply.strip(), (
+            f"in a research project the agent wrote {ids} but its return is empty; "
+            "it must name the loc_ id and give summary_for_user"
+        )
+        assert len(reply) <= _IN_PROJECT_RETURN_LIMIT, (
+            f"in a research project the return must be at most {_IN_PROJECT_RETURN_LIMIT} "
+            "characters (the loc_ id line and summary_for_user, not the guide); "
+            f"got {len(reply)}"
+        )
+        missing = [lid for lid in ids if not _names_id(reply, lid)]
+        assert not missing, (
+            f"the return does not name the localities entry {missing} this run wrote; "
+            "in a research project it must name the loc_ id written or updated"
+        )
+        return
+    assert _refused_localities_write(tool_calls), (
+        "in a research project, nothing persisted and no localities write was refused "
+        "with reason no_project; the guide belongs in a localities entry, a fixable "
+        "refusal must be fixed and retried, and only a no_project answer falls back "
+        "to returning the guide"
+    )
+    assert _RECORD_TYPES_HEADING.search(reply), (
+        "a localities write was refused, so the return must carry the guide in full: "
+        "no `## Available record types` heading in the return"
+    )
+
+
+def test_no_project_return_carries_guide(test, agent_returns=None):
+    """Tag-gated (`no-project`): with no research project there is nowhere to
+    persist the guide, so the agent's return is the guide in full.
+
+    Searches the whole joined return for a line-anchored `## Available record
+    types` (case-insensitive, suffix allowed). No split on `---`: no-project
+    returns open with a narration preamble and a `---`, guides carry internal
+    `---` rules, and `summary_for_user` carries no headings, so a plain search is
+    both simpler and sufficient.
+    """
+    if "no-project" not in (test.get("tags") or []):
+        pytest.skip("not a no-project test")
+    reply = agent_return_text(agent_returns, "locality-guide")
+    assert _RECORD_TYPES_HEADING.search(reply), (
+        "no `## Available record types` heading in the return; with no project "
+        "the guide is the return"
+    )
