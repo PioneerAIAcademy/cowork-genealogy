@@ -47,6 +47,7 @@ export const RESEARCH_QUERY_SECTIONS = [
   "proof_summaries",
   "evaluations",
   "localities",
+  "namesakes",
   "external_collections",
 ] as const;
 
@@ -73,6 +74,8 @@ export type ResearchQuerySection = (typeof RESEARCH_QUERY_SECTIONS)[number];
  *  needs saying. */
 export const RESEARCH_QUERY_OPTIONAL_SECTIONS: ReadonlySet<string> = new Set([
   "localities",
+  // A project has the key only once a namesake is recorded.
+  "namesakes",
 ]);
 
 /** Array sections deliberately NOT served, and why.
@@ -90,7 +93,7 @@ export const RESEARCH_QUERY_EXCLUDED: Readonly<Record<string, string>> = {
     "would create a contract that card then has to remove",
   warning_justifications:
     "writer-tool only; persisted by the warning gate as a side-effect of a " +
-    "justified write. Read by gps-mentor for audit, not by research_query",
+    "justified write. No tool returns it, and no agent needs it to",
 };
 
 export interface ResearchQueryInput {
@@ -283,6 +286,9 @@ export const SECTION_FILTERS: Record<ResearchQuerySection, Partial<Record<Filter
   // fits inside a single 50-item page. The empty object routes to the
   // "(this section takes no filters)" branch below.
   localities: {},
+  namesakes: {
+    personId: { field: "person_id", mode: "exact" },
+  },
   external_collections: {
     place: { field: "place", mode: "place-or-enclosing" },
     recordType: { field: "record_types", mode: "contains-substring-ci" },
@@ -653,7 +659,8 @@ export const researchQuerySchema = {
     "related_question_ids, assertionId — matches supporting/contradicting_assertion_ids, " +
     "status), `timelines` (personId — matches person_ids), `proof_summaries` " +
     "(questionId, assertionId — matches supporting_assertion_ids), `evaluations` " +
-    "(targetId, focus), `localities` (no filters), `external_collections` (place — also " +
+    "(targetId, focus), `localities` (no filters), `namesakes` (personId — the tree person a " +
+    "recorded namesake is not), `external_collections` (place — also " +
     "its enclosing places, recordType). Note for `evaluations`: there is no filter for " +
     "`superseded_by` — narrow with targetId/focus, then pick the entry whose " +
     "`superseded_by` is null yourself.\n" +
@@ -707,7 +714,9 @@ export const researchQuerySchema = {
       personId: {
         type: ["string", "array"],
         items: { type: "string" },
-        description: "person_evidence: matches person_id. timelines: matches person_ids (contains).",
+        description:
+          "person_evidence: matches person_id. timelines: matches person_ids (contains). " +
+          "namesakes: matches person_id.",
       },
       assertionId: {
         type: ["string", "array"],

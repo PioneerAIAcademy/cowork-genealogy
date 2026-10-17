@@ -8650,20 +8650,9 @@ describe("research_append — worked examples are themselves valid", () => {
     },
   };
 
-  const SECTIONS_WITH_EXAMPLES = [
-    "sources",
-    "assertions",
-    "person_evidence",
-    "questions",
-    "plans",
-    "plan_items",
-    "conflicts",
-    "hypotheses",
-    "timelines",
-    "proof_summaries",
-    "evaluations",
-    "known_holdings",
-  ];
+  // Derived from the registry, so an example added for a new section is
+  // round-tripped without anyone remembering to list it here.
+  const SECTIONS_WITH_EXAMPLES = Object.keys(__testing.EXAMPLES);
 
   it.each(SECTIONS_WITH_EXAMPLES)("the '%s' example validates", async (section) => {
     // A fresh project per case so examples never depend on each other.
@@ -10317,6 +10306,20 @@ describe("research_append — person_evidence requires a recorded score", () => 
     );
     await attest({ tree_person_id: "p-sibling" });
     expect((await researchAppend(link(0.82, "p-sibling") as any)).ok).toBe(true);
+  });
+
+  // An S entry reaches EVERY research source that cites it (#3363). Read
+  // last-wins, the second source here, which carries no record, hid rec_A: I9
+  // then needed a score no same_person call can give a person made from it.
+  it("C9s reads every research source citing an S entry, not only the last", async () => {
+    await writeProject(mintedTree);
+    const r0 = JSON.parse(await readFile(join(dir, "research.json"), "utf-8"));
+    r0.sources.push({ ...validSource("src_011"), gedcomx_source_description_id: "S1" });
+    await writeFile(join(dir, "research.json"), JSON.stringify(r0, null, 2));
+    const scored = await researchAppend(link(0.9, "I9") as any);
+    expect(scored.ok).toBe(false);
+    expect(failure(scored).errors?.join(" ")).toMatch(/minted from the very record/);
+    expect((await researchAppend(link(null, "I9") as any)).ok).toBe(true);
   });
 
   it("still calls a locally-minted stub minted when no baseline exists", async () => {

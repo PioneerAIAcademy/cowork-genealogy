@@ -15,8 +15,12 @@
 
 - **Status:** Accepted
 - **Decided:** 2026-08-09 (on the fourth independent re-derivation in one week)
-- **Last updated:** 2026-10-01 (a read tool's resource budget is a hard refusal
-  at the tool, not an advisory field. Previously 2026-09-28, when a corpus replay
+- **Last updated:** 2026-10-17 (a registered guard may have a writer-tool
+  precondition and no harness detector, replayed by the vitest half alone, and a
+  case file names the `research.json` section its write lives in (default
+  `proof_summaries`). Previously
+  2026-10-01, when a read tool's resource budget became a hard refusal at the
+  tool, not an advisory field. Previously 2026-09-28, when a corpus replay
   became half a graduation argument: a guard now needs a labelled case set —
   must-fire cases in at least two shapes plus must-not-fire cases — and a guard
   on two planes keeps one JSON case file both planes replay, held by a registry;
@@ -378,13 +382,19 @@ measured rather than argued.
    its case file, owed one because it predates this rule (a frozen,
    shrink-only list), or exempt with a reason. The first instance is
    `find_unpersisted_conflict_resolutions`, graduated to a `research_append`
-   precondition with its cases in `unpersisted-conflict-resolution.json`.
+   precondition with its cases in `unpersisted-conflict-resolution.json`. A
+   guard with a writer-tool precondition and no harness detector may instead be
+   registered with a case file, as `competingParentSetsInvariants` and
+   `namesakeTieInvariants` are: the vitest half alone replays it, and the
+   pytest half still holds it to the rule above.
 
    **What this knowingly accepts.** Two loaders now exist that otherwise would
-   not, one per plane. And the format — a list of `{ research, expect }` records
-   — fits a guard that is a pure function of one project document; the next
-   guard to graduate may read a tree, tool calls or a sidecar, and the format
-   will have to grow. **Reopen** the one-file decision when a two-plane guard's
+   not, one per plane. And the format — a list of `{ research, expect }` records,
+   each judged for the entry its `write` id names in the `research.json` section
+   the file declares (`section`, default `proof_summaries`) — fits a guard that
+   is a pure function of one project document and its tree (a case may carry
+   `tree`); a guard that reads tool calls or a sidecar will make the format grow
+   again. **Reopen** the one-file decision when a two-plane guard's
    inputs cannot be written as a plain JSON record both planes can feed to
    their guard.
 
@@ -566,15 +576,19 @@ What exists holds the gates that did ship:
 > for guards the harness can enumerate: every `find_*` detector and `*_KIND`
 > shadow constant in `eval/harness/harness/skill_invocation.py` is accounted for
 > in `packages/engine/mcp-server/tests/guard-cases/registry.json`; each
-> registered guard's case file has two fire shapes and a silent case and
-> replays against its detector. The backlog and the exemptions are frozen in the
-> test, so adding to either is an edit a reviewer sees; nothing *prevents* that
-> edit. A guard that lives only in the writer tool is outside what the registry
-> can enumerate, and is held by review, like placement.
+> registered guard's case file has two fire shapes and a silent case and, where
+> the guard has a detector, replays against it. The backlog and the exemptions
+> are frozen in the test, so adding to either is an edit a reviewer sees;
+> nothing *prevents* that edit. A guard that lives only in the writer tool is
+> outside what the registry can enumerate, so whether it is registered at all
+> is held by review, like placement; once registered, its case file is held to
+> the same rule.
 
 > `packages/engine/mcp-server/tests/tools/research-append-guard-cases.test.ts`
-> — replays every registered two-plane guard's case file through its writer
-> precondition, and fails on a registered writer guard with no replay binding.
+> — replays the case file of every registered guard with a writer
+> precondition, two-plane or writer-only, through that precondition, reading
+> each case's write from the file's `section` (default `proof_summaries`), and
+> fails on a registered writer guard with no replay binding.
 
 None of these catches the thing this ADR is about. And per the new-lint rule in
 `CLAUDE.md`, a new gate's test is not evidence until the gate has been commented

@@ -367,6 +367,20 @@ export interface WarningJustification {
   recorded_at: string
 }
 
+/** A different person who shares a tree person's name, keyed by the tree
+ *  person_id it shadows. */
+export interface Namesake {
+  id: string
+  person_id: string
+  name: string
+  place: string
+  time_period?: string | null
+  record_ids: string[]
+  log_entry_ids?: string[]
+  notes?: string | null
+  created: string
+}
+
 export interface ResearchData {
   project: Project
   researcher_profile?: ResearcherProfile
@@ -384,6 +398,7 @@ export interface ResearchData {
   evaluations: EvaluationEntry[]
   localities?: Locality[]
   warning_justifications?: WarningJustification[]
+  namesakes?: Namesake[]
 }
 
 // ============================================================

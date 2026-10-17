@@ -20,6 +20,7 @@ import type {
 } from "../types/gedcomx.js";
 import { toArk } from "./ark.js";
 import { recordBasisOf } from "./record-basis.js";
+import { isRelationshipEstablishing } from "./source-ref-resolver.js";
 
 // ─── fact_type → tree fact type (honors the #711 structured-fact model) ───────
 //
@@ -107,6 +108,31 @@ export const COUPLE_EVENT_FACT_KEYS: ReadonlySet<string> = new Set([
 /** Whether this `fact_type` names a couple event, in any spelling. */
 export function isCoupleEventFactType(raw: unknown): boolean {
   return COUPLE_EVENT_FACT_KEYS.has(factTypeKey(raw));
+}
+
+/** Fact types, as `factTypeKey` folds them, that name a second person on the
+ *  persona's own record: a parent, a spouse or couple, an informant, or a
+ *  parent's birthplace. Taken from the committed research files, where most of
+ *  them are linked to two people. */
+export const NAMES_SECOND_PERSON_KEYS: ReadonlySet<string> = new Set([
+  "father", "mother", "parents", "fathername", "mothername", "parentname",
+  "fatherbirthplace", "motherbirthplace", "filiation", "spouse", "couple", "informant",
+]);
+
+/** Whether an assertion of this `fact_type` names a second person: a
+ *  marriage, relationship or parentage (`isRelationshipEstablishing`), a couple
+ *  event in any spelling (`isCoupleEventFactType`: banns, a marriage date or
+ *  intention, a divorce), or a fact about another person filed on this persona
+ *  (`NAMES_SECOND_PERSON_KEYS`). The person-evidence agent links such an
+ *  assertion to that person too, so its link says nothing about which of them a
+ *  persona is: counting it let the groom's name and birth be copied onto the
+ *  bride. */
+export function isTwoParty(factType: unknown): boolean {
+  return (
+    isRelationshipEstablishing(factType) ||
+    isCoupleEventFactType(factType) ||
+    NAMES_SECOND_PERSON_KEYS.has(factTypeKey(factType))
+  );
 }
 
 /** Tree fact types whose `value` is null (events + place/duration attributes) —

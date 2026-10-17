@@ -373,13 +373,21 @@ nothing and could leave the project in a state where every later `tree_edit`
 rejected the whole document.
 
 The realistic failure is a **dangling person reference**: `research.json` may
-cite a person being removed (`person_evidence[i].person_id`, a question's
-`subject_person_ids`, a timeline, a known holding), and `validateCrossFile`
-reports those as errors. The tool does not repair them — it does not touch
-`research.json`, by design — so the error names the blocking paths and the caller
-decides: clear those entries first, or pick a fact-level selector that does not
-cascade. The skill already tells the researcher that pre-existing assertions
-stating the answer compromise the exercise anyway.
+cite a person being removed (`person_evidence[i].person_id`, the project's
+`subject_person_ids`, a timeline, a known holding, a proof-summary claim's
+`relationship`, a namesake row's `person_id`: every reference
+`iteratePersonIdRefs` walks), and `validateCrossFile` reports those as errors.
+The tool does not repair them — it does not touch `research.json`, by design —
+so the error names the blocking paths and the caller decides: clear those
+entries first, or pick a fact-level selector that does not cascade. The skill
+already tells the researcher that pre-existing assertions stating the answer
+compromise the exercise anyway.
+
+A namesake row cannot be cleared: `research_append` never deletes a row and
+refuses an update to its `person_id` (`research-schema-spec.md` §5.14). A forget
+that would orphan one is therefore refused, and the remedy is a new project. In
+any project with a plan the plan-phase precondition below fires first, so this
+refusal is reached only in a project that holds a namesake row and no plan.
 
 ### Plan-phase precondition
 

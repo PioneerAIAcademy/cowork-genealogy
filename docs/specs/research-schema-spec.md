@@ -15,7 +15,7 @@ A genealogy research project consists of two files:
 
 `research.json` references `tree.gedcomx.json` at two points:
 
-1. **Person IDs** — `project.subject_person_ids`, `person_evidence.person_id`, and `timelines.person_ids` reference person IDs in `tree.gedcomx.json`.
+1. **Person IDs** — `project.subject_person_ids`, `person_evidence.person_id`, `timelines.person_ids`, `known_holdings.relates_to_person_ids`, `proof_summaries.claims[].relationship.parent` / `.child`, and `namesakes.person_id` reference person IDs in `tree.gedcomx.json`.
 2. **Source description IDs** — `sources.gedcomx_source_description_id` references source description IDs in `tree.gedcomx.json`.
 
 At upload time, resolved person identities flow into `tree.gedcomx.json` while the assertion-to-record-role linkages stay in `research.json` as the audit trail.
@@ -42,17 +42,19 @@ A project often starts with a question about a person who does not yet exist in 
   "timelines": [ ],
   "proof_summaries": [ ],
   "evaluations": [ ],
-  "localities": [ ]
+  "localities": [ ],
+  "warning_justifications": [ ],
+  "namesakes": [ ]
 }
 ```
 
 All arrays start empty. The file is created at project initialization.
 
-**Twelve of these fifteen keys must be present**, even when their array is
+**Twelve of these seventeen keys must be present**, even when their array is
 empty: `project`, `questions`, `plans`, `log`, `sources`, `assertions`,
 `person_evidence`, `conflicts`, `hypotheses`, `timelines`,
 `proof_summaries`, `evaluations`. Omitting one is a validation failure, not
-a shorthand for "empty". The other three are optional and may be absent
+a shorthand for "empty". The other five are optional and may be absent
 entirely:
 
 - `researcher_profile` — written by `init-project` as a fixed profile at
@@ -63,6 +65,10 @@ entirely:
   knowledge) before any new research begins (Section 5.1.2).
 - `localities` — written by `locality-guide`; absent on projects that predate
   it (Section 5.13).
+- `warning_justifications` — appended by the tree-writer tools as a side
+  effect of a justified write (Section 4).
+- `namesakes` — written by `search-records`, in a later change; no committed
+  document carries it yet (Section 5.14).
 
 **No other top-level key is permitted.** Every object in this file is
 closed: the JSON Schema sets `additionalProperties: false` on the document
@@ -216,6 +222,7 @@ value is rejected at write time.
 | `ps_` | proof_summaries | `ps_001` |
 | `ev_` | evaluations | `ev_001` |
 | `loc_` | localities | `loc_001` |
+| `ns_` | namesakes | `ns_001` |
 
 The digits after the prefix are a convention, not a constraint — `q_flynn-1850`
 is as valid as `q_002` — with one exception: an `ev_` id must be the prefix
@@ -229,7 +236,7 @@ Two distinct formats appear in this file, and the distinction is enforced.
 
 | Format | Fields | Shape |
 |--------|--------|-------|
-| **Date** | `project.created`, `project.updated`, `known_holdings[].created`, `questions[].created`, `questions[].resolved`, `plans[].created`, `sources[].access_date`, `person_evidence[].created`, `localities[].created`, `localities[].updated` | `YYYY-MM-DD` exactly — `2026-05-01`. No time part, no month- or year-only form. Enforced by both validators |
+| **Date** | `project.created`, `project.updated`, `known_holdings[].created`, `questions[].created`, `questions[].resolved`, `plans[].created`, `sources[].access_date`, `person_evidence[].created`, `localities[].created`, `localities[].updated`, `namesakes[].created` | `YYYY-MM-DD` exactly — `2026-05-01`. No time part, no month- or year-only form. Enforced by both validators |
 | **Timestamp** | `log[].performed`, `timelines[].generated`, `evaluations[].timestamp` | ISO 8601 date-time **with an explicit timezone** — `2026-05-01T10:15:00Z` or `2026-05-01T10:15:00+01:00` |
 
 Write the colon form with a `Z` or a numeric offset and both validators accept
@@ -289,7 +296,8 @@ described under "Who actually writes a row" below.
 | `proof_summaries` | proof-conclusion | (terminal) | Mutable (tier, narrative can be revised) |
 | `evaluations` | **the gps-mentor agent** | proof-conclusion, question-selection | Retire an entry by pointing `superseded_by` at its replacement; never delete. The owner is an agent, and the harness ownership check keys on the calling *skill's* name — so this row cannot be enforced there, and is declared unenforceable rather than left to look covered |
 | `localities` | locality-guide | research-plan (+ the Research Viewer) | Mutable; never delete — a re-survey of the same place refreshes the existing `loc_` entry in place (there is no status field to supersede). Optional section — absent on projects that predate it. `search-records` does NOT read it (research-plan pre-translates the fact into `plan_item.rationale`) |
-| `warning_justifications` | (none — writer-tool only) | gps-mentor (audit trail) | Append-only; written by `tree_edit`, `tree_correct`, `merge_tree_persons`, `materialize_facts` as a side-effect of a justified write. Each entry carries `warning_id`, `justification`, `person_ids`, `tool`, `recorded_at`. |
+| `warning_justifications` | (none — writer-tool only) | none: no tool returns it (`research_query` excludes it, `project_context` omits it) | Append-only; written by `tree_edit`, `tree_correct`, `merge_tree_persons`, `materialize_facts` as a side-effect of a justified write. Each entry carries `warning_id`, `justification`, `person_ids`, `tool`, `recorded_at`. |
+| `namesakes` | search-records (in a later change; nothing writes it yet) | `research_append` (the namesake cap), `merge_tree_persons` | Mutable (`name`, `place`, `time_period`, `record_ids`, `log_entry_ids`, `notes`); never delete. A row is never retired, and `research_append` refuses an update that sets `person_id` (Section 5.14). Optional section — absent until a namesake is recorded |
 
 `research_append` also accepts a `plan_items` pseudo-section, which addresses
 `plans[].items[]` rather than a top-level property of this file. It carries the
@@ -307,7 +315,7 @@ mechanism at all** — so do not reach for one generically. There are exactly th
 |---|---|---|
 | A `superseded` status value | `plans` **only** — it is the one status enum that defines one (see the enum table above) | Set `status: "superseded"` on the old plan |
 | A `superseded_by` pointer | `person_evidence`, `evaluations` | Point the old entry's `superseded_by` at the new entry's id |
-| None | `questions`, `conflicts`, `hypotheses`, `sources`, `assertions`, `localities`, `proof_summaries` | Update the entry in place. `conflicts` and `hypotheses` reach a terminal state through their own status values (`resolved`/`moot`, `ruled_out`); the rest simply stay current |
+| None | `questions`, `conflicts`, `hypotheses`, `sources`, `assertions`, `localities`, `proof_summaries`, `namesakes` | Update the entry in place. `conflicts` and `hypotheses` reach a terminal state through their own status values (`resolved`/`moot`, `ruled_out`); the rest simply stay current |
 
 Writing a status value the section's enum does not define is rejected by
 `validate_research_schema`, so an instruction to "supersede with status" on a section in
@@ -1068,6 +1076,56 @@ written as free text in the plan item that uses it. The section shipped with
 a viewer Localities tab; `search-records` deliberately stays general (see the
 consumer table above).
 
+### 5.14 `namesakes`
+
+Array of namesake rows. A row records a different person who shares a tree
+person's name, place and time, keyed by the `person_id` of the tree person the
+namesake is **not**, so that a `probable` or `confident` `person_evidence` link
+to that person needs something in its record that ties the record to them.
+**Optional section** (not in `required`): absent until a namesake is recorded.
+`search-records` records a row when a search turns up such a person; that write
+lands in a later change, so no committed document carries the section yet (0 of
+515 tracked research documents, measured at 8b1a77f7a by
+`packages/engine/mcp-server/dev/measure-namesake-cap.ts`) and no write is
+refused on its account.
+
+| Field | Type | Required | Description |
+|-------|------|----------|-------------|
+| `id` | string | yes | `ns_` prefix |
+| `person_id` | string | yes | GedcomX person ID of the tree person the namesake is **not**, whose links the row caps. An update cannot change it (see below) |
+| `name` | string | yes | The namesake's name. Non-empty |
+| `place` | string | yes | Where the namesake is recorded. Non-empty |
+| `time_period` | string or null | no | When, as free text (e.g. "born about 1873") |
+| `record_ids` | string[] | yes | The record ids of the namesake's own records, in the form assertions carry in `record_id` |
+| `log_entry_ids` | string[] | no | `log_` references to the searches that found the namesake; each must name an existing log entry |
+| `notes` | string or null | no | Free text |
+| `created` | string | yes | Tool-stamped ISO 8601 date |
+
+**A row is never retired, and no update re-points it.** It has no status and no
+`superseded_by`, and `research_append` lets an update set only `name`, `place`,
+`time_period`, `record_ids`, `log_entry_ids` and `notes` (the section's
+`updatableFields`); an update setting any other field, `person_id` included, is
+refused. A row the agent could switch off would rebuild the self-declared flag
+the ruling below rejected.
+
+**Why a section keyed on the tree person** (lead, 2026-10-13). The cap looks a
+row up by the link's `person_id`. A list on the question was rejected: questions
+carry no subject person id, so a namesake found under one question would not
+protect the same person's links under another. Stub persons were rejected: they
+pollute the user's tree, and telling a namesake from a same-named father or son
+would need a marker field on the tree. A self-declared flag on the link was
+rejected: the agent's own failure is believing it has ruled namesakes out, so it
+would not set it.
+
+**`person_id` is walked like every other tree reference.** `iteratePersonIdRefs`
+yields it, so the validator reports a row keyed on a person not in the tree,
+`merge_tree_persons` re-keys a row onto the merge survivor (counted in
+`researchRefsUpdated.namesakes`), and `tree_forget` is refused when it would
+orphan a row (`tree-forget-tool-spec.md` §4).
+
+What a row does to a link, the ties that allow one and the refusal, is specified
+in `research-append-tool-spec.md` §5, the namesake cap row.
+
 ---
 
 ## 6. Cross-Reference Map
@@ -1126,6 +1184,10 @@ evaluations
   ├─ target_id (when target_type == "question") ─► questions[].id
   ├─ target_id (when target_type == "proof_summary") ► proof_summaries[].id
   └─ superseded_by ──────────────────────────────► evaluations[].id
+
+namesakes
+  ├─ person_id ──────────────────────────────────► tree.gedcomx.json persons[].id
+  └─ log_entry_ids ──────────────────────────────► log[].id
 ```
 
 ---
@@ -1995,11 +2057,13 @@ Research objective: Identify the parents of Patrick Flynn, born ~1845 in Pennsyl
   `gps-mentor` critiqued proof summary ps_001 and returned
   `consider_addressing`. The mentor's actual reasoning lives in the file named
   by `file_path`, not in `research.json`. See Section 5.12.
-- **`researcher_profile`, `known_holdings`, and `localities` are absent.** All
-  three are optional (Section 1); a project that skipped the holdings survey
-  and has done no locality research legitimately has none of them. The other
-  twelve keys are all present. On a younger project several of them would be
-  present but empty, which is required; omitting them is not.
+- **`researcher_profile`, `known_holdings`, `localities`,
+  `warning_justifications` and `namesakes` are absent.** All five are optional
+  (Section 1); a project that skipped the holdings survey, has done no locality
+  research, has justified no warning and has recorded no namesake legitimately
+  has none of them. The other twelve keys are all present. On a younger
+  project several of them would be present but empty, which is required;
+  omitting them is not.
 - **The tree above and this file are consistent by design.** `subject_person_ids`
   names `I1`; `sources[].gedcomx_source_description_id` values (`S1`–`S3`) name
   source descriptions in the tree; `person_evidence[].person_id` values name

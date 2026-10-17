@@ -14,7 +14,8 @@ export type PersonIdRefField =
   | "subject_person_ids"
   | "timelines"
   | "known_holdings"
-  | "proof_summaries";
+  | "proof_summaries"
+  | "namesakes";
 
 /** The research.json fields that hold tree person-id references. */
 export const PERSON_ID_REF_FIELDS: readonly PersonIdRefField[] = [
@@ -23,6 +24,7 @@ export const PERSON_ID_REF_FIELDS: readonly PersonIdRefField[] = [
   "timelines",
   "known_holdings",
   "proof_summaries",
+  "namesakes",
 ];
 
 export interface PersonIdRef {
@@ -41,7 +43,8 @@ export interface PersonIdRef {
 /**
  * Yield every tree-person-id reference in `research`, in the same order the
  * validator's cross-file check has always emitted them (person_evidence,
- * subject_person_ids, timelines, known_holdings). Each ref carries the
+ * subject_person_ids, timelines, known_holdings, proof_summaries, namesakes).
+ * Each ref carries the
  * validator's exact error path/message and an in-place setter for the remap.
  *
  * person_evidence keeps its original `if (person_id) …` guard (a falsy
@@ -167,5 +170,24 @@ export function* iteratePersonIdRefs(research: any): Generator<PersonIdRef> {
         };
       }
     }
+  }
+
+  // namesakes[].person_id — the person a recorded namesake is not. A merge
+  // re-keys the row onto the survivor, so the row keeps capping its links.
+  const namesakes = Array.isArray(research.namesakes) ? research.namesakes : [];
+  for (let i = 0; i < namesakes.length; i++) {
+    const ns = namesakes[i];
+    if (!isObject(ns)) continue;
+    const pid = ns.person_id;
+    if (!pid) continue;
+    yield {
+      pid,
+      field: "namesakes",
+      path: `research.json/namesakes[${i}]`,
+      message: `person_id '${pid}' not found in tree.gedcomx.json persons`,
+      set: (newId) => {
+        ns.person_id = newId;
+      },
+    };
   }
 }

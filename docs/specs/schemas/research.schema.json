@@ -109,6 +109,12 @@
       "items": {
         "$ref": "#/$defs/warning_justification"
       }
+    },
+    "namesakes": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/namesake"
+      }
     }
   },
   "$defs": {
@@ -1731,6 +1737,65 @@
           "type": "string"
         },
         "recorded_at": {
+          "$ref": "enums.schema.json#/$defs/iso_date"
+        }
+      }
+    },
+    "namesake": {
+      "description": "A different person who shares the name of a tree person, recorded so that a probable or confident person_evidence link to the tree person needs something in its record that ties the record to that person. Keyed by the tree person_id it shadows. Never retired, and its person_id never changes; see research-schema-spec.md.",
+      "type": "object",
+      "required": [
+        "id",
+        "person_id",
+        "name",
+        "place",
+        "record_ids",
+        "created"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "type": "string",
+          "pattern": "^ns_"
+        },
+        "person_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "name": {
+          "type": "string",
+          "minLength": 1
+        },
+        "place": {
+          "type": "string",
+          "minLength": 1
+        },
+        "time_period": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "record_ids": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "log_entry_ids": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "pattern": "^log_"
+          }
+        },
+        "notes": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "created": {
           "$ref": "enums.schema.json#/$defs/iso_date"
         }
       }
