@@ -36,9 +36,12 @@ the page); the identity call is the genealogist's.
 **What the record is.** The hint's page image (`ark:/61903/3:1:3Q9M-CSK6-Y315-G`)
 is page 744 of the Cape Town Nederduitsche Gereformeerde Kerk's *Naamlijst van
 Leden ... Overleden* (deceased members), 1 October 1875 to 30 September 1877.
-The entry reads only "February 21 Carel Fredrik Kolbey". The list has **no age
-column**, and gives no spouse or parents, so the age check this hint was expected
-to turn on cannot be made. `image_basis` stays false: the call rests on the index
+The entry reads only "February 21 Carel Fredrik Kolbe", the surname ending in a
+flourish that the index renders as "Kolbey". The list has **no age column**, and
+gives no spouse or parents, so the age check this hint was expected to turn on
+cannot be made. The genealogist viewed the original page. The small pencil
+numbers in its left margin (8, 14, 18, 20) are a running count of entries, not
+ages: the "18" beside this line marks it as the 18th entry. `image_basis` stays false: the call rests on the index
 plus other indexed records, not on a field read from the page.
 
 **Read-check of the page transcription.** Two other indexed entries on the same
