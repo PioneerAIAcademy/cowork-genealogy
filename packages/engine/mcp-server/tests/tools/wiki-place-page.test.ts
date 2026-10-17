@@ -319,6 +319,18 @@ describe("wikiPlacePageTool — section is the locality_page_section enum (#1270
 });
 
 describe("wikiPlacePageTool — a sub-national home page (issue #2486 item B)", () => {
+  it("resolves a two-part sub-national place by its title once the leaf grammar misses", async () => {
+    mockGetPlaceById.mockResolvedValueOnce(placeOfType("County"));
+    mockFetch
+      .mockResolvedValueOnce(NOT_FOUND)
+      .mockResolvedValueOnce(NOT_FOUND)
+      .mockResolvedValueOnce(NOT_FOUND)
+      .mockResolvedValueOnce(searchResponse(["Malm%C3%B6hus County, Sweden Genealogy"]))
+      .mockResolvedValueOnce(pageResponse("Malmöhus_County,_Sweden_Genealogy", "# M"));
+    const result = await wikiPlacePageTool({ standardPlace: "Malmöhus, Sweden", section: "home" }, LOCAL);
+    expect(result.url).toBe("https://www.familysearch.org/en/wiki/Malmöhus_County,_Sweden_Genealogy");
+  });
+
   const SCHUYLKILL = "Schuylkill, Pennsylvania, United States";
 
   it("resolves a county's own page from its wiki title, never trying the leaf grammar", async () => {

@@ -101,8 +101,10 @@ anything below that.
    three sections try `{leaf}_Getting_Started`, `{leaf}_Online_Genealogy_Records`
    and `{leaf}_Research_Tips_and_Strategies`. When every leaf slug misses, the
    places-API alternate names (`getPlaceCandidateNames`) are tried through the
-   same grammar.
-2. **Below state level, `home` only — the page's real title.** The wiki names a
+   same grammar — for `home`, only after step 2 misses.
+2. **`home` for anything but a bare country, once the leaf grammar misses — the
+   page's real title.** A two-part place outside the US and Canada (`Malmöhus,
+   Sweden`, `Jalisco, Mexico`) reaches its page only this way. The wiki names a
    sub-state page with its parent and usually a type word
    (`Schuylkill_County,_Pennsylvania_Genealogy`), which no grammar built from the
    leaf can produce, so the title comes from the wiki's own ranking:
