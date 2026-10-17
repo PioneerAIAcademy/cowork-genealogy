@@ -13,7 +13,9 @@ assertions the run ADDED (`file_changes["research.json"].diff.assertions.added`)
 against an empty prior list. Run logs record no `input`, so each run's
 delegation is loaded from `eval/tests/unit/<skill>/*.json` by `test.id`; a test
 with no delegation, or whose file is gone (the record-extraction suite's), skips
-V2 and runs V7 with no record-text exemption.
+V2 and runs V7 with no delegation exemption. Each validator is reported as
+judged / skipped / failing runs, so a zero on a population it never judged is
+visible as such; V7 also counts the values it flagged.
 
 Usage (from the repo root):
     uv run --project eval/harness python eval/harness/scripts/replay_record_structurer_validators.py
@@ -22,6 +24,7 @@ Usage (from the repo root):
 from __future__ import annotations
 
 import json
+import subprocess
 import sys
 from pathlib import Path
 
@@ -36,9 +39,15 @@ import test_record_structurer as rs  # noqa: E402
 SUITES = ("record-structurer", "extraction-append", "record-extraction")
 
 
+def committed(pattern: str) -> list[Path]:
+    """Tracked files only, so an uncommitted local run log cannot move the counts."""
+    out = subprocess.run(["git", "ls-files", pattern], cwd=REPO, capture_output=True, text=True, encoding="utf-8", check=True)
+    return [REPO / line for line in out.stdout.splitlines() if line]
+
+
 def delegations(skill: str) -> dict[str, str]:
     out: dict[str, str] = {}
-    for path in sorted((REPO / "eval/tests/unit" / skill).glob("*.json")):
+    for path in committed(f"eval/tests/unit/{skill}/*.json"):
         spec = json.loads(path.read_text(encoding="utf-8"))
         test_id = (spec.get("test") or {}).get("id")
         delegation = (spec.get("input") or {}).get("delegation")
@@ -47,47 +56,67 @@ def delegations(skill: str) -> dict[str, str]:
     return out
 
 
-def outcome(fn, **kwargs) -> str:
+def outcome(fn, **kwargs) -> tuple[str, str]:
     try:
         fn(**kwargs)
     except pytest.skip.Exception:
-        return "skip"
+        return "skip", ""
     except AssertionError as e:
-        return f"FAIL {e}"
-    return "pass"
+        return "fail", str(e)
+    return "pass", ""
+
+
+def flagged_values(added: list[dict], tool_calls: list, test: dict) -> int:
+    """V7 one assertion at a time, so the count is of values, not of message text."""
+    n = 0
+    for a in added:
+        state, _ = outcome(
+            rs.test_value_holds_no_derivation,
+            before_state={"research_json": {"assertions": []}},
+            after_state={"research_json": {"assertions": [a]}},
+            tool_calls=tool_calls,
+            test=test,
+        )
+        n += state == "fail"
+    return n
 
 
 def replay(skill: str) -> None:
     known = delegations(skill)
-    for log_path in sorted((REPO / "eval/runlogs/unit" / skill).glob("v*.json")):
+    for log_path in committed(f"eval/runlogs/unit/{skill}/v*.json"):
         if log_path.name.endswith(".ann.json"):
             continue
         log = json.loads(log_path.read_text(encoding="utf-8"))
-        runs = v2_hits = v7_hits = v7_values = assertions = 0
+        counts = {v: {"pass": 0, "skip": 0, "fail": 0} for v in ("V2", "V7")}
+        runs = assertions = values = 0
         firing: list[str] = []
         for test in log.get("tests") or []:
             delegation = known.get(test.get("test_id"))
+            vtest = {"delegation": delegation} if delegation else {}
             for run in test.get("runs") or []:
                 out = run.get("output") or {}
+                tool_calls = out.get("tool_calls") or []
                 added = ((((out.get("file_changes") or {}).get("research.json") or {}).get("diff") or {}).get("assertions") or {}).get("added") or []
                 runs += 1
                 assertions += len(added)
-                vtest = {"delegation": delegation} if delegation else {}
-                v2 = outcome(rs.test_document_record_ids_were_delegated, tool_calls=out.get("tool_calls") or [], test=vtest)
-                v7 = outcome(
+                v2, v2_msg = outcome(rs.test_document_record_ids_were_delegated, tool_calls=tool_calls, test=vtest)
+                v7, v7_msg = outcome(
                     rs.test_value_holds_no_derivation,
                     before_state={"research_json": {"assertions": []}},
                     after_state={"research_json": {"assertions": added}},
+                    tool_calls=tool_calls,
                     test=vtest,
                 )
-                if v2.startswith("FAIL"):
-                    v2_hits += 1
-                    firing.append(f"  V2 {test.get('test_id')} run {run.get('run_index')}: {v2[:200]}")
-                if v7.startswith("FAIL"):
-                    v7_hits += 1
-                    v7_values += v7.count("; ") + 1
-                    firing.append(f"  V7 {test.get('test_id')} run {run.get('run_index')}: {v7[:200]}")
-        print(f"{skill}/{log_path.name}: {runs} runs, {assertions} added assertions, V2 failing runs {v2_hits}, V7 failing runs {v7_hits} ({v7_values} values)")
+                counts["V2"][v2] += 1
+                counts["V7"][v7] += 1
+                where = f"{test.get('test_id')} run {run.get('run_index')}"
+                if v2 == "fail":
+                    firing.append(f"  V2 {where}: {v2_msg[:200]}")
+                if v7 == "fail":
+                    values += flagged_values(added, tool_calls, vtest)
+                    firing.append(f"  V7 {where}: {v7_msg[:200]}")
+        summary = "; ".join(f"{v} judged {c['pass'] + c['fail']}, skipped {c['skip']}, failing {c['fail']}" for v, c in counts.items())
+        print(f"{skill}/{log_path.name}: {runs} runs, {assertions} added assertions; {summary}; V7 flagged {values} values")
         for line in firing:
             print(line)
 

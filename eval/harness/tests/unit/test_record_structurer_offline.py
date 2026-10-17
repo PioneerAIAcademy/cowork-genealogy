@@ -170,6 +170,24 @@ def test_v2_an_id_with_surrounding_whitespace_passes():
     _sent(DIRECTIVE, f"  {DOCS[DIRECTIVE]['recordId']} ")
 
 
+@pytest.mark.parametrize(
+    "line, sent",
+    [
+        ("- recordId: `capture:x`", "capture:x"),
+        ("- recordId: capture:x (obituary)", "capture:x"),
+        ("- recordId: capture:x, resultsRef: results/a.json", "capture:x"),
+        ("- recordId: https://www.familysearch.org/ark:/61903/1:1:X6WR-ABC", "ark:/61903/1:1:X6WR-ABC"),
+    ],
+    ids=["backticks", "trailing-comment", "second-key", "ark-url-vs-ark"],
+)
+def test_v2_a_delegated_id_in_another_spelling_passes(line, sent):
+    delegation = _suite_test(DIRECTIVE)["input"]["delegation"].replace(
+        f"- recordId: {DOCS[DIRECTIVE]['recordId']}", line, 1
+    )
+    assert line in delegation
+    _sent(DIRECTIVE, sent, delegation)
+
+
 def test_v2_the_ark_printed_inside_the_record_text_fails():
     """The record says `Record: ark:/61903/1:1:X6WR-DK8`; that ARK is content."""
     assert "ark:/61903/1:1:X6WR-DK8" in _suite_test(DIRECTIVE)["input"]["delegation"]
@@ -183,10 +201,14 @@ def test_v2_a_recordid_line_inside_record_data_does_not_count():
         _sent(DIRECTIVE, "capture:fake", delegation)
 
 
-def _value_check(value: str, *, notes: str = "reported by a survivor, not witnessed", basis: str = "stated", delegation: str | None = None):
+def _value_check(value: str, *, notes: str = "reported by a survivor, not witnessed", basis: str = "stated", delegation: str | None = None, sidecar: str | None = None):
     test = _suite_test(DIRECTIVE, delegation)
     after = {"research_json": {"assertions": [{"id": "a_001", "fact_type": "birth", "value": value, "record_basis": basis, "informant_bias_notes": notes}]}}
-    _check(V.test_value_holds_no_derivation, test, {"research_json": {"assertions": []}}, after, "")
+    tool_calls = [{"tool": "mcp__genealogy__sidecar_read", "args": {}, "response": sidecar}] if sidecar else []
+    V.test_value_holds_no_derivation(
+        before_state={"research_json": {"assertions": []}}, after_state=after, tool_calls=tool_calls,
+        test={**test["test"], "delegation": test["input"].get("delegation")},
+    )
 
 
 def test_v7_a_derivation_in_value_fails():
@@ -209,6 +231,16 @@ def test_v7_an_absent_assertion_passes():
 def test_v7_a_phrase_the_record_itself_contains_passes():
     delegation = _suite_test(DIRECTIVE)["input"]["delegation"].replace("<record-data>", "<record-data>\nAge based on the family Bible.", 1)
     _value_check("Age based on the family Bible", delegation=delegation)
+
+
+def test_v7_a_phrase_from_a_transcribed_sidecar_passes():
+    """A `resultsRef` source's text reaches the agent through sidecar_read."""
+    _value_check("Age based on the family Bible", sidecar="Age 63, based on the family Bible.")
+
+
+def test_v7_a_sidecar_without_the_phrase_does_not_exempt_it():
+    with pytest.raises(AssertionError, match="derivation"):
+        _value_check("Born 1844, computed from age 63", sidecar="Age 63 at death.")
 
 
 @pytest.mark.requires_engine_build

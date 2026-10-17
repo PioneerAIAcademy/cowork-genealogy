@@ -103,9 +103,9 @@ export interface StagedTranscription {
   transcription: string;
   truncated?: true;
   found?: "FOUND" | "NOT FOUND";
-  /** The scan this text was read from, as `images/<key>.jpg`; absent when the
-   *  save failed or the input was a `file`. `extraction_append` cites it as the
-   *  source's `image_filename`. */
+  /** The scan this text was read from, as `images/<key>.jpg`; absent whenever
+   *  no scan was retained (a failed save, non-image content such as a PDF, or a
+   *  `file` input). `extraction_append` cites it as the source's `image_filename`. */
   image_ref?: string;
 }
 

@@ -205,6 +205,10 @@ describe("imageTranscribeTool — request + happy path", () => {
       expect(result.transcription).toContain("Last will and testament");
       expect(result.imageRef).toBeUndefined();
       await expect(readFile(join(dir, "images", "x.jpg"))).rejects.toThrow();
+      // The text is still staged, with no scan for extraction_append to cite.
+      const envelope = JSON.parse(await readFile(join(dir, result.staged!.resultsRef), "utf8"));
+      expect(envelope.payload.results[0].transcription).toContain("Last will and testament");
+      expect(envelope.payload.results[0]).not.toHaveProperty("image_ref");
     } finally {
       await rm(dir, { recursive: true, force: true });
     }

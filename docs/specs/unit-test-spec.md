@@ -1630,7 +1630,9 @@ it fire, and graduate it once one paid run shows zero. The worked example is
 the no-derivation-wording-in-`value` rule: ruled tier 2 on 2026-09-07 at 49 of
 150 record-extraction runs, and landed tier 1 (`test_value_holds_no_derivation`
 in `test_record_structurer.py`) once extraction moved into code and the rate
-fell to 0 of 133 assertions. The 2026-09-07 ruling also cited a tier-1 failure
+fell to 0: none of the 30 eligible assertions (of 133, in the suite's one
+committed 6-run log) carried the wording. That base is small; the next paid
+record-structurer run is the first wider measure. The 2026-09-07 ruling also cited a tier-1 failure
 suppressing the judge; that cost is gone (the judge still runs, above).
 
 **A skip is recorded as its own outcome, not as a pass.** A validator that calls

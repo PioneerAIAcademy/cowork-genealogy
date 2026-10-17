@@ -570,8 +570,9 @@ Returns **text only**:
 **The staged element** (one per call, `results[0]` of the envelope, snake_case — it is
 persisted project state): `{ id, source: { imageId | ark | memoryArtifactUrl | file },
 content_type, size_bytes, model, transcription, truncated?, found?, image_ref? }`, where
-`image_ref` is the `imageRef` of the scan retained under `images/` (absent when the save
-failed or the input was a `file`); the envelope's
+`image_ref` is the `imageRef` of the scan retained under `images/`, absent whenever no
+scan was retained (the save failed, the content is not an image, such as a PDF, or the
+input was a `file`); the envelope's
 `query` is `source` plus `lookingFor`. `research_log_append({ tool: "image_transcribe",
 stagedResultsRef })` finalizes it into `results/<log_id>.json` exactly as a search page.
 **The inline `transcription` stays** — the shipped `image-reader` agent and `person_read`'s
