@@ -385,7 +385,7 @@ Everything is ALREADY persisted; the tool return confirmed the id. Do NOT
 reproduce the gap analysis or the criteria walkthrough. Return **≤8 lines** to
 the caller, in this order:
 
-- the `q_` id written, or "no question written" and the one-line reason
+- the `q_` id written; when §1b's stop fires, exactly `no further questions — objective answered`; otherwise "no question written" and the one-line reason
 - the question in full, quoted as written
 - its selection basis and the rationale in one line
 - what it depends on and unblocks, naming any other question by its text

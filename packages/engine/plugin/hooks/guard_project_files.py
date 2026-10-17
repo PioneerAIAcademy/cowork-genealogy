@@ -293,6 +293,17 @@ OWNED_FIELD_REASON = (
     "`updated` activity ping, is unaffected."
 )
 
+# A field-specific next step, appended to OWNED_FIELD_REASON. A deny that names
+# only proof-conclusion sends the main thread straight there, skipping the
+# objective check question-selection owns.
+OWNED_FIELD_NEXT = {
+    ("project", "status"): (
+        " Before invoking it, run `@plugin:question-selection`: proof-conclusion "
+        "completes the project only when question-selection has returned "
+        "`no further questions — objective answered`."
+    ),
+}
+
 CLAIM_REASON = (
     "Recording a conflict's analysis or resolution from here is disabled — "
     "settling `{section}` (a `status: \"resolved\"`, or any of {fields}) is owned "
@@ -597,6 +608,7 @@ def decision(payload: dict) -> dict:
                 field=field,
                 agent=OWNED_FIELDS[(owned_section, field)],
             )
+            reason += OWNED_FIELD_NEXT.get((owned_section, field), "")
         else:
             allowed = ", ".join(f"`{s}`" for s in sorted(AGENT_WRITABLE_SECTIONS[caller]))
             reason = OUT_OF_LANE_REASON.format(section=section, allowed=allowed)

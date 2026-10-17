@@ -1,0 +1,150 @@
+{
+  "run_log": "v25_2026-10-16_11-15-59.json",
+  "annotator": "edenosas1@gmail.com",
+  "corrections": [
+    {
+      "test_id": "ut_research_004",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 2,
+      "corrected_score": 2,
+      "comment": "Read project_context, questions and proof_summaries, then spawned question-selection to resolve q_001 and register an Irish-origins question. The reply's facts from ps_001/c_001 are right (born Ireland ca. 1845, Thomas as probable father), but it opens with a false 'No existing project found' before correcting itself, and adds unsupported claims of its own: 'almost certainly during or immediately after the Great Famine' and that Schuylkill Irish came 'particularly' from Cork, Galway and Tipperary."
+    },
+    {
+      "test_id": "ut_research_004",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 2,
+      "corrected_score": 2,
+      "comment": "After the question-selection stub it stopped and wrote out a five-step search plan itself (passenger lists, Griffith's, parish registers, FAN), which is research-plan's job, and then asked whether to continue. The concrete omission: project_context flagged q_002 as resolved with no proof summary (nextStep proof-conclusion), and the reply never mentions it."
+    },
+    {
+      "test_id": "ut_research_004",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Three reads (project_context, research_query questions, research_query proof_summaries), all on the correct projectPath with valid sections. All three were relevant to working out the state before routing."
+    },
+    {
+      "test_id": "ut_research_023",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "One project_context call showed no questions and I1 Patrick Flynn. It spawned question-selection with the user's question verbatim. The reply's account of the state and of why it routed there is accurate, and it claims no state change."
+    },
+    {
+      "test_id": "ut_research_023",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 2,
+      "comment": "The only thing judge_context asks is whether the --autonomous request is treated as ongoing work. The reply describes registering the question and ends with 'No further routing was taken this turn.', with no next step and no sign that the job continues. It also puts the sandbox path '/tmp/eval-ut_research_023-0-0-bakb758t' and 'I1' in the user-facing reply."
+    },
+    {
+      "test_id": "ut_research_023",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "A single project_context call with the correct projectPath, which was enough to see that there were zero questions."
+    },
+    {
+      "test_id": "ut_research_h22",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 1,
+      "comment": "It correctly read the two unregistered birthplace disagreements and spawned conflict-resolution with the competing assertion ids. But the reply then weighs the conflicts itself, which judge_context names as a fail: 'two-to-one weight toward Alabama, though the 1850 informant was likely a household member with direct knowledge', 'makes either plausible', and it calls them 'those two incidental conflicts' with 'The 1850 census find is solid'."
+    },
+    {
+      "test_id": "ut_research_h22",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "It checked the log, extraction and person_evidence coverage, sent both conflicts in one conflict-resolution hand-off, did not treat 'wrap up' as permission to skip them, and told the user exhaustiveness and proof would follow. Nothing the state required was left out."
+    },
+    {
+      "test_id": "ut_research_h22",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Five reads (project_context; assertions by assertionId [a_007,a_023,a_044,a_011,a_027]; log by q_001; assertions by sourceId; person_evidence). All were well-formed and targeted, though the last three only re-confirmed what project_context already reported."
+    },
+    {
+      "test_id": "ut_research_h7w",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 1,
+      "comment": "It routed correctly to hypothesis-tracking on competingParentSets, but the reply argues for one parent set, which judge_context says fails the router's own work. It calls the 1810 'Saml Tarrant' census 'potentially significant for Hypothesis A' and the 1792 Samuel deed 'the strongest geographic anchor so far' ('the same county, the same year'). It also says 'The Tennessee Militia connection points toward a Southern rather than New York origin', which uses the patron's framing as evidence."
+    },
+    {
+      "test_id": "ut_research_h7w",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "It confirmed there were no hypotheses, pulled the q_001 assertions, spawned hypothesis-tracking for both couples (I2/I3 and I4/I5), and offered to continue. Nothing the state required was missed."
+    },
+    {
+      "test_id": "ut_research_h7w",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "project_context, then research_query for hypotheses and for assertions, both scoped to q_001 on the correct projectPath. All valid and relevant."
+    },
+    {
+      "test_id": "ut_research_s59",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 2,
+      "corrected_score": 2,
+      "comment": "The routing claims are accurate. It asked question-selection first, then actually Read tree.gedcomx.json, where I1's F1 Birth does carry place 'Alabama, United States'. It then re-invoked proof-conclusion with the 'question-selection: no further questions — objective answered' line. But the reply opens its summary with '**Research complete.**' and says it is re-invoking proof-conclusion 'to close the project', while both stubs changed no state and project.status is still 'active'. That is the overclaim judge_context names."
+    },
+    {
+      "test_id": "ut_research_s59",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "It did the whole handshake in order (question-selection, tree-gate check, proof-conclusion with the completion line), did not frame parentage as an uncovered part of the objective, and gave a closing summary."
+    },
+    {
+      "test_id": "ut_research_s59",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "project_context and research_query proof_summaries for q_001 on the correct projectPath, both valid. The tree check was a built-in Read, not an MCP call."
+    },
+    {
+      "test_id": "ut_research_tsi",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "A Glob found no research.json, and it spawned init-project with the user's objective verbatim ('Find the parents of Hannah Pruitt, FamilySearch ID LZ00-AAA.'). The reply states that accurately and claims no state change, though it needlessly names the sandbox path and research.json."
+    },
+    {
+      "test_id": "ut_research_tsi",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "It explained why initialisation comes first, listed the downstream steps, and asked whether to continue. Nothing the empty-folder state required was missed."
+    },
+    {
+      "test_id": "ut_research_tsi",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": null,
+      "corrected_score": null,
+      "comment": "It made no MCP tool calls, only a built-in Glob and the init-project Agent spawn, so N/A is correct."
+    }
+  ]
+}

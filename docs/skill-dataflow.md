@@ -107,7 +107,7 @@ flowchart TD
     EXA -- "declared" --> PCA
 
     PCA["proof-conclusion · agent<br/>proof_summaries[] · resolves the question<br/>encodes the conclusion in the tree"]
-    PCA --> GATE{"all questions resolved,<br/>tree encoded?"}
+    PCA --> GATE{"all questions resolved,<br/>question-selection says<br/>objective answered,<br/>tree encoded?"}
     GATE -- no --> QS
     GATE -- yes --> DONE["proof-conclusion agent writes<br/>project.status = completed"]
 
@@ -152,7 +152,7 @@ unreachable from an autonomous run.
 | 10 | **`research-exhaustiveness`** (agent) | Spawned as `@plugin:research-exhaustiveness` when analyzed evidence now plausibly answers the question — **even with plan items still `planned`** — or all items are `completed`/`skipped`. Carries `questionId` + `projectPath`, and confirms the question by TEXT when the id does not resolve or disagrees with the prose. Refuses while an item on the question's **active** plan is `in_progress` **or `planned`** (#1830). The two are not in tension: the orchestrator still consults this gate *before* the plan is drained, so the judgement is made here, and a refusal naming leftover items routes to `research-plan` to dispose of them | The seven stop criteria, assessed in order as a gate and stopping at the first that fails. The **only** caller permitted to set a non-null `search_stop.stopped_because` | `research_query` joins across `questions`, `plans`/`plan_items`, `log`, `assertions`, `person_evidence`; `Read` also granted | `questions[].search_stop`, and on the declare path only `questions[].status = "exhaustive_declared"` — one `research_append` update |
 | 11 | **`proof-conclusion`** (agent) | Spawned as `@plugin:proof-conclusion` when a question is at `exhaustive_declared` with no `proof_summaries` entry, or re-invoked because a tier-≥-probable conclusion is not yet in the tree. Carries `questionId` + `projectPath`. Its own three-check gate — unresolved conflicts, unclassified assertions, unlinked persons — hard-blocks before Step 1 | Tier and form selection, the self-contained narrative, and the tree encoding | `research_query` projections (never a raw whole-file `Read`), `sources[].citation`, tree facts and relationships, `source_attachments`, `merge_warnings` | `proof_summaries[]` + the question's `status`/`resolved`/`resolution_assertion_ids` in one batch, and `project` — `research_append`; tree `relationships`, `persons[].facts[]` and `sources` at tier ≥ probable — `tree_edit` / `tree_correct` |
 | — | **`gps-mentor`** (agent) | **No routing row.** Only when the user asks — "second opinion", "review my work", "is this defensible?" — with `focus: "on-demand"`, including on a completed project. `proof-conclusion`'s closing summary tells the user they can ask. An existing non-blocking verdict for the same focus and target is surfaced instead unless `force_reevaluate` is passed | One structured advisory verdict, read as a standalone document; advisory in what it recommends. It holds no search tool — it grades what was gathered | `project_context`, `research_query` (`evaluations`, `conflicts`, `hypotheses`, and the proof's `narrative_markdown`), the `evaluations/` verdict files via `sidecar_read`, `validate_research_schema`, `collections_search` | `evaluations[]` in `research.json` — `research_append` — plus `superseded_by` on the prior entry for the same focus and target. The verdict file under `evaluations/` is written by the tool, not by the agent |
-| 12 | **`proof-conclusion`** (agent), re-entered | Every question `resolved`, **and** each tier-≥-probable conclusion encoded in the tree. The orchestrator routes here and does not write | Closing the project | `research_query` | `project.status = "completed"` — `research_append`, refused by the tool while a blocking conflict is unresolved |
+| 12 | **`proof-conclusion`** (agent), re-entered | Every question `resolved`, `question-selection` has returned `no further questions — objective answered` (the orchestrator passes that line in the delegation), **and** each tier-≥-probable conclusion encoded in the tree. The orchestrator routes here and does not write | Closing the project | `research_query` | `project.status = "completed"` — `research_append`, refused by the tool while a blocking conflict is unresolved |
 
 ---
 
@@ -178,20 +178,39 @@ denied. The rule is field-scoped, not section-scoped — `project` stays out of
 `OWNED_SECTIONS` because the section is co-written, and every other write to it,
 including the `updated` activity ping, is untouched.
 
-**The condition the agent fires on is not the condition that should close a project.**
-`agents/proof-conclusion.md` step 8 writes `completed` when "ALL questions are now
-`resolved`". Since PR #1819 that agent also resolves the question it concluded, in the
-same batch as the summary — so its own condition is true the moment it finishes the
-**first** question of an objective that will need a second one, before
-`question-selection` has minted the next. The agent cannot tell the two cases apart: it
-holds no view of the objective, and "all questions resolved" is a proxy that is briefly
-true on the way to every multi-question objective. The tool refuses the write only while
-a blocking conflict is unresolved, so the premature write can land on that first pass.
+**"All questions resolved" alone does not close a project.** It is a proxy that is
+briefly true on the way to every multi-question objective: since PR #1819
+`proof-conclusion` resolves the question it concluded in the same batch as the summary,
+so the condition holds the moment it finishes the **first** question of an objective
+that needs a second, before `question-selection` has minted the next. The agent cannot
+tell the two cases apart, because it holds no view of the objective. On that rule alone
+a "parents and siblings" project was closed with the siblings never researched.
 
-What closes the gap is the re-invocation seam, not a wider condition: `question-selection`
-returns its stop-point signal, the orchestrator re-invokes `proof-conclusion`, and that
-call makes the write. Do not instead widen step 8's condition — the agent has nothing to
-evaluate it against. Tracked on issue #1335 as a consequence of the ruling.
+The completion is therefore a handshake across the re-invocation seam, and nobody widens
+the agent's own condition:
+
+1. With every question `resolved`, the orchestrator asks `question-selection` **first,
+   every time** — even when the objective looks covered. It does not judge coverage
+   itself.
+2. `question-selection` either mints the next question, which is routed as normal, or
+   returns the literal caller line `no further questions — objective answered` (its
+   step 1b).
+3. On that line the orchestrator runs the tree-encoding gate, then re-invokes
+   `proof-conclusion` with the line in the delegation.
+4. `proof-conclusion`'s step 8 writes `completed` only when all questions are resolved
+   **and** the delegation carries the line. Without it, it stamps `updated` alone and
+   names `question-selection` as the next step.
+
+The `PreToolUse` hook's `project.status` refusal says the same thing, so a main thread
+that is denied the write is pointed at `question-selection` before `proof-conclusion`.
+
+**Why the write stays with `proof-conclusion`.** `OWNED_FIELDS` in the hook and the
+ownership manifest already name it. Moving the write to `question-selection` would
+change three ownership sites and make it a `project` writer, for the same outcome.
+**Why not a `research_append` precondition.** "Every independent part of the objective
+has a question" is a judgment about wording, not a fact the documents record, and
+`question-selection`'s verdict is not persisted, so the tool has nothing to read. **The
+cost** is one extra `question-selection` turn on every completing run.
 
 ---
 

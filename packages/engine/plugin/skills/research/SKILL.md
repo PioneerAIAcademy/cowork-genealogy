@@ -226,7 +226,8 @@ it by name.
    | `research-exhaustiveness` reported the declaration refused because items on the active plan are still `planned` | `research-plan` to **dispose of the named items** — complete each one whose search was done, or skip it with a `skip_category`. Not an extension: the stop criteria have already been judged |
     | `proof-conclusion` wrote `<ps_id>` at tier ≥ probable **but the concluded relationship or fact is not yet in `tree.gedcomx.json`** (a parentage link, a Couple, or a vital fact — e.g. the concluded death date/place, bounded expressions included; check each claim's own relationship when `claims[]` is present, not just the scalar's) | `@plugin:proof-conclusion` again for the same question — it must encode the conclusion before you proceed (see **Tree-encoding gate**) |
     | A question is at `status: "exhaustive_declared"` with no `proof_summaries` entry yet | `@plugin:proof-conclusion` |
-    | All questions are `resolved` and `project.status` still `active` | **First check the objective, not the question list.** An objective can hold several independent facts ("where was she born, and who were her parents" is two). If any fact the objective asks for has no question covering it, invoke `@plugin:question-selection` and do not continue this row — a relationship already in `tree.gedcomx.json` without a resolved question behind it does not cover it, and a fact the project's questions or proofs mention but the objective does not ask for is not part of it. When every fact the objective asks for has a resolved question, go straight to the tree-encoding gate — do not call question-selection to confirm it. Once question-selection has returned "no further questions — objective answered" for the current state, treat the objective as covered. **Then verify the tree-encoding gate — do not write `completed` until it holds:** every tier-≥-probable conclusion is encoded in `tree.gedcomx.json` (see **Tree-encoding gate**; per claim where a `claims[]` breakdown exists); if not, re-invoke `@plugin:proof-conclusion` for that question. Marking a question `resolved` is not, by itself, evidence the check happened. Once it is verified, re-invoke `@plugin:proof-conclusion` for the last resolved question — its §8 owns the `project.status` write. **You never write it yourself:** a `project.status` write is refused unless it comes from `@plugin:proof-conclusion`. Then stop. |
+    | All questions are `resolved` and `project.status` still `active` | **Ask `@plugin:question-selection` first, every time** — even when the objective looks covered. It judges whether every independent part of the objective has a resolved question. If it writes a new `q_`, route that question as normal and do not continue this row. |
+    | `@plugin:question-selection` returned `no further questions — objective answered` | **Verify the tree-encoding gate — do not complete until it holds:** every tier-≥-probable conclusion is encoded in `tree.gedcomx.json` (see **Tree-encoding gate**; per claim where a `claims[]` breakdown exists); if not, re-invoke `@plugin:proof-conclusion` for that question. Marking a question `resolved` is not, by itself, evidence the check happened. Once it holds, re-invoke `@plugin:proof-conclusion` for the last resolved question with the line `question-selection: no further questions — objective answered` in the delegation — its §8 completes the project only on that line. **You never write `project.status` yourself:** a `project.status` write is refused unless it comes from `@plugin:proof-conclusion`. Then stop. |
    | All questions are `resolved` and `project.status` is `completed` | Stop |
 
    **Extraction contract — an `assertions` write through `research_append` is refused.** You never compose
@@ -447,9 +448,10 @@ Stop when one of:
 
 - `project.status == "completed"` — **`@plugin:proof-conclusion` writes
   this via `research_append`, never you**, once all questions are
-  `resolved` **and every tier-≥-probable conclusion is encoded in
-  `tree.gedcomx.json`** (Tree-encoding gate; per claim where a `claims[]`
-  breakdown exists) — see routing table
+  `resolved`, **`@plugin:question-selection` has returned `no further
+  questions — objective answered`, and every tier-≥-probable conclusion is
+  encoded in `tree.gedcomx.json`** (Tree-encoding gate; per claim where a
+  `claims[]` breakdown exists) — see routing table
 - The user explicitly halts you
 - You hit a genuine blocker (no more accessible records, an
   irreducible conflict, missing access to a required repository) —

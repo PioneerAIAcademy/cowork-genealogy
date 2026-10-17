@@ -788,3 +788,22 @@ def test_completion_summary_offers_second_opinion(
     )
     banned = sorted({m.group(0) for m in _BANNED_USER_WORDS.finditer(summary)})
     assert not banned, f"summary_for_user uses words kept out of user text: {banned}"
+
+
+def test_completion_withheld_without_objective_signal(before_state, after_state, agent_returns, text_response, test):
+    """Tag-gated: resolving the last question does not complete the project
+    unless the delegation carries question-selection's `no further questions —
+    objective answered` line (#3240). project.status keeps its prior value and
+    the agent's next step names question-selection."""
+    if "completion-withheld-without-objective-signal" not in test.get("tags", []):
+        pytest.skip("not a completion-withheld test")
+    before, after = _project_status(before_state), _project_status(after_state)
+    assert after != "completed" or before == "completed", (
+        "project.status was set to 'completed' without question-selection's "
+        "`no further questions — objective answered` line in the delegation"
+    )
+    reply = agent_return_text(agent_returns, "proof-conclusion") or (text_response or "")
+    assert re.search(r"question[- ]selection", reply, re.IGNORECASE), (
+        "with every question resolved but no objective-answered line, the next step "
+        "must name question-selection; the reply does not"
+    )

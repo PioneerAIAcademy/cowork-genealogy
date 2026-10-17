@@ -558,6 +558,8 @@ describe("the guard script's decisions", () => {
     // The refusal must name the way out, or it reproduces the bypass this
     // guardrail exists to stop.
     expect(out.hookSpecificOutput.permissionDecisionReason).toContain("@plugin:proof-conclusion");
+    // The objective-check sentence belongs to project.status alone.
+    expect(out.hookSpecificOutput.permissionDecisionReason).not.toContain("@plugin:question-selection");
     expect(out.stopReason).toBeUndefined();
   });
 
@@ -596,6 +598,10 @@ describe("the guard script's decisions", () => {
     const out = runGuard({ tool_name: "mcp__genealogy__research_append", tool_input, ...extra });
     expect(out.hookSpecificOutput.permissionDecision).toBe("deny");
     expect(out.hookSpecificOutput.permissionDecisionReason).toContain("@plugin:proof-conclusion");
+    // The deny names question-selection's objective check before the owner, so
+    // a main thread that hits it does not skip straight to the completion write.
+    expect(out.hookSpecificOutput.permissionDecisionReason).toContain("@plugin:question-selection");
+    expect(out.hookSpecificOutput.permissionDecisionReason).toContain("no further questions — objective answered");
     expect(out.hookSpecificOutput.permissionDecisionReason).toContain("status");
     expect(out.stopReason).toBeUndefined();
   });
