@@ -1,51 +1,19 @@
 {
-  "run_log": "v24_2026-10-14_18-01-54.json",
-  "annotator": "edmondoware70@gmail.com",
+  "run_log": "v25_2026-10-17_15-31-34.json",
+  "annotator": "mercybocumy2000@gmail.com",
   "corrections": [
     {
-      "test_id": "ut_research_021",
-      "dimension_source": "base",
-      "dimension_name": "Correctness",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_research_021",
-      "dimension_source": "base",
-      "dimension_name": "Completeness",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_research_021",
-      "dimension_source": "base",
-      "dimension_name": "Tool Arguments",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_research_005",
-      "dimension_source": "base",
-      "dimension_name": "Correctness",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_research_005",
-      "dimension_source": "base",
-      "dimension_name": "Completeness",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
       "test_id": "ut_research_005",
       "dimension_source": "base",
       "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_004",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
       "llm_score": 3,
       "corrected_score": 3,
       "comment": null
@@ -59,15 +27,7 @@
       "comment": null
     },
     {
-      "test_id": "ut_research_004",
-      "dimension_source": "base",
-      "dimension_name": "Completeness",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_research_004",
+      "test_id": "ut_research_012",
       "dimension_source": "base",
       "dimension_name": "Correctness",
       "llm_score": 3,
@@ -75,15 +35,7 @@
       "comment": null
     },
     {
-      "test_id": "ut_research_008",
-      "dimension_source": "base",
-      "dimension_name": "Correctness",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_research_008",
+      "test_id": "ut_research_012",
       "dimension_source": "base",
       "dimension_name": "Completeness",
       "llm_score": 3,
@@ -91,7 +43,55 @@
       "comment": null
     },
     {
-      "test_id": "ut_research_008",
+      "test_id": "ut_research_012",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_013",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_013",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_013",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_tsv",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_tsv",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_tsv",
       "dimension_source": "base",
       "dimension_name": "Tool Arguments",
       "llm_score": null,
@@ -99,15 +99,7 @@
       "comment": null
     },
     {
-      "test_id": "ut_research_019",
-      "dimension_source": "base",
-      "dimension_name": "Tool Arguments",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_research_019",
+      "test_id": "ut_research_011",
       "dimension_source": "base",
       "dimension_name": "Correctness",
       "llm_score": 3,
@@ -115,7 +107,7 @@
       "comment": null
     },
     {
-      "test_id": "ut_research_019",
+      "test_id": "ut_research_011",
       "dimension_source": "base",
       "dimension_name": "Completeness",
       "llm_score": 3,
@@ -123,7 +115,7 @@
       "comment": null
     },
     {
-      "test_id": "ut_research_001",
+      "test_id": "ut_research_011",
       "dimension_source": "base",
       "dimension_name": "Tool Arguments",
       "llm_score": 3,
@@ -131,7 +123,15 @@
       "comment": null
     },
     {
-      "test_id": "ut_research_001",
+      "test_id": "ut_research_014",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_014",
       "dimension_source": "base",
       "dimension_name": "Completeness",
       "llm_score": 3,
@@ -139,12 +139,36 @@
       "comment": null
     },
     {
-      "test_id": "ut_research_001",
+      "test_id": "ut_research_014",
       "dimension_source": "base",
-      "dimension_name": "Correctness",
+      "dimension_name": "Tool Arguments",
       "llm_score": 3,
       "corrected_score": 3,
       "comment": null
+    },
+    {
+      "test_id": "ut_research_005",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 2,
+      "corrected_score": 2,
+      "comment": "The AI claimed it had routed to proof-conclusion but no proof-conclusion tool call appears anywhere in the 7-call trace"
+    },
+    {
+      "test_id": "ut_research_005",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 2,
+      "corrected_score": 2,
+      "comment": "The AI identified that proof-conclusion was pending for q_001 and q_002 but stopped and reported without executing it, which autonomous mode requires."
+    },
+    {
+      "test_id": "ut_research_004",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 2,
+      "corrected_score": 2,
+      "comment": "The AI outlined a plan for Irish-origins research (naturalization, passenger records, Griffith’s) but ended with “Say continue…” instead of registering the new question and driving the GPS workflow as the test requires."
     }
   ]
 }
