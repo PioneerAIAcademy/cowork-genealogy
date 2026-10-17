@@ -1085,7 +1085,7 @@ to that person needs something in its record that ties the record to them.
 **Optional section** (not in `required`): absent until a namesake is recorded.
 `search-records` records a row when a search turns up such a person; that write
 lands in a later change, so no committed document carries the section yet (0 of
-515 tracked research documents, measured at 8b1a77f7a by
+515 tracked research documents, measured at e87e5a5ca by
 `packages/engine/mcp-server/dev/measure-namesake-cap.ts`) and no write is
 refused on its account.
 

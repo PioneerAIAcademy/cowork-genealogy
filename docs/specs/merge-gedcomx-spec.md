@@ -246,12 +246,16 @@ Sequence inside each tool:
    the row holder whichever side of the pair it is on: each live probable or
    confident link of the other member is judged as the row holder's, and nothing
    comes across from a record linked to either member while none of its live
-   probable or confident links to them passes. Any finding writes nothing and
+   probable or confident links to them passes. A spouse, parent or child of the
+   row holder whom the same call merges with someone is judged as the person the
+   merge makes: the survivor's id, every copy's names, facts and person-level
+   sources, and every copy's links pointed at it. The row holder's own links are
+   judged on that same projection. Any finding writes nothing and
    returns `{ ok: false, errors }` with no `reason`; no `warningJustifications`
    entry passes it, and running before the warning gate means a caller is never
    asked to justify warnings for a merge that is then refused.
 
-   Measured at 8b1a77f7a over the 6 committed `merge_tree_persons` calls (7
+   Measured at e87e5a5ca over the 6 committed `merge_tree_persons` calls (7
    pairs), by `packages/engine/mcp-server/dev/measure-namesake-cap.ts` (which runs
    `eval/harness/scripts/dump_namesake_call_states.py`): no pair is joined by a
    relationship, and none folds a FamilySearch or starting-tree person into one
@@ -639,13 +643,25 @@ also asserts both files are byte-unchanged):
 - **MF17**, **MS15** — a widow's link tied by the other copy's husband: refused,
   marked "do not lower it" and routed to recording that relationship first;
   merged once the relationship is in the tree, though the starting tree lacks it.
-- **MS19** (known let-through) — a wife with no refs, merged in the same call with
-  a duplicate made from the census, ties the census link: merged. A relative
-  merged in the same call is judged by its pre-merge id and refs.
-- **MF22** (accepted false deny) — the same shape, with the wife made from that
-  census and her duplicate holding another record: refused, the wife read as
-  created from this source alone. The route is to merge the duplicate relatives in
-  an earlier call.
+- **MF23** — a wife with no refs, merged in the same call with a duplicate made
+  from the census: the wife the merge makes reaches only the census, so the census
+  link is refused, in either survivor order.
+- **MS22** — the same shape, with the wife made from that census and her duplicate
+  holding another record: the merged wife reaches both, so it merges, in either
+  survivor order.
+- **MF24** — two copies of the row holder's wife, both attached to him and merged
+  in the same call, reach only the census: refused in every pair and survivor
+  order (each copy's links point at the merged wife, never at the other copy).
+- **MS23** — the census wife is linked to his FamilySearch wife, whose run-made
+  copy is merged in the same call: merged in either pair order.
+- **MS24** — a placeholder father ('Unknown') merged in the same call with the
+  giver's named father, who has another record: the merged father ties the
+  baptism, in either survivor order; without the fathers' pair it is refused.
+- **MS25** — the row holder's own census link is tied through a wife merged in the
+  same call, so part 3 carries the giver's fact citing that census; without the
+  wives' pair the fact is refused.
+- **MF25** — a person-level source the row holder lacks, from a record linked to
+  the giver only at speculative: refused, listing the source ref.
 - **MS1** — a row on someone outside the pair: merged.
 - **MS2** — the row holder's starting-tree father ties the moved link: merged.
 - **MS3** — the row holder's own untied link is not judged, and the other member
@@ -661,8 +677,8 @@ also asserts both files are byte-unchanged):
   in this call now reaches his record: merged.
 - **MS8** — a co-party the source keeps on a record id of its own ties the link:
   merged.
-- **MS9** — a wife merged in the same call maps onto the row holder's wife, in
-  either survivor order: merged.
+- **MS9** — a wife merged in the same call, made from the census, maps onto the
+  row holder's wife, who has a record of her own: merged in either survivor order.
 - **MS10** — the folded row holder's own wife ties the link: merged.
 - **MS13** — both hold rows, and one shared wife ties each member's link: merged.
 - **MF18**, **MF18s** — the folded person's name, facts and parent edges cite a

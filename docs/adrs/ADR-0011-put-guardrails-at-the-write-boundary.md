@@ -384,9 +384,13 @@ measured rather than argued.
    `find_unpersisted_conflict_resolutions`, graduated to a `research_append`
    precondition with its cases in `unpersisted-conflict-resolution.json`. A
    guard with a writer-tool precondition and no harness detector may instead be
-   registered with a case file, as `competingParentSetsInvariants` and
-   `namesakeTieInvariants` are: the vitest half alone replays it, and the
-   pytest half still holds it to the rule above.
+   registered with a case file, as `competingParentSetsInvariants` is: the
+   vitest half alone replays it, and the pytest half still holds it to the rule
+   above. A guard judged at write time on what the call changed registers the
+   static twin its cases can replay: the namesake cap registers
+   `namesakeTieInvariants`, which `research_append` does not call, beside its
+   write-time check `namesakeCallCheck`, whose own tests pin what the twin
+   cannot (which links a call asserts, and that a voucher stood before it).
 
    **What this knowingly accepts.** Two loaders now exist that otherwise would
    not, one per plane. And the format — a list of `{ research, expect }` records,
