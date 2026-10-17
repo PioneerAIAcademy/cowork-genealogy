@@ -12,7 +12,12 @@ import re
 import pytest
 
 from extraction_validators import *  # noqa: F401,F403
+from validators_lib import bare_tool_name as _bare_tool_name
 from validators_lib import new_section_entries as _new_section_entries
+
+_RECORD_DATA_RE = re.compile(r"<record-data>.*?</record-data>", re.S)
+_DELEGATED_ID_RE = re.compile(r"^\s*(?:-\s*)?recordId:\s*(\S.*?)\s*$", re.M)
+_DERIVATION_PHRASES = ("computed from", "derived from", "calculated from", "based on", "inferred from")
 
 
 def _new_assertions(before_state, after_state):
@@ -120,3 +125,51 @@ def test_an_old_style_date_raises_the_calendar_flag(text_response, agent_returns
         pytest.skip("not an Old Style date test")
     reply = _agent_reply(agent_returns, text_response)
     assert re.search(r"^Calendar: .*1750", reply, re.M), "the reply does not carry the calendar line for the 1750 dates"
+
+
+def test_document_record_ids_were_delegated(tool_calls, test):
+    """Every document the agent sends is one of the sources it was handed.
+
+    Issue #2019 V2, narrowed by issue #2479: code copies one `recordId` onto
+    every assertion of a record, so the one id an LLM still picks is each
+    `documents[].recordId`. It must be an id the delegation names on a
+    `recordId:` line. Lines inside `<record-data>` are record content, not the
+    delegation's own words, so an ARK printed in the record text does not count.
+    """
+    delegation = (test or {}).get("delegation") or ""
+    allowed = {m.strip() for m in _DELEGATED_ID_RE.findall(_RECORD_DATA_RE.sub("", delegation))}
+    if not allowed:
+        pytest.skip("the delegation names no recordId")
+    sent = [
+        str(d.get("recordId") or "").strip()
+        for c in (tool_calls or [])
+        if _bare_tool_name(str(c.get("tool") or "")) == "extraction_append"
+        for d in ((c.get("args") or {}).get("documents") or [])
+        if isinstance(d, dict)
+    ]
+    if not sent:
+        pytest.skip("no extraction_append documents were sent")
+    stray = sorted({s for s in sent if s not in allowed})
+    assert not stray, f"documents sent for recordIds the delegation never named: {stray} (delegated: {sorted(allowed)})"
+
+
+def test_value_holds_no_derivation(before_state, after_state, test):
+    """`value` holds the fact, not how it was worked out.
+
+    Issue #2019 V7. A non-absent assertion whose `informant_bias_notes` is set
+    must not carry derivation wording in `value`; the reasoning belongs in the
+    notes. A phrase the record itself contains is data, so a phrase found
+    anywhere in the delegation is exempt. That exemption is coarse: a record
+    that says "based on" anywhere lets every value using "based on" pass.
+    """
+    delegation = ((test or {}).get("delegation") or "").lower()
+    phrases = [p for p in _DERIVATION_PHRASES if p not in delegation]
+    hits = []
+    for a in _new_assertions(before_state, after_state):
+        if a.get("record_basis") == "absent" or not (a.get("informant_bias_notes") or "").strip():
+            continue
+        value = str(a.get("value") or "").lower()
+        found = [p for p in phrases if p in value]
+        if found:
+            hits.append(f"{a.get('id')}: {a.get('value')!r} ({', '.join(found)})")
+    assert not hits, "values carry their derivation instead of the fact: " + "; ".join(hits)

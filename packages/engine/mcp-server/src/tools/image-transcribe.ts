@@ -335,6 +335,7 @@ export async function imageTranscribeTool(
       transcription,
       ...(truncated ? { truncated: true as const } : {}),
       ...(found ? { found } : {}),
+      ...(imageRef ? { image_ref: imageRef } : {}),
     };
     try {
       staged = await stageSearchResults({

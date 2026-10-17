@@ -1253,6 +1253,8 @@ describe("imageTranscribeTool — staging producer (#2489 via #2048)", () => {
       transcription: "Obituary text\nFOUND",
       found: "FOUND",
     });
+    // A `file` input is never copied under images/, so there is no scan to cite.
+    expect(envelope.payload.results[0]).not.toHaveProperty("image_ref");
 
     expect(result.digest).toEqual({
       id: "capture:obit",
@@ -1271,7 +1273,9 @@ describe("imageTranscribeTool — staging producer (#2489 via #2048)", () => {
     expect(envelope.payload.results[0]).toMatchObject({
       id: "004884748_02613",
       source: { imageId: "004884748_02613" },
+      image_ref: "images/004884748_02613.jpg",
     });
+    expect(envelope.payload.results[0].image_ref).toBe(result.imageRef);
     expect(result.digest?.id).toBe("004884748_02613");
   });
 

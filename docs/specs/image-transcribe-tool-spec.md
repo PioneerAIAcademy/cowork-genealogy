@@ -569,7 +569,9 @@ Returns **text only**:
 
 **The staged element** (one per call, `results[0]` of the envelope, snake_case — it is
 persisted project state): `{ id, source: { imageId | ark | memoryArtifactUrl | file },
-content_type, size_bytes, model, transcription, truncated?, found? }`; the envelope's
+content_type, size_bytes, model, transcription, truncated?, found?, image_ref? }`, where
+`image_ref` is the `imageRef` of the scan retained under `images/` (absent when the save
+failed or the input was a `file`); the envelope's
 `query` is `source` plus `lookingFor`. `research_log_append({ tool: "image_transcribe",
 stagedResultsRef })` finalizes it into `results/<log_id>.json` exactly as a search page.
 **The inline `transcription` stays** — the shipped `image-reader` agent and `person_read`'s
@@ -1047,11 +1049,12 @@ key a staging→finalize on, so a GC sweep replaces the finalize:
   project-relative path). Best-effort — a save failure omits `imageRef` rather
   than losing the transcription. It does **not** write `research.json`.
 - The `image-reader` subagent threads `projectPath` into that call and reports
-  the returned `imageRef`; the `record-structurer` agent passes it as the
-  document's `imageFilename`, and `extraction_append` writes it to the retained
-  source's `sources[].image_filename` (pairing the
-  image with the existing `transcription` field, `research-schema-spec.md`
-  §5.5).
+  the returned `imageRef`; it is also staged beside the text as `image_ref`, and
+  `extraction_append` writes it to the retained source's `sources[].image_filename`
+  from that staged row whenever a document carries the `transcriptionRef` (the
+  `record-structurer` agent's relayed `imageFilename` is only the fallback, for a
+  staged row with no `image_ref`). That pairs the image with the existing
+  `transcription` field (`research-schema-spec.md` §5.5).
 - `research_append` runs a **best-effort, TTL-gated sweep**
   (`gcUnreferencedImages`) after each write: remove `images/*.jpg` that no
   source's `image_filename` cites **and** that are older than the TTL (24 h,

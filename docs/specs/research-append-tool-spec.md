@@ -1977,7 +1977,7 @@ document travels as a tool parameter.
 | `documents[].recordId` | yes | The `capture:<descriptive>`, `ancestry:<collection>:<id>` or ARK that identifies the source. |
 | `documents[].document` | yes | The document below. |
 | `documents[].transcriptionRef` | no | The `results/` ref of the `StagedTranscription` the agent read. The tool finalizes it into this source's log entry (`tool: "image_transcribe"`, `stagedResultsRef`), and copies its `transcription` into the source entry, so no model re-emits the page text. |
-| `documents[].imageFilename` | no | Written to the source's `image_filename`. It is `image_transcribe`'s `imageRef`, relayed. §5.4's warning still fires when a transcription lands without one. |
+| `documents[].imageFilename` | no | `image_transcribe`'s `imageRef`, relayed. The source's `image_filename` comes from the staged transcription's `image_ref` when `transcriptionRef` is set and that row has one, which wins over this value; otherwise this is written. §5.4's warning still fires when a transcription lands without one. |
 | `questionIds` | no | Stamped on every assertion in the batch, as in §11.6. |
 | `absentPersons` | no | Expected-but-absent persons, keyed by `recordId`, as in §11.6. |
 

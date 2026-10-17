@@ -1620,6 +1620,19 @@ Validators are split into three tiers:
   - **A broken tier-2 validator gates like tier 1.** A validator that declares an argument the harness does not supply, or raises anything other than `AssertionError`, is a bug in the validator rather than a finding about the run, so it fails the test and is recorded in the run log like any tier-1 failure. Its error text never reaches the judge — a harness diagnostic is not an observation about the response, and the judge is instructed to weigh whatever appears in that section.
 - **Advisory:** Existing `warnings.warn()` pattern inside `test_*` functions (e.g. `test_tool_allowlist`). Not surfaced to the judge.
 
+**A check that would fire on a large share of today's runs starts in tier 2.**
+A tier-1 failure fails the test, so a new gate that fires on a third of a
+suite's runs fails a third of the suite at once, whether or not those runs were
+otherwise right, and the next paid run of that skill reports a regression the
+change did not cause. Measure the rule over the committed run logs before
+choosing: near zero, gate it; frequent, start it as `report_*`, fix what makes
+it fire, and graduate it once one paid run shows zero. The worked example is
+the no-derivation-wording-in-`value` rule: ruled tier 2 on 2026-09-07 at 49 of
+150 record-extraction runs, and landed tier 1 (`test_value_holds_no_derivation`
+in `test_record_structurer.py`) once extraction moved into code and the rate
+fell to 0 of 133 assertions. The 2026-09-07 ruling also cited a tier-1 failure
+suppressing the judge; that cost is gone (the judge still runs, above).
+
 **A skip is recorded as its own outcome, not as a pass.** A validator that calls
 `pytest.skip()` did not apply to this state and executed no assertion. It stays
 non-gating — a validator that does not apply must never fail a test — but the run

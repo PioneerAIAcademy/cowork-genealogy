@@ -177,7 +177,7 @@ part of `staged`.
 `results[]`:
 
 - `image_transcribe` — `payload: { query: { imageId | ark | memoryArtifactUrl | file, lookingFor? },
-  results: [ { id, source, content_type, size_bytes, model, transcription, truncated?, found? } ] }`,
+  results: [ { id, source, content_type, size_bytes, model, transcription, truncated?, found?, image_ref? } ] }`,
   where `id` is the FamilySearch identifier or `capture:<basename>` for an uploaded file (the
   extraction id convention, as `record-structurer` uses it). The tool also returns a `digest` beside the handle.
 - `record_read` — `payload: { query: { recordId }, results: [ { recordId, gedcomx, indexFields? } ] }`:
