@@ -394,6 +394,23 @@ committed e2e corpus set one of those fields.
 // on failure: { ok: false, errors: string[] } — nothing written
 ```
 
+A write that gives a child two or more **biological** parents of one sex,
+where that set grew, is refused (§7) with a `competingParentage` warning and a
+`conflicts_surfaced` entry. It is refused whether or not
+`tooManyFathers2`/`tooManyMothers2` is new to the child, and whether the second
+parent arrives by a new edge, a merge, or a parent's gender being set. No
+`warningJustifications` entry passes it: the refusal leads with the route, and
+asks for justifications only for any other warnings the same write introduces.
+An adoptive, step, foster or guardian parent is written with that subtype and is
+never counted. Each value names one parent as
+`"<personId> <name> (<evidence>)"`. The evidence is the call's
+`sourceAssertionId` for the proposed edge; else the parentage assertions
+`person_evidence` links to that parent on the edge's sources, plus
+`source <S-id>` for any source those do not cover; else `no source`. An
+assertion linked only to the child is never cited, because it may name the
+other parent. It is the same `ConflictSurfaced` shape `materialize_facts`
+returns for vital facts.
+
 ### 4.3 Batch form (`ops`) — several edits in one call
 
 To make several edits at once (e.g. a record's source plus its sibling stubs), pass
@@ -552,6 +569,36 @@ Sequence (validate-before-persist, tree-only):
   (`tree-edit/SKILL.md` §"Adding a fact to a person" at `d0915210`) and makes `place`/`standard_place` atomic. Overridable:
   pass `standard_place` explicitly, or `resolveStandardPlace: false`, to skip the
   network call.
+- **Competing parentage is surfaced by the writer, not by a new tool.** A
+  second biological parent of one sex is refused by the warning gate under a
+  `competingParentage` id, so the refusal is the detector: it
+  carries `conflicts_surfaced` and tells the caller to send the disagreement to
+  `conflict-resolution` as an identity question, not to justify it, and, once
+  it is resolved, to remove the rejected parent's edge with `tree_correct` before
+  writing the chosen one: the gate refuses while both edges stand, resolved or
+  not, because it reads the trees, not `conflicts`. The disputed edge stays out of the tree
+  meanwhile; the entry names each parent's assertion so the conflict can be
+  recorded without it. **It cannot be justified**: a re-call that justifies
+  the warning is refused like the first call. Only a biological parent is
+  counted, so the one edge this refuses is a second biological parent, which
+  is exactly what conflict-resolution must see. *Rejected:* surfacing only on a
+  successful write (it would fire only after the conflict had been justified
+  away); keeping the warning justifiable (the writer agents are told to re-call
+  with a justification for each warning id, so the route was advisory, and the
+  reason once given, that it would block an adoptive or step parent, does not
+  hold because those subtypes are never counted); routing in agent prose alone (a rule the model reads, not one the tool binds,
+  ADR-0011). **Only biological parents count** (any subtype except Adoptive, Step, Foster or
+  Guardian, in any case — `isNonBiologicalSubtype`), as `tooManyFathers2` / `tooManyMothers2` themselves count, so
+  an adoptive or step father beside a biological one lands without a refusal. The finding is computed from the before and
+  after trees and gated under its own id (`competingParentage|child|sex|parents`,
+  which replaces the count warning for that child), not from the gate's
+  introduced warnings. A `tooManyFathers2` id carries no related person, so a
+  child who already held it would hide a new biological father, and a parent's
+  gender change touches the parent while the warning sits on the child. Every
+  gated writer runs it, `materialize_facts` included, since filling in an
+  Unknown gender can make a second father. A merge renames parent ids through
+  its collapse map, so folding one father into another is not reported, while
+  folding two records of one child together is.
 - **`remove` is fact/relationship-only.** The agent permits deletion only on a
   tier downgrade (`packages/engine/plugin/agents/tree-edit.md` §"Ad-hoc edits"); person removal is structurally reserved to
   the merge tools, so `tree_edit` cannot delete a person.
@@ -586,7 +633,7 @@ Sequence (validate-before-persist, tree-only):
 | `resolveStandardPlace` network call fails | best-effort: set `standard_place: null`, add a warning; never fail the edit on a place-resolution miss |
 | `projectPath` is a real directory holding **neither** project file | write nothing; `{ ok: false, reason: "no_project", errors }` — the user is not in a research project, so this is an answer rather than a failure and is **not** marked `isError`. A directory holding exactly one of the two files is a *broken* project and stays loud. Applies to `tree_correct` identically. See the write-boundary invariants in `guardrail-enforcement-spec.md` |
 | Resulting tree carries a **call-introduced** validation error | write nothing; return `{ ok: false, errors }`. A pre-existing error rides as a warning |
-| Write introduces an **unjustified genealogical warning** | write nothing; return `{ ok: false, reason: "unjustified_warnings", message: "...", warnings: [{ warningId, issueType, severity, personId, personName, message, facts?, relatedPersonId? }] }`. Re-call with `warningJustifications: [{ warningId, justification }]` for each warning. A pre-existing warning needs no justification. |
+| Write introduces an **unjustified genealogical warning** | write nothing; return `{ ok: false, reason: "unjustified_warnings", errors: [message], message: "...", warnings: [{ warningId, issueType, severity, personId, personName, message, facts?, relatedPersonId? }], conflicts_surfaced? }`. Re-call with `warningJustifications: [{ warningId, justification }]` for each warning. A pre-existing warning needs no justification. A stale `warningId` is refused the same way, with `errors` naming it. When the warning is competing biological parentage, `conflicts_surfaced` names it and `message` routes it to `conflict-resolution` instead of a justification (§6). |
 
 ---
 

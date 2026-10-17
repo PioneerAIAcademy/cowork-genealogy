@@ -1047,6 +1047,29 @@ e2e-login: $(ENGINE_DEPS) ## Log in to FamilySearch (opens a browser; token last
 	# Login is host-global and ~24h-lived — a once-per-day act, not per run.
 	cd $(ENGINE_DIR) && npx tsx dev/e2e-login.ts
 
+# ── Source screen (issue #3408) ──
+# Every path is outside the repo: the truth set is restricted. Report counts only.
+.PHONY: source-screen-snapshot source-screen-baseline source-screen-plant source-screen-judge source-screen-score
+source-screen-snapshot: $(ENGINE_DEPS) ## Snapshot tree persons for the source screen: make source-screen-snapshot PIDS=<file> OUT=<dir> [SAMPLE=100] [SEED=1]
+	@test -n "$(PIDS)" -a -n "$(OUT)" || { echo "ERROR: set PIDS and OUT (both outside the repo)" >&2; exit 1; }
+	cd $(ENGINE_DIR) && npx tsx dev/source-screen.ts snapshot --pids "$(abspath $(PIDS))" --out "$(abspath $(OUT))" $(if $(SAMPLE),--sample $(SAMPLE)) $(if $(SEED),--seed $(SEED))
+
+source-screen-baseline: $(ENGINE_DEPS) ## Score a snapshot with the existing checks, offline: make source-screen-baseline SNAPSHOT=<dir> [THRESHOLD=0.5]
+	@test -n "$(SNAPSHOT)" || { echo "ERROR: set SNAPSHOT" >&2; exit 1; }
+	cd $(ENGINE_DIR) && npx tsx dev/source-screen.ts baseline --snapshot "$(abspath $(SNAPSHOT))" $(if $(THRESHOLD),--threshold $(THRESHOLD))
+
+source-screen-plant: $(ENGINE_DEPS) ## Build the planted-error fixture copies: make source-screen-plant OUT=<dir>
+	@test -n "$(OUT)" || { echo "ERROR: set OUT (outside the repo)" >&2; exit 1; }
+	cd $(ENGINE_DIR) && npx tsx dev/source-screen.ts plant --spec dev/source-screen-fixtures.json --out "$(abspath $(OUT))"
+
+source-screen-judge: $(ENGINE_BUILD) ## Run the source-evaluation agent over a snapshot, on your Claude subscription: make source-screen-judge SNAPSHOT=<dir>
+	@test -n "$(SNAPSHOT)" || { echo "ERROR: set SNAPSHOT" >&2; exit 1; }
+	cd eval/harness && uv run python source_screen_judge.py --snapshot "$(abspath $(SNAPSHOT))"
+
+source-screen-score: $(ENGINE_DEPS) ## Score findings against the fixture spec: make source-screen-score FINDINGS="<dir>/baseline.jsonl <dir>/judge.jsonl"
+	@test -n "$(FINDINGS)" || { echo "ERROR: set FINDINGS" >&2; exit 1; }
+	cd $(ENGINE_DIR) && npx tsx dev/source-screen.ts score --spec dev/source-screen-fixtures.json $(foreach f,$(FINDINGS),--findings "$(abspath $(f))")
+
 .PHONY: e2e-run
 e2e-run: $(ENGINE_BUILD) ## Run ONE e2e benchmark fixture against live FamilySearch (expensive): make e2e-run TEST=kenneth-quass-death
 	# Changed this recipe? Keep eval/RunE2E.bat in sync — it is the Windows
