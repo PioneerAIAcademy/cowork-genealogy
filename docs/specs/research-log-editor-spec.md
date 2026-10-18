@@ -382,7 +382,7 @@ it searches (`applyAltNameAutoPair`), so a log naming that half is true.
 | `stagedResultsRef` does not resolve under `projectPath/results/.staging/` | input error; write nothing |
 | `stagedResultsRef` names no staged file — already logged by an earlier successful call, pruned after 24h, or never staged | input error, raised before any op is applied; write nothing. The message says each staged ref can be logged once: do not log it again if the search already has an entry, otherwise re-run the search |
 | a batch names one `stagedResultsRef` in two ops | input error `ops[j]: stagedResultsRef '…' is also ops[i]'s`, raised before any op is applied; write nothing. Compared on the resolved path, so two spellings of one file collide |
-| `notes` states the household structure of a census that carries no relationship-to-head column, without hedging it — the census the note names, or, for a `record_search` entry, the one its staged response shows; a staged `record_search` or `record_read` response whose titles are all British also supplies the jurisdiction of a census the note names without one | input error; write nothing, and in a batch no op's staged file is consumed. The message names the missing column and quotes a compliant rewording, so the caller can re-send. See §8.2 |
+| `notes` states the household structure of a census that carries no relationship-to-head column, without hedging it — the census the note names, or, for a `record_search` entry, the one its staged response shows; a staged `record_search` or `record_read` response whose titles are all British also supplies the jurisdiction of a census the note names without one | input error; write nothing, and in a batch no op's staged file is consumed. The message quotes the census and every phrase it read as structure, names the missing column and quotes a compliant rewording, so the caller can fix the note in one try. See §8.2 |
 | an explicit `query` on a staged `record_search` or `fulltext_search` entry names a filter key, with a value, that the staged search never sent | input error; write nothing, and in a batch no op's staged file is consumed. The message names each key and the value the call claimed, and says how to re-send: drop the key, omit `query` so the tool fills it, or re-run the search with the filter. No override. See §8.3 |
 | `notes` (single-entry, or any op's) arrives JSON-escaped: no real newline once leading and trailing whitespace is ignored, at least two literal `\n`, and at least one literal `\n` that opens a table row (`\|`) or heading (`#`) | decoded, then handled as if sent decoded, with no warning. It decodes only `\n \r \t \" \\ \/ \uXXXX`; any other backslash (`\|`, `\*`, `\'`) is kept as sent. A second pass runs if the result still looks escaped, and no more than two. A trailing `"` is dropped first when it is the only unescaped quote in the note, since it is the escaped string's own closing quote. The decode runs before every precondition and before persistence, so the census check (§8.2) and validation judge the stored text. `unescapeJsonNotes` |
 
@@ -458,6 +458,15 @@ Scope, and why it is this narrow:
   always carries birth years older than the census itself, so a whole-note year
   test refuses the documented censuses it is meant to allow. Only a year
   syntactically attached to the word "census" counts.
+- **A census word binds a year on one side only.** A word with a year before it
+  does not also take the year after it: in "1900 census 1853/Maine", "the 1900
+  census, 1853 Maine" and "1900 census (1853, Maine)" the 1853 is a birth year,
+  and read as an 1853 census it refused "Mogom household, 1880 census: … 1900
+  census 1853/Maine", a note about the 1880 census. A word with no year before
+  it still takes the one after ("US Census 1870"). What this gives up: a list
+  that runs on past a bound word ("the 1880 census, 1870 and 1860") no longer
+  binds its tail. In the committed corpus (2026-10-18) one note binds
+  differently, "1881 census, 1891 census", which only loses a duplicate 1891.
 - **The jurisdiction binds the same way.** The doctrine is US-federal, where
   1880 is the dividing line. England & Wales and Scotland gained the column in
   1851, so a post-1851 British census is documented and must pass. A named
@@ -484,6 +493,30 @@ Scope, and why it is this narrow:
   skipped the note-only path whenever no staged row was a US federal census: it
   accepts "1841 England census … wife" and frees none of the church-records
   notes, whose payload names no census.
+- **A 1790–1840 US census names only the head.** Those schedules name the head
+  of each household and count everyone else in age-and-sex tallies, so a head
+  named off one is what the census states. When every census that fired is a US
+  one of 1790, 1800, 1810, 1820, 1830 or 1840 — or, when the note binds none,
+  every year of the staged payload is — a claim that names only the head is not
+  refused: `household of ⟨X⟩`, `⟨X⟩'s household`, `⟨X⟩ household`, `heads a
+  household`, `household headed by ⟨X⟩`, `Household head ⟨X⟩`, `head of
+  household`, `as head` and `(head)`. So a nil ("No Geach household indexed in
+  the 1830 U.S. census") passes too. A claim that names anyone else, or gives
+  them a relationship, is still refused, because no one else is on the page: a
+  kinship word (`with wife Mary`), any other `as` or bracketed role, `in …
+  household`, `household includes`, a roster, `living with` / `enumerated with`,
+  named co-residents, and against a staged payload the punctuated plural and the
+  possessive. A note that also names an 1850–1870 census keeps the full rule for
+  it, and any other year ("1801 census", which the US did not take) or a British
+  mention is unchanged. The refusal says why in head-only words. This revises the
+  2026-10-14 ruling that this check does not change (lead, 2026-10-18): that
+  ruling was made for survey-surname tables (survey-surname-agent-spec.md, "The
+  hedge line") and did not consider these shapes. Measured with
+  `dev/measure-census-hedge-refusals.ts` against `main` at f0f1483a4, together
+  with the one-side binding above and the two roster fixes below: **0** notes
+  and **0** paired payload ops newly refused, **5** notes newly freed — four nil
+  searches for an 1830 or 1840 household and one 1840 hit that names only its
+  head, through the FamilySearch record title it quotes.
 - **Undecidable inputs skip** rather than guessing: when no year binds to a
   census at all, the note-only gate does not fire — the same behaviour as an
   undocumented jurisdiction. What this gives up: an unhedged pre-1880 US census
@@ -586,8 +619,12 @@ Scope, and why it is this narrow:
   cancel the deny silently. A list introduced as spellings, variants, surnames
   or forms (`Household spellings tried: Flynn, Flinn and Flynne`) is a list of
   names searched, not of people; `names` is not among those words, because
-  `Household names: George, Henry and Margaret` is a roster. A roster written in
-  lower case is missed.
+  `Household names: George, Henry and Margaret` is a roster. Two more lists are
+  not of people: one straight after `household in`, `at` or `near` (`household
+  in Norwalk, Fairfield, CT`), and a FamilySearch record title, which names the
+  head and then the collection (`Household of David Bagley, United States,
+  Census, 1840`: neither `United States` nor a run with `Census` in it is a
+  person). A roster written in lower case is missed.
 
   **Capitalisation is never the test.** The first version asked whether a
   capital sat within 24 characters of the noun, which is not a test for a name
@@ -604,11 +641,12 @@ Scope, and why it is this narrow:
 
   **Every clause and guard goes red when it alone is removed**, which is
   checked by `dev/mutate-census-hedge.ts` rather than asserted. Run it rather
-  than trusting this sentence: it takes each of the forty-one out in turn and
-  exits non-zero on any the suite does not notice. Two rounds of this card
-  shipped a mechanism no test exercised, each time because a note written for
-  one clause incidentally satisfied a neighbour, so reading the tests does not
-  substitute. A green row means the clause needs a test **or** is inert — one
+  than trusting this sentence: it takes each one out in turn, including which
+  arms count as naming only the head, and exits non-zero on any the suite does
+  not notice. Two rounds of this card shipped a mechanism no test exercised,
+  each time because a note written for one clause incidentally satisfied a
+  neighbour, so reading the tests does not substitute. A green row means the
+  clause needs a test **or** is inert — one
   was deleted on that finding rather than given a test it could not fail.
 
   **The sweep proves it ran before it reports.** Its first version launched
@@ -640,6 +678,12 @@ Scope, and why it is this narrow:
   and `Sarah A. Mullen` are not cut at their abbreviating periods.
 - **"Indexed" beside a role word is a hedge** ("Role indexed as 'Head'").
   Flagging a *name* as indexed is not.
+- **The refusal quotes what it fired on**: the census as the note wrote it
+  ("1850 census", "pre-1880 census"), or the staged census years when the
+  payload decided, and every phrase it read as structure, as written ("wife
+  Mary", "household of", "William Mullen household"), up to eight. Without them
+  the caller had to guess which words to change, and a birth year read as a
+  census year ("census 1853") was invisible.
 - **The hedge is accepted however it is hyphenated.** The refusal message spells
   it "relationship-to-head column"; the hedge patterns accepted only spaces, so
   a caller who hedged in the exact words they were handed was refused a second

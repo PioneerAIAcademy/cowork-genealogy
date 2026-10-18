@@ -144,7 +144,7 @@ describe("requirePre1880CensusHedge", () => {
     // The one shape this change newly refuses. `CENSUS_YEAR` spans 1600-1999
     // and the old gate was `\b18[0-7]\d\b`, so 1600-1799 is new. Correct: the
     // 1790-1840 schedules name only the head and tally the rest by age band, so
-    // the structure is inferred more completely than on an 1850. Pinned so the
+    // "with wife Mary" names someone the schedule does not. Pinned so the
     // "nothing is newly refused" reading cannot come back.
     bad("1790 US Census household: John Smith head, with wife Mary.");
     bad("census of 1790, household head John Smith, with wife Mary.");
@@ -394,7 +394,7 @@ describe("requirePre1880CensusHedge tells a household claim from a household wor
 });
 
 /**
- * Every mechanism `assertsHousehold` is built from, pinned one at a time.
+ * Every mechanism `householdClaims` is built from, pinned one at a time.
  *
  * The first version of that predicate asked whether a capital letter sat
  * within 24 characters of the noun, and review broke it three ways in each
@@ -405,7 +405,7 @@ describe("requirePre1880CensusHedge tells a household claim from a household wor
  * shipped, where disabling either the backward branch or the sentence stop
  * left all 88 tests green.
  */
-describe("assertsHousehold reads the relation, not the capitalisation", () => {
+describe("householdClaims reads the relation, not the capitalisation", () => {
   const bad = (n: string, years?: number[]) =>
     expect(() => requirePre1880CensusHedge(n, years)).toThrow(/relationship-to-head/);
   const ok = (n: string, years?: number[]) => expect(() => requirePre1880CensusHedge(n, years)).not.toThrow();
@@ -509,7 +509,7 @@ describe("assertsHousehold reads the relation, not the capitalisation", () => {
   ])("records a vocabulary gap this gate still has (%#)", (n) => ok(n, [1850]));
 
   it("needs the noun-compound arm, which no relation reaches", () => {
-    // Eleven corpus notes take this shape. Without hasHouseholdCompound each
+    // Eleven corpus notes take this shape. Without householdCompounds each
     // is freed: there is no of, no in, no possessive and no kinship word.
     bad("1850 U.S. Census, Schuylkill County, Pennsylvania - Thomas Flynn household, Dwelling 84, Family 91.", [1850]);
     bad("1 result: Sarah A. Mullen, William Mullen household, Dodge County, Wisconsin.", [1850]);
@@ -519,6 +519,9 @@ describe("assertsHousehold reads the relation, not the capitalisation", () => {
     // Both are what stop the compound arm becoming the capital test again.
     ok("Bucks Co., PA household: no Whitfield found", [1850]);
     ok("1830 census search for Bagley surname in Vermont. Reading Topsham household records to check age columns.", [1850]);
+    // The 1830 schedule names heads, so that note also passes without the
+    // complement guard; on an 1850 one only the guard keeps it a mention.
+    ok("1850 census search for Bagley surname in Vermont. Reading Topsham household records to check age columns.", [1850]);
   });
 
   it("needs the sentence stop, because a relation does not cross a full stop", () => {
@@ -630,7 +633,8 @@ describe("stagedPre1880UsCensusYears", () => {
  * ut_search_records_027 notes from 2026-10-08, verbatim, judged with the 1860
  * census payload their search staged. Each failed the eval validator while this
  * gate let it through -- a roster after a household phrase, with no relation word
- * from `HOUSEHOLD_CLAIM` -- so nothing made the agent add the hedge. And the
+ * from `HOUSEHOLD_HEAD_CLAIM` or `HOUSEHOLD_MEMBER_CLAIM` -- so nothing made the
+ * agent add the hedge. And the
  * first hedged note below was graded compliant while this gate would have
  * refused it.
  */
@@ -894,5 +898,173 @@ describe("the staged payload supplies an unqualified mention's jurisdiction (#34
     expect(
       stagedPayloadColumnFrom("record_read", read({ title: "x" } as never, { id: "sd_c_1", title: "England and Wales, Census, 1851" })),
     ).toBe(1851);
+  });
+});
+
+/**
+ * The 1790-1840 US schedules name only the head of each household and tally
+ * everyone else by age and sex. A note naming the head says what the schedule
+ * says; a note naming anyone else, or giving them a relationship, does not.
+ */
+describe("a 1790-1840 US census names only the head", () => {
+  const bad = (n: string, years?: number[], columnFrom?: number) =>
+    expect(() => requirePre1880CensusHedge(n, years, columnFrom)).toThrow(/relationship-to-head/);
+  const ok = (n: string, years?: number[]) => expect(() => requirePre1880CensusHedge(n, years)).not.toThrow();
+
+  it.each([
+    "Found Horace Gibbs household in Norwalk, Fairfield, CT in the 1840 census (matchScore 0.565, matchRank 1)... Passing top match to extraction.",
+    "Found Horace Gibbs as head of household in Norwalk in the 1840 census (head-of-household only enumeration)",
+    "Searched 1840 US Census for all Filer heads of household in Cattaraugus. No Filer household in Cattaraugus.",
+    "1810 US Census, Watervliet, Albany, New York: John P Witbeck household. Tally only: 1 free white male 26-44, 1 free white female 26-44, 3 free white males under 10.",
+    // Committed corpus notes the gate used to refuse. The first quotes a
+    // FamilySearch record title, which the roster arm read as a list of people.
+    "Found 2 results — both are 'Household of David Bagley, United States, Census, 1840, Topsham, Orange, Vermont' " +
+      "(two indexings of the same entry: XHRB-V42 and XHRB-V4V). Confidence 4, score 5.44. David Bagley was still in " +
+      "Topsham in 1840 when William would be approximately 25. Match ranking against I1 (David Bagley stub) returned " +
+      "scores of 0.15 due to thinness of stub (no birth/death dates), but both records are clearly David Bagley in " +
+      "Topsham, consistent with the father named in the 1884 death records. XHRB-V42 is attachedToOther (already " +
+      "linked in FamilySearch's tree to LVDV-DBC, corroborating the identity match). Will read XHRB-V42 to check " +
+      "household composition.",
+    "Nil result. No Geach household indexed in the 1830 U.S. census for Washington County, Ohio with exact surname matching.",
+  ])("accepts a note that names only the head, or reports a nil (%#)", (n) => ok(n));
+
+  it.each([
+    ["household of", "1840 census: Household of Christena Clark, Fallsbury Township."],
+    ["a possessive", "1840 census: the entry is christena clark's household, Fallsbury Township."],
+    ["a compound", "1840 census: Christena Clark household, Fallsbury Township."],
+    ["heads a household", "1840 census: Christena Clark heads a household in Fallsbury Township."],
+    ["headed by", "1840 census: household headed by Christena Clark, Fallsbury Township."],
+    ["household head", "1840 census: Household head Christena Clark, Fallsbury Township."],
+    ["head of household", "1840 US Census: Christena Clark, head of household, Fallsbury Township."],
+    ["as head", "1820 census: the record shows Talliaferro Stribling as head, Amite County."],
+    ["(head)", "1840 census: Christena Clark (head), Fallsbury Township."],
+  ])("accepts the head named by %s, which an 1850 note is refused for", (_label, n) => {
+    ok(n);
+    bad(n.replace(/18[24]0/, "1850"));
+  });
+
+  it.each([
+    ["a kinship word", "1830 census: John Smith head, with wife Mary"],
+    ["the 1790 kinship claim", "1790 US Census household: John Smith head, with wife Mary"],
+    ["a plural kinship word", "1840 census: John Smith household with sons John and James."],
+    ["an `as` role", "1840 census: John Smith household; Mary Smith listed as wife."],
+    ["a bracketed role", "1840 census: John Smith (head), Mary Smith (wife)."],
+    ["someone `in` the household", "1840 census: Amos Whitfield in the Doss household."],
+    ["`includes`", "1840 census: the Doss household also includes Amos Whitfield."],
+    ["a roster", "1840 census: Household shows George, Henry and Margaret Ackerman."],
+    ["co-residence", "1840 census: John Smith living with Thomas Smith."],
+    ["named co-residents", "1840 census: co-residents are Henry and Margaret Ackerman."],
+  ])("still refuses %s", (_label, n) => bad(n));
+
+  it("accepts the rewording its refusal suggests", () => {
+    ok("1830 census: John Smith head, with wife Mary, inferred from other records, not stated on the schedule.");
+  });
+
+  it("still refuses the payload-only kinship shapes against an 1840 payload", () => {
+    bad("1 result: John Smith household; sons, Thomas and Stephen.", [1840]);
+    bad("1 result: Ezra and Noah Whitfield are Amos's children.", [1840]);
+  });
+
+  it("keeps the 1850 rule in a note that also names 1850", () => {
+    bad("1850 census: John Smith, wife Mary, son John");
+    bad("1840 and 1850 census: John Smith household, Pike County.");
+    bad("1840 census: John Smith household. 1860 census: John Smith household, Pike County.");
+  });
+
+  it("does not reach a census the US did not take, or a British one", () => {
+    bad("1801 census for Manger: Ingebor Nielsdatter household.");
+    bad("1841 England census, Trowbridge: Samuel Purnall household.");
+    bad("1840 Scotland census: John Miller household.");
+    bad("1840 census: Samuel Purnall household.", [], 1851);
+  });
+
+  it("reads a staged 1790-1840 payload the same way", () => {
+    const n = "1 result: Horace Gibbs household, Norwalk, Fairfield, CT (matchScore 0.565).";
+    ok(n, [1840]);
+    bad(n, [1850]);
+    bad(n, [1840, 1850]);
+    bad("1 result: Amos Whitfield in the Household of Nancy Doss.", [1840]);
+  });
+
+  it("does not read a FamilySearch record title as a roster", () => {
+    ok("1840 census: 'Household of David Bagley, United States Census, 1840, Topsham, Orange, Vermont'.");
+    bad("1840 census: Household of David Bagley, Mary Bagley and John Bagley.");
+  });
+});
+
+describe("a census word binds the year on one side only", () => {
+  const ok = (n: string) => expect(() => requirePre1880CensusHedge(n)).not.toThrow();
+
+  it.each([
+    "Mogom household, 1880 census: new conflict value vs tree 1848/New Brunswick and 1900 census 1853/Maine",
+    "Mogom household, 1880 census: born 1848 New Brunswick per the tree; the 1900 census, 1853 Maine.",
+    "Mogom household, 1880 census: born 1848 New Brunswick per the tree; 1900 census (1853, Maine).",
+  ])("does not read the birth year after a bound census as a census (%#)", (n) => ok(n));
+
+  it("binds the year before the word, and the year after a word with none before it", () => {
+    expect(censusMentions("1900 census 1853/Maine")).toEqual([{ year: 1900, columnFrom: 1880 }]);
+    expect(censusMentions("the 1900 census, 1853 Maine")).toEqual([{ year: 1900, columnFrom: 1880 }]);
+    expect(censusMentions("1900 census (1853, Maine)")).toEqual([{ year: 1900, columnFrom: 1880 }]);
+    expect(censusMentions("US Census 1870, Ward 4")).toEqual([{ year: 1870, columnFrom: 1880 }]);
+    expect(() => requirePre1880CensusHedge("US Census 1870, Ward 4: Mogom household.")).toThrow(/relationship-to-head/);
+  });
+});
+
+describe("a refusal quotes what it fired on", () => {
+  const message = (n: string, years?: number[], columnFrom?: number): string => {
+    try {
+      requirePre1880CensusHedge(n, years, columnFrom);
+    } catch (e) {
+      return (e as Error).message;
+    }
+    throw new Error(`not refused: ${n}`);
+  };
+  /** The quoted strings, less the message's own e.g. rewording. */
+  const quotes = (m: string) => [...m.matchAll(/"([^"]+)"/g)].map((q) => q[1]).filter((q) => !q.startsWith("..."));
+
+  it("quotes the census and every phrase read as structure", () => {
+    expect(quotes(message("1850 census: John Smith, wife Mary, son John"))).toEqual(["1850 census", "wife Mary", "son John"]);
+  });
+
+  it("quotes only what a 1790-1840 note is refused for", () => {
+    const m = message("1830 census: John Smith household, with wife Mary");
+    expect(m).toMatch(/1790-1840 US census household \("1830 census"\)/);
+    expect(quotes(m)).toEqual(["1830 census", "wife Mary"]);
+  });
+
+  it("names the staged census when the payload decides", () => {
+    const m = message("1 result: Amos Whitfield in the Household of Nancy Doss.", [1860, 1850]);
+    expect(m).toContain("(the staged search's 1850/1860 US census rows)");
+    expect(quotes(m)).toEqual(["Household of", "in the Household"]);
+  });
+
+  it("quotes a British census in the British wording", () => {
+    const m = message("1841 census: Household of Samuell Purnell. Elizabeth Purnell (wife), Job Purnell (son).", [], 1851);
+    expect(m).toMatch(/pre-1851 British census household \("1841 census"\)/);
+    expect(quotes(m)).toEqual(["1841 census", "Household of", "(wife)", "(son)"]);
+  });
+
+  it.each([
+    "1870 census, Adams County: Daniel McElwee plus sons Thos T McElwee and Stephen McElwee.",
+    "1850 US Census, Cork: head of household Thomas Flynn with Mary Flynn.",
+    "1 result: Sarah A. Mullen, William Mullen household, Dodge County, Wisconsin. 1860 census.",
+    "Census of 1870, Yell County, Arkansas: Reuben Hensley living with Sarah Hensley and sons William and Elisha.",
+    "pre-1880 census: Household lists George, Henry and Margaret Ackerman.",
+  ])("quotes the note's own words (%#)", (n) => {
+    const q = quotes(message(n));
+    expect(q.length).toBeGreaterThan(1);
+    for (const phrase of q) expect(n).toContain(phrase);
+  });
+
+  it("quotes a pre- census with its prefix", () => {
+    expect(quotes(message("pre-1880 census: Household lists George, Henry and Margaret Ackerman."))[0]).toBe("pre-1880 census");
+  });
+
+  it("quotes at most eight phrases, and cuts a long one", () => {
+    expect(message("1850 census: wife Mary, son John, son James, son Peter, daughter Ann, daughter Sue, daughter Jane, son Tom, son Bill.")).toContain(
+      '"daughter Jane", "son Tom" and 1 more',
+    );
+    const roster = "Household shows George Ackerman, Henry Ackerman, Margaret Ackerman, Catherine Ackerman, Elizabeth Ackerman and John Ackerman.";
+    expect(message(`1850 census. ${roster}`)).toContain(`"${roster.slice(0, 80)}…"`);
   });
 });
