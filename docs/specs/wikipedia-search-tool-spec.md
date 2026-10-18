@@ -111,8 +111,11 @@ GET https://en.wikipedia.org/w/rest.php/v1/search/page?q={query}&limit=1
 }
 ```
 
-Both requests send the same `User-Agent` and URL-encode the query or title
-with `encodeURIComponent()`.
+Every request sends the same `User-Agent`,
+`genealogy-mcp-server/<version> (https://github.com/PioneerAIAcademy/cowork-genealogy)`,
+where `<version>` is the engine's package version. The contact URL is not
+optional: Wikimedia throttles every agent without contact details in one shared
+bucket. Every request URL-encodes the query or title with `encodeURIComponent()`.
 
 ---
 

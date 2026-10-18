@@ -1,4 +1,5 @@
 import { fetchWithRetry } from "../utils/http.js";
+import { readBuildInfo } from "../utils/build-info.js";
 import type {
   WikipediaAPIResponse,
   WikipediaPageSearchResponse,
@@ -13,7 +14,12 @@ const WIKIPEDIA_SEARCH_URL = "https://en.wikipedia.org/w/rest.php/v1/search/page
 // across the committed e2e run logs.
 const WIKIPEDIA_TIMEOUT_MS = 60_000;
 
-const WIKIPEDIA_HEADERS = { "User-Agent": "genealogy-mcp-server/0.0.1" };
+// Wikimedia throttles every User-Agent without contact details in one shared
+// bucket: measured, a bare agent got 429s after about ten requests, while the
+// same agent with this URL went 20 of 20.
+const WIKIPEDIA_HEADERS = {
+  "User-Agent": `genealogy-mcp-server/${readBuildInfo().base} (https://github.com/PioneerAIAcademy/cowork-genealogy)`,
+};
 
 export interface WikipediaSearchInput {
   query: string;

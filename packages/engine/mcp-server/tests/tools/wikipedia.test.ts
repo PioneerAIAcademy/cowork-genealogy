@@ -1,11 +1,13 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { wikipediaSearch } from "../../src/tools/wikipedia.js";
+import { readBuildInfo } from "../../src/utils/build-info.js";
 
 const mockFetch = vi.fn();
 vi.stubGlobal("fetch", mockFetch);
 
 const SUMMARY = "https://en.wikipedia.org/api/rest_v1/page/summary";
 const SEARCH = "https://en.wikipedia.org/w/rest.php/v1/search/page";
+const USER_AGENT = `genealogy-mcp-server/${readBuildInfo().base} (https://github.com/PioneerAIAcademy/cowork-genealogy)`;
 
 function summaryOk(title: string, extract: string) {
   mockFetch.mockResolvedValueOnce({
@@ -71,7 +73,7 @@ describe("wikipediaSearch", () => {
     expect(result.title).toBe("Luo people");
     expect(result.url).toBe("https://en.wikipedia.org/wiki/Luo_people");
     for (const [, init] of mockFetch.mock.calls) {
-      expect((init as RequestInit).headers).toEqual({ "User-Agent": "genealogy-mcp-server/0.0.1" });
+      expect((init as RequestInit).headers).toEqual({ "User-Agent": USER_AGENT });
     }
   });
 
