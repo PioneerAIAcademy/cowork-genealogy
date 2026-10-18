@@ -878,7 +878,7 @@ file's own sections, top to bottom.
    replaces.
 2. Run phase 0.
 3. Land the prep PRs (the research-plan one after PR #3479, proof-conclusion after PR #3476),
-   then PR 1, then PR 2 right after it.
+   then PR 1, then PR 2 right after it. The conflict PR follows PR 1 in parallel with PR 2.
 4. Fold this file into `research-as-a-job-later.md`, or retire that file's superseded sections.
 
 ## Phases
@@ -897,10 +897,11 @@ file's own sections, top to bottom.
 - **On both hosted planes:** a host-side deny binds alongside `continue_policy.foreground_rewrite`.
 - **Record the results** in ADR-0005.
 
-**Phase 1.** The prose ships as small PRs, so that no PR holds more than one or two skills' eval
-slots and a failed eval holds up only its own skill. The prep PRs work under today's
-behaviour, so they land first. PR 1 is code only. PR 2 switches step mode on, and merges right
-after PR 1. Until it does, PR 1's deny reason alone makes each turn report and stop.
+**Phase 1.** The prose ships as small PRs, so a failed eval holds up only the PR it is in. The
+prep PRs work under today's behaviour, so they land first. PR 1 is code only. PR 2 switches
+step mode on with the four skills that cannot land apart, and merges right after PR 1. Until it
+does, PR 1's deny reason alone makes each turn report and stop. The conflict PR follows PR 1
+in parallel with PR 2.
 
 - **Prep PRs — prose that works today, one paid run each, in parallel except where an order is
   named:**
@@ -955,19 +956,24 @@ after PR 1. Until it does, PR 1's deny reason alone makes each turn report and s
   - **viewer:** the `resources_spent` label;
   - **schema and docs:** the `deferred` enum value and the contract docs; `docs/architecture.md:859-860`; `docs/specs/project-context-tool-spec.md`;
   - **the e2e harness** per F.
-- **PR 2 — the switch-on; paid `research`, `research-exhaustiveness`, `person-evidence`,
-  `question-selection`, `conflict-resolution` and `proof-conclusion` runs.** These cannot land
-  earlier:
+- **The conflict PR — paid `conflict-resolution` and `proof-conclusion` runs, any time after
+  PR 1, independent of PR 2.** It needs PR 1's `weighed_log_entry_ids` field; until it lands no
+  conflict carries the field, so PR 1's unsettled-conflict arm never fires and routing is
+  today's.
+  - **conflict-resolution:** writes `weighed_log_entry_ids` on every analysis, and ends a pass
+    that settles nothing and names nothing to search without a Continue line (E);
+  - **proof-conclusion:** in that state, writes `not_proved` with `shortfall: "conflict"` and the
+    `blocked_by_conflict` stop in §7's batch, and its report ends without a Continue line (E);
+  - **tests:** the conflict-resolution and proof-conclusion cases for the unsettled conflict in
+    acceptance item 7.
+- **PR 2 — the switch-on; paid `research`, `research-exhaustiveness`, `person-evidence` and
+  `question-selection` runs.** These four cannot land earlier:
   - the router's step report and the choice need PR 1's step check, ladder branch and
     `deferred` value;
   - person-evidence's rewording would turn off its downward resolution until the router passes
     `userPresent`;
   - question-selection's two-fact ask would end a hosted turn the Stop veto still re-opens, and
     e2e's two-question fixtures are re-scoped only in PR 1; its gate text states PR 1's rule.
-  - **conflict-resolution:** writes `weighed_log_entry_ids` and ends a pass that settles
-    nothing and names nothing to search without a Continue line (E). Its second paid run,
-    since its route PR lands before PR 1 adds the field. proof-conclusion's half of that
-    arm (the `blocked_by_conflict` stop in §7's batch) goes in this PR too, as its second run;
   - **the router:** A's deletions; the step report and only the replies that apply; the search
     fan-out, external items included (D, I); the choice replacing the loop row (`:225`);
     wrap-up from any state (B2), with `userPresent` for person-evidence and `wrapUp` for
@@ -1185,6 +1191,6 @@ after PR 1. Until it does, PR 1's deny reason alone makes each turn report and s
   still runs, so the saving there is the third pass, about $20.
 - **Paid eval runs, one per skill:** `research-plan`, `conflict-resolution`,
   `hypothesis-tracking`, `timeline` and `proof-conclusion` in the prep PRs; `research`,
-  `research-exhaustiveness`, `person-evidence`, `question-selection`, and second runs of
-  `conflict-resolution` and `proof-conclusion` in PR 2; `search-records` in phase 2; plus `make hook-smoke`.
+  `research-exhaustiveness`, `person-evidence` and `question-selection` in PR 2; second runs of
+  `conflict-resolution` and `proof-conclusion` in the conflict PR; `search-records` in phase 2; plus `make hook-smoke`.
 - **The biggest single build** is the e2e persistent session.
