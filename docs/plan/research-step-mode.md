@@ -7,7 +7,7 @@ single-pass plan drawn from feedback issue #3475, and a one-step-per-turn draft.
 has reviewed this merged version six times, and its findings are folded in. After round 4,
 "Keep going" was simplified to replies the host sends for the researcher (decision 13).
 Decisions 14–19 were added on 2026-10-18. A set-aside design reviewed in three plan-critic
-rounds was dropped for decision 15, which reuses the wrap-up path.
+rounds was dropped for decision 15, which reuses the wrap-up path; round 4 reviewed that.
 
 ## Decisions taken (lead, 2026-10-16)
 1. **Step mode on every production plane:** Cowork, the hosted web app (the alpha) and the
@@ -155,9 +155,6 @@ that apply:
     4. `research-exhaustiveness`;
     5. `proof-conclusion`.
 
-    Setting a question aside needs no mode: it is one research-exhaustiveness write, an
-    ordinary one-step turn (section E).
-
     Apart from that `ctx` check, the predicate checks membership and order only. Router
     prose says when a member is skipped:
     - person-evidence runs only for unlinked assertions;
@@ -240,12 +237,13 @@ that apply:
   - **The host decides which apply,** with one pure function in `step_boundary.py`,
     `reply_options(offered_step, research)`, called where the host already reads the
     offer line for `next_auto_reply` (section A2). It returns:
-    - **nothing** when the turn makes no offer: a step that ended on a question for the
-      researcher, or proof-conclusion;
+    - **nothing** when the turn makes no offer, such as a step that ended on a question for the
+      researcher or a final conclusion. The test is the offer line, never the step the turn
+      ran, so a wrap-up turn that ends offering the next question still gets its buttons;
     - **only Wrap it up** when the offer is `wrap-up` (section E);
     - otherwise **Continue** and **Keep going**, plus:
-      - **Wrap it up** unless the offered step is proof-conclusion (Continue already
-        concludes);
+      - **Wrap it up** when `current_question(research)` exists and the offered step is not
+        proof-conclusion (Continue already concludes);
       - **Search more** at the choice with a low-risk default: the offer is proof-conclusion,
         and the question has a `resources_spent` stop and no proof summary. At a high-risk
         choice the offer is already planning, and Wrap it up is the alternative. Reading the
@@ -435,24 +433,39 @@ that apply:
      evidence in hand. Otherwise proof-conclusion's conflict check (`:122-150`) would stop at
      `not_proved`.
   4. research-exhaustiveness records the stop, using its existing "user wants to stop early"
-     case (`:352`): `resources_spent`, the skipped items as `skipped_plan_item`, items waiting
+     case (`:352`). The router passes it `wrapUp: yes` too. Under it, the agent skips its
+     scope check (`agents/research-exhaustiveness.md:76-83`), Step 0's person_evidence and
+     tentative-value blocks, and the active-plan check when there is no plan, but keeps the
+     "already declared" stop (`:87`), which writes nothing. It writes `resources_spent`, the skipped items as `skipped_plan_item`, items waiting
      on an upload as `handed_to_user`, and any never-planned gaps as `deferred`. Its
      tentative-value (b) path records the alternative source as `deferred` here, never routing
      to research-plan.
   5. proof-conclusion concludes at the tier reached and resolves the question, `not_proved`
      included. The router's delegation says it is a wrap-up (`wrapUp: yes`, as it passes
-     `userPresent`), and §6's "only when you concluded it" (`agents/proof-conclusion.md:317`)
-     counts a wrap-up as concluding. A blocking conflict still holds the question open
-     (decision 12). If it declines, for instance because a person the conclusion relies on is
-     still unidentified (`agents/proof-conclusion.md:139-142`), it writes the `not_proved`
-     decline it already persists (`:81`), and the turn ends with its report.
+     `userPresent`), and §7's "only when you concluded it" (`agents/proof-conclusion.md:317`)
+     counts a wrap-up as concluding.
+     - **Under `wrapUp: yes`, a relied-upon person with no linked identity assertion** (zero
+       assertions included) does not stop the gate (`:139-142`). It yields `not_proved` with
+       `shortfall: "gap"`, naming who is unidentified, and the question resolves. That covers
+       a wrap-up before any evidence, and one where person-evidence left the subject
+       unidentified.
+     - **An identity conflict, or any blocking conflict, still holds the question open**
+       (decision 12). The run then ends on that open question, as decision 12 already says,
+       and a different question waits until it is settled.
+     - **When the router says a new question is waiting** (`newQuestion: yes`), §8 does not
+       write `completed`, even if every question is now resolved.
 - **Before any evidence exists,** the same turn runs: dispose skips the open items, person-
   evidence and conflict-resolution have nothing to do, research-exhaustiveness records the
   stop, and proof-conclusion writes `not_proved` with `shortfall: "gap"`, naming the searches
   not run. That is the way out for a researcher who wants a different question before any
   search has run.
-- **Coming back to a wrapped-up question** is a new question on the same fact, which
-  question-selection writes as usual, with the earlier evidence already in the project.
+- **Coming back to a wrapped-up question** is a new question on the same fact. question-
+  selection's step 1b (`agents/question-selection.md:103`) stops new questions once the
+  objective is answered, so it gains one exception: a question the researcher asked for is
+  written, including one on the same fact as a resolved `not_proved` question.
+- **On a completed project,** a message carrying a new question routes to question-selection,
+  not to the router's "all resolved and `completed` → Stop" row
+  (`skills/research/SKILL.md:230`).
 
 ### C. Concluding without an exhaustive search
 - **`agents/proof-conclusion.md`:**
@@ -530,9 +543,12 @@ that apply:
     `wrap-up`). Its only button is Wrap it up (section A). Cowork's reply names the phrase "wrap
     it up", and a typed "continue" to this offer gets a one-line pointer to it.
   - **"Wrap it up."** runs B2's turn, from any state: a question one step from concluded, one in
-    a conflict's evidence round, or one with no evidence yet. It ends by offering the new
+    a conflict's evidence round, or one with no evidence yet. The router passes proof-conclusion
+    `newQuestion: yes`, so the project is not marked complete. The turn ends by offering the new
     question ("Continue with choosing the next question?"), and question-selection writes it
-    next turn.
+    next turn under step 1b's exception (section B2).
+  - **When a blocking conflict holds the question open,** the wrap-up ends on it, and the new
+    question waits until the conflict is settled (decision 12).
 - **Work that used to open a helper question becomes plan items on the main question:**
   - a conflict that needs new evidence;
   - a FAN pivot;
@@ -863,9 +879,10 @@ after PR 1. Until it does, PR 1's deny reason alone makes each turn report and s
      rule (E), its `question-state.test.ts` cases and the `project-context-tool-spec.md` line,
      because the new route loops without it.
   3. **proof-conclusion,** after PR #3476 merges, independent of the others: C, E's route line
-     (`:343`) with its route test, and B2's wrap-up rule: under `wrapUp: yes` the conclusion
-     resolves the question at any tier, `not_proved` included. That rule is a no-op until PR 2's
-     router passes `wrapUp`.
+     (`:343`) with its route test, and B2's wrap-up rules: under `wrapUp: yes` an unidentified
+     person yields `not_proved` and the conclusion resolves the question at any tier; under
+     `newQuestion: yes` §8 does not complete the project. Both are no-ops until PR 2's router
+     passes the fields. A zero-assertion wrap-up test.
 - **PR 1 — code and CI tests:**
   - `step_boundary.py` (the predicate with mode `wrapup`, `step_ctx`, `current_question`,
     `next_auto_reply`, `reply_options`, `STEP_LABELS` with `wrap-up`, and the Cowork entry
@@ -917,10 +934,11 @@ after PR 1. Until it does, PR 1's deny reason alone makes each turn report and s
     (I); questions between
     steps (J); Cowork's one-turn "Keep going" sentence (A2); the objective row (E) and the
     deleted "return to question-selection" line;
-  - **research-exhaustiveness:** B, B2 (including the stop before any evidence exists), and
-    waiting items (I);
+  - **research-exhaustiveness:** B, B2 and its `wrapUp` exemptions (with a zero-assertion,
+    no-plan test), and waiting items (I);
   - **person-evidence:** B2's reworded autonomy rule;
-  - **question-selection:** E's changes, including its gate text;
+  - **question-selection:** E's changes, including its gate text, and step 1b's exception for
+    a question the researcher asked for (B2);
   - **tests:**
     - the five research-exhaustiveness tests (`ut_research_exhaustiveness_001`, `_014`, `_015`,
       `_016`, `_d9i`);
@@ -998,11 +1016,12 @@ after PR 1. Until it does, PR 1's deny reason alone makes each turn report and s
    - the worker sets `completed` at turn close when a step finished the project;
    - a turn that ran no step leaves `prev_step` unchanged, on the prototype by reading the last
      closed turn with a non-null `turns.step`;
-   - `reply_options`: nothing for no offer and for a proof-conclusion turn; Continue, Keep going
-     and Wrap it up for an ordinary offer, with or without evidence; no Wrap it up beside a
-     proof-conclusion offer; Search more only at a low-risk choice; only Wrap it up for a
-     `wrap-up` offer. `turn_done.options` carries the list on both hosted planes, and is absent
-     when empty.
+   - `reply_options`: nothing for no offer; Continue, Keep going and Wrap it up for an ordinary
+     offer, with or without evidence; no Wrap it up when there is no unresolved question (such
+     as init-project's offer) or beside a proof-conclusion offer; buttons on a wrap-up turn that
+     ends offering the next question; Search more only at a low-risk choice; only Wrap it up
+     for a `wrap-up` offer. `turn_done.options` carries the list on both hosted planes, and is
+     absent when empty.
 4. **`research_append`:**
    - it refuses a second open question, and refuses it while a concluded question still has a
      `planned` item;
@@ -1058,7 +1077,13 @@ after PR 1. Until it does, PR 1's deny reason alone makes each turn report and s
    - "Wrap it up." on an `exhaustive_declared` question with no summary, and on a concluded
      question in a conflict's evidence round, each end with a refreshed summary and the new
      question offered;
-   - with one wrapped-up `not_proved` question and one proved question, the project completes;
+   - with one wrapped-up `not_proved` question with no open conflict, and one proved question,
+     the project completes;
+   - a one-question project, a different question mid-run, then "Wrap it up.": the question
+     resolves, `project.status` stays `active`, and the new question is written next turn, also
+     when it is on the same fact;
+   - a wrap-up with zero assertions and no plan resolves the question at `not_proved`; a
+     wrap-up on a question with an identity conflict leaves it open;
    - a question after the search step is answered, spawns no agent, and ends with the same
      "Continue with linking the records?" line;
    - a search step with an external item hands out the link and still offers linking; an
