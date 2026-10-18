@@ -1144,7 +1144,11 @@ driver must wait.
 > **Read-only tools run side by side: `READ_ONLY` (`src/tool-schemas.ts`).**
 > Those tools carry `annotations: {"readOnlyHint": true}` in `tools/list`, which
 > the Claude Code CLI reads as concurrency-safe (verified on 2.1.139, 2.1.220 and
-> 2.1.302), so several in one assistant message run at once. Every other tool —
+> 2.1.302), so several in one assistant message run at once. A tool belongs in the
+> set when concurrent calls cannot corrupt project state and their order does not
+> matter: a pure read, or a read that only stages its own result file, appends a
+> log line, writes `external-collections.json` under `withProjectLock`, or
+> rewrites its own retained scan under `images/`. Every other tool —
 > anything that writes `research.json` or the tree, or whose effect a later call
 > in the batch can depend on — stays serial: it runs alone, in order, after the
 > calls before it finish. `tests/packaging/read-only-tools.test.ts` pins the set

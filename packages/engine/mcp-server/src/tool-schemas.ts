@@ -82,7 +82,8 @@ export const ALWAYS_LOAD: ReadonlySet<string> = new Set([
 
 // Tools Claude Code may run side by side (annotations.readOnlyHint): concurrent calls cannot corrupt
 // project state and their order does not matter — pure reads, plus reads that only stage their own
-// result file, append a log line, or write external-collections.json under withProjectLock.
+// result file, append a log line, write external-collections.json under withProjectLock, or rewrite
+// their own retained scan under images/.
 export const READ_ONLY: ReadonlySet<string> = new Set([
   "auth_status",
   "catalog_search",
