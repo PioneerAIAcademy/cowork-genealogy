@@ -497,26 +497,59 @@ Scope, and why it is this narrow:
   of each household and count everyone else in age-and-sex tallies, so a head
   named off one is what the census states. When every census that fired is a US
   one of 1790, 1800, 1810, 1820, 1830 or 1840 — or, when the note binds none,
-  every year of the staged payload is — a claim that names only the head is not
-  refused: `household of ⟨X⟩`, `⟨X⟩'s household`, `⟨X⟩ household`, `heads a
+  every year of the staged payload is — a claim that names only the head is
+  excused: `household of ⟨X⟩`, `⟨X⟩'s household`, `⟨X⟩ household`, `heads a
   household`, `household headed by ⟨X⟩`, `Household head ⟨X⟩`, `head of
-  household`, `as head` and `(head)`. So a nil ("No Geach household indexed in
-  the 1830 U.S. census") passes too. A claim that names anyone else, or gives
-  them a relationship, is still refused, because no one else is on the page: a
-  kinship word (`with wife Mary`), any other `as` or bracketed role, `in …
-  household`, `household includes`, a roster, `living with` / `enumerated with`,
-  named co-residents, and against a staged payload the punctuated plural and the
-  possessive. A note that also names an 1850–1870 census keeps the full rule for
+  household`, `as head` and `(head)`, but not `as the head's …`. So a nil ("No
+  Geach household indexed in the 1830 U.S. census") passes too. Every other
+  claim still refuses: a kinship word before a name (`with wife Mary`), any
+  other `as` or bracketed role, `in … household`, `household includes`, a
+  roster, `living with` / `enumerated with`, named co-residents, and against a
+  staged payload the punctuated plural and the possessive.
+
+  A note whose head claim is excused is also read for anyone else, sentence by
+  sentence, skipping a sentence that names another record type or the tree. Any
+  of these refuses it:
+  - a relationship word, in any case, with no name after it and after
+    his/her/their too (`Wife Mary.`, `wife and 3 children in tallies`, `his wife
+    Mary`, `father of Patrick`, `grandson Amos`);
+  - a capitalised run after `with`, `includes`, `including`, `contains`,
+    `comprises`, `holds` or `enumerated in`/`with`, unless the run is a place
+    (`includes Amos Whitfield`, but not `enumerated in Fallsbury Township`);
+  - two or more names with ages (`John (40), Mary (38), Thomas (12)`);
+  - a name put on a tally (`Mary Flynn is the female 30-40`); the head's own
+    tally reads the same way and is refused too;
+  - `⟨Name⟩ enumerated in it`.
+
+  A relationship word is read whatever it qualifies, so "spouse field absent"
+  beside a head claim is refused too, and the refusal quotes the word. A note
+  that makes no head claim is not read this way, and keeps the verdict the
+  older arms give it: read regardless, these refused 8 committed notes and 1
+  paired payload op that `main` accepts, every one a search note that mentions
+  a relative ("check age columns for male child ~5", "if Nehemiah is
+  Elizabeth's father", "consistent with Peter Geach dying circa 1839-1840"). A
+  hedge clears any of them, as it clears the same note on an 1850 census. Two
+  shapes still pass:
+  - "Thomas Flynn, Household head; his son Patrick is the male 5-10". It makes
+    no head claim, and `his son` is the older arms' tree-side carve-out, so the
+    1850 note passes the same way.
+  - a bracketed list after the household name ("Thomas Flynn household (Mary,
+    Patrick, Bridget)"). All four such lists in the committed corpus name places
+    ("Robt Wood household (Resaca, Gordon)").
+
+  A note that also names an 1850–1870 census keeps the full rule for
   it, and any other year ("1801 census", which the US did not take) or a British
   mention is unchanged. The refusal says why in head-only words. This revises the
   2026-10-14 ruling that this check does not change (lead, 2026-10-18): that
   ruling was made for survey-surname tables (survey-surname-agent-spec.md, "The
   hedge line") and did not consider these shapes. Measured with
   `dev/measure-census-hedge-refusals.ts` against `main` at f0f1483a4, together
-  with the one-side binding above and the two roster fixes below: **0** notes
-  and **0** paired payload ops newly refused, **5** notes newly freed — four nil
-  searches for an 1830 or 1840 household and one 1840 hit that names only its
-  head, through the FamilySearch record title it quotes.
+  with the one-side binding above, the reading for anyone else and the two roster fixes
+  below: **0** notes and **0** paired payload ops newly refused, **5** notes
+  newly freed — four nil searches for an 1830 or 1840 household and one 1840
+  hit that names only its head, through the FamilySearch record title it
+  quotes. That hit's one relationship word, "the father named in the 1884 death
+  records", sits in a sentence about another record.
 - **Undecidable inputs skip** rather than guessing: when no year binds to a
   census at all, the note-only gate does not fire — the same behaviour as an
   undocumented jurisdiction. What this gives up: an unhedged pre-1880 US census
@@ -680,8 +713,9 @@ Scope, and why it is this narrow:
   Flagging a *name* as indexed is not.
 - **The refusal quotes what it fired on**: the census as the note wrote it
   ("1850 census", "pre-1880 census"), or the staged census years when the
-  payload decided, and every phrase it read as structure, as written ("wife
-  Mary", "household of", "William Mullen household"), up to eight. Without them
+  payload decided, and the phrases it read as structure, as written ("wife
+  Mary", "household of", "William Mullen household"), each once and none
+  that sits inside a longer one, up to eight. Without them
   the caller had to guess which words to change, and a birth year read as a
   census year ("census 1853") was invisible.
 - **The hedge is accepted however it is hyphenated.** The refusal message spells

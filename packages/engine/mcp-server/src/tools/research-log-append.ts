@@ -570,9 +570,14 @@ const SOURCE_NAMED =
 /**
  * The US federal censuses that name only the HEAD of each household: everyone
  * else is a tally by age and sex, with no name. A head named off one is what the
- * schedule states, so when every census that fired is one of these, a claim
- * that names only the head is not refused. One that names anyone else, or
- * gives them a relationship, still is: no one else is on the page.
+ * schedule states, so when every census that fired is one of these (or, with no
+ * year bound, every staged payload year is), a head claim (`Claim.head`) is
+ * excused. Every other claim still refuses, and a note whose head claim is
+ * excused is also read for anyone else (`otherPersonClaims`). What neither
+ * reads passes: a note with no head claim keeps the older arms' verdict, so
+ * "Thomas Flynn, Household head; his son Patrick" passes as its 1850 twin does,
+ * and a bracketed list ("Thomas Flynn household (Mary, Patrick, Bridget)") is
+ * not read as people, because in the corpus such lists are places.
  */
 const HEAD_ONLY_US_CENSUS_YEARS: ReadonlySet<number> = new Set([1790, 1800, 1810, 1820, 1830, 1840]);
 
@@ -586,8 +591,9 @@ const HEAD_ONLY_US_CENSUS_YEARS: ReadonlySet<number> = new Set([1790, 1800, 1810
 type Claim = { phrase: string; head: boolean };
 const headClaim = (phrase: string): Claim => ({ phrase, head: true });
 const otherClaim = (phrase: string): Claim => ({ phrase, head: false });
-/** A role label or `as` role: a head claim only when the role is head. */
-const roleClaim = (phrase: string): Claim => ({ phrase, head: /\bhead\b/i.test(phrase) });
+/** A role label or `as` role: a head claim only when the role is head, so not
+ *  "as the head's wife". */
+const roleClaim = (phrase: string): Claim => ({ phrase, head: /\bhead\b(?!['’]s\b)/i.test(phrase) });
 
 /** Every match of `re` in `s`, run on to the end of the word it stops in, so a
  *  refusal can quote "wife Mary" where the pattern stopped at "wife M". */
@@ -945,12 +951,15 @@ const AS_ROLE =
 const HOUSEHOLD_HEAD_NAMED = /\b[Hh]ousehold\s+head\s*[:,\u2013\u2014-]?\s*[A-Z]/;
 const HEAD_OF_HOUSEHOLD = /\bhead\s+of\s+(?:the\s+)?household\b/i;
 
-const asRoleClaims = (notes: string): Claim[] =>
+/** The note's sentences that speak for the census: every sentence but one that
+ *  names another record type or the tree. */
+const censusSentences = (notes: string): string[] =>
   // Not cut at an initial, or "naming Sarah A. Bagley as mother" loses its source.
   notes
     .split(/(?<!\b[A-Z])[.;]\s/)
-    .filter((sentence) => !SOURCE_NAMED.test(sentence.toLowerCase()) && !/\btree\b/i.test(sentence))
-    .flatMap((sentence) => phrasesOf(AS_ROLE, sentence).map(roleClaim));
+    .filter((sentence) => !SOURCE_NAMED.test(sentence.toLowerCase()) && !/\btree\b/i.test(sentence));
+const asRoleClaims = (notes: string): Claim[] =>
+  censusSentences(notes).flatMap((sentence) => phrasesOf(AS_ROLE, sentence).map(roleClaim));
 const KINSHIP_CLAIM =
   /(?<!\b(?:his|her|their)\s)\b(?:mother|father|wife|husband|sons?|daughters?|parents?|children)\s+(?:(?:is|was|are|were)\s+(?:listed|recorded|shown|given|named)\s+as\s+)?[A-Z]/;
 
@@ -975,6 +984,60 @@ const PLURAL_KINSHIP_PUNCTUATED =
  * that also named an 1810 census, and nothing it would have caught.
  */
 const POSSESSIVE_KINSHIP = /\b[A-Z][a-zA-Z]*(?:'s|’s)\s+(?:sons?|daughters?|child|children|wife|husband)\b/;
+
+/**
+ * SOMEONE BESIDES THE HEAD, read only where the head-only rule is excusing a
+ * head claim (`HEAD_ONLY_US_CENSUS_YEARS`). The arms above were built for an
+ * 1850 schedule, where the household phrase already refused the note, and each
+ * is narrow on purpose: `KINSHIP_CLAIM` wants a lower-case role, a capitalised
+ * name after it and no his/her/their. With the head excused they were the whole
+ * deny, and "John Smith household. Wife Mary.", "Thomas Flynn household; father
+ * of Patrick" and "heads a household with his wife Mary and three children" all
+ * passed. These read the wider shapes:
+ *
+ * - `HEAD_ONLY_RELATION`: a relationship word, in any case, with no name after
+ *   it and his/her/their included.
+ * - `NAMED_COMPANION_G`: a capitalised run after with/includes/including/contains/
+ *   comprises/holds/enumerated in|with, unless the run is a place (`isPlaceRun`),
+ *   as in "enumerated in Fallsbury Township".
+ * - `AGED_NAMES`: two or more names, each with an age: "John (40), Mary (38)".
+ * - `NAMED_TALLY`: a name put on a tally mark: "Mary Flynn is the female 30-40".
+ *   The head's own tally reads the same way and is refused too.
+ * - `NAMED_IN_IT`: "Patrick Flynn enumerated in it".
+ *
+ * Only in a sentence that speaks for the census (`censusSentences`): "consistent
+ * with the father named in the 1884 death records" is what those records state.
+ * A note that makes no head claim is judged by the arms above alone, so a search
+ * note that mentions a relative ("check age columns for male child ~5", "if
+ * Nehemiah is Elizabeth's father") passes as it did before. A hedge clears these
+ * as it clears every other claim.
+ */
+const HEAD_ONLY_RELATION =
+  /\b(?:wife|wives|husbands?|spouses?|(?:grand|step)?(?:sons?|daughters?|child(?:ren)?|mother|father|parents?)|brothers?|sisters?|widow(?:er)?s?)\b/i;
+const NAMED_COMPANION_G = new RegExp(
+  String.raw`\b(?:with|includes?|including|contains?|comprises?|holds?|enumerated\s+(?:in|with))\s+(${ROSTER_NAME})`,
+  "g",
+);
+/** A capitalised name that is not a pronoun or an article. */
+const PERSON_NAME = String.raw`(?!(?:He|She|It|They|This|That|The|Who)\b)[A-Z][a-z][\w'’-]*(?:[ ][A-Z][a-z][\w'’-]*){0,2}`;
+const AGED_NAME = String.raw`${PERSON_NAME}[ ]?\([ ]*\d{1,3}[ ]*\)`;
+const AGED_NAMES = new RegExp(String.raw`${AGED_NAME}(?:[ ]*(?:,|and|&)[ ]*(?:and[ ]+)?${AGED_NAME})+`);
+const NAMED_TALLY = new RegExp(
+  String.raw`${PERSON_NAME}[ ](?:is|was)[ ](?:the|a|one[ ]of[ ]the)[ ](?:free[ ](?:white|colou?red)[ ])?(?:fe)?males?\b`,
+);
+const NAMED_IN_IT = new RegExp(String.raw`${PERSON_NAME}[ ](?:(?:is|was)[ ])?(?:also[ ])?enumerated[ ]in[ ]it\b`);
+
+function otherPersonClaims(notes: string): Claim[] {
+  return censusSentences(notes)
+    .flatMap((sentence) => [
+      ...phrasesOf(HEAD_ONLY_RELATION, sentence),
+      ...[...sentence.matchAll(NAMED_COMPANION_G)].filter((m) => !isPlaceRun(m[1])).map((m) => m[0]),
+      ...phrasesOf(AGED_NAMES, sentence),
+      ...phrasesOf(NAMED_TALLY, sentence),
+      ...phrasesOf(NAMED_IN_IT, sentence),
+    ])
+    .map(otherClaim);
+}
 
 /**
  * "relationship to head column", HOWEVER IT IS HYPHENATED. The separator is
@@ -1033,9 +1096,14 @@ function householdClaims(notes: string): Claim[] {
   return claims;
 }
 
-/** Up to eight distinct phrases, quoted, with runs of whitespace closed up. */
+/** Up to eight distinct phrases, quoted: runs of whitespace closed up, and a
+ *  phrase that sits inside a longer one dropped. */
 function quoted(phrases: readonly string[]): string {
-  const distinct = [...new Set(phrases.map((p) => p.replace(/\s+/g, " ").trim()))];
+  const clean = phrases.map((p) => p.replace(/\s+/g, " ").trim());
+  const lower = clean.map((p) => p.toLowerCase());
+  const distinct = clean.filter(
+    (p, i) => lower.indexOf(lower[i]) === i && !lower.some((q) => q.length > p.length && q.includes(lower[i])),
+  );
   const shown = distinct.slice(0, 8).map((p) => `"${p.length > 80 ? `${p.slice(0, 80)}…` : p}"`).join(", ");
   return distinct.length > 8 ? `${shown} and ${distinct.length - 8} more` : shown;
 }
@@ -1155,12 +1223,17 @@ export function requirePre1880CensusHedge(
     ...phrasesOf(HEAD_OF_HOUSEHOLD, notes).map(headClaim),
   ];
   // When every census that decides is a head-only schedule, a claim that names
-  // only the head is what it states. A note that also names a later census
-  // keeps that census's rule.
+  // only the head is what it states -- unless the note names someone else too
+  // (`otherPersonClaims`). A note that also names a later census keeps that
+  // census's rule.
   const headOnly = bound.length > 0
     ? fired.every((m) => m.columnFrom === 1880 && HEAD_ONLY_US_CENSUS_YEARS.has(m.year))
     : payloadYears.every((y) => HEAD_ONLY_US_CENSUS_YEARS.has(y));
-  const stated = claims.filter((c) => !(headOnly && c.head));
+  const excusesHead = headOnly && claims.some((c) => c.head);
+  const stated = [
+    ...claims.filter((c) => !(headOnly && c.head)),
+    ...(excusesHead ? otherPersonClaims(notes) : []),
+  ];
   if (stated.length === 0) return;
 
   const hedged =

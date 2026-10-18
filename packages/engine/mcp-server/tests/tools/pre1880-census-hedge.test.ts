@@ -990,6 +990,142 @@ describe("a 1790-1840 US census names only the head", () => {
     ok("1840 census: 'Household of David Bagley, United States Census, 1840, Topsham, Orange, Vermont'.");
     bad("1840 census: Household of David Bagley, Mary Bagley and John Bagley.");
   });
+
+  // Review probes: each is refused on main, and passed once its head claim was
+  // excused, because no arm built for an 1850 note reached the other person.
+  it.each([
+    "1840 census: Mary Smith, wife of head of household John Smith.",
+    "1840 census: John Smith household: John (40), Mary (38), Thomas (12).",
+    "1840 census: household of John Smith; Mary his wife, Thomas his son.",
+    "1840 census: John Smith (head) and Mary Smith, his wife.",
+    "1840 census: John Smith heads a household with his wife Mary and three children.",
+    "1840 census: John Smith household, wife and 3 children in tallies.",
+    "1840 census: John Smith household. Wife Mary.",
+    "1840 census: John Smith household. Wife: Mary Smith.",
+    "1840 census: John Smith (head); Mary Smith, wife.",
+    "1840 census: Mary Smith listed as the head's wife.",
+    "1840 census: Amos Whitfield, son, household of Nancy Doss.",
+    "1840 census: Household of Nancy Doss includes Amos Whitfield.",
+    "1840 census: the Doss household, which includes Amos Whitfield.",
+    "1840 census: Nancy Doss household with Amos Whitfield (age 10-15).",
+    "1840 census: Nancy Doss household, Amos Whitfield her son.",
+    "1840 census: Nancy Doss household; Amos is her son.",
+    "1840 census: Nancy Doss heads a household; her son Amos is the male 10-15.",
+    "1840 census: Nancy Doss household; the male 10-15 is her son Amos.",
+    "1840 census: Nancy Doss household. Sons Amos and Ezra.",
+    "1840 census: Nancy Doss household. Children: Amos, Ezra.",
+    "1840 census: Nancy Doss household. Husband John Doss deceased.",
+    "1840 census: Thomas Flynn household; Mary Flynn is the female 30-40.",
+    "1840 census: Thomas Flynn household; father of Patrick.",
+    "1840 census: Thomas Flynn, father of Patrick, head of household.",
+    "1840 census: Thomas Flynn household -- Patrick's father.",
+    "1840 census: Thomas Flynn household. Patrick Flynn enumerated in it.",
+    "1840 census: Thomas Flynn (head of household) and his wife Mary.",
+    "1830 census: John Smith household, with his wife Mary",
+  ])("refuses a head claim beside anyone else (%#)", (n) => bad(n));
+
+  it.each([
+    "1830 census: Household head John Smith; wife Mary",
+    "1840 census: John Smith household. Wife Mary, son Thomas.",
+    "1840 census: Nancy Doss household with son Amos Whitfield.",
+    "1840 census: Nancy Doss household. Son Amos, daughter Ezra.",
+    "1840 census: Thomas Flynn household with Mary Flynn and Patrick Flynn.",
+    "1840 census: Thomas Flynn as head, with Mary as wife.",
+    "1840 census: Thomas Flynn as head, Mary as his wife.",
+    "1840 census: Thomas Flynn (head), wife Mary (30-40).",
+    "1840 census: Thomas Flynn (head), Mary (wife).",
+    "1840 census: Thomas Flynn (head) Mary (spouse).",
+  ])("keeps refusing the probes an older arm already caught (%#)", (n) => bad(n));
+
+  it("keeps an older arm's refusal where the reading for anyone else finds nothing", () => {
+    // Each of these arms names someone besides the head by itself, so it
+    // refuses with no help: here the wider reading finds no capitalised
+    // companion, and skips the sentence about the tree.
+    bad("1840 census: Amos Whitfield living with the Doss family.");
+    bad("1 result: John Smith household. The tree lists sons, Thomas and Stephen.", [1840]);
+    bad("1 result: John Smith household. The tree has Ezra as Amos's son.", [1840]);
+  });
+
+  it("reads a grand- or step- relation", () => {
+    bad("1840 census: Nancy Doss household; grandson Amos.");
+    bad("1840 census: Nancy Doss household; stepdaughter Ann.");
+  });
+
+  it("reads a named companion, but not a place", () => {
+    bad("1840 census: Christena Clark household with Amos Whitfield.");
+    ok("1840 census: Christena Clark household, enumerated in Fallsbury Township.");
+    ok("1840 census: Christena Clark household, Licking County, with Ohio neighbours.");
+  });
+
+  it("reads two or more names with ages, but not the head's age alone", () => {
+    bad("1840 census: John Smith household; John (40) and Mary (38).");
+    ok("1840 census: John Smith household; John Smith (40).");
+  });
+
+  it("reads a name put on a tally, but not a pronoun", () => {
+    bad("1840 census: Nancy Doss household. Amos is the male 10-15.");
+    ok("1840 census: Nancy Doss household. She is the female 50-60.");
+  });
+
+  it("does not count 'as the head's' as naming the head", () => {
+    bad("1840 census: Mary Smith listed as the head's servant.");
+  });
+
+  it("reads anyone else only in a sentence that speaks for the census", () => {
+    ok("1840 census: Horace Gibbs household, Norwalk. The tree gives his wife as Mary Gibbs.");
+    ok("1840 census: Horace Gibbs household, Norwalk; his wife Mary is named in the 1850 death records.");
+    bad("1840 census: Horace Gibbs household; his wife Mary. Check the death records next.");
+  });
+
+  it("reads anyone else only beside a head claim; a note with none is read by the older arms alone", () => {
+    // Committed corpus notes. Without the head claim beside it, the wider
+    // reading refused eight of them and one payload op.
+    ok(
+      "1820 census search for Bagley surname in Vermont. 20 results total, all returned. Topsham households: " +
+        "Christopher Bagley, Aaron Bagley, David Bagley, John Bagley. Also William Bagley in Washington (adjacent " +
+        "town). Reading Topsham household records to check age columns for male child ~5 years old.",
+    );
+    ok("Searched the 1840 census for his wife Catherine; she is absent from the return.");
+    bad("1840 census: Horace Gibbs household; searched for his wife Catherine.");
+  });
+
+  it.each([
+    [
+      "1840 census: Thomas Flynn household; Mary Flynn, his wife.",
+      "1840 census: Thomas Flynn household; Mary Flynn, presumably his wife.",
+    ],
+    [
+      "1840 census: John Smith household; wife and three children.",
+      "1840 census: John Smith household; wife and three children inferred from the tallies, not stated.",
+    ],
+    [
+      "1840 census: Nancy Doss household. Sons Amos and Ezra.",
+      "1840 census: Nancy Doss household. Sons Amos and Ezra implied by the age tallies.",
+    ],
+  ])("clears a hedged note as an 1850 note is cleared (%#)", (unhedged, hedged) => {
+    bad(unhedged);
+    ok(hedged);
+    ok(hedged.replace("1840", "1850"));
+    bad(unhedged.replace("1840", "1850"));
+  });
+
+  it("gives 'possibly his wife' the verdict an 1850 note gets", () => {
+    bad("1840 census: Thomas Flynn household; possibly his wife Mary.");
+    bad("1850 census: Thomas Flynn household; possibly his wife Mary.");
+    ok("1840 census: Thomas Flynn, age 40-50; possibly his wife Mary.");
+    ok("1850 census: Thomas Flynn, age 40-50; possibly his wife Mary.");
+  });
+
+  it.each([
+    // A bracketed list after a household name is read as places: in the
+    // corpus all four are ("Robt Wood household (Resaca, Gordon)").
+    "1840 census: Thomas Flynn household (Mary, Patrick, Bridget).",
+    // No head claim, so only the older arms read it, and `his son` is their
+    // tree-side carve-out -- the 1850 note passes the same way.
+    "1840 census: Thomas Flynn, Household head; his son Patrick is the male 5-10.",
+  ])("records a shape the head-only reading still accepts (%#)", (n) => {
+    ok(n);
+  });
 });
 
 describe("a census word binds the year on one side only", () => {
@@ -1054,6 +1190,18 @@ describe("a refusal quotes what it fired on", () => {
     const q = quotes(message(n));
     expect(q.length).toBeGreaterThan(1);
     for (const phrase of q) expect(n).toContain(phrase);
+  });
+
+  it("quotes each phrase once, and not one that sits inside another", () => {
+    expect(quotes(message("1850 census: Household of David Bagley, Mary Bagley and John Bagley."))).toEqual([
+      "1850 census",
+      "Household of David Bagley, Mary Bagley and John Bagley.",
+    ]);
+    expect(quotes(message("1850 and 1860 census: Household of Nancy Doss. Amos is in the household of Nancy Doss."))).toEqual([
+      "1850 and 1860 census",
+      "Household of",
+      "in the household",
+    ]);
   });
 
   it("quotes a pre- census with its prefix", () => {
