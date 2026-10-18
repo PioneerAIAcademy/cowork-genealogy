@@ -293,6 +293,51 @@ def test_an_agent_run_with_no_transcript_is_missing_once(tmp_path):
     assert _profile(bundle)["sessions"][0]["missing_agent_transcripts"] == 3
 
 
+def test_a_rewrite_is_priced_at_its_own_message_s_1h_and_5m_split(tmp_path):
+    rows = [
+        _user("m1", 0, "go"),
+        _assistant("m2", 10, "msg_1", [{"type": "tool_use", "id": "tu_1", "name": "Agent",
+                                        "input": {"subagent_type": "x", "prompt": "go"}}],
+                   {"input_tokens": 5, "cache_read_input_tokens": 40_000, "cache_creation_input_tokens": 10_000}),
+        _user("m3", 910, _result("tu_1", "done")),
+        _assistant("m4", 920, "msg_2", [{"type": "text", "text": "ok"}],
+                   {"input_tokens": 5, "cache_read_input_tokens": 0, "cache_creation_input_tokens": 60_000,
+                    "cache_creation": {"ephemeral_5m_input_tokens": 40_000, "ephemeral_1h_input_tokens": 20_000}}),
+    ]
+    session = _profile(_write_bundle(tmp_path, "feedback-a", rows))["sessions"][0]
+    rewritten = 50_005
+    one_hour = round(rewritten / 3)
+    expected = (one_hour * 6.00 + (rewritten - one_hour) * 3.00 * 1.25 - rewritten * 0.30) / 1_000_000
+    assert session["cache_rewrites"] == 1
+    assert session["cache_rewrite_cost"] == round(expected, 2)
+
+
+def test_a_nested_agent_s_own_pause_is_taken_off_its_parent_s_wait_too(tmp_path):
+    parent = [
+        _user("p1", 11, "survey the tree"),
+        _assistant("p2", 20, "msg_p1", [{"type": "tool_use", "id": "tu_nested", "name": "Agent",
+                                         "input": {"subagent_type": "x", "prompt": "go"}}]),
+        _user("p3", 1800, _result("tu_nested", "done")),
+        _assistant("p4", 1810, "msg_p2", [{"type": "text", "text": "done"}]),
+    ]
+    nested = [
+        _user("n1", 21, "read it"),
+        _assistant("n2", 30, "msg_n1", [{"type": "tool_use", "id": "tu_read", "name": "Read",
+                                         "input": {"file_path": "/project/research.json"}}]),
+        _user("n3", 730, _result("tu_read", "{}")),
+        _assistant("n4", 1230, "msg_n2", [{"type": "text", "text": "x"}]),
+        _assistant("n5", 1730, "msg_n3", [{"type": "text", "text": "x"}]),
+        _assistant("n6", 1790, "msg_n4", [{"type": "text", "text": "done"}]),
+    ]
+    nested_meta = {"agentType": "genealogy-research:tree-survey", "description": "survey",
+                   "toolUseId": "tu_nested", "spawnDepth": 2}
+    bundle = _write_bundle(tmp_path, "feedback-a", _waiting_session(),
+                           {"a1": (AGENT_META, parent), "b2": (nested_meta, nested)})
+    session = _profile(bundle)["sessions"][0]
+    assert session["paused_min"] == round(700 / 60, 1)
+    assert session["agent_wait_min"] == round(1100 / 60, 1)
+
+
 def test_two_bundles_of_one_session_count_it_once(tmp_path):
     rows = [
         _user("m1", 0, "This session is being continued from a previous conversation."),
