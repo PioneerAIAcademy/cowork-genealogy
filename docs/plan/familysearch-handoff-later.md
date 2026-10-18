@@ -19,7 +19,7 @@
   account, so there is no Bedrock spend and no gateway route.
 - **Where tool results go:** into the patron's Claude conversation, under Anthropic's consumer
   terms and that patron's training setting, not FamilySearch's logging. That includes record
-  facts, transcribed images and living people from the patron's tree (ask 6).
+  facts, tree facts and transcribed images (ask 6).
 - **How Claude reaches it:** from Anthropic's cloud, `160.79.104.0/21`, for both the MCP server and
   FamilySearch's sign-in server, not from the patron's machine (claude.com/docs/connectors/building/authentication).
 
