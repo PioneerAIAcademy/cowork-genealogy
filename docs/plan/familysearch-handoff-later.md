@@ -16,7 +16,10 @@
   is the condition of using FamilySearch's server. The plugin reads and writes project state only
   through the MCP tools, so it needs no storage change.
 - **What FamilySearch pays for:** the tool servers only. The model runs in the patron's own Claude
-  account, so there is no Bedrock spend, no gateway route and no Langfuse capture.
+  account, so there is no Bedrock spend and no gateway route.
+- **Where tool results go:** into the patron's Claude conversation, under Anthropic's consumer
+  terms and that patron's training setting, not FamilySearch's logging. That includes record
+  facts, transcribed images and living people from the patron's tree (ask 6).
 - **How Claude reaches it:** from Anthropic's cloud, `160.79.104.0/21`, for both the MCP server and
   FamilySearch's sign-in server, not from the patron's machine (claude.com/docs/connectors/building/authentication).
 
@@ -93,5 +96,8 @@ replacement does.
    to exchange them, or accept passthrough.
 4. **Network:** a VPC for the public environment, with access to the shared RDS and S3.
 5. **Platform:** the public hostname, TLS certificate and edge route.
-6. **Legal and records:** patrons' research stored on FamilySearch's servers as the condition of
-   use, with F17's retention and deletion answers applying to it.
+6. **Legal, records and InfoSec:** patrons' research stored on FamilySearch's servers as the
+   condition of use, with F17's retention and deletion answers applying to it; and a
+   FamilySearch-operated server sending record data, tree data and image transcriptions to
+   Anthropic under each patron's own account. Do custodian licenses (F9's terms question) allow
+   it? This may decide authorization.
