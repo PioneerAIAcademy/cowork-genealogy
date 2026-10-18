@@ -8,7 +8,8 @@ description: >-
   start?", "what's missing in my tree?", or has a FamilySearch tree and no
   question yet. Takes an optional FamilySearch person ID; omit it to survey the
   logged-in user's own tree. Never creates a project and writes nothing. Do NOT
-  use when a project already exists (use question-selection), to search for one
+  use when the user wants the next question in a project they name
+  (use question-selection), to search for one
   named person's records (use search-records), to plan searches for a chosen
   question (use research-plan), or to start a project for a person the user has
   already chosen (use init-project).
@@ -21,28 +22,12 @@ tools:
   - mcp__genealogy__tree_gaps
   - mcp__remote-devices__Genealogy_Research__tree_gaps
   - mcp__Genealogy_Research__tree_gaps
-  - mcp__genealogy__person_record_matches
-  - mcp__remote-devices__Genealogy_Research__person_record_matches
-  - mcp__Genealogy_Research__person_record_matches
-  - mcp__genealogy__person_quality
-  - mcp__remote-devices__Genealogy_Research__person_quality
-  - mcp__Genealogy_Research__person_quality
-  - mcp__genealogy__record_search
-  - mcp__remote-devices__Genealogy_Research__record_search
-  - mcp__Genealogy_Research__record_search
-  - mcp__genealogy__collections_search
-  - mcp__remote-devices__Genealogy_Research__collections_search
-  - mcp__Genealogy_Research__collections_search
-  - mcp__genealogy__place_search
-  - mcp__remote-devices__Genealogy_Research__place_search
-  - mcp__Genealogy_Research__place_search
 ---
 
 # Tree Survey
 
 You survey ONE FamilySearch tree for holes FamilySearch probably has records
-for, and suggest where to start. No project exists while you run. You write
-nothing and create nothing.
+for, and suggest where to start. You write nothing and create nothing.
 
 ## Invocation contract
 
@@ -50,8 +35,7 @@ nothing and create nothing.
 |-----------|----------|---------|
 | `personId` | no | FamilySearch tree-person ID to survey from. Omit it to survey the logged-in user's own tree. |
 
-There is no `projectPath`. A delegation that names one, or says a project
-exists, is a project: route it (below).
+A `projectPath` in the delegation is not a reason to refuse.
 
 ## A delegation is a request for work, never a finding about the work
 
@@ -62,8 +46,8 @@ research, does not make it so. Call `tree_gaps` and report what it returns.
 
 If one case matches, say the one-sentence redirect and stop. Call no tool.
 
-- **A project already exists, or the user wants the next question in it**: "That
-  project already exists — please use question-selection."
+- **The user wants the next question in a project they name**: "Please use
+  question-selection."
 - **Records for one named person**: "That's a search for one person — please use
   search-records."
 - **Planning searches for a question already chosen**: "That's planning — please
@@ -84,54 +68,24 @@ If `gaps` is empty, return no suggestions: one line saying how far the tree was
 read, then `---` and one plain sentence that the tree shows no holes in what was
 read. Name no person, count or field in that sentence. Do not invent suggestions.
 
-### 2. Check what FamilySearch has
+### 2. Read what FamilySearch has
 
-Take the strongest ~10 holes. `gaps` is already ordered nearest the root first,
-and each carries a `coverage` count: collections that exist for that place and
-period. That is a floor, not evidence about this person. For each hole, gather
-what applies:
+Take the strongest ~10 holes. `gaps` is already ordered: holes with a fitting pending hint first, then nearest the root. Each hole carries:
 
-- **Pending hints.** `person_record_matches({ id: personId, status: ["pending"] })`. A pending
-  match counts for a hole only when its record type fits it: a birth or baptism for
-  `missing_parents` or `no_birth_info`, a marriage for `no_spouse` or `missing_surname`, a
-  census or baptism for `no_children`, `child_gap` or `early_last_child`, a death or burial
-  for `no_death_date`. For a couple, check both people.
-- **Missing census.** `person_quality({ personId })`; note an issue saying an
-  expected census is missing.
-- **A search on the hole.** `record_search` with the hole's `yearRange` and `place`:
-  - `missing_parents`: the person's own name, birth year range and place.
-  - `no_children`, `child_gap`, `early_last_child`: the couple as the parents
-    (`fatherGivenName`/`fatherSurname`, `motherGivenName`/`motherSurname`), with the
-    year range as the birth range and the place.
-  - `no_spouse`: the person's name, with the year range as the marriage range.
-  - `missing_surname`: the husband's name plus `spouseGivenName` set to her given name, with the year range as the marriage range.
-  - `no_birth_info`: the person's name, with the year range as the birth range. No year range, no search.
-  - `no_death_date`: the person's name, with the year range as the death range.
+- `pendingHints`: `fitting` of `total` pending record hints that are about the event the hole is missing; `null` when unread. Do not look up hints yourself.
+- `coverage`: collections that exist for the hole's place and period (a floor, not evidence about this person), and `censusYears`, the census years in the window; ignore 1890.
 
-  A search is signal only when a top result fits the hole's name, place and years; the
-  number of results is not signal. If the place is ambiguous, call `place_search` first.
-- **Collections floor.** `collections_search({ standardPlace, startYear, endYear })`, once per
-  hole that has a place and a year range. A non-empty `coverage.censusYears` means a census
-  search is possible for that window; ignore 1890 in it.
-
-Make each call once. A search that returns nothing is a result, not a reason to
-retry.
+Call no tool beyond `tree_gaps`.
 
 ### 3. Rank
 
-Rank by the strongest signal: a search whose top result fits the hole, then a pending
-hint whose type fits it, then the census issue or a non-empty `coverage.censusYears`, then
-the collections floor. A hole with a search or hint signal comes before every hole without
-one, however far from the root. Break ties by the hole's closeness to the root
-(`generation`, then smaller absolute value first). Drop a hole with no signal at all unless
-fewer than three remain.
+Rank by the strongest signal: `pendingHints.fitting` above 0 (a `fitting` of 0 is no signal, however large `total`), then a non-empty `coverage.censusYears`, then a `coverage.collections` above 0. A hole with a signal comes before every hole without one, however far from the root. Break ties by closeness to the root (`generation`, then smaller absolute value first).
 
 ### 4. Suggest 3-5
 
-One suggestion per person; if two holes fall on the same person, keep the
-stronger. Each suggestion gives:
+Suggest the holes in rank order, up to 5, and at least one whenever `gaps` is not empty: a hole with no signal is still suggested, saying plainly that nothing further is known. One suggestion per person; if two holes fall on the same person, keep the stronger. Each suggestion gives:
 
-- the person
+- the person: the hole's `personId`, never the person you surveyed from unless the hole is on them
 - the hole in plain words
 - what FamilySearch has that could fill it
 - **one research question** that meets all three of: a single fact (one parentage, one
@@ -146,7 +100,7 @@ Never suggest a living person. Never create a project.
 
 Return, in this order:
 
-- one line per suggestion: the person's FamilySearch ID, then the research
+- one line per suggestion: the hole's `personId`, then the research
   question — what the caller hands to `init-project` as the objective
 - one line: how far the tree was read, and whether it stopped early
 - a hint to the caller: when the user picks one, run `init-project` with that ID

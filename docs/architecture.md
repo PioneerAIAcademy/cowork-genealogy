@@ -221,15 +221,15 @@ are relative to `packages/engine/mcp-server/` unless shown otherwise.)*
 | Component | Count | Where | What it is for |
 |---|---|---|---|
 | **MCP tools** — `src/tools/`, advertised via `allToolSchemas` in `src/tool-schemas.ts` | every tool in `allToolSchemas` | host | Network access (FamilySearch, the wiki sidecar, OpenRouter OCR) and **validate-before-persist** writes to project state. Invariants live here because a tool contract cannot be argued past. |
-| **Skills** — `packages/engine/plugin/skills/<name>/SKILL.md` | **5** | VM, in the session's own context | Judgment and procedure: GPS doctrine, routing, when-to-stop criteria. A skill folder may also carry `references/` (§3.3) and `templates/`. |
+| **Skills** — `packages/engine/plugin/skills/<name>/SKILL.md` | **4** | VM, in the session's own context | Judgment and procedure: GPS doctrine, routing, when-to-stop criteria. A skill folder may also carry `references/` (§3.3) and `templates/`. |
 | **Plugin agents** — `packages/engine/plugin/agents/*.md` | **28** | VM, **fresh context** | Heavy or capability-restricted work delegated off the main thread. Each spawns with **no session state** — only its own `tools:` allow-list and its `model:` pin. (`disallowedTools:` was deleted from all five on 2026-08-30 — §5.2.) |
 
 The twenty-eight agents are `gps-mentor`, `record-structurer`, `image-reader`,
 `proof-conclusion`, `research-exhaustiveness`, `person-evidence`,
 `search-full-text`, `search-images`, `citation`, `question-selection`, `search-wikipedia`, `convert-dates`,
 `search-familysearch-wiki`, `check-warnings`, `translation`, `tree-edit`, `validate-schema`,
-`hypothesis-tracking`, `locality-guide`, `historical-context`, `project-status`,
-`search-external-sites`, `source-evaluation`, `survey-surname`, `search-hints`, `conflict-resolution`,
+`hypothesis-tracking`, `locality-guide`, `historical-context`,
+`timeline`, `search-external-sites`, `source-evaluation`, `survey-surname`, `search-hints`, `conflict-resolution`,
 `init-project` and `tree-survey`.
 
 > Plugin agents (`packages/engine/plugin/agents/`) are consumed by the **Cowork
@@ -355,7 +355,7 @@ descriptions because a user may still invoke any of them directly.
 
 ### 3.3 `references/` — the fourth artifact, duplicated on purpose
 
-3 of the 5 skills carry a `references/` folder, loaded on demand, in-session,
+2 of the 4 skills carry a `references/` folder, loaded on demand, in-session,
 for material too long to sit in the skill body.
 
 **A reference is loaded deliberately only if its own `SKILL.md` names it** — or if
@@ -1513,8 +1513,9 @@ document** — never mixing them across the repo, which is intentional.
 
 ### 6.5 State reaches the prompt too
 
-All 5 skills carry a `**Narration:**` line as the first line of the body,
-instructing Claude to read
+All 4 skills carry a `**Narration:**` line near the top of the body —
+directly after the frontmatter for `forget-and-rederive`, right after the
+title heading for the other three — instructing Claude to read
 `researcher_profile.narration_guidance` from `research.json` and apply it as that
 invocation's narration style. The `init-project` agent writes the profile at
 project creation as fixed values and asks only the research objective — it
@@ -1710,29 +1711,35 @@ it costs nothing at runtime, and **it is not a gap and no decision waits on it.*
 - **E2B Hobby caps *uninterrupted* runtime at 1 hour — not total session
   length.** `_RUNNING_TIMEOUT_S = 3600` is the maximum the tier permits, not a
   backstop we chose: create with 7200 fails 400 "Timeout cannot be greater than 1
-  hours" (measured 2026-08-09), while `set_timeout` past the ceiling returns 204
-  and silently no-ops — so an over-large value fails loudly at create and
+  hours" (measured 2026-08-09), while `set_timeout` with a value over 3600 returns
+  204 and silently no-ops — so an over-large value fails loudly at create and
   silently everywhere else. But **the window resets on pause/resume**: the
-  sandbox is created with `on_timeout: pause` + `auto_resume` and `resume()`
-  re-arms the full window on every `/connect`, so reaching the cap pauses rather
-  than kills and the next request resumes (~1s). A session therefore runs for as
-  many hours as it needs. **Do not read the cap as a session-length limit** —
+  sandbox is created with `on_timeout: pause` + `auto_resume`, so reaching the cap
+  pauses rather than kills, and the next request resumes it (~1s) with a fresh
+  hour. A session therefore runs for as many hours as it needs. **Do not read the
+  cap as a session-length limit** —
   both "there is a 1-hour cap" and "sessions run for hours" are true at once. The
   control plane sets the outer limit: `/connect` refuses a session more than 72 h
   past `projects.created` with a 410 (`SESSION_MAX_AGE` in `app/sessions.py`),
   because its sandbox still runs the agent code it was created with. `/resume` and
   the read endpoints stay open, so an ended session's research can still be read.
-  Whether a pause landing mid-turn breaks that turn is **asserted, not
-  measured** — which is exactly why the 2026-09-21 continuous-work ruling
-  refused to accept the pause. Since continuous work shipped, `set_timeout` is no longer
-  called only from `resume()`: `app/sandbox_heartbeat.py` beats every recently
-  live sandbox on a 300 s loop from the control plane, so a turn cannot age out
-  while it works. That matters now because a turn is a whole research job —
-  median 53.9 minutes, p90 107.9 — so under continuous work one user message
-  would otherwise reach the cap mid-flight on about half of runs. The control
-  plane is deliberately out of the streaming path (`/connect` hands the browser
-  a WSS straight to the sandbox), so the loop beats on **liveness**, the
-  superset of "a turn is active" that it can actually see.
+  **A turn cannot run through the cap, though.** `set_timeout` cannot push a
+  running sandbox's end time past its hour: five minutes after create,
+  `set_timeout(3600)` returns success and leaves the end time at start + 3600,
+  while `set_timeout(1800)` does move it in (measured 2026-10-15 by
+  `apps/server/dev/probe_e2b_heartbeat.py`). So **a turn that runs past one hour
+  of continuous sandbox runtime is paused, and the call in flight can fail.** An
+  alpha session's feedback bundle (submitted 2026-10-12) froze four times
+  mid-turn, each about an hour after a `/connect` or `/resume`; three of the four
+  calls in flight failed on resume
+  (`image_transcribe` aborted after 15,061 s; `API Error: Failed to parse JSON`,
+  twice), and the fourth turn sat until the user came back. That matters because
+  a turn is a whole research job — median 53.9 minutes, p90 107.9 — so under
+  continuous work one user message reaches the cap mid-flight on about half of
+  runs. The heartbeat the 2026-09-21 continuous-work ruling chose, a control-plane
+  loop calling `set_timeout` every 300 s, could not prevent this and was removed
+  once the probe above measured the cap. Making a turn survive the pause (the Pro
+  tier, or pause-aware turns) is not built.
 
 - **The delete-janitor for abandoned sandboxes is unimplemented** — paused
   sandboxes are never reclaimed, by us or by E2B (never reaping them is what

@@ -55,7 +55,8 @@ import type {
 } from "../types/materialize-facts.js";
 import { validateIntroduced } from "../validation/introduced-errors.js";
 import { checkWarningGate } from "./tree-edit.js";
-import { mintedFromThisRecord, readStartingTree } from "./research-append.js";
+import { mintedFromThisRecord } from "./research-append.js";
+import { readStartingTree, startingPersonIdsOf } from "../utils/starting-tree.js";
 import { sanitizeTree } from "../validation/tree-sanitize.js";
 import {
   atomicWriteJson,
@@ -83,6 +84,7 @@ import {
   NAME_TYPES,
   SKIP_TYPES,
   isCoupleEventFactType,
+  factTypeKey,
   assertionFactAttr,
   assertionTreeFactType,
   candAsFact,
@@ -225,8 +227,8 @@ function applyMaterializeOp(
    *  brand-new fact as pre-existing and reports it `factsEnriched` on a person
    *  the same op created — which the count's own definition ("existed BEFORE
    *  this op") says is impossible. */
-  preExistingFactIds?: ReadonlySet<string>,
-  startingPersonIds?: ReadonlySet<string>,
+  preExistingFactIds: ReadonlySet<string> | undefined,
+  startingPersonIds: ReadonlySet<string>,
 ): MaterializeFactsOpResult {
   const { recordId, recordRole } = op;
   if (str(recordId) === undefined || str(recordRole) === undefined) {
@@ -444,6 +446,7 @@ function applyNamedPartyOp(
   tree: SimplifiedGedcomX,
   research: any,
   op: MaterializeFactsNamedPartyOp,
+  startingPersonIds: ReadonlySet<string>,
 ): MaterializeFactsOpResult {
   const assertionId = str(op.assertionId);
   if (assertionId === undefined) throw new MaterializeFactsError("assertionId is required");
@@ -574,6 +577,17 @@ function applyNamedPartyOp(
   // null — §4.2 step 2), so a missing S-entry cannot leave a half-minted person.
   const ref = resolveSourceRef(assertion, research, tree);
 
+  // An existing person gets this record's name and facts only through
+  // `namedPartyTargetRefusal`, judged before the gender write and `upsertName`
+  // below touch the person.
+  const existingId = str(op.personId);
+  if (existingId !== undefined) {
+    const refusal = namedPartyTargetRefusal(
+      tree, research, assertion, relatedRole, existingId, op.gender, startingPersonIds,
+    );
+    if (refusal !== null) throw new MaterializeFactsError(refusal);
+  }
+
   const targetId = str(op.personId) ?? nextId(tree, "I");
   let person = (tree.persons ?? []).find((p) => p && p.id === targetId);
   let created = false;
@@ -685,6 +699,7 @@ function applyNamedPartyOp(
       research,
       { personId: targetId, recordId: String(recordId), recordRole: spelling },
       preOpFactIds,
+      startingPersonIds,
     );
     factsAdded += pass.factsAdded;
     factsEnriched += pass.factsEnriched;
@@ -712,7 +727,7 @@ function applyOp(
   tree: SimplifiedGedcomX,
   research: any,
   op: MaterializeFactsAnyOp,
-  startingPersonIds?: ReadonlySet<string>,
+  startingPersonIds: ReadonlySet<string>,
 ): MaterializeFactsOpResult {
   // A null/non-object op is a caller error, not a crash: destructuring it threw
   // a raw TypeError straight out of the tool, past every `{ ok: false }` path.
@@ -738,7 +753,7 @@ function applyOp(
           "form), not both",
       );
     }
-    return applyNamedPartyOp(tree, research, op);
+    return applyNamedPartyOp(tree, research, op, startingPersonIds);
   }
   if (!hasPersona) {
     throw new MaterializeFactsError(
@@ -771,47 +786,238 @@ function applyOp(
   return applyMaterializeOp(tree, research, persona, undefined, startingPersonIds);
 }
 
-/** True when `personId` is an eligible target for persona `(recordId, recordRole)`:
- *  either the person was minted from this record (`mintedFromThisRecord`), or a
- *  live `probable`/`confident` `person_evidence` entry ties one of the persona's
- *  assertion ids to the person. Shared by `requireLinkToExistingPerson` (the
- *  explicit-personId gate) and `findExistingPersonForPersona` (the implicit
- *  reuse lookup). */
+/** The decision both arms share (§4.3): may a record's facts land on
+ *  `personId`? Null when they may. A person not in the tree yet is a mint, and a
+ *  mint needs no link: the link to it is written afterwards. A person minted
+ *  from this very record (`mintedFromThisRecord`, judged against the starting
+ *  tree so a pre-existing person whose refs happen to reach only this record is
+ *  not taken for a stub) is a re-copy, not a claimed identity. Otherwise a live
+ *  `probable` or `confident` person_evidence link must tie one of `qualifying`
+ *  to that person: a `speculative` link is a candidate, not an identity, and an
+ *  unlinked one is not even that. Returns the refusal text, naming `what` must
+ *  be linked. Exported so the corpus replay runs this rule rather than a copy. */
+export function existingPersonLinkRefusal(
+  tree: SimplifiedGedcomX,
+  research: any,
+  personId: string,
+  recordId: string,
+  qualifying: ReadonlySet<string>,
+  what: string,
+  startingPersonIds?: ReadonlySet<string>,
+): string | null {
+  if (!(tree.persons ?? []).some((p) => p?.id === personId)) return null;
+  if (mintedFromThisRecord(personId, recordId, research, tree, startingPersonIds)) return null;
+  const linked = ((research?.person_evidence ?? []) as any[]).some(
+    (e) =>
+      e &&
+      !e.superseded_by &&
+      e.person_id === personId &&
+      (e.confidence === "confident" || e.confidence === "probable") &&
+      qualifying.has(e.assertion_id),
+  );
+  if (linked) return null;
+  return (
+    `'${personId}' was already in the tree, and no 'probable' or 'confident' person_evidence link ` +
+    `ties ${what} to them. Write that link with research_append first; a 'speculative' link ` +
+    "does not qualify."
+  );
+}
+
+/** Fact types, as `factTypeKey` folds them, that name a second person on the
+ *  persona's own record: a parent, a spouse or couple, an informant, or a
+ *  parent's birthplace. Taken from the committed research files, where most of
+ *  them are linked to two people. */
+const NAMES_SECOND_PERSON_KEYS: ReadonlySet<string> = new Set([
+  "father", "mother", "parents", "fathername", "mothername", "parentname",
+  "fatherbirthplace", "motherbirthplace", "filiation", "spouse", "couple", "informant",
+]);
+
+/** Whether an assertion of this `fact_type` names a second person: a
+ *  marriage, relationship or parentage (`isRelationshipEstablishing`), a couple
+ *  event in any spelling (`isCoupleEventFactType`: banns, a marriage date or
+ *  intention, a divorce), or a fact about another person filed on this persona
+ *  (`NAMES_SECOND_PERSON_KEYS`). The person-evidence agent links such an
+ *  assertion to that person too, so its link says nothing about which of them a
+ *  persona is: counting it let the groom's name and birth be copied onto the
+ *  bride. */
+function isTwoParty(factType: unknown): boolean {
+  return (
+    isRelationshipEstablishing(factType) ||
+    isCoupleEventFactType(factType) ||
+    NAMES_SECOND_PERSON_KEYS.has(factTypeKey(factType))
+  );
+}
+
+/** The ids of the one-party assertions on record `recordId` whose role passes
+ *  `sameRole`: the assertions whose link can only be about that role. */
+function onePartyAssertionIds(
+  research: any,
+  recordId: unknown,
+  sameRole: (role: unknown) => boolean,
+): Set<string> {
+  const ids = new Set<string>();
+  for (const a of (Array.isArray(research?.assertions) ? research.assertions : []) as any[]) {
+    if (a && a.record_id === recordId && typeof a.id === "string" && sameRole(a.record_role) && !isTwoParty(a.fact_type)) {
+      ids.add(a.id);
+    }
+  }
+  return ids;
+}
+
+/** A persona's OWN assertions, matched on its exact role as the fact pass
+ *  matches it. */
+function ownPersonaAssertionIds(research: any, recordId: unknown, recordRole: unknown): Set<string> {
+  return onePartyAssertionIds(research, recordId, (role) => role === recordRole);
+}
+
+/** Live `probable` or `confident` links, as assertion id to the persons it is
+ *  linked to. */
+function strongLinkTargets(research: any): Map<string, Set<string>> {
+  const to = new Map<string, Set<string>>();
+  for (const e of (research?.person_evidence ?? []) as any[]) {
+    if (!e || e.superseded_by || (e.confidence !== "probable" && e.confidence !== "confident")) continue;
+    const id = String(e.assertion_id);
+    if (!to.has(id)) to.set(id, new Set());
+    to.get(id)!.add(String(e.person_id));
+  }
+  return to;
+}
+
+/** The assertions that may carry persona `(recordId, recordRole)` onto
+ *  `personId`: its own one-party assertions. When another persona of the same
+ *  record holds `personId` through one of its own one-party assertions linked to
+ *  them alone, `personId` is that persona, so only an assertion of this
+ *  persona's linked to them alone counts: the agent links an assertion to every
+ *  person it bears on, and the wife's name it also puts on her husband is not
+ *  about him. `heldBy` names the holding role, for the refusal text. */
+function personaQualifying(
+  research: any,
+  recordId: unknown,
+  recordRole: unknown,
+  personId: string,
+): { qualifying: Set<string>; heldBy?: string } {
+  const own = ownPersonaAssertionIds(research, recordId, recordRole);
+  const to = strongLinkTargets(research);
+  for (const id of onePartyAssertionIds(research, recordId, (role) => role !== recordRole)) {
+    const targets = to.get(id);
+    if (targets?.size === 1 && targets.has(personId)) {
+      const holder = (Array.isArray(research?.assertions) ? research.assertions : []).find((a: any) => a?.id === id);
+      return {
+        qualifying: new Set([...own].filter((ownId) => (to.get(ownId)?.size ?? 0) < 2)),
+        heldBy: String(holder?.record_role ?? ""),
+      };
+    }
+  }
+  return { qualifying: own };
+}
+
+/** Whether the persona arm writes anything onto a person from this assertion:
+ *  a gender, a name or a person fact, by its fact pass's own tests. */
+function writesPersonLevel(a: any): boolean {
+  if (recordBasisOf(a) === "absent") return false;
+  const t = String(a?.fact_type ?? "").toLowerCase();
+  return GENDER_TYPES.has(t) || NAME_TYPES.has(t) || materializesToPersonFact(a);
+}
+
+/** The named-party arm's target decision (§4.3): may the party `assertion`
+ *  names as `relatedRole` be written onto `personId`? Null when it may, else the
+ *  refusal text. Judged on the tree as it stood before the op, because the op's
+ *  own name write attaches this record's ref, after which a person the run
+ *  added, not shaped like a FamilySearch id, whose refs reach no other record
+ *  reads as this record's stub and passes `existingPersonLinkRefusal` with no
+ *  link. Exported so the corpus replay runs this decision rather than a copy.
+ *
+ *  - A person one of the assertion's OWN persona's one-party assertions is
+ *    linked to is that persona, never the party it names. Read at that
+ *    persona's strongest level: a speculative link marks a candidate only while
+ *    no probable or confident one names someone.
+ *  - A `gender` that contradicts the person's resolved Male or Female.
+ *  - Otherwise the persona arm's link rule. Once the named role's own one-party
+ *    assertions carry a probable or confident link to anyone, only they
+ *    qualify, since they say who she is. Until then the naming assertion
+ *    qualifies too, though its link may be about either party: that lets her
+ *    onto the other party when nothing marks him as the own persona and the
+ *    gender check cannot separate them (§4.3). */
+export function namedPartyTargetRefusal(
+  tree: SimplifiedGedcomX,
+  research: any,
+  assertion: any,
+  relatedRole: string,
+  personId: string,
+  gender: unknown,
+  startingPersonIds: ReadonlySet<string>,
+): string | null {
+  const recordId = assertion.record_id;
+  const roleOf = (role: unknown) => normNamePart(String(role ?? ""));
+  const ownRole = roleOf(assertion.record_role);
+  const wanted = roleOf(relatedRole);
+  const links = ((research?.person_evidence ?? []) as any[]).filter((e) => e && !e.superseded_by);
+  const strong = (e: any) => e.confidence === "probable" || e.confidence === "confident";
+
+  const own = onePartyAssertionIds(research, recordId, (role) => roleOf(role) === ownRole);
+  const ownLinks = links.filter((e) => own.has(e.assertion_id));
+  const ownParty = ownLinks.some(strong) ? ownLinks.filter(strong) : ownLinks;
+  if (ownParty.some((e) => e.person_id === personId)) {
+    return (
+      `'${personId}' is linked to record '${recordId}' role '${assertion.record_role}', the persona ` +
+      `assertion '${assertion.id}' belongs to, so it is not the '${relatedRole}' that assertion ` +
+      "names. Pass the person who is that party, or omit personId to mint them; if that link is " +
+      "wrong, supersede it with research_append first."
+    );
+  }
+
+  const person = (tree.persons ?? []).find((p) => p?.id === personId);
+  const stated = normGender(gender);
+  const has = person?.gender;
+  if ((stated === "Male" || stated === "Female") && (has === "Male" || has === "Female") && has !== stated) {
+    return (
+      `'${personId}' is ${has}, but the '${relatedRole}' this op names is ${stated}, so it is ` +
+      "someone else. Pass the person who is that party, omit personId to mint them, or omit " +
+      "gender if the record does not state it."
+    );
+  }
+
+  const named = onePartyAssertionIds(research, recordId, (role) => roleOf(role) === wanted);
+  const namedTo = [...new Set(links.filter((e) => strong(e) && named.has(e.assertion_id)).map((e) => String(e.person_id)))];
+  const qualifying = namedTo.length > 0 ? named : new Set<string>([String(assertion.id), ...named]);
+  const what =
+    namedTo.length > 0
+      ? `one of the '${relatedRole}' persona's own assertions on record '${recordId}' (they are ` +
+        `linked to ${namedTo.map((id) => `'${id}'`).join(", ")}, so assertion '${assertion.id}', ` +
+        "whose link may be about either party, no longer counts)"
+      : `assertion '${assertion.id}' or one of the '${relatedRole}' persona's own one-party ` +
+        `assertions on record '${recordId}'`;
+  const refusal = existingPersonLinkRefusal(tree, research, personId, String(recordId), qualifying, what, startingPersonIds);
+  return refusal === null ? null : `${refusal} If this party is someone else, omit personId to mint a new person.`;
+}
+
+/** True when the persona `(recordId, recordRole)`'s facts may land on
+ *  `personId` by `existingPersonLinkRefusal`, judged on `personaQualifying`: the
+ *  implicit reuse lookup's test, so omitting personId never picks a person the
+ *  explicit-personId gate would refuse. */
 function isEligibleTarget(
   personId: string,
   recordId: string,
   recordRole: string,
   research: any,
   tree: SimplifiedGedcomX,
-  startingPersonIds?: ReadonlySet<string>,
+  startingPersonIds: ReadonlySet<string>,
 ): boolean {
-  if (mintedFromThisRecord(personId, recordId, research, tree, startingPersonIds)) return true;
-  const persona = new Set<string>();
-  for (const a of (Array.isArray(research.assertions) ? research.assertions : []) as any[]) {
-    if (a && a.record_id === recordId && a.record_role === recordRole && typeof a.id === "string") {
-      persona.add(a.id);
-    }
-  }
-  return ((research.person_evidence ?? []) as any[]).some(
-    (e: any) =>
-      e &&
-      !e.superseded_by &&
-      e.person_id === personId &&
-      (e.confidence === "confident" || e.confidence === "probable") &&
-      persona.has(e.assertion_id),
-  );
+  const { qualifying } = personaQualifying(research, recordId, recordRole, personId);
+  return existingPersonLinkRefusal(tree, research, personId, recordId, qualifying, "this persona", startingPersonIds) === null;
 }
 
 /** When `personId` is omitted, scan tree persons for any person whose facts
  *  carry an `assertion_id` matching one of this persona's assertions. Among
  *  eligible candidates (those passing `isEligibleTarget`), prefer one with a
- *  live `person_evidence` link; break remaining ties by lowest numeric id.
- *  Returns the person's id, or undefined when no eligible candidate exists. */
+ *  live link from one of the persona's own assertions; break remaining ties by
+ *  lowest numeric id. Returns the person's id, or undefined when no eligible
+ *  candidate exists. */
 function findExistingPersonForPersona(
   tree: SimplifiedGedcomX,
   research: any,
   op: MaterializeFactsOp,
-  startingPersonIds?: ReadonlySet<string>,
+  startingPersonIds: ReadonlySet<string>,
 ): string | undefined {
   const personaAssertionIds = new Set<string>();
   for (const a of (Array.isArray(research.assertions) ? research.assertions : []) as any[]) {
@@ -837,14 +1043,17 @@ function findExistingPersonForPersona(
   );
   if (eligible.length === 0) return undefined;
 
-  // Tie-break: prefer a candidate with a live person_evidence link to this persona.
+  // Tie-break: prefer a candidate with a live person_evidence link from one of
+  // this persona's own assertions. A marriage assertion's link may be to the
+  // other party, so counting it could prefer the bride for the groom's facts.
+  const own = ownPersonaAssertionIds(research, op.recordId, op.recordRole);
   const linked = new Set<string>();
   for (const e of (research.person_evidence ?? []) as any[]) {
     if (
       e &&
       !e.superseded_by &&
       (e.confidence === "confident" || e.confidence === "probable") &&
-      personaAssertionIds.has(e.assertion_id)
+      own.has(e.assertion_id)
     ) {
       linked.add(e.person_id);
     }
@@ -861,28 +1070,53 @@ function findExistingPersonForPersona(
   return pool[0];
 }
 
-/** Refuse to copy a persona's facts onto a person already in the tree unless
- *  `isEligibleTarget` passes. A `speculative` link is a candidate, not an
- *  identity, and an unlinked one is not even that. Minting a new person (no
- *  personId, or one not yet in the tree) needs no link: the link to it is
- *  written afterwards. Nor does re-materializing a record onto the stub it
- *  minted (`mintedFromThisRecord`), which repeats a copy rather than claiming
- *  an identity. */
-function requireLinkToExistingPerson(
+/** The persona arm's target decision (§4.3): may persona `op`'s facts land on
+ *  `op.personId`? Null when they may, else the refusal text. It takes a link
+ *  from one of the assertions `personaQualifying` returns. A persona whose
+ *  assertions write nothing onto a person (`writesPersonLevel`) has nothing to
+ *  refuse. Exported so the corpus replay runs this decision rather than a copy. */
+export function personaTargetRefusal(
   tree: SimplifiedGedcomX,
   research: any,
   op: MaterializeFactsOp,
   startingPersonIds?: ReadonlySet<string>,
-): void {
+): string | null {
   const personId = str(op.personId);
-  if (personId === undefined || !(tree.persons ?? []).some((p) => p?.id === personId)) return;
-  if (isEligibleTarget(personId, String(op.recordId), String(op.recordRole), research, tree, startingPersonIds)) return;
-  throw new MaterializeFactsError(
-    `'${personId}' was already in the tree, and no 'probable' or 'confident' person_evidence link ` +
-      `ties record '${op.recordId}' role '${op.recordRole}' to them. Write that link with ` +
-      "research_append first; a 'speculative' link does not qualify. If this persona is someone " +
-      "else, omit personId to materialize it onto a new person.",
+  if (personId === undefined) return null;
+  const persona = (Array.isArray(research?.assertions) ? research.assertions : []).filter(
+    (a: any) => a && a.record_id === op.recordId && a.record_role === op.recordRole,
   );
+  if (!persona.some(writesPersonLevel)) return null;
+  const { qualifying, heldBy } = personaQualifying(research, op.recordId, op.recordRole, personId);
+  const refusal = existingPersonLinkRefusal(
+    tree,
+    research,
+    personId,
+    String(op.recordId),
+    qualifying,
+    heldBy === undefined
+      ? `one of record '${op.recordId}' role '${op.recordRole}''s own assertions (not one that names a ` +
+          "second person too, such as a marriage, relationship or parentage, a parent or a spouse, " +
+          "whose link may be about that person)"
+      : `one of record '${op.recordId}' role '${op.recordRole}''s own assertions linked to them alone ` +
+          `(an assertion of role '${heldBy}' on that record is linked to them alone, so they are that ` +
+          "persona, and a link of this one's that also reaches someone else does not count)",
+    startingPersonIds,
+  );
+  return refusal === null
+    ? null
+    : `${refusal} If this persona is someone else, omit personId: the tool then reuses the person ` +
+        "this persona was already materialized onto, or mints a new one.";
+}
+
+function requireLinkToExistingPerson(
+  tree: SimplifiedGedcomX,
+  research: any,
+  op: MaterializeFactsOp,
+  startingPersonIds: ReadonlySet<string>,
+): void {
+  const refusal = personaTargetRefusal(tree, research, op, startingPersonIds);
+  if (refusal !== null) throw new MaterializeFactsError(refusal);
 }
 
 // ─── the tool ─────────────────────────────────────────────────────────────────
@@ -921,20 +1155,13 @@ export async function materializeFacts(
     const sanitized = sanitizeTree(await readJson(projectPath, "tree.gedcomx.json"));
     const tree = sanitized.tree;
     const research = await readJson(projectPath, "research.json");
+    // The write-once baseline, so the link rule can tell a person the project
+    // began with from a stub a run minted. Fail-open: no baseline, empty set.
+    const startingPersonIds = startingPersonIdsOf(await readStartingTree(projectPath));
     // Post-heal, pre-materialize snapshot (applyMaterializeOp mutates tree in
     // place): block only on errors THIS call introduces, not pre-existing drift
     // in a section it never touched (#1572).
     const beforeTree = structuredClone(tree);
-
-    // Read once: starting-tree person ids discriminate FamilySearch persons from
-    // minted stubs in `mintedFromThisRecord`. Fail-open (an absent baseline
-    // yields an empty set) matches `readStartingTree`'s own contract.
-    const baseline = await readStartingTree(projectPath);
-    const startingPersonIds: ReadonlySet<string> = new Set(
-      ((Array.isArray(baseline?.persons) ? baseline.persons : []) as any[])
-        .map((p: any) => p?.id)
-        .filter((id: any): id is string => typeof id === "string" && id !== ""),
-    );
 
     // ─── Batch form: apply every op in-memory, then validate + write once ────
     if (input.ops !== undefined) {
@@ -964,7 +1191,7 @@ export async function materializeFacts(
         beforeTree, tree, research, projectPath,
         input.warningJustifications, "materialize_facts",
       );
-      if (batchGateResult && "ok" in batchGateResult) return batchGateResult as any;
+      if (batchGateResult && "ok" in batchGateResult) return batchGateResult;
       const batchJustPersisted = batchGateResult?.justificationsPersisted === true;
 
       if (batchJustPersisted) {
@@ -1030,7 +1257,7 @@ export async function materializeFacts(
       beforeTree, tree, research, projectPath,
       input.warningJustifications, "materialize_facts",
     );
-    if (singleGateResult && "ok" in singleGateResult) return singleGateResult as any;
+    if (singleGateResult && "ok" in singleGateResult) return singleGateResult;
     const singleJustPersisted = singleGateResult?.justificationsPersisted === true;
 
     if (singleJustPersisted) {
@@ -1081,8 +1308,14 @@ export const materializeFactsSchema = {
     "Create-or-enrich: if personId names a person that does not exist yet, the tool " +
     "mints it from the persona's name/gender assertions, so the person is never " +
     "fact-less. A personId already in the tree needs a live 'probable' or 'confident' " +
-    "person_evidence link from this persona to that person, written first with " +
-    "research_append; 'speculative' does not qualify. When personId is omitted and " +
+    "person_evidence link from one of this persona's own assertions to that person, " +
+    "written first with research_append; 'speculative' does not qualify, and neither " +
+    "does an assertion that names a second person too (a marriage, relationship or " +
+    "parentage, a couple event such as banns, or a parent, spouse or informant), whose " +
+    "link may be about that person. When another persona of the record is linked to that " +
+    "person through its own assertion alone, only this persona's assertions linked to " +
+    "them alone count. " +
+    "When personId is omitted and " +
     "this persona was already materialized onto a tree person (detected by " +
     "assertion_id backlinks on that person's facts), the existing person is reused " +
     "rather than a duplicate being minted; the returned personId may therefore be an " +
@@ -1133,7 +1366,13 @@ export const materializeFactsSchema = {
     "writes her facts too. A negative-evidence " +
     "assertion (what the source does NOT say) is refused too — it cannot mint anyone. " +
     "Pass nameType only when the record settles whether the surname is her own or " +
-    "a married one; omitted means no claim, which is preferable to a wrong one. This " +
+    "a married one; omitted means no claim, which is preferable to a wrong one. A " +
+    "personId already in the tree needs the same 'probable' or 'confident' link first, " +
+    "from this assertion or from one of that role's own one-party assertions on the " +
+    "record; once those are linked probable or confident to anyone, only they count. A " +
+    "person one of this assertion's own persona's one-party assertions is linked to is " +
+    "refused (a 'speculative' link of theirs counts only while none is 'probable' or " +
+    "'confident'), and so is one whose resolved gender contradicts the gender you pass. This " +
     "writes a SOURCED NAME and the gender scalar. Where that role does have a persona " +
     "the record never names, that persona's facts are written too in the same call, but " +
     "ONLY when the assertion's structured_value.related_person_role names that same role: " +
