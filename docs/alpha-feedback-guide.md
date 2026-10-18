@@ -612,13 +612,15 @@ fresh session. Both halves, every time.
 
 ### Windows equivalents
 
-Every `make` target above has a batch file. Double-click it, or run it from
-`eval\`; each prompts for what it needs instead of taking `SKILL=`-style
-arguments, and rebuilds the MCP server first where that matters.
+Every `make` target above has a batch file except `make feedback-profile`,
+whose row gives the command to type in `eval\harness`. Double-click a batch
+file, or run it from `eval\`; each prompts for what it needs instead of taking
+`SKILL=`-style arguments, and rebuilds the MCP server first where that matters.
 
-| Instead of | Double-click |
+| Instead of | Use |
 |---|---|
 | `make feedback-case ZIP=<zip>` | `scripts\setup-feedback-case.bat <zip>` (pass the zip path) |
+| `make feedback-profile ZIP=<zip>` | in `eval\harness`: `uv run python -m e2e.feedback_profile <zip>` |
 | `make eval-skill SKILL=<skill>` | `eval\RunTests.bat` |
 | `make eval-ui` | `eval\Start.bat` |
 | `make gate-skill SKILL=… TEST=…` | `eval\GateSkill.bat` |
