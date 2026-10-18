@@ -506,7 +506,7 @@ The tool omits the parameter.
 
 Each entry's `gedcomx` must include:
 - `persons[]` with at least one person carrying `identifiers["http://gedcomx.org/Persistent"]` — required for the API to return real ARKs in the response.
-- `sourceDescriptions[]` with `{ id: "<any-id>", about: "#<primary-id>" }` declaring which person is the focus. The id field is internal; only `about` matters to the API. Per the FS docs ([Person Matches by Example resource](https://www.familysearch.org/developers/docs/api/tree/Person_Matches_by_Example_resource)), this is required. The API tolerates absence (falls back to `persons[0]`) but the tool always emits it. The tool uses `id: "match-anchor"` to avoid colliding with caller-provided sourceDescription ids (see Internal Pipeline §3).
+- `sourceDescriptions[]` with `{ id: "<any-id>", about: "#<primary-id>" }` declaring which person is the focus. The id field is internal; only `about` matters to the API. Per the FS docs ([Person Matches by Example resource](https://www.familysearch.org/developers/docs/api/tree/Person_Matches_by_Example_resource)), this is required, and the tool always emits it. **The API does not honor it: it scores `persons[0]`**, so the tool also moves the focus person to the front of `persons[]` (measured 2026-10-18 on 85 genealogist-adjudicated record hints: AUC 0.49 with the record's own order, 0.68 with the focus person first). The tool uses `id: "match-anchor"` to avoid colliding with caller-provided sourceDescription ids (see Internal Pipeline §3).
 - Optionally `relationships[]` of `ParentChild` linking parent personas to the primary.
 
 **Response shape (200 OK):**
@@ -887,7 +887,7 @@ export const samePersonSchema = {
 - **Headers:** use `BROWSER_USER_AGENT` from `src/constants.ts`. Do not hardcode the Mozilla string.
 - **HTTP errors:** map each upstream status to an LLM-instruction error message per the Error Handling table. Never surface raw HTTP errors to the LLM.
 - **Simplifier:** use `toGedcomX()` from `src/utils/gedcomx-convert.ts`. Do not roll your own inflation logic.
-- **Minimal post-processing:** call `toGedcomX()` on the LLM's input as-is, then append one `sourceDescription` per side anchored to the primary id. Do not restructure persons, do not add identifiers (the simplifier handles them via the `ark` field), do not normalize ids.
+- **Minimal post-processing:** call `toGedcomX()` on the LLM's input as-is, then move the primary person to the front of `persons[]` and append one `sourceDescription` per side anchored to the primary id. Do not otherwise restructure persons, do not add identifiers (the simplifier handles them via the `ark` field), do not normalize ids.
 
 ---
 
@@ -898,7 +898,7 @@ export const samePersonSchema = {
 - **Multiple ARK identifiers per person.** Only the first `http://gedcomx.org/Persistent` ARK (via `persons[].ark`) is used.
 - **Match against multiple candidates in one call.** The API name is `matchTwoExamples` — exactly two entries per call. Batch processing is the caller's responsibility.
 - **Tree-merge use case.** The platform endpoint `api.familysearch.org/platform/tree/persons/matches` is a different operation (find merge candidates for a tree person). If we eventually want that, it's a separate tool.
-- **Restructuring the input GedcomX.** The tool passes whatever the LLM provides through `toGedcomX()` unchanged. It does not re-assemble persons, build relationships, or normalize ids. If the input has parents-and-relationships, they go to the API. If it's focus-only, that goes too. The only modification is appending one `sourceDescription` for the primary anchor.
+- **Restructuring the input GedcomX.** The tool passes whatever the LLM provides through `toGedcomX()` unchanged. It does not re-assemble persons, build relationships, or normalize ids. If the input has parents-and-relationships, they go to the API. If it's focus-only, that goes too. The only modifications are moving the primary person to the front of `persons[]` (the API scores `persons[0]`) and appending one `sourceDescription` for the primary anchor.
 - **Deduplicating ids across `gedcomx1` and `gedcomx2`.** The two documents live in separate `entries[]` items in the API request, so they don't share an id namespace. Both sides may use `"I1"` independently with no problem. The tool does NOT rewrite ids to make them unique across sides.
 
 ---
