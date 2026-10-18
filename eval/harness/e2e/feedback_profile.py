@@ -11,7 +11,10 @@ read from one is committed (`docs/alpha-feedback-guide.md`).
 How each figure is measured:
 
 - A session is its events merged across bundles by `uuid`; an agent run is its
-  longest transcript across bundles.
+  longest transcript across bundles. A run is missing when no bundle carries its
+  transcript: one a bundle lists as dropped, or a main-thread `Agent`/`Task`
+  call with no error result that neither its `toolUseId` nor the `agentId` its
+  result names ties to a transcript. A call refused before it ran errors.
 - A gap over `PAUSE_S` between consecutive events is a sandbox pause, except a
   gap that ends when an agent returns — an `Agent`/`Task` result or a background
   agent's `<task-notification>` — which is agent time less that agent's own
@@ -72,6 +75,7 @@ BEFORE_ANY_SKILL = "(before any skill)"
 
 _BUILD_ID = re.compile(r'buildId\\?"\s*:\s*\\?"([^"\\]+)')
 _TASK_ID = re.compile(r"<task-id>([^<]+)</task-id>")
+_AGENT_ID = re.compile(r"agentId: ([A-Za-z0-9]+)")
 _DROPPED_AGENT = re.compile(r"(?:sessions/([^/]+)/)?subagents/agent-([^/\s]+)\.jsonl")
 _IMAGE_KEYS = ("imageId", "ark", "memoryArtifactUrl", "file")
 
@@ -209,7 +213,10 @@ def load_bundles(bundles: list[tuple[str, Path]]) -> dict[str, Any]:
             match = _DROPPED_AGENT.search(entry) if isinstance(entry, str) else None
             if match:
                 dropped.append((match.group(1) or active_sid, match.group(2)))
-    missing: Counter = Counter(sid for sid, aid in set(dropped) if aid not in agents and sid)
+    missing: dict[str, set[str]] = defaultdict(set)
+    for sid, aid in dropped:
+        if sid and aid not in agents:
+            missing[sid].add(aid)
     return {"bundles": sorted({name for name, _path in bundles}), "sessions": sessions,
             "session_bundles": session_bundles, "truncated": truncated, "agents": agents,
             "missing": missing}
@@ -383,9 +390,12 @@ def analyze(rows: list[dict], agent_paused: dict[str, float] | None = None) -> d
                         chars, image_chars = _result_size(block.get("content"))
                         text = _result_text(block.get("content"))
                         builds.update(_BUILD_ID.findall(text))
+                        launch = (tool_uses.get(block["tool_use_id"]) or {}).get("name") in AGENT_TOOLS
+                        agent_id = _AGENT_ID.search(text) if launch else None
                         results[block["tool_use_id"]] = {
                             "t": t, "chars": chars, "image_chars": image_chars,
-                            "is_error": bool(block.get("is_error")), "head": text[:400]}
+                            "is_error": bool(block.get("is_error")), "head": text[:400],
+                            "agent_id": agent_id.group(1) if agent_id else None}
                     elif block.get("type") == "text" and \
                             (block.get("text") or "").startswith(COMPACTION_PREFIX):
                         compactions += 1
@@ -447,7 +457,8 @@ def analyze(rows: list[dict], agent_paused: dict[str, float] | None = None) -> d
                       "args": use["args"], "latency": tool_latency(tid, use, r),
                       "result_chars": r["chars"] if r else None,
                       "image_chars": r["image_chars"] if r else 0,
-                      "is_error": r["is_error"] if r else None, "result_head": r["head"] if r else None})
+                      "is_error": r["is_error"] if r else None, "result_head": r["head"] if r else None,
+                      "agent_id": r["agent_id"] if r else None})
     model_calls = []
     prev_ctx = 0
     pending = compacted = False
@@ -553,6 +564,7 @@ def build_profile(corpus: dict[str, Any], since: float | None = None) -> dict[st
     def in_window(end: float | None) -> bool:
         return end is not None and (since is None or end >= since)
 
+    transcript_calls = {a["meta"].get("toolUseId") for a in agents.values()}
     threads: list[tuple[str, dict]] = []
     agent_parent: dict[str, str] = {}
     sessions_out = []
@@ -570,6 +582,9 @@ def build_profile(corpus: dict[str, Any], since: float | None = None) -> dict[st
         segments += [s for s in skill_segments(sid, thread)
                      if s["model_calls"] and in_window(s["model_calls"][-1]["t"])]
         rewrites = [mc for mc in thread["model_calls"] if mc["rewritten"]]
+        unanswered = {c["agent_id"] or c["id"] for c in thread["tool_calls"]
+                      if c["name"] in AGENT_TOOLS and c["is_error"] is not True
+                      and c["id"] not in transcript_calls and c["agent_id"] not in agents}
         sessions_out.append({
             "session": sid, "bundles": sorted(corpus["session_bundles"][sid]),
             "engine_builds": thread["engine_builds"],
@@ -581,7 +596,8 @@ def build_profile(corpus: dict[str, Any], since: float | None = None) -> dict[st
             "main_cost": round(thread["cost"], 2), "main_model_calls": len(thread["model_calls"]),
             "compactions": thread["compactions"], "cache_rewrites": len(rewrites),
             "cache_rewrite_cost": round(sum(mc["rewrite_cost"] for mc in rewrites), 2),
-            "agent_runs": 0, "missing_agent_transcripts": corpus["missing"].get(sid, 0),
+            "agent_runs": 0,
+            "missing_agent_transcripts": len(corpus["missing"].get(sid, set()) | unanswered),
             "log_truncated_in": sorted(corpus["truncated"].get(sid, ())),
         })
     by_session = {s["session"]: s for s in sessions_out}
@@ -732,8 +748,8 @@ def format_report(profile: dict[str, Any]) -> str:
         f"agent returned.",
         "Cost in USD at pricing.MODEL_RATES, each message's cache writes at its own 5m/1h split.",
         "",
-        "SESSIONS (* = a bundle's copy of the log was trimmed oldest-first; missing = agent "
-        "transcripts the bundle dropped, whose own pauses count as agent wait)",
+        "SESSIONS (* = a bundle's copy of the log was trimmed oldest-first; missing = agent runs "
+        "with no transcript, dropped by the bundle or never shipped, whose own pauses count as agent wait)",
     ]
     lines += _table(
         ["session", "bundles", "engine", "active", "agent wait", "api-error wait", "paused", "main $", "calls",

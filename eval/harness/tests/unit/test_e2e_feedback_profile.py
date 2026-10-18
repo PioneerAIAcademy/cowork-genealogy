@@ -40,10 +40,12 @@ def _result(tool_use_id: str, text: str) -> list:
     return [{"type": "tool_result", "tool_use_id": tool_use_id, "content": text}]
 
 
-def _write_bundle(root: Path, name: str, main_rows: list, agents: dict | None = None) -> Path:
+def _write_bundle(root: Path, name: str, main_rows: list, agents: dict | None = None,
+                  feedback: dict | None = None) -> Path:
     fb = root / name / "_feedback"
     fb.mkdir(parents=True)
-    (fb / "feedback.json").write_text(json.dumps({"submitted_at": "2026-10-18T13:00:00Z"}), encoding="utf-8")
+    (fb / "feedback.json").write_text(json.dumps({"submitted_at": "2026-10-18T13:00:00Z", **(feedback or {})}),
+                                     encoding="utf-8")
     (fb / "session-log.jsonl").write_text("".join(json.dumps(r) + "\n" for r in main_rows), encoding="utf-8")
     for aid, (meta, rows) in (agents or {}).items():
         (fb / "subagents").mkdir(exist_ok=True)
@@ -270,6 +272,25 @@ def test_an_error_head_is_counted_in_each_thread_it_came_from(tmp_path):
     assert _profile(bundle)["top"]["error_heads"] == [
         {"times": 2, "tool": "Read", "where": "record-extractor a1", "head": error},
         {"times": 1, "tool": "Read", "where": "main 5e55a0b1", "head": error}]
+
+
+def test_an_agent_run_with_no_transcript_is_missing_once(tmp_path):
+    launches = ["tu_agent", "tu_a5", "tu_a8", "tu_a9", "tu_err"]
+    results = {"tu_agent": "extracted", "tu_a5": "done\nagentId: a5 (use SendMessage to continue)",
+               "tu_a8": "done\nagentId: a8 (use SendMessage to continue)",
+               "tu_a9": "done\nagentId: a9 (use SendMessage to continue)"}
+    rows = [_user("m1", 0, "go"),
+            *[_assistant(f"m{2 + i}", 10 + i, "msg_1", [{"type": "tool_use", "id": tid, "name": "Agent",
+                                                       "input": {"subagent_type": "x", "prompt": "go"}}])
+              for i, tid in enumerate(launches)],
+            *[_user(f"r{i}", 100 + i, _result(tid, text)) for i, (tid, text) in enumerate(results.items())],
+            _user("r_err", 105, [{"type": "tool_result", "tool_use_id": "tu_err", "is_error": True,
+                                  "content": "Agent type 'x' not found."}]),
+            _assistant("m9", 110, "msg_2", [{"type": "text", "text": "done"}])]
+    run = [_user("x1", 11, "go"), _assistant("x2", 50, "msg_x", [{"type": "text", "text": "done"}])]
+    bundle = _write_bundle(tmp_path, "feedback-a", rows, {"a1": (AGENT_META, run), "a5": ({}, run)},
+                           {"dropped_transcripts": ["subagents/agent-a9.jsonl", "subagents/agent-b7.jsonl"]})
+    assert _profile(bundle)["sessions"][0]["missing_agent_transcripts"] == 3
 
 
 def test_two_bundles_of_one_session_count_it_once(tmp_path):
