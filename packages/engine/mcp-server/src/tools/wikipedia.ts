@@ -1,4 +1,4 @@
-import { fetchWithRetry } from "../utils/http.js";
+import { fetchWithRetry, DEFAULT_RETRY_BUDGET_MS } from "../utils/http.js";
 import { readBuildInfo } from "../utils/build-info.js";
 import type {
   WikipediaAPIResponse,
@@ -9,10 +9,14 @@ import type {
 const WIKIPEDIA_API_BASE = "https://en.wikipedia.org/api/rest_v1/page/summary";
 const WIKIPEDIA_SEARCH_URL = "https://en.wikipedia.org/w/rest.php/v1/search/page";
 
-// One un-retried summary fetch, so a slow success today is a hard failure at
-// the 30s default with nothing behind it. Measured at 33.7s and 35.2s (2 of 19)
-// across the committed e2e run logs.
-const WIKIPEDIA_TIMEOUT_MS = 60_000;
+// Cowork's device bridge aborts any MCP call at 60s, so the summary, the search
+// and the second summary share one deadline under it, each request getting what
+// is left. A slow summary has run 33.7s and 35.2s (2 of 19 across the committed
+// e2e run logs), so the first may need most of it.
+const WIKIPEDIA_DEADLINE_MS = 55_000;
+
+// With less than this left, a request is not started.
+const MIN_REQUEST_MS = 1_000;
 
 // Wikimedia throttles every User-Agent without contact details in one shared
 // bucket: measured, a bare agent got 429s after about ten requests, while the
@@ -25,13 +29,24 @@ export interface WikipediaSearchInput {
   query: string;
 }
 
-function fetchSummary(title: string): Promise<Response> {
-  return fetchWithRetry(
-    `${WIKIPEDIA_API_BASE}/${encodeURIComponent(title)}`,
-    { headers: WIKIPEDIA_HEADERS },
-    WIKIPEDIA_TIMEOUT_MS,
-  );
+type DeadlineFetch = (url: string) => Promise<Response>;
+
+/**
+ * A fetch whose timeout and retry budget are both capped at what is left
+ * before `deadline`. With too little left it throws `outOfTime()` rather than
+ * send a request bound to time out.
+ */
+function requestBefore(deadline: number, outOfTime: () => Error): DeadlineFetch {
+  return async (url) => {
+    const remaining = deadline - Date.now();
+    if (remaining < MIN_REQUEST_MS) throw outOfTime();
+    return fetchWithRetry(url, { headers: WIKIPEDIA_HEADERS }, remaining, {
+      budgetMs: Math.min(DEFAULT_RETRY_BUDGET_MS, remaining),
+    });
+  };
 }
+
+const summaryUrl = (title: string) => `${WIKIPEDIA_API_BASE}/${encodeURIComponent(title)}`;
 
 const SEARCH_HITS = 5;
 
@@ -71,11 +86,9 @@ function titleMatches(title: string, queryWords: ReadonlySet<string>): boolean {
 }
 
 /** The first of Wikipedia's top search hits for `query` whose title matches it, or null. */
-async function matchingSearchTitle(query: string): Promise<string | null> {
-  const response = await fetchWithRetry(
+async function matchingSearchTitle(query: string, request: DeadlineFetch): Promise<string | null> {
+  const response = await request(
     `${WIKIPEDIA_SEARCH_URL}?q=${encodeURIComponent(query)}&limit=${SEARCH_HITS}`,
-    { headers: WIKIPEDIA_HEADERS },
-    WIKIPEDIA_TIMEOUT_MS,
   );
   if (!response.ok) {
     throw new Error(`Wikipedia search API error: ${response.status}`);
@@ -92,15 +105,26 @@ export async function wikipediaSearch(
   input: WikipediaSearchInput
 ): Promise<WikipediaSearchResult> {
   const notFound = () => new Error(`No Wikipedia article found for '${input.query}'`);
+  // Only the search fallback can find too little time left, and running out
+  // there is no evidence the article is missing.
+  const request = requestBefore(
+    Date.now() + WIKIPEDIA_DEADLINE_MS,
+    () =>
+      new Error(
+        `Wikipedia lookup for '${input.query}' timed out: it is not an exact article title, and too ` +
+          `little of the ${WIKIPEDIA_DEADLINE_MS / 1000}s limit was left to search for it. Retry, or ` +
+          "pass the exact article title.",
+      ),
+  );
 
   // The summary endpoint takes an exact title, so a descriptive query ("Luo
   // people Kenya ethnic group history") 404s there; the first search hit whose
   // title the query spells out is the article it meant.
-  let response = await fetchSummary(input.query);
+  let response = await request(summaryUrl(input.query));
   if (response.status === 404) {
-    const title = await matchingSearchTitle(input.query);
+    const title = await matchingSearchTitle(input.query, request);
     if (title === null) throw notFound();
-    response = await fetchSummary(title);
+    response = await request(summaryUrl(title));
     if (response.status === 404) throw notFound();
   }
 

@@ -9,28 +9,34 @@ const SUMMARY = "https://en.wikipedia.org/api/rest_v1/page/summary";
 const SEARCH = "https://en.wikipedia.org/w/rest.php/v1/search/page";
 const USER_AGENT = `genealogy-mcp-server/${readBuildInfo().base} (https://github.com/PioneerAIAcademy/cowork-genealogy)`;
 
+const summaryBody = (title: string, extract: string) => ({
+  ok: true,
+  status: 200,
+  json: async () => ({
+    title,
+    extract,
+    content_urls: { desktop: { page: `https://en.wikipedia.org/wiki/${title.replace(/ /g, "_")}` } },
+  }),
+});
+
+const statusBody = (code: number) => ({ ok: false, status: code, headers: new Headers(), json: async () => ({}) });
+
+const hitsBody = (titles: string[]) => ({
+  ok: true,
+  status: 200,
+  json: async () => ({ pages: titles.map((title) => ({ title, key: title.replace(/ /g, "_") })) }),
+});
+
 function summaryOk(title: string, extract: string) {
-  mockFetch.mockResolvedValueOnce({
-    ok: true,
-    status: 200,
-    json: async () => ({
-      title,
-      extract,
-      content_urls: { desktop: { page: `https://en.wikipedia.org/wiki/${title.replace(/ /g, "_")}` } },
-    }),
-  });
+  mockFetch.mockResolvedValueOnce(summaryBody(title, extract));
 }
 
 function status(code: number) {
-  mockFetch.mockResolvedValueOnce({ ok: false, status: code, json: async () => ({}) });
+  mockFetch.mockResolvedValueOnce(statusBody(code));
 }
 
 function searchHits(titles: string[]) {
-  mockFetch.mockResolvedValueOnce({
-    ok: true,
-    status: 200,
-    json: async () => ({ pages: titles.map((title) => ({ title, key: title.replace(/ /g, "_") })) }),
-  });
+  mockFetch.mockResolvedValueOnce(hitsBody(titles));
 }
 
 const urlOf = (call: number) => mockFetch.mock.calls[call][0] as string;
@@ -187,5 +193,61 @@ describe("wikipediaSearch — which search hit it takes", () => {
 
     expect(urlOf(2)).toBe(`${SUMMARY}/Le%20Mans`);
     expect(result.title).toBe("Le Mans");
+  });
+});
+
+describe("wikipediaSearch — one deadline for the whole call", () => {
+  const START = 1_000_000;
+  const QUERY = "Luo people Kenya ethnic group history";
+  let now: number;
+
+  beforeEach(() => {
+    now = START;
+    vi.spyOn(Date, "now").mockImplementation(() => now);
+  });
+
+  /** Queue a response that arrives `ms` after its request was sent. */
+  function after(ms: number, response: object) {
+    mockFetch.mockImplementationOnce(async () => {
+      now += ms;
+      return response;
+    });
+  }
+
+  it("caps each request's timeout at what is left of one 55s deadline", async () => {
+    const timeouts = vi.spyOn(AbortSignal, "timeout");
+    after(20_000, statusBody(404));
+    after(10_000, hitsBody(["Luo people"]));
+    after(0, summaryBody("Luo people", "…"));
+
+    await wikipediaSearch({ query: QUERY });
+
+    expect(timeouts.mock.calls.map(([ms]) => ms)).toEqual([55_000, 35_000, 25_000]);
+  });
+
+  it.each([
+    ["the search", [[54_500, statusBody(404)]], 1],
+    ["the matched hit's summary", [[20_000, statusBody(404)], [34_500, hitsBody(["Luo people"])]], 2],
+  ] as const)("fails as a timeout, not as no article, when too little is left for %s", async (_stage, responses, sent) => {
+    for (const [ms, response] of responses) after(ms, response);
+    // What each later request would answer if it were sent: nothing found.
+    mockFetch.mockImplementation(async (url: string) => (url.startsWith(SEARCH) ? hitsBody([]) : statusBody(404)));
+
+    await expect(wikipediaSearch({ query: QUERY })).rejects.toThrow(
+      `Wikipedia lookup for '${QUERY}' timed out: it is not an exact article title`
+    );
+    expect(mockFetch).toHaveBeenCalledTimes(sent);
+  });
+
+  it("keeps a retried request inside the deadline", async () => {
+    after(52_000, statusBody(404));
+    mockFetch.mockImplementation(async () => {
+      now += 3_000;
+      return statusBody(503);
+    });
+
+    await expect(wikipediaSearch({ query: QUERY })).rejects.toThrow("Wikipedia search API error: 503");
+    expect(mockFetch).toHaveBeenCalledTimes(2);
+    expect(now - START).toBeLessThanOrEqual(55_000);
   });
 });

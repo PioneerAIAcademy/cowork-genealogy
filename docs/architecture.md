@@ -1884,8 +1884,8 @@ Other environment differences that bite:
   budget this bites (though measured 2026-09-08, none of 59 live reads exceeded
   60s — p50 18.7s, max 50.1s; see the spec's Timeout budget section), but
   it is not specific to that tool — `IMAGE_FETCH_TIMEOUT_MS` (90s) and the 60s
-  budgets in `wikipedia.ts`/`wiki-search.ts`/`collections-search.ts` sit at or
-  above the ceiling too. **No automated check reaches this** — neither harness
+  budgets in `wiki-search.ts`/`collections-search.ts` sit at or above the
+  ceiling too (`wikipedia.ts` shares one 55s deadline across its requests). **No automated check reaches this** — neither harness
   goes through the bridge — so it is only observable in a live Cowork session.
 
 ### If you're asked to…

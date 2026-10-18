@@ -78,17 +78,22 @@ Example:
 | The summary 404s and no search hit matches the query, or the matched hit's summary also 404s | Throw error: `"No Wikipedia article found for '{query}'"` |
 | A summary returns any other non-2xx | Throw error: `"Wikipedia API error: {status}"` |
 | The search returns non-2xx | Throw error: `"Wikipedia search API error: {status}"` — not the not-found error, which would claim an absence nobody checked |
+| Less than a second of the deadline (below) is left for the search or the matched hit's summary | Throw error: `"Wikipedia lookup for '{query}' timed out: it is not an exact article title, and too little of the 55s limit was left to search for it. Retry, or pass the exact article title."` — not the not-found error, for the same reason |
 
 ### Timeout
 
-`WIKIPEDIA_TIMEOUT_MS` = **60s**, passed as `fetchWithRetry`'s third
-argument to every request — the summary, the search and the second summary —
-rather than the shared 30s default. Each call is retried by
-`fetchWithRetry` (up to 3 attempts, 10s budget), but a 60s timeout exhausts the
-budget on the first attempt, so timeouts are effectively single-attempt. A slow
-success becomes a hard failure at the default with nothing behind it. Across the committed e2e run logs, 2 of 19 calls ran past
+`WIKIPEDIA_DEADLINE_MS` = **55s**, one deadline the summary, the search and
+the second summary share. Each request's timeout, passed as `fetchWithRetry`'s
+third argument, is what is left of it, rather than the shared 30s default. Each
+call is retried by `fetchWithRetry` (up to 3 attempts, its 10s budget also
+capped at what is left), but a timeout that long exhausts the budget on the
+first attempt, so timeouts are effectively single-attempt. A slow success
+becomes a hard failure at the default with nothing behind it. Across the committed e2e run logs, 2 of 19 calls ran past
 30s, at 33.7s and 35.2s. Re-measure rather than re-guess; the method is in
-`image-transcribe-tool-spec.md`'s timeout-budget section.
+`image-transcribe-tool-spec.md`'s timeout-budget section. The deadline sits
+under the 60s at which Cowork's device bridge aborts any MCP call, and when
+less than a second of it is left for the search or the matched hit's summary,
+the call fails with a timeout error rather than the not-found error.
 
 ---
 
@@ -203,6 +208,8 @@ The index.ts is the MCP server entry point that registers all tools. Update it t
 | 6 | A matching second hit is taken over a first that does not match; a title made only of small words is never taken |
 | 7 | A summary error other than 404 is reported without searching |
 | 8 | A failed search is reported as a search error, not as no article |
+| 9 | Each request's timeout is what is left of the one 55s deadline, and a retried request stays inside it |
+| 10 | With too little of the deadline left for the search or the matched hit's summary, the call fails as a timeout, not as no article |
 
 `dev/smoke-calls.ts` runs one exact title (`"Genealogy"`) and one descriptive
 query (`"Luo people Kenya ethnic group history"`) live; both must return
