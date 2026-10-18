@@ -1,4 +1,6 @@
-import { readFile, writeFile, rm } from "node:fs/promises";
+import { readFile, rename, writeFile, rm } from "node:fs/promises";
+import { randomUUID } from "node:crypto";
+import { basename, dirname, join } from "node:path";
 import {
   ensureStorageDir,
   TOKEN_STORAGE_PATH,
@@ -23,11 +25,25 @@ function isTokenStore(value: unknown): value is TokenStore {
   return true;
 }
 
+/**
+ * Write tokens.json whole: a new temp file beside it, created 0o600, renamed over
+ * it, so a concurrent loadTokens reads the old tokens or the new ones, never a
+ * partly written file. Rejects with the write's or the rename's own error, after
+ * removing the temp.
+ */
 export async function saveTokens(tokens: TokenStore): Promise<void> {
   await ensureStorageDir();
-  await writeFile(TOKEN_STORAGE_PATH, JSON.stringify(tokens, null, 2), {
-    mode: 0o600,
-  });
+  const tmp = join(
+    dirname(TOKEN_STORAGE_PATH),
+    `.${basename(TOKEN_STORAGE_PATH)}.tmp-${randomUUID()}`,
+  );
+  try {
+    await writeFile(tmp, JSON.stringify(tokens, null, 2), { mode: 0o600, flag: "wx" });
+    await rename(tmp, TOKEN_STORAGE_PATH);
+  } catch (error) {
+    await rm(tmp, { force: true }).catch(() => {});
+    throw error;
+  }
 }
 
 export async function loadTokens(): Promise<TokenStore | null> {

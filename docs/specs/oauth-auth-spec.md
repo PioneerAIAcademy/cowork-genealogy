@@ -125,7 +125,7 @@ Uses Node.js built-in `crypto` module (no external deps).
 
 File-based token persistence.
 
-- `saveTokens(tokens)` — `mkdir({ recursive: true })` + `writeFile` JSON with `mode: 0o600` (user read/write only)
+- `saveTokens(tokens)` — `mkdir({ recursive: true })`, then `writeFile` JSON to a new temp file beside `tokens.json`, created with `mode: 0o600` (user read/write only) and `flag: "wx"`, and `rename` it over `tokens.json`, so a concurrent `loadTokens` reads the old tokens or the new ones, never a partial file. If the write or the rename fails, it removes the temp and rejects with that error
 - `loadTokens()` -> `TokenStore | null` — never throws (returns null on missing/corrupt/wrong-shape)
 - `isExpired(tokens)` -> boolean — pure function, checks `expiresAt - buffer`
 - `clearTokens()` — `rm({ force: true })`, silent if already gone
