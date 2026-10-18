@@ -596,6 +596,7 @@ Drive folder as the immutable record, so re-importing later is always possible.
 | 0 Notice | research; spot it; write Did/Should | 🌐 Workbench |
 | 1 Claim + branch | assign the issue to yourself; read the tester's words in the body, download the zip only if Step 2 needs it; `git checkout -b <short-task-name>` | 🌐 GitHub → ⌨️ Terminal (repo) |
 | 2 Unpack | `make feedback-case ZIP=<zip>`; copy the prompt it prints, or recover it from the session log when the box was left blank (check for a `_truncation_note`) | ⌨️ Terminal (repo) |
+| *(side)* Measure | `make feedback-profile ZIP=<zip>` prints the session's time and cost per agent, skill and tool (Windows: in `eval\harness`, `uv run python -m e2e.feedback_profile <zip>`) | ⌨️ Terminal (repo) |
 | 3 Reproduce | paste the user's prompt; viewer open; `/compare-state --against=what-went-wrong` | 🤖 Claude Code (case dir) + Viewer |
 | 4 Classify | skill, tool, or grading fault? | 🤖 Claude Code (case dir) |
 | 5 Capture | `/mine-unit-test --project <case-dir>`; scrub PII | 🤖 Claude Code (case dir) |
@@ -611,13 +612,15 @@ fresh session. Both halves, every time.
 
 ### Windows equivalents
 
-Every `make` target above has a batch file. Double-click it, or run it from
-`eval\`; each prompts for what it needs instead of taking `SKILL=`-style
-arguments, and rebuilds the MCP server first where that matters.
+Every `make` target above has a batch file except `make feedback-profile`,
+whose row gives the command to type in `eval\harness`. Double-click a batch
+file, or run it from `eval\`; each prompts for what it needs instead of taking
+`SKILL=`-style arguments, and rebuilds the MCP server first where that matters.
 
-| Instead of | Double-click |
+| Instead of | Use |
 |---|---|
 | `make feedback-case ZIP=<zip>` | `scripts\setup-feedback-case.bat <zip>` (pass the zip path) |
+| `make feedback-profile ZIP=<zip>` | in `eval\harness`: `uv run python -m e2e.feedback_profile <zip>` |
 | `make eval-skill SKILL=<skill>` | `eval\RunTests.bat` |
 | `make eval-ui` | `eval\Start.bat` |
 | `make gate-skill SKILL=… TEST=…` | `eval\GateSkill.bat` |

@@ -17,6 +17,7 @@ import {
   describeFetchError,
   fetchWithTimeout,
   isFetchTimeout,
+  retryAfterMs,
 } from "./http.js";
 import type { OpenRouterChatResponse } from "../types/image-transcribe.js";
 
@@ -48,13 +49,27 @@ export const OCR_MAX_TOKENS = 16000;
 // hallucinations, and the engine ships no native binary.
 export const MAX_OCR_INPUT_BYTES = 14 * 1024 * 1024;
 
-// One retry, transport failures only. Measured over the committed e2e corpus,
+// One retry on a transport failure. Measured over the committed e2e corpus,
 // 24 of 175 classifiable calls (14%) died at the transport with no socket code
 // and 6 timed out; the failures are intermittent, which is what a single retry
 // is for. A TIMEOUT is never retried — it has already spent the budget, so a
 // second attempt doubles the worst case.
 const OCR_TRANSPORT_RETRIES = 1;
 const OCR_TRANSPORT_RETRY_DELAY_MS = 1_000;
+
+// Up to two more attempts on a 429 or 503, OpenRouter's rate-limit and overload
+// answers, which clear after a short wait. The wait is the response's Retry-After,
+// else 2s then 4s with jitter, and never more than 20s in all.
+//
+// Every attempt after the first runs on what is left of the caller's budget, and
+// a wait that would leave none is not taken, so the whole call — attempts, waits
+// and the transport retry above — stays inside that one budget.
+const OCR_STATUS_RETRIES = 2;
+const OCR_RETRY_STATUSES = new Set([429, 503]);
+const OCR_STATUS_RETRY_BASE_MS = 2_000;
+const OCR_STATUS_MAX_WAIT_MS = 20_000;
+
+const sleep = (ms: number): Promise<void> => new Promise((r) => setTimeout(r, ms));
 
 // OpenRouter attribution headers (recommended, not required). Stable app id.
 const APP_REFERER = "https://github.com/PioneerAIAcademy/cowork-genealogy";
@@ -137,6 +152,11 @@ export async function runOcr(req: OcrRequest): Promise<OcrOutcome> {
 
   const dataUrl = `data:${contentType};base64,${Buffer.from(bytes).toString("base64")}`;
 
+  const budgetMs = Math.max(1, Math.min(req.timeoutMs ?? OCR_TIMEOUT_MS, OCR_TIMEOUT_MS));
+  const deadline = Date.now() + budgetMs;
+  let transportRetries = 0;
+  let statusRetries = 0;
+  let waitedMs = 0;
   let response!: Response;
   for (let attempt = 0; ; attempt++) {
     try {
@@ -168,17 +188,20 @@ export async function runOcr(req: OcrRequest): Promise<OcrOutcome> {
             ],
           }),
         },
-        Math.max(1, Math.min(req.timeoutMs ?? OCR_TIMEOUT_MS, OCR_TIMEOUT_MS)),
+        attempt === 0 ? budgetMs : Math.max(1, deadline - Date.now()),
       );
-      break;
     } catch (error) {
       // Retry a TRANSPORT failure once; never a timeout. The transport branch
       // catches every non-timeout fetch rejection, which includes a reset after
       // the request was sent and inference may already have been billed — the
       // corpus cannot separate those, so this is a reasoned default.
-      if (attempt >= OCR_TRANSPORT_RETRIES || isFetchTimeout(error)) {
+      if (
+        transportRetries >= OCR_TRANSPORT_RETRIES ||
+        isFetchTimeout(error) ||
+        OCR_TRANSPORT_RETRY_DELAY_MS >= deadline - Date.now()
+      ) {
         throw new Error(
-          `Could not reach OpenRouter${attempt > 0 ? " (2 attempts)" : ""}. ` +
+          `Could not reach OpenRouter${attempt > 0 ? ` (${attempt + 1} attempts)` : ""}. ` +
             `(${describeFetchError(error)})` +
             (attempt > 0
               ? " A retry already failed, so this is more than one transient blip" +
@@ -186,12 +209,21 @@ export async function runOcr(req: OcrRequest): Promise<OcrOutcome> {
               : ""),
         );
       }
-      await new Promise((r) => setTimeout(r, OCR_TRANSPORT_RETRY_DELAY_MS));
+      transportRetries++;
+      await sleep(OCR_TRANSPORT_RETRY_DELAY_MS);
+      continue;
     }
+    if (!OCR_RETRY_STATUSES.has(response.status) || statusRetries >= OCR_STATUS_RETRIES) break;
+    const backoff = OCR_STATUS_RETRY_BASE_MS * 2 ** statusRetries;
+    const waitMs = retryAfterMs(response) ?? backoff + backoff * 0.5 * Math.random();
+    if (waitedMs + waitMs > OCR_STATUS_MAX_WAIT_MS || waitMs >= deadline - Date.now()) break;
+    statusRetries++;
+    waitedMs += waitMs;
+    await sleep(waitMs);
   }
 
   // Auth failures are LLM-actionable — the key needs replacing where it was set.
-  // Transient failures (429/5xx) are not; they surface as retryable.
+  // Transient failures (429/5xx) are not; past the retries above they surface as retryable.
   if (response.status === 401) {
     throw new Error(
       "The OpenRouter API key was rejected (401). Tell the user to replace it " +

@@ -1,6 +1,9 @@
 export interface ImageTranscribeInput {
   imageId?: string;
   ark?: string;
+  /** Another name for `ark`: record_read returns a page image under it.
+   *  Folded into `ark` before the input forms are counted. */
+  imageArk?: string;
   /** A FamilySearch memory artifact URL, as carried by a person_read source
    *  that came from the memories API. Already a direct bytes URL, so it is
    *  used as-is rather than resolved, and it is fetched WITHOUT a token. */

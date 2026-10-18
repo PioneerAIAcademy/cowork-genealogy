@@ -1,6 +1,6 @@
 # Conclusion tree — one evidence/conclusion model for facts and relationships
 
-**Status:** Draft; `/critique-plan` closed after 17 rounds (2026-10-07); nothing built.
+**Status:** Stage 1a under way: PRs #3398, #3400, #3453, #3457 and #3470 merged (2026-10-14/15). Stage 1b onward not started. `/critique-plan` closed after 17 rounds (2026-10-07).
 
 **Decision record:** issue #3032. Its body is rewritten from this plan.
 
