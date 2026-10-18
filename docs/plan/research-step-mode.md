@@ -6,7 +6,7 @@ Phase 0 (a probe) comes first and changes no product code. This merges two draft
 single-pass plan drawn from feedback issue #3475, and a one-step-per-turn draft. plan-critic
 has reviewed this merged version six times, and its findings are folded in. After round 4,
 "Keep going" was simplified to replies the host sends for the researcher (decision 13).
-Decisions 14–19 were added after review on 2026-10-18 and have not been through plan-critic.
+Decisions 14–20 were added on 2026-10-18; plan-critic has reviewed them once.
 
 ## Decisions taken (lead, 2026-10-16)
 1. **Step mode on every production plane:** Cowork, the hosted web app (the alpha) and the
@@ -52,8 +52,11 @@ Decisions 14–19 were added after review on 2026-10-18 and have not been throug
 18. **New top-level tasks are agents,** entered through the router, each with a step group
     (section K).
 19. **The prose ships as small PRs.** The parts that work under today's behaviour land first,
-    one eval slot each. The router, research-exhaustiveness and person-evidence land with PR 1
-    (Phases).
+    one eval slot each. The router, research-exhaustiveness, person-evidence and
+    question-selection land in PR 2, right after PR 1 (Phases).
+20. **A set-aside question does not block finishing.** The project completes once every
+    question is resolved or set aside, and the final report names each set-aside question and
+    how to resume it (section E).
 
 ## Evidence
 **#3475.** Proxy-exact, after question selection: $49.84 over about 361 live minutes. Each
