@@ -553,9 +553,9 @@ input: { gedcomx1, primaryId1, gedcomx2, primaryId2 }
   │     - buildRawWithAnchor then rewrites each Persistent identifier to the
   │       FULL canonical ARK (`ark:/61903/n:n:<id>`) from the simplified `ark`;
   │       matchTwoExamples rejects the converter's bare id as "Invalid Feed".
-  │     - We do NOT pre-structure or re-assemble the persons. Whatever
-  │       was in the simplified GedcomX (focus + parents + relationships)
-  │       comes through into the raw GedcomX as-is.
+  │     - buildRawWithAnchor then moves the focus person to persons[0]
+  │       (matchTwoExamples scores persons[0]). Otherwise the persons are
+  │       not re-assembled: focus + parents + relationships come through as-is.
   │
   ├─ 3. ADD a sourceDescription to each raw GedcomX:
   │       gedcomx1Raw.sourceDescriptions = [
@@ -571,8 +571,9 @@ input: { gedcomx1, primaryId1, gedcomx2, primaryId2 }
   │       via the simplifier — see Evidence Trail — so we don't want to
   │       silently duplicate ids if a caller happened to name theirs mainSrc).
   │     - The id of the sourceDescription is irrelevant to FS's matching
-  │       algorithm; only the `about: "#<primaryId>"` anchor matters. So
-  │       "match-anchor" is just a unique-enough internal name.
+  │       algorithm, and the `about: "#<primaryId>"` anchor does not choose
+  │       whom the API scores (step 2 does). The FS docs call it required,
+  │       so it is still sent. "match-anchor" is just a unique-enough internal name.
   │
   ├─ 4. Build request body:
   │       { entries: [
@@ -947,7 +948,7 @@ exercised by `tests/tools/same-person.test.ts`.
 ### Review-round edits (Pascal/Dallan review, 2026-05-17)
 
 - **`queryArk` format.** Emitted in canonical `ark:/61903/...` form to match `candidateArk` (per the ID-vocabulary standard; both ARKs, no resolver-URL prefix). The `title` field is parsed with an explicit regex rule; if parsing fails, the raw title is surfaced. See "Parsing the queryArk from `title`" subsection.
-- **`sourceDescription` id changed from `mainSrc` → `match-anchor`.** Avoids potential collision if the LLM's simplified input already contains a sourceDescription with id `mainSrc` (sourceDescriptions round-trip via the simplifier — see Evidence Trail). The id itself is irrelevant to FS's matching algorithm — only the `about` anchor matters.
+- **`sourceDescription` id changed from `mainSrc` → `match-anchor`.** Avoids potential collision if the LLM's simplified input already contains a sourceDescription with id `mainSrc` (sourceDescriptions round-trip via the simplifier — see Evidence Trail). The id itself is irrelevant to FS's matching algorithm, and the `about` anchor does not choose whom the API scores: it scores `persons[0]`, which is why the focus person is moved first.
 - **Defensive empty-`entries[]` check added** to the pipeline (step 6) and error table. Should never fire (the API always returns ≥1 entry — see Evidence Trail) but cheap insurance.
 - **Test file naming** uses kebab-case `same-person.test.ts` to match the source file `tools/same-person.ts`.
 - **Runtime persons[] validation** clarified — the JSON schema for `type: "object"` doesn't catch a missing nested `persons[]`. Moved to runtime check inside `validateInput()` with a clear error message.
