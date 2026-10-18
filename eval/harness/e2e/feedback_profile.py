@@ -12,9 +12,10 @@ How each figure is measured:
 
 - A session is its events merged across bundles by `uuid`; an agent run is its
   longest transcript across bundles. A run is missing when no bundle carries its
-  transcript: one a bundle lists as dropped, or a main-thread `Agent`/`Task`
-  call with no error result that neither its `toolUseId` nor the `agentId` its
-  result names ties to a transcript. A call refused before it ran errors.
+  transcript: a bundle lists it as dropped, or a main-thread `Agent`/`Task` call
+  launched it and no transcript carries that call's `toolUseId` or the `agentId`
+  its result names. A call that came back as an error is left out, since one
+  refused before it ran launched nothing.
 - A gap over `PAUSE_S` between consecutive events is a sandbox pause, except a
   gap that ends when an agent returns — an `Agent`/`Task` result or a background
   agent's `<task-notification>` — which is agent time less that agent's own
