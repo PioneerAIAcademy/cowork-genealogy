@@ -4865,6 +4865,9 @@ describe("research_append (batch ops)", () => {
     await refusedFor(running([conflict("unresolved", ["q_001"])]), { unblocks: [] });
     await refusedFor(running([conflict("unresolved", ["q_009"])]), { unblocks: ["q_001"] });
   });
+  it("(in-flight) still refuses the d01 shape even when the delegation also claims selection_basis: unresolved_conflict", async () => {
+    await refusedFor(running(), { depends_on: ["q_001"], selection_basis: "unresolved_conflict" });
+  });
 
   it("(in-flight) allows the conflict exception: an unresolved conflict blocks it and unblocks names it (ut_003)", async () => {
     await writeProject(running([conflict("unresolved", ["q_001"])]));

@@ -2466,6 +2466,25 @@ function activePlanItems(
  *  `ut_question_selection_d01` fails. A user who wants to move on marks the
  *  in-flight item done or skipped first.
  *
+ *  jud-sdev's review, 2026-10-16: as first shipped, `selfReportedContradiction`
+ *  was a single boolean applied to every active-plan item, so it switched the
+ *  WHOLE guard off -- including (1)'s conflict-scoped check and the no-override
+ *  rule above -- for any append carrying that one `selection_basis` string,
+ *  regardless of what else the entry claimed. Narrowed to also require an empty
+ *  `depends_on`, which puts the `ut_question_selection_d01` guarantee back: an
+ *  entry shaped like that override (naming the in-flight question in
+ *  `depends_on`) is refused even when it also claims
+ *  `selection_basis: "unresolved_conflict"`. NOT fully closed by this narrowing:
+ *  a question with `unblocks` naming the in-flight question and no `depends_on`
+ *  still takes (2)'s free pass even when it is actually about a conflict
+ *  `conflicts[]` already documents -- in which case (1)'s stricter check (that
+ *  conflict's `blocks_question_ids` must list the in-flight question) never
+ *  gets a chance to run. Put to the lead rather than decided here, since
+ *  tightening it further risks the same false-refusal direction ADR-0011
+ *  limit 1 says to avoid: ruled to leave it. `person_warnings` output has no
+ *  document to verify the claim against either way, so the same self-reported
+ *  trust this whole exception already rests on covers this case too.
+ *
  *  Same pre-call snapshot and active-plan discipline as
  *  `planCompleteInvariants`: a superseded plan's items are frozen and a resolved
  *  question's plan is settled, so neither blocks. */
@@ -2483,7 +2502,9 @@ function newQuestionWhileSearchInFlightInvariants(entry: any, preCallResearch: a
     if (c?.status !== "unresolved" || !Array.isArray(c.blocks_question_ids)) continue;
     for (const q of c.blocks_question_ids) if (typeof q === "string") conflictBlocked.add(q);
   }
-  const selfReportedContradiction = entry?.selection_basis === "unresolved_conflict";
+  const selfReportedContradiction =
+    entry?.selection_basis === "unresolved_conflict" &&
+    !(Array.isArray(entry?.depends_on) && entry.depends_on.length > 0);
   const refused = activePlanItems(
     preCallResearch,
     (plan) =>
