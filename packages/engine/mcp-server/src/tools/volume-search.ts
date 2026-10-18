@@ -6,6 +6,7 @@ import {
   RECORD_TYPE_GROUP_NAMES,
   assertKnownGroupNames,
   conceptIdsForGroups,
+  refuseRecordTypeAliases,
 } from "../utils/record-type-groups.js";
 import { resolveStandardPlaceToPlaceId, placeIdToRepIds, ambiguousPlaceError } from "../utils/place-resolver.js";
 import { fetchFulltextSearchable } from "../utils/fulltext-searchable.js";
@@ -74,16 +75,11 @@ function validate(input: VolumeSearchInput): void {
   // their own live spellings elsewhere (`yearFrom`/`yearTo`, `fromYear`/`toYear`)
   // and catching those too is the schema-wide `additionalProperties` question the
   // spec puts out of scope, not a bigger version of this list.
-  for (const alias of ["recordType", "record_type", "recordTypes"]) {
-    if (alias in input) {
-      throw new Error(
-        `volume_search filters by recordTypeGroups (an array of group names), ` +
-          `not ${alias}. Valid groups: ` +
-          RECORD_TYPE_GROUP_NAMES.join(", ") +
-          "."
-      );
-    }
-  }
+  refuseRecordTypeAliases(
+    input,
+    ["recordType", "record_type", "recordTypes"],
+    (alias) => `volume_search filters by recordTypeGroups (an array of group names), not ${alias}.`
+  );
   if (input.recordTypeGroups != null) {
     if (!Array.isArray(input.recordTypeGroups)) {
       throw new Error("recordTypeGroups must be an array of group names.");

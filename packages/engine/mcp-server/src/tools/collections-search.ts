@@ -2,7 +2,7 @@ import type { Principal } from "../auth/principal.js";
 import { getValidToken } from "../auth/refresh.js";
 import { BROWSER_USER_AGENT } from "../constants.js";
 import { fsFetch } from "../utils/fs-fetch.js";
-import { RECORD_TYPE_GROUP_NAMES } from "../utils/record-type-groups.js";
+import { refuseRecordTypeAliases } from "../utils/record-type-groups.js";
 import { formatYearRange } from "../utils/search-helpers.js";
 import type {
   FSCollectionData,
@@ -249,23 +249,14 @@ export async function collectionsSearchTool(
   // validates input against the advertised schema, so without this the field
   // is dropped and the place's whole list comes back as if it were filtered:
   // a "probate" ask returned every New York collection.
-  for (const alias of [
-    "recordType",
-    "record_type",
-    "recordTypes",
-    "recordTypeGroup",
-    "recordTypeGroups",
-  ]) {
-    if (alias in input) {
-      throw new Error(
-        `collections_search has no record-type filter: it lists every collection ` +
-          `for the place, so ${alias} cannot narrow it. To filter by record type, ` +
-          `use volume_search's recordTypeGroups (an array of group names). Valid groups: ` +
-          RECORD_TYPE_GROUP_NAMES.join(", ") +
-          "."
-      );
-    }
-  }
+  refuseRecordTypeAliases(
+    input,
+    ["recordType", "record_type", "recordTypes", "recordTypeGroup", "recordTypeGroups"],
+    (alias) =>
+      `collections_search has no record-type filter: it lists every collection for the ` +
+      `place, so ${alias} cannot narrow it. To filter by record type, use volume_search's ` +
+      "recordTypeGroups (an array of group names)."
+  );
 
   // Derive the right collection scope (US state, "Country, State" for
   // Canada/Mexico, country otherwise). Free-text queries pass through.
