@@ -176,19 +176,23 @@ function respellArk(ark: string): string {
 }
 
 /**
- * Two `ark` values name the same image when they would fetch the same URL, or
- * when they are one ARK and only one side carries i=/cc=/groupId=: record_read
- * adds ?cc= to the ARK a caller may also pass bare. That side's fallback URL is
- * then the other side's URL.
+ * Which of `ark` and `imageArk` to read when both are given, or null when they
+ * do not name the same image. `ark` when the two would fetch the same URL.
+ * When they are one ARK and only one side carries i=/cc=/groupId= (that side's
+ * fallback URL is the other side's URL), the side carrying them, whichever key
+ * it came in on: on a multi-image waypoint ARK `i=` picks the page, so the bare
+ * side could read a different image.
  */
-function sameImageRequest(a: string, b: string): boolean {
-  if (a.trim() === b.trim()) return true;
+function sameImageChoice(ark: string, imageArk: string): string | null {
+  if (ark.trim() === imageArk.trim()) return ark;
   try {
-    const x = arkToImageUrl(respellArk(a));
-    const y = arkToImageUrl(respellArk(b));
-    return x.url === y.url || x.fallbackUrl === y.url || y.fallbackUrl === x.url;
+    const fromArk = arkToImageUrl(respellArk(ark));
+    const fromAlias = arkToImageUrl(respellArk(imageArk));
+    if (fromArk.url === fromAlias.url || fromArk.fallbackUrl === fromAlias.url) return ark;
+    if (fromAlias.fallbackUrl === fromArk.url) return imageArk;
+    return null;
   } catch {
-    return false;
+    return null;
   }
 }
 
@@ -203,11 +207,11 @@ function kindOf(value: unknown): string {
  * `imageArk` is record_read's name for a page image and the key
  * research_log_append logs an image entry under, so callers carry it forward;
  * nothing refuses an unknown key, so without this fold the value was dropped
- * and the call failed as if no image had been named. An explicit `ark` wins
- * when both name the same image (sameImageRequest); two that do not are
- * refused rather than one being picked, and so is an `ark` that is not a
- * string, which would otherwise be dropped for `imageArk` without a word. The
- * resulting `ark` is respelled by respellArk.
+ * and the call failed as if no image had been named. When both name the same
+ * image, sameImageChoice says which is read; two that do not are refused
+ * rather than one being picked, and so is an `ark` that is not a string, which
+ * would otherwise be dropped for `imageArk` without a word. The resulting
+ * `ark` is respelled by respellArk.
  */
 export function foldImageArkInput<T extends { ark?: string; imageArk?: string }>(
   given: T,
@@ -228,13 +232,14 @@ export function foldImageArkInput<T extends { ark?: string; imageArk?: string }>
   if (typeof alias === "string" && alias.trim() !== "") {
     const { imageArk: _alias, ...rest } = input;
     const ark = typeof input.ark === "string" && input.ark.trim() !== "" ? input.ark : undefined;
-    if (ark !== undefined && !sameImageRequest(ark, alias)) {
+    const chosen = ark === undefined ? alias : sameImageChoice(ark, alias);
+    if (chosen === null) {
       throw new Error(
         `${caller} was given both ark ('${ark}') and imageArk ('${alias}'), which do not ` +
           "name the same image. imageArk is another name for ark: pass only one.",
       );
     }
-    folded = { ...rest, ark: ark ?? alias } as T;
+    folded = { ...rest, ark: chosen } as T;
   }
   return typeof folded.ark === "string" ? { ...folded, ark: respellArk(folded.ark) } : folded;
 }

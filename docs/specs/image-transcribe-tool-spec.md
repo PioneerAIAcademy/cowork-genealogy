@@ -385,7 +385,9 @@ consistent across schema, manifest, and skill.)*
   `research_log_append` logs an image entry by — is read as `ark`, and a query
   string never decides an `ark`'s shape. Both are `foldImageArkInput`'s job, run
   first, before the forms are counted; the rules are `image-read-spec.md`'s
-  (Input, and "ark format"), shared unchanged. `imageArk` therefore counts as
+  (Input, and "ark format"), shared unchanged. Among them: when `ark` and
+  `imageArk` are one ARK and only one carries `i`/`cc`/`groupId`, the one
+  carrying them is read, since `i=` can pick the page. `imageArk` therefore counts as
   the `ark` form in the exactly-one check, and the staged `source` and
   `metadata` report it as `ark`.
 - `memoryArtifactUrl` is a person's **memory** artifact, as carried by a
@@ -1315,7 +1317,8 @@ Mirror `tests/tools/wiki-search.test.ts` (stub global `fetch`, mock the
   keys received.
 - **`imageArk`**: read as `ark` and reported back as `ark`; `ark` and `imageArk`
   naming different images, or an `ark` that is not a string, are refused before
-  the key lookup; `imageArk` beside `imageId` is two forms; a query string is
+  the key lookup; of one ARK given bare and with `i=`/`cc=`, the side carrying
+  them is read; `imageArk` beside `imageId` is two forms; a query string is
   stripped from a DGS URL, and the film viewer link still built. The respelling table itself is unit-tested in
   `tests/utils/fs-image-fetch.test.ts`.
 

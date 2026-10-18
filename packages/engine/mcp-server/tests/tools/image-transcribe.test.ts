@@ -708,6 +708,15 @@ describe("imageTranscribeTool — imageArk (record_read's field) and query strin
     expect(fetchFsImageBytesMock).not.toHaveBeenCalled();
   });
 
+  it("reads the side carrying i= when ark and imageArk are one ARK, one of them bare", async () => {
+    mockOpenRouterOk("page");
+    await transcribe({ ark: ARK, imageArk: `${ARK}?i=4` }, LOCAL);
+
+    const [url, fallbackUrl] = fetchFsImageBytesMock.mock.calls[0];
+    expect(url).toBe(`https://www.familysearch.org/${ARK}?i=4`);
+    expect(fallbackUrl).toBe(`https://www.familysearch.org/${ARK}`);
+  });
+
   it("refuses an ark that is not a string, before the key lookup or any fetch", async () => {
     await expect(
       transcribe({ ark: 123, imageArk: ARK } as unknown as ImageTranscribeInput, LOCAL),

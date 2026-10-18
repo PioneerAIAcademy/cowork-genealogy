@@ -189,12 +189,15 @@ describe("foldImageArkInput — imageArk and query strings", () => {
   });
 
   it.each([
-    ["a bare ark beside record_read's ?cc= imageArk", ARK, `${ARK}?cc=2363041`],
-    ["an ark carrying ?cc= beside a bare imageArk", `${ARK}?cc=2363041`, ARK],
-    ["a page URL carrying i= beside a bare imageArk", `https://www.familysearch.org/${ARK}?lang=en&i=112`, ARK],
-    ["an unprefixed id beside a ?cc= imageArk", "3Q9M-CSNL-S98H-M", `${ARK}?cc=2363041`],
-  ])("reads %s as the same image, keeping ark", (_label, ark, imageArk) => {
-    expect(foldImageArkInput({ ark, imageArk }, "test")).toEqual({ ark });
+    ["a bare ark beside an imageArk carrying i=4", ARK, `${ARK}?i=4`, "?i=4"],
+    ["an ark carrying i=4 beside a bare imageArk", `${ARK}?i=4`, ARK, "?i=4"],
+    ["a bare ark beside record_read's ?cc= imageArk", ARK, `${ARK}?cc=2363041`, "?cc=2363041"],
+    ["a page URL carrying i= beside a bare imageArk", `https://www.familysearch.org/${ARK}?lang=en&i=112`, ARK, "?i=112"],
+    ["an unprefixed id beside a ?cc= imageArk", "3Q9M-CSNL-S98H-M", `${ARK}?cc=2363041`, "?cc=2363041"],
+  ])("reads %s from the side carrying the context params", (_label, ark, imageArk, query) => {
+    const resolved = resolveFsImageInput(foldImageArkInput({ ark, imageArk }, "test"), "test");
+    expect(resolved.url).toBe(`https://www.familysearch.org/${ARK}${query}`);
+    expect(resolved.fallbackUrl).toBe(`https://www.familysearch.org/${ARK}`);
   });
 
   it("refuses a pair that both carry image-context params, when those differ", () => {

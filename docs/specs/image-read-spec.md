@@ -26,13 +26,14 @@ image under and the key `research_log_append` logs an image entry by, so it is
 the name callers carry forward. `foldImageArkInput` (`src/utils/fs-image-fetch.ts`)
 folds it into `ark` before anything else reads the input — the resolver, the
 image cap, the viewer link and the saved-image key all see `ark`. When both are
-given, `ark` is used if the two name the same image: they would fetch the same
-URL (one image in another spelling), or they are one ARK and only one side
-carries `i`/`cc`/`groupId` (a bare `ark` beside `record_read`'s
-`ark:/61903/3:1:…?cc=2363041`). Two that both carry those params and differ are
-not the same image. Otherwise the call is refused before any fetch, and so is
-an `ark` that is not a string. An empty `imageArk` is not folded, so the
-no-input error names it. Like
+given and would fetch the same URL (one image in another spelling), `ark` is
+used. When they are one ARK and only one side carries `i`/`cc`/`groupId` (a
+bare `ark` beside `record_read`'s `ark:/61903/3:1:…?cc=2363041`), the side
+carrying them is used, whichever key it came in on: on a multi-image waypoint
+ARK `i=` picks the page, so the bare side could read another image. Two that
+both carry those params and differ, and any other pair, are refused before any
+fetch, and so is an `ark` that is not a string. An empty `imageArk` is not
+folded, so the no-input error names it. Like
 `memoryArtifactUrl`, it is accepted without being advertised on the schema.
 
 **`memoryArtifactUrl` is accepted but deliberately not advertised.**
