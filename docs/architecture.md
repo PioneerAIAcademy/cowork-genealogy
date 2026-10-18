@@ -732,7 +732,8 @@ Architecturally:
 
 > **On the User-Agent, the rule is conditional.** `genealogy-mcp-server/<version>`
 > is what the four non-FamilySearch tools send today (`wikipedia`, `wiki_search`,
-> `wiki_read`, `wiki_place_page`) and is correct for them. It is also exactly
+> `wiki_read`, `wiki_place_page`) and is correct for them; `wikipedia` adds the
+> repo's URL, because Wikimedia throttles agents without contact details. It is also exactly
 > what Imperva 403s on any FamilySearch endpoint. So: **FamilySearch →
 > `BROWSER_USER_AGENT`; anything else → the service's own convention.** The
 > deleted `mcp-tool-scaffolder` subagent stated it unconditionally — because its
