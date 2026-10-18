@@ -1601,6 +1601,13 @@ feedback-reset: ## Reset a feedback case dir to its imported state between attem
 	@test -n "$(CASE)" || { echo "ERROR: set CASE, e.g. make feedback-reset CASE=~/feedback/feedback-2026-07-21T09-14-22Z" >&2; exit 1; }
 	bash scripts/reset-feedback-case.sh $(CASE)
 
+.PHONY: feedback-profile
+feedback-profile: ## Time and cost of hosted feedback bundles per session, agent, skill and tool: make feedback-profile ZIP=~/Downloads/feedback-….zip [SINCE=2026-10-01] [JSON=profile.json] (ZIP may name a bundle dir or a folder of them)
+	# Pure analysis, no API calls. Each zip is unpacked into its own temporary
+	# directory and removed after; nothing in a bundle is imported or run.
+	@test -n "$(ZIP)" || { echo "ERROR: set ZIP, e.g. make feedback-profile ZIP=~/Downloads/feedback-2026-10-18T17-59-18-178086Z.zip" >&2; exit 1; }
+	cd eval/harness && uv run python -m e2e.feedback_profile $(foreach z,$(ZIP),'$(abspath $(patsubst ~/%,$(HOME)/%,$(z)))') $(if $(SINCE),--since '$(SINCE)',) $(if $(JSON),--json '$(abspath $(patsubst ~/%,$(HOME)/%,$(JSON)))',)
+
 # ── Artifacts (desktop/Cowork deliverables and the Beanstalk bundles) ─────────
 # The build scripts are cross-platform Node (no bash / no `zip`, so the Windows
 # BuildMcpb.bat / BuildPlugin.bat call them too) and self-install + self-build
