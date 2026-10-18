@@ -11,6 +11,15 @@ export interface WikipediaAPIResponse {
   };
 }
 
+// MediaWiki REST search, the fallback when a query is not an exact title
+// GET https://en.wikipedia.org/w/rest.php/v1/search/page?q={query}&limit=1
+
+export interface WikipediaPageSearchResponse {
+  pages?: Array<{
+    title?: string;
+  }>;
+}
+
 // Tool Output
 
 export interface WikipediaSearchResult {
