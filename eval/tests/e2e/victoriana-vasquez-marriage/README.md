@@ -28,17 +28,56 @@ match strength.
 
 ## Notes for reviewers
 
-**DRAFT PENDING ADJUDICATION.** This fixture comes from a hint batch
-(`filtered-list-samples-3.csv` row 32, `hint-samples.csv` row 935,
-flag `adds_marriage`, confidence 3) in which roughly half the hint records are
-**false matches**, and the authors do not know which.
-`expected-findings.json` was transcribed from the hint record — "Mexico, Marriages, 1570-1950", an index entry for the marriage of Jose Cleofas Gutierrez and Victoriana Vazquez on 9 January 1875 in Degollado, Jalisco; the entry names only the couple, with no parents, ages or residences, and has no linked image. The CSV's country column says "Unknown"; the record's jurisdiction is Jalisco, Mexico, so the fixture is tagged `MX`.
-The genealogist + developer teams must decide (a) true match — keep the
-findings; (b) different answer — edit `expected-findings.json`; or (c) no
-findable answer — replace the findings with a `"polarity": "avoid"` guard
-naming the January 1875 Degollado marriage, plus a `required` finding that the report documents
-the rejection.
+**Resolved: OUTCOME 1 (true match), on index evidence.** The 9 January 1875
+Degollado marriage of José Cleofas Gutierrez and Victoriana Vázquez (hint
+`ark:/61903/1:1:JC8N-Y3P`) **is** the marriage of tree person Victoriana Vasquez
+(`GFG9-7H4`). The call does **not** rest on the two marriage-hint names alone
+(the issue is explicit that would be insufficient); it rests on a separate
+indexed record that ties this couple to her parentage.
 
-A plausible candidate that rests on names alone. Both partners match the tree: the bride's given name exactly, her surname as the common Vazquez/Vasquez variant, and the groom's compound given name Jose Cleofas with the surname Gutierrez — a pairing less likely to recur by chance than a plain Jose Gutierrez. Beyond the two names there is nothing to test, in either direction: the tree has no dates or places for anyone, so neither the 1875 date nor Jalisco can be checked against it, and the index names no parents, so the tree's Remigio Vasquez and Bernarda Sandoval are neither confirmed nor contradicted. The tree cites no records, so this cannot be a re-index of an existing source.
+**What decided it (indexed records, no images read):**
 
-Gutierrez and Vázquez are both common surnames in western Mexico, so two couples with these names in the same generation are possible. The discriminating check is the parish marriage entry itself (or its *información matrimonial*) in the Degollado registers for January 1875: a Mexican Catholic marriage entry normally names both sets of parents, and Remigio Vázquez and Bernarda Sandoval as the bride's parents would settle the match; different parents would make this another Victoriana. A baptism for a Silveria Gutiérrez in Degollado naming Cleofas Gutiérrez and Victoriana Vázquez as parents would also tie the couple to this place.
+- **The marriage hint names only the couple.** The index entry
+  (`ark:/61903/1:1:JC8N-Y3P`, "Mexico, Marriages, 1570-1950") and its parish
+  counterpart (`ark:/61903/1:1:684J-DSBM`, bride persona
+  `ark:/61903/1:1:684J-DSBS`, "Mexico, Jalisco, Catholic Church Records,
+  1590-2022") carry no parents, ages, or residences — so on their own they only
+  establish a Degollado couple of these two names.
+- **The deciding record is the 1879 Degollado civil death registration**
+  (`ark:/61903/1:1:QGWN-N5CM`, "Mexico, Jalisco, Civil Registration,
+  1857-2000"). Its **index fields** record **María Victoriana Vázquez Sandoval**
+  (born about 1841, died 2 September 1879, Degollado, Jalisco) as the **wife of
+  Cleofas Gutiérrez** *and* the **daughter of Remigio Vázquez and María Bernarda
+  Sandoval**. That single record connects **both** the husband **and** the
+  parentage of the tree person — who is defined precisely as daughter of Remigio
+  Vasquez + Bernarda Sandoval and wife of Jose Cleofas Gutierrez — to this
+  couple in Degollado.
+- **Corroboration:** the 1879 Degollado parish burials of María Victoriana
+  Vázquez (`ark:/61903/1:1:684J-DSKS`, `ark:/61903/1:1:684V-3N76`, burial 5 Sep
+  1879, b. ~1841), consistent with the death registration; and later Jalisco
+  civil marriages of the couple's children naming Victoriana Vázquez + Cleofas
+  Gutiérrez as parents (e.g. `ark:/61903/1:1:QGQR-T5DH`).
+
+**Indexed evidence vs. inference.** Everything above is read from the
+FamilySearch **index**, not from any page image. The *verified* facts are the
+indexed record contents (the 1875 marriage; the 1879 death registration naming
+husband + both parents in Degollado; the burials; the children's marriages). The
+*inference* — standard GPS identity correlation — is that tree person `GFG9-7H4`
+is the woman in the 1879 death registration and therefore the 1875 bride; it is
+strongly supported because her parents, her husband, and the place all coincide
+in that one record, and no competing Victoriana Vázquez with these exact parents
+and this husband surfaced.
+
+**No page images were examined (`image_basis: false`).** The marriage and death
+records each carry a page image, but none was read; the identification is made on
+indexed fields only, so no Step 1a image-calibration applies and nothing here is
+presented as direct proof from an image.
+
+**Searched and not found (not needed):** a Degollado baptism of a Silveria
+Gutiérrez naming Cleofas Gutiérrez + Victoriana Vázquez as parents — the other
+check the draft suggested — was searched for and **not** located. It is not
+needed: the 1879 death registration already settles the identity.
+
+**Retrieval** was read-only via the MCP `person_read` / `record_read` /
+`record_search` tools against live FamilySearch; the identity judgement is the
+genealogist's.

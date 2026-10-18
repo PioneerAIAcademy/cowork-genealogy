@@ -3,7 +3,7 @@
     {
       "id": "f1",
       "type": "fact",
-      "description": "Victoriana Vasquez married Jose Cleofas Gutierrez on 9 January 1875 in Degollado, Jalisco, Mexico, according to a marriage index entry that spells her surname Vazquez and names no parents.",
+      "description": "Victoriana Vasquez married Jose Cleofas Gutierrez on 9 January 1875 in Degollado, Jalisco, Mexico. The marriage index names only the couple (no parents), so the match to tree person GFG9-7H4 is established not by the two names alone but by a separate indexed record tying this couple to her parentage.",
       "details": {
         "subject_person": "Victoriana Vasquez (GFG9-7H4)",
         "fact_type": "Marriage",
@@ -11,7 +11,8 @@
         "place": "Degollado, Jalisco, Mexico"
       },
       "supporting_sources": [
-        "Mexico, Marriages, 1570-1950 — marriage entry for Jose Cleofas Gutierrez and Victoriana Vazquez, 9 Jan 1875"
+        "Mexico, Marriages, 1570-1950 — marriage index entry for Jose Cleofas Gutierrez and Victoriana Vazquez, 9 Jan 1875, Degollado, Jalisco (ark:/61903/1:1:JC8N-Y3P); names only the couple, no parents, ages or image. The same event appears in the parish register, Mexico, Jalisco, Catholic Church Records, 1590-2022 (ark:/61903/1:1:684J-DSBM, bride persona ark:/61903/1:1:684J-DSBS), likewise naming only the couple in the index.",
+        "Identity confirmed by INDEX, not by the marriage entry's two names alone: the 1879 Degollado civil death registration, Mexico, Jalisco, Civil Registration, 1857-2000 (ark:/61903/1:1:QGWN-N5CM), records Maria Victoriana Vazquez Sandoval (born about 1841, died 2 Sep 1879, Degollado, Jalisco) as the WIFE of Cleofas Gutierrez AND the DAUGHTER of Remigio Vazquez and Maria Bernarda Sandoval. That one record connects both the husband and the parentage of tree person GFG9-7H4 (daughter of Remigio Vasquez + Bernarda Sandoval, wife of Jose Cleofas Gutierrez) to this couple in Degollado — so the 1875 bride is the tree person, not a same-named stranger. Corroborated by the 1879 Degollado parish burials of Maria Victoriana Vazquez (ark:/61903/1:1:684J-DSKS, ark:/61903/1:1:684V-3N76) and by later Jalisco civil marriages of the couple's children naming Victoriana Vazquez + Cleofas Gutierrez as parents (e.g. ark:/61903/1:1:QGQR-T5DH). No page images were examined; this rests on indexed evidence (image_basis: false)."
       ],
       "required": true
     }
