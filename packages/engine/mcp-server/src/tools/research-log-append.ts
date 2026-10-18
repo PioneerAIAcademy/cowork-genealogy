@@ -598,11 +598,11 @@ const SOURCE_NAMED =
  * schedule states, so when every census that fired is one of these (or, with no
  * year bound, every staged payload year is), a head claim (`Claim.head`) is
  * excused. Every other claim still refuses, and a note whose head claim is
- * excused is also read for anyone else (`otherPersonClaims`). What neither
- * reads passes: a note with no head claim keeps the older arms' verdict, so
- * "Thomas Flynn, Household head; his son Patrick" passes as its 1850 twin does,
- * and a bracketed list ("Thomas Flynn household (Mary, Patrick, Bridget)") is
- * not read as people, because in the corpus such lists are places.
+ * excused is also read for anyone else (`otherPersonClaims`), including a
+ * bracketed list of names after the household name ("Thomas Flynn household
+ * (Mary, Patrick, Bridget)", `bracketedRosters`). What neither reads passes: a
+ * note with no head claim keeps the older arms' verdict, so "Thomas Flynn,
+ * Household head; his son Patrick" passes as its 1850 twin does.
  */
 const HEAD_ONLY_US_CENSUS_YEARS: ReadonlySet<number> = new Set([1790, 1800, 1810, 1820, 1830, 1840]);
 
@@ -976,13 +976,15 @@ const AS_ROLE =
 const HOUSEHOLD_HEAD_NAMED = /\b[Hh]ousehold\s+head\s*[:,\u2013\u2014-]?\s*[A-Z]/;
 const HEAD_OF_HOUSEHOLD = /\bhead\s+of\s+(?:the\s+)?household\b/i;
 
-/** The note's sentences that speak for the census: every sentence but one that
- *  names another record type or the tree. */
-const censusSentences = (notes: string): string[] =>
-  // Not cut at an initial, or "naming Sarah A. Bagley as mother" loses its source.
-  notes
-    .split(/(?<!\b[A-Z])[.;]\s/)
-    .filter((sentence) => !SOURCE_NAMED.test(sentence.toLowerCase()) && !/\btree\b/i.test(sentence));
+/** Where a note's sentence ends. Not at an initial, or "naming Sarah A. Bagley
+ *  as mother" loses its source. */
+const SENTENCE_STOP = /(?<!\b[A-Z])[.;]\s/;
+/** A sentence that speaks for the census: one that names no other record type
+ *  and not the tree. */
+const speaksForCensus = (sentence: string): boolean =>
+  !SOURCE_NAMED.test(sentence.toLowerCase()) && !/\btree\b/i.test(sentence);
+/** The note's sentences that speak for the census. */
+const censusSentences = (notes: string): string[] => notes.split(SENTENCE_STOP).filter(speaksForCensus);
 const asRoleClaims = (notes: string): Claim[] =>
   censusSentences(notes).flatMap((sentence) => phrasesOf(AS_ROLE, sentence).map(roleClaim));
 const KINSHIP_CLAIM =
@@ -1029,6 +1031,9 @@ const POSSESSIVE_KINSHIP = /\b[A-Z][a-zA-Z]*(?:'s|’s)\s+(?:sons?|daughters?|ch
  * - `NAMED_TALLY`: a name put on a tally mark: "Mary Flynn is the female 30-40".
  *   The head's own tally reads the same way and is refused too.
  * - `NAMED_IN_IT`: "Patrick Flynn enumerated in it".
+ * - `bracketedRosters`: two or more names in a bracket straight after the
+ *   household name: "Thomas Flynn household (Mary, Patrick, Bridget)". A place
+ *   list, the head's own name and a single item are not rosters.
  *
  * Only in a sentence that speaks for the census (`censusSentences`): "consistent
  * with the father named in the 1884 death records" is what those records state.
@@ -1052,6 +1057,77 @@ const NAMED_TALLY = new RegExp(
 );
 const NAMED_IN_IT = new RegExp(String.raw`${PERSON_NAME}[ ](?:(?:is|was)[ ])?(?:also[ ])?enumerated[ ]in[ ]it\b`);
 
+/**
+ * A LIST IN A BRACKET straight after a household name: "Thomas Flynn household
+ * (Mary, Patrick, Bridget)", "Household of Thomas Flynn [Mary, Patrick]",
+ * "Cornelius Hurley's household (Cornelius, 67; Johanna, 61)", and `dwelling`
+ * as the compound arm reads it. Read only where the head-only rule is excusing
+ * a head claim (`otherPersonClaims`): there the household name is excused and
+ * the list is what names everyone else, while on an 1850 schedule the household
+ * name refuses the note by itself.
+ *
+ * A lower-case label opening the list comes off ("(members: Mary, Patrick)",
+ * "(incl. Mary, Patrick)"), the list is split on commas, semicolons, `&` and
+ * `and`, and each item loses any aside in brackets and one person's age or
+ * birth (`LIFE_DETAIL`). The list is a roster when two or more items look like
+ * a person's name: one to three capitalised words (`ROSTER_NAME`, which reads
+ * "Mary A." and "O'Brien" where `PERSON_NAME` does not), with no digit and no
+ * `Census`. It is skipped when it lists spellings (`ROSTER_OF_SPELLINGS`), when
+ * any item is a place (`isPlaceRun`, leaving out the head's own name, so
+ * "Household of Thomas Ward (Mary Ward, Patrick Ward)" still reads), and when
+ * every name in it is the head's own ("Household of David Bagley (Bagley,
+ * David)"). So "(Dwelling 84, Family 91)", "(XHRB-V42, XHRB-V4V)" and a source
+ * citation are not rosters, and nor is a single item, which may be the head or
+ * a place.
+ *
+ * Brackets are held out of the sentence split, so "(Mary; Patrick)" and "(Mary
+ * (b. 1802), Patrick)" stay whole, and the sentence, brackets included, must
+ * speak for the census (`speaksForCensus`).
+ */
+const BRACKET = String.raw`\((?:[^()]|\([^()]*\))*\)|\[[^\[\]]*\]`;
+const BRACKET_G = new RegExp(BRACKET, "g");
+const HOUSEHOLD_WORD = String.raw`(?:[Hh]ousehold|[Dd]welling)`;
+const HOUSEHOLD_NAME = String.raw`[A-Z][\w.'’-]*(?:[ ][A-Z][\w.'’-]*){0,3}`;
+/** "X household (…)", where X may be possessive, or "Household of X (…)". */
+const NAMED_HOUSEHOLD_LIST_G = new RegExp(
+  String.raw`(?:\b(${HOUSEHOLD_NAME})[ ]${HOUSEHOLD_WORD}|\b${HOUSEHOLD_WORD}[ ]of[ ](${HOUSEHOLD_NAME}))[ ]?(${BRACKET})`,
+  "g",
+);
+const LIST_LABEL = /^(?:[a-z][a-z ]*:|incl\.)[ ]*/;
+const LIST_ITEM_SPLIT = /[ ]*(?:[,;&]|\band\b)[ ]*/;
+const ASIDE_G = /\([^()]*\)|\[[^\[\]]*\]/g;
+/** One person's age or birth: "age 38", "b. 1802", "abt 1800". Not an age range,
+ *  which is a tally column: "Free White Males aged 30-40". */
+const LIFE_DETAIL = /[ ]+(?:aged?[ ]*\d{1,3}\b(?!-)|(?:born|abt|ca)\b|[bc]\.|~).*$/;
+const LISTED_NAME = new RegExp(String.raw`^${ROSTER_NAME}$`);
+
+function bracketedRosters(notes: string): string[] {
+  const held: string[] = [];
+  const masked = notes.replace(BRACKET_G, (b) => `\u0000${held.push(b) - 1}\u0000`);
+  const out: string[] = [];
+  for (const part of masked.split(SENTENCE_STOP)) {
+    const sentence = part.replace(/\u0000(\d+)\u0000/g, (_, i: string) => held[Number(i)]);
+    if (!speaksForCensus(sentence)) continue;
+    for (const m of sentence.matchAll(NAMED_HOUSEHOLD_LIST_G)) {
+      if (ROSTER_OF_SPELLINGS.test(m[3])) continue;
+      const own = new Set((m[1] ?? m[2]).split(" ").map((w) => w.replace(/['’]s$/, "")));
+      const notOwn = (item: string) => item.split(" ").filter((w) => !own.has(w)).join(" ");
+      const items = m[3]
+        .slice(1, -1)
+        .replace(LIST_LABEL, "")
+        .replace(ASIDE_G, "")
+        .split(LIST_ITEM_SPLIT)
+        .map((item) => item.replace(LIFE_DETAIL, "").trim())
+        .filter((item) => item !== "");
+      if (items.some((item) => isPlaceRun(notOwn(item)))) continue;
+      const names = items.filter((item) => LISTED_NAME.test(item) && !/\d/.test(item) && !/\bCensus\b/.test(item));
+      if (names.every((name) => notOwn(name) === "")) continue;
+      if (names.length >= 2) out.push(m[3]);
+    }
+  }
+  return out;
+}
+
 function otherPersonClaims(notes: string): Claim[] {
   return censusSentences(notes)
     .flatMap((sentence) => [
@@ -1061,6 +1137,7 @@ function otherPersonClaims(notes: string): Claim[] {
       ...phrasesOf(NAMED_TALLY, sentence),
       ...phrasesOf(NAMED_IN_IT, sentence),
     ])
+    .concat(bracketedRosters(notes))
     .map(otherClaim);
 }
 

@@ -1116,15 +1116,95 @@ describe("a 1790-1840 US census names only the head", () => {
     ok("1850 census: Thomas Flynn, age 40-50; possibly his wife Mary.");
   });
 
+  // A bracketed list straight after the household name. The household name is
+  // excused, so the list is what names everyone else.
   it.each([
-    // A bracketed list after a household name is read as places: in the
-    // corpus all four are ("Robt Wood household (Resaca, Gordon)").
     "1840 census: Thomas Flynn household (Mary, Patrick, Bridget).",
+    "1840 census: Thomas Flynn household (Mary, Patrick and Bridget).",
+    "1840 census: Thomas Flynn household (Thomas Flynn, Bridget Flynn, Patrick Flynn, John Flynn).",
+    "1840 census: Cornelius Hurley household (Cornelius, Johanna, and Mary).",
+    "1840 census: Weichel household (Jacob, Josefine, Windelin, Peter, Augina, Katherina, Barbara Weichel).",
+  ])("refuses a bracketed list of names after the household name (%#)", (n) => {
+    bad(n);
+    bad(n.replace("1840", "1850"));
+  });
+
+  it("refuses a bracketed list against a staged 1840 payload", () => {
+    bad("Household of Thomas Flynn (Mary, Patrick, Bridget).", [1840]);
+    bad("Household of Thomas Flynn (Mary, Patrick, Bridget).", [1850]);
+  });
+
+  it.each([
+    ["square brackets", "1840 census: Thomas Flynn household [Mary, Patrick, Bridget]."],
+    ["a possessive", "1840 census: Thomas Flynn's household (Mary, Patrick, Bridget)."],
+    ["a dwelling", "1840 census: Thomas Flynn dwelling (Mary, Patrick, Bridget)."],
+    ["semicolons", "1840 census: Thomas Flynn household (Mary; Patrick; Bridget)."],
+    ["an ampersand", "1840 census: Thomas Flynn household (Mary & Patrick)."],
+    ["ages after commas", "1840 census: Thomas Flynn household (Mary, 38; Patrick, 12)."],
+    ["an age and a birth", "1840 census: Thomas Flynn household (Mary age 38, Patrick b. 1830)."],
+    ["asides", "1840 census: Thomas Flynn household (Mary (b. 1802), Patrick (b. 1830))."],
+    ["a label", "1840 census: Thomas Flynn household (members: Mary, Patrick)."],
+    ["incl.", "1840 census: Thomas Flynn household (incl. Mary, Patrick)."],
+    ["initials", "1840 census: Thomas Flynn household (Mary A. Flynn, Patrick Flynn)."],
+    ["the head among them", "1840 census: Thomas Flynn household (Thomas, Mary)."],
+    ["a head whose surname is a place word", "1840 census: Household of Thomas Ward (Mary Ward, Patrick Ward)."],
+  ])("refuses a bracketed list with %s", (_label, n) => bad(n));
+
+  it.each([
+    "1840 census: Thomas Flynn household (Cincinnati, Hamilton, Ohio).",
+    "1840 census: Thomas Flynn household (Fallsbury Township, Licking Co., Ohio).",
+    "1840 census: Thomas Flynn household (Birmingham).",
+    "1840 census: Benjamin Reese household (Benjamin Reese).",
+    "1840 census: Thomas Flynn household (Dwelling 84, Family 91).",
+    "1840 census: Household of David Bagley (Bagley, David).",
+    "1840 census: Thomas Flynn's household (Flynn, Thomas).",
+    "1840 census: Thomas Flynn household (Flynn, Thomas, head).",
+    "1840 census: Thomas Flynn household (XHRB-V42, XHRB-V4V).",
+    "1840 census: Thomas Flynn household (FamilySearch, United States Census, 1840, NARA M704, roll 123).",
+    "1840 census: Thomas Flynn household (Free White Males aged 30-40: 1, Free White Females aged 20-30: 1).",
+    "1840 census: Thomas Flynn household (spellings: Flynn, Flinn, Flynne).",
+    "1840 census: Thomas Flynn household (nil).",
+    "1840 census: Thomas Flynn household (1 male 30-40, 1 female 20-30).",
+  ])("accepts a bracket that names no one besides the head (%#)", (n) => {
+    ok(n);
+    bad(n.replace("1840", "1850"));
+  });
+
+  it("clears a hedged bracketed list as it clears any other claim", () => {
+    ok("1840 census: Thomas Flynn household (Mary, Patrick, Bridget), names inferred from other records.");
+  });
+
+  it("reads a bracketed list only in a sentence that speaks for the census", () => {
+    ok("1840 census: Thomas Flynn household, Branch Township. The tree has the Thomas Flynn household (Mary, Patrick, Bridget).");
+    bad("1840 census: Thomas Flynn household, Branch Township. The census has the Thomas Flynn household (Mary, Patrick, Bridget).");
+  });
+
+  it.each([
     // No head claim, so only the older arms read it, and `his son` is their
     // tree-side carve-out -- the 1850 note passes the same way.
     "1840 census: Thomas Flynn, Household head; his son Patrick is the male 5-10.",
+    // A name with a bare number is how a schedule locator is written too:
+    // "(Dwelling 84, Family 91)".
+    "1840 census: Thomas Flynn household (Mary 38, Patrick 12, Bridget 9).",
+    // Only a bracket marks where a list ends; after a comma or a dash the corpus
+    // writes places and commentary.
+    "1840 census: Thomas Flynn household, Mary, Patrick and Bridget.",
+    "1840 census: Thomas Flynn household — Mary, Patrick, Bridget.",
+    // A slash joins variant spellings as often as people.
+    "1840 census: Thomas Flynn household (Mary/Patrick/Bridget).",
+    // One item may be the head or a place.
+    "1840 census: Thomas Flynn household (Mary Flynn).",
   ])("records a shape the head-only reading still accepts (%#)", (n) => {
     ok(n);
+  });
+
+  it.each([
+    // No lexicon of names: capitalised words that are not people read as names.
+    "1840 census: Thomas Flynn household (Cincinnati, Hamilton).",
+    "1840 census: Thomas Flynn household (Free White Males, Free White Females).",
+    "1840 census: Thomas Flynn household (Flinn, Flynne).",
+  ])("records a bracket the head-only reading still refuses (%#)", (n) => {
+    bad(n);
   });
 });
 
@@ -1199,6 +1279,18 @@ describe("a refusal quotes what it fired on", () => {
     const m = message("1830 census: John Smith household, with wife Mary");
     expect(m).toMatch(/1790-1840 US census household \("1830 census"\)/);
     expect(quotes(m)).toEqual(["1830 census", "wife Mary"]);
+  });
+
+  it("quotes a bracketed list only where the head-only rule excuses the head", () => {
+    // On an 1850 schedule the household name is the claim, and the list is not read.
+    expect(quotes(message("1840 census: Thomas Flynn household (Mary, Patrick, Bridget)."))).toEqual([
+      "1840 census",
+      "(Mary, Patrick, Bridget)",
+    ]);
+    expect(quotes(message("1850 census: Thomas Flynn household (Mary, Patrick, Bridget)."))).toEqual([
+      "1850 census",
+      "Thomas Flynn household",
+    ]);
   });
 
   it("names the staged census when the payload decides", () => {

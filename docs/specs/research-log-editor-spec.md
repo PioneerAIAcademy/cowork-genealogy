@@ -528,7 +528,30 @@ Scope, and why it is this narrow:
   - two or more names with ages (`John (40), Mary (38), Thomas (12)`);
   - a name put on a tally (`Mary Flynn is the female 30-40`); the head's own
     tally reads the same way and is refused too;
-  - `⟨Name⟩ enumerated in it`.
+  - `⟨Name⟩ enumerated in it`;
+  - two or more names in a bracket straight after the household name: `Thomas
+    Flynn household (Mary, Patrick, Bridget)`, `Household of Thomas Flynn
+    [Mary, Patrick]`, `Thomas Flynn's household (Mary; Patrick)`.
+
+  The bracket is split on commas, semicolons, `&` and `and`. A lower-case label
+  opening it (`members:`, `incl.`) comes off, and so does each item's aside in
+  brackets and one person's age or birth (`age 38`, `b. 1802`; a tally's `aged
+  30-40` stays). A name is one to three capitalised words with no digit and no
+  `Census`. The bracket is not read when any item is a place (a state or
+  country name, or a place word such as `County`, `Twp` or `PA`, not counting
+  the head's own name, so `Household of Thomas Ward (Mary Ward, Patrick Ward)`
+  still reads), when every name in it is the head's own (`Household of David
+  Bagley (Bagley, David)`, the head written surname-first), when it lists
+  spellings, or when it holds one item, which may be the head or a place. So
+  `(Cincinnati, Hamilton, Ohio)`, `(Dwelling 84, Family 91)`, `(Birmingham)`,
+  `(XHRB-V42, XHRB-V4V)` and a source citation pass. With no lexicon of names,
+  two capitalised words that are not people still read as names and refuse: a
+  place list with no state or place word (`(Cincinnati, Hamilton)`), a tally
+  with no counts (`(Free White Males, Free White Females)`), and variant
+  spellings with no `spellings` word (`(Flinn, Flynne)`). The refusal quotes
+  the bracket, so adding the state, the counts or the word clears it. On an
+  1850 schedule the household name already refuses the note, so the bracket is
+  not read there.
 
   A relationship word is read whatever it qualifies, so "spouse field absent"
   beside a head claim is refused too, and the refusal quotes the word. A note
@@ -537,14 +560,24 @@ Scope, and why it is this narrow:
   paired payload op that `main` accepts, every one a search note that mentions
   a relative ("check age columns for male child ~5", "if Nehemiah is
   Elizabeth's father", "consistent with Peter Geach dying circa 1839-1840"). A
-  hedge clears any of them, as it clears the same note on an 1850 census. Two
+  hedge clears any of them, as it clears the same note on an 1850 census. These
   shapes still pass:
   - "Thomas Flynn, Household head; his son Patrick is the male 5-10". It makes
     no head claim, and `his son` is the older arms' tree-side carve-out, so the
     1850 note passes the same way.
-  - a bracketed list after the household name ("Thomas Flynn household (Mary,
-    Patrick, Bridget)"). All four such lists in the committed corpus name places
-    ("Robt Wood household (Resaca, Gordon)").
+  - names with bare numbers, `(Mary 38, Patrick 12)`. A schedule locator is
+    written the same way (`(Dwelling 84, Family 91)`), and nothing short of a
+    lexicon tells the two apart.
+  - a list after a comma or a dash (`Thomas Flynn household, Mary, Patrick and
+    Bridget`, `Thomas Flynn household — Mary, Patrick`). Only a bracket marks
+    where a list ends, and after a household name the committed run logs put
+    places and commentary there: 54 of their distinct notes have a comma there
+    and 10 a dash (2026-10-19), and none of them lists people.
+  - names joined by slashes, `(Mary/Patrick/Bridget)`: a slash joins variant
+    spellings as often as people.
+  - a single name, `(Mary Flynn)`.
+
+  `pre1880-census-hedge.test.ts` pins each of these, and each refusal above.
 
   A note that also names an 1850–1870 census keeps the full rule for
   it, and any other year ("1801 census", which the US did not take) or a British
@@ -552,13 +585,15 @@ Scope, and why it is this narrow:
   2026-10-14 ruling that this check does not change (lead, 2026-10-18): that
   ruling was made for survey-surname tables (survey-surname-agent-spec.md, "The
   hedge line") and did not consider these shapes. Measured with
-  `dev/measure-census-hedge-refusals.ts` against `main` at f0f1483a4, together
-  with the binding above, the reading for anyone else and the two roster fixes
-  below: **0** notes and **0** paired payload ops newly refused, **5** notes
-  newly freed — four nil searches for an 1830 or 1840 household and one 1840
-  hit that names only its head, through the FamilySearch record title it
-  quotes. That hit's one relationship word, "the father named in the 1884 death
-  records", sits in a sentence about another record.
+  `dev/measure-census-hedge-refusals.ts` against `main` at 0ae117dd2
+  (2026-10-19), together with the binding above, the reading for anyone else,
+  the bracket reading and the two roster fixes below: **0** notes and **0**
+  paired payload ops newly refused, **5** notes newly freed — four nil searches
+  for an 1830 or 1840 household and one 1840 hit that names only its head,
+  through the FamilySearch record title it quotes. That hit's one relationship
+  word, "the father named in the 1884 death records", sits in a sentence about
+  another record. The bracket reading alone changes no committed note's
+  verdict, in either direction, against this branch without it.
 - **Undecidable inputs skip** rather than guessing: when no year binds to a
   census at all, the note-only gate does not fire — the same behaviour as an
   undocumented jurisdiction. What this gives up: an unhedged pre-1880 US census
