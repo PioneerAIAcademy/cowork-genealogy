@@ -130,6 +130,7 @@ describe("wikipediaSearch — which search hit it takes", () => {
   ];
   const SAINT_ETIENNE = ["Saint-Étienne", "AS Saint-Étienne", "Saint Etienne (band)", "Saint Etienne discography", "CA Saint-Étienne Loire Sud Rugby"];
   const OSTEROY = ["Hamre, Osterøy", "Osterøy Municipality", "Hordaland", "Etne Municipality", "Os Municipality (Hordaland)"];
+  const MOOREA = ["Moʼorea", "French Polynesia", "Marquesas Islands", "Society Islands", "Index of French Polynesia–related articles"];
   const GEORGIA = [
     "Tamar of Georgia",
     "History of Georgia (U.S. state)",
@@ -159,6 +160,8 @@ describe("wikipediaSearch — which search hit it takes", () => {
     ["Saint Etienne history", SAINT_ETIENNE, "Saint-Étienne"],
     ["Hamre parish Osteroy Hordaland Norway history", OSTEROY, "Hamre, Osterøy"],
     ["Georgia state history genealogy records 19th century", GEORGIA, "History of Georgia (U.S. state)"],
+    ["Mo'orea island history French Polynesia", MOOREA, "Moʼorea"],
+    ["O'Brien family history Ireland", ["O’Brien", "O'Brien (surname)"], "O’Brien"],
   ])("resolves '%s' to the hit whose title it spells out", async (query, hits, title) => {
     status(404);
     searchHits(hits);

@@ -60,9 +60,14 @@ const FUNCTION_WORDS = new Set([
 // ("Osteroy" for "Osterøy"), and ß, which case folding spells ss.
 const UNDECOMPOSED: Record<string, string> = { ø: "o", ł: "l", đ: "d", ħ: "h", ŧ: "t", ı: "i", ß: "ss" };
 
-/** Case-folded words with diacritics stripped, split on anything that is not a letter or digit. */
+/**
+ * Case-folded words with diacritics stripped, split on anything that is not a
+ * letter or digit. An apostrophe (', ’, ʼ) is removed, neither a letter nor a
+ * split, so "Mo'orea" reads as "Moʼorea", whose ʼ Unicode counts as a letter.
+ */
 function words(text: string): string[] {
   return text
+    .replace(/['’ʼ]/g, "")
     .normalize("NFD")
     .replace(/\p{M}/gu, "")
     .toLowerCase()

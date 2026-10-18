@@ -33,8 +33,9 @@ Example:
 
 **A hit matches when every significant word of its title appears in the
 query.** Both are compared as words: case-folded, diacritics stripped (a
-stroked letter counts as its bare letter, so `ø` reads as `o`), and split on
-anything that is not a letter or digit. A trailing parenthetical is dropped
+stroked letter counts as its bare letter, so `ø` reads as `o`), apostrophes
+(`'`, `’`, `ʼ`) removed rather than read as a letter or a split, so `"Mo'orea"`
+matches `"Moʼorea"`, and split on anything else that is not a letter or digit. A trailing parenthetical is dropped
 from the title first, and these small words in it need not appear in the
 query: of, the, and, in, on, at, a, an, de, la, le, du, des, von, van, der. A
 title made only of those words never matches. Search ranks by relevance, not
@@ -204,7 +205,7 @@ The index.ts is the MCP server entry point that registers all tools. Update it t
 | 2 | A descriptive query that 404s as a title resolves through search; the result carries the hit's real title |
 | 3 | A search with no hit keeps the not-found error |
 | 4 | Hits none of whose titles the query spells out keep the not-found error (`"Maddock North Dakota history"`, `"Hollow Creek Settlement"`, on their live hit lists) |
-| 5 | Hits that match still resolve, through diacritics, a stroked letter, small words and a parenthetical (`"Luo people"`, `"Schuylkill County, Pennsylvania"`, `"Saint-Étienne"`, `"Hamre, Osterøy"`, `"History of Georgia (U.S. state)"`) |
+| 5 | Hits that match still resolve, through diacritics, a stroked letter, apostrophes, small words and a parenthetical (`"Luo people"`, `"Schuylkill County, Pennsylvania"`, `"Saint-Étienne"`, `"Hamre, Osterøy"`, `"Moʼorea"`, `"O’Brien"`, `"History of Georgia (U.S. state)"`) |
 | 6 | A matching second hit is taken over a first that does not match; a title made only of small words is never taken |
 | 7 | A summary error other than 404 is reported without searching |
 | 8 | A failed search is reported as a search error, not as no article |
