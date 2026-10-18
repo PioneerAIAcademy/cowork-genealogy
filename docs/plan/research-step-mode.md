@@ -6,7 +6,7 @@ Phase 0 (a probe) comes first and changes no product code. This merges two draft
 single-pass plan drawn from feedback issue #3475, and a one-step-per-turn draft. plan-critic
 has reviewed this merged version six times, and its findings are folded in. After round 4,
 "Keep going" was simplified to replies the host sends for the researcher (decision 13).
-Decisions 14–20 were added on 2026-10-18; plan-critic has reviewed them once.
+Decisions 14–20 were added on 2026-10-18; plan-critic has reviewed them twice.
 
 ## Decisions taken (lead, 2026-10-16)
 1. **Step mode on every production plane:** Cowork, the hosted web app (the alpha) and the
@@ -392,11 +392,11 @@ that apply:
     - there is no summary;
     - no plan item is open, not counting one waiting only on an upload;
     - every log entry of the question is listed in `search_stop.log_entry_ids`. Those are the
-      entries on its plans' items, plus each capture that closes one of its hand-offs. A
-      closing entry carries no `plan_item_id`, so it is matched by `(site, url_generated)`,
-      as `planItemCapturePendingInvariants` already matches it (`research-append.ts`). Today
-      `questionStatus` filters the log by `plan_item_id` alone, so an upload would never undo
-      the choice.
+      entries on its plans' items, plus each later entry that closes one of its hand-offs. A
+      closing entry carries no `plan_item_id`, so it is matched by URL with the same
+      `closesHandOff` rule `awaitingUserHandOffs` uses, from the one helper section I moves
+      into `src/utils`. Today `questionStatus` filters the log by `plan_item_id` alone, so an
+      upload would never undo the choice.
   - **It then reports** "researcher's choice: research-plan or proof-conclusion", with the
     default read from `justification`. A `justification` with no "Overturn risk:" prefix, such
     as an older stop, defaults to research-plan.
@@ -534,27 +534,49 @@ that apply:
   1850 census?" becomes a plan item on the current question (research-plan's edit or add-new
   mode), at any boundary.
 - **A different question mid-run,** at any boundary including the "not exhaustive" choice,
-  gets a reply that names the current question and ends
-  "Continue with setting this question aside?" (`STEP_LABELS` gains `set-aside`). Its buttons
-  are Set it aside, plus Wrap it up when the question has evidence (section A). The router
-  remembers the new question from the conversation.
+  is handled by the current question's state. The router remembers the new question from the
+  conversation.
+  - **The current question has a proof summary and no open item:** E's rule already admits the
+    new question, so question-selection writes it with no offer.
+  - **The current question is `exhaustive_declared` with no summary:** it is one step from
+    concluded, and the engine refuses a non-gate stop at that status
+    (`declarationStatusInvariants`, `research-append.ts`). The reply says so and ends "Continue
+    with writing the conclusion?"; the new question is offered after it.
+  - **Otherwise** the reply names the current question and ends "Continue with setting this
+    question aside?" (`STEP_LABELS` gains `set-aside`). Its buttons are Set it aside, plus Wrap
+    it up when the question has evidence (section A).
   - **"Set it aside."** (or "Continue.", which runs the offered step) is one
     research-exhaustiveness step. The router's delegation says it is a set-aside, as it passes
-    `userPresent`. research-exhaustiveness writes only a marker: `search_stop` with
+    `userPresent`. A set-aside delegation skips Steps 0–3 entirely, since none of their checks
+    bears on parking, and writes only a marker: `search_stop` with
     `stopped_because: "set_aside"`, `stop_criteria: null`, a one-line `justification`, and
-    empty `log_entry_ids` and `not_reached`. Step 0's refusal on open items does not apply to
-    it. Plan items are left as they are. No conclusion is written. The turn ends "Continue with
-    choosing the next question?", and question-selection writes the new one next turn.
+    empty `log_entry_ids` and `not_reached`. The question is `in_progress` here, by the cases
+    above. Plan items are left as they are. No conclusion is written. The turn ends "Continue
+    with choosing the next question?", and question-selection writes the new one next turn.
   - **"Wrap it up."** concludes the current question first (section B2), then offers the new
     one the same way.
   - **A set-aside question is parked.** The ladder's `set_aside` arm reports no next step
-    (section B), `step_ctx` and `reply_options` skip it (section A), and an upload for one of its
-    hand-offs is triaged and logged without resuming it.
-  - **Resuming one** is a researcher's message naming it. The router sets the current
-    question aside first, the same way, then research-exhaustiveness clears the old question's
-    `search_stop` to null. The ladder then routes it from its real state, open items included.
-  - **Completion:** the router's completion rows need every question `resolved` or set aside.
-    proof-conclusion's final report names each set-aside question and how to resume it.
+    (section B), and `step_ctx`, `reply_options` and the router skip it (section A, and
+    below).
+  - **The router reads every routing row for `current_question` only** (section A): its
+    unextracted log entries, unlinked assertions, conflicts and active-plan items. Today the
+    rows read project-wide state (`skills/research/SKILL.md:208-229`), and search-records takes
+    "the active plan for the current question" without defining it. So a parked question's open
+    items and unextracted captures wait, and an upload for one of its hand-offs is triaged and
+    logged, and nothing more.
+  - **Resuming one** is a researcher's message naming it. The router handles the current
+    question first by the cases above. Then research-exhaustiveness resets the old question's
+    `search_stop` to the shape question-selection writes on creation (`stopped_because: null`).
+    It cannot be written as null: `search_stop` is required and not nullable (`validator.ts`,
+    `NULLABLE_FIELDS`). The ladder then routes it from its real state, open items included.
+  - **Completion (decision 20):**
+    - the router's completion rows need every question `resolved` or set aside;
+    - proof-conclusion's §8 (`agents/proof-conclusion.md:327`) writes `completed` on the same
+      test, and its final report names each set-aside question and how to resume it;
+    - the completion gate leaves out conflicts on assertions tied only to set-aside questions:
+      `questionTiedAssertionIds` (`question-state.ts`) skips a set-aside question, with the
+      gate's refusal text and `research-append-tool-spec.md`. A parked question has no
+      conclusion for a conflict to contest.
   - **The viewer** labels a `set_aside` stop "Set aside" (section B). The question's status
     stays `in_progress`, so no new status is needed.
 - **Work that used to open a helper question becomes plan items on the main question:**
@@ -670,7 +692,7 @@ Step mode removes the runaway structurally:
   front door.
 
 ### I. External-site searches (errands)
-Today `search-external-sites` builds the URL, logs it with `captureReceived: false` (the row
+Today `search-external-sites` builds the URL, logs it with `capture_received: false` (the row
 `project_context` reports in `awaitingUser`), sets the plan item `in_progress`, hands the link
 over and returns. It never waits inside a call. A capture that comes back later is triaged by a
 new spawn. That already fits step mode: the wait is a step boundary.
@@ -680,8 +702,8 @@ new spawn. That already fits step mode: the wait is a step boundary.
   ends "Continue with linking the records?", so the researcher can carry on and upload
   whenever they like.
 - **"Waiting only on an upload"** means an `in_progress` item with an open hand-off: an
-  `external_site` entry with `outcome: "partial"` and `captureReceived: false` that no later
-  entry closes. That is exactly `awaitingUserHandOffs` (`project-context.ts`), which moves into
+  `external_site` entry with `outcome: "partial"` and `capture_received: false` that no later
+  entry closes (`closesHandOff`). That is exactly `awaitingUserHandOffs` (`project-context.ts`), which moves into
   `src/utils` so `project_context`, `question-state.ts` and `research-append.ts` share it.
   `step_ctx` mirrors it in Python, and both suites read one shared fixture. The capture-pending
   rule (`planItemCapturePendingInvariants`) is unchanged. Such an item does not count as open
@@ -887,8 +909,9 @@ after PR 1. Until it does, PR 1's deny reason alone makes each turn report and s
      order, each with its route test. The first to merge carries the ladder's conflict-evidence
      rule (E), its `question-state.test.ts` cases and the `project-context-tool-spec.md` line,
      because the new route loops without it.
-  3. **proof-conclusion,** after PR #3476 merges, independent of the others: C, and E's route
-     line (`:343`), with its route test.
+  3. **proof-conclusion,** after PR #3476 merges, independent of the others: C, E's route line
+     (`:343`) with its route test, and §8's completion test and final report for set-aside
+     questions (decision 20). The §8 wording is a no-op until PR 1 adds `set_aside`.
 - **PR 1 — code and CI tests:**
   - `step_boundary.py` (the predicate with mode `wrapup`, `step_ctx`, `current_question`,
     `next_auto_reply`, `reply_options`, `STEP_LABELS` with `set-aside`, and the Cowork entry
@@ -918,7 +941,10 @@ after PR 1. Until it does, PR 1's deny reason alone makes each turn report and s
     with its exemption (a `set_aside` stop, or a proof summary and no open item) and the
     11 rewritten tests; three `question-state.ts` changes (the `set_aside` arm, B's choice with
     its closing-entry coverage, and the concluded arm routing to proof-conclusion), with
-    `question-state.test.ts`. E's conflict-evidence rule ships in the first route PR;
+    `question-state.test.ts`. E's conflict-evidence rule ships in the first route PR.
+    `questionTiedAssertionIds` skips set-aside questions, with the completion gate's refusal
+    text and `research-append-tool-spec.md` (E). The `project_context` tool description's list
+    of states gains the parked state, beside `project-context-tool-spec.md`;
   - **web:** the buttons from `turn_done.options`, `options` on both hosted planes (with the
     prototype's new `research.json` read in `complete()`), host replies shown as automatic, and
     the `completed` string;
@@ -938,11 +964,12 @@ after PR 1. Until it does, PR 1's deny reason alone makes each turn report and s
   - **the router:** A's deletions; the step report and only the replies that apply; the search
     fan-out, external items included (D, I); the choice replacing the loop row (`:225`);
     wrap-up (B2) and `userPresent` for person-evidence; the different-question reply and
-    set-aside, resume and the completion rows (E); the upload turn (I); questions between
+    set-aside, resume, the completion rows, and every routing row read for `current_question`
+    only (E); the upload turn (I); questions between
     steps (J); Cowork's one-turn "Keep going" sentence (A2); the objective row (E) and the
     deleted "return to question-selection" line;
-  - **research-exhaustiveness:** B, B2, waiting items (I), and E's `set_aside` marker and its
-    clearing on resume;
+  - **research-exhaustiveness:** B, B2, waiting items (I), and E's `set_aside` marker (a
+    set-aside delegation skips Steps 0–3) and its reset to the creation shape on resume;
   - **person-evidence:** B2's reworded autonomy rule;
   - **question-selection:** E's changes, including its gate text;
   - **tests:**
@@ -1041,7 +1068,9 @@ after PR 1. Until it does, PR 1's deny reason alone makes each turn report and s
 5. **The `question-state` changes:**
    - B's branch fires with `resources_spent`, no summary, no open item and full log coverage;
    - a `set_aside` stop parks the question with no next step, even beside an open conflict or
-     an open item, and a cleared stop routes it from its real state;
+     an open item, and a stop reset to the creation shape routes it from its real state;
+   - the completion gate ignores an unresolved conflict tied only to a set-aside question, and
+     still refuses one tied to the current question;
    - a `justification` with no "Overturn risk:" prefix defaults to research-plan;
    - E's rule: when every open conflict carries `independence_analysis` and a plan item is
      open, the next step is search-records;
@@ -1085,6 +1114,15 @@ after PR 1. Until it does, PR 1's deny reason alone makes each turn report and s
      one's stop;
    - with one question resolved and one set aside, the router's completion rows complete the
      project, and proof-conclusion's report names the set-aside question;
+   - a different question right after a search step, with personas still unlinked, writes the
+     `set_aside` marker;
+   - a different question while the current one is `exhaustive_declared` with no summary ends
+     "Continue with writing the conclusion?"; while it has a summary and no open item,
+     question-selection writes the new question with no offer;
+   - a resume resets the old question's `search_stop` to the creation shape, and the write
+     validates;
+   - with a parked question holding planned items and an unextracted capture, the next turn
+     works the new question;
    - a question after the search step is answered, spawns no agent, and ends with the same
      "Continue with linking the records?" line;
    - a search step with an external item hands out the link and still offers linking; an
