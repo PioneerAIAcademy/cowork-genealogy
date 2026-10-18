@@ -569,7 +569,7 @@ that apply:
 - **Five sites that route this work to question-selection now route it to research-plan:**
   - `agents/conflict-resolution.md:358-359` and `:495-497`;
   - `agents/hypothesis-tracking.md:451`;
-  - `agents/timeline.md:822` (high-severity timeline gaps; timeline is reachable from
+  - `agents/timeline.md:822-823` (high-severity timeline gaps; timeline is reachable from
     `agents/conflict-resolution.md:498-500`);
   - `agents/proof-conclusion.md:343` ("tier could advance → question-selection or
     research-plan").
@@ -880,7 +880,8 @@ file's own sections, top to bottom.
 
 | Item | Under step mode |
 |---|---|
-| S1 (`init-project`), S5 (`record-extraction`) | **Unchanged in scope** |
+| S1 (`init-project`) | **Unchanged in scope** |
+| S5 (`record-extraction`) | **Gone:** the skill was retired; extraction runs in code through `extraction_append` and the record-structurer agent |
 | The narration guidance's "do not narrate between actions" | **Becomes the step-report rule:** one paragraph per step, what was found and what comes next |
 | "The literal is gone from every body"; the web Continue button removed | **A new literal and buttons return:** "Continue with …?", distinct from the retired "Next: <step>. Continue?". `hand_back.py` now matches the new line, for the alpha's "Keep going" replies (section A2) |
 
