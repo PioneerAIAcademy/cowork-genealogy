@@ -27,7 +27,8 @@ How each figure is measured:
 - Main-thread work belongs to the skill loaded last, until the next `Skill` call.
 - A cache rewrite is the first main-thread call after an agent returns reading
   at least `REWRITE_MIN_TOKENS` less than the previous call's context held; the
-  shortfall's write price above a read is its cost.
+  shortfall's write price above a read is its cost. The first call after a
+  compaction is never one: no cache read could serve the new context.
 
 Run from eval/harness/:
   uv run python -m e2e.feedback_profile ~/Downloads/feedback-<ts>.zip [--since ISO] [--json PATH]
@@ -327,7 +328,7 @@ def analyze(rows: list[dict], agent_paused: dict[str, float] | None = None) -> d
     pauses: list[tuple[float, float]] = []
     builds: set[str] = set()
     prev_t: float | None = None
-    agent_returned = False
+    agent_returned = compacted = False
     for t, d in events:
         returned = _returned_agents(d, tool_uses)
         if prev_t is not None:
@@ -357,6 +358,7 @@ def analyze(rows: list[dict], agent_paused: dict[str, float] | None = None) -> d
             if isinstance(content, str):
                 if content.startswith(COMPACTION_PREFIX):
                     compactions += 1
+                    compacted = True
                 timeline.append((t, "prompt", {"text": content[:300]}))
             elif isinstance(content, list):
                 for block in content:
@@ -372,14 +374,16 @@ def analyze(rows: list[dict], agent_paused: dict[str, float] | None = None) -> d
                     elif block.get("type") == "text" and \
                             (block.get("text") or "").startswith(COMPACTION_PREFIX):
                         compactions += 1
+                        compacted = True
         elif d.get("type") == "assistant":
             mid = next((v for v in (message.get("id"), d.get("uuid")) if isinstance(v, str) and v), str(t))
             m = msgs.get(mid)
             if m is None:
                 m = msgs[mid] = {"start": prev_t if prev_t is not None else t, "usage": {},
                                  "model": message.get("model"), "stop": None, "thinking_chars": 0,
-                                 "text_chars": 0, "tools": [], "after_agent": agent_returned}
-                agent_returned = False
+                                 "text_chars": 0, "tools": [], "after_agent": agent_returned,
+                                 "after_compaction": compacted}
+                agent_returned = compacted = False
             m["end"] = t
             if isinstance(message.get("usage"), dict) and message["usage"]:
                 m["usage"] = message["usage"]
@@ -431,7 +435,7 @@ def analyze(rows: list[dict], agent_paused: dict[str, float] | None = None) -> d
                       "is_error": r["is_error"] if r else None, "result_head": r["head"] if r else None})
     model_calls = []
     prev_ctx = 0
-    pending = False
+    pending = compacted = False
     for mid, m in msgs.items():
         u = m["usage"]
         ctx = sum(_tokens(u, f) for f in ("input_tokens", "cache_creation_input_tokens",
@@ -440,12 +444,13 @@ def analyze(rows: list[dict], agent_paused: dict[str, float] | None = None) -> d
         covered = m["thinking_chars"] + m["text_chars"] >= GEN_CHARS_PER_S * latency
         rewritten, rewrite_cost = 0, 0.0
         pending = pending or m["after_agent"]
+        compacted = compacted or m["after_compaction"]
         if ctx:
             shortfall = prev_ctx - _tokens(u, "cache_read_input_tokens")
-            if pending and prev_ctx and shortfall >= REWRITE_MIN_TOKENS:
+            if pending and not compacted and prev_ctx and shortfall >= REWRITE_MIN_TOKENS:
                 rewritten = min(_tokens(u, "cache_creation_input_tokens"), shortfall)
                 rewrite_cost = _rewrite_cost(rewritten, u, m["model"])
-            pending = False
+            pending = compacted = False
             prev_ctx = ctx
         cost = pricing.estimate_message_cost(u, m["model"])
         out = _tokens(u, "output_tokens")
@@ -718,8 +723,8 @@ def format_report(profile: dict[str, Any]) -> str:
           _mins(s["paused_min"]), _usd(s["main_cost"]), _n(s["main_model_calls"]), _n(s["compactions"]),
           _n(s["agent_runs"]), _n(s["missing_agent_transcripts"]), _n(s["cache_rewrites"]),
           _usd(s["cache_rewrite_cost"])] for s in sessions])
-    lines += ["  rewrites = main-thread calls after an agent returned that re-wrote the cached context; "
-              "rewrite $ = their cost above a cache read.", "",
+    lines += ["  rewrites = main-thread calls after an agent returned that re-wrote the cached context, "
+              "never the first call after a compaction; rewrite $ = their cost above a cache read.", "",
               "AGENTS BY TYPE (active min and $ as total/p50/max; capped = turns stopped at the "
               f"output cap, max_tokens; >50k = tool results over {BIG_RESULT_CHARS:,} chars)"]
     lines += _table(

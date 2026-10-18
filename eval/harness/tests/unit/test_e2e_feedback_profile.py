@@ -150,7 +150,12 @@ def test_a_message_is_priced_from_its_last_usage_line(tmp_path):
     assert agent["cost_total"] == round(expected, 2)
 
 
-def test_only_a_call_after_an_agent_that_misses_the_cache_is_a_rewrite(tmp_path):
+COMPACTION = "This session is being continued from a previous conversation that ran out of context."
+
+
+@pytest.mark.parametrize("compaction", [COMPACTION, [{"type": "text", "text": COMPACTION}]],
+                         ids=["string-prompt", "text-block"])
+def test_only_a_call_after_an_agent_that_misses_the_cache_is_a_rewrite(tmp_path, compaction):
     def agent_call(uuid, t, msg_id, tool_use_id, read, write):
         return _assistant(uuid, t, msg_id, [{"type": "tool_use", "id": tool_use_id, "name": "Agent",
                                              "input": {"subagent_type": "x", "prompt": "go"}}],
@@ -167,10 +172,21 @@ def test_only_a_call_after_an_agent_that_misses_the_cache_is_a_rewrite(tmp_path)
         _user("m7", 2000, "and now?"),
         _assistant("m8", 2010, "msg_4", [{"type": "text", "text": "ok"}],
                    {"input_tokens": 5, "cache_read_input_tokens": 27_000, "cache_creation_input_tokens": 31_000}),
+        agent_call("m9", 2020, "msg_5", "tu_3", read=58_000, write=500),
+        _user("m10", 2900, _result("tu_3", "done")),
+        _user("m11", 2950, compaction),
+        _assistant("m12", 2960, "msg_6", [{"type": "text", "text": "ok"}],
+                   {"input_tokens": 5, "cache_read_input_tokens": 0, "cache_creation_input_tokens": 12_000}),
+        agent_call("m13", 2970, "msg_7", "tu_4", read=12_000, write=300),
+        _user("m14", 3870, _result("tu_4", "done")),
+        _assistant("m15", 3880, "msg_8", [{"type": "text", "text": "ok"}],
+                   {"input_tokens": 5, "cache_read_input_tokens": 0, "cache_creation_input_tokens": 12_500}),
     ]
     session = _profile(_write_bundle(tmp_path, "feedback-a", rows))["sessions"][0]
-    assert session["cache_rewrites"] == 1
-    assert session["cache_rewrite_cost"] == round((50_005 - 27_000) * (3.00 * 1.25 - 0.30) / 1_000_000, 2)
+    assert session["compactions"] == 1
+    assert session["cache_rewrites"] == 2
+    rewritten = (50_005 - 27_000) + 12_305
+    assert session["cache_rewrite_cost"] == round(rewritten * (3.00 * 1.25 - 0.30) / 1_000_000, 2)
 
 
 def test_a_call_queued_behind_an_agent_is_timed_from_the_agent_s_return(tmp_path):
