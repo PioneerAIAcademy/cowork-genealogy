@@ -1121,10 +1121,10 @@ function householdClaims(notes: string): Claim[] {
   return claims;
 }
 
-/** Up to eight distinct phrases, quoted: runs of whitespace closed up, and a
- *  phrase that sits inside a longer one dropped. */
+/** Up to eight distinct phrases, quoted: double quotes taken out, runs of
+ *  whitespace closed up, and a phrase that sits inside a longer one dropped. */
 function quoted(phrases: readonly string[]): string {
-  const clean = phrases.map((p) => p.replace(/\s+/g, " ").trim());
+  const clean = phrases.map((p) => p.replace(/["“”]/g, "").replace(/\s+/g, " ").trim());
   const lower = clean.map((p) => p.toLowerCase());
   const distinct = clean.filter(
     (p, i) => lower.indexOf(lower[i]) === i && !lower.some((q) => q.length > p.length && q.includes(lower[i])),

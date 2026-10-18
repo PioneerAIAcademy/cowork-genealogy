@@ -159,6 +159,7 @@ const MUTATIONS: readonly (readonly [string, string, string])[] = [
   ["quotes: the pre- prefix", '`${prefix ?? ""}${m[0].slice(vital.length)}`', "m[0].slice(vital.length)"],
   ["quotes: at most eight", "distinct.slice(0, 8)", "distinct"],
   ["quotes: a long one cut", "p.length > 80 ?", "false ?"],
+  ["quotes: double quotes out", 'p.replace(/["“”]/g, "").replace(', "p.replace("],
   ["quotes: each phrase once", "lower.indexOf(lower[i]) === i && ", ""],
   ["quotes: none inside another", " && !lower.some((q) => q.length > p.length && q.includes(lower[i]))", ""],
 ];

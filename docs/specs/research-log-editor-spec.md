@@ -382,7 +382,7 @@ it searches (`applyAltNameAutoPair`), so a log naming that half is true.
 | `stagedResultsRef` does not resolve under `projectPath/results/.staging/` | input error; write nothing |
 | `stagedResultsRef` names no staged file — already logged by an earlier successful call, pruned after 24h, or never staged | input error, raised before any op is applied; write nothing. The message says each staged ref can be logged once: do not log it again if the search already has an entry, otherwise re-run the search |
 | a batch names one `stagedResultsRef` in two ops | input error `ops[j]: stagedResultsRef '…' is also ops[i]'s`, raised before any op is applied; write nothing. Compared on the resolved path, so two spellings of one file collide |
-| `notes` states the household structure of a census that carries no relationship-to-head column, without hedging it — the census the note names, or, for a `record_search` entry, the one its staged response shows; a staged `record_search` or `record_read` response whose titles are all British also supplies the jurisdiction of a census the note names without one | input error; write nothing, and in a batch no op's staged file is consumed. The message quotes the census and every phrase it read as structure, names the missing column and quotes a compliant rewording, so the caller can fix the note in one try. See §8.2 |
+| `notes` states the household structure of a census that carries no relationship-to-head column, without hedging it — the census the note names, or, for a `record_search` entry, the one its staged response shows; a staged `record_search` or `record_read` response whose titles are all British also supplies the jurisdiction of a census the note names without one | input error; write nothing, and in a batch no op's staged file is consumed. The message quotes the census and up to eight of the phrases it read as structure, names the missing column and quotes a compliant rewording, so the caller can fix the note in one try. See §8.2 |
 | an explicit `query` on a staged `record_search` or `fulltext_search` entry names a filter key, with a value, that the staged search never sent | input error; write nothing, and in a batch no op's staged file is consumed. The message names each key and the value the call claimed, and says how to re-send: drop the key, omit `query` so the tool fills it, or re-run the search with the filter. No override. See §8.3 |
 | `notes` (single-entry, or any op's) arrives JSON-escaped: no real newline once leading and trailing whitespace is ignored, at least two literal `\n`, and at least one literal `\n` that opens a table row (`\|`) or heading (`#`) | decoded, then handled as if sent decoded, with no warning. It decodes only `\n \r \t \" \\ \/ \uXXXX`; any other backslash (`\|`, `\*`, `\'`) is kept as sent. A second pass runs if the result still looks escaped, and no more than two. A trailing `"` is dropped first when it is the only unescaped quote in the note, since it is the escaped string's own closing quote. The decode runs before every precondition and before persistence, so the census check (§8.2) and validation judge the stored text. `unescapeJsonNotes` |
 
@@ -723,8 +723,9 @@ Scope, and why it is this narrow:
 - **The refusal quotes what it fired on**: the census as the note wrote it
   ("1850 census", "pre-1880 census"), or the staged census years when the
   payload decided, and the phrases it read as structure, as written ("wife
-  Mary", "household of", "William Mullen household"), each once and none
-  that sits inside a longer one, up to eight. Without them
+  Mary", "household of", "William Mullen household") but with the note's own
+  double quotes taken out, each once and none that sits inside a longer one,
+  up to eight. Without them
   the caller had to guess which words to change, and a birth year read as a
   census year ("census 1853") was invisible.
 - **The hedge is accepted however it is hyphenated.** The refusal message spells

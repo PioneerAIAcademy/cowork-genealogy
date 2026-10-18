@@ -1225,6 +1225,11 @@ describe("a refusal quotes what it fired on", () => {
     for (const phrase of q) expect(n).toContain(phrase);
   });
 
+  it("takes the note's own double quotes out of a quoted phrase", () => {
+    const m = message('1850 census: Mary listed as "wife" of Thomas Flynn household.');
+    expect(quotes(m)).toEqual(["1850 census", "Thomas Flynn household", "as wife"]);
+  });
+
   it("quotes each phrase once, and not one that sits inside another", () => {
     expect(quotes(message("1850 census: Household of David Bagley, Mary Bagley and John Bagley."))).toEqual([
       "1850 census",
