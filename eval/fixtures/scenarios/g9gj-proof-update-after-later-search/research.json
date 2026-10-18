@@ -1502,7 +1502,8 @@
       ],
       "tier": "probable",
       "vehicle": "summary",
-      "shortfall": "gap"
+      "shortfall": "gap",
+      "updated": "2026-10-09T17:25:00.000Z"
     },
     {
       "id": "ps_002",
@@ -1518,7 +1519,8 @@
       ],
       "tier": "not_proved",
       "vehicle": "statement",
-      "shortfall": "gap"
+      "shortfall": "gap",
+      "updated": "2026-10-09T15:50:00.000Z"
     }
   ],
   "evaluations": []
