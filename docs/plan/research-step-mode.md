@@ -578,6 +578,40 @@ that apply:
     resolved or not (`agents/conflict-resolution.md:348-352`).
   - **Once the items close,** the arm fires again and conflict-resolution weighs the new
     evidence.
+- **Ending on an unsettled conflict.** Today the conflict arm (`questionStatus`,
+  `question-state.ts`) and the router's "Evidence conflicts present" row
+  (`skills/research/SKILL.md:220`) send any unresolved conflict to conflict-resolution. Once a
+  conflict cannot be settled and nothing is left to search, every "Continue" re-runs it on the
+  same evidence. Nothing in the documents tells "new evidence to weigh" from "already weighed",
+  because conflict-resolution fills both analysis fields on every pass and conflicts carry no
+  timestamp. So:
+  - **A new optional conflict field, `weighed_log_entry_ids`:** the question's log entries
+    conflict-resolution has weighed, written on every analysis. It mirrors
+    `search_stop.log_entry_ids`. "The question's log entries" is B's coverage set: entries on
+    its plans' items plus closing entries matched by `closesHandOff`.
+  - **The ladder gains one arm, above the conflict arm.** When every open conflict has
+    weighed every log entry of the question, and no plan item is open (an item waiting only on
+    an upload aside):
+    - if the question's `search_stop` is `blocked_by_conflict` and its `log_entry_ids` cover
+      every log entry, there is no next step: "the research ended on an unsettled conflict";
+    - otherwise the next step is proof-conclusion.
+  - **proof-conclusion in that state** writes or refreshes the `not_proved` summary with
+    `shortfall: "conflict"`, leaves the question open (decision 12), and in the same batch
+    writes the question's `search_stop` as `blocked_by_conflict`, listing every log entry.
+    The plugin hook routes only stop-gate values (`ownership.json`'s `search_stop` notes), and
+    proof-conclusion already updates the question in §7's batch.
+  - **A later upload or steer** adds a log entry neither list covers, so the conflict goes
+    back to conflict-resolution to weigh it.
+  - **The router's conflict row** follows the ladder's `nextStep` for the question, not the
+    bare presence of a conflict.
+  - **Step reports:** conflict-resolution's report on a pass that cannot settle anything and
+    names no record left to search, and proof-conclusion's report in this state, end without
+    a "Continue with …?" line. The researcher's buttons are then empty, and the reply names
+    Wrap it up and a different question as the ways on.
+  - **Schema sites** (a new optional field): both `research.schema.json` trees' conflict
+    entry, `research-schema-spec.md`'s conflicts table, `RESEARCH_SHAPES.conflict`'s allowed
+    keys and a type check in `validator.ts`'s conflicts block, and the `Conflict` interface in `packages/schema/src/index.ts` (optional,
+    not nullable).
 - **After the round settles the conflict,** the ladder's "concluded; mark the question
   resolved" arm (`question-state.ts:429-434`) would send the question to question-selection,
   which writes no resolution. It routes to proof-conclusion instead, which refreshes the summary
@@ -911,27 +945,34 @@ after PR 1. Until it does, PR 1's deny reason alone makes each turn report and s
   - the worker's turn-close `completed`;
   - **writer and ladder rules:** E's rule replacing `newQuestionWhileSearchInFlightInvariants`,
     with its exemption (a proof summary and no open item) and the 11 rewritten tests; two
-    `question-state.ts` changes (B's choice with its closing-entry coverage, and the concluded
-    arm routing to proof-conclusion), with `question-state.test.ts`. E's conflict-evidence rule
-    ships in the first route PR;
+    `question-state.ts` changes (B's choice with its closing-entry coverage, the concluded
+    arm routing to proof-conclusion, and the unsettled-conflict arm), with
+    `question-state.test.ts`. E's conflict-evidence rule ships in the first route PR;
+  - **`weighed_log_entry_ids`** on conflicts: the schema sites in section E;
   - **web:** the buttons from `turn_done.options`, `options` on both hosted planes (with the
     prototype's new `research.json` read in `complete()`), host replies shown as automatic, and
     the `completed` string;
   - **viewer:** the `resources_spent` label;
   - **schema and docs:** the `deferred` enum value and the contract docs; `docs/architecture.md:859-860`; `docs/specs/project-context-tool-spec.md`;
   - **the e2e harness** per F.
-- **PR 2 — the switch-on; paid `research`, `research-exhaustiveness`, `person-evidence` and
-  `question-selection` runs.** These four cannot land earlier:
+- **PR 2 — the switch-on; paid `research`, `research-exhaustiveness`, `person-evidence`,
+  `question-selection`, `conflict-resolution` and `proof-conclusion` runs.** These cannot land
+  earlier:
   - the router's step report and the choice need PR 1's step check, ladder branch and
     `deferred` value;
   - person-evidence's rewording would turn off its downward resolution until the router passes
     `userPresent`;
   - question-selection's two-fact ask would end a hosted turn the Stop veto still re-opens, and
     e2e's two-question fixtures are re-scoped only in PR 1; its gate text states PR 1's rule.
+  - **conflict-resolution:** writes `weighed_log_entry_ids` and ends a pass that settles
+    nothing and names nothing to search without a Continue line (E). Its second paid run,
+    since its route PR lands before PR 1 adds the field. proof-conclusion's half of that
+    arm (the `blocked_by_conflict` stop in §7's batch) goes in this PR too, as its second run;
   - **the router:** A's deletions; the step report and only the replies that apply; the search
     fan-out, external items included (D, I); the choice replacing the loop row (`:225`);
     wrap-up from any state (B2), with `userPresent` for person-evidence and `wrapUp` for
-    proof-conclusion; the different-question reply and its wrap-up offer (E); the upload turn
+    proof-conclusion; the different-question reply and its wrap-up offer, and the conflict row
+    following the ladder's `nextStep` (E); the upload turn
     (I); questions between
     steps (J); Cowork's one-turn "Keep going" sentence (A2); the objective row (E) and the
     deleted "return to question-selection" line;
@@ -1038,6 +1079,11 @@ after PR 1. Until it does, PR 1's deny reason alone makes each turn report and s
    - E's rule: when every open conflict carries `independence_analysis` and a plan item is
      open, the next step is search-records;
    - a concluded, unresolved question with no open conflict routes to proof-conclusion;
+   - an analysed, unresolved conflict that has weighed every log entry, with no open item,
+     routes to proof-conclusion; once the question's `blocked_by_conflict` stop covers every log
+     entry, there is no next step; one more log entry sends it back to conflict-resolution;
+   - `weighed_log_entry_ids` validates on a conflict, and an unknown sibling key is still
+     refused;
    - B's branch fires beside an item waiting only on an upload, and stops firing once the
      capture's closing entry is logged with no `plan_item_id`;
    - **regression guards, which pass today:** B's branch does not fire when the stop lists only
@@ -1078,6 +1124,10 @@ after PR 1. Until it does, PR 1's deny reason alone makes each turn report and s
    - "Wrap it up." on an `exhaustive_declared` question with no summary, and on a concluded
      question in a conflict's evidence round, each end with a refreshed summary and the new
      question offered;
+   - a conflict-resolution pass that cannot settle the conflict and names nothing to search
+     writes `weighed_log_entry_ids` and ends without a "Continue with …?" line; proof-conclusion
+     then writes `not_proved` with `shortfall: "conflict"` and the `blocked_by_conflict` stop,
+     and a following "continue" runs no step;
    - with one wrapped-up `not_proved` question with no open conflict, and one proved question,
      the project completes;
    - a one-question project, a different question mid-run, then "Wrap it up.": the question
@@ -1135,5 +1185,6 @@ after PR 1. Until it does, PR 1's deny reason alone makes each turn report and s
   still runs, so the saving there is the third pass, about $20.
 - **Paid eval runs, one per skill:** `research-plan`, `conflict-resolution`,
   `hypothesis-tracking`, `timeline` and `proof-conclusion` in the prep PRs; `research`,
-  `research-exhaustiveness`, `person-evidence` and `question-selection` in PR 2; `search-records` in phase 2; plus `make hook-smoke`.
+  `research-exhaustiveness`, `person-evidence`, `question-selection`, and second runs of
+  `conflict-resolution` and `proof-conclusion` in PR 2; `search-records` in phase 2; plus `make hook-smoke`.
 - **The biggest single build** is the e2e persistent session.
