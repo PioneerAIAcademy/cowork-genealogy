@@ -43,7 +43,7 @@ import zipfile
 from collections import Counter, defaultdict
 from contextlib import ExitStack
 from datetime import datetime, timezone
-from pathlib import Path
+from pathlib import Path, PurePath
 from typing import Any
 
 from e2e import pricing
@@ -95,21 +95,38 @@ def _bundles_in(root: Path) -> list[Path]:
     return sorted(c for c in root.iterdir() if c.is_dir() and (c / "_feedback").is_dir())
 
 
-def extract_zip(zip_path: Path, stack: ExitStack) -> Path:
-    """Unpack `zip_path`'s `_feedback/` members into a new temporary directory.
+def member_target(name: str, dest: PurePath) -> PurePath | None:
+    """Where zip member `name` is written under `dest`, or None when it is skipped.
 
-    Members are written one by one rather than with `extractall`: a zip made on
-    Windows names them with backslashes, and only files under a `_feedback`
-    folder are wanted. Empty, `.` and `..` parts are dropped, so nothing lands
-    outside the directory, which `stack` removes on exit."""
+    Backslashes become separators (a zip made on Windows uses them) and empty,
+    `.` and `..` parts are dropped. Only a file under a `_feedback` folder is
+    kept. A name that is absolute or UNC is skipped, and so is one with a `:` in
+    any part: on Windows a part carrying a drive (`D:`, `D:evil.txt`) restarts the
+    path on that drive, and `x:y` names a stream. A target that resolves outside
+    `dest` is skipped too. A pure `dest` is joined but not resolved, so the
+    Windows rules are checked on every OS."""
+    posix = name.replace("\\", "/")
+    parts = [p for p in posix.split("/") if p not in ("", ".", "..")]
+    if posix.endswith("/") or "_feedback" not in parts[:-1]:
+        return None
+    if posix.startswith("/") or any(":" in p for p in parts):
+        return None
+    target = dest.joinpath(*parts)
+    if isinstance(dest, Path) and not target.resolve().is_relative_to(dest.resolve()):
+        return None
+    return target
+
+
+def extract_zip(zip_path: Path, stack: ExitStack) -> Path:
+    """Unpack `zip_path`'s `_feedback/` members into a new temporary directory,
+    which `stack` removes on exit. Members are written one by one, each where
+    `member_target` puts it, rather than with `extractall`."""
     dest = Path(stack.enter_context(tempfile.TemporaryDirectory(prefix="feedback-profile-")))
     with zipfile.ZipFile(zip_path) as zf:
         for info in zf.infolist():
-            name = info.filename.replace("\\", "/")
-            parts = [p for p in name.split("/") if p not in ("", ".", "..")]
-            if name.endswith("/") or "_feedback" not in parts[:-1]:
+            target = member_target(info.filename, dest)
+            if target is None:
                 continue
-            target = dest.joinpath(*parts)
             target.parent.mkdir(parents=True, exist_ok=True)
             with zf.open(info) as src, target.open("wb") as out:
                 shutil.copyfileobj(src, out)

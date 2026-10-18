@@ -11,7 +11,7 @@ import tempfile
 import zipfile
 from contextlib import ExitStack
 from datetime import datetime, timedelta, timezone
-from pathlib import Path
+from pathlib import Path, PureWindowsPath
 
 import pytest
 
@@ -206,6 +206,7 @@ def test_a_zip_is_unpacked_into_a_fresh_temporary_directory(tmp_path, monkeypatc
         zf.writestr("_feedback\\subagents\\agent-a1.jsonl",
                     "".join(json.dumps(r) + "\n" for r in _agent_run(paused_gap=400)))
         zf.writestr("_feedback/../../escaped.txt", "x")
+        zf.writestr("_feedback/D:evil.txt", "x")
 
     with ExitStack() as stack:
         first = fp.extract_zip(zip_path, stack)
@@ -224,3 +225,33 @@ def test_a_zip_is_unpacked_into_a_fresh_temporary_directory(tmp_path, monkeypatc
     assert "1 bundle(s), 1 session(s), 1 agent run(s)" in report
     assert json.loads(out.read_text(encoding="utf-8"))["bundles"] == [zip_path.stem]
     assert list(temp_root.iterdir()) == []
+
+
+WINDOWS_TEMP = PureWindowsPath(r"C:\Users\x\AppData\Local\Temp\feedback-profile-abc")
+
+
+@pytest.mark.parametrize("name", [
+    "_feedback/D:/evil.txt", "_feedback/D:evil.txt", "D:/_feedback/evil.txt", "C:\\_feedback\\evil.txt",
+    "/etc/x", "/tmp/_feedback/evil.txt", "\\\\server\\share\\_feedback\\evil.txt",
+    "//server/share/_feedback/evil.txt", "_feedback/session-log.jsonl:hidden", "_feedback/subagents/",
+])
+def test_a_windows_name_that_could_leave_the_directory_is_skipped(name):
+    assert fp.member_target(name, WINDOWS_TEMP) is None
+
+
+@pytest.mark.parametrize("name, inside", [
+    ("_feedback/../../x", "_feedback/x"),
+    ("_feedback\\subagents\\agent-a1.jsonl", "_feedback/subagents/agent-a1.jsonl"),
+    ("feedback-1/./_feedback//session-log.jsonl", "feedback-1/_feedback/session-log.jsonl"),
+])
+def test_a_windows_name_is_kept_inside_the_directory(name, inside):
+    assert fp.member_target(name, WINDOWS_TEMP) == WINDOWS_TEMP.joinpath(*inside.split("/"))
+
+
+def test_a_member_that_resolves_outside_the_directory_is_skipped(tmp_path):
+    dest, outside = tmp_path / "dest", tmp_path / "outside"
+    dest.mkdir()
+    outside.mkdir()
+    (dest / "_feedback").symlink_to(outside, target_is_directory=True)
+    assert fp.member_target("_feedback/evil.txt", dest) is None
+    assert fp.member_target("b/_feedback/ok.txt", dest) == dest / "b" / "_feedback" / "ok.txt"
