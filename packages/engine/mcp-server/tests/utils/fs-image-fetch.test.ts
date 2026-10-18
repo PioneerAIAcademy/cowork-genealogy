@@ -188,6 +188,36 @@ describe("foldImageArkInput — imageArk and query strings", () => {
     );
   });
 
+  it.each([
+    ["a bare ark beside record_read's ?cc= imageArk", ARK, `${ARK}?cc=2363041`],
+    ["an ark carrying ?cc= beside a bare imageArk", `${ARK}?cc=2363041`, ARK],
+    ["a page URL carrying i= beside a bare imageArk", `https://www.familysearch.org/${ARK}?lang=en&i=112`, ARK],
+    ["an unprefixed id beside a ?cc= imageArk", "3Q9M-CSNL-S98H-M", `${ARK}?cc=2363041`],
+  ])("reads %s as the same image, keeping ark", (_label, ark, imageArk) => {
+    expect(foldImageArkInput({ ark, imageArk }, "test")).toEqual({ ark });
+  });
+
+  it("refuses a pair that both carry image-context params, when those differ", () => {
+    expect(() =>
+      foldImageArkInput({ ark: `${ARK}?cc=2363041`, imageArk: `${ARK}?cc=2363041&i=5` }, "test"),
+    ).toThrow(/do not name the same image/);
+  });
+
+  it.each([
+    [123, "a number"],
+    [null, "null"],
+    [[ARK], "an array"],
+    [{ ark: ARK }, "an object"],
+  ])("refuses an ark that is not a string (%j), with or without imageArk", (ark, kind) => {
+    const input = (value: object) => value as { ark?: string; imageArk?: string };
+    expect(() => foldImageArkInput(input({ ark, imageArk: ARK }), "image_read")).toThrow(
+      `image_read was given an ark that is not a string (${kind}).`,
+    );
+    expect(() => foldImageArkInput(input({ ark }), "image_read")).toThrow(
+      `image_read was given an ark that is not a string (${kind}).`,
+    );
+  });
+
   it("leaves an empty imageArk in place, so the no-input error can name it", () => {
     expect(foldImageArkInput({ imageArk: "" }, "test")).toEqual({ imageArk: "" });
   });

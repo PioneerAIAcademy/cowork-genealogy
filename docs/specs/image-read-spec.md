@@ -26,9 +26,13 @@ image under and the key `research_log_append` logs an image entry by, so it is
 the name callers carry forward. `foldImageArkInput` (`src/utils/fs-image-fetch.ts`)
 folds it into `ark` before anything else reads the input — the resolver, the
 image cap, the viewer link and the saved-image key all see `ark`. When both are
-given, `ark` is used if the two would fetch the same URL (the same image in
-another spelling); otherwise the call is refused before any fetch. An empty
-`imageArk` is not folded, so the no-input error names it. Like
+given, `ark` is used if the two name the same image: they would fetch the same
+URL (one image in another spelling), or they are one ARK and only one side
+carries `i`/`cc`/`groupId` (a bare `ark` beside `record_read`'s
+`ark:/61903/3:1:…?cc=2363041`). Two that both carry those params and differ are
+not the same image. Otherwise the call is refused before any fetch, and so is
+an `ark` that is not a string. An empty `imageArk` is not folded, so the
+no-input error names it. Like
 `memoryArtifactUrl`, it is accepted without being advertised on the schema.
 
 **`memoryArtifactUrl` is accepted but deliberately not advertised.**
@@ -224,7 +228,8 @@ The tool returns two content blocks:
 | Not logged in | "Not authenticated. Call the login tool first." |
 | More than one of imageId, ark and memoryArtifactUrl provided | "Provide exactly one of imageId, ark, or memoryArtifactUrl." (`imageArk` counts as `ark`) |
 | None of them provided | "image_read requires one of imageId, ark, or memoryArtifactUrl. Received keys: {each key passed, marked `(empty)` or `(not a string)` where so}." — or "Received no keys." |
-| `ark` and `imageArk` both given, and they would not fetch the same URL | "image_read was given both ark ('{ark}') and imageArk ('{imageArk}'), which do not name the same image. imageArk is another name for ark: pass only one." — thrown before any fetch |
+| `ark` and `imageArk` both given, and they do not name the same image (see Input) | "image_read was given both ark ('{ark}') and imageArk ('{imageArk}'), which do not name the same image. imageArk is another name for ark: pass only one." — thrown before any fetch |
+| `ark` is not a string | "image_read was given an ark that is not a string ({null, a number, an array, …}). Pass ark as a string: the ARK (ark:/61903/3:1:...) or page URL exactly as it was given." — thrown before any fetch, with or without `imageArk` |
 | Invalid imageId format | "Unrecognized imageId. Expected an Image Group Number of the form NUMBER_NUMBER (e.g. 004884748_02613)." |
 | Invalid ark format | "Unrecognized ark. Expected a FamilySearch document-image ARK (ark:/61903/3:1:... or 3:2:..., a bare 3:1:.../3:2:... id, an unprefixed XXXX-XXXX-XXXX-X id (treated as 3:1:), or a resolver URL for one), a DeepZoomCloud ARK URL (ending in /$dist), or a DGS distribution URL (dgs:.../dist.jpg). Pass the FamilySearch page URL or ARK exactly as the user gave it, including its 3:1:/3:2: prefix; do not build an imageId from a groupId or an i= index." |
 | FamilySearch returns non-2xx | "FamilySearch image fetch failed: {status} {statusText}" (the `{statusText}` and its separating space are omitted when the response carries none). On a **400 or 404** for a `3:1:`/`3:2:` ark that is not a memory artifact, appends: the ark may not be a valid document-image identifier; directs to `record_read`'s `imageArk` field, and to passing the full page URL when the ark carries `i=`/`cc=`/`groupId=` context. It states that `image_search` returns image ids rather than arks. Every other status — including 401/403 (rights-restricted image) and 429 — keeps the bare message, because the ark is real and re-fetching it returns the same one. |

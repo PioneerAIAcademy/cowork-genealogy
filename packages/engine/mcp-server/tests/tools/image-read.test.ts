@@ -377,6 +377,20 @@ describe("imageReadTool — imageArk and query strings", () => {
     }
   });
 
+  it("reads a bare ark beside record_read's ?cc= imageArk as that ark", async () => {
+    mockImageResponse();
+    await imageReadTool({ ark: ARK, imageArk: `${ARK}?cc=2363041` }, LOCAL);
+    expect(mockFetch).toHaveBeenCalledTimes(1);
+    expect(mockFetch.mock.calls[0][0]).toBe(`https://www.familysearch.org/${ARK}`);
+  });
+
+  it("refuses an ark that is not a string rather than reading imageArk in its place", async () => {
+    await expect(
+      imageReadTool({ ark: 123, imageArk: ARK } as unknown as ImageReadInput, LOCAL)
+    ).rejects.toThrow(/image_read was given an ark that is not a string \(a number\)/);
+    expect(mockFetch).not.toHaveBeenCalled();
+  });
+
   it("refuses ark and imageArk that name different images, without fetching", async () => {
     await expect(
       imageReadTool({ ark: ARK, imageArk: "ark:/61903/3:1:3Q9M-C9PT-V9Q2-2" }, LOCAL)

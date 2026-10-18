@@ -708,6 +708,14 @@ describe("imageTranscribeTool — imageArk (record_read's field) and query strin
     expect(fetchFsImageBytesMock).not.toHaveBeenCalled();
   });
 
+  it("refuses an ark that is not a string, before the key lookup or any fetch", async () => {
+    await expect(
+      transcribe({ ark: 123, imageArk: ARK } as unknown as ImageTranscribeInput, LOCAL),
+    ).rejects.toThrow(/image_transcribe was given an ark that is not a string \(a number\)/);
+    expect(getOpenRouterApiKeyMock).not.toHaveBeenCalled();
+    expect(fetchFsImageBytesMock).not.toHaveBeenCalled();
+  });
+
   it("counts imageArk as the ark form when checking for exactly one input", async () => {
     await expect(
       transcribe({ imageId: "004884748_02613", imageArk: ARK }, LOCAL),

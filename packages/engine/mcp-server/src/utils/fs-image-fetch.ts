@@ -175,14 +175,27 @@ function respellArk(ark: string): string {
   return ark;
 }
 
-/** Two `ark` values that would fetch the same URL name the same image. */
+/**
+ * Two `ark` values name the same image when they would fetch the same URL, or
+ * when they are one ARK and only one side carries i=/cc=/groupId=: record_read
+ * adds ?cc= to the ARK a caller may also pass bare. That side's fallback URL is
+ * then the other side's URL.
+ */
 function sameImageRequest(a: string, b: string): boolean {
   if (a.trim() === b.trim()) return true;
   try {
-    return arkToImageUrl(respellArk(a)).url === arkToImageUrl(respellArk(b)).url;
+    const x = arkToImageUrl(respellArk(a));
+    const y = arkToImageUrl(respellArk(b));
+    return x.url === y.url || x.fallbackUrl === y.url || y.fallbackUrl === x.url;
   } catch {
     return false;
   }
+}
+
+function kindOf(value: unknown): string {
+  if (value === null) return "null";
+  if (Array.isArray(value)) return "an array";
+  return typeof value === "object" ? "an object" : `a ${typeof value}`;
 }
 
 /**
@@ -191,8 +204,10 @@ function sameImageRequest(a: string, b: string): boolean {
  * research_log_append logs an image entry under, so callers carry it forward;
  * nothing refuses an unknown key, so without this fold the value was dropped
  * and the call failed as if no image had been named. An explicit `ark` wins
- * when both name the same image; two that do not are refused rather than one
- * being picked. The resulting `ark` is respelled by respellArk.
+ * when both name the same image (sameImageRequest); two that do not are
+ * refused rather than one being picked, and so is an `ark` that is not a
+ * string, which would otherwise be dropped for `imageArk` without a word. The
+ * resulting `ark` is respelled by respellArk.
  */
 export function foldImageArkInput<T extends { ark?: string; imageArk?: string }>(
   given: T,
@@ -201,6 +216,13 @@ export function foldImageArkInput<T extends { ark?: string; imageArk?: string }>
   // A call with no arguments arrives as undefined; read it as no keys so the
   // no-input error can say so.
   const input = given ?? ({} as T);
+  const rawArk: unknown = input.ark;
+  if (rawArk !== undefined && typeof rawArk !== "string") {
+    throw new Error(
+      `${caller} was given an ark that is not a string (${kindOf(rawArk)}). Pass ark as a ` +
+        "string: the ARK (ark:/61903/3:1:...) or page URL exactly as it was given.",
+    );
+  }
   let folded = input;
   const alias = input.imageArk;
   if (typeof alias === "string" && alias.trim() !== "") {

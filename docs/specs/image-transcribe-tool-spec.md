@@ -597,7 +597,8 @@ list the caller can turn into assertions.
 |---|---|
 | None of the four inputs | `image_transcribe requires one of imageId, ark, memoryArtifactUrl, or file (…). Received keys: {each key passed, marked (empty) or (not a string) where so}.` — or `Received no keys.` |
 | More than one provided | `Provide exactly one of imageId, ark, memoryArtifactUrl, or file — not X and Y.` (`imageArk` counts as `ark`) |
-| `ark` and `imageArk` both given, and they would not fetch the same URL | `image_transcribe was given both ark ('…') and imageArk ('…'), which do not name the same image. imageArk is another name for ark: pass only one.` Refused before the key lookup and any fetch |
+| `ark` and `imageArk` both given, and they do not name the same image (`image-read-spec.md`, Input) | `image_transcribe was given both ark ('…') and imageArk ('…'), which do not name the same image. imageArk is another name for ark: pass only one.` Refused before the key lookup and any fetch |
+| `ark` is not a string | `image_transcribe was given an ark that is not a string (…). Pass ark as a string: the ARK (ark:/61903/3:1:...) or page URL exactly as it was given.` Refused before the key lookup and any fetch |
 | `file` with no `projectPath` / a missing directory | the shared loud messages (`projectPath is required …`, `projectPath does not exist: …`); a folder holding neither project file RETURNS `{ ok: false, reason: "no_project" }` (not thrown) |
 | `file` ref shape | absolute / drive letter / backslash / NUL / empty, `.`, `..` segment — named before any I/O; a symlink out of the project is the store's "escapes the project directory" |
 | `file` missing / a directory / not an image or PDF | `'<ref>' was not found under the project folder …` / `is a directory` / `is not an image or a PDF (by its content, not its name) …` |
@@ -1313,9 +1314,9 @@ Mirror `tests/tools/wiki-search.test.ts` (stub global `fetch`, mock the
   `image_read`'s cases via the shared resolver). The no-input error names the
   keys received.
 - **`imageArk`**: read as `ark` and reported back as `ark`; `ark` and `imageArk`
-  naming different images are refused before the key lookup; `imageArk` beside
-  `imageId` is two forms; a query string is stripped from a DGS URL, and the
-  film viewer link still built. The respelling table itself is unit-tested in
+  naming different images, or an `ark` that is not a string, are refused before
+  the key lookup; `imageArk` beside `imageId` is two forms; a query string is
+  stripped from a DGS URL, and the film viewer link still built. The respelling table itself is unit-tested in
   `tests/utils/fs-image-fetch.test.ts`.
 
 ### 13.3 Image-prep unit tests — not applicable
