@@ -31,6 +31,7 @@ const PINNED = [
   "place_search",
   "place_search_all",
   "project_context",
+  "rank_search_matches",
   "record_person_matches",
   "record_read",
   "record_record_matches",
@@ -58,7 +59,6 @@ const WRITERS = [
   "materialize_facts",
   "merge_tree_persons",
   "project_create",
-  "rank_search_matches", // appends the match-score log
   "research_append",
   "research_log_append",
   "same_person", // records the match score research_append's link gate reads

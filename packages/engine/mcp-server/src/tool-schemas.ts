@@ -109,6 +109,7 @@ export const READ_ONLY: ReadonlySet<string> = new Set([
   "place_search",
   "place_search_all",
   "project_context",
+  "rank_search_matches",
   "record_person_matches",
   "record_read",
   "record_record_matches",
