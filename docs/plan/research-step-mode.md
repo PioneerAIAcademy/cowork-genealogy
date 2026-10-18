@@ -6,7 +6,7 @@ Phase 0 (a probe) comes first and changes no product code. This merges two draft
 single-pass plan drawn from feedback issue #3475, and a one-step-per-turn draft. plan-critic
 has reviewed this merged version six times, and its findings are folded in. After round 4,
 "Keep going" was simplified to replies the host sends for the researcher (decision 13).
-Decisions 14–19 were added on 2026-10-18. A set-aside design reviewed in three plan-critic
+Decisions 14–23 were added on 2026-10-18. A set-aside design reviewed in three plan-critic
 rounds was dropped for decision 15, which reuses the wrap-up path. Rounds 4 and 5 reviewed
 the replacement and the unsettled-conflict ending; their findings are folded in.
 
@@ -55,6 +55,14 @@ the replacement and the unsettled-conflict ending; their findings are folded in.
 19. **The prose ships as small PRs.** The parts that work under today's behaviour land first,
     one eval slot each. The router, research-exhaustiveness, person-evidence and
     question-selection land in PR 2, right after PR 1 (Phases).
+20. **Helper work becomes plan items on the current question,** not new questions: a conflict
+    that needs new evidence, a FAN pivot and an objective-level sub-question (section E).
+21. **`deferred` is a closed-enum value** of `not_reached`, not prose (section B).
+22. **`--autonomous` is retired** once e2e runs on the host's "Keep going." replies (section
+    F). The e2e orchestrator then passes search-external-sites `userPresent: no` itself.
+23. **The `AskUserQuestion` decision carrier is dropped.** Every step ends at a boundary, so a
+    question for the researcher is a step's ending. `DecisionCard` becomes the home for the
+    reply buttons.
 
 ## Evidence
 **#3475.** Proxy-exact, after question selection: $49.84 over about 361 live minutes. Each
@@ -749,8 +757,8 @@ new spawn. That already fits step mode: the wait is a step boundary.
 - **Under "Keep going",** the links are handed out and the run continues. The waiting items
   end as `handed_to_user` in the stop, and a later upload reopens the question as above.
   `search-external-sites` still gets `userPresent: yes`, so it hands the link over rather than
-  deferring silently. Only an autonomous e2e run passes `no`; if `--autonomous` is retired
-  (open decisions), the e2e orchestrator passes it instead.
+  deferring silently. Only e2e passes `no`: an autonomous run today, and the e2e orchestrator
+  once `--autonomous` is retired (decision 22).
 - **Uploads on the prototype are a prerequisite.** The alpha has them (`upload_session_file`,
   into `<project>/uploads/`). The prototype returns 501 today. research-as-a-job's "let
   documents in" item (`docs/plan/research-as-a-job-later.md`) moves ahead of the rest of its
@@ -838,7 +846,7 @@ file's own sections, top to bottom.
 | `research` as the only front door (PR #3262's frontmatter) | **Keep:** section H depends on it |
 | "Not every turn is a job"; the `research_delivered` finish line (PR #3187, PR #3286, PR #3235) | **Superseded:** every turn is one step. Keep the bounded routing list and "name what was saved"; delete `research_delivered` in phase 2 |
 | "Never ask a question you will not wait for" | **Keep, applied to every step.** Offers at the **end** of a step become its "Continue with X?". Offers **mid-step** become statements, because nothing stops mid-step: for example search-records' "Let the user confirm before extraction", now that extraction is inside the search step |
-| "Give 'I need you' an exit" (`AskUserQuestion` carrier, `pending_decision`, `DecisionCard`) | **Change.** The step boundary already ends every turn, so a question is just a step's ending. `DecisionCard` becomes the home for the reply buttons. The carrier is needed only if a decision must interrupt a step, and none is planned |
+| "Give 'I need you' an exit" (`AskUserQuestion` carrier, `pending_decision`, `DecisionCard`) | **Change.** The step boundary already ends every turn, so a question is just a step's ending. `DecisionCard` becomes the home for the reply buttons. The carrier is dropped (decision 23) |
 | The fourth stop's clauses: unreachable records end `completed`; a blocking conflict "is a decision" | **Unreachable records:** unchanged (the proof at the tier reached, `completed`). **A blocking conflict:** the conflict step names the record that could settle it and offers the planning step (section E), no `decision` exit needed |
 | "Capture a real feed before specifying phase 2" | **Keep:** it now shows the step reports |
 | *Before phase 2*'s acceptance list | **Replaced** by this plan's acceptance items 8–9 (a fresh session ends after one step) and item 7 (one-shot and plan-only asks end after their step) |
@@ -895,7 +903,7 @@ file's own sections, top to bottom.
 4. Fold this file into `research-as-a-job-later.md`, or retire that file's superseded sections.
 
 ## Phases
-**Phase 0 — probe, no product change.**
+**Phase 0 — probe, no product change. Run by Praise, on macOS.**
 - **In live Cowork, check:**
   1. `PreToolUse` fires on `Agent|Task|Skill` main-thread calls;
   2. **`UserPromptSubmit` fires and carries the prompt text.** If it does, it is the clean
@@ -1182,16 +1190,6 @@ in parallel with PR 2.
     `not_proved` summary, well under the reply cap.
 11. **The prototype's `turns.step` and `turns.mode`** are filled for every turn and survive
     redelivery, and a per-step p50/p90 query over `turns` returns figures.
-
-## Open decisions
-- **Helper work under one question per run.** A conflict that needs new evidence, a FAN pivot
-  and a sub-question become plan items on the main question instead of new questions (section
-  E). Recommended: yes.
-- **`deferred` as an enum value or prose.** Recommended: the enum value.
-- **Retire `--autonomous`** once F is proven. Recommended: yes; e2e's "Keep going." replies
-  replace it.
-- **Whether the `AskUserQuestion` decision carrier is still needed** once step mode ends every
-  turn (see the integration table).
 
 ## Coordinates with
 - **PR #3262 and `research-as-a-job-later.md` (Praise):** see "Integrating with
