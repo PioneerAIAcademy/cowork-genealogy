@@ -449,17 +449,17 @@ send the exact phrase; Cowork's reply lists the phrases:
   - an objective-level sub-question.
 - **research-plan writes those items** (its edit or add-new mode), from the record types
   conflict-resolution records in `resolution_rationale` (`agents/conflict-resolution.md:353-357`).
-- **Six sites that route this work to question-selection now route it to research-plan:**
+- **Five sites that route this work to question-selection now route it to research-plan:**
   - `agents/conflict-resolution.md:358-359` and `:495-497`;
   - `agents/hypothesis-tracking.md:451`;
-  - `skills/timeline/SKILL.md:433-434` and `agents/project-status.md:163-165` (high-severity
-    timeline gaps; timeline is reachable from `agents/conflict-resolution.md:498-500`);
+  - `agents/timeline.md:822-823` (high-severity timeline gaps; timeline is reachable from
+    `agents/conflict-resolution.md:498-500`);
   - `agents/proof-conclusion.md:343` ("tier could advance → question-selection or
     research-plan").
 
   The conflict step names the record that could settle it, then ends "Continue with planning
   the searches?". No unit test or validator pins the old route. PR 2 adds one test for the new route in
-  conflict-resolution, hypothesis-tracking, timeline and project-status.
+  conflict-resolution, hypothesis-tracking and timeline.
 - **The ladder needs one more rule** (`question-state.ts`), or its unresolved-conflict arm
   (`:417-418`) sends every pass back to conflict-resolution before the new items can run.
   - **The rule:** when every conflict in `openConflictIds` already carries
@@ -640,7 +640,8 @@ file's own sections, top to bottom.
 
 | Item | Under step mode |
 |---|---|
-| S1 (`init-project`), S5 (`record-extraction`) | **Unchanged in scope** |
+| S1 (`init-project`) | **Unchanged in scope** |
+| S5 (`record-extraction`) | **Gone:** the skill was retired; extraction runs in code through `extraction_append` and the record-structurer agent |
 | The narration guidance's "do not narrate between actions" | **Becomes the step-report rule:** one paragraph per step, what was found and what comes next |
 | "The literal is gone from every body"; the web Continue button removed | **A new literal and buttons return:** "Continue with …?", distinct from the retired "Next: <step>. Continue?". `hand_back.py` now matches the new line, for the alpha's "Keep going" replies (section A2) |
 
@@ -649,7 +650,7 @@ file's own sections, top to bottom.
 | Item | Under step mode |
 |---|---|
 | No proof export; nothing writes to the FamilySearch tree; no numeric confidence meter | **Unaffected** |
-| No leaf-skill changes beyond the listed ones | **Plus** this plan's research-exhaustiveness, proof-conclusion, question-selection, research-plan, conflict-resolution, hypothesis-tracking, person-evidence, timeline and project-status changes |
+| No leaf-skill changes beyond the listed ones | **Plus** this plan's research-exhaustiveness, proof-conclusion, question-selection, research-plan, conflict-resolution, hypothesis-tracking, person-evidence and timeline changes |
 | No further cost bounding | **Step mode bounds every turn to one step.** "Keep going" is bounded by its reply cap, and on the prototype by the $35 spend bound |
 | Nothing Cowork-specific | **Except** the plugin hook's Cowork entry point and Cowork's one-turn "Keep going" (sections A and A2) |
 
@@ -709,14 +710,14 @@ file's own sections, top to bottom.
   - **the e2e harness** per F.
 - **PR 2 — prose; paid `research`, `research-exhaustiveness`, `proof-conclusion`,
   `question-selection`, `research-plan`, `conflict-resolution`, `hypothesis-tracking`,
-  `person-evidence`, `timeline` and `project-status` runs:**
+  `person-evidence` and `timeline` runs:**
   - **the router:** A's deletions; the step report and replies; the search fan-out (D); the
     choice replacing the loop row (`:225`); wrap-up (B2) and `userPresent` for person-evidence;
     Cowork's one-turn "Keep going" sentence (A2); the objective row (E) and the deleted "return
     to question-selection" line;
   - **the agents:** research-exhaustiveness (B, B2), proof-conclusion (C, and E's route),
-    question-selection (E, including its gate text), conflict-resolution, hypothesis-tracking
-    and project-status (E's route to research-plan), and person-evidence (B2's reworded autonomy
+    question-selection (E, including its gate text), conflict-resolution and
+    hypothesis-tracking (E's route to research-plan), and person-evidence (B2's reworded autonomy
     rule);
   - **timeline:** its route to research-plan (E);
   - **research-plan:** the edit mode (G), the wrap-up dispose wording, and the FAN pivot and a
@@ -733,8 +734,8 @@ file's own sections, top to bottom.
     - `ut_research_plan_q7m`, which calls ending on an execution question non-compliant, and
       that is how step mode ends;
     - `ut_person_evidence_023` gains `userPresent: no` (B2);
-    - new tests: the route to research-plan in conflict-resolution, hypothesis-tracking,
-      timeline and project-status, and person-evidence resolving downward under
+    - new tests: the route to research-plan in conflict-resolution, hypothesis-tracking
+      and timeline, and person-evidence resolving downward under
       `userPresent: no`;
     - a turn whose message is "Keep going." runs one step and passes person-evidence
       `userPresent: no`.
@@ -822,7 +823,7 @@ file's own sections, top to bottom.
    - a plan of five or more items runs its independent searches as parallel tool calls. The
      4-spawn width test moves to issue #2243's PR (section D);
    - an unresolved conflict that needs new evidence ends offering a research-plan step, not a
-     new question, and hypothesis-tracking, timeline, project-status and proof-conclusion route
+     new question, and hypothesis-tracking, timeline and proof-conclusion route
      a needed search the same way;
    - in a wrap-up, research-exhaustiveness records the (b) path's alternative as `deferred`, and
      person-evidence resolves a weak match downward;
@@ -873,6 +874,6 @@ file's own sections, top to bottom.
 - **Offset:** the researcher stops passes like #3475's $26 of extra ones.
 - **Paid eval runs:** `research`, `research-exhaustiveness`, `proof-conclusion`,
   `question-selection`, `research-plan`, `conflict-resolution`, `hypothesis-tracking`,
-  `person-evidence`, `timeline` and `project-status` in PR 2, and `search-records` in phase 2,
+  `person-evidence` and `timeline` in PR 2, and `search-records` in phase 2,
   plus `make hook-smoke`.
 - **The biggest single build** is the e2e persistent session.
