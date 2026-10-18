@@ -8,6 +8,8 @@ vi.mock("../../src/auth/refresh.js", () => ({
 import {
   resolveFsImageInput,
   fetchFsImageBytes,
+  foldImageArkInput,
+  receivedKeys,
 } from "../../src/utils/fs-image-fetch.js";
 import { getValidToken } from "../../src/auth/refresh.js";
 
@@ -151,6 +153,92 @@ describe("resolveFsImageInput — unprefixed image-ARK id", () => {
   ])("rejects %s and says to pass the link as given", (_label, ark) => {
     expect(() => resolveFsImageInput({ ark }, "test")).toThrow(/Unrecognized ark/);
     expect(() => resolveFsImageInput({ ark }, "test")).toThrow(/exactly as the user gave it/);
+  });
+});
+
+describe("foldImageArkInput — imageArk and query strings", () => {
+  const ARK = "ark:/61903/3:1:3Q9M-CSNL-S98H-M";
+
+  it("folds imageArk (record_read's field) into ark and drops the alias", () => {
+    expect(foldImageArkInput({ imageArk: ARK, projectPath: "/p" }, "test")).toEqual({
+      ark: ARK,
+      projectPath: "/p",
+    });
+  });
+
+  it("keeps an explicit ark when imageArk names the same image in another spelling", () => {
+    const folded = foldImageArkInput(
+      { ark: ARK, imageArk: `https://www.familysearch.org/${ARK}?lang=en` },
+      "test",
+    );
+    expect(folded).toEqual({ ark: ARK });
+  });
+
+  it("refuses ark and imageArk that name different images", () => {
+    expect(() =>
+      foldImageArkInput({ ark: ARK, imageArk: "ark:/61903/3:1:3Q9M-C9PT-V9Q2-2" }, "image_read"),
+    ).toThrow(
+      /image_read was given both ark \('ark:\/61903\/3:1:3Q9M-CSNL-S98H-M'\) and imageArk \('ark:\/61903\/3:1:3Q9M-C9PT-V9Q2-2'\), which do not name the same image/,
+    );
+  });
+
+  it("refuses two values whose image-context params select different pages", () => {
+    expect(() => foldImageArkInput({ ark: `${ARK}?i=4`, imageArk: `${ARK}?i=5` }, "test")).toThrow(
+      /do not name the same image/,
+    );
+  });
+
+  it("leaves an empty imageArk in place, so the no-input error can name it", () => {
+    expect(foldImageArkInput({ imageArk: "" }, "test")).toEqual({ imageArk: "" });
+  });
+
+  it.each([
+    ["a bare 3:1: id", "3:1:3Q9M-CSNL-S98H-M?cc=2363041", `${ARK}?cc=2363041`],
+    ["a bare 3:2: id", "3:2:3Q9M-CSNL-S98H-M?i=3", "ark:/61903/3:2:3Q9M-CSNL-S98H-M?i=3"],
+    ["an unprefixed id", "3QS7-89Q6-89S6-Y?cc=2363041", "ark:/61903/3:1:3QS7-89Q6-89S6-Y?cc=2363041"],
+    [
+      "a DGS distribution URL",
+      "https://familysearch.org/das/v2/dgs:004884748_02613/dist.jpg?cc=2363041",
+      "https://familysearch.org/das/v2/dgs:004884748_02613/dist.jpg",
+    ],
+    [
+      "a DeepZoomCloud distribution URL",
+      "https://sg30p0.familysearch.org/service/records/storage/deepzoomcloud/dz/v1/3:1:3Q9M-CSNL-S98H-M/$dist?cc=1",
+      "https://sg30p0.familysearch.org/service/records/storage/deepzoomcloud/dz/v1/3:1:3Q9M-CSNL-S98H-M/$dist",
+    ],
+  ])("respells %s whose query string would otherwise be refused", (_label, ark, expected) => {
+    expect(foldImageArkInput({ ark }, "test").ark).toBe(expected);
+    expect(() => resolveFsImageInput({ ark }, "test")).toThrow(/Unrecognized ark/);
+    expect(() => resolveFsImageInput({ ark: expected }, "test")).not.toThrow();
+  });
+
+  it.each([
+    ["a canonical ARK", `${ARK}?cc=2363041`],
+    ["a resolver URL", `https://www.familysearch.org/${ARK}?lang=en&i=112`],
+    ["an ARK with no query", ARK],
+    ["an unrecognized value", "https://www.familysearch.org/search/film/007621224?i=586"],
+  ])("leaves %s as given", (_label, ark) => {
+    expect(foldImageArkInput({ ark }, "test").ark).toBe(ark);
+  });
+
+  it("forwards the query a respelled bare id carried, with the bare resolver URL as the fallback", () => {
+    const { ark } = foldImageArkInput({ ark: "3:1:3Q9M-CSNL-S98H-M?i=7&cc=2363041" }, "test");
+    const resolved = resolveFsImageInput({ ark }, "test");
+    expect(resolved.url).toBe(`https://www.familysearch.org/${ARK}?i=7&cc=2363041`);
+    expect(resolved.fallbackUrl).toBe(`https://www.familysearch.org/${ARK}`);
+  });
+});
+
+describe("receivedKeys", () => {
+  it("names every key, marking an empty or non-string value", () => {
+    expect(receivedKeys({ imageUrl: "x", ark: "", page: 3 })).toBe(
+      "Received keys: imageUrl, ark (empty), page (not a string).",
+    );
+  });
+
+  it("says so when there are none", () => {
+    expect(receivedKeys({})).toBe("Received no keys.");
+    expect(receivedKeys(undefined)).toBe("Received no keys.");
   });
 });
 

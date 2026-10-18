@@ -142,6 +142,82 @@ function arkToImageUrl(ark: string): { url: string; fallbackUrl?: string } {
 }
 
 /**
+ * The keys a call carried, for the error that finds no image input among
+ * them: an unrecognized key reads as no input at all, and naming it is what
+ * shows the caller which name it got wrong.
+ */
+export function receivedKeys(input: object | null | undefined): string {
+  const keys = Object.entries(input ?? {}).map(([key, value]) =>
+    value === "" ? `${key} (empty)` : typeof value === "string" ? key : `${key} (not a string)`,
+  );
+  return keys.length > 0 ? `Received keys: ${keys.join(", ")}.` : "Received no keys.";
+}
+
+/**
+ * Respell an `ark` whose query string or fragment would otherwise stop
+ * arkToImageUrl from recognizing it. A distribution URL loses the query; a
+ * bare `3:1:`/`3:2:` id or an unprefixed id becomes its canonical ARK with the
+ * query kept, so its i=/cc=/groupId= are forwarded exactly as they are for the
+ * canonical spelling. A spelling arkToImageUrl already reads (a canonical ARK,
+ * a resolver URL) is returned unchanged, so its label and saved-image key do
+ * not move.
+ */
+function respellArk(ark: string): string {
+  const trimmed = ark.trim();
+  const cut = trimmed.search(/[?#]/);
+  if (cut === -1 || isDocumentImageArk(toArk(trimmed))) return ark;
+  const path = trimmed.slice(0, cut);
+  if (ARK_PATTERN.test(path) || DGS_URL_PATTERN.test(path)) return path;
+  const query = trimmed.slice(cut);
+  const canonical = toArk(path);
+  if (isDocumentImageArk(canonical)) return canonical + query;
+  if (UNPREFIXED_IMAGE_ID_RE.test(path)) return `ark:/61903/3:1:${path}${query}`;
+  return ark;
+}
+
+/** Two `ark` values that would fetch the same URL name the same image. */
+function sameImageRequest(a: string, b: string): boolean {
+  if (a.trim() === b.trim()) return true;
+  try {
+    return arkToImageUrl(respellArk(a)).url === arkToImageUrl(respellArk(b)).url;
+  } catch {
+    return false;
+  }
+}
+
+/**
+ * The `ark` a caller meant, settled before the input forms are counted.
+ * `imageArk` is record_read's name for a page image and the key
+ * research_log_append logs an image entry under, so callers carry it forward;
+ * nothing refuses an unknown key, so without this fold the value was dropped
+ * and the call failed as if no image had been named. An explicit `ark` wins
+ * when both name the same image; two that do not are refused rather than one
+ * being picked. The resulting `ark` is respelled by respellArk.
+ */
+export function foldImageArkInput<T extends { ark?: string; imageArk?: string }>(
+  given: T,
+  caller: string,
+): T {
+  // A call with no arguments arrives as undefined; read it as no keys so the
+  // no-input error can say so.
+  const input = given ?? ({} as T);
+  let folded = input;
+  const alias = input.imageArk;
+  if (typeof alias === "string" && alias.trim() !== "") {
+    const { imageArk: _alias, ...rest } = input;
+    const ark = typeof input.ark === "string" && input.ark.trim() !== "" ? input.ark : undefined;
+    if (ark !== undefined && !sameImageRequest(ark, alias)) {
+      throw new Error(
+        `${caller} was given both ark ('${ark}') and imageArk ('${alias}'), which do not ` +
+          "name the same image. imageArk is another name for ark: pass only one.",
+      );
+    }
+    folded = { ...rest, ark: ark ?? alias } as T;
+  }
+  return typeof folded.ark === "string" ? { ...folded, ark: respellArk(folded.ark) } : folded;
+}
+
+/**
  * Resolve an imageId/ark input to a distribution-image URL plus a human
  * label. Requires exactly one of imageId / ark. `caller` names the tool for
  * the both-missing error so each tool's message reads naturally.
@@ -192,7 +268,7 @@ export function resolveFsImageInput(
     return { url, label: input.ark, fallbackUrl, memoryShape: false };
   }
   throw new Error(
-    `${caller} requires one of imageId, ark, or memoryArtifactUrl.`
+    `${caller} requires one of imageId, ark, or memoryArtifactUrl. ${receivedKeys(input)}`
   );
 }
 

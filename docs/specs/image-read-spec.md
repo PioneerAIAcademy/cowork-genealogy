@@ -12,6 +12,7 @@ to OCR models. Requires FamilySearch authentication.
 {
   imageId?: string      // An Image Group Number of the form NUMBER_NUMBER
   ark?: string          // A FamilySearch document-image ARK, resolver URL, or resolved distribution URL
+  imageArk?: string     // Another name for ark (not advertised); see below
   projectPath?: string  // Absolute project-folder path. When set, the fetched scan is saved
                          // under images/ and its project-relative path returned as imageRef.
 }
@@ -19,6 +20,16 @@ to OCR models. Requires FamilySearch authentication.
 
 Exactly one of `imageId` or `ark` must be provided. `projectPath` is optional
 and independent of that choice.
+
+**`imageArk` is read as `ark`.** It is the field `record_read` returns a page
+image under and the key `research_log_append` logs an image entry by, so it is
+the name callers carry forward. `foldImageArkInput` (`src/utils/fs-image-fetch.ts`)
+folds it into `ark` before anything else reads the input — the resolver, the
+image cap, the viewer link and the saved-image key all see `ark`. When both are
+given, `ark` is used if the two would fetch the same URL (the same image in
+another spelling); otherwise the call is refused before any fetch. An empty
+`imageArk` is not folded, so the no-input error names it. Like
+`memoryArtifactUrl`, it is accepted without being advertised on the schema.
 
 **`memoryArtifactUrl` is accepted but deliberately not advertised.**
 `ImageReadInput extends FsImageInput`, the input schema carries no
@@ -81,6 +92,25 @@ Accepted forms:
 - An already-resolved DeepZoomCloud ARK URL (ending in `/$dist`) or DGS
   distribution URL (`dgs:.../dist.jpg`), passed through unchanged —
   the pre-existing shapes from before `imageId` was introduced.
+
+**A query string never decides the shape.** `record_read`'s `imageArk` carries
+one (`ark:/61903/3:1:3Q9M-C9PT-V9Q2-2?cc=2363041`), and callers append one to
+the other spellings as readily. Before the resolver runs,
+`foldImageArkInput` respells only the forms a `?…` or `#…` suffix would
+otherwise get refused as `Unrecognized ark`:
+
+| `ark` as given | Read as |
+|---|---|
+| a `/$dist` or `dgs:…/dist.jpg` URL with a query | the same URL, query stripped |
+| a bare `3:1:`/`3:2:` id with a query | its canonical `ark:/61903/…` ARK, query kept |
+| an unprefixed `XXXX-XXXX-XXXX-X` id with a query | `ark:/61903/3:1:…`, query kept |
+| a canonical ARK or resolver URL, with or without a query | unchanged |
+
+The query is kept on an ARK because the resolver reads it the same way for
+every spelling: only `i`/`cc`/`groupId` are forwarded, on the first attempt,
+with the bare resolver URL as the fallback (below); anything else is dropped. A
+spelling that was already accepted is never rewritten, so its saved-image key
+(`images/<key>.jpg`) does not change.
 
 **Verified against a live session (2026-07-07):** fetching a `3:1:`/
 `3:2:` ARK's resolver URL redirects straight to the image bytes
@@ -192,8 +222,9 @@ The tool returns two content blocks:
 | Condition | Message |
 |-----------|---------|
 | Not logged in | "Not authenticated. Call the login tool first." |
-| Both imageId and ark provided | "Provide either imageId or ark, not both." |
-| Neither imageId nor ark provided | "image_read requires either imageId or ark." |
+| More than one of imageId, ark and memoryArtifactUrl provided | "Provide exactly one of imageId, ark, or memoryArtifactUrl." (`imageArk` counts as `ark`) |
+| None of them provided | "image_read requires one of imageId, ark, or memoryArtifactUrl. Received keys: {each key passed, marked `(empty)` or `(not a string)` where so}." — or "Received no keys." |
+| `ark` and `imageArk` both given, and they would not fetch the same URL | "image_read was given both ark ('{ark}') and imageArk ('{imageArk}'), which do not name the same image. imageArk is another name for ark: pass only one." — thrown before any fetch |
 | Invalid imageId format | "Unrecognized imageId. Expected an Image Group Number of the form NUMBER_NUMBER (e.g. 004884748_02613)." |
 | Invalid ark format | "Unrecognized ark. Expected a FamilySearch document-image ARK (ark:/61903/3:1:... or 3:2:..., a bare 3:1:.../3:2:... id, an unprefixed XXXX-XXXX-XXXX-X id (treated as 3:1:), or a resolver URL for one), a DeepZoomCloud ARK URL (ending in /$dist), or a DGS distribution URL (dgs:.../dist.jpg). Pass the FamilySearch page URL or ARK exactly as the user gave it, including its 3:1:/3:2: prefix; do not build an imageId from a groupId or an i= index." |
 | FamilySearch returns non-2xx | "FamilySearch image fetch failed: {status} {statusText}" (the `{statusText}` and its separating space are omitted when the response carries none). On a **400 or 404** for a `3:1:`/`3:2:` ark that is not a memory artifact, appends: the ark may not be a valid document-image identifier; directs to `record_read`'s `imageArk` field, and to passing the full page URL when the ark carries `i=`/`cc=`/`groupId=` context. It states that `image_search` returns image ids rather than arks. Every other status — including 401/403 (rights-restricted image) and 429 — keeps the bare message, because the ark is real and re-fetching it returns the same one. |
