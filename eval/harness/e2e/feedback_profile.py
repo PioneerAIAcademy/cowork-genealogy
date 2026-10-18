@@ -15,9 +15,13 @@ How each figure is measured:
 - A gap over `PAUSE_S` between consecutive events is a sandbox pause, except a
   gap that ends when an agent returns — an `Agent`/`Task` result or a background
   agent's `<task-notification>` — which is agent time less that agent's own
-  pauses, and a gap that ends on a model message whose content covers it
-  (`GEN_CHARS_PER_S`). Active time is everything that is not a pause.
-- Agent wait is main-thread active time that ends when an agent returns.
+  pauses, a gap that ends on a model message whose content covers it
+  (`GEN_CHARS_PER_S`), and a gap that ends on an API error (a `<synthetic>`
+  placeholder), which is the request still waiting on the API. Active time is
+  everything that is not a pause.
+- Agent wait is main-thread active time that ends when an agent returns;
+  api-error wait is the active time those over-threshold API-error gaps add.
+- A `<synthetic>` message is not a model call: it is neither counted nor timed.
 - A tool call's latency runs from the call to its result. A call after an agent
   launch in the same message waits for that agent, so its clock starts at the
   agent's return; a window that holds a pause has no latency.
@@ -63,6 +67,7 @@ REWRITE_MIN_TOKENS = 1_024
 TOP_N = 10
 AGENT_TOOLS = ("Agent", "Task")
 COMPACTION_PREFIX = "This session is being continued"
+SYNTHETIC_MODEL = "<synthetic>"
 BEFORE_ANY_SKILL = "(before any skill)"
 
 _BUILD_ID = re.compile(r'buildId\\?"\s*:\s*\\?"([^"\\]+)')
@@ -262,6 +267,13 @@ def _returned_agents(row: dict, tool_uses: dict[str, dict]) -> list[str] | None:
     return None
 
 
+def _is_api_error(row: dict) -> bool:
+    """The placeholder Claude Code writes when a request fails."""
+    message = row.get("message") if isinstance(row.get("message"), dict) else {}
+    return row.get("type") == "assistant" and message.get("model") == SYNTHETIC_MODEL \
+        and row.get("isApiErrorMessage") is True
+
+
 def _covers_gap(row: dict, gap: float) -> bool:
     """A gap that ends on an assistant line carrying content to fill it is a long
     generation, not a pause."""
@@ -324,7 +336,7 @@ def analyze(rows: list[dict], agent_paused: dict[str, float] | None = None) -> d
     results: dict[str, dict[str, Any]] = {}
     timeline: list[tuple[float, str, dict]] = []
     compactions = 0
-    active = paused = agent_wait = 0.0
+    active = paused = agent_wait = api_error_wait = 0.0
     pauses: list[tuple[float, float]] = []
     builds: set[str] = set()
     prev_t: float | None = None
@@ -341,6 +353,9 @@ def analyze(rows: list[dict], agent_paused: dict[str, float] | None = None) -> d
                     agent_wait += gap - own
                     if own:
                         pauses.append((prev_t, t))
+                elif _is_api_error(d):
+                    active += gap
+                    api_error_wait += gap
                 elif _covers_gap(d, gap):
                     active += gap
                 else:
@@ -437,14 +452,16 @@ def analyze(rows: list[dict], agent_paused: dict[str, float] | None = None) -> d
     prev_ctx = 0
     pending = compacted = False
     for mid, m in msgs.items():
+        pending = pending or m["after_agent"]
+        compacted = compacted or m["after_compaction"]
+        if m["model"] == SYNTHETIC_MODEL:
+            continue
         u = m["usage"]
         ctx = sum(_tokens(u, f) for f in ("input_tokens", "cache_creation_input_tokens",
                                           "cache_read_input_tokens"))
         latency = m["end"] - m["start"]
         covered = m["thinking_chars"] + m["text_chars"] >= GEN_CHARS_PER_S * latency
         rewritten, rewrite_cost = 0, 0.0
-        pending = pending or m["after_agent"]
-        compacted = compacted or m["after_compaction"]
         if ctx:
             shortfall = prev_ctx - _tokens(u, "cache_read_input_tokens")
             if pending and not compacted and prev_ctx and shortfall >= REWRITE_MIN_TOKENS:
@@ -467,6 +484,7 @@ def analyze(rows: list[dict], agent_paused: dict[str, float] | None = None) -> d
     timeline.sort(key=lambda x: x[0])
     return {"start": events[0][0] if events else None, "end": events[-1][0] if events else None,
             "active_s": active, "paused_s": paused, "agent_wait_s": agent_wait,
+            "api_error_wait_s": api_error_wait,
             "model_calls": model_calls, "tool_calls": calls, "compactions": compactions,
             "timeline": timeline, "engine_builds": sorted(builds),
             "cost": sum(mc["cost"] or 0.0 for mc in model_calls)}
@@ -558,6 +576,7 @@ def build_profile(corpus: dict[str, Any], since: float | None = None) -> dict[st
             "start": _iso(thread["start"]), "end": _iso(thread["end"]),
             "active_min": round(thread["active_s"] / 60, 1),
             "agent_wait_min": round(thread["agent_wait_s"] / 60, 1),
+            "api_error_wait_min": round(thread["api_error_wait_s"] / 60, 1),
             "paused_min": round(thread["paused_s"] / 60, 1),
             "main_cost": round(thread["cost"], 2), "main_model_calls": len(thread["model_calls"]),
             "compactions": thread["compactions"], "cache_rewrites": len(rewrites),
@@ -708,21 +727,25 @@ def format_report(profile: dict[str, Any]) -> str:
         + (f", ended on or after {profile['since']}" if profile["since"] else "")
         + (f" ({profile['excluded_sessions']} session(s) and {profile['excluded_agent_runs']} "
            f"agent run(s) ended earlier)" if profile["excluded_sessions"] or profile["excluded_agent_runs"] else ""),
-        f"Time in minutes. A gap over {PAUSE_S // 60} min is a sandbox pause unless an agent's return "
-        f"or a model call's output ends it. Agent wait is active time that ended when an agent returned.",
+        f"Time in minutes. A gap over {PAUSE_S // 60} min is a sandbox pause unless an agent's return, "
+        f"an API error or a model call's output ends it. Agent wait is active time that ended when an "
+        f"agent returned.",
         "Cost in USD at pricing.MODEL_RATES, each message's cache writes at its own 5m/1h split.",
         "",
         "SESSIONS (* = a bundle's copy of the log was trimmed oldest-first; missing = agent "
         "transcripts the bundle dropped, whose own pauses count as agent wait)",
     ]
     lines += _table(
-        ["session", "bundles", "engine", "active", "agent wait", "paused", "main $", "calls",
+        ["session", "bundles", "engine", "active", "agent wait", "api-error wait", "paused", "main $", "calls",
          "compactions", "agents", "missing", "rewrites", "rewrite $"],
         [[s["session"][:8] + ("*" if s["log_truncated_in"] else ""), str(len(s["bundles"])),
           ",".join(s["engine_builds"]) or "-", _mins(s["active_min"]), _mins(s["agent_wait_min"]),
+          _mins(s["api_error_wait_min"]),
           _mins(s["paused_min"]), _usd(s["main_cost"]), _n(s["main_model_calls"]), _n(s["compactions"]),
           _n(s["agent_runs"]), _n(s["missing_agent_transcripts"]), _n(s["cache_rewrites"]),
           _usd(s["cache_rewrite_cost"])] for s in sessions])
+    lines += [f"  api-error wait = gaps over {PAUSE_S // 60} min that ended on an API error (a <synthetic> "
+              "placeholder): the request was still waiting on the API, so they count as active, not paused."]
     lines += ["  rewrites = main-thread calls after an agent returned that re-wrote the cached context, "
               "never the first call after a compaction; rewrite $ = their cost above a cache read.", "",
               "AGENTS BY TYPE (active min and $ as total/p50/max; capped = turns stopped at the "

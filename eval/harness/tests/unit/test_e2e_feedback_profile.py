@@ -133,6 +133,36 @@ def test_a_real_idle_gap_is_a_pause(tmp_path):
     assert session["agent_wait_min"] == 0.0
 
 
+def _synthetic(uuid: str, seconds: float, text: str = "API Error: Failed to parse JSON",
+               api_error: bool = True) -> dict:
+    zero = {"input_tokens": 0, "output_tokens": 0, "cache_creation_input_tokens": 0, "cache_read_input_tokens": 0}
+    row = {"type": "assistant", "uuid": uuid, "sessionId": SESSION, "timestamp": _at(seconds),
+           "message": {"role": "assistant", "id": f"syn-{uuid}", "model": "<synthetic>",
+                       "stop_reason": "stop_sequence", "usage": zero, "content": [{"type": "text", "text": text}]}}
+    return {**row, "isApiErrorMessage": True, "error": "unknown"} if api_error else row
+
+
+def test_a_wait_that_ends_on_an_api_error_is_active_and_not_a_model_call(tmp_path):
+    rows = [
+        _user("m1", 0, "go"),
+        _assistant("m2", 10, "msg_1", [{"type": "text", "text": "Searching."}]),
+        _synthetic("m3", 599),
+        _user("m4", 605, "keep going"),
+        _synthetic("m5", 1245),
+        _user("m6", 1250, "keep going"),
+        _assistant("m7", 1260, "msg_2", [{"type": "text", "text": "ok"}]),
+        _user("m8", 1270, "thanks"),
+        _synthetic("m9", 1900, "No response requested.", api_error=False),
+    ]
+    profile = _profile(_write_bundle(tmp_path, "feedback-a", rows))
+    session = profile["sessions"][0]
+    assert (session["active_min"], session["api_error_wait_min"], session["paused_min"]) == \
+        (round(1270 / 60, 1), round(640 / 60, 1), round(630 / 60, 1))
+    assert session["main_model_calls"] == 2
+    assert [m["model"] for m in profile["top"]["slowest_model_calls"]] == ["claude-sonnet-4-6"] * 2
+    assert "api-error wait = gaps over 10 min that ended on an API error" in fp.format_report(profile)
+
+
 def test_a_message_is_priced_from_its_last_usage_line(tmp_path):
     first = {"input_tokens": 3, "output_tokens": 7, "cache_read_input_tokens": 100_000,
              "cache_creation_input_tokens": 10_000,
