@@ -686,8 +686,9 @@ Architecturally:
 - **Also touch, and nothing will tell you if you don't:** `src/types/<name>.ts`
   (shared response types), `dev/try-<name>.ts` (a one-shot live-API smoke script
   — your only real debugger when the MCP harness swallows errors),
-  `tests/tools/<name>.test.ts`, `docs/catalog.md`'s tool table, and — if a skill will
-  call it — an `eval/fixtures/mcp/` fixture.
+  `tests/tools/<name>.test.ts`, `docs/catalog.md`'s tool table, `READ_ONLY` in
+  `src/tool-schemas.ts` if concurrent calls cannot corrupt project state (§5.2),
+  and — if a skill will call it — an `eval/fixtures/mcp/` fixture.
 - **Changing an existing tool's response type also breaks its fixtures**, in the
   other direction: add or rename a required field and every fixture for that tool
   is now a shape the tool cannot return.
@@ -1139,6 +1140,16 @@ driver must wait.
 > and the SDK's `@tool` cannot emit that `_meta` key. So `make eval-skill`
 > diverges from production here. Nothing on the unit plane grades ToolSearch
 > counts.
+>
+> **Read-only tools run side by side: `READ_ONLY` (`src/tool-schemas.ts`).**
+> Those tools carry `annotations: {"readOnlyHint": true}` in `tools/list`, which
+> the Claude Code CLI reads as concurrency-safe (verified on 2.1.139, 2.1.220 and
+> 2.1.302), so several in one assistant message run at once. Every other tool —
+> anything that writes `research.json` or the tree, or whose effect a later call
+> in the batch can depend on — stays serial: it runs alone, in order, after the
+> calls before it finish. `tests/packaging/read-only-tools.test.ts` pins the set
+> and refuses a writer in it. The unit harness stays serial, since `mock_mcp.py`
+> copies no annotations; whether Cowork's bridge passes them on is unverified.
 
 ### 5.3 Capability restriction by tool identity
 

@@ -80,6 +80,51 @@ export const ALWAYS_LOAD: ReadonlySet<string> = new Set([
   "research_delivered",
 ]);
 
+// Tools Claude Code may run side by side (annotations.readOnlyHint): concurrent calls cannot corrupt
+// project state and their order does not matter — pure reads, plus reads that only stage their own
+// result file, append a log line, or write external-collections.json under withProjectLock.
+export const READ_ONLY: ReadonlySet<string> = new Set([
+  "auth_status",
+  "catalog_search",
+  "census_children_gap",
+  "collections_search",
+  "convert_calendar",
+  "external_links_search",
+  "fulltext_search",
+  "get_name_variants",
+  "image_read",
+  "image_search",
+  "image_transcribe",
+  "merge_warnings",
+  "person_ancestors",
+  "person_person_matches",
+  "person_quality",
+  "person_read",
+  "person_record_matches",
+  "person_search",
+  "person_warnings",
+  "place_distance",
+  "place_population",
+  "place_search",
+  "place_search_all",
+  "project_context",
+  "record_person_matches",
+  "record_read",
+  "record_record_matches",
+  "record_search",
+  "research_query",
+  "sidecar_read",
+  "source_attachments",
+  "tree_gaps",
+  "validate_research_schema",
+  "volume_bisect",
+  "volume_search",
+  "wiki_place_page",
+  "wiki_read",
+  "wiki_search",
+  "wikipedia_search",
+]);
+
 export const allToolSchemas = [
   catalogSearchSchema,
   volumeBisectSchema,
@@ -138,8 +183,12 @@ export const allToolSchemas = [
 ];
 
 // Set in place, not copied: ownership-manifest.test.ts matches schemas by object identity.
-for (const name of ALWAYS_LOAD) {
-  const schema = allToolSchemas.find((s) => s.name === name);
-  if (!schema) throw new Error(`ALWAYS_LOAD names unknown tool "${name}"`);
-  Object.assign(schema, { _meta: { "anthropic/alwaysLoad": true } });
+function mark(set: ReadonlySet<string>, setName: string, fields: object): void {
+  for (const name of set) {
+    const schema = allToolSchemas.find((s) => s.name === name);
+    if (!schema) throw new Error(`${setName} names unknown tool "${name}"`);
+    Object.assign(schema, fields);
+  }
 }
+mark(ALWAYS_LOAD, "ALWAYS_LOAD", { _meta: { "anthropic/alwaysLoad": true } });
+mark(READ_ONLY, "READ_ONLY", { annotations: { readOnlyHint: true } });
