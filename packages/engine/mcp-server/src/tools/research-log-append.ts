@@ -367,10 +367,15 @@ function supersededPlanItemRefusal(research: any, planItemId: string): string | 
  * still reads as a US 1860 census (correctly refused) rather than a Welsh one.
  *
  * A CENSUS TOKEN BINDS ONE YEAR SIDE. A token already bound to the year before
- * it does not also bind the year after it: in "1900 census 1853/Maine", "the
- * 1900 census, 1853 Maine" and "1900 census (1853, Maine)" the 1853 is a birth
- * year, and read as an 1853 census it refused a note about the 1880 census
- * ("Mogom household, 1880 census: ... 1900 census 1853/Maine").
+ * it does not also bind a single year after it: in "1900 census 1853/Maine",
+ * "the 1900 census, 1853 Maine" and "1900 census (1853, Maine)" the 1853 is a
+ * birth year, and read as an 1853 census it refused a note about the 1880 census
+ * ("Mogom household, 1880 census: ... 1900 census 1853/Maine"). A RUN of two or
+ * more years after it still binds ("Searched 1880 census, 1870 and 1860"). And a
+ * year straight after a vital-event marker (`b.`, `born`, `bapt.`, `bp.`, `chr.`,
+ * `d.`, `died`, `m.`, `married`, `bur.`) never binds, so "Patrick Flynn b. 1840
+ * United States Census, 1850" reads as the 1850 census, not the 1840 one -- which
+ * would have put it under the head-only rule below.
  *
  * THE STAGED PAYLOAD SUPPLIES THE JURISDICTION OF AN UNQUALIFIED MENTION (issue
  * #3409, decided at review-ready 2026-10-14). An unqualified "1851 census" reads
@@ -397,8 +402,12 @@ type CensusMention = { year: number; columnFrom: number };
 type QualifiedMention = CensusMention & { qualified: boolean; phrase: string };
 
 const CENSUS_YEAR = String.raw`1[6-9]\d\d`;
+const CENSUS_YEAR_SEPARATOR = String.raw`\s*(?:,|and|&|\/|or|to|-|–|through)\s*`;
 /** A run of years sharing one census token: "1860 and 1870 censuses". */
-const CENSUS_YEAR_RUN = String.raw`(?:${CENSUS_YEAR})(?:\s*(?:,|and|&|\/|or|to|-|–|through)\s*(?:${CENSUS_YEAR}))*`;
+const CENSUS_YEAR_RUN = String.raw`(?:${CENSUS_YEAR})(?:${CENSUS_YEAR_SEPARATOR}(?:${CENSUS_YEAR}))*`;
+/** A vital-event marker a year can follow: "b. 1840", "born 1840", "d. 1878".
+ *  The one-letter forms are lower case only, so an initial ("John B.") is not one. */
+const VITAL_EVENT_BEFORE = /(?:\b(?:b|d|m)\.|\b(?:[Bb]apt|[Bb]p|[Cc]hr|[Bb]ur)\.|\b(?:[Bb]orn|[Dd]ied|[Mm]arried))\s*$/;
 /** Words allowed between the year and the token: "1900 US federal census". */
 const CENSUS_QUALIFIER = String.raw`(?:u\.?\s?s\.?|united\s+states|federal|state|national|uk|united\s+kingdom|england|english|wales|welsh|scotland|scottish|ireland|irish|britain|british|canada|canadian|denmark|danish|norway|norwegian|sweden|swedish|germany|german|prussia|prussian|colonial|population|agricultural|mortality|slave|veterans?|school|and|&)`;
 const CENSUS_TOKEN = String.raw`census(?:es)?`;
@@ -468,6 +477,12 @@ function qualifiedMentions(notes: string): QualifiedMention[] {
   // Where each census token bound to a PRECEDING year starts.
   const boundTokens = new Set<number>();
   for (const m of notes.matchAll(CENSUS_BEFORE)) {
+    // "b. 1840 census 1850": the 1840 is a birth. It does not bind, and when it
+    // is the only year before the token, the token keeps the year after it.
+    const vital = VITAL_EVENT_BEFORE.test(notes.slice(0, m.index))
+      ? (new RegExp(String.raw`^${CENSUS_YEAR}(?:${CENSUS_YEAR_SEPARATOR})?`, "i").exec(m[1])?.[0] ?? "")
+      : "";
+    if (vital === m[1]) continue;
     boundTokens.add(m.index + m[0].search(/census(?:es)?$/i));
     const post = notes.slice(m.index + m[0].length, m.index + m[0].length + 24);
     // "pre-1880 census" names a census BEFORE 1880, so it binds as 1879. Read as
@@ -478,10 +493,20 @@ function qualifiedMentions(notes: string): QualifiedMention[] {
     // The `of|for` capture stops at a period, so "census of the U.S." is read
     // here, and so is "census for the USA".
     const usAfter = /^\s*(?:of|for)\s+(?:the\s+)?(?:u\.?\s?s(?:\.?a)?\b|united\s+states\b)/i.test(post);
-    push(m[1], m[2] ?? "", /^\s*(?:of|for)\s+([A-Za-z&\s]{0,20})/.exec(post)?.[1] ?? "", `${prefix ?? ""}${m[0]}`, before, usAfter);
+    push(
+      m[1].slice(vital.length),
+      m[2] ?? "",
+      /^\s*(?:of|for)\s+([A-Za-z&\s]{0,20})/.exec(post)?.[1] ?? "",
+      `${prefix ?? ""}${m[0].slice(vital.length)}`,
+      before,
+      usAfter,
+    );
   }
   for (const m of notes.matchAll(CENSUS_AFTER)) {
-    if (boundTokens.has(m.index + (m[1] ?? "").length)) continue;
+    // A token the year before it bound still takes a RUN after it ("1880
+    // census, 1870 and 1860"), never one year ("1900 census 1853/Maine").
+    const following = m[2].match(new RegExp(CENSUS_YEAR, "g")) ?? [];
+    if (boundTokens.has(m.index + (m[1] ?? "").length) && following.length < 2) continue;
     push(m[2], m[1] ?? "", "", m[0]);
   }
   return out;

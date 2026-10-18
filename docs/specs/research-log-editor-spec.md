@@ -459,14 +459,23 @@ Scope, and why it is this narrow:
   test refuses the documented censuses it is meant to allow. Only a year
   syntactically attached to the word "census" counts.
 - **A census word binds a year on one side only.** A word with a year before it
-  does not also take the year after it: in "1900 census 1853/Maine", "the 1900
-  census, 1853 Maine" and "1900 census (1853, Maine)" the 1853 is a birth year,
-  and read as an 1853 census it refused "Mogom household, 1880 census: … 1900
-  census 1853/Maine", a note about the 1880 census. A word with no year before
-  it still takes the one after ("US Census 1870"). What this gives up: a list
-  that runs on past a bound word ("the 1880 census, 1870 and 1860") no longer
-  binds its tail. In the committed corpus (2026-10-18) one note binds
-  differently, "1881 census, 1891 census", which only loses a duplicate 1891.
+  does not also take a single year after it: in "1900 census 1853/Maine", "the
+  1900 census, 1853 Maine" and "1900 census (1853, Maine)" the 1853 is a birth
+  year, and read as an 1853 census it refused "Mogom household, 1880 census: …
+  1900 census 1853/Maine", a note about the 1880 census. A run of two or more
+  years after it still binds ("Searched 1880 census, 1870 and 1860"), and a word
+  with no year before it still takes the one after ("US Census 1870"). A year
+  straight after a vital-event marker — `b.`, `born`, `bapt.`, `bp.`, `chr.`,
+  `d.`, `died`, `m.`, `married`, `bur.` — never binds, even before "census", so
+  "Patrick Flynn b. 1840 United States Census, 1850" is the 1850 census. The
+  one-letter markers count in lower case only, so an initial ("John B. 1850
+  census") is not one. What this gives up: a single year after a bound word is
+  never read as a census, even when it is one ("1880 census (1870, Pike
+  County)"), and losing it can put a note under the head-only rule below:
+  "1840 census, 1850: John Smith household" reads as 1840 alone and passes. In
+  the committed corpus (2026-10-18) two notes bind differently from `main` and
+  neither verdict moves: "1881 census, 1891 census" loses a duplicate 1891, and
+  "Milan Raney (b. 1891, 1910 census)" no longer reads the birth year as a census.
 - **The jurisdiction binds the same way.** The doctrine is US-federal, where
   1880 is the dividing line. England & Wales and Scotland gained the column in
   1851, so a post-1851 British census is documented and must pass. A named
@@ -544,7 +553,7 @@ Scope, and why it is this narrow:
   ruling was made for survey-surname tables (survey-surname-agent-spec.md, "The
   hedge line") and did not consider these shapes. Measured with
   `dev/measure-census-hedge-refusals.ts` against `main` at f0f1483a4, together
-  with the one-side binding above, the reading for anyone else and the two roster fixes
+  with the binding above, the reading for anyone else and the two roster fixes
   below: **0** notes and **0** paired payload ops newly refused, **5** notes
   newly freed — four nil searches for an 1830 or 1840 household and one 1840
   hit that names only its head, through the FamilySearch record title it

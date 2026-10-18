@@ -1144,6 +1144,39 @@ describe("a census word binds the year on one side only", () => {
     expect(censusMentions("US Census 1870, Ward 4")).toEqual([{ year: 1870, columnFrom: 1880 }]);
     expect(() => requirePre1880CensusHedge("US Census 1870, Ward 4: Mogom household.")).toThrow(/relationship-to-head/);
   });
+
+  const bad = (n: string) => expect(() => requirePre1880CensusHedge(n)).toThrow(/relationship-to-head/);
+  const years = (n: string) => censusMentions(n).map((m) => m.year);
+
+  it("still binds a run of years after a bound word", () => {
+    // Bound to 1880 or 1840 alone, each of these passed: the first as a
+    // documented census, the second under the head-only rule.
+    bad("Searched 1880 census, 1870 and 1860: John Smith household with wife Mary.");
+    bad("Searched the 1880 census, 1870 and 1860 for the John Smith household.");
+    bad("1840 census, 1850 and 1860: John Smith household.");
+    expect(years("1880 census, 1870 and 1860")).toEqual([1880, 1870, 1860]);
+  });
+
+  it("never binds a year straight after a vital-event marker", () => {
+    // Bound as 1840, each of these went under the head-only rule.
+    bad("Patrick Flynn b. 1840 United States Census, 1850: Thomas Flynn household.");
+    bad("John Smith b. 1840 census 1850: John Smith household.");
+    bad("Patrick Flynn b. 1840, 1850 census: Thomas Flynn household.");
+    // Committed corpus note: the 1891 is a birth.
+    expect(years("Milan Raney (b. 1891, 1910 census)")).toEqual([1910]);
+    expect(years("born 1840 census")).toEqual([]);
+  });
+
+  it.each(["b.", "born", "Born", "bapt.", "bp.", "chr.", "d.", "died", "m.", "married", "bur."])(
+    "reads '%s' as a vital-event marker",
+    (marker) => expect(years(`${marker} 1840 census 1850`)).toEqual([1850]),
+  );
+
+  it("does not read an initial as a vital-event marker", () => {
+    expect(years("John B. 1850 census")).toEqual([1850]);
+    expect(years("Sarah M. 1850 census")).toEqual([1850]);
+    expect(years("Sarah m. 1850 census")).toEqual([]);
+  });
 });
 
 describe("a refusal quotes what it fired on", () => {
