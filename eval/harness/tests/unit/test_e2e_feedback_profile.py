@@ -170,6 +170,25 @@ def test_only_a_call_after_an_agent_that_misses_the_cache_is_a_rewrite(tmp_path)
     assert session["cache_rewrite_cost"] == round((50_005 - 27_000) * (3.00 * 1.25 - 0.30) / 1_000_000, 2)
 
 
+def _failed_read(n: int, t: float, error: str) -> list:
+    return [_assistant(f"r{n}", t, f"msg_r{n}", [{"type": "tool_use", "id": f"tu_r{n}", "name": "Read",
+                                                  "input": {"file_path": f"/project/{n}.json"}}]),
+            _user(f"e{n}", t + 1, [{"type": "tool_result", "tool_use_id": f"tu_r{n}", "content": error,
+                                    "is_error": True}])]
+
+
+def test_an_error_head_is_counted_in_each_thread_it_came_from(tmp_path):
+    error = "File does not exist. Note: your current working directory is /project."
+    main = _waiting_session()
+    main = [main[0], *_failed_read(1, 2, error), *main[1:]]
+    agent = [_user("a1", 11, "extract the record"), *_failed_read(2, 20, error), *_failed_read(3, 30, error),
+             _assistant("a_end", 40, "msg_end", [{"type": "text", "text": "done"}])]
+    bundle = _write_bundle(tmp_path, "feedback-a", main, {"a1": (AGENT_META, agent)})
+    assert _profile(bundle)["top"]["error_heads"] == [
+        {"times": 2, "tool": "Read", "where": "record-extractor a1", "head": error},
+        {"times": 1, "tool": "Read", "where": "main 5e55a0b1", "head": error}]
+
+
 def test_two_bundles_of_one_session_count_it_once(tmp_path):
     rows = [
         _user("m1", 0, "This session is being continued from a previous conversation."),

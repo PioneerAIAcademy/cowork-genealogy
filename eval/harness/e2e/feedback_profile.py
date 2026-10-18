@@ -611,12 +611,9 @@ def _top_lists(all_calls, all_models, threads) -> dict[str, list[dict]]:
     largest = sorted((x for x in all_calls if x[1]["result_chars"]),
                      key=lambda x: -x[1]["result_chars"])[:TOP_N]
     errors: Counter = Counter()
-    first_where: dict[tuple[str, str], str] = {}
     for where, c in all_calls:
         if c["is_error"]:
-            key = (c["name"], " ".join((c["result_head"] or "").split())[:160])
-            errors[key] += 1
-            first_where.setdefault(key, where)
+            errors[(where, c["name"], " ".join((c["result_head"] or "").split())[:160])] += 1
     repeated = []
     for where, th in threads:
         counts = Counter((c["name"], c["args"]) for c in th["tool_calls"])
@@ -636,8 +633,8 @@ def _top_lists(all_calls, all_models, threads) -> dict[str, list[dict]]:
             {"chars": c["result_chars"], "where": w, "tool": c["name"], "args": c["args"][:160]}
             for w, c in largest],
         "error_heads": [
-            {"times": n, "tool": tool, "where": first_where[(tool, head)], "head": head}
-            for (tool, head), n in errors.most_common(TOP_N)],
+            {"times": n, "tool": tool, "where": where, "head": head}
+            for (where, tool, head), n in errors.most_common(TOP_N)],
         "repeated_calls": sorted(repeated, key=lambda r: -r["times"])[:TOP_N],
         "images_transcribed_more_than_once": sorted(
             ({"times": len(ws), "image": key, "where": sorted(set(ws))}
@@ -721,7 +718,7 @@ def format_report(profile: dict[str, Any]) -> str:
               + (f"  -> {', '.join(m['tools'])}" if m["tools"] else "") for m in top["slowest_model_calls"]]
     lines += ["", "LARGEST RESULTS"]
     lines += [f"  {r['chars']:>9,} chars  {r['where']}  {r['tool']}  {r['args']}" for r in top["largest_results"]]
-    lines += ["", "ERROR HEADS"]
+    lines += ["", "ERROR HEADS (times one thread got the same error from one tool)"]
     lines += [f"  {e['times']:>3}x  {e['tool']}  {e['where']}  {e['head']}" for e in top["error_heads"]]
     lines += ["", "REPEATED IDENTICAL CALLS (same tool and arguments within one thread)"]
     lines += [f"  {r['times']:>3}x  {r['where']}  {r['tool']}  {r['args']}" for r in top["repeated_calls"]]
