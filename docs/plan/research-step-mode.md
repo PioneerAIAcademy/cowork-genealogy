@@ -7,7 +7,8 @@ single-pass plan drawn from feedback issue #3475, and a one-step-per-turn draft.
 has reviewed this merged version six times, and its findings are folded in. After round 4,
 "Keep going" was simplified to replies the host sends for the researcher (decision 13).
 Decisions 14–19 were added on 2026-10-18. A set-aside design reviewed in three plan-critic
-rounds was dropped for decision 15, which reuses the wrap-up path; round 4 reviewed that.
+rounds was dropped for decision 15, which reuses the wrap-up path. Rounds 4 and 5 reviewed
+the replacement and the unsettled-conflict ending; their findings are folded in.
 
 ## Decisions taken (lead, 2026-10-16)
 1. **Step mode on every production plane:** Cowork, the hosted web app (the alpha) and the
@@ -242,8 +243,9 @@ that apply:
       ran, so a wrap-up turn that ends offering the next question still gets its buttons;
     - **only Wrap it up** when the offer is `wrap-up` (section E);
     - otherwise **Continue** and **Keep going**, plus:
-      - **Wrap it up** when `current_question(research)` exists and the offered step is not
-        proof-conclusion (Continue already concludes);
+      - **Wrap it up** when `current_question(research)` exists and the offered step is
+        neither proof-conclusion (Continue already concludes) nor question-selection (the offer
+        after a wrap-up, where the current question may be one a conflict held open);
       - **Search more** at the choice with a low-risk default: the offer is proof-conclusion,
         and the question has a `resources_spent` stop and no proof summary. At a high-risk
         choice the offer is already planning, and Wrap it up is the alternative. Reading the
@@ -589,29 +591,40 @@ that apply:
     conflict-resolution has weighed, written on every analysis. It mirrors
     `search_stop.log_entry_ids`. "The question's log entries" is B's coverage set: entries on
     its plans' items plus closing entries matched by `closesHandOff`.
-  - **The ladder gains one arm, above the conflict arm.** When every open conflict has
-    weighed every log entry of the question, and no plan item is open (an item waiting only on
-    an upload aside):
-    - if the question's `search_stop` is `blocked_by_conflict` and its `log_entry_ids` cover
-      every log entry, there is no next step: "the research ended on an unsettled conflict";
-    - otherwise the next step is proof-conclusion.
-  - **proof-conclusion in that state** writes or refreshes the `not_proved` summary with
-    `shortfall: "conflict"`, leaves the question open (decision 12), and in the same batch
-    writes the question's `search_stop` as `blocked_by_conflict`, listing every log entry.
-    The plugin hook routes only stop-gate values (`ownership.json`'s `search_stop` notes), and
-    proof-conclusion already updates the question in §7's batch.
-  - **A later upload or steer** adds a log entry neither list covers, so the conflict goes
-    back to conflict-resolution to weigh it.
+  - **The ladder gains one arm, above the conflict arm.** It applies when there is at least
+    one open conflict, every open conflict carries `independence_analysis` and a
+    `weighed_log_entry_ids` that covers every log entry of the question, and no plan item is
+    open (an item waiting only on an upload aside). Then:
+    - if the question has a `not_proved` summary with `shortfall: "conflict"`, there is no next
+      step: "the research ended on an unsettled conflict";
+    - otherwise the next step is proof-conclusion, which writes or refreshes that summary and
+      leaves the question open (decision 12).
+  - **The summary is the terminal marker, not `search_stop`.** proof-conclusion may not write
+    `search_stop`: the plugin hook routes every non-null `stopped_because` to
+    research-exhaustiveness (`guard_project_files.py`, `OWNED_DECLARATIONS`, pinned in
+    `plugin-hooks.test.ts`), and its body says so (`agents/proof-conclusion.md:319`). A non-gate
+    stop would also be refused on an `exhaustive_declared` question
+    (`declarationStatusInvariants`), and would overwrite a gate stop a later `proved` needs.
+    `ownership.json`'s `search_stop` note, which says non-gate values are not routed, is stale;
+    PR 1 corrects it.
+  - **A later upload or steer** adds a log entry the weighed list does not cover, so the
+    conflict goes back to conflict-resolution. If that pass still settles nothing, the arm
+    finds the old `not_proved`/`conflict` summary and stops without refreshing it; the
+    conflict's own analysis records the new evidence. That is the accepted cost of using the
+    summary as the marker.
   - **The router's conflict row** follows the ladder's `nextStep` for the question, not the
-    bare presence of a conflict.
+    bare presence of a conflict. A new row above it (`skills/research/SKILL.md:220`): when
+    `project_context` reports no next step for an unresolved question, run nothing and name
+    Wrap it up and a different question. Without it the "plausibly answers" and "all plan items
+    completed" rows (`:223-224`) still match and run research-exhaustiveness.
   - **Step reports:** conflict-resolution's report on a pass that cannot settle anything and
     names no record left to search, and proof-conclusion's report in this state, end without
     a "Continue with …?" line. The researcher's buttons are then empty, and the reply names
     Wrap it up and a different question as the ways on.
   - **Schema sites** (a new optional field): both `research.schema.json` trees' conflict
     entry, `research-schema-spec.md`'s conflicts table, `RESEARCH_SHAPES.conflict`'s allowed
-    keys and a type check in `validator.ts`'s conflicts block, and the `Conflict` interface in `packages/schema/src/index.ts` (optional,
-    not nullable).
+    keys and a type check in `validator.ts`'s conflicts block, and the `Conflict` interface
+    in `packages/schema/src/index.ts` (optional, not nullable).
 - **After the round settles the conflict,** the ladder's "concluded; mark the question
   resolved" arm (`question-state.ts:429-434`) would send the question to question-selection,
   which writes no resolution. It routes to proof-conclusion instead, which refreshes the summary
@@ -943,7 +956,10 @@ in parallel with PR 2.
     handling and `has_queued`; the alpha's runner chain and `turn_step`; `reply_follows` and
     ChatPane's busy state (A2); a turn that ran no step leaving `prev_step` as it was (J);
   - decision 12's three contract sites (E);
-  - the worker's turn-close `completed`;
+  - the worker's turn-close `completed`, set only when `project.status` became `completed`
+    during the turn, so later turns on a finished project that took a new question are not
+    labelled `completed`;
+  - `ownership.json`'s stale `search_stop` note (E);
   - **writer and ladder rules:** E's rule replacing `newQuestionWhileSearchInFlightInvariants`,
     with its exemption (a proof summary and no open item) and the 11 rewritten tests; two
     `question-state.ts` changes (B's choice with its closing-entry coverage, the concluded
@@ -962,10 +978,12 @@ in parallel with PR 2.
   today's.
   - **conflict-resolution:** writes `weighed_log_entry_ids` on every analysis, and ends a pass
     that settles nothing and names nothing to search without a Continue line (E);
-  - **proof-conclusion:** in that state, writes `not_proved` with `shortfall: "conflict"` and the
-    `blocked_by_conflict` stop in §7's batch, and its report ends without a Continue line (E);
+  - **proof-conclusion:** in that state, writes or refreshes `not_proved` with
+    `shortfall: "conflict"`, leaves the question open, and its report ends without a Continue
+    line (E);
   - **tests:** the conflict-resolution and proof-conclusion cases for the unsettled conflict in
-    acceptance item 7.
+    acceptance item 7. The "a following continue runs no step" case needs PR 2's router rows
+    and ships with PR 2's tests.
 - **PR 2 — the switch-on; paid `research`, `research-exhaustiveness`, `person-evidence` and
   `question-selection` runs.** These four cannot land earlier:
   - the router's step report and the choice need PR 1's step check, ladder branch and
@@ -978,7 +996,7 @@ in parallel with PR 2.
     fan-out, external items included (D, I); the choice replacing the loop row (`:225`);
     wrap-up from any state (B2), with `userPresent` for person-evidence and `wrapUp` for
     proof-conclusion; the different-question reply and its wrap-up offer, and the conflict row
-    following the ladder's `nextStep` (E); the upload turn
+    following the ladder's `nextStep` with the no-next-step row above it (E); the upload turn
     (I); questions between
     steps (J); Cowork's one-turn "Keep going" sentence (A2); the objective row (E) and the
     deleted "return to question-selection" line;
@@ -1001,7 +1019,7 @@ in parallel with PR 2.
       `userPresent: no`;
     - the five question-selection tests and the two-fact test (E);
     - the new tests for B2's wrap-up before evidence, E's different-question reply, I and J in
-      acceptance item 7.
+      acceptance item 7, and the unsettled-conflict "continue runs no step" case.
 - **Prerequisites, staffed separately:** issue #2243 for the fan-out; its handed-state follow-up
   for D's handed state; prototype uploads (research-as-a-job's "let documents in") for
   external-site searches on the prototype (section I).
@@ -1061,12 +1079,14 @@ in parallel with PR 2.
      reply, and no held reply is released while Stop is set;
    - the alpha's chain replies to "Continue with …?" only while "Keep going" is on;
    - `turn_done` carries `reply_follows` on both hosted planes when a reply will follow;
-   - the worker sets `completed` at turn close when a step finished the project;
+   - the worker sets `completed` at turn close when a step finished the project, and not on a
+     later turn of a project that was already `completed` before the turn;
    - a turn that ran no step leaves `prev_step` unchanged, on the prototype by reading the last
      closed turn with a non-null `turns.step`;
    - `reply_options`: nothing for no offer; Continue, Keep going and Wrap it up for an ordinary
      offer, with or without evidence; no Wrap it up when there is no unresolved question (such
-     as init-project's offer) or beside a proof-conclusion offer; buttons on a wrap-up turn that
+     as init-project's offer) or beside a proof-conclusion or question-selection offer; buttons
+     on a wrap-up turn that
      ends offering the next question; Search more only at a low-risk choice; only Wrap it up
      for a `wrap-up` offer. `turn_done.options` carries the list on both hosted planes, and is
      absent when empty.
@@ -1086,8 +1106,12 @@ in parallel with PR 2.
      open, the next step is search-records;
    - a concluded, unresolved question with no open conflict routes to proof-conclusion;
    - an analysed, unresolved conflict that has weighed every log entry, with no open item,
-     routes to proof-conclusion; once the question's `blocked_by_conflict` stop covers every log
-     entry, there is no next step; one more log entry sends it back to conflict-resolution;
+     routes to proof-conclusion; once the question has a `not_proved` summary with
+     `shortfall: "conflict"`, there is no next step; one more log entry sends it back to
+     conflict-resolution; the same holds for a question already `exhaustive_declared`;
+   - the arm does not fire with no open conflict, or for a conflict-blocked question with no log
+     entries whose conflict carries no `weighed_log_entry_ids`; that question goes to
+     conflict-resolution;
    - `weighed_log_entry_ids` validates on a conflict, and an unknown sibling key is still
      refused;
    - B's branch fires beside an item waiting only on an upload, and stops firing once the
@@ -1132,8 +1156,8 @@ in parallel with PR 2.
      question offered;
    - a conflict-resolution pass that cannot settle the conflict and names nothing to search
      writes `weighed_log_entry_ids` and ends without a "Continue with …?" line; proof-conclusion
-     then writes `not_proved` with `shortfall: "conflict"` and the `blocked_by_conflict` stop,
-     and a following "continue" runs no step;
+     then writes `not_proved` with `shortfall: "conflict"` and no `search_stop`, and a following
+     "continue" runs no step (with PR 2's router rows);
    - with one wrapped-up `not_proved` question with no open conflict, and one proved question,
      the project completes;
    - a one-question project, a different question mid-run, then "Wrap it up.": the question
