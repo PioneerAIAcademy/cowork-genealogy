@@ -26,14 +26,29 @@ Example:
 
 1. Fetch the summary of `query` as a title. An exact title is answered here,
    in one request.
-2. If that returns **404**, search Wikipedia for `query` and take the top
-   hit's `title`.
+2. If that returns **404**, search Wikipedia for `query`, asking for 5 hits,
+   and take the first hit whose title matches the query (below).
 3. Fetch that title's summary. The result's `title` is the real article title
    (`"Luo people"`), not the query.
 
-The existing not-found error is kept only when the search has no hit, or the
-top hit's summary also 404s. Any other status ends the lookup with an error
-(below).
+**A hit matches when every significant word of its title appears in the
+query.** Both are compared as words: case-folded, diacritics stripped (a
+stroked letter counts as its bare letter, so `ø` reads as `o`), and split on
+anything that is not a letter or digit. A trailing parenthetical is dropped
+from the title first, and these small words in it need not appear in the
+query: of, the, and, in, on, at, a, an, de, la, le, du, des, von, van, der. A
+title made only of those words never matches. Search ranks by relevance, not
+meaning, so without the rule a query for a place with no article of its own
+gets another article back as its answer: `"Maddock North Dakota history"` got
+`"List of governors of North Dakota"`, and `"Hollow Creek Settlement"` got
+`"Swede Hollow, Saint Paul"`. Under it both are not found, while `"History of
+Schuylkill County Pennsylvania"` still resolves to `"Schuylkill County,
+Pennsylvania"` and `"Saint Etienne history"` to `"Saint-Étienne"`. The cost is
+that a right hit whose title carries a word the query lacks is not found
+(`"Skåne Sweden history"` misses `"Scania"`).
+
+The not-found error is kept when no hit matches, or the matched hit's summary
+also 404s. Any other status ends the lookup with an error (below).
 
 ---
 
@@ -60,7 +75,7 @@ Example:
 
 | Condition | Behavior |
 |-----------|----------|
-| The summary 404s and the search returns no hit, or the top hit's summary also 404s | Throw error: `"No Wikipedia article found for '{query}'"` |
+| The summary 404s and no search hit matches the query, or the matched hit's summary also 404s | Throw error: `"No Wikipedia article found for '{query}'"` |
 | A summary returns any other non-2xx | Throw error: `"Wikipedia API error: {status}"` |
 | The search returns non-2xx | Throw error: `"Wikipedia search API error: {status}"` — not the not-found error, which would claim an absence nobody checked |
 
@@ -99,7 +114,7 @@ GET https://en.wikipedia.org/api/rest_v1/page/summary/{title}
 
 **Search endpoint** (step 2, the MediaWiki REST search):
 ```
-GET https://en.wikipedia.org/w/rest.php/v1/search/page?q={query}&limit=1
+GET https://en.wikipedia.org/w/rest.php/v1/search/page?q={query}&limit=5
 ```
 
 **Example response** (relevant fields only). No hit is `{ "pages": [] }`.
@@ -181,10 +196,13 @@ The index.ts is the MCP server entry point that registers all tools. Update it t
 | # | Test case |
 |---|-----------|
 | 1 | An exact title is answered by the summary alone — one request, no search |
-| 2 | A descriptive query that 404s as a title resolves through search; the result carries the top hit's real title |
+| 2 | A descriptive query that 404s as a title resolves through search; the result carries the hit's real title |
 | 3 | A search with no hit keeps the not-found error |
-| 4 | A summary error other than 404 is reported without searching |
-| 5 | A failed search is reported as a search error, not as no article |
+| 4 | Hits none of whose titles the query spells out keep the not-found error (`"Maddock North Dakota history"`, `"Hollow Creek Settlement"`, on their live hit lists) |
+| 5 | Hits that match still resolve, through diacritics, a stroked letter, small words and a parenthetical (`"Luo people"`, `"Schuylkill County, Pennsylvania"`, `"Saint-Étienne"`, `"Hamre, Osterøy"`, `"History of Georgia (U.S. state)"`) |
+| 6 | A matching second hit is taken over a first that does not match; a title made only of small words is never taken |
+| 7 | A summary error other than 404 is reported without searching |
+| 8 | A failed search is reported as a search error, not as no article |
 
 `dev/smoke-calls.ts` runs one exact title (`"Genealogy"`) and one descriptive
 query (`"Luo people Kenya ethnic group history"`) live; both must return

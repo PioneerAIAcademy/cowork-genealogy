@@ -33,10 +33,47 @@ function fetchSummary(title: string): Promise<Response> {
   );
 }
 
-/** The title of Wikipedia's top search hit for `query`, or null when there is none. */
-async function topSearchTitle(query: string): Promise<string | null> {
+const SEARCH_HITS = 5;
+
+// Small words a title carries that the query need not repeat.
+const FUNCTION_WORDS = new Set([
+  "of", "the", "and", "in", "on", "at", "a", "an",
+  "de", "la", "le", "du", "des", "von", "van", "der",
+]);
+
+// Letters NFD does not decompose: the stroked ones, which a query types bare
+// ("Osteroy" for "Osterøy"), and ß, which case folding spells ss.
+const UNDECOMPOSED: Record<string, string> = { ø: "o", ł: "l", đ: "d", ħ: "h", ŧ: "t", ı: "i", ß: "ss" };
+
+/** Case-folded words with diacritics stripped, split on anything that is not a letter or digit. */
+function words(text: string): string[] {
+  return text
+    .normalize("NFD")
+    .replace(/\p{M}/gu, "")
+    .toLowerCase()
+    .replace(/[øłđħŧıß]/g, (c) => UNDECOMPOSED[c])
+    .split(/[^\p{L}\p{N}]+/u)
+    .filter((w) => w !== "");
+}
+
+/**
+ * Whether the query spells out a search hit's title: every significant word of
+ * the title, less a trailing parenthetical, appears in the query. Search
+ * ranks by relevance, not meaning, so a query for a place with no article of
+ * its own gets some other article back ("Maddock North Dakota history" → "List
+ * of governors of North Dakota"), and the caller would take it as the answer.
+ */
+function titleMatches(title: string, queryWords: ReadonlySet<string>): boolean {
+  const significant = words(title.replace(/\s*\([^()]*\)\s*$/, "")).filter(
+    (w) => !FUNCTION_WORDS.has(w),
+  );
+  return significant.length > 0 && significant.every((w) => queryWords.has(w));
+}
+
+/** The first of Wikipedia's top search hits for `query` whose title matches it, or null. */
+async function matchingSearchTitle(query: string): Promise<string | null> {
   const response = await fetchWithRetry(
-    `${WIKIPEDIA_SEARCH_URL}?q=${encodeURIComponent(query)}&limit=1`,
+    `${WIKIPEDIA_SEARCH_URL}?q=${encodeURIComponent(query)}&limit=${SEARCH_HITS}`,
     { headers: WIKIPEDIA_HEADERS },
     WIKIPEDIA_TIMEOUT_MS,
   );
@@ -44,8 +81,11 @@ async function topSearchTitle(query: string): Promise<string | null> {
     throw new Error(`Wikipedia search API error: ${response.status}`);
   }
   const data: WikipediaPageSearchResponse = await response.json();
-  const title = data.pages?.[0]?.title;
-  return typeof title === "string" && title !== "" ? title : null;
+  const queryWords = new Set(words(query));
+  for (const page of data.pages ?? []) {
+    if (typeof page.title === "string" && titleMatches(page.title, queryWords)) return page.title;
+  }
+  return null;
 }
 
 export async function wikipediaSearch(
@@ -54,11 +94,11 @@ export async function wikipediaSearch(
   const notFound = () => new Error(`No Wikipedia article found for '${input.query}'`);
 
   // The summary endpoint takes an exact title, so a descriptive query ("Luo
-  // people Kenya ethnic group history") 404s there; the top search hit's
-  // title is the article it meant.
+  // people Kenya ethnic group history") 404s there; the first search hit whose
+  // title the query spells out is the article it meant.
   let response = await fetchSummary(input.query);
   if (response.status === 404) {
-    const title = await topSearchTitle(input.query);
+    const title = await matchingSearchTitle(input.query);
     if (title === null) throw notFound();
     response = await fetchSummary(title);
     if (response.status === 404) throw notFound();

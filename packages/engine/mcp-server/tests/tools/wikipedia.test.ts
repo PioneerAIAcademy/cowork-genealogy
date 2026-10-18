@@ -68,7 +68,7 @@ describe("wikipediaSearch", () => {
 
     expect(mockFetch).toHaveBeenCalledTimes(3);
     expect(urlOf(0)).toBe(`${SUMMARY}/${encodeURIComponent(query)}`);
-    expect(urlOf(1)).toBe(`${SEARCH}?q=${encodeURIComponent(query)}&limit=1`);
+    expect(urlOf(1)).toBe(`${SEARCH}?q=${encodeURIComponent(query)}&limit=5`);
     expect(urlOf(2)).toBe(`${SUMMARY}/Luo%20people`);
     expect(result.title).toBe("Luo people");
     expect(result.url).toBe("https://en.wikipedia.org/wiki/Luo_people");
@@ -101,5 +101,91 @@ describe("wikipediaSearch", () => {
     await expect(wikipediaSearch({ query: "Luo people Kenya" })).rejects.toThrow(
       "Wikipedia search API error: 403"
     );
+  });
+});
+
+describe("wikipediaSearch — which search hit it takes", () => {
+  // Hit lists as the live search endpoint returned them (limit=5) on 2026-10-18.
+  const MADDOCK = [
+    "List of governors of North Dakota",
+    "First ladies of North Dakota",
+    "List of founding dates of North Dakota incorporated cities",
+    "Doug Burgum",
+    "List of school districts in North Dakota",
+  ];
+  const HOLLOW_CREEK = ["Swede Hollow, Saint Paul", "Goose Hollow, Portland, Oregon", "Hannacrois Creek", "Kawagama Lake", "Wilber Lake"];
+  const LUO = ["Luo people", "Demographics of Kenya", "Luo peoples", "Luo", "List of Luo Kenyans"];
+  const SCHUYLKILL = [
+    "Schuylkill County, Pennsylvania",
+    "Schuylkill notes",
+    "National Register of Historic Places listings in Schuylkill County, Pennsylvania",
+    "Schuylkill Haven, Pennsylvania",
+    "Schuylkill River",
+  ];
+  const SAINT_ETIENNE = ["Saint-Étienne", "AS Saint-Étienne", "Saint Etienne (band)", "Saint Etienne discography", "CA Saint-Étienne Loire Sud Rugby"];
+  const OSTEROY = ["Hamre, Osterøy", "Osterøy Municipality", "Hordaland", "Etne Municipality", "Os Municipality (Hordaland)"];
+  const GEORGIA = [
+    "Tamar of Georgia",
+    "History of Georgia (U.S. state)",
+    "History of slavery in South Carolina",
+    "Cherokee history",
+    "Bibliography of early United States naval history",
+  ];
+
+  const expectSearched = (query: string) =>
+    expect(urlOf(1)).toBe(`${SEARCH}?q=${encodeURIComponent(query)}&limit=5`);
+
+  it.each([
+    ["Maddock North Dakota history", MADDOCK],
+    ["Hollow Creek Settlement", HOLLOW_CREEK],
+  ])("keeps the not-found error for '%s' when no hit's title is in the query", async (query, hits) => {
+    status(404);
+    searchHits(hits);
+
+    await expect(wikipediaSearch({ query })).rejects.toThrow(`No Wikipedia article found for '${query}'`);
+    expectSearched(query);
+    expect(mockFetch).toHaveBeenCalledTimes(2);
+  });
+
+  it.each([
+    ["Luo people Kenya ethnic group history", LUO, "Luo people"],
+    ["History of Schuylkill County Pennsylvania", SCHUYLKILL, "Schuylkill County, Pennsylvania"],
+    ["Saint Etienne history", SAINT_ETIENNE, "Saint-Étienne"],
+    ["Hamre parish Osteroy Hordaland Norway history", OSTEROY, "Hamre, Osterøy"],
+    ["Georgia state history genealogy records 19th century", GEORGIA, "History of Georgia (U.S. state)"],
+  ])("resolves '%s' to the hit whose title it spells out", async (query, hits, title) => {
+    status(404);
+    searchHits(hits);
+    summaryOk(title, "…");
+
+    const result = await wikipediaSearch({ query });
+
+    expectSearched(query);
+    expect(urlOf(2)).toBe(`${SUMMARY}/${encodeURIComponent(title)}`);
+    expect(result.title).toBe(title);
+  });
+
+  it("takes a matching second hit over a first that does not match", async () => {
+    const query = "Luo people Kenya ethnic group history";
+    status(404);
+    searchHits(["Demographics of Kenya", "Luo people"]);
+    summaryOk("Luo people", "…");
+
+    const result = await wikipediaSearch({ query });
+
+    expectSearched(query);
+    expect(urlOf(2)).toBe(`${SUMMARY}/Luo%20people`);
+    expect(result.title).toBe("Luo people");
+  });
+
+  it("never takes a hit whose title is only small words", async () => {
+    status(404);
+    searchHits(["Le", "Le Mans"]);
+    summaryOk("Le Mans", "…");
+
+    const result = await wikipediaSearch({ query: "Le Mans history" });
+
+    expect(urlOf(2)).toBe(`${SUMMARY}/Le%20Mans`);
+    expect(result.title).toBe("Le Mans");
   });
 });
