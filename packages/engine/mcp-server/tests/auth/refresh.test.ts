@@ -8,6 +8,7 @@ import {
 } from "../../src/auth/refresh.js";
 import { REDIRECT_URI, TOKEN_URL, isHostedMode } from "../../src/auth/config.js";
 import { loadTokens, saveTokens, isExpired } from "../../src/auth/tokenManager.js";
+import type { TokenStore } from "../../src/types/auth.js";
 
 vi.mock("../../src/auth/config.js", async (importOriginal) => {
   const actual = await importOriginal<typeof import("../../src/auth/config.js")>();
@@ -208,7 +209,13 @@ describe("getValidToken", () => {
       refreshToken: "rt",
       expiresAt: Date.now() - 1000,
     });
-    mockedIsExpired.mockReturnValueOnce(true);
+    // The shared refresh re-reads tokens.json and refreshes with the refresh token stored there.
+    mockedLoadTokens.mockResolvedValueOnce({
+      accessToken: "old",
+      refreshToken: "rt-stored",
+      expiresAt: Date.now() - 1000,
+    });
+    mockedIsExpired.mockReturnValue(true);
     mockFetch.mockResolvedValueOnce({
       ok: true,
       status: 200,
@@ -221,10 +228,11 @@ describe("getValidToken", () => {
     });
 
     expect(await getValidToken(LOCAL)).toBe("refreshed");
+    expect(new URLSearchParams(mockFetch.mock.calls[0][1].body as string).get("refresh_token")).toBe("rt-stored");
     expect(mockedSaveTokens).toHaveBeenCalledTimes(1);
     const saved = mockedSaveTokens.mock.calls[0][0];
     expect(saved.accessToken).toBe("refreshed");
-    expect(saved.refreshToken).toBe("rt");
+    expect(saved.refreshToken).toBe("rt-stored");
   });
 
   it("shares one refresh between callers that find the token expired together", async () => {
@@ -250,6 +258,50 @@ describe("getValidToken", () => {
     // Shared only while in flight: the next expiry refreshes again.
     expect(await getValidToken(LOCAL)).toBe("refreshed-2");
     expect(mockFetch).toHaveBeenCalledTimes(2);
+  });
+
+  it("gives a caller whose read predates the save the saved token, not a second refresh", async () => {
+    // tokens.json as the mocks see it: saveTokens replaces it, loadTokens snapshots it.
+    let file: TokenStore = { accessToken: "old", refreshToken: "rt", expiresAt: Date.now() - 1000 };
+    mockedIsExpired.mockImplementation((t) => t.expiresAt <= Date.now());
+    mockedSaveTokens.mockImplementation(async (t) => {
+      file = t;
+    });
+    let stallNextRead = false;
+    let releaseRead: (() => void) | undefined;
+    mockedLoadTokens.mockImplementation(async () => {
+      const snapshot = { ...file };
+      if (stallNextRead) {
+        stallNextRead = false;
+        await new Promise<void>((r) => (releaseRead = r));
+      }
+      return snapshot;
+    });
+    let issued = 0;
+    let releaseRefresh: (() => void) | undefined;
+    mockFetch.mockImplementation(async () => {
+      issued++;
+      if (issued === 1) await new Promise<void>((r) => (releaseRefresh = r));
+      return {
+        ok: true,
+        status: 200,
+        statusText: "OK",
+        json: async () => ({ access_token: `new-${issued}`, token_type: "Bearer" }),
+      };
+    });
+
+    const first = getValidToken(LOCAL);
+    await vi.waitFor(() => expect(releaseRefresh).toBeTypeOf("function"));
+    // This caller reads tokens.json while the refresh is in flight, and its read
+    // settles only after that refresh has saved and finished.
+    stallNextRead = true;
+    const late = getValidToken(LOCAL);
+    await vi.waitFor(() => expect(releaseRead).toBeTypeOf("function"));
+    releaseRefresh!();
+    expect(await first).toBe("new-1");
+    releaseRead!();
+    expect(await late).toBe("new-1");
+    expect(issued).toBe(1);
   });
 
   it("throws an LLM-instruction error when no tokens are stored", async () => {

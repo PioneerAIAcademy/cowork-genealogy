@@ -148,6 +148,11 @@ in a hosted deployment the web tier owns the grant. `loadConfig`,
   - Expired + refresh fails: `"FamilySearch session has expired and refresh failed. Call the login tool to re-authenticate."`
   - Expired + no refresh token: `"FamilySearch access token has expired and no refresh token is available. Call the login tool to re-authenticate."`
 
+**Shared refresh.** Concurrent `LOCAL` callers of `getValidToken` share one in-flight
+refresh, which re-reads `tokens.json` first: it returns an unexpired token found there
+as is, and otherwise refreshes with the refresh token stored there, so a caller whose
+read predates the last save never starts a second refresh.
+
 **Hosted-mode override.** When `config.json` carries `hosted: true` (the control
 plane sets it when it provisions a sandbox — see
 `apps/server/app/fs_oauth.py:hosted_config`), all three messages above are

@@ -118,18 +118,23 @@ export async function refreshAccessToken(
 
 // A refresh revokes the access token the previous one issued, so local callers that
 // find the token expired together — tool calls Claude Code runs side by side — share
-// one refresh rather than each revoking the token the others were just handed.
+// one refresh rather than each revoking the token the others were just handed. It
+// re-reads tokens.json first: a caller whose read began before the last refresh saved
+// still holds the expired token, and must take the saved one rather than refresh again.
 let localRefresh: Promise<TokenStore> | null = null;
 
+async function refreshUnlessSaved(callerRefreshToken: string): Promise<TokenStore> {
+  const current = await loadTokens();
+  if (current && !isExpired(current)) return current;
+  const refreshed = await refreshAccessToken(current?.refreshToken ?? callerRefreshToken);
+  await saveTokens(refreshed);
+  return refreshed;
+}
+
 function refreshLocalTokens(refreshToken: string): Promise<TokenStore> {
-  localRefresh ??= refreshAccessToken(refreshToken)
-    .then(async (refreshed) => {
-      await saveTokens(refreshed);
-      return refreshed;
-    })
-    .finally(() => {
-      localRefresh = null;
-    });
+  localRefresh ??= refreshUnlessSaved(refreshToken).finally(() => {
+    localRefresh = null;
+  });
   return localRefresh;
 }
 
