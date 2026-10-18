@@ -227,6 +227,31 @@ describe("getValidToken", () => {
     expect(saved.refreshToken).toBe("rt");
   });
 
+  it("shares one refresh between callers that find the token expired together", async () => {
+    mockedLoadTokens.mockResolvedValue({
+      accessToken: "old",
+      refreshToken: "rt",
+      expiresAt: Date.now() - 1000,
+    });
+    mockedIsExpired.mockReturnValue(true);
+    let issued = 0;
+    mockFetch.mockImplementation(async () => ({
+      ok: true,
+      status: 200,
+      statusText: "OK",
+      json: async () => ({ access_token: `refreshed-${++issued}`, token_type: "Bearer" }),
+    }));
+
+    const together = await Promise.all([getValidToken(LOCAL), getValidToken(LOCAL), getValidToken(LOCAL)]);
+    expect(together).toEqual(["refreshed-1", "refreshed-1", "refreshed-1"]);
+    expect(mockFetch).toHaveBeenCalledTimes(1);
+    expect(mockedSaveTokens).toHaveBeenCalledTimes(1);
+
+    // Shared only while in flight: the next expiry refreshes again.
+    expect(await getValidToken(LOCAL)).toBe("refreshed-2");
+    expect(mockFetch).toHaveBeenCalledTimes(2);
+  });
+
   it("throws an LLM-instruction error when no tokens are stored", async () => {
     mockedLoadTokens.mockResolvedValueOnce(null);
     await expect(getValidToken(LOCAL)).rejects.toThrow(

@@ -116,6 +116,23 @@ export async function refreshAccessToken(
   return toTokenStore(data, refreshToken);
 }
 
+// A refresh revokes the access token the previous one issued, so local callers that
+// find the token expired together — tool calls Claude Code runs side by side — share
+// one refresh rather than each revoking the token the others were just handed.
+let localRefresh: Promise<TokenStore> | null = null;
+
+function refreshLocalTokens(refreshToken: string): Promise<TokenStore> {
+  localRefresh ??= refreshAccessToken(refreshToken)
+    .then(async (refreshed) => {
+      await saveTokens(refreshed);
+      return refreshed;
+    })
+    .finally(() => {
+      localRefresh = null;
+    });
+  return localRefresh;
+}
+
 /**
  * The access token `principal` acts with. The single entry point for every
  * FamilySearch call; the parameter is what makes an unscoped call a compile
@@ -155,9 +172,7 @@ export async function getValidToken(principal: Principal): Promise<string> {
     );
   }
   try {
-    const refreshed = await refreshAccessToken(tokens.refreshToken);
-    await saveTokens(refreshed);
-    return refreshed.accessToken;
+    return (await refreshLocalTokens(tokens.refreshToken)).accessToken;
   } catch {
     throw new Error(
       await reauthInstruction(
