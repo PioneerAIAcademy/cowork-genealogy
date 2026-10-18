@@ -806,9 +806,10 @@ make it bite, and that is the condition to re-check on.
 
 **429 and 503: up to two retries, backing off.** These are OpenRouter's
 rate-limit and overload answers: they say to come back shortly, not that the
-request was bad. Two 429s were seen even with calls made one at a time, and
-Claude Code now runs read-only tools side by side (`docs/architecture.md` §5.2),
-so parallel transcriptions make them likelier. The wait is the response's
+request was bad. In the hosted feedback of 2026-10-05 to 10-18, 2 of about 200
+`image_transcribe` calls got an OpenRouter 429 while every call still ran one at
+a time. Claude Code now runs read-only tools side by side (`docs/architecture.md`
+§5.2), so parallel transcriptions make them likelier. The wait is the response's
 `Retry-After` when it is whole seconds (`retryAfterMs` in `utils/http.ts`; an
 HTTP-date is treated as absent), else 2s then 4s with up to 50% jitter so
 parallel calls do not retry in step. At most two retries and 20s of waiting in

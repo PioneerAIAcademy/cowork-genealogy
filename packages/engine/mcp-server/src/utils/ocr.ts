@@ -58,9 +58,8 @@ const OCR_TRANSPORT_RETRIES = 1;
 const OCR_TRANSPORT_RETRY_DELAY_MS = 1_000;
 
 // Up to two more attempts on a 429 or 503, OpenRouter's rate-limit and overload
-// answers, which clear after a short wait — two 429s were seen even with calls
-// made one at a time. The wait is the response's Retry-After, else 2s then 4s
-// with jitter, and never more than 20s in all.
+// answers, which clear after a short wait. The wait is the response's Retry-After,
+// else 2s then 4s with jitter, and never more than 20s in all.
 //
 // Every attempt after the first runs on what is left of the caller's budget, and
 // a wait that would leave none is not taken, so the whole call — attempts, waits
