@@ -109,10 +109,13 @@ def test_a_long_agent_wait_is_agent_time_not_a_pause(tmp_path, background):
 def test_the_agent_s_own_pause_is_still_a_pause(tmp_path, background):
     bundle = _write_bundle(tmp_path, "feedback-a", _waiting_session(background),
                            {"a1": (AGENT_META, _agent_run(paused_gap=700))})
-    session = _profile(bundle)["sessions"][0]
+    profile = _profile(bundle)
+    session = profile["sessions"][0]
     assert session["paused_min"] == round(700 / 60, 1)
     assert session["agent_wait_min"] == round(1100 / 60, 1)
     assert session["active_min"] == round(1120 / 60, 1)
+    latency = {t["tool"]: t["latency_max_s"] for t in profile["tools"]}
+    assert latency == {"Agent": 1.0 if background else None, "Read": None}
 
 
 def test_a_real_idle_gap_is_a_pause(tmp_path):
@@ -168,6 +171,40 @@ def test_only_a_call_after_an_agent_that_misses_the_cache_is_a_rewrite(tmp_path)
     session = _profile(_write_bundle(tmp_path, "feedback-a", rows))["sessions"][0]
     assert session["cache_rewrites"] == 1
     assert session["cache_rewrite_cost"] == round((50_005 - 27_000) * (3.00 * 1.25 - 0.30) / 1_000_000, 2)
+
+
+def test_a_call_queued_behind_an_agent_is_timed_from_the_agent_s_return(tmp_path):
+    def use(uuid, t, msg_id, tool_use_id, name):
+        return _assistant(uuid, t, msg_id, [{"type": "tool_use", "id": tool_use_id, "name": name, "input": {}}])
+
+    rows = [
+        _user("m1", 0, "go"),
+        # 5baa965d on 2026-10-15: one message launches an agent, then three calls that wait for it.
+        use("m2", 10.0, "msg_1", "tu_agent", "Agent"),
+        use("m3", 10.719, "msg_1", "tu_read", "mcp__genealogy__record_read"),
+        use("m4", 17.4, "msg_1", "tu_log", "mcp__genealogy__research_log_append"),
+        use("m5", 18.505, "msg_1", "tu_search", "mcp__genealogy__record_search"),
+        _user("m6", 907.069, _result("tu_agent", "extracted")),
+        _user("m7", 907.795, _result("tu_read", "{}")),
+        _user("m8", 907.812, _result("tu_log", "{}")),
+        _user("m9", 908.096, _result("tu_search", "{}")),
+        # Agents launched together run together, and a call that ran beside them
+        # and came back first keeps its own clock.
+        use("m10", 910.0, "msg_2", "tu_agent2", "Agent"),
+        use("m10b", 910.2, "msg_2", "tu_agent3", "Agent"),
+        use("m11", 910.5, "msg_2", "tu_glob", "Glob"),
+        _user("m12", 911.0, _result("tu_glob", "[]")),
+        _user("m13", 1000.0, _result("tu_agent2", "done")),
+        _user("m13b", 1005.0, _result("tu_agent3", "done")),
+        # A call whose window holds a pause has no latency.
+        use("m14", 1010.0, "msg_3", "tu_slow", "mcp__genealogy__record_search"),
+        _user("m15", 2210.0, _result("tu_slow", "{}")),
+        _assistant("m16", 2220.0, "msg_4", [{"type": "text", "text": "done"}]),
+    ]
+    tools = _profile(_write_bundle(tmp_path, "feedback-a", rows))["tools"]
+    assert {t["tool"]: (t["latency_p50_s"], t["latency_max_s"]) for t in tools} == {
+        "Agent": (94.8, 897.1), "record_read": (0.7, 0.7), "research_log_append": (0.7, 0.7),
+        "record_search": (1.0, 1.0), "Glob": (0.5, 0.5)}
 
 
 def _failed_read(n: int, t: float, error: str) -> list:

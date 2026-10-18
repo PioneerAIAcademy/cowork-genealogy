@@ -18,6 +18,9 @@ How each figure is measured:
   pauses, and a gap that ends on a model message whose content covers it
   (`GEN_CHARS_PER_S`). Active time is everything that is not a pause.
 - Agent wait is main-thread active time that ends when an agent returns.
+- A tool call's latency runs from the call to its result. A call after an agent
+  launch in the same message waits for that agent, so its clock starts at the
+  agent's return; a window that holds a pause has no latency.
 - A model message is priced from its LAST usage line: a transcript streams one
   line per content block, and a subagent's first line undercounts output tokens.
 - A compaction is a "This session is being continued" prompt.
@@ -321,6 +324,7 @@ def analyze(rows: list[dict], agent_paused: dict[str, float] | None = None) -> d
     timeline: list[tuple[float, str, dict]] = []
     compactions = 0
     active = paused = agent_wait = 0.0
+    pauses: list[tuple[float, float]] = []
     builds: set[str] = set()
     prev_t: float | None = None
     agent_returned = False
@@ -334,10 +338,13 @@ def analyze(rows: list[dict], agent_paused: dict[str, float] | None = None) -> d
                     paused += own
                     active += gap - own
                     agent_wait += gap - own
+                    if own:
+                        pauses.append((prev_t, t))
                 elif _covers_gap(d, gap):
                     active += gap
                 else:
                     paused += gap
+                    pauses.append((prev_t, t))
             else:
                 active += gap
                 if returned is not None:
@@ -393,11 +400,32 @@ def analyze(rows: list[dict], agent_paused: dict[str, float] | None = None) -> d
                     m["tools"].append(block["id"])
         prev_t = t
 
+    held_by: dict[str, list[str]] = {}
+    for m in msgs.values():
+        launched: list[str] = []
+        for tid in m["tools"]:
+            if tool_uses[tid]["name"] in AGENT_TOOLS:
+                launched.append(tid)
+            else:
+                held_by[tid] = list(launched)
+
+    def tool_latency(tid: str, use: dict, r: dict | None) -> float | None:
+        """Result less call time. A call after an agent launch in the same message
+        waits for that agent, so its clock starts at the agent's return, unless
+        its own result came back first. None when the window holds a pause."""
+        if r is None:
+            return None
+        start = max([use["t"], *(results[a]["t"] for a in held_by.get(tid, ())
+                                 if a in results and results[a]["t"] <= r["t"])])
+        if any(a < r["t"] and b > start for a, b in pauses):
+            return None
+        return r["t"] - start
+
     calls = []
     for tid, use in tool_uses.items():
         r = results.get(tid)
         calls.append({"id": tid, "name": use["name"], "t": use["t"], "input": use["input"],
-                      "args": use["args"], "latency": (r["t"] - use["t"]) if r else None,
+                      "args": use["args"], "latency": tool_latency(tid, use, r),
                       "result_chars": r["chars"] if r else None,
                       "image_chars": r["image_chars"] if r else 0,
                       "is_error": r["is_error"] if r else None, "result_head": r["head"] if r else None})
@@ -705,7 +733,8 @@ def format_report(profile: dict[str, Any]) -> str:
         ["skill", "segments", "$", "model min", "compactions"],
         [[s["skill"], _n(s["segments"]), _usd(s["cost"]), _mins(s["model_min"]), _n(s["compactions"])]
          for s in profile["skills"]])
-    lines += ["", "TOOLS (every thread; result chars and latency in seconds as p50/max)"]
+    lines += ["", "TOOLS (every thread; result chars and latency in seconds as p50/max; a call queued behind "
+              "an agent is timed from the agent's return, and a call spanning a pause is not timed)"]
     lines += _table(
         ["tool", "calls", "errors", "result chars total", "result chars", "latency s", ">50k"],
         [[t["tool"], _n(t["calls"]), _n(t["errors"]), _n(t["result_chars_total"]),
