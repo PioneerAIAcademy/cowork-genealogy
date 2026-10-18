@@ -450,8 +450,9 @@ that apply:
        a wrap-up before any evidence, and one where person-evidence left the subject
        unidentified.
      - **An identity conflict, or any blocking conflict, still holds the question open**
-       (decision 12). The run then ends on that open question, as decision 12 already says,
-       and a different question waits until it is settled.
+       (decision 12). It still gets its `not_proved` summary and dispose has closed its items,
+       so E's rule admits a different question beside it. Only the project's completion waits
+       on that conflict, as the completion gate already requires.
      - **When the router says a new question is waiting** (`newQuestion: yes`), §8 does not
        write `completed`, even if every question is now resolved.
 - **Before any evidence exists,** the same turn runs: dispose skips the open items, person-
@@ -547,8 +548,8 @@ that apply:
     `newQuestion: yes`, so the project is not marked complete. The turn ends by offering the new
     question ("Continue with choosing the next question?"), and question-selection writes it
     next turn under step 1b's exception (section B2).
-  - **When a blocking conflict holds the question open,** the wrap-up ends on it, and the new
-    question waits until the conflict is settled (decision 12).
+  - **When a blocking conflict holds the question open** (decision 12), the new question
+    still starts: the wrapped-up question has a summary and no open item.
 - **Work that used to open a helper question becomes plan items on the main question:**
   - a conflict that needs new evidence;
   - a FAN pivot;
@@ -1083,7 +1084,8 @@ after PR 1. Until it does, PR 1's deny reason alone makes each turn report and s
      resolves, `project.status` stays `active`, and the new question is written next turn, also
      when it is on the same fact;
    - a wrap-up with zero assertions and no plan resolves the question at `not_proved`; a
-     wrap-up on a question with an identity conflict leaves it open;
+     wrap-up on a question with an identity conflict leaves it open, and a new question is
+     still accepted beside it;
    - a question after the search step is answered, spawns no agent, and ends with the same
      "Continue with linking the records?" line;
    - a search step with an external item hands out the link and still offers linking; an
