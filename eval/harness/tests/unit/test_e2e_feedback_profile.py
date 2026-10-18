@@ -159,10 +159,22 @@ def test_a_wait_that_ends_on_an_api_error_is_active_and_not_a_model_call(tmp_pat
     profile = _profile(_write_bundle(tmp_path, "feedback-a", rows))
     session = profile["sessions"][0]
     assert (session["active_min"], session["api_error_wait_min"], session["paused_min"]) == \
-        (round(1270 / 60, 1), round(640 / 60, 1), round(630 / 60, 1))
+        (round(1230 / 60, 1), round(600 / 60, 1), round(670 / 60, 1))
     assert session["main_model_calls"] == 2
     assert [m["model"] for m in profile["top"]["slowest_model_calls"]] == ["claude-sonnet-4-6"] * 2
-    assert "api-error wait = gaps over 10 min that ended on an API error" in fp.format_report(profile)
+    assert "api-error wait = the first 10 min, the request timeout, of each gap over 10 min" \
+        in fp.format_report(profile)
+
+
+@pytest.mark.parametrize("gap, active, paused, api_error_wait", [
+    (644, 600, 44, 600), (96 * 60, 600, 96 * 60 - 600, 600), (300, 300, 0, 0)],
+    ids=["644s", "96min", "300s"])
+def test_an_api_error_wait_is_active_for_at_most_the_request_timeout(gap, active, paused, api_error_wait):
+    rows = [_user("m1", 0, "go"), _assistant("m2", 10, "msg_1", [{"type": "text", "text": "Searching."}]),
+            _synthetic("m3", 10 + gap)]
+    thread = fp.analyze(rows)
+    assert (thread["active_s"] - 10, thread["paused_s"], thread["api_error_wait_s"]) == \
+        pytest.approx((active, paused, api_error_wait))
 
 
 def test_a_message_is_priced_from_its_last_usage_line(tmp_path):

@@ -21,8 +21,9 @@ How each figure is measured:
   agent's `<task-notification>` — which is agent time less that agent's own
   pauses, a gap that ends on a model message whose content covers it
   (`GEN_CHARS_PER_S`), and a gap that ends on an API error (a `<synthetic>`
-  placeholder), which is the request still waiting on the API. Active time is
-  everything that is not a pause.
+  placeholder): a request gives up after `API_TIMEOUT_S`, so that much of the
+  gap is the request still waiting on the API and the rest is a pause. Active
+  time is everything that is not a pause.
 - Agent wait is main-thread active time that ends when an agent returns;
   api-error wait is the active time those over-threshold API-error gaps add.
 - A `<synthetic>` message is not a model call: it is neither counted nor timed.
@@ -63,6 +64,7 @@ from e2e.feedback_transcript_adapter import _bare_agent, _group_dirs, _parse_met
 from e2e.subagent_capture import parse_jsonl, transcript_agent_id
 
 PAUSE_S = 600
+API_TIMEOUT_S = 600
 GEN_CHARS_PER_S = 50
 BIG_RESULT_CHARS = 50_000
 # A call reading 1-3 tokens less than the last one held is the cache boundary
@@ -362,8 +364,11 @@ def analyze(rows: list[dict], agent_paused: dict[str, float] | None = None) -> d
                     if own:
                         pauses.append((prev_t, t))
                 elif _is_api_error(d):
-                    active += gap
-                    api_error_wait += gap
+                    waited = min(gap, API_TIMEOUT_S)
+                    active += waited
+                    api_error_wait += waited
+                    paused += gap - waited
+                    pauses.append((prev_t, t))
                 elif _covers_gap(d, gap):
                     active += gap
                 else:
@@ -744,9 +749,9 @@ def format_report(profile: dict[str, Any]) -> str:
         + (f", ended on or after {profile['since']}" if profile["since"] else "")
         + (f" ({profile['excluded_sessions']} session(s) and {profile['excluded_agent_runs']} "
            f"agent run(s) ended earlier)" if profile["excluded_sessions"] or profile["excluded_agent_runs"] else ""),
-        f"Time in minutes. A gap over {PAUSE_S // 60} min is a sandbox pause unless an agent's return, "
-        f"an API error or a model call's output ends it. Agent wait is active time that ended when an "
-        f"agent returned.",
+        f"Time in minutes. A gap over {PAUSE_S // 60} min is a sandbox pause unless an agent's return "
+        f"or a model call's output ends it, or an API error does for its first {API_TIMEOUT_S // 60} min. "
+        f"Agent wait is active time that ended when an agent returned.",
         "Cost in USD at pricing.MODEL_RATES, each message's cache writes at its own 5m/1h split.",
         "",
         "SESSIONS (* = a bundle's copy of the log was trimmed oldest-first; missing = agent runs "
@@ -761,8 +766,9 @@ def format_report(profile: dict[str, Any]) -> str:
           _mins(s["paused_min"]), _usd(s["main_cost"]), _n(s["main_model_calls"]), _n(s["compactions"]),
           _n(s["agent_runs"]), _n(s["missing_agent_transcripts"]), _n(s["cache_rewrites"]),
           _usd(s["cache_rewrite_cost"])] for s in sessions])
-    lines += [f"  api-error wait = gaps over {PAUSE_S // 60} min that ended on an API error (a <synthetic> "
-              "placeholder): the request was still waiting on the API, so they count as active, not paused."]
+    lines += [f"  api-error wait = the first {API_TIMEOUT_S // 60} min, the request timeout, of each gap over "
+              f"{PAUSE_S // 60} min that ended on an API error (a <synthetic> placeholder): the request was "
+              "still waiting on the API, so that part is active and the rest is paused."]
     lines += ["  rewrites = main-thread calls after an agent returned that re-wrote the cached context, "
               "never the first call after a compaction; rewrite $ = their cost above a cache read.", "",
               "AGENTS BY TYPE (active min and $ as total/p50/max; capped = turns stopped at the "
