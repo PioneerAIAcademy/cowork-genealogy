@@ -1,9 +1,10 @@
 """Deterministic grade for a single-ask e2e turn (spec §16, issue #3527).
 
 Pure: every function here reads its arguments and nothing else, so the grade can
-be tested on synthetic records with no SDK, no network and no workspace.
+be tested on synthetic records with no network and no workspace. The spawn
+predicate is the orchestrator's own, so there is one definition of an Agent call.
 
-PASS needs all three checks:
+PASS needs all four checks:
 
 - ``owner`` — the first main-thread unit is the fixture's ``expected_owner``. The
   ``research`` router (it always runs first) and the fixture's ``setup_units`` are
@@ -16,8 +17,9 @@ PASS needs all three checks:
   whose ``tool`` is the expected value. New = id in the final ``research.json``
   and absent from the starting one.
 
-A turn a cap or watchdog cut off also fails, on ``stop``: what it saved before
-the cut is not an answer the patron got.
+- ``stop`` — the turn ended on its own. A turn a cap or watchdog cut off fails
+  here: what it saved before the cut is not an answer the patron got. The cost
+  cap is not a cut-off (it only labels a finished run), so it does not fail this.
 """
 
 from __future__ import annotations
@@ -25,9 +27,13 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 from typing import Any
 
+from e2e.orchestrator import _is_agent_tool
+
 ROUTER_UNIT = "research"
 SAVE_SECTIONS = ("log", "sources")
 CHECKS = ("owner", "no_research_job", "save", "stop")
+# Set after the fact from the final ResultMessage; the turn was not cut off.
+LABEL_ONLY_STOPS = ("cost_cap",)
 ASYNC_LAUNCH = "Async agent launched"
 
 
@@ -74,17 +80,13 @@ def _is_main(entry: dict[str, Any]) -> bool:
     return entry.get("agent_id") is None
 
 
-def _is_agent(tool: str) -> bool:
-    return tool.endswith("Agent") or tool.endswith("Task")
-
-
 def spawned_units(tool_calls: list[dict[str, Any]]) -> list[dict[str, Any]]:
     """Every Agent/Task and Skill call, in order, with its thread."""
     units: list[dict[str, Any]] = []
     for entry in tool_calls:
         tool = str(entry.get("tool") or "")
         args = entry.get("args") or {}
-        if _is_agent(tool):
+        if _is_agent_tool(tool):
             name = _unit_name(args.get("subagent_type") or "general-purpose")
         elif tool == "Skill":
             name = _unit_name(args.get("skill") or "?")
@@ -131,12 +133,13 @@ def grade(
     aborted_reason: str | None = None,
 ) -> SingleAskGrade:
     units = spawned_units(tool_calls)
-    first = first_unit(units, spec.setup_units)
+    expected = _unit_name(spec.expected_owner)
+    first = first_unit(units, tuple(_unit_name(u) for u in spec.setup_units))
     checks: dict[str, tuple[bool, str]] = {}
 
     checks["owner"] = (
-        first == spec.expected_owner,
-        f"first main-thread unit {first or 'none'}, expected {spec.expected_owner}",
+        first == expected,
+        f"first main-thread unit {first or 'none'}, expected {expected}",
     )
 
     forbidden = {"question-selection"} | (set() if spec.is_plan_ask else {"research-plan"})
@@ -179,12 +182,15 @@ def grade(
     extraction_appends = sum(
         1 for e in tool_calls if _bare(str(e.get("tool") or "")) == "extraction_append"
     )
-    checks["stop"] = (aborted_reason is None, aborted_reason or "clean")
+    checks["stop"] = (
+        aborted_reason is None or aborted_reason in LABEL_ONLY_STOPS,
+        aborted_reason or "clean",
+    )
     # A background spawn's work can land after research.json is read, so a
     # `save` FAIL beside one may be a timing artifact; printed, not graded.
     background_spawns = sum(
         1 for e in tool_calls
-        if _is_agent(str(e.get("tool") or "")) and ASYNC_LAUNCH in str(e.get("response_summary") or "")
+        if _is_agent_tool(str(e.get("tool") or "")) and ASYNC_LAUNCH in str(e.get("response_summary") or "")
     )
     failed = [name for name in CHECKS if not checks[name][0]]
     return SingleAskGrade(

@@ -224,7 +224,7 @@ def _write(tmp_path: Path, **over) -> Path:
     src = DEFAULT_SINGLE_ASK_FIXTURES / "review-sources-kenneth-quass"
     raw = json.loads((src / "fixture.json").read_text(encoding="utf-8"))
     raw.update(over)
-    d = tmp_path / "f"
+    d = tmp_path / str(raw.get("id") or "f")
     d.mkdir()
     (d / "fixture.json").write_text(json.dumps(raw), encoding="utf-8")
     for name in ("starting-research.json", "starting-tree.gedcomx.json"):
@@ -241,6 +241,8 @@ def _write(tmp_path: Path, **over) -> Path:
         {"expected_owner": ""},
         {"is_plan_ask": "false"},
         {"setup_units": "init-project"},
+        {"model": "claude-sonnet-4-6"},
+        {"caps": []},
     ],
 )
 def test_bad_fixture_is_refused(tmp_path, over):
@@ -474,3 +476,51 @@ def test_main_exits_0_on_a_pass_and_writes_the_run_log(monkeypatch, tmp_path, ca
     logs = list((tmp_path / "runs").rglob("run-*.json"))
     assert len(logs) == 1
     assert json.loads(logs[0].read_text(encoding="utf-8"))["grade"]["passed"] is True
+
+
+def test_loader_refuses_an_id_that_is_not_the_directory_name(tmp_path):
+    d = _write(tmp_path)
+    moved = d.rename(tmp_path / "copied-fixture")
+    with pytest.raises(FixtureError, match="not the directory name"):
+        load_single_ask_fixture(moved)
+
+
+@pytest.mark.parametrize("body", ["{not json", "[]"])
+def test_loader_refuses_a_bad_starting_research(tmp_path, body):
+    d = _write(tmp_path)
+    (d / "starting-research.json").write_text(body, encoding="utf-8")
+    with pytest.raises(FixtureError, match="starting-research.json"):
+        load_single_ask_fixture(d)
+
+
+def test_cost_cap_labels_but_does_not_fail_stop():
+    g, line = run([agent("source-evaluation")], aborted="cost_cap")
+    assert g.passed
+    assert "stop=cost_cap" in line
+
+
+def test_a_namespaced_expected_owner_and_setup_unit_match():
+    spec = SingleAskSpec(**{
+        **SPEC.__dict__,
+        "expected_owner": "genealogy-research:source-evaluation",
+        "setup_units": ("genealogy-research:init-project",),
+    })
+    g, _ = run([agent("init-project"), agent("source-evaluation")], spec=spec)
+    assert g.passed, g.checks
+
+
+def test_the_record_keeps_subagent_summaries(monkeypatch, tmp_path):
+    import asyncio
+
+    import e2e.orchestrator as orch
+
+    async def fake_run_agent(**kwargs):
+        return ([], [], {}, None, None, [], [], [], [])
+
+    monkeypatch.setattr(orch, "_run_agent", fake_run_agent)
+    monkeypatch.setattr(orch, "collect_subagents", lambda ws: ([{"agent_type": "source-evaluation"}], "ok"))
+    monkeypatch.setattr(orch, "backfill_background_tool_calls", lambda ws, tc: None)
+    monkeypatch.setattr(orch, "merge_whole_run_usage", lambda u, s: ({}, 0.1))
+    fixture, _ = load_single_ask_fixture(DEFAULT_SINGLE_ASK_FIXTURES / "review-sources-kenneth-quass")
+    record = asyncio.run(orch.run_single_ask_turn(fixture=fixture, message="M", workspace=tmp_path))
+    assert record["subagents"] == [{"agent_type": "source-evaluation"}]

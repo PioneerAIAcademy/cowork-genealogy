@@ -3647,6 +3647,7 @@ async def run_single_ask_turn(
         usage["whole_run_usage"] = whole_run_usage
         usage["whole_run_cost_usd_estimated"] = whole_run_cost
     return {
+        "subagents": subagents,
         "message": message,
         "tool_calls": tool_calls,
         "narration": narration,

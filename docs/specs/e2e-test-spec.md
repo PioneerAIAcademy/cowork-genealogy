@@ -2612,7 +2612,8 @@ research job. Single-ask mode covers that use: it sends one
 message as one ordinary turn and checks which unit answered and what was saved.
 
 `make e2e-single-ask [TEST=<slug>]` runs `e2e.run_single_ask`. Omit `TEST` to run
-the whole panel. It prints one line per fixture, exits 0 when all pass, 1 when
+the whole panel. It prints a short block per fixture (a PASS/FAIL line, then the
+units in order and any reason), exits 0 when all pass, 1 when
 any fails, and 2 when a run never happened (bad fixture, no build, the genealogy
 MCP server unavailable — §6).
 
@@ -2620,7 +2621,7 @@ MCP server unavailable — §6).
 
 - Fixtures: `eval/tests/e2e-single-ask/<slug>/`.
 - Run logs: `eval/runlogs/e2e-single-ask/<slug>/run-<timestamp>.json`. They are not
-  committed; a PR that changes a fixture's result pastes the printed line instead.
+  committed; a PR that changes a fixture's result pastes the printed block instead.
 
 Both are **siblings** of `eval/tests/e2e/` and `eval/runlogs/e2e/`, never inside
 them. About 20 readers walk those two trees with no exclusion (`corpus_report`,
@@ -2635,7 +2636,7 @@ would need an exclusion in every reader and breaks the first time one is missed.
 
 | Field | Required | Meaning |
 |---|---|---|
-| `id` | yes | the directory name |
+| `id` | yes | the directory name (the loader refuses a mismatch) |
 | `message` | yes | sent verbatim |
 | `expected_owner` | yes | the agent or skill name that should answer |
 | `expected_save` | yes | `{"section": "log", "tool": "<log tool value>"}` or `{"section": "sources"}` |
@@ -2670,7 +2671,8 @@ There is no `expected-findings.json` and no judge.
 
 ### 16.4 Grade
 
-Deterministic, in `e2e/single_ask_grade.py`. PASS only if all four hold:
+Deterministic, in `e2e/single_ask_grade.py`. PASS only if all four hold (`expected_owner` and `setup_units` may carry a plugin
+namespace; it is stripped, as it is from spawned names):
 
 1. **`owner`** — the first **main-thread** `Agent`/`Task`/`Skill` spawn, skipping the
    `research` router and any `setup_units`, is `expected_owner`. A spawn inside a
@@ -2683,7 +2685,8 @@ Deterministic, in `e2e/single_ask_grade.py`. PASS only if all four hold:
    expected value. "New" means its id is in the final `research.json` and not in
    `starting-research.json`.
 4. **`stop`** — the turn ended on its own. A turn a cap or watchdog cut off fails
-   here even if it saved: the patron never got the answer.
+   here even if it saved: the patron never got the answer. `cost_cap` is not a
+   cut-off (§6: it only labels a finished run), so it does not fail this check.
 
 Printed, not graded: whether the main thread called `research_delivered`, every
 unit in order (nested ones in parentheses), the `extraction_append` count, how the

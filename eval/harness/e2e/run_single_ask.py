@@ -75,9 +75,20 @@ def load_single_ask_fixture(fixture_dir: Path) -> tuple[Fixture, SingleAskSpec]:
     setup = raw.get("setup_units") or []
     if not isinstance(setup, list) or not all(isinstance(u, str) for u in setup):
         raise FixtureError(f"{fixture_dir.name}: setup_units must be a list of unit names")
+    if raw["id"] != fixture_dir.name:
+        raise FixtureError(f"{fixture_dir.name}: fixture.json id is {raw['id']!r}, not the directory name")
+    for key in ("model", "caps"):
+        if key in raw and not isinstance(raw[key], dict):
+            raise FixtureError(f"{fixture_dir.name}: `{key}` must be an object")
     for name in ("starting-research.json", "starting-tree.gedcomx.json"):
         if not (fixture_dir / name).is_file():
             raise FixtureError(f"{fixture_dir.name}: {name} is missing")
+    try:
+        starting = json.loads((fixture_dir / "starting-research.json").read_text(encoding="utf-8"))
+    except (json.JSONDecodeError, UnicodeDecodeError) as e:
+        raise FixtureError(f"{fixture_dir.name}: starting-research.json does not parse: {e}") from e
+    if not isinstance(starting, dict):
+        raise FixtureError(f"{fixture_dir.name}: starting-research.json must be a JSON object")
     model = raw.get("model") or {}
     fixture = Fixture(
         id=raw["id"],
@@ -111,14 +122,14 @@ def fixture_dirs(root: Path, test: str | None) -> list[Path]:
 
 
 async def run_one(
-    fixture_dir: Path,
+    fixture: Fixture,
+    spec: SingleAskSpec,
     *,
     runlog_root: Path,
     mcp_server_entry: Path,
     effort_level: str | None,
     agent_model: str | None,
 ) -> tuple[SingleAskSpec, dict[str, Any], SingleAskGrade | None]:
-    fixture, spec = load_single_ask_fixture(fixture_dir)
     starting_research = json.loads(
         fixture.starting_research_path.read_text(encoding="utf-8")
     )
@@ -221,11 +232,12 @@ def main(argv: list[str] | None = None) -> int:
         return 2
 
     failures = 0
-    for d in dirs:
+    for fixture, spec in loaded:
         try:
             spec, record, g = asyncio.run(
                 run_one(
-                    d,
+                    fixture,
+                    spec,
                     runlog_root=args.runlog_root,
                     mcp_server_entry=args.mcp_server_entry,
                     effort_level=args.effort_level,
@@ -236,7 +248,7 @@ def main(argv: list[str] | None = None) -> int:
             print("\nInterrupted.", file=sys.stderr)
             return 130
         except RuntimeError as e:
-            print(f"\nThis run never happened ({d.name}): {e}", file=sys.stderr)
+            print(f"\nThis run never happened ({fixture.id}): {e}", file=sys.stderr)
             return 2
         cost = (record.get("usage") or {}).get("whole_run_cost_usd_estimated")
         if g is None:
