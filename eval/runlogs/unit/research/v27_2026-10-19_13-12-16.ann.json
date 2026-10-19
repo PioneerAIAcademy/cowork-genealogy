@@ -29,14 +29,6 @@
     {
       "test_id": "ut_research_004",
       "dimension_source": "base",
-      "dimension_name": "Correctness",
-      "llm_score": 2,
-      "corrected_score": 2,
-      "comment": "The AI stated proof-conclusion and question-selection hand-offs were made but the tool log shows only research_delivered was called — it reported routing that never happened."
-    },
-    {
-      "test_id": "ut_research_004",
-      "dimension_source": "base",
       "dimension_name": "Completeness",
       "llm_score": 2,
       "corrected_score": 2,
@@ -49,14 +41,6 @@
       "llm_score": 3,
       "corrected_score": 3,
       "comment": null
-    },
-    {
-      "test_id": "ut_research_005",
-      "dimension_source": "base",
-      "dimension_name": "Correctness",
-      "llm_score": 2,
-      "corrected_score": 2,
-      "comment": "The AI claimed seven assertions lacked person_evidence links but the tool responses show only four (a_002, a_003, a_006, a_007) had zero links — overclaimed scope though the person-evidence hand-off was correct."
     },
     {
       "test_id": "ut_research_005",
@@ -169,6 +153,22 @@
       "llm_score": 3,
       "corrected_score": 3,
       "comment": null
+    },
+    {
+      "test_id": "ut_research_005",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 2,
+      "corrected_score": 2,
+      "comment": "The AI claimed seven assertions lacked person_evidence links but the tool responses show only four (a_002, a_003, a_006, a_007) had zero links, overclaimed scope though the person-evidence hand-off was correct."
+    },
+    {
+      "test_id": "ut_research_004",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 2,
+      "corrected_score": 2,
+      "comment": "The AI stated proof-conclusion and question-selection hand-offs were made but the tool log shows only research_delivered was called; it reported routing that never happened."
     }
   ]
 }
