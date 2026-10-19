@@ -11,8 +11,7 @@ description: >-
   a FamilySearch person ID: with no ID it creates nothing and asks for one.
   Pass the projectPath and the user's own words (objective, person ID, known
   facts, any holdings they mention). Do NOT use when a research.json file
-  already exists in the folder — use project-status instead to resume an
-  existing project.
+  already exists in the folder — the project already exists.
 model: claude-sonnet-4-6
 tools:
   - mcp__genealogy__person_read
@@ -164,7 +163,7 @@ When unsure: did the user name them, or is their surname fixed by a stated maide
 project_create({ projectPath, objective, title, personReadRef: <staged.resultsRef>, subjectPersonIds: ["<subject's FamilySearch ID>"], tree: { persons: [<additions>], relationships: [<their links>] } })
 ```
 
-`objective` from Step 1; `title` a concise 3-6 word session name (e.g. "Patrick Flynn's parents"); `personReadRef` the subject's `staged.resultsRef` (if you read more than one person, the subject's); `subjectPersonIds` the subject's FamilySearch ID. Omit `tree` when there are no additions. With no FamilySearch data, omit `personReadRef` and pass the Step 3 tree, with `subjectPersonIds` its local `I` id.
+`objective` from Step 1; `title` a concise 3-6 word session name (e.g. "Patrick Flynn's parents"); `personReadRef` the subject's `staged.resultsRef` (if you read more than one person, the subject's); `subjectPersonIds` the subject's FamilySearch ID. Omit `tree` when there are no additions.
 
 The result's `idMap` gives the tree ids assigned: `persons` (FamilySearch ID → `I` id), `sources` (FamilySearch source id → `S` id), `additions` (your labels → `I` ids). Use those ids in every later step.
 
