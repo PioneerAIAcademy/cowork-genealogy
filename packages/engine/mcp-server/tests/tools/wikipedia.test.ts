@@ -142,9 +142,20 @@ describe("wikipediaSearch — which search hit it takes", () => {
   const expectSearched = (query: string) =>
     expect(urlOf(1)).toBe(`${SEARCH}?q=${encodeURIComponent(query)}&limit=5`);
 
+  // Hit lists as the live search endpoint returned them on 2026-10-19 (issue #3557).
+  const KENYA = ["Church Mission Society", "Anglican Church of Kenya", "Missionary Church", "Mill Hill Missionaries", "Chief Kivoi Mwendwa"];
+  // Wikipedia swaps "Pretoria" and the 1948–1994 article between fetches, so both orders are tested.
+  const PRETORIA_FOURTH = ["Transvaal Colony", "South African Republic", "History of South Africa (1948–1994)", "Pretoria", "University of South Africa"];
+  const PRETORIA_THIRD = ["Transvaal Colony", "South African Republic", "Pretoria", "History of South Africa (1948–1994)", "University of South Africa"];
+  const PECQUENCOURT = ["Communes of the Nord department", "Pecquencourt", "Armorial of the Communes of Nord (Q–Z)", "Bailleul, Nord", "Croix, Nord"];
+  const NORWAY = ["Culture of Norway", "History of Norway", "Diseases and epidemics of the 19th century", "History of Germany", "19th century in science"];
+  const TOPSHAM = ["Orange County, Vermont", "Orange, Vermont", "Groton State Forest", "Groton, Vermont", "Thetford Academy, Vermont"];
+  const DETROIT = ["History of Detroit", "Michigan", "Hamtramck, Michigan", "History of Michigan", "Detroit"];
+
   it.each([
     ["Maddock North Dakota history", MADDOCK],
     ["Hollow Creek Settlement", HOLLOW_CREEK],
+    ["Church Missionary Society in Kenya", KENYA],
   ])("keeps the not-found error for '%s' when no hit's title is in the query", async (query, hits) => {
     status(404);
     searchHits(hits);
@@ -162,6 +173,13 @@ describe("wikipediaSearch — which search hit it takes", () => {
     ["Georgia state history genealogy records 19th century", GEORGIA, "History of Georgia (U.S. state)"],
     ["Mo'orea island history French Polynesia", MOOREA, "Moʼorea"],
     ["O'Brien family history Ireland", ["O’Brien", "O'Brien (surname)"], "O’Brien"],
+    ["Pretoria Transvaal South Africa history civil registration", PRETORIA_FOURTH, "Pretoria"],
+    ["Pretoria Transvaal South Africa history civil registration", PRETORIA_THIRD, "Pretoria"],
+    ["Pecquencourt commune Nord department France", PECQUENCOURT, "Pecquencourt"],
+    ["Norway history 19th century", NORWAY, "History of Norway"],
+    ["Topsham Vermont history Orange County", TOPSHAM, "Orange County, Vermont"],
+    ["Detroit Wayne County Michigan history genealogy records", DETROIT, "History of Detroit"],
+    ["History of Detroit Michigan", DETROIT, "History of Detroit"],
   ])("resolves '%s' to the hit whose title it spells out", async (query, hits, title) => {
     status(404);
     searchHits(hits);
