@@ -1950,5 +1950,33 @@
     "verdict:spacing and case change the result set": "NO — 'vanderlinde' (space removed) and 'Van Der Linde' enumerate the identical set as 'van der Linde', so spacing and capitalisation carry no signal. This says nothing about DROPPING the particle; that leg is recorded separately.",
     "verdict:control Mc Kee equals McKee": "REPRODUCES",
     "measured_at": "2026-09-14T19:12:58.467Z"
+  },
+  "L": {
+    "baselineTotal": 1577,
+    "termsRejected": {
+      "q.residenceAddress": "Unsupported Term=residenceAddress",
+      "q.address": "Unsupported Term=address",
+      "q.streetAddress": "Unsupported Term=streetAddress",
+      "q.street": "Unsupported Term=street",
+      "q.residenceStreet": "Unsupported Term=residenceStreet",
+      "q.houseNumber": "Unsupported Term=houseNumber",
+      "q.dwelling": "Unsupported Term=dwelling",
+      "q.dwellingNumber": "Unsupported Term=dwellingNumber",
+      "f.dwellingNumber": "Specified filter=dwellingNumber is not an allowed filter term",
+      "q.residencePlace.street": "Unable to map supplied value=street to term modifier"
+    },
+    "termsAccepted": [],
+    "verdict:address search term": "NO ADDRESS SEARCH TERM (10 of 10 rejected)",
+    "addressFieldsByCollection": {
+      "US 1880": {},
+      "US 1900": {},
+      "US 1940": {},
+      "US 1950": {
+        "EVENT_HOUSE_NBR_ORIG": "1 1/4 mile on left"
+      }
+    },
+    "verdict:address field to read": "1 of 4 sampled collections carry a populated address field (US 1950)",
+    "verdict:address lever": "DROP the address search lever: the tool cannot express it",
+    "measured_at": "2026-10-19T19:18:23.053Z"
   }
 }

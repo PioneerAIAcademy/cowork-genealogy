@@ -30,6 +30,9 @@
  *   SECTION K — Particle surnames. Whether the literal quotes
  *     `name-search-mechanics.md` prescribes change anything (they are
  *     stripped before matching), and whether the particle is needed to match.
+ *   SECTION L — Address. Whether indexed record search takes any street,
+ *     house-number or dwelling term (issue #2213's address lever), and which
+ *     census collections carry a populated address field to READ.
  *
  * EVERY CONCLUSION LINE IS COMPUTED FROM THE RUN, never a literal. Section F
  * used to end in a hardcoded `console.log` asserting "gibberish -> 0" — it
@@ -2677,6 +2680,109 @@ async function sectionI(): Promise<void> {
           "     transposition, and exactness removes it."
       : "  => not supported by this measurement."
   );
+}
+
+// --- SECTION L — is there an address lever? -------------------------------
+//
+// Issue #2213 (merged from #2555) proposed "identify the address and search
+// for it", and said to check the parameter exists before writing any guidance:
+// a lever the tool cannot express is worse than no lever. Two questions, each
+// with its own computed verdict:
+//   1. SEARCH: does any address-shaped term survive the API? Every candidate is
+//      sent on a baseline that is itself proven to answer, so a rejection reads
+//      as the term's, not the pool's.
+//   2. READ: which census collections carry a POPULATED street / house-number /
+//      address index field on a record — useful on a record already in hand,
+//      never as a search filter.
+
+const L_TERMS = [
+  "q.residenceAddress", "q.address", "q.streetAddress", "q.street", "q.residenceStreet",
+  "q.houseNumber", "q.dwelling", "q.dwellingNumber", "f.dwellingNumber", "q.residencePlace.street",
+];
+const L_COLLECTIONS: Array<[string, string]> = [
+  ["US 1880", "1417683"], ["US 1900", "1325221"], ["US 1940", "2000219"], ["US 1950", "4464515"],
+];
+const L_ADDRESS_LABEL = /STREET|HOUSE_NBR|HOUSE_NUMBER|ADDRESS/;
+const RECAPI = "https://sg30p0.familysearch.org/service/cds/recapi/records/persona";
+
+async function rawPersona(entityId: string): Promise<unknown | null> {
+  await throttle();
+  const res = await fetchRetry(
+    `${RECAPI}/${encodeURIComponent(entityId)}.json`,
+    { headers: { Authorization: `Bearer ${token}`, Accept: "application/json", "Accept-Language": "en", "User-Agent": BROWSER_USER_AGENT } },
+    { maxRetries: 4, baseMs: 6_000, label: "recapi" },
+  );
+  return res.ok ? await res.json() : null;
+}
+
+/** Every populated `labelId -> text` anywhere in a raw record. */
+function labelTexts(node: unknown, out = new Map<string, string>()): Map<string, string> {
+  if (Array.isArray(node)) node.forEach((n) => labelTexts(n, out));
+  else if (node && typeof node === "object") {
+    const o = node as Record<string, unknown>;
+    if (typeof o.labelId === "string" && typeof o.text === "string" && o.text.trim()) out.set(o.labelId, o.text);
+    for (const v of Object.values(o)) labelTexts(v, out);
+  }
+  return out;
+}
+
+async function sectionL(): Promise<void> {
+  console.log("\n=== L. Address: a search term, or only a field to read? ===");
+
+  const base = `f.collectionId=2000219&q.surname=Smith&q.residencePlace=Logan,%20Cache,%20Utah,%20United%20States&count=1&${REQUIRE_SWITCH}`;
+  const baseline = await search(base);
+  record("L", "baselineTotal", errored(baseline) ? null : baseline.total);
+  console.log(`  baseline (1940, Smith, Logan)  -> ${baseline.error ?? `results=${baseline.total}`}`);
+  const accepted: string[] = [];
+  const rejected: Record<string, string | null> = {};
+  for (const term of L_TERMS) {
+    const r = await search(`${base}&${term}=Main`);
+    if (errored(r)) rejected[term] = r.error;
+    else accepted.push(term);
+    console.log(`  ${term.padEnd(26)} -> ${r.error ?? `results=${r.total}`}`);
+  }
+  record("L", "termsRejected", rejected);
+  record("L", "termsAccepted", accepted);
+  const searchVerdict = errored(baseline)
+    ? "NOT MEASURED"
+    : accepted.length === 0
+      ? `NO ADDRESS SEARCH TERM (${L_TERMS.length} of ${L_TERMS.length} rejected)`
+      : `ACCEPTED: ${accepted.join(", ")}`;
+  record("L", "verdict:address search term", searchVerdict);
+  console.log(`  -> search: ${searchVerdict}`);
+
+  const readable: Record<string, Record<string, string>> = {};
+  let sampled = 0;
+  for (const [label, id] of L_COLLECTIONS) {
+    const hit = await search(`f.collectionId=${id}&q.surname=Smith&q.residencePlace=Utah&count=1&${REQUIRE_SWITCH}`);
+    const persona = hit.personas[0];
+    if (errored(hit) || !persona) {
+      console.log(`  ${label}: ${hit.error ?? "no persona"} — NOT MEASURED`);
+      continue;
+    }
+    const raw = await rawPersona(persona.id.replace(/^\d:\d:/, ""));
+    if (!raw) {
+      console.log(`  ${label}: record ${persona.id} unreadable — NOT MEASURED`);
+      continue;
+    }
+    sampled++;
+    const fields = Object.fromEntries([...labelTexts(raw)].filter(([k]) => L_ADDRESS_LABEL.test(k)));
+    readable[label] = fields;
+    console.log(`  ${label} (${persona.id}): ${Object.keys(fields).length ? JSON.stringify(fields).slice(0, 140) : "no populated address field"}`);
+  }
+  record("L", "addressFieldsByCollection", readable);
+  const withAddress = Object.entries(readable).filter(([, f]) => Object.keys(f).length).map(([c]) => c);
+  const readVerdict = sampled === 0
+    ? "NOT MEASURED"
+    : `${withAddress.length} of ${sampled} sampled collections carry a populated address field${withAddress.length ? ` (${withAddress.join(", ")})` : ""}`;
+  record("L", "verdict:address field to read", readVerdict);
+  console.log(`  -> read: ${readVerdict}`);
+
+  const lever = searchVerdict.startsWith("NO ADDRESS SEARCH TERM")
+    ? "DROP the address search lever: the tool cannot express it"
+    : searchVerdict === "NOT MEASURED" ? "NOT MEASURED" : "an address term exists; the lever is expressible";
+  record("L", "verdict:address lever", lever);
+  console.log(`  -> lever: ${lever}`);
 }
 
 // --- SECTION T — does a name term FILTER on content, or only RANK? --------
@@ -6427,6 +6533,7 @@ const SECTIONS: Record<string, () => Promise<void>> = {
   I: sectionI,
   J: sectionJ,
   K: sectionK,
+  L: sectionL,
   N: sectionN,
   P: sectionP,
   Q: sectionQ,
