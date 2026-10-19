@@ -1,0 +1,13 @@
+{
+  "per_finding": {
+    "f1": "true",
+    "f2": "partial"
+  },
+  "proof_quality_score": 2,
+  "notes": {
+    "f1": "Father-child relationship recovered. John W(illiam) Spriggs is linked as Reuben's father (ParentChild I1 -> L64C-QQX), b. 1872 Iowa, via the 1910 Beadle County, SD census (ark:/61903/1:1:MPXD-MZ4 -- the expected f1 source); the proof summary names him 'John William Spriggs'. Minor deltas only: birth place is 'Iowa' (coarser than the expected Decorah Twp, Winneshiek) and the 1934 death is not recorded. Graded true.",
+    "f2": "Mother only partially recovered. Charlotte Spriggs is linked as Reuben's mother (ParentChild I2 -> L64C-QQX) via the same 1910 census, but the maiden name 'Westby' was NOT recovered (proof summary states 'maiden name unknown'), and the birth year reads 1877 vs the expected 1876 with place only 'Norway' (coarser than Akershus). The person and relationship are right but the maternal identification is incomplete -- hence partial, not true. Separately, proof ps_001 (tier Probable) asserts 'two independent census records eight years apart' but only the 1910 ark (MPXD-MZ4) appears in the final research sources; the claimed second (1920) census citation is unverified in the final state."
+  },
+  "findings_hash": "8282b99585e85550c9a239b680abd2df42e7db75ad8ad2b1401ef4324ac71eda",
+  "blind_bundle_digest": "aa4cdc8ac45d5893c840082edd3600acbbe03733d91a5aea5305a4ec624e9750"
+}
