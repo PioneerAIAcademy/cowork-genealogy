@@ -1,9 +1,9 @@
 {
-  "run_log": "v24_2026-10-15_11-34-34.json",
-  "annotator": "ikeboateng2018@gmail.com",
+  "run_log": "v5_2026-10-15_15-29-30.json",
+  "annotator": "122873616+Cia-3@users.noreply.github.com",
   "corrections": [
     {
-      "test_id": "ut_research_020",
+      "test_id": "ut_question_selection_007",
       "dimension_source": "base",
       "dimension_name": "Correctness",
       "llm_score": 3,
@@ -11,15 +11,7 @@
       "comment": null
     },
     {
-      "test_id": "ut_research_020",
-      "dimension_source": "base",
-      "dimension_name": "Tool Arguments",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_research_020",
+      "test_id": "ut_question_selection_007",
       "dimension_source": "base",
       "dimension_name": "Completeness",
       "llm_score": 3,
@@ -27,7 +19,7 @@
       "comment": null
     },
     {
-      "test_id": "ut_research_004",
+      "test_id": "ut_question_selection_007",
       "dimension_source": "base",
       "dimension_name": "Tool Arguments",
       "llm_score": 3,
@@ -35,23 +27,79 @@
       "comment": null
     },
     {
-      "test_id": "ut_research_017",
+      "test_id": "ut_question_selection_007",
+      "dimension_source": "rubric",
+      "dimension_name": "Question specificity",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_question_selection_008",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_question_selection_008",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_question_selection_008",
       "dimension_source": "base",
       "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_question_selection_008",
+      "dimension_source": "rubric",
+      "dimension_name": "Question specificity",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_question_selection_013",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_question_selection_013",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_question_selection_013",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_question_selection_013",
+      "dimension_source": "rubric",
+      "dimension_name": "Question specificity",
       "llm_score": null,
       "corrected_score": null,
       "comment": null
     },
     {
-      "test_id": "ut_research_017",
-      "dimension_source": "base",
-      "dimension_name": "Completeness",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_research_017",
+      "test_id": "ut_question_selection_014",
       "dimension_source": "base",
       "dimension_name": "Correctness",
       "llm_score": 3,
@@ -59,7 +107,7 @@
       "comment": null
     },
     {
-      "test_id": "ut_research_018",
+      "test_id": "ut_question_selection_014",
       "dimension_source": "base",
       "dimension_name": "Completeness",
       "llm_score": 3,
@@ -67,15 +115,7 @@
       "comment": null
     },
     {
-      "test_id": "ut_research_018",
-      "dimension_source": "base",
-      "dimension_name": "Correctness",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_research_018",
+      "test_id": "ut_question_selection_014",
       "dimension_source": "base",
       "dimension_name": "Tool Arguments",
       "llm_score": 3,
@@ -83,23 +123,15 @@
       "comment": null
     },
     {
-      "test_id": "ut_research_016",
-      "dimension_source": "base",
-      "dimension_name": "Tool Arguments",
-      "llm_score": null,
-      "corrected_score": null,
-      "comment": null
-    },
-    {
-      "test_id": "ut_research_016",
-      "dimension_source": "base",
-      "dimension_name": "Completeness",
+      "test_id": "ut_question_selection_014",
+      "dimension_source": "rubric",
+      "dimension_name": "Question specificity",
       "llm_score": 3,
       "corrected_score": 3,
       "comment": null
     },
     {
-      "test_id": "ut_research_016",
+      "test_id": "ut_question_selection_q4v",
       "dimension_source": "base",
       "dimension_name": "Correctness",
       "llm_score": 3,
@@ -107,15 +139,7 @@
       "comment": null
     },
     {
-      "test_id": "ut_research_001",
-      "dimension_source": "base",
-      "dimension_name": "Correctness",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_research_001",
+      "test_id": "ut_question_selection_q4v",
       "dimension_source": "base",
       "dimension_name": "Completeness",
       "llm_score": 3,
@@ -123,7 +147,7 @@
       "comment": null
     },
     {
-      "test_id": "ut_research_001",
+      "test_id": "ut_question_selection_q4v",
       "dimension_source": "base",
       "dimension_name": "Tool Arguments",
       "llm_score": 3,
@@ -131,20 +155,12 @@
       "comment": null
     },
     {
-      "test_id": "ut_research_004",
-      "dimension_source": "base",
-      "dimension_name": "Correctness",
-      "llm_score": 2,
-      "corrected_score": 2,
-      "comment": "No source for the claim on coal-mining families in Schuylkill. I agree with the score."
-    },
-    {
-      "test_id": "ut_research_004",
-      "dimension_source": "base",
-      "dimension_name": "Completeness",
-      "llm_score": 2,
-      "corrected_score": 2,
-      "comment": "The response for Patrick's origin was not complete and did not move the full use of the GPS workflow."
+      "test_id": "ut_question_selection_q4v",
+      "dimension_source": "rubric",
+      "dimension_name": "Question specificity",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
     }
   ]
 }
