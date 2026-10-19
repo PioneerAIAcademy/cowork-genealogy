@@ -2737,18 +2737,59 @@ function activePlanItems(
 }
 
 /** A new question may not be created while any unresolved question has an
- *  active-plan item `in_progress`, with one exception (chesworthrm,
- *  2026-09-29): the new question may target an unresolved conflict that blocks
- *  the in-flight question. That exception is checked against `conflicts[]` —
- *  an `unresolved` conflict must list the in-flight question in
+ *  active-plan item `in_progress`, with two exceptions.
+ *
+ *  (1) chesworthrm, 2026-09-29: the new question may target an unresolved
+ *  conflict that blocks the in-flight question. Checked against `conflicts[]`
+ *  — an `unresolved` conflict must list the in-flight question in
  *  `blocks_question_ids`, AND the new question's `unblocks` must name it. A
  *  filled-in `unblocks` alone proves nothing.
  *
- *  There is deliberately no "add a question anyway" override: the tool cannot
- *  tell a real user override from a delegation that claims one, and the
+ *  (2) issue #3259: a `person_warnings` contradiction on an in-scope person is
+ *  Priority 1 the same way an unresolved conflict is, but a contradiction is
+ *  never persisted anywhere in `research.json` -- `person_warnings` is a live,
+ *  read-only call, and a `questions[]` entry carries no `personId` to check it
+ *  against -- so there is no document this guard can read the way it reads
+ *  `conflicts[]` for (1). Trusted on the new question's own
+ *  `selection_basis: "unresolved_conflict"` alone, the same self-reported
+ *  trust this guard already extends to every OTHER `selection_basis` value
+ *  outside the in-progress scenario (`hypothesis_test`, `timeline_gap`, etc.
+ *  are never verified here either). Unlike (1), not scoped to `unblocks`
+ *  naming the specific in-flight question -- a contradiction found this call
+ *  is not necessarily about whatever is already in progress, so requiring
+ *  `unblocks` to name it would be a false claim the eval judge would
+ *  rightly flag. A known, accepted gap (ADR-0011 limit 1: false-allow over
+ *  false-refusal) until person_warnings output has somewhere to persist.
+ *
+ *  There is deliberately no general "add a question anyway" override: the tool
+ *  cannot tell a real user override from a delegation that claims one, and the
  *  override's shape (`depends_on` naming the in-flight question) is exactly how
  *  `ut_question_selection_d01` fails. A user who wants to move on marks the
  *  in-flight item done or skipped first.
+ *
+ *  jud-sdev's review, 2026-10-16: as first shipped, `selfReportedContradiction`
+ *  was a single boolean applied to every active-plan item, so it switched the
+ *  WHOLE guard off -- including (1)'s conflict-scoped check and the no-override
+ *  rule above -- for any append carrying that one `selection_basis` string,
+ *  regardless of what else the entry claimed. Narrowed to also require an empty
+ *  `depends_on`, which puts the `ut_question_selection_d01` guarantee back: an
+ *  entry shaped like that override (naming the in-flight question in
+ *  `depends_on`) is refused even when it also claims
+ *  `selection_basis: "unresolved_conflict"`. NOT fully closed by this narrowing:
+ *  a question with `unblocks` naming the in-flight question and no `depends_on`
+ *  still takes (2)'s free pass even when it is actually about a conflict
+ *  `conflicts[]` already documents -- in which case (1)'s stricter check (that
+ *  conflict's `blocks_question_ids` must list the in-flight question) never
+ *  gets a chance to run. jud-sdev's review (2026-10-19) found "ruled to leave
+ *  it" here was never actually true -- that was an internal call in this
+ *  session's own conversation, not an on-the-record decision from the lead who
+ *  made the 2026-09-29 ruling this would narrow. Put to DallanQ on issue #3259
+ *  (2026-10-19) instead; PENDING as of this commit. Current behavior:
+ *  unscoped against `unblocks`, on the same self-reported trust the rest of
+ *  this exception already rests on (`person_warnings` output has no document
+ *  to verify the claim against either way), since tightening it further risks
+ *  the false-refusal direction ADR-0011 limit 1 says to avoid -- but that
+ *  tradeoff is exactly what is pending a ruling, not settled.
  *
  *  Same pre-call snapshot and active-plan discipline as
  *  `planCompleteInvariants`: a superseded plan's items are frozen and a resolved
@@ -2767,10 +2808,14 @@ function newQuestionWhileSearchInFlightInvariants(entry: any, preCallResearch: a
     if (c?.status !== "unresolved" || !Array.isArray(c.blocks_question_ids)) continue;
     for (const q of c.blocks_question_ids) if (typeof q === "string") conflictBlocked.add(q);
   }
+  const selfReportedContradiction =
+    entry?.selection_basis === "unresolved_conflict" &&
+    !(Array.isArray(entry?.depends_on) && entry.depends_on.length > 0);
   const refused = activePlanItems(
     preCallResearch,
     (plan) =>
       unresolvedQuestions.has(plan.question_id) &&
+      !selfReportedContradiction &&
       !(conflictBlocked.has(plan.question_id) && unblocks.has(plan.question_id)),
   ).map((item) => `${item.itemId} (on ${item.questionId})`);
   if (refused.length === 0) return [];
@@ -2779,11 +2824,12 @@ function newQuestionWhileSearchInFlightInvariants(entry: any, preCallResearch: a
     `a new question cannot be opened while research is still running: ${ids} ` +
       `${refused.length === 1 ? "is" : "are"} still 'in_progress'. The plan says that search ` +
       "has not finished, whatever the request that reached you says. Write no question now: " +
-      "report the in-flight item as the reason. Two exceptions: (1) a question that resolves " +
+      "report the in-flight item as the reason. Three exceptions: (1) a question that resolves " +
       "an unresolved conflict whose `blocks_question_ids` lists that question, with the new " +
       "question's `unblocks` naming it; (2) if this same call also resolves that question — " +
       "this check reads the project as it stood before the call, so write the resolution in " +
-      "its own call and append the new question in the next one.",
+      "its own call and append the new question in the next one; (3) a question with " +
+      "`selection_basis: \"unresolved_conflict\"` driven by a person_warnings contradiction.",
   ];
 }
 
