@@ -260,7 +260,19 @@ def main():
         print(
             json.dumps(
                 {
-                    "continue_": False,
+                    # `continue`, NOT `continue_`. The Python SDK renames
+                    # `continue_` -> `continue` in `_convert_hook_output_for_cli`
+                    # (`_internal/query.py:62-74`), and that runs only on CALLBACK
+                    # output. This is a COMMAND hook: its stdout goes straight to
+                    # the CLI with no SDK in the path, so `continue_` would be an
+                    # unrecognised key and the stop silently dropped. Item 9 would
+                    # then have measured a plain deny and reported "a halt does not
+                    # end a Cowork turn" when no halt was ever sent -- the exact
+                    # silent false negative the VOID gate exists to prevent.
+                    # The prototype's `_halt` (`options.py:442`) spells it
+                    # `continue_` and is CORRECT, because it is a callback.
+                    # Caught by Praise on the hand-install, 2026-10-19.
+                    "continue": False,
                     "stopReason": HALT_REASON,
                     "hookSpecificOutput": {
                         "hookEventName": "PreToolUse",

@@ -26,16 +26,30 @@ made about `device_commit_files` sessions, not about this, so it is measured.
 
 ## Run it
 
-**1. Install as a plugin Cowork loads.** Copy this directory so the two files sit
-at `<plugin>/hooks/`, since `hooks.json` resolves the command through
-`${CLAUDE_PLUGIN_ROOT}/hooks/`:
+**1. Build the plugin folder:**
+
+```
+python3 setup.py ~/step-probe-plugin
+```
+
+It assembles the layout, checks `python3` really launches Python 3 (on stock
+Windows that name resolves to a Microsoft Store alias, and `hooks.json` shells
+that exact name), and self-tests all three arms. It prints `READY` only if the
+halt arm actually emits a CLI-readable stop, so a broken install fails there
+rather than looking like negative answers later.
+
+The layout it produces, if you would rather do it by hand:
 
 ```
 step-probe-plugin/
-  hooks/
-    hooks.json
-    probe_step_hooks.py
+  .claude-plugin/plugin.json     <- required, or the plugin will not install
+  hooks/hooks.json
+  hooks/probe_step_hooks.py
 ```
+
+`hooks.json` resolves its command through `${CLAUDE_PLUGIN_ROOT}/hooks/`, so the
+two hook files must sit under `hooks/`. The manifest is named `step-probe` so it
+cannot collide with `genealogy-research`.
 
 Point Cowork at `step-probe-plugin`. Do **not** add these hooks to the shipped
 plugin: the `.*` matcher runs the recorder on every tool call, and the file would
@@ -67,6 +81,18 @@ python3 read_probe.py path/to/step-probe.jsonl
 ```
 
 The log defaults to beside the script; `STEP_PROBE_LOG` overrides it.
+
+**The log is written inside the VM, not on your machine.** Cowork runs the plugin
+from its own copy, so `~/step-probe-plugin` on the host stays empty. At the end of
+the session, ask it to find the log and copy it into the connected folder:
+
+```
+find / -name step-probe.jsonl 2>/dev/null
+```
+
+**`read_probe.py` does not report item 9.** It reads the hook's own records, and
+whether the runtime HONOURED the halt is only visible in the session: if the
+second task ran after the halt, the halt did not end the turn.
 
 ## Reading the result
 
