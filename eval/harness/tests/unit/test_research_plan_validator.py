@@ -1016,6 +1016,20 @@ def test_person_level_source_passes_when_deed_content_stated():
     check(_pshape_state(), response, TAGGED)  # does not raise
 
 
+def test_direct_arm_grades_the_agents_own_return_not_the_relay():
+    """Issue #2116: on a direct test the main thread only relays the agent's
+    return, so the reporter reads `agent_returns`. The relay naming the deed
+    while the agent's own return does not must still fire, and the reverse must
+    pass."""
+    direct = {**TAGGED, "skill": "research-plan", "delegation": "Create the first research plan for q_001."}
+    with_deed = "Patrick Sheahan (I2) bought land from James Kelly in 1875 (Deed Book 42, p. 118, S2)."
+    without = "Patrick Sheahan (I2), Michael's brother, was in Schuylkill County by 1875."
+    returns = lambda text: [{"subagent_type": "research-plan", "text": text}]  # noqa: E731
+    with pytest.raises(AssertionError, match="I2"):
+        check(_pshape_state(), with_deed, direct, returns(without))
+    check(_pshape_state(), without, direct, returns(with_deed))  # does not raise
+
+
 def test_person_level_source_content_without_the_person_fires():
     response = "A land purchase is recorded in Deed Book 42, p. 118. Plan: 1880 census, church records."
     with pytest.raises(AssertionError, match="I2"):

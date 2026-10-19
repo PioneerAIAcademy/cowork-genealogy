@@ -211,6 +211,52 @@ def test_census_era_boundaries_preserved(before_state, after_state, test):
     )
 
 
+# `\b` excludes "FamilySearch"; the gap accepts "click Search, then Records"
+# and "Search → Records" (both ≤ 20 non-period, non-CR, non-newline chars apart).
+_NAV_RE = re.compile(r"\bSearch\b[^.\r\n]{0,20}\bRecords\b")
+
+
+def test_stated_navigation_preserved(before_state, after_state, test):
+    """A navigation step the chunk states must survive into the logged notes.
+
+    Gated on the `navigation` tag. The fixture's rank-1 chunk for
+    `ut_search_wiki_006` states: "To search, go to FamilySearch.org, click
+    Search, then Records, and enter the person's name and estimated marriage
+    year." The annotator lowered Completeness from 3 to 2 because this step was
+    absent from the logged notes in run `v1_2026-10-13_22-41-26` (PR #3415).
+    The judge gave Completeness 3 on every run — the gap is invisible to
+    automated grading.
+
+    Likely trigger: the Summary rule forbids "invent navigation paths (e.g.
+    'Search → Records, select Ireland')". The example is almost word-for-word
+    the navigation the chunk states, so the model drops all navigation rather
+    than only invented navigation.
+
+    Deterministic proxy: `_NAV_RE` — `\\bSearch\\b[^.\\n]{0,20}\\bRecords\\b`
+    — matches the logged notes. `\\b` excludes "FamilySearch"; the short gap
+    accepts both "click Search, then Records" and "Search → Records". A
+    summary that drops the navigation step has no reason to combine those two
+    words in that order within 20 characters.
+
+    This replaces the `judge_context` approach that scored Completeness 3 even
+    when the step was absent. `docs/specs/unit-test-spec.md` 5.4 and the
+    census validator's docstring: deterministic checks belong in validators,
+    not in the judge prompt.
+    """
+    if "navigation" not in (test.get("tags") or []):
+        pytest.skip("only applies to navigation tests")
+    notes = _logged_notes(before_state, after_state)
+    if not notes:
+        pytest.skip("nothing logged; covered by test_one_log_entry_appended")
+    text = "\n".join(notes)
+    assert _NAV_RE.search(text), (
+        "the logged notes must keep the navigation step the chunk states "
+        "('click Search, then Records' or equivalent). A summary that drops "
+        "it while keeping the chunk's other facts is the defect behind "
+        "issue #3431."
+    )
+
+
 # --- The logged notes' Sources section --------------------------------
 
 
