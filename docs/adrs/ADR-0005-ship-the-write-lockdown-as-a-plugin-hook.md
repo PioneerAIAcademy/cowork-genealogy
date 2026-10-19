@@ -63,8 +63,10 @@ Verified live in Cowork on 2026-07-30 — the hook loads, fires under either
 matcher form, and its deny is honored with the script's own reason text
 surfacing. (That probe used a **broader matcher** than the shipped one and so
 also fired for `Bash`; the `Bash` route is deliberately open — see the costs
-below.) Cowork runs `permission_mode: "default"`, the hosted path runs
-`bypassPermissions`; a hook binds under both.
+below.) The hosted path runs `bypassPermissions`; a hook binds under both.
+Cowork's `permission_mode` is recorded `"default"` here and was observed
+`"auto"` on 2026-10-19 (see "What the step-mode phase-0 probe found"); the
+hook bound under both.
 
 **The matcher is part of the guardrail, not packaging detail.** It decides
 whether the script runs at all, so a tool the script would deny but the matcher
@@ -191,7 +193,7 @@ this ADR records behaviour rather than citing them:
 `PreToolUse` (matcher `.*`), `UserPromptSubmit`, `SessionStart` and `Stop`. The
 kit was deleted once these results were in. It lived in a step-probe folder
 under `apps/server/dev/`, and is in git history on the PR #3262 branch
-`research-as-a-job-phase2` at commit `824513a03` (added in `12c5457633`,
+`research-as-a-job-phase2` at commit `824513a03` (added in `84f384fc9`,
 deleted in `d2d082c392`). That hash is not reachable from `main`, so if that
 branch is rebased or closed unmerged, recover the kit by that path from the
 range rather than by hash. Three sessions on macOS, run by
@@ -245,8 +247,11 @@ step finished some other way.
   `genealogy-research:research`. The plan's rule that names are compared after
   the last `:` is needed here, not only on the SDK path.
 
-**Item 10 is what option 1 rests on.** The lead's 2026-10-19 decision makes
-`AskUserQuestion` the sole step boundary, with no halt behind it. The operator
+**Item 10 is what option 1 rested on.** The lead's earlier 2026-10-19 decision
+(24) made `AskUserQuestion` the sole step boundary, with no halt behind it. It
+was superseded the same day by decision 25, which builds the halt on the
+FamilySearch prototype. The measurement below is unchanged and is what decided
+that Cowork keeps no hook. The operator
 confirmed each of their actions below.
 
 - **Asked, then answered.** The model asked which ancestor to research, with
@@ -265,10 +270,10 @@ confirmed each of their actions below.
   to continue, and ended its turn: `Stop` fired 11 seconds after the ask. It did
   not pick and proceed.
 
-So in Cowork option 1 gets a real wait, but not a turn boundary. A turn under
-option 1 ends only when the model stops after a step. A "Continue" answer
-resumes inside the turn that asked, and the next step's end has to come from
-asking again.
+So in Cowork option 1 got a real wait, but not a turn boundary: a "Continue"
+answer resumes inside the turn that asked. Under decision 25 Cowork ships no
+hook at all, so a Cowork turn ends where the model stops. This measurement is
+why that was accepted rather than worked around.
 
 **The third session added two more:**
 

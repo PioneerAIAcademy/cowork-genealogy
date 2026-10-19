@@ -1,11 +1,17 @@
 """Phase 0 of `docs/plan/research-step-mode.md`: the premises a step boundary rests on.
 
-Step mode ends every turn at a step boundary. On the hosted planes the boundary
-has to be a `PreToolUse` **deny** on the call that would start the next step, so
-PR 1's design rests on facts about what the two planes' hooks already do with
-such a call. This file pins those facts so PR 1 is not written against a guess,
-and so a later change to either plane that would invalidate the design fails here
-rather than in a billed run.
+Step mode ends every turn at a step boundary. This file pins facts about what
+the planes' hooks already do with the call that would start the next step, so
+the design is not written against a guess, and so a later change to either plane
+fails here rather than in a billed run.
+
+**These premises outlived the design that prompted them.** When this was written
+the boundary was to be a `PreToolUse` deny. Phase 0 falsified that: denied at the
+boundary the model reports the refusal and carries on (`dev/probe_step_deny.py`,
+run 2). Under decision 25 the boundary is a **halt**, built on the FamilySearch
+prototype only -- Cowork gets no hook and the alpha gets nothing. The facts below
+are unaffected, because they are about `DELEGATION_TOOLS`, `foreground_rewrite`
+and `is_blocked_call`, which both instruments pass through.
 
 Nothing here is a product change -- phase 0 changes none. These are assertions
 about code that already exists.
@@ -16,14 +22,14 @@ Two of them are also the kind that flip silently: the `Skill` gap widens the
 moment someone adds `Skill` to `DELEGATION_TOOLS`, and the explicit-`False`
 shape is a property of the *call*, so it changes with whatever the model emits.
 
-**Why a deny and not `_halt`.** `_halt` (`proto/worker/options.py:441`) looks
-like the right instrument -- it preempts everything and ends the turn -- and it
-is wrong twice over. `options.py:363-367` records that the SDK's halt fields
-"end it AFTER the call runs (CLI 2.1.220, U3 live lost-lock run 2026-10-03: the
-halted record_search executed on a just-revoked token)". So the delegation a
-halt fires on still executes, and the turn ends with no window for the step
-report the boundary exists to produce. A plain deny is a tool RESULT the model
-reads, which leaves that window open.
+**What `_halt` does, correctly stated.** `_halt`
+(`proto/worker/options.py:391-392`) returns the SDK's stop fields **and**
+`**_deny(reason)`. The deny is not incidental: `options.py:359-363` records that
+the halt fields alone "end it AFTER the call runs (CLI 2.1.220, U3 live
+lost-lock run 2026-10-03: the halted record_search executed on a just-revoked
+token)", so the deny is what stops the call it fires on. An earlier version of
+this docstring claimed the delegation still executes under `_halt`; that is true
+of a bare halt and false of the one shipped here.
 """
 from __future__ import annotations
 
@@ -128,7 +134,7 @@ async def test_an_already_foreground_delegation_falls_through_on_both_planes(too
 
 
 def test_the_blocked_set_cannot_deny_a_delegation():
-    """`is_blocked_call` requires an `mcp__` prefix (`options.py:122-124`), so the
+    """`is_blocked_call` requires an `mcp__` prefix (`options.py:118-120`), so the
     e2e tree-read block cannot be reused as a step boundary however it is
     configured. Asserted in both directions: an mcp tool in the same set denies,
     which is what makes this a statement about the prefix and not about the set
@@ -154,8 +160,10 @@ async def test_blocking_a_delegation_by_name_is_a_no_op_end_to_end(tool):
 
 
 async def test_the_prototype_can_end_a_turn_from_the_hook_and_the_alpha_cannot():
-    """PR 1's "the alpha's hooks" item is new machinery, not a port of the
-    prototype's arm, and the phase-0 line does not say so.
+    """The two planes are asymmetric: only the prototype can end a turn from a
+    hook. Under decision 25 that asymmetry is accepted rather than closed -- the
+    halt is built on the prototype only and the alpha gets nothing -- so this
+    pins the gap as a standing fact, not as work owed.
 
     The prototype's `halt` returns the SDK's turn-ending pair; the alpha's hook
     has no equivalent and says so deliberately (`real_agent.py:428-430`: "No

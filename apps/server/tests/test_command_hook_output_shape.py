@@ -7,7 +7,7 @@ reads as one with no opinion. There is no error and no log line.
   * An SDK **callback** returns a dict that `claude_agent_sdk`'s
     `_convert_hook_output_for_cli` rewrites (`_internal/query.py:62-74`,
     `continue_` -> `continue`). So the prototype's `_halt`
-    (`proto/worker/options.py:442`) spelling it `continue_` is CORRECT.
+    (`proto/worker/options.py:392`) spelling it `continue_` is CORRECT.
   * A **command** hook prints JSON to stdout and the CLI reads it directly.
     No SDK is in that path, so `continue_` is never renamed and the stop is
     silently lost.
@@ -24,7 +24,9 @@ uses it must keep it.
 """
 from __future__ import annotations
 
+import ast
 import json
+import shlex
 from pathlib import Path
 
 import pytest
@@ -39,6 +41,9 @@ PLUGIN_HOOKS = REPO / "packages" / "engine" / "plugin" / "hooks"
 HOOK_MANIFESTS = (PLUGIN_HOOKS / "hooks.json",)
 
 
+unresolved: list[str] = []
+
+
 def _command_hook_scripts() -> list[Path]:
     out: list[Path] = []
     for manifest in HOOK_MANIFESTS:
@@ -50,13 +55,34 @@ def _command_hook_scripts() -> list[Path]:
                 for h in m.get("hooks") or []:
                     if h.get("type") != "command":
                         continue
-                    # `python3 "${CLAUDE_PLUGIN_ROOT}/hooks/x.py"` -> x.py
+                    # `python3 "${CLAUDE_PLUGIN_ROOT}/hooks/x.py" --flag` -> x.py.
+                    # Take the first .py token, not the last path segment: a
+                    # trailing argument made `rsplit("/")` yield `x.py" --flag`,
+                    # which resolves to nothing and was skipped IN SILENCE.
                     cmd = h.get("command", "")
-                    name = cmd.rsplit("/", 1)[-1].strip('"').strip("'")
-                    p = manifest.parent / name
-                    if p.exists():
-                        out.append(p)
+                    name = ""
+                    for tok in shlex.split(cmd, posix=True):
+                        if tok.endswith(".py"):
+                            name = tok.rsplit("/", 1)[-1]
+                            break
+                    resolved = manifest.parent / name if name else None
+                    if resolved is not None and resolved.exists():
+                        out.append(resolved)
+                    else:
+                        # Never skip quietly. An unresolvable command is a hook
+                        # this guard would otherwise not check at all.
+                        unresolved.append(cmd)
     return out
+
+
+def test_every_command_hook_resolves_to_a_file():
+    """A command whose script cannot be resolved is a hook nobody checks."""
+    unresolved.clear()
+    _command_hook_scripts()
+    assert not unresolved, (
+        "these hooks.json commands did not resolve to a file on disk, so the "
+        f"spelling guard below never ran on them: {unresolved}"
+    )
 
 
 def test_there_are_command_hooks_to_check():
@@ -67,16 +93,28 @@ def test_there_are_command_hooks_to_check():
 
 @pytest.mark.parametrize("script", _command_hook_scripts(), ids=lambda p: p.name)
 def test_no_command_hook_emits_the_callback_spelling(script: Path):
-    """`continue_` in a command hook is a stop the CLI will never see."""
+    """`continue_` in a command hook is a stop the CLI will never see.
+
+    Parsed, not grepped. The substring check this replaced matched only the
+    double-quoted key: `{'continue_': False}` and `dict(continue_=False)` both
+    sailed past it, which is two of the three ways to write the bug. An
+    `ast.Constant` equal to `"continue_"` catches every quoting style, and a
+    keyword named `continue_` catches the `dict(...)` form. Equality is what
+    keeps a comment or docstring EXPLAINING the trap legal: prose mentioning
+    the spelling contains it, and is never equal to it.
+    """
     src = script.read_text(encoding="utf-8")
-    # The string as it would be EMITTED, i.e. a JSON key. A mention in a comment
-    # explaining the trap is fine and must stay allowed, or the explanation
-    # cannot be written down.
-    assert '"continue_"' not in src, (
-        f"{script.name} emits the key \"continue_\". A command hook's stdout "
-        "reaches the CLI unrenamed, so the stop is silently dropped. Use "
-        '"continue". The SDK-callback spelling is correct only in a callback '
-        "(see proto/worker/options.py:442)."
+    offenders: list[str] = []
+    for node in ast.walk(ast.parse(src, filename=str(script))):
+        if isinstance(node, ast.Constant) and node.value == "continue_":
+            offenders.append(f"string literal at line {node.lineno}")
+        elif isinstance(node, ast.keyword) and node.arg == "continue_":
+            offenders.append(f"keyword argument at line {getattr(node, 'lineno', '?')}")
+    assert not offenders, (
+        f"{script.name} emits the key `continue_` ({'; '.join(offenders)}). A "
+        "command hook's stdout reaches the CLI unrenamed, so the stop is "
+        'silently dropped. Use "continue". The SDK-callback spelling is '
+        "correct only in a callback (see proto/worker/options.py:392)."
     )
 
 

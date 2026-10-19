@@ -1239,8 +1239,8 @@ is the only instrument that can.
 **Why it ships in the plugin:** `hooks=` is an SDK argument the hosted control
 plane can set and Cowork cannot be made to. A plugin-shipped `hooks/hooks.json`
 binds in **both** — verified live in Cowork 2026-07-30. Cowork runs
-`permission_mode: "default"`, the hosted path `bypassPermissions`; a hook binds
-under both.
+the hosted path `bypassPermissions`; a hook binds under both, under either
+Cowork `permission_mode` (recorded `"default"`, observed `"auto"` on 2026-10-19, ADR-0005).
 
 Two behaviors of the script that are deliberate:
 
@@ -2146,9 +2146,12 @@ changes how a correct change is made:
    asking the researcher with `AskUserQuestion`, and what stops a model starting the
    next step without asking differs by plane: the FS prototype gets a `PreToolUse`
    deny and then a halt; **Cowork gets router prose and no hook at all**; the alpha
-   gets nothing. The eval harnesses run the hosted/SDK path, so they exercise the
-   plane that HAS the enforcement. **A green eval suite therefore says the boundary
-   holds where a hook holds it, and says nothing about the plane most users are on.**
+   gets nothing. **None of it is built yet.** When it is, the gap will be that
+   the e2e harness tracks `real_agent` (`eval/harness/e2e/orchestrator.py`),
+   which is the alpha, and the alpha gets nothing -- so the suite will exercise
+   a plane with no enforcement while the one that HAS it goes ungraded. **A
+   green eval suite will therefore say nothing about whether the boundary
+   holds anywhere.**
    Do not read a passing step-mode test as evidence the boundary holds in Cowork.
 
    This is a deliberate choice, not a limitation: phase 0 measured that a Cowork hook

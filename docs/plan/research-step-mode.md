@@ -66,7 +66,8 @@ the replacement and the unsettled-conflict ending; their findings are folded in.
     2026-10-19.** The carrier STAYS, and is the mechanism rather than something made
     redundant by one. Its premise -- "every step ends at a boundary, so a question for the
     researcher is a step's ending" -- was falsified by phase 0: a `PreToolUse` deny does not
-    end a turn (`probe_step_deny.py`, alpha), and `AskUserQuestion` itself waits in Cowork but
+    end a turn **on the alpha** (`probe_step_deny.py` run 2; in Cowork a plain deny did end
+    the turn, ADR-0005 message 3 -- one run each, and decision 25 does not rest on it), and `AskUserQuestion` itself waits in Cowork but
     does not end the turn either (ADR-0005 item 10). `DecisionCard` still becomes the home for
     the reply buttons, which is unchanged.
 
@@ -205,8 +206,10 @@ that apply:
       (section I).
     - **Each host reads the file** with what it already holds: the prototype worker with
       `read_research` (`worker.py`), the alpha with `read_research_json(project_dir)`, both
-      harnesses from the workspace, and Cowork from the hook's working directory if phase 0
-      shows it is readable. The alpha's `count_only` hook does no I/O today (`real_agent.py`),
+      harnesses from the workspace. Cowork was to read it from the hook's working
+      directory, but ADR-0005 item 7 measured that it is NOT readable (the cwd is
+      `/home/claude`), and under decision 25 Cowork ships no hook, so that arm
+      is moot. The alpha's `count_only` hook does no I/O today (`real_agent.py`),
       so it reads `ctx` only for a research-plan call.
     - **A host that cannot read it passes nothing, and the follower is denied.** The cost is one
       needless pause, never an unasked plan.
@@ -234,10 +237,10 @@ that apply:
   | Plane | Hook | Turn steps from | Notes |
   |---|---|---|---|
   | Prototype worker | `PreToolUse` in `apps/server/proto/worker/options.py` (sees every call) | the claimed turn | The hook is rebuilt per attempt, and redelivery is the normal resume path. So the worker stores the turn's first step and mode in `turns.step` and `turns.mode`, and a redelivered attempt (`receive_count > 1`) seeds from them |
-  | Alpha | `apps/server/app/agent/real_agent.py` | `handle_turn(text)`, reset in `_begin_turn_hook_state` | The main hook's matcher omits `Skill`. Put the step check in the `count_only` hook, or widen the matcher and update `test_write_lockdown.py`. No redelivery |
+  | Alpha | `apps/server/app/agent/real_agent.py` | `handle_turn(text)`, reset in `_begin_turn_hook_state` | The main hook's matcher omits `Skill`. Put the step check in the `count_only` hook, or widen the matcher and update `test_write_lockdown.py`. No redelivery **SUPERSEDED by decision 25**. The alpha gets nothing under decision 25. |
   | Unit harness | `eval/harness/harness/skill_runner.py`'s `pretool_hook` | the one turn | Run the step check **before** the stub, so a stub's canned reply never replaces the step denial |
   | e2e harness | `eval/harness/e2e/orchestrator.py`'s `PreToolUse` | the user messages it sends (section F) | The resume-on-stall prompt is not a new turn |
-  | Cowork | the plugin hook's own entry point (phase 0 picks the signal) | its prompt text | The hook is a fresh process per call, so the entry point keeps the turn's steps in a session state file, or reads them from the transcript (phase 0) |
+  | Cowork | the plugin hook's own entry point (phase 0 picks the signal) | its prompt text | The hook is a fresh process per call, so the entry point keeps the turn's steps in a session state file, or reads them from the transcript (phase 0) **SUPERSEDED by decision 25**. Cowork ships no hook under decision 25. |
 
   - **The plugin hook steps aside where a host enforces.** It does nothing when
     `GENEALOGY_STEP_HOST=1`, giving one guard per plane, each testable.
@@ -252,7 +255,7 @@ that apply:
     and starts the host's replies (section A2); only Cowork runs it in mode `job`.
   - **A host reply under "Keep going" is a new turn,** like the researcher's own reply. A
     resume or stall prompt is not.
-- **No hosted turn arms the Stop veto.** Every turn is one step, so a turn that stops has
+- **No hosted turn arms the Stop veto.** Every turn is one step, so a turn that stops has  **SUPERSEDED by decision 25**: rider 1 keeps the rule as one step per *boundary*, not one per turn
   finished its step.
   - **Prototype:** `turn_max_nudges` (`worker.py`) returns 0 for every turn, so the worker binds
     no Stop hook. The web tier never needs the plugin.
@@ -708,7 +711,7 @@ that apply:
   - **tests:** rewrite `ut_question_selection_003`, `_005`, `_006`, `_008` and `_d03`, and add
     a test with a two-fact objective (no questions → no write, and an ask).
 - **The router:** delete "New evidence may reveal new questions — return to question-selection"
-  (`skills/research/SKILL.md:361-362`). The objective row (the row beginning *"All questions are `resolved` and `project.status` still `active`"*; `:230` on `main`), after the tree-encoding gate,
+  (`skills/research/SKILL.md:364-365`). The objective row (the row beginning *"All questions are `resolved` and `project.status` still `active`"*; `:230` on `main`), after the tree-encoding gate,
   names any uncovered part of the objective as a suggested next question, as a statement. The
   `compound-objective-*` router tests point at that statement.
 - **research-plan's FAN-pivot hand-off** (`agents/research-plan.md:751`) becomes a plan
@@ -898,7 +901,7 @@ file's own sections, top to bottom.
 |---|---|
 | "The default web path never enters the router"; re-entry through the nudge text (PR #3262) | **Router entry comes from the front door below** on every message, the host's replies included. No nudge text remains |
 | `research` as the only front door (PR #3262's frontmatter) | **Keep:** section H depends on it |
-| "Not every turn is a job"; the `research_delivered` finish line (PR #3187, PR #3286, PR #3235) | **Superseded:** every turn is one step. Keep the bounded routing list and "name what was saved"; delete `research_delivered` in phase 2 |
+| "Not every turn is a job"; the `research_delivered` finish line (PR #3187, PR #3286, PR #3235) | **Superseded:** every turn is one step. Keep the bounded routing list and "name what was saved"; delete `research_delivered` in phase 2 |  **SUPERSEDED by decision 25**: rider 1 keeps one step per boundary, not one per turn.
 | "Never ask a question you will not wait for" | **Keep, applied to every step.** Offers at the **end** of a step become its "Continue with X?". Offers **mid-step** become statements, because nothing stops mid-step: for example search-records' "Let the user confirm before extraction", now that extraction is inside the search step |
 | "Give 'I need you' an exit" (`AskUserQuestion` carrier, `pending_decision`, `DecisionCard`) | **Keep** (decision 24, reversing 23). The carrier IS the boundary. The premise this row carried -- "the step boundary already ends every turn" -- was measured false in phase 0: a deny does not end a turn, and `AskUserQuestion` waits without ending one either. `DecisionCard` still becomes the home for the reply buttons |
 | The fourth stop's clauses: unreachable records end `completed`; a blocking conflict "is a decision" | **Unreachable records:** unchanged (the proof at the tier reached, `completed`). **A blocking conflict:** the conflict step names the record that could settle it and offers the planning step (section E), no `decision` exit needed |
@@ -979,7 +982,7 @@ file's own sections, top to bottom.
 
 **Phase 1.** The prose ships as small PRs, so a failed eval holds up only the PR it is in. The
 prep PRs work under today's behaviour, so they land first. PR 1 is code only. PR 2 switches
-step mode on with the four skills that cannot land apart, and merges right after PR 1. Until it
+step mode on with the four skills that cannot land apart, and merges right after PR 1. Until it  **SUPERSEDED by decision 25**: a deny alone does not make a turn stop; `dev/probe_step_deny.py` run 2
 does, PR 1's deny reason alone makes each turn report and stop. The conflict PR follows PR 1
 in parallel with PR 2.
 
@@ -1239,7 +1242,7 @@ in parallel with PR 2.
      upload turn triages it and offers linking;
    - research-exhaustiveness beside an item waiting on an upload declines, lists it as
      `handed_to_user` with its URL, and offers upload or conclude.
-8. **Phase 0's hosted arm on the phase 1 build:** the second step is denied on both planes.
+8. **Phase 0's hosted arm on the phase 1 build:** the second step is denied on both planes.  **SUPERSEDED by decision 25**: the boundary is a halt, on the FS prototype only
 9. **A fresh hosted session** on the Benz and Haist feedback openers
    (`feedback-2026-10-08T12-32-23-007161Z.zip`, `feedback-2026-10-05T17-53-26-347549Z.zip`)
    ends after one step with "Continue with …?".

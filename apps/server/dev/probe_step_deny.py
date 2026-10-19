@@ -80,13 +80,22 @@ So the design premise in `research-step-mode.md` -- "the boundary is a deny on
 the delegation that would start the next step" -- is FALSIFIED for the only case
 that matters, a turn with more than one thing to do. A deny is a tool RESULT;
 the model treats it as one failed item on its list and continues. That is
-exactly what `options.py:363-367` already says about denies ("the model reads
+exactly what `options.py:359-363` already says about denies ("the model reads
 it, argues with it, and picks another tool"), now measured at the turn level.
 
-What this does NOT say: that `_halt` is the answer instead. Its own comment
-records that halt fields end the turn only AFTER the call runs, so the
-delegation would execute. Neither instrument is sufficient as it stands, and the
-alpha has no halt at all. PR 1 owes a mechanism, not a reordering.
+A caveat on the arms: this replaces `options.hooks` wholesale, which drops
+`foreground_rewrite` (`real_agent.py`). So both arms ran with a delegation shape
+production does not use. It does not affect the result -- the leak was the model
+continuing after a deny, not the delegation's background/foreground mode -- but a
+re-run that wants production's shape has to re-add that hook.
+
+What this does NOT say: that this settles the instrument. It was written
+believing `_halt` was no better, on the reading that halt fields end the turn
+only AFTER the call runs. That is true of the stop fields alone, but `_halt`
+(`options.py:391-392`) ships `**_deny(reason)` with them, so it does stop the
+call it fires on. Decision 25 (2026-10-19) chose the halt, on the FamilySearch
+prototype only; Cowork gets no hook and the alpha gets nothing. This probe's
+result stands as the reason the deny was not chosen.
 
 Two further observations from the transcripts, both costing nothing extra:
 
