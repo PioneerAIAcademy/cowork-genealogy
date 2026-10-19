@@ -358,12 +358,11 @@ def test_navigation_fires_when_step_is_dropped():
 
 
 def test_navigation_fires_when_familysearch_and_records_present_but_no_nav():
-    """'FamilySearch' contains 'Search' as a substring but not as a word
-    (\\b excludes it). 'Marriage Records' contains 'Records'. Neither triggers
-    the pattern — only standalone 'Search' near 'Records' does.
+    """Proves \\b excludes 'FamilySearch' as a standalone 'Search' match.
 
-    This is the case CLAUDE.md asks for: prove the guard does not fire on
-    notes that only have 'FamilySearch' and 'Marriage Records'.
+    The regex finds no match, so the assertion fails — the validator fires
+    and flags the missing navigation step. 'Marriage Records' contains
+    'Records' but 'FamilySearch' does not supply a word-boundary 'Search'.
     """
     body = (
         "# FamilySearch Wiki: Marriage Records\n\n"
