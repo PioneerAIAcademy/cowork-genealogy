@@ -10,6 +10,8 @@ One test runs with **no project** (`ut_search_wikipedia_002`, tagged `no-project
 
 One test in this suite is a **decline** (`ut_search_wikipedia_008`, tagged `scope-decline`). It logs nothing and makes no tool call, and that is its correct outcome. On that test read "Template fidelity" and "Tool query and response interpretation" as N/A, and grade "Reply economy" on the decline shape described in its own section.
 
+One test is a **not-found** lookup (`ut_search_wikipedia_011`, tagged `not-found`). The tool answers `No Wikipedia article found`. One negative log entry and no template are correct. On that test read "Template fidelity" as N/A, and under "Reply economy" the line "No Wikipedia article was found for that topic." is the correct one-line return.
+
 ## Template fidelity
 
 Did the agent call `wikipedia_search` and log the result — without asserting anything the tool response does not support?

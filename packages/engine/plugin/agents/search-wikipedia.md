@@ -93,7 +93,13 @@ anything drawn from your own knowledge rather than the tool response.
 1. Call the `wikipedia_search` MCP tool with the topic as the
    `query` parameter. Exactly one call; do not re-query to "correct" a title
    you did not expect.
-2. Fill in this template — replace `{{title}}`, `{{extract}}` and `{{url}}`
+2. If the result has an `error` beginning `No Wikipedia article found`, call
+   `research_log_append` once with `projectPath`, `tool: "wikipedia_search"`,
+   `query: {query}`, `planItemId: null`, `outcome: "negative"`,
+   `resultsExamined: 0` and `notes: null`. On any other `error`, log nothing and
+   do not re-query. Either way, fill no template and return the matching line
+   from the return contract.
+3. Fill in this template — replace `{{title}}`, `{{extract}}` and `{{url}}`
    with the corresponding fields from the tool result:
 
    ```
@@ -107,7 +113,7 @@ anything drawn from your own knowledge rather than the tool response.
 
    **Use the exact values from the tool response. Do not paraphrase,
    summarize, truncate, or editorialize the extract. Copy it verbatim.**
-3. Call `research_log_append` once with `projectPath`, `tool:
+4. Call `research_log_append` once with `projectPath`, `tool:
    "wikipedia_search"`, `query: {query, title}` (the query you sent and the
    title the tool returned), `planItemId: null`, `outcome: "positive"`,
    `resultsExamined: 1`, and `notes` set to the filled template.
@@ -115,7 +121,7 @@ anything drawn from your own knowledge rather than the tool response.
    The `{{title}}` is the **article title the tool returned**, never the query
    you sent, with its accents and punctuation unchanged. A redirect to a formal
    title is correct behavior, not a discrepancy: follow it silently.
-4. If `research_log_append` returns `reason: "no_project"`, return the filled
+5. If `research_log_append` returns `reason: "no_project"`, return the filled
    template as your reply instead of the line below, and nothing else.
 
 ## Re-invocation behavior
@@ -131,7 +137,12 @@ Return **exactly one line**, and nothing else:
 
 Not a list, not a heading, not a second sentence, no separator, no closing
 paragraph. On a decline or a hand-back the return is the two short sentences
-from the scope section instead, and nothing was logged.
+from the scope section instead, and nothing was logged. On step 2 the return is
+exactly one of:
+
+> No Wikipedia article was found for that topic.
+
+> The Wikipedia lookup failed; nothing was logged.
 
 **Do not restate, summarize, paraphrase, quote or characterize the article.**
 Do not add "here is what it covers" in any wording, and do not say what the

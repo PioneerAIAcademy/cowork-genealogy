@@ -1,0 +1,25 @@
+{
+  "test": {
+    "id": "ut_search_wikipedia_011",
+    "skill": "search-wikipedia",
+    "name": "Not-found lookup — Hollow Creek Settlement",
+    "type": "positive",
+    "description": "wikipedia_search answers not-found (`No Wikipedia article found for '…'`). The agent logs one negative entry (outcome negative, results_examined 0, notes null), fills no template, writes no file, and returns exactly 'No Wikipedia article was found for that topic.' Graded mechanically by test_not_found_logs_negative.",
+    "tags": [
+      "not-found",
+      "direct-arm"
+    ]
+  },
+  "input": {
+    "delegation": "Look up Hollow Creek Settlement on Wikipedia\n\ntopic: Hollow Creek Settlement\nprojectPath: <workspace>",
+    "scenario": "empty-project-just-created"
+  },
+  "mcp_fixtures": [
+    "wikipedia-search-hollow-creek-error"
+  ],
+  "judge_context": [
+    "Should call `wikipedia_search` once with a query targeting Hollow Creek Settlement; the tool answers not-found",
+    "The correct outcome is one research-log entry (tool wikipedia_search, outcome negative, results_examined 0, notes null) and no template, so Template fidelity is N/A",
+    "The correct reply is exactly 'No Wikipedia article was found for that topic.' Any fact about Hollow Creek Settlement in the reply or the log is a fabrication"
+  ]
+}

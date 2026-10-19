@@ -183,7 +183,7 @@ def test_log_notes_match_template(before_state, after_state, tool_calls, test):
     """The logged entry's `notes` must be the filled template, with the tool's
     own title/extract/url copied verbatim.
 
-    Agent body step 2: "Use the exact values from the tool response. Do not
+    Agent body step 3: "Use the exact values from the tool response. Do not
     paraphrase, summarize, truncate, or editorialize the extract. Copy it
     verbatim." The judge sees the entry through `file_changes_summary`, but a
     byte-level comparison is mechanical, so it lives here.
@@ -225,7 +225,7 @@ def test_log_notes_match_template(before_state, after_state, tool_calls, test):
     ):
         assert value and str(value) in actual, (
             f"the logged notes do not contain the tool response's {field} "
-            f"verbatim. Agent body step 2: 'Copy it verbatim.' Expected to "
+            f"verbatim. Agent body step 3: 'Copy it verbatim.' Expected to "
             f"find:\n  {value!r}\nNotes were:\n  {actual!r}"
         )
     raise AssertionError(
@@ -315,6 +315,36 @@ def test_no_project_returns_template(before_state, after_state, tool_calls, agen
     )
 
 
+def test_not_found_logs_negative(before_state, after_state, agent_returns, text_response, test):
+    """Tag-gated (`not-found`): when `wikipedia_search` answers `No Wikipedia
+    article found`, the agent logs one negative entry, fills no template, writes
+    no file, and returns the not-found line (agent body step 2).
+    """
+    if "not-found" not in test.get("tags", []):
+        pytest.skip("not a not-found scenario")
+    new = new_log_entries(before_state, after_state)
+    assert len(new) == 1, f"expected exactly one new log entry; got {len(new)}"
+    entry = new[0]
+    for field, expected in (
+        ("tool", "wikipedia_search"),
+        ("outcome", "negative"),
+        ("results_examined", 0),
+        ("notes", None),
+    ):
+        assert entry.get(field) == expected, (
+            f"the not-found entry's {field} is {entry.get(field)!r}, not {expected!r}"
+        )
+    files = _files_created(before_state, after_state)
+    assert not files, f"a not-found lookup writes no file; wrote: {files}"
+    reply = _graded_reply(agent_returns, text_response)
+    assert "No Wikipedia article was found" in reply, (
+        f"expected the not-found return line; reply was {reply!r}"
+    )
+    assert "Saved the Wikipedia summary" not in reply, (
+        f"nothing was found, so nothing was saved; reply was {reply!r}"
+    )
+
+
 # --- Negative no-harm invariant (tag-gated) ---------------------------
 
 def test_no_wiki_no_write(tool_calls, before_state, after_state, test):
@@ -383,8 +413,8 @@ def test_no_wiki_no_write(tool_calls, before_state, after_state, test):
 # body's `## Return contract` wants a report that the entry is logged, not a plan
 # to log it.
 #
-# Deliberately narrow. This is a PROXY for step 5's actual rule ("One sentence
-# only"), which is not mechanical — sentence splitting breaks on abbreviations,
+# Deliberately narrow. This is a PROXY for the return contract's actual rule ("exactly
+# one line"), which is not mechanical — sentence splitting breaks on abbreviations,
 # backticked names and decimals, and a false positive here would fail a run
 # whose logged entry is perfect. So this matches only the pending-action shape,
 # and the `Reply economy` rubric dimension keeps the rest (extra sentences that
