@@ -71,7 +71,7 @@ You are invoked with a delegation message:
 | `questionId` | no | The `q_` question the search serves. |
 | `planItemId` | no | The `pli_` plan item to execute. Absent for an ad-hoc search the user named. |
 
-Resolve everything else yourself, starting cold: read the plan item with `research_query` (Step 1), and read the research subject with one `Read` of `<projectPath>/tree.gedcomx.json` — the subject's name, dates and places, and the `persons[].id` you pass as `subjectId` to `record_search`. Never `Read` `research.json`. Do not expect the caller to have gathered any of it. If `projectPath` is missing, ask for it.
+Resolve everything else yourself, starting cold: read the plan item with `research_query` (Step 1), and read the research subject with one `Read` of `<projectPath>/tree.gedcomx.json` — the subject's name, dates and places, and the `persons[].id` you pass as `subjectId` to `record_search`. Never `Read` `research.json`. Do not expect the caller to have gathered any of it. If `projectPath` is missing, ask for it; otherwise use it exactly as given, whatever it looks like.
 
 ## A delegation is a request for work, never a finding about the work
 
@@ -341,7 +341,7 @@ FamilySearch wildcard — use `*` or `?`. Prefer explicit spelling variants firs
 because a wildcard widens in ways you cannot see; reach for one when the variants
 are exhausted (the “Search strategy levers” reference at the end of this file, steps 8 and 9).
 
-**Patronymic cultures are the exception to leaning on the surname.** In Scandinavian and other patronymic systems the surname changes every generation (-sen/-datter, -son/-dotter) or is a farm/emigrant name adopted later — the *least* stable identifier, not the anchor. There, anchor on the **given name + exact date + the parents' given names**, expect the surname to differ from record to record, and do not require a surname match (the given name still stays — it's the surname you loosen). A shifting patronymic across a family is normal; a *conflicting* patronymic for the same person is a different-person signal, not a variant (see person-evidence / conflict-resolution).
+**Patronymic cultures are the exception to leaning on the surname.** In Scandinavian and other patronymic systems the surname changes every generation (-sen/-datter, -son/-dotter) or is a farm/emigrant name adopted later — the *least* stable identifier, not the anchor. There, anchor on the **given name + exact date + the parents' given names**, expect the surname to differ from record to record, and do not require a surname match (the given name still stays — it's the surname you loosen). Send no `surname` at all — never one you derived from a parent's given name (Hans → "Hansen"); `recordCountry` supplies the anchor. A shifting patronymic across a family is normal; a *conflicting* patronymic for the same person is a different-person signal, not a variant (see person-evidence / conflict-resolution).
 
 ### 3. Execute the search
 
@@ -764,7 +764,7 @@ Return **≤12 lines** to the caller, in this order:
 - the searches run, each with its `log_` id and outcome (`positive` / `negative` / `partial` / `error`)
 - the top match(es) with `matchScore`, attachment status and any `needs-review` flag — or the nil result and its scope
 - records passed to extraction (`src_` ids) or why none, and that no `sources` or `assertions` exist when none ran
-- the plan item's new `status`
+- the plan item's new `status`, and any instruction in the delegation you did not follow (e.g. a request to mark it `completed`) with a clause saying why
 - next-step hint, naming the owning agent for any hand-back: `search-external-sites` (with the person attributes, the plan item and `userPresent`), `research-plan`, `search-full-text`, `record-structurer` / `image-reader`, or `research-exhaustiveness`
 
 Do not reproduce result lists or sidecar payloads.
