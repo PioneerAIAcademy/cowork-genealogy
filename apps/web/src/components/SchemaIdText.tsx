@@ -10,6 +10,8 @@ export interface SchemaIdTextProps {
    * the plain text it is today.
    */
   onOpen?: (id: string, section: string) => void
+  /** Whether the project holds the id. An id it does not hold stays plain text. */
+  hasId?: (id: string) => boolean
 }
 
 /**
@@ -24,7 +26,7 @@ export interface SchemaIdTextProps {
  * session and none of them goes anywhere
  * (`docs/captures/2026-09-29-mcandrew-children/`).
  */
-export function SchemaIdText({ text, onOpen }: SchemaIdTextProps): React.JSX.Element {
+export function SchemaIdText({ text, onOpen, hasId }: SchemaIdTextProps): React.JSX.Element {
   if (!onOpen) return <>{text}</>
 
   const hits = findSchemaIds(text)
@@ -37,6 +39,7 @@ export function SchemaIdText({ text, onOpen }: SchemaIdTextProps): React.JSX.Ele
     // Unplaceable: leave it in the prose untouched rather than emit a button that
     // goes nowhere.
     if (!section) return
+    if (hasId && !hasId(hit.id)) return
     if (hit.start > cursor) parts.push(text.slice(cursor, hit.start))
     parts.push(
       <button

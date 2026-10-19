@@ -259,10 +259,18 @@ export default function ChatPane({
   const openSchemaId = useMemo(
     () =>
       research
-        ? (_id: string, section: string): void => research.setActiveSection(section)
+        ? (id: string, section: string): void => {
+            research.setActiveSection(section)
+            // Let the section render, then bring the entry itself into view, as the
+            // viewer's CrossLink does.
+            requestAnimationFrame(() => {
+              document.getElementById(id)?.scrollIntoView({ behavior: 'smooth', block: 'center' })
+            })
+          }
         : undefined,
     [research]
   )
+  const hasSchemaId = research?.hasId
   // react-markdown hands a paragraph's children through; only the STRING children are
   // prose. Non-string children are already-parsed nodes (emphasis, code, links) and
   // are passed through untouched, so markdown keeps working exactly as before.
@@ -272,7 +280,7 @@ export default function ChatPane({
         <p>
           {React.Children.map(children, (child) =>
             typeof child === 'string' ? (
-              <SchemaIdText text={child} onOpen={openSchemaId} />
+              <SchemaIdText text={child} onOpen={openSchemaId} hasId={hasSchemaId} />
             ) : (
               child
             )
@@ -283,7 +291,7 @@ export default function ChatPane({
         <li>
           {React.Children.map(children, (child) =>
             typeof child === 'string' ? (
-              <SchemaIdText text={child} onOpen={openSchemaId} />
+              <SchemaIdText text={child} onOpen={openSchemaId} hasId={hasSchemaId} />
             ) : (
               child
             )
@@ -291,7 +299,7 @@ export default function ChatPane({
         </li>
       )
     }),
-    [openSchemaId]
+    [openSchemaId, hasSchemaId]
   )
   // Reasoning blocks are hidden by default: the lay user never asked for the
   // model's private reasoning, and two alpha testers read the collapsed block's

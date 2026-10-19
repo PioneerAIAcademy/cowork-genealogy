@@ -36,6 +36,9 @@ export interface ResearchDataState {
   devMode: boolean
   setDevMode: (v: boolean) => void
   getById: (id: string) => IndexEntry | null
+  /** Whether the project holds `id`. Silent on a miss, unlike `getById`, so it can
+   *  run on every render. */
+  hasId: (id: string) => boolean
   selectFolder: () => Promise<void>
   /** Whether the transport can actually open a folder picker (Electron). False
    *  on the web client, where `folderPath` is a session title, not a filesystem
