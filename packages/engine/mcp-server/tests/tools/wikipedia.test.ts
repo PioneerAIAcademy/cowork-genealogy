@@ -156,8 +156,12 @@ describe("wikipediaSearch — which search hit it takes", () => {
     ["Maddock North Dakota history", MADDOCK],
     ["Hollow Creek Settlement", HOLLOW_CREEK],
     ["Church Missionary Society in Kenya", KENYA],
-    ["Treaty of Paris American Revolution", ["Treaty of Paris (1783)"]],
+    // Constructed hit lists, each pinning one part of the rule.
     ["Cork Ireland county history", ["County Cork"]],
+    ["Baden history Germany", ["Baden-Baden"]],
+    ["Fort history", ["Fort (Wayne) station"]],
+    ["Rhode Island history", ["Rhode Island (19th century)"]],
+    ["1999 history", ["The (1999)"]],
   ])("keeps the not-found error for '%s' when no hit's title is in the query", async (query, hits) => {
     status(404);
     searchHits(hits);
@@ -182,6 +186,10 @@ describe("wikipediaSearch — which search hit it takes", () => {
     ["Topsham Vermont history Orange County", TOPSHAM, "Orange County, Vermont"],
     ["Detroit Wayne County Michigan history genealogy records", DETROIT, "History of Detroit"],
     ["History of Detroit Michigan", DETROIT, "History of Detroit"],
+    // Constructed hit lists, each pinning one part of the rule.
+    ["Republic of Texas history", ["History of the Republic of Texas"], "History of the Republic of Texas"],
+    ["Savannah Georgia history", ["History of Savannah, Georgia"], "History of Savannah, Georgia"],
+    ["South Africa history 1948–1994", ["History of South Africa (1948–1994)"], "History of South Africa (1948–1994)"],
     ["Posen province history Prussia", ["Province of Posen", "Posen"], "Province of Posen"],
     ["Illinois 1821 Springfield history", ["Springfield (Illinois, 1821)"], "Springfield (Illinois, 1821)"],
     ["Treaty of Paris 1783 American Revolution", ["Treaty of Paris (1783)"], "Treaty of Paris (1783)"],
