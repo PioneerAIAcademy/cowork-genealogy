@@ -65,9 +65,11 @@ attached to nobody, so it does not re-index anything the tree already holds.
 - **The same burial, a second register.** A separate entry in the Stein burial
   register, on a different film (8195413, against Teufen's 8125885), records
   Conrad Grubenmann, **aged 88**, buried 17 Mar 1787 in Stein, wife Anna Väfin
-  (`ark:/61903/1:1:6F88-WZBR`). Stein is where the family lived and where all
-  of Konrad's children were born. One burial entered in both his home parish
-  and his parish of residence fits him, and it is why f1 accepts either place.
+  (`ark:/61903/1:1:6F88-WZBR`). Stein is the village where the family lived;
+  their children were baptized at Hundwil, the parish church, which is why the
+  Hundwil entries below are his children's. One burial entered in both the
+  register of his home parish and the register of the village where he lived
+  fits him, and it is why f1 accepts either place.
   Which parish actually held the burial is not settled from the index.
 - **The son is ruled out.** Hans Konrad Grubenmann (KP47-CJ1), baptized at
   Hundwil 28 Jul 1731 to Conrad Grubenmann and Barbara Obertrüfer
