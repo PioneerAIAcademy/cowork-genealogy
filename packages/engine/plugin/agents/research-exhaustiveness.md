@@ -144,14 +144,14 @@ Read:
 - The question and its `search_stop`
 - Log entries for its plan items: `research_query` `section: "log"`, `questionId`;
   page with `offset` while `truncated` is true
-- `research_query` `section: "localities"`: keep the entries whose `place` or
-  `for_place` covers the question's place
 - Assertions from those searches (via each assertion's `log_entry_id`)
 - Skipped plan items — their `skip_category` and `skip_reason` where present
 
-Then **call `wiki_read`** for the jurisdiction's registration start date —
+Then **call `research_query` `section: "localities"`** and keep the entries
+whose `place` or `for_place` covers the question's place, and **call
+`wiki_read`** for the jurisdiction's registration start date —
 `{State}_Vital_Records` for a US state, `{Country}_Civil_Registration`
-otherwise — and do not begin Step 2 until it has returned or failed.
+otherwise. Do not begin Step 2 until both have returned or failed.
 
 ## 2. Assess the 7-Point Stop Criteria
 
@@ -234,8 +234,9 @@ named in `justification`.
 
 ## Build `not_reached`
 
-Every write carries `not_reached` built from these rules, alongside the
-entries §3 names. A decline writes nothing.
+Every `search_stop` write — a stop-gate value, `resources_spent` or
+`blocked_by_conflict` — carries `not_reached` built from these rules,
+alongside the entries §3 names.
 
 - **`handed_to_user`** — one entry per log entry on this question's plan
   items with `tool: "external_site"`, `outcome: "partial"` and
@@ -246,9 +247,11 @@ entries §3 names. A decline writes nothing.
   id, never the later entry's; `wiki_title: null`; `description` names the
   site, the `url_generated`, and what the search was for.
 - **`paywalled`** — only a paywalled hit that was never handed to the user.
-- **`wiki_named_untouched`** — from a kept locality's `guide_markdown` (call
-  `wiki_read` on the page only when `guide_markdown` is null; none of either,
-  no entries). One entry per record type that could hold this question's
+- **`wiki_named_untouched`** — from a kept locality's `guide_markdown`. This
+  needs the §1 `research_query` `section: "localities"` result; if that call
+  has not been made, make it now — never conclude there is no guide without
+  it. Call `wiki_read` on the page only when `guide_markdown` is null; no
+  kept locality, no entries. One entry per record type that could hold this question's
   target fact, is named for the question's place and period, and was searched
   by no log entry on this question's plan items. On a stop-gate write list
   only the types the guide places beyond reach of our tools — a reachable one
