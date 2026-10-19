@@ -19,14 +19,6 @@
       "comment": null
     },
     {
-      "test_id": "ut_search_wikipedia_008",
-      "dimension_source": "base",
-      "dimension_name": "Tool Arguments",
-      "llm_score": null,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
       "test_id": "ut_search_wikipedia_005",
       "dimension_source": "base",
       "dimension_name": "Correctness",
@@ -217,6 +209,14 @@
       "llm_score": 3,
       "corrected_score": 3,
       "comment": null
+    },
+    {
+      "test_id": "ut_search_wikipedia_008",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": null,
+      "corrected_score": 3,
+      "comment": "judge left this blank because a decline makes no tool call. Correct, so scored 3"
     }
   ]
 }
