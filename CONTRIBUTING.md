@@ -9,10 +9,10 @@ Everyone who contributes signs the
 contributors and maintainers alike. You keep the copyright in what you
 write; the agreement gives the project permission to use it.
 
-Signing means adding one row to
-[CLA-SIGNERS.md](./CLA-SIGNERS.md) — **in the same pull request as your
-contribution**, so there is no separate signing step to wait on.
-Instructions are in that file. You do this once; later pull requests need
+Signing means adding one file, `signatures/<your-github-login>.md` —
+**in the same pull request as your contribution**, so there is no
+separate signing step to wait on. Instructions are in
+[CLA-SIGNERS.md](./CLA-SIGNERS.md). You do this once; later pull requests need
 nothing.
 
 If you are on the team — organization membership, repository write

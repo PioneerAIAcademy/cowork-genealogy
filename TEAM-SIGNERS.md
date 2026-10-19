@@ -9,63 +9,63 @@ Outside contributors do not sign it. They sign the CLA only —
 
 ## How to sign
 
-**You sign two agreements.** Add a row here, and a row in
-[CLA-SIGNERS.md](./CLA-SIGNERS.md). One pull request, **from your own
-GitHub account**, covers both. Nobody can sign for you.
+**You sign two agreements, in one file.** Create
+`signatures/<your-github-login>.md` in a pull request **from your own
+GitHub account**. Nobody can sign for you.
 
 **Sign during onboarding, before your access is granted** — not before
 your first commit. This agreement gates the keys, so it comes earlier
 than the CLA does for an outside contributor.
 
-Title the pull request `Sign CLA and Team Agreement: <your name>`, and in
-the description include:
+On GitHub, open
+[Add file](https://github.com/PioneerAIAcademy/cowork-genealogy/new/main?filename=signatures/YOUR-GITHUB-LOGIN.md),
+replace `YOUR-GITHUB-LOGIN` with your login, paste the template below,
+and choose **Propose new file**. No git needed. Title the pull request
+`Sign CLA and Team Agreement: <your name>`, and in the description
+include:
 
 > I have read and agree to the Contributor License Agreement and to the
-> Team Agreement, at the versions recorded in my rows.
+> Team Agreement, at the versions recorded in my signature file.
 
 Read both agreements first, in full. Use your full legal name, not a
-nickname or handle, and put your row at the bottom.
+nickname or handle.
 
-Record the **Version** from the header of `TEAM-AGREEMENT.md` as it
-stands the day you sign, so a later revision cannot change what you
-signed. Email addresses are deliberately not collected — see
-[CLA-SIGNERS.md](./CLA-SIGNERS.md) for why.
+Record each **Version** from the header of `CLA.md` and
+`TEAM-AGREEMENT.md` as it stands the day you sign, so a later revision
+cannot change what you signed. Email addresses are deliberately not
+collected — see [CLA-SIGNERS.md](./CLA-SIGNERS.md) for why.
 
-**Row format:**
+**Template** — `signatures/adalovelace.md`:
 
-| Full legal name | GitHub | Date signed | Version |
-|---|---|---|---|
-| Ada Lovelace | `@adalovelace` | 2026-09-02 | 1.0 |
+```markdown
+Full legal name: Ada Lovelace
 
-The example is illustrative. Do not copy it into the table.
+| Agreement | Version | Date signed |
+|---|---|---|
+| CLA | 1.0 | 2026-10-19 |
+| Team Agreement | 1.0 | 2026-10-19 |
+```
 
----
-
-## Signers
-
-Everyone listed here must also appear in
-[CLA-SIGNERS.md](./CLA-SIGNERS.md).
-
-| Full legal name | GitHub | Date signed | Version |
-|---|---|---|---|
+The example is illustrative. Use your own name, login, and today's date.
 
 ---
 
 ## For maintainers
 
-**Do not grant access until the person has a row here.** Organization
-membership, repository write access, and project credentials all wait on
-it. When that ordering slips, get the signature and rotate anything
-already issued.
+**Do not grant access until the person's file has a Team Agreement row.**
+Organization membership, repository write access, and project credentials
+all wait on it. Check that the file name matches the pull request
+author's login. When that ordering slips, get the signature and rotate
+anything already issued.
 
-**Check both files.** A team member with no CLA row is a gap: this
+**Check for both rows.** A team member with no CLA row is a gap: this
 agreement covers what someone is trusted with, not the rights in what
 they write.
 
 **When the Team Agreement changes.** Publish the new version with a new
 version number in `TEAM-AGREEMENT.md`'s header, then ask current signers
-to add a fresh row. Never edit or remove an existing row.
+to add a row to their own file. Never edit or remove an existing row.
 
-**When someone leaves.** Their row stays. The confidentiality obligations
+**When someone leaves.** Their file stays. The confidentiality obligations
 survive their departure and the record has to survive with them. Revoke
 access and rotate credentials instead.

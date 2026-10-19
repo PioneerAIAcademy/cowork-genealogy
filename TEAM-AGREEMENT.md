@@ -1,6 +1,6 @@
 # Team Agreement: confidentiality, credentials, and personal data
 
-**Version 1.0 — 2026-09-02**
+**Version 1.0 — 2026-10-19**
 
 This agreement is between you and **GeneFun, Inc.**, doing business as
 **Pioneer AI Academy** ("GeneFun", "we", "us").
@@ -90,8 +90,9 @@ research that does. So most bundles you open will contain none.
 Treat the exceptions as the thing this section exists for. That ask is
 unenforceable — nothing stops a user sending anyway, and they may not
 realise their research qualifies. The tooling removes living people from
-the tree files automatically and treats a person as living unless the
-record says otherwise, but do not rely on it either: it deliberately
+the tree files automatically, treating a person as living unless the tree
+shows a death or a birth more than 110 years ago, but do not rely on it
+either: it deliberately
 passes a malformed tree through untouched rather than block a report, and
 it does not reach the session transcript, the free-text feedback fields,
 or `research.json`. Assume any bundle you open may contain a living
@@ -125,7 +126,7 @@ The workflow that implements these rules is
 Records and images retrieved through the FamilySearch API are generally
 also available to anyone through the FamilySearch website, so they are
 not secret. They are still governed by FamilySearch's terms of use, and
-our partnership depends on respecting them.
+the project depends on respecting them.
 
 **Researching your own family is expected.** Using the product on your
 own family lines is how the alpha test works, and nothing here restricts
@@ -145,9 +146,9 @@ Some information you encounter is genuinely not public. You agree not to
 disclose the following outside the project team, and to use it only for
 project work:
 
-- Unreleased details of GeneFun's relationships with FamilySearch,
-  Anthropic, or any other partner or sponsor — including the terms,
-  status, and existence of discussions not publicly announced.
+- Unreleased details of GeneFun's dealings with other organizations,
+  FamilySearch and Anthropic among them — including the terms, status,
+  and existence of discussions not publicly announced.
 - Product plans, launch timing, and roadmap that have not been announced.
 - Material a partner has given us under their own confidentiality terms,
   including pre-release software and documentation.
@@ -231,14 +232,15 @@ regard to its conflict of law provisions.
 ### 11. Changes
 
 GeneFun may publish a new version of this agreement and ask you to sign
-it as a condition of continued access. The version recorded next to your
-name in [TEAM-SIGNERS.md](./TEAM-SIGNERS.md) is the one that binds you until you
+it as a condition of continued access. The version recorded in your
+signature file under `signatures/` is the one that binds you until you
 sign a newer one.
 
 ---
 
 ## How to sign
 
-Add your row to [TEAM-SIGNERS.md](./TEAM-SIGNERS.md), and one to
-[CLA-SIGNERS.md](./CLA-SIGNERS.md), in a single pull request opened from
-your own GitHub account. Signing instructions are in those files.
+Create your signature file, `signatures/<your-github-login>.md`, with a
+row for this agreement and one for the [CLA](./CLA.md), in a single pull
+request opened from your own GitHub account. Instructions are in
+[TEAM-SIGNERS.md](./TEAM-SIGNERS.md).

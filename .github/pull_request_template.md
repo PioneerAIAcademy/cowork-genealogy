@@ -1,7 +1,7 @@
-- [ ] I have signed the [CLA](../CLA.md) — my name is in
-      [CLA-SIGNERS.md](../CLA-SIGNERS.md). Contributing from outside the
-      team? Add the row in this PR. One row, one time; skip this box on
-      later PRs.
+- [ ] I have signed the [CLA](../CLA.md) — `signatures/<my-login>.md`
+      exists ([how](../CLA-SIGNERS.md)). Contributing from outside the
+      team? Add the file in this PR. One time; skip this box on later
+      PRs.
 
 ## Summary
 
