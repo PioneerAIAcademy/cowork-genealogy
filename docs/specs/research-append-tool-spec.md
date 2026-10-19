@@ -1197,6 +1197,30 @@ entry, so a batch sourcing several records names each.
 
 Marked advisory in `guardrail-enforcement-spec.md`'s instrument table.
 
+### 5.5 Unsourced timeline event advisory (warning, not a precondition)
+
+A **warning** — never a rejection — emitted when a `timelines` op leaves the
+entry with one or more `events[]` whose `assertion_ids` is an empty array. One
+line per entry, naming the count: `"<n> of <m> events in <t_id> cite no record
+(assertion_ids empty); they come from the tree or the user and are unchecked.
+Say so to the user."` It rides `validation.warnings` and never touches `ok`.
+Implemented as `unsourcedTimelineEventWarnings` in `research-append.ts`.
+
+- **Why it exists.** A timeline mixes record-backed events with events taken
+  from the tree or the user, and a reply that presents them alike makes
+  unchecked tree conclusions read as established fact (a 2026-10-18 feedback
+  bundle: 5 of 6 events in its `t_001` had `assertion_ids: []`).
+- **Why warn and not refuse (lead ruling, 2026-10-18).** A timeline built from
+  tree facts is a legitimate first pass. The defect is undisclosed provenance,
+  not the empty list, so a refusal would block correct work.
+- **What makes it fire.** An `append`, or an `update` whose `fields` carries
+  `events` — the same scoping as the 1890 census check beside it, so an edit
+  touching only `label` or `gaps` does not re-warn about events written earlier.
+  It counts over the resulting entry's events. No warning when none is empty or
+  `events` is empty.
+- **What nothing checks.** Whether the agent reads the count out to the user;
+  CI checks only that the warning is emitted.
+
 ## 6. Decisions recorded
 
 - **One tool with `section` + `op`, not per-section tools.** Same rationale as
