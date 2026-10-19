@@ -76,14 +76,30 @@ _CLAUSE_BREAKS = (
 )
 
 
+# Markdown emphasis around a word is not a word boundary to a human and must
+# not be one here. `Do **not** detach` read as a RECOMMENDATION on the shipped
+# module while the unemphasised `Do not detach` read as a negation, because the
+# asterisks sat between the negator and the term. Stripping the markers is not
+# a text-shape heuristic: it removes markup so the words underneath can be read.
+_EMPHASIS = re.compile(r"(\*\*|\*|__|_|`)")
+
+
+def _unemphasised(text: str) -> str:
+    return _EMPHASIS.sub("", text)
+
+
 def _is_negated(text: str, at: int) -> bool:
     """True when the detach term at `at` is being ruled out rather than urged.
 
     Scoped to the term's OWN clause: the window is cut at the nearest preceding
     clause break, so a negation belonging to an earlier clause cannot license a
     recommendation in this one.
+
+    The window is read with emphasis stripped — see `_EMPHASIS`. The offset
+    cannot shift the term out of view: stripping only ever SHORTENS the prefix,
+    so the negator stays inside the window it was already inside.
     """
-    before = text[max(0, at - _NEG_WINDOW):at].lower()
+    before = _unemphasised(text[max(0, at - _NEG_WINDOW):at]).lower()
     cut = max((before.rfind(b) + len(b) for b in _CLAUSE_BREAKS if b in before), default=0)
     return bool(_NEGATED_TERM.search(before[cut:]))
 
@@ -113,7 +129,14 @@ def _recommends_detach(block: str) -> bool:
             end = i + len(term)
             while end < len(low) and low[end].isalpha():
                 end += 1  # "detach" matched inside "detaching": read after the word
-            after = low[end:end + 40]
+            # Emphasis stripped for the same reason `_is_negated` strips it:
+            # `_DISPARAGED_DETACH` is anchored at the start of this window, and
+            # `**loses the evidence**` puts asterisks where the anchor expects
+            # the verb — so a bolded harm verb reads as a RECOMMENDATION while
+            # the plain one is correctly ignored. The agent bolds freely (251
+            # bold spans across the 53 graded replies), so this is one word
+            # away on any correct report.
+            after = _unemphasised(low[end:end + 40])
             if not _is_negated(low, i) and not _DISPARAGED_DETACH.search(after):
                 return True
             start = i + len(term)
@@ -304,6 +327,13 @@ def _detach_names_another_record(block: str, protected: str) -> bool:
     detached") does not count, nor does a title word `protected` itself
     contains ("Detach the Death Index record."), so those stay attributed.
     """
+    # `_DETACH_*_ON_TITLE_RE` require a record title to start with
+    # `[A-Z0-9]`, and the agent writes them bolded —
+    # `Detach the **1885 Minnesota State Census**` — so the asterisk sits
+    # where the capital is expected and the ONLY path that clears a
+    # correct report stops matching. Strip emphasis first; the titles and
+    # the protected name carry none of their own.
+    block = _unemphasised(block)
     sentences = [x for x in _SENTENCE_RE.split(block) if x.strip()]
     detaching = [x for x in sentences if _recommends_detach(x)]
     protected_lower = protected.lower()
@@ -465,8 +495,7 @@ def test_research_json_unmodified(before_state, after_state, test):
 
     Skipped on negative tests: the run is expected to route away to
     another skill, which may legitimately write as part of its own
-    contract. Mirrors the same guard in test_check_warnings.py and
-    test_project_status.py.
+    contract. Mirrors the same guard in test_check_warnings.py.
     """
     if test.get("type") != "positive":
         pytest.skip("negative tests don't run the skill body")
@@ -808,3 +837,89 @@ def test_no_warnings_without_tree_person(tool_calls, test):
 # reading KD96-WX7 -- and the JUDGE does catch it, which is how it was found. If
 # this is ever made deterministic it needs the test to declare which ids are
 # persons, not a pattern over the reply.
+
+
+# ---------------------------------------------------------------------------
+# Census-variance gate (issue #3434)
+#
+# A census birth year or age within a couple of years of the profile is
+# ordinary variance (informant-reported), not an indexing error.  The 1900
+# United States Census's month-and-year-of-birth column is informant-reported,
+# not a civil registration, so a two-year drift there is ordinary variance too.
+#
+# _find_census_year_error_line checks each line that contains "indexing error"
+# and asks whether "census" and "1900" co-appear on the same line within a
+# two-line backward window.  Requiring both words on the same line avoids
+# false positives from incidental "1900" mentions (e.g. "solid evidence of
+# the 1900 residence") appearing near a death-index "indexing error" line.
+# The window catches split-line headings like:
+#   United States Census, 1900
+#   This is an indexing error
+# A negation within the same window ("not an indexing error") passes.
+# A forward dismissal — "ordinary variance" in the next 8 lines — also passes,
+# covering agents that write a draft heading then immediately reject it.
+# ---------------------------------------------------------------------------
+
+_CENSUS_INDEX_ERROR_RE = re.compile(r"\bindex(?:ing)?\s+error\b", re.IGNORECASE)
+_CENSUS_NEGATION_RE = re.compile(
+    r"\bnot(?:\s+\w+){0,3}\s+(?:an?\s+)?index(?:ing)?\s+error\b", re.IGNORECASE
+)
+_CENSUS_1900_RE = re.compile(
+    r"(?:\bcensus\b[^\n]*\b1900\b|\b1900\b[^\n]*\bcensus\b)", re.IGNORECASE
+)
+_CENSUS_DISMISSAL_RE = re.compile(r"\bordinary\s+(?:census\s+)?variance\b", re.IGNORECASE)
+
+
+def _find_census_year_error_line(reply: str) -> str | None:
+    """Return the first line pairing a census-1900 reference with 'indexing error'.
+
+    Checks each "indexing error" line and the two lines immediately before it
+    for a line that contains BOTH "census" and "1900" (in any order on the
+    same line).  Requiring co-occurrence prevents false positives from
+    incidental "1900" mentions (e.g. "1900 residence") near a death-index
+    "indexing error" line.
+
+    Also checks the next 8 lines forward for "ordinary variance" dismissal
+    language: an agent may draft a heading then immediately reject the
+    classification in the next sentence.  That pattern is correct reasoning,
+    not a misfiled finding.
+    """
+    lines = reply.splitlines()
+    for i, line in enumerate(lines):
+        if not _CENSUS_INDEX_ERROR_RE.search(line):
+            continue
+        window = "\n".join(lines[max(0, i - 2) : i + 1])  # current + 2 before
+        if not _CENSUS_1900_RE.search(window):
+            continue
+        if _CENSUS_NEGATION_RE.search(window):
+            continue
+        forward = "\n".join(lines[i : min(len(lines), i + 9)])  # current + 8 after
+        if _CENSUS_DISMISSAL_RE.search(forward):
+            continue
+        return line
+    return None
+
+
+def _requires_census_variance_trap(test) -> None:
+    if "census-variance-trap" not in (test.get("tags") or []):
+        pytest.skip("test does not declare census-variance-trap")
+    if test.get("type") != "positive":
+        pytest.skip("negative tests route away and produce no audit")
+
+
+def test_census_drift_is_not_a_finding(
+    text_response, test, agent_returns=None
+) -> None:
+    """1900 census birth year drift must not be classified as an indexing error."""
+    _requires_census_variance_trap(test)
+    from harness.skill_runner import subject_reply_text
+
+    reply = subject_reply_text(agent_returns, text_response, "source-evaluation", test)
+    bad_line = _find_census_year_error_line(reply)
+    assert bad_line is None, (
+        "agent classified a 1900-census birth year drift as an indexing error:\n"
+        f"  {bad_line!r}\n"
+        "A census birth year within a couple of years is ordinary variance "
+        "(informant-reported, not a transcription error); do not list it as a "
+        "finding of any kind."
+    )

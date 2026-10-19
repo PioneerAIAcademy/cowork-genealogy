@@ -311,7 +311,7 @@ def calls(db):
     for project, created, cost, age_h, tokens, model in [
         ("prj_new", first, 1.00, 1, (10_000, 20_000, 100_000, 2_000), sonnet),
         ("prj_new", first, 0.50, 1, (10_000, 20_000, 100_000, 4_000), sonnet),
-        ("prj_reopened", first, 3.00, 30, (10_000, 40_000, 200_000, 3_000), sonnet),
+        ("prj_reopened", first, 3.00, 96, (10_000, 40_000, 200_000, 3_000), sonnet),
         ("prj_third", second, 2.00, 2, (20_000, 0, 80_000, 5_000), sonnet),
         ("prj_third", second, 0.40, 2, (20_000, 0, 80_000, 5_000), "claude-sonnet-5"),
         ("prj_gone", noon - timedelta(days=40), 50.0, 1, (1, 1, 1, 1), sonnet),
@@ -339,7 +339,7 @@ def test_the_report_totals_every_call_by_day_and_session_age(calls, capsys):
     assert days[first] == [first, "$4.50", "3", "$1.500", "170000", "3000", "2", "1", "$3.00"]
     assert days[second] == [second, "$2.40", "2", "$1.200", "100000", "5000", "1", "1", "$0.00"]
     worst = out.split("Every call, the 3 most expensive sessions")[1].splitlines()[2].split()
-    assert worst[:3] == ["prj_reopened", "$3.00", "1"] and worst[3:5] == ["calls@example.com", "30h"]
+    assert worst[:3] == ["prj_reopened", "$3.00", "1"] and worst[3:5] == ["calls@example.com", "4.0d"]
     assert "0 turns, 0 sessions, $0.00." in out, "no turn rows must not hide the calls"
 
 

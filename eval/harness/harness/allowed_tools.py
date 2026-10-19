@@ -201,10 +201,9 @@ def compute_allowed_tools(
     # It is also the honest reading of "decide what a test must declare
     # before its callee may really run": the declaration is this field.
     #
-    # ONE HOP ONLY. search-records is currently the sole skill that delegates
-    # via Skill(), and none of its three skill callees (project-status,
-    # record-extraction, research-plan) delegate
-    # further, so the graph is one level deep and cannot cycle. If a callee
+    # ONE HOP ONLY. No plugin skill has a `Skill()` callee with a skill
+    # directory today: search-records' last one, research-plan, became an agent
+    # (issue #2116). So the graph is at most one level deep and cannot cycle. If a callee
     # ever starts delegating, make this recursive AND add a visited-set cycle
     # guard — do not just add a second hop, which pushes the same bug one
     # level down where it is harder to see.
@@ -301,8 +300,9 @@ def skill_refs_for_skill(skill_md: Path) -> list[str]:
     `Skill("<name>")`. Empty for a missing file.
 
     A skill naming *itself* is filtered out. This is **defensive — no body
-    does this today**. Every `Skill("<name>")` literal in the plugin (ten of
-    them, all in `search-records/SKILL.md`) names some other skill, and this
+    does this today**. Every `Skill("<name>")` literal in the plugin (two
+    today, both `Skill("project-status")` in `search-records/SKILL.md`) names
+    some other name, and this
     docstring previously claimed that "several SKILL.md bodies quote their own
     invocation", which was never true of any body (#1225 review).
 

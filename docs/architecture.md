@@ -221,16 +221,16 @@ are relative to `packages/engine/mcp-server/` unless shown otherwise.)*
 | Component | Count | Where | What it is for |
 |---|---|---|---|
 | **MCP tools** — `src/tools/`, advertised via `allToolSchemas` in `src/tool-schemas.ts` | every tool in `allToolSchemas` | host | Network access (FamilySearch, the wiki sidecar, OpenRouter OCR) and **validate-before-persist** writes to project state. Invariants live here because a tool contract cannot be argued past. |
-| **Skills** — `packages/engine/plugin/skills/<name>/SKILL.md` | **5** | VM, in the session's own context | Judgment and procedure: GPS doctrine, routing, when-to-stop criteria. A skill folder may also carry `references/` (§3.3) and `templates/`. |
-| **Plugin agents** — `packages/engine/plugin/agents/*.md` | **28** | VM, **fresh context** | Heavy or capability-restricted work delegated off the main thread. Each spawns with **no session state** — only its own `tools:` allow-list and its `model:` pin. (`disallowedTools:` was deleted from all five on 2026-08-30 — §5.2.) |
+| **Skills** — `packages/engine/plugin/skills/<name>/SKILL.md` | **3** | VM, in the session's own context | Judgment and procedure: GPS doctrine, routing, when-to-stop criteria. A skill folder may also carry `references/` (§3.3) and `templates/`. |
+| **Plugin agents** — `packages/engine/plugin/agents/*.md` | **29** | VM, **fresh context** | Heavy or capability-restricted work delegated off the main thread. Each spawns with **no session state** — only its own `tools:` allow-list and its `model:` pin. (`disallowedTools:` was deleted from all five on 2026-08-30 — §5.2.) |
 
-The twenty-eight agents are `gps-mentor`, `record-structurer`, `image-reader`,
+The twenty-nine agents are `gps-mentor`, `record-structurer`, `image-reader`,
 `proof-conclusion`, `research-exhaustiveness`, `person-evidence`,
 `search-full-text`, `search-images`, `citation`, `question-selection`, `search-wikipedia`, `convert-dates`,
 `search-familysearch-wiki`, `check-warnings`, `translation`, `tree-edit`, `validate-schema`,
-`hypothesis-tracking`, `locality-guide`, `historical-context`, `project-status`,
-`search-external-sites`, `source-evaluation`, `survey-surname`, `search-hints`, `conflict-resolution`,
-`init-project` and `tree-survey`.
+`hypothesis-tracking`, `locality-guide`, `historical-context`,
+`timeline`, `search-external-sites`, `source-evaluation`, `survey-surname`, `search-hints`, `conflict-resolution`,
+`init-project`, `tree-survey` and `research-plan`.
 
 > Plugin agents (`packages/engine/plugin/agents/`) are consumed by the **Cowork
 > runtime** and are a different thing from Claude Code subagents
@@ -355,7 +355,7 @@ descriptions because a user may still invoke any of them directly.
 
 ### 3.3 `references/` — the fourth artifact, duplicated on purpose
 
-3 of the 5 skills carry a `references/` folder, loaded on demand, in-session,
+1 of the 3 skills carries a `references/` folder, loaded on demand, in-session,
 for material too long to sit in the skill body.
 
 **A reference is loaded deliberately only if its own `SKILL.md` names it** — or if
@@ -510,7 +510,7 @@ names a step it no longer takes (`project_create` carries the
 — but pinned to a **sha256 of its own content**, so an edit inside it fails CI
 until the hash moves in the same diff. `research-plan` carried a specialized
 copy too until it was deleted under the lead's 2026-08-31 ruling and the two
-rules it needed were inlined into its `SKILL.md`. **Copy that shape, not a bare
+rules it needed were inlined into its body (now `agents/research-plan.md`). **Copy that shape, not a bare
 exemption**, when a fourth family gets a lint: every skill must land in exactly
 one of the two lists, and the test asserts that too.
 
@@ -651,8 +651,9 @@ Architecturally:
   `createServer(principal)` there; `src/index.ts` (the shipped `.mcpb`, binding
   `LOCAL`) and `src/http.ts` (the search-agent prototype's Streamable HTTP
   tool server, binding each request's bearer and a `PgS3ProjectStore` from its
-  `X-Genealogy-Project-Id` header, fenced on the worker attempt's claim when
-  `X-Genealogy-Turn-Id` / `X-Genealogy-Claim-Epoch` are sent) are entrypoints that only connect
+  `X-Genealogy-Project-Id` header, fenced on the worker attempt's claim
+  (`X-Genealogy-Turn-Id` / `X-Genealogy-Claim-Epoch`), and 403 unless the bearer is
+  the one stamped on that open turn of that project, U4) are entrypoints that only connect
   a transport, so a new arm goes in `server.ts` and both get it. A
   commented-out `case` does not
   count as live, and if dispatch is ever refactored to a lookup map the
@@ -685,8 +686,9 @@ Architecturally:
 - **Also touch, and nothing will tell you if you don't:** `src/types/<name>.ts`
   (shared response types), `dev/try-<name>.ts` (a one-shot live-API smoke script
   — your only real debugger when the MCP harness swallows errors),
-  `tests/tools/<name>.test.ts`, `docs/catalog.md`'s tool table, and — if a skill will
-  call it — an `eval/fixtures/mcp/` fixture.
+  `tests/tools/<name>.test.ts`, `docs/catalog.md`'s tool table, `READ_ONLY` in
+  `src/tool-schemas.ts` if concurrent calls cannot corrupt project state (§5.2),
+  and — if a skill will call it — an `eval/fixtures/mcp/` fixture.
 - **Changing an existing tool's response type also breaks its fixtures**, in the
   other direction: add or rename a required field and every fixture for that tool
   is now a shape the tool cannot return.
@@ -730,7 +732,8 @@ Architecturally:
 
 > **On the User-Agent, the rule is conditional.** `genealogy-mcp-server/<version>`
 > is what the four non-FamilySearch tools send today (`wikipedia`, `wiki_search`,
-> `wiki_read`, `wiki_place_page`) and is correct for them. It is also exactly
+> `wiki_read`, `wiki_place_page`) and is correct for them; `wikipedia` adds the
+> repo's URL, because Wikimedia throttles agents without contact details. It is also exactly
 > what Imperva 403s on any FamilySearch endpoint. So: **FamilySearch →
 > `BROWSER_USER_AGENT`; anything else → the service's own convention.** The
 > deleted `mcp-tool-scaffolder` subagent stated it unconditionally — because its
@@ -802,7 +805,7 @@ There **is** an orchestrator, and it is a skill:
    reads `research.json` through `research_query` and derives where the project
    is: which questions have plans, which log entries lack assertions, which
    conflicts are open, which proofs lack verdicts.
-2. **A 17-row routing table maps state → next sub-skill** — in
+2. **A 21-row routing table maps state → next sub-skill** — in
    `research/SKILL.md` under `## What to do`, the table whose header row reads
    `| If research.json has... | Invoke |`. The table is the source of truth and
    is not duplicated here. Its `Invoke` column is a **literal tool call, by the
@@ -1138,6 +1141,20 @@ driver must wait.
 > and the SDK's `@tool` cannot emit that `_meta` key. So `make eval-skill`
 > diverges from production here. Nothing on the unit plane grades ToolSearch
 > counts.
+>
+> **Read-only tools run side by side: `READ_ONLY` (`src/tool-schemas.ts`).**
+> Those tools carry `annotations: {"readOnlyHint": true}` in `tools/list`, which
+> the Claude Code CLI reads as concurrency-safe (verified on 2.1.139, 2.1.220 and
+> 2.1.302), so several in one assistant message run at once. A tool belongs in the
+> set when concurrent calls cannot corrupt project state and their order does not
+> matter: a pure read, or a read that only stages its own result file, appends a
+> log line, writes `external-collections.json` under `withProjectLock`, or
+> rewrites its own retained scan under `images/`. Every other tool —
+> anything that writes `research.json` or the tree, or whose effect a later call
+> in the batch can depend on — stays serial: it runs alone, in order, after the
+> calls before it finish. `tests/packaging/read-only-tools.test.ts` pins the set
+> and refuses a writer in it. The unit harness stays serial, since `mock_mcp.py`
+> copies no annotations; whether Cowork's bridge passes them on is unverified.
 
 ### 5.3 Capability restriction by tool identity
 
@@ -1222,8 +1239,8 @@ is the only instrument that can.
 **Why it ships in the plugin:** `hooks=` is an SDK argument the hosted control
 plane can set and Cowork cannot be made to. A plugin-shipped `hooks/hooks.json`
 binds in **both** — verified live in Cowork 2026-07-30. Cowork runs
-`permission_mode: "default"`, the hosted path `bypassPermissions`; a hook binds
-under both.
+the hosted path `bypassPermissions`; a hook binds under both, under either
+Cowork `permission_mode` (recorded `"default"`, observed `"auto"` on 2026-10-19, ADR-0005).
 
 Two behaviors of the script that are deliberate:
 
@@ -1512,8 +1529,9 @@ document** — never mixing them across the repo, which is intentional.
 
 ### 6.5 State reaches the prompt too
 
-All 5 skills carry a `**Narration:**` line as the first line of the body,
-instructing Claude to read
+All 3 skills carry a `**Narration:**` line near the top of the body —
+directly after the frontmatter for `forget-and-rederive`, right after the
+title heading for the other two — instructing Claude to read
 `researcher_profile.narration_guidance` from `research.json` and apply it as that
 invocation's narration style. The `init-project` agent writes the profile at
 project creation as fixed values and asks only the research objective — it
@@ -1709,29 +1727,35 @@ it costs nothing at runtime, and **it is not a gap and no decision waits on it.*
 - **E2B Hobby caps *uninterrupted* runtime at 1 hour — not total session
   length.** `_RUNNING_TIMEOUT_S = 3600` is the maximum the tier permits, not a
   backstop we chose: create with 7200 fails 400 "Timeout cannot be greater than 1
-  hours" (measured 2026-08-09), while `set_timeout` past the ceiling returns 204
-  and silently no-ops — so an over-large value fails loudly at create and
+  hours" (measured 2026-08-09), while `set_timeout` with a value over 3600 returns
+  204 and silently no-ops — so an over-large value fails loudly at create and
   silently everywhere else. But **the window resets on pause/resume**: the
-  sandbox is created with `on_timeout: pause` + `auto_resume` and `resume()`
-  re-arms the full window on every `/connect`, so reaching the cap pauses rather
-  than kills and the next request resumes (~1s). A session therefore runs for as
-  many hours as it needs. **Do not read the cap as a session-length limit** —
+  sandbox is created with `on_timeout: pause` + `auto_resume`, so reaching the cap
+  pauses rather than kills, and the next request resumes it (~1s) with a fresh
+  hour. A session therefore runs for as many hours as it needs. **Do not read the
+  cap as a session-length limit** —
   both "there is a 1-hour cap" and "sessions run for hours" are true at once. The
-  control plane sets the outer limit: `/connect` refuses a session more than 24 h
+  control plane sets the outer limit: `/connect` refuses a session more than 72 h
   past `projects.created` with a 410 (`SESSION_MAX_AGE` in `app/sessions.py`),
   because its sandbox still runs the agent code it was created with. `/resume` and
   the read endpoints stay open, so an ended session's research can still be read.
-  Whether a pause landing mid-turn breaks that turn is **asserted, not
-  measured** — which is exactly why the 2026-09-21 continuous-work ruling
-  refused to accept the pause. Since continuous work shipped, `set_timeout` is no longer
-  called only from `resume()`: `app/sandbox_heartbeat.py` beats every recently
-  live sandbox on a 300 s loop from the control plane, so a turn cannot age out
-  while it works. That matters now because a turn is a whole research job —
-  median 53.9 minutes, p90 107.9 — so under continuous work one user message
-  would otherwise reach the cap mid-flight on about half of runs. The control
-  plane is deliberately out of the streaming path (`/connect` hands the browser
-  a WSS straight to the sandbox), so the loop beats on **liveness**, the
-  superset of "a turn is active" that it can actually see.
+  **A turn cannot run through the cap, though.** `set_timeout` cannot push a
+  running sandbox's end time past its hour: five minutes after create,
+  `set_timeout(3600)` returns success and leaves the end time at start + 3600,
+  while `set_timeout(1800)` does move it in (measured 2026-10-15 by
+  `apps/server/dev/probe_e2b_heartbeat.py`). So **a turn that runs past one hour
+  of continuous sandbox runtime is paused, and the call in flight can fail.** An
+  alpha session's feedback bundle (submitted 2026-10-12) froze four times
+  mid-turn, each about an hour after a `/connect` or `/resume`; three of the four
+  calls in flight failed on resume
+  (`image_transcribe` aborted after 15,061 s; `API Error: Failed to parse JSON`,
+  twice), and the fourth turn sat until the user came back. That matters because
+  a turn is a whole research job — median 53.9 minutes, p90 107.9 — so under
+  continuous work one user message reaches the cap mid-flight on about half of
+  runs. The heartbeat the 2026-09-21 continuous-work ruling chose, a control-plane
+  loop calling `set_timeout` every 300 s, could not prevent this and was removed
+  once the probe above measured the cap. Making a turn survive the pause (the Pro
+  tier, or pause-aware turns) is not built.
 
 - **The delete-janitor for abandoned sandboxes is unimplemented** — paused
   sandboxes are never reclaimed, by us or by E2B (never reaping them is what
@@ -1817,7 +1841,7 @@ bridge-free path has never been observed.
 | **Hosted control plane** (`app/agent/real_agent.py`) | `plugins=[{"type": "local", …}]` | **staged** into `<project>/.claude/agents/` | plugin's **+ its own `hooks=`** — the plugin half is the one arm of this column that is **measured**, by `make hook-smoke` (§9.1) | `bypassPermissions`, no allowlist | own stdio registration under `genealogy` |
 | **Unit harness** (`eval/harness/harness/workspace.py`) | staged into `.claude/skills/` | staged into `.claude/agents/` | **its own `hooks=`** — not the plugin's `hooks.json`, but it **imports the shipped predicates**, so the write lockdown and the ownership rules bind (§5.4) | `bypassPermissions` — chosen over `dontAsk` so declared `Write`/`Edit` still work. No MCP tool is blocked: every registered tool is granted, and `test_tool_allowlist` only warns (§5.1) | mock server under `genealogy` |
 | **E2e harness** (`eval/harness/e2e/orchestrator.py`) | staged | staged | **its own `hooks=`** | **`dontAsk`**, which on CLI ≥2.1 denies `Write`/`Edit` outright | live server under `genealogy` |
-| **Search-agent prototype** (`apps/server/proto/worker/`, `apps/server/proto/tools/`) | `plugins=[{"type": "local", …}]` from `ENGINE_PLUGIN_DIR` | passed as `agents=`, parsed from the plugin's `agents/` | plugin's **+ its own `hooks=`** (`PreToolUse`, `PostToolUse`, `Stop`) | `bypassPermissions`, `setting_sources=[]` | `build/http.js`, Streamable HTTP at `/mcp` — the one non-stdio row; the worker registers it under `genealogy` with a per-request `Authorization: Bearer`, never `LOCAL`, and a per-request `X-Genealogy-Project-Id` header that binds a `PgS3ProjectStore` on the stack's Postgres/S3 store, plus the `X-Genealogy-Turn-Id` / `X-Genealogy-Claim-Epoch` claim fence (U6) that makes a superseded attempt's writes roll back |
+| **Search-agent prototype** (`apps/server/proto/worker/`, `apps/server/proto/tools/`) | `plugins=[{"type": "local", …}]` from `ENGINE_PLUGIN_DIR` | passed as `agents=`, parsed from the plugin's `agents/` | plugin's **+ its own `hooks=`** (`PreToolUse`, `PostToolUse`, `Stop`) | `bypassPermissions`, `setting_sources=[]` | `build/http.js`, Streamable HTTP at `/mcp` — the one non-stdio row; the worker registers it under `genealogy` with a per-request `Authorization: Bearer`, never `LOCAL`, and a per-request `X-Genealogy-Project-Id` header that binds a `PgS3ProjectStore` on the stack's Postgres/S3 store, plus the `X-Genealogy-Turn-Id` / `X-Genealogy-Claim-Epoch` claim fence (U6) that makes a superseded attempt's writes roll back; a project request is refused 403 unless its bearer's sha256 is the one the attempt stamped on that open turn (U4) |
 
 **The permission-mode column is not a footnote.** It is why the e2e tier and the
 unit tier disagree about raw writes for reasons that have nothing to do with the
@@ -1861,8 +1885,8 @@ Other environment differences that bite:
   budget this bites (though measured 2026-09-08, none of 59 live reads exceeded
   60s — p50 18.7s, max 50.1s; see the spec's Timeout budget section), but
   it is not specific to that tool — `IMAGE_FETCH_TIMEOUT_MS` (90s) and the 60s
-  budgets in `wikipedia.ts`/`wiki-search.ts`/`collections-search.ts` sit at or
-  above the ceiling too. **No automated check reaches this** — neither harness
+  budgets in `wiki-search.ts`/`collections-search.ts` sit at or above the
+  ceiling too (`wikipedia.ts` shares one 55s deadline across its requests). **No automated check reaches this** — neither harness
   goes through the bridge — so it is only observable in a live Cowork session.
 
 ### If you're asked to…
@@ -2069,7 +2093,7 @@ Do not search for the phrase instead of the label: issue titles name the
 mechanism, not the shape, so a text search finds about half of them and returns
 confident near-misses for the rest.
 
-Three of these gaps are **architecture rather than backlog**, because each one
+Four of these gaps are **architecture rather than backlog**, because each one
 changes how a correct change is made:
 
 1. **Spelling is not binding.** No *CI job* proves a declared agent tool actually
@@ -2117,6 +2141,30 @@ changes how a correct change is made:
    the success gate can and cannot see"). `make e2e-corpus` deliberately reports
    counts, refusing a percentage whose denominator would be doing the work. Read
    its `concentration:` block before quoting even a count.
+4. **Step mode's boundary is enforced on one plane and graded on another.** Under
+   `docs/plan/research-step-mode.md` decision 25 (lead, 2026-10-19), a step ends by
+   asking the researcher with `AskUserQuestion`, and what stops a model starting the
+   next step without asking differs by plane: the FS prototype gets a `PreToolUse`
+   deny and then a halt; **Cowork gets router prose and no hook at all**; the alpha
+   gets nothing. **None of it is built yet.** When it is, the gap will be that
+   the e2e harness tracks `real_agent` (`eval/harness/e2e/orchestrator.py`),
+   which is the alpha, and the alpha gets nothing -- so the suite will exercise
+   a plane with no enforcement while the one that HAS it goes ungraded. **A
+   green eval suite will therefore say nothing about whether the boundary
+   holds anywhere.**
+   Do not read a passing step-mode test as evidence the boundary holds in Cowork.
+
+   This is a deliberate choice, not a limitation: phase 0 measured that a Cowork hook
+   *could* do it (ADR-0005 item 9 — a plugin `PreToolUse` returning `"continue": false`
+   does end a Cowork turn), and the lead judged it not worth a stateful hook yet,
+   because the cost exposure is the prototype and a Cowork researcher can press stop.
+   Two things would close it, and the first is already instrumented: decision 25's
+   rider logs **every halt on the prototype**, and because the router prose is identical
+   on both planes that rate estimates how often Cowork runs past a boundary — a high
+   one buys the hook with numbers rather than a guess. The facts such a hook would
+   need are already recorded, so they need no re-measuring (ADR-0005, "PARKED for a
+   possible future Cowork hook"). Otherwise it needs an instrument that reaches Cowork,
+   which today is only a live session, for the same reason as gap 1.
 
 ### 9.5 An autonomous run must be able to reach what a production run can
 

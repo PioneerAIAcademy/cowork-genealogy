@@ -1171,6 +1171,14 @@ recap — the shape the skill actually uses. Gated on the `index-discrepancy` ta
 that tag and no `index_error_source` fails rather than skipping, so the guard
 cannot be disarmed by omission.
 
+**What the guard reads is the agent's own return, not the main thread's
+reply.** `subject_reply_text` returns the subject's words whenever it made a
+return, and on a direct test it returns nothing else. The two texts differ on
+every committed `index-discrepancy` run, and differ structurally: the relay
+carries markdown headings on 52 of 53 and the agent's own return on 0 of 53.
+A check tuned against the relay therefore measures the dispatcher, and reads
+clean while the guard it is meant to validate has a live gap.
+
 A reply-wide check cannot express this rule. A correct audit of the same
 person also reports a genuinely *misattributed* source, for which detaching
 **is** the right recommendation — so any reply-wide licence for the word
@@ -1202,7 +1210,7 @@ Every skill's SKILL.md has "Do NOT use when" clauses that name confusable skills
 | search-records | `extraction_append` / `record-structurer` (an agent) | record data in context vs not |
 | question-selection | research-plan | "what question next" vs "how to answer this question" |
 | conflict-resolution | `extraction_append` (a tool) | conflicting facts vs classifying evidence type (classification is set in code at extraction and is not refined per assertion afterward) |
-| proof-conclusion | project-status (an agent, not a skill — its side of the pair is reached by auto-delegation from its own `description`, not by a routing row) | "write the proof" vs "where are we" |
+| proof-conclusion | the main-thread status answer (no skill; the `project_context` tool's description instructs the main thread to answer "where are we?" from the projection) | "write the proof" vs "where are we" |
 
 For each confusable pair, create tests from both directions: a test in skill A's directory with `correct_skill: ["B"]`, and a corresponding test in skill B's directory with `correct_skill: ["A"]`.
 
@@ -2411,7 +2419,7 @@ After each run, the harness compares `before_state` and `after_state` to produce
    - `deleted`: IDs in `before` but not in `after` — emit the full old object. Should always be empty (no-delete enforcement).
    - `common`: IDs in both — for each, compare each field. If any field differs, emit `{id, changed_fields: {<field>: {before, after}}}`. If all fields match, omit.
 3. **The `project` section is a single object, not an array.** Treat it as a one-entry array keyed by `id` for purposes of diffing.
-4. **Files outside `research.json` / `tree.gedcomx.json`** (e.g., a markdown table from `survey-surname`) are not diffed structurally — they appear in `output.files_created` with their path, and content is left to the validators or judge to interpret.
+4. **Files outside `research.json` / `tree.gedcomx.json`** (e.g., a markdown file an agent writes in the working folder) are not diffed structurally — they appear in `output.files_created` with their path, and content is left to the validators or judge to interpret.
 
 The harness does not use RFC 6902 JSON Patch. Patch operations are less readable in the UI and would require teaching the LLM judge a separate format.
 
@@ -2542,7 +2550,7 @@ post_state = snapshot_json_files(tmp_dir)
 diff = compute_diff(pre_state, post_state)  # what changed, what was created
 ```
 
-For stateless skills that write new files (survey-surname saves a markdown table, init-project creates research.json), the harness detects newly created files in the temp directory.
+For skills that write new files (init-project creates research.json), the harness detects newly created files in the temp directory.
 
 ### Prompt caching
 

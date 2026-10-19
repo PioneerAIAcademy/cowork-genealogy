@@ -1,6 +1,6 @@
 {
   "tool": "tree_gaps",
-  "description": "CONSTRUCTED for the tree-survey ranking test -- six holes, nearest the root first; only the generation-3 hole (TGAP-H3A) has a pending hint whose record type fits it (see person-record-matches-tgap-h3a). Shape follows docs/specs/tree-gaps-tool-spec.md, Output.",
+  "description": "CONSTRUCTED for the tree-survey ranking test -- six holes. Only the generation-3 hole (TGAP-H3A) has a pending hint that fits it (`pendingHints` fitting 1), so tree_gaps returns it first and the rest nearest the root first. Shape follows docs/specs/tree-gaps-tool-spec.md, Output.",
   "args": {
     "personId": "TGAP-ROT"
   },
@@ -10,6 +10,38 @@
       "name": "Walter Ashby"
     },
     "gaps": [
+      {
+        "type": "missing_parents",
+        "personId": "TGAP-H3A",
+        "name": "Samuel Weis",
+        "lifespan": "1830-1899",
+        "generation": 3,
+        "detail": "Father and mother are both missing from the tree.",
+        "yearRange": {
+          "start": 1829,
+          "end": 1833
+        },
+        "place": "Lancaster, Lancaster, Pennsylvania, United States",
+        "coverage": {
+          "collections": 9,
+          "records": 4200000,
+          "recordTypes": [
+            "CENSUS",
+            "CHURCH_RECORD",
+            "VITAL"
+          ],
+          "censusYears": [
+            1900,
+            1910,
+            1920
+          ],
+          "placeLevel": "locality"
+        },
+        "pendingHints": {
+          "fitting": 1,
+          "total": 1
+        }
+      },
       {
         "type": "no_death_date",
         "personId": "TGAP-H1A",
@@ -36,6 +68,10 @@
             1920
           ],
           "placeLevel": "locality"
+        },
+        "pendingHints": {
+          "fitting": 0,
+          "total": 0
         }
       },
       {
@@ -64,6 +100,10 @@
             1920
           ],
           "placeLevel": "locality"
+        },
+        "pendingHints": {
+          "fitting": 0,
+          "total": 0
         }
       },
       {
@@ -92,34 +132,10 @@
             1920
           ],
           "placeLevel": "locality"
-        }
-      },
-      {
-        "type": "missing_parents",
-        "personId": "TGAP-H3A",
-        "name": "Samuel Weis",
-        "lifespan": "1830-1899",
-        "generation": 3,
-        "detail": "Father and mother are both missing from the tree.",
-        "yearRange": {
-          "start": 1829,
-          "end": 1833
         },
-        "place": "Lancaster, Lancaster, Pennsylvania, United States",
-        "coverage": {
-          "collections": 9,
-          "records": 4200000,
-          "recordTypes": [
-            "CENSUS",
-            "CHURCH_RECORD",
-            "VITAL"
-          ],
-          "censusYears": [
-            1900,
-            1910,
-            1920
-          ],
-          "placeLevel": "locality"
+        "pendingHints": {
+          "fitting": 0,
+          "total": 0
         }
       },
       {
@@ -148,6 +164,10 @@
             1920
           ],
           "placeLevel": "locality"
+        },
+        "pendingHints": {
+          "fitting": 0,
+          "total": 0
         }
       },
       {
@@ -178,7 +198,11 @@
           "placeLevel": "locality"
         },
         "spouseId": "TGAP-H5B",
-        "spouseName": "Karl Ruhl"
+        "spouseName": "Karl Ruhl",
+        "pendingHints": {
+          "fitting": 0,
+          "total": 0
+        }
       }
     ],
     "scanned": {

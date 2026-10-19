@@ -122,7 +122,7 @@ carrying. Everything below is out on that test, not because it is unimportant.
 | Project state | Session filesystem is the only copy | Postgres jsonb documents, S3 blobs, behind one `ProjectStore` interface |
 | Conversation | SDK on-disk transcript | SDK `SessionStore` backed by Postgres/S3, hydrated per turn |
 | Agent shell | `Bash` under `bypassPermissions` | Removed via `disallowed_tools` on the worker's options — see below |
-| Tool layer | Node forked over stdio in the sandbox | Same tools, three entrypoints over one `createServer(principal)`: `build/index.js` stays stdio for the desktop `.mcpb`, both harnesses and the hosted alpha; `build/hosted-stdio.js` is the per-turn stdio fork on Postgres/S3 (D9–10); `build/http.js` serves Streamable HTTP at `/mcp` (compose service `tools`, swapped in at D16) |
+| Tool layer | Node forked over stdio in the sandbox | Same tools, three entrypoints over one `createServer(principal)`: `build/index.js` stays stdio for the desktop `.mcpb`, both harnesses and the hosted alpha; `build/hosted-stdio.js` was the per-turn stdio fork on Postgres/S3 (D9–10; deleted in PR #3011); `build/http.js` serves Streamable HTTP at `/mcp` (compose service `tools`, swapped in at D16) |
 | Transport | One WebSocket per session | SSE plus a 1 s Postgres poll |
 | Model | Anthropic API direct | Bedrock direct (`CLAUDE_CODE_USE_BEDROCK`) for the prototype; production is the Messages-compatible Agent Gateway through `ANTHROPIC_BASE_URL` with the Bedrock flag unset (answered 2026-09-11; P3b) |
 | OCR | OpenRouter running Gemini | Unchanged — a pure HTTP caller the substrate does not touch |
@@ -1540,8 +1540,8 @@ without whichever Bedrock refuses.
   per request through an `AsyncLocalStorage` in `src/store/project-store.ts`, so a turn
   there runs the project tools against the same Postgres/S3 store as the worker; an
   unbound store that throws is installed as the process store, so nothing falls through
-  to the file backend. **The default is `http` since 2026-09-20 (the lead's call), and
-  `TOOL_SERVER=stdio` is the opt-out.** The shared service is the shape production runs,
+  to the file backend. **The default is `http` since 2026-09-20 (the lead's call); the
+  `TOOL_SERVER=stdio` opt-out was deleted in PR #3011.** The shared service is the shape production runs,
   so it is the shape the remaining measurements should describe, and a per-turn fork
   cannot exercise the risk that matters there — one process serving many patrons, which
   is what the per-request store binding above exists to make safe. Two things went with
@@ -2223,7 +2223,7 @@ without whichever Bedrock refuses.
   | | bagley harness, 07-31 | **bagley harness, 09-24** | bagley proto | paerai harness, 09-21 | paerai proto |
   |---|---|---|---|---|---|
   | judge: verdict, f1 | pass, true | pass, true | pass, true | pass, true | pass, true |
-  | human blind grade: f1, proof quality | true, 2 | **partial**, 3 | — | true, 2 | — |
+  | human blind grade: f1, proof quality | true, 2 | **partial**, 3 | true, 2 (PR #3358) | true, 2 | — |
   | cost | $5.29 | **$11.85** | $16.29 | $4.94 | ~$32.21 (list, off the transcript) |
   | wall clock | 2,147 s | 4,544 s | 5,151 s, 1 attempt | 1,903 s | >14,400 s, 3 attempts |
   | tool calls / delegations | 93 / 4 | 336 / 13 | 317 / 21 | 140 / 8 | 517 / 46 |

@@ -65,6 +65,8 @@ _SUMMARY_LEAD = _VALIDATOR._SUMMARY_LEAD_RE
 _recommends_reread = _VALIDATOR.test_index_discrepancy_recommends_reread
 _no_detach = _VALIDATOR.test_index_discrepancy_does_not_recommend_detaching
 
+from harness.skill_runner import subject_reply_text  # noqa: E402
+
 _REPO = Path(__file__).resolve().parents[4]
 _PROTECTED = "Minnesota Death Index"
 _TEST = {
@@ -380,14 +382,31 @@ def test_both_guards_pass_on_every_committed_positive_run():
     agree with the corpus. A future widening that breaks a real reply fails
     here rather than inside the next paid run.
     """
+    # `v1_*` skipped `v1.json` and `v2.json` — 16 of the 53 index-discrepancy
+    # runs, and the two that carry the only false positives a wrong scope rule
+    # produces. A replay that cannot see a third of the corpus is how a clean
+    # number survives a broken guard.
     logs = sorted(
         p for p in glob.glob(
-            str(_REPO / "eval/runlogs/unit/source-evaluation/v1_*.json")
+            str(_REPO / "eval/runlogs/unit/source-evaluation/v*.json")
         )
         if not p.endswith(".ann.json")
     )
     assert logs, "no committed source-evaluation run logs found"
+    # Pin the glob: `v1_*` would skip every released `v<N>.json`, and this
+    # replay's only other assertion is that it read SOMETHING, so the narrowing
+    # would pass silently. Verified: passes on `v*.json` (finds v1, v2), fails
+    # on `v1_*.json` (finds none).
+    assert any("_" not in Path(q).stem for q in logs), (
+        "the replay must read the released v<N>.json logs"
+    )
     checked = 0
+    # Pin the field, the other half of the same regression: if `reply` goes back
+    # to `output["text_response"]`, every replayed reply becomes identical to it
+    # and the replay grades the dispatcher again. On this corpus the two differ
+    # on 79 of 79 replies, so one sighting is enough to prove the subject's own
+    # return is what was read.
+    saw_subject_return = False
     for path in logs:
         log = json.loads(Path(path).read_text(encoding="utf-8"))
         for entry in log.get("tests") or []:
@@ -395,9 +414,23 @@ def test_both_guards_pass_on_every_committed_positive_run():
                 continue
             for run in entry.get("runs") or []:
                 output = run.get("output") or {}
-                reply = (output.get("text_response") or "").strip()
+                # GRADE WHAT THE VALIDATOR GRADES. `subject_reply_text` returns
+                # the agent's OWN return whenever it is non-empty, and on all 53
+                # committed index-discrepancy runs that text DIFFERS from the
+                # main thread's relay — the relay carries `##` headings in 52 of
+                # 53 and the agent's return in 0 of 53. Replaying the relay
+                # measures the dispatcher, not the subject, and a scope rule
+                # tuned against it reads clean while firing on real replies.
+                reply = subject_reply_text(
+                    output.get("agent_returns"),
+                    output.get("text_response"),
+                    "source-evaluation",
+                    _TEST,
+                ).strip()
                 if not reply:
                     continue
+                if reply != (output.get("text_response") or "").strip():
+                    saw_subject_return = True
                 protected = _PROTECTED if "Hole" in reply else "Drouin Collection"
                 if protected.lower() not in reply.lower():
                     continue
@@ -406,6 +439,10 @@ def test_both_guards_pass_on_every_committed_positive_run():
                 _no_detach(reply, test)
                 checked += 1
     assert checked, "replayed no positive runs — the corpus reader is broken"
+    assert saw_subject_return, (
+        "every replayed reply equalled its run's text_response, so this replay "
+        "graded the main thread's relay rather than the subject's own return"
+    )
 
 
 # --- the direct arm: the agent's return is the reply (issue #2796) --------
@@ -923,3 +960,213 @@ def test_warnings_guards_skip_an_untagged_test():
             fn([], {"tags": []})
     with pytest.raises(pytest.skip.Exception):
         _pw_verbatim([], "", {"tags": []})
+
+
+# --- #2481: markdown emphasis must not change what a matcher reads ---------
+
+
+def test_emphasis_does_not_change_what_any_detach_matcher_reads():
+    """Three matchers read words that emphasis can sit inside, and all three
+    got it wrong in the same way: the markers land exactly where an anchor or a
+    character class expects a letter.
+
+    The agent bolds freely — 251 bold spans across the 53 committed graded
+    replies — so each of these is one word away on a real report, and two of
+    them fail in the direction that reds a CORRECT one.
+    """
+    # 1. a negation before the term
+    for text in (
+        "Do not detach; the record belongs here.",
+        "Do **not** detach; the record belongs here.",
+        "Do *not* detach yet.",
+        "Do __not__ detach.",
+    ):
+        assert not _VALIDATOR._recommends_detach(text), text
+
+    # 2. the harm verb AFTER the term, which says the report is arguing the
+    #    doctrine rather than violating it
+    for text in (
+        "Keep it attached - detaching it loses the evidence.",
+        "Keep it attached - detaching it **loses the evidence**.",
+    ):
+        assert not _VALIDATOR._recommends_detach(text), text
+
+    # 3. the record title that clears a correct report
+    for text in (
+        "Correct the Minnesota Death Index year. Detach the 1885 State Census.",
+        "Correct the Minnesota Death Index year. Detach the **1885 State Census**.",
+    ):
+        assert _VALIDATOR._detach_names_another_record(text, _PROTECTED), text
+
+    # and a bare recommendation still fires
+    assert _VALIDATOR._recommends_detach("Detach it.")
+# ---------------------------------------------------------------------------
+# Census-variance trap (issue #3434)
+#
+# A census birth year or age within a couple of years of the profile is
+# ordinary variance, not an indexing error.  The 1900 United States Census's
+# month-and-year-of-birth column is informant-reported, not a civil registration,
+# so a two-year drift there is ordinary variance too.
+#
+# Prove both directions per CLAUDE.md: the guard MUST fire on bad output and
+# MUST NOT fire on correct output.
+# ---------------------------------------------------------------------------
+
+_census_trap = _VALIDATOR.test_census_drift_is_not_a_finding
+_find_census_year_error_line = _VALIDATOR._find_census_year_error_line
+_CENSUS_TEST = {"tags": ["census-variance-trap"], "type": "positive"}
+
+# Text that MUST fire the guard (agent misclassifies 1900 census drift).
+# Drawn from actual agent outputs observed in round 9 and round 10 eval runs.
+_CENSUS_FAIL_PLAIN = (
+    "SOURCES ON: Christian P. Hole (KD96-TV2) — 2 findings\n"
+    "1. Minnesota Death Index — indexing error in death year (1954 vs 1945).\n"
+    "2. United States Census, 1900 — indexing error (birth year)\n"
+    "Indexed birth year 1877; the profile records 1875."
+)
+_CENSUS_FAIL_HEADER = (
+    "SOURCES ON: Christian P. Hole (KD96-TV2) — 1 finding\n"
+    "1. Minnesota Death Index — indexing error in death year (1954 vs 1945).\n"
+    '**Finding 1. "United States Census, 1900" — indexing error (birth year)**\n'
+    "Indexed birth year 1877; the profile records 1875."
+)
+_CENSUS_FAIL_POSSIBLE = (
+    "SOURCES ON: Christian P. Hole (KD96-TV2) — 2 findings\n"
+    "1. Minnesota Death Index — indexing error (1954 vs 1945).\n"
+    "**2. United States Census, 1900 — possible indexing error (birth year)**\n"
+    "The birth year 1877 vs profile 1875 may reflect a transcription slip."
+)
+
+# Text that must NOT fire the guard (agent correctly handles ordinary variance).
+_CENSUS_PASS_CLEAN = (
+    "SOURCES ON: Christian P. Hole (KD96-TV2) — 1 finding\n"
+    "1. Minnesota Death Index — indexing error in death year (1954 vs 1945).\n"
+    "Next: re-read the underlying death certificate and correct the indexed year."
+)
+_CENSUS_PASS_NEGATED = (
+    "SOURCES ON: Christian P. Hole (KD96-TV2) — 1 finding\n"
+    "1. Minnesota Death Index — indexing error in death year (1954 vs 1945).\n"
+    "(The 1900 census entry also shows a birth year of 1877 against the profile's "
+    "1875 — a two-year gap on an informant-reported census field. This is ordinary "
+    "variance, not an indexing error, and is not counted as a finding.)"
+)
+_CENSUS_PASS_NEGATED_LONG = (
+    "SOURCES ON: Christian P. Hole (KD96-TV2) — 1 finding\n"
+    "1. Minnesota Death Index — indexing error in death year (1954 vs 1945).\n"
+    "The 1900 census included a month-and-year-of-birth column whose values were "
+    "supplied by whoever answered the enumerator's questions — an informant-reported "
+    "figure. A two-year drift from 1875 to 1877 does not constitute evidence of an "
+    "indexing error."
+)
+
+
+# A split-line heading: "1900" on one line, "indexing error" on the next.
+# The per-line regex would miss this; the window-based guard must catch it.
+_CENSUS_FAIL_SPLIT_LINE = (
+    "SOURCES ON: Christian P. Hole (KD96-TV2) — 2 findings\n"
+    "1. Minnesota Death Index — indexing error in death year (1954 vs 1945).\n"
+    "**Finding 2 — United States Census, 1900**\n"
+    "This is an indexing error: birth year 1877 does not match the profile's 1875."
+)
+
+# A draft heading dismissed by "ordinary variance" in the next lines.
+# Mirrors the h5w false positive found in v3_2026-10-15_18-39-03.json: the
+# agent writes a numbered section label with "indexing error", then rejects it.
+_CENSUS_PASS_FORWARD_DISMISSAL = (
+    "SOURCES ON: Christian P. Hole (KD96-TV2)\n"
+    '**1. "United States Census, 1900" — indexing error (birth year)**\n'
+    "The record shows birth year 1877 vs profile's 1875.\n"
+    "A two-year gap on a census record is ordinary variance "
+    "and is not counted here as a finding.\n"
+    "Moving on.\n"
+    '**Finding 1. "Minnesota Death Index" — indexing error (death year)**\n'
+)
+
+
+def test_census_trap_fires_on_bad_output():
+    for text in (_CENSUS_FAIL_PLAIN, _CENSUS_FAIL_HEADER, _CENSUS_FAIL_POSSIBLE):
+        assert _find_census_year_error_line(text) is not None, (
+            f"guard did not fire on expected bad output:\n{text!r}"
+        )
+
+
+def test_census_trap_fires_on_split_line_finding():
+    """Guard must catch '1900' on a heading line and 'indexing error' on the next."""
+    assert _find_census_year_error_line(_CENSUS_FAIL_SPLIT_LINE) is not None, (
+        "guard missed a split-line census indexing-error finding"
+    )
+
+
+def test_census_trap_passes_on_correct_output_inner():
+    for text in (
+        _CENSUS_PASS_CLEAN,
+        _CENSUS_PASS_NEGATED,
+        _CENSUS_PASS_NEGATED_LONG,
+        _CENSUS_PASS_FORWARD_DISMISSAL,
+    ):
+        assert _find_census_year_error_line(text) is None, (
+            f"guard fired on correct output:\n{text!r}"
+        )
+
+
+def test_census_trap_passes_on_forward_dismissed_draft():
+    """Guard must not fire when agent drafts a label then dismisses it as ordinary variance."""
+    assert _find_census_year_error_line(_CENSUS_PASS_FORWARD_DISMISSAL) is None, (
+        "guard fired on a draft heading the agent immediately dismissed as ordinary variance"
+    )
+
+
+def test_census_trap_error_message_names_the_offending_line():
+    """Assertion error must show the actual bad line, not an empty string."""
+    with pytest.raises(AssertionError, match=r"United States Census, 1900"):
+        _census_trap(text_response=_CENSUS_FAIL_PLAIN, test=_CENSUS_TEST)
+
+
+def test_census_trap_fails_on_indexing_error_label():
+    for text in (_CENSUS_FAIL_PLAIN, _CENSUS_FAIL_HEADER, _CENSUS_FAIL_POSSIBLE):
+        with pytest.raises(AssertionError):
+            _census_trap(text_response=text, test=_CENSUS_TEST)
+
+
+def test_census_trap_passes_on_correct_output():
+    for text in (_CENSUS_PASS_CLEAN, _CENSUS_PASS_NEGATED, _CENSUS_PASS_NEGATED_LONG):
+        _census_trap(text_response=text, test=_CENSUS_TEST)
+
+
+def test_census_trap_fails_when_agent_returns_carry_bad_text():
+    """Via agent_returns (delegation test): the subagent's own return is checked."""
+    ar = [{"subagent_type": "source-evaluation", "text": _CENSUS_FAIL_PLAIN}]
+    with pytest.raises(AssertionError):
+        _census_trap(
+            text_response="",
+            test={**_CENSUS_TEST, "delegation": True},
+            agent_returns=ar,
+        )
+
+
+def test_census_trap_passes_when_agent_returns_carry_correct_text():
+    """Via agent_returns: a clean agent return passes even if relay is dirty."""
+    ar = [{"subagent_type": "source-evaluation", "text": _CENSUS_PASS_NEGATED}]
+    dirty_relay = "1900 United States Census — indexing error"
+    _census_trap(
+        text_response=dirty_relay,
+        test={**_CENSUS_TEST, "delegation": True},
+        agent_returns=ar,
+    )
+
+
+def test_census_trap_skips_when_tag_absent():
+    for test in ({"tags": []}, {}):
+        with pytest.raises(pytest.skip.Exception):
+            _census_trap(
+                text_response="1900 United States Census — indexing error",
+                test=test,
+            )
+
+
+def test_census_trap_skips_on_negative_test():
+    with pytest.raises(pytest.skip.Exception):
+        _census_trap(
+            text_response="1900 United States Census — indexing error",
+            test={**_CENSUS_TEST, "type": "negative"},
+        )

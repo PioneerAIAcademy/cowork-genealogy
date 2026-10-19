@@ -28,8 +28,8 @@ ours to set, so a host-side hook can never reach Cowork. A plugin-shipped
 hard-denied and the agent surfaced this script's own reason text), after the
 upstream reports that plugin PreToolUse command hooks are dropped
 (anthropics/claude-code#34573) were found not to reproduce on the current
-build. Cowork runs `permission_mode: "default"`; the hosted path runs
-`bypassPermissions`, and a hook binds under both.
+build. The hosted path runs `bypassPermissions`, and a hook binds under both, under
+either Cowork `permission_mode` (recorded `"default"`, observed `"auto"` on 2026-10-19, ADR-0005).
 
 Contract, from the hook protocol: read the payload as JSON on stdin, print a
 decision to stdout, exit 0. Printing `{}` means "no opinion" — the normal
@@ -243,6 +243,10 @@ AGENT_WRITABLE_SECTIONS = {
     # hypothesis-tracking states, links and rules out hypotheses, and writes
     # nothing else in research.json.
     "hypothesis-tracking": frozenset({"hypotheses"}),
+    # timeline regenerates one `timelines` entry wholesale and writes nothing
+    # else in research.json. Its coherence verdict and any geographic
+    # infeasibility have no persisted field at all -- they live in its reply.
+    "timeline": frozenset({"timelines"}),
     # conflict-resolution opens, analyses and settles conflicts, and writes
     # nothing else in research.json. A hypothesis or question change its finding
     # implies is handed back to the main thread, not made here.
@@ -255,6 +259,11 @@ AGENT_WRITABLE_SECTIONS = {
     # agent. It leaves out `questions`, which question-selection owns
     # (issue #2122).
     "init-project": frozenset({"project", "researcher_profile", "known_holdings", "sources"}),
+    # research-plan writes plans and their items and nothing else in
+    # research.json. A lane, not a route: tests/packaging/plugin-hooks.test.ts
+    # requires one for every agent granted research_append, and nothing is
+    # routed to this agent (issue #2116).
+    "research-plan": frozenset({"plans", "plan_items"}),
 }
 
 # The deny NAMES THE ROUTE OUT, and that is load-bearing rather than polite.

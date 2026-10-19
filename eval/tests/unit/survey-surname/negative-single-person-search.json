@@ -4,7 +4,7 @@
     "skill": "survey-surname",
     "name": "Negative: single-person census search handed back to search-records",
     "type": "negative",
-    "description": "A request to find one person's census record is not a surname survey. The agent should recognize this and hand back to search-records without calling any tool.",
+    "description": "A request to find one person's census record is not a surname survey. The agent should recognize this and hand back to search-records without calling any tool, logging nothing and writing no file.",
     "tags": ["routing", "negative", "direct-arm"]
   },
   "negative": {
@@ -20,7 +20,7 @@
   },
   "judge_context": [
     "This is a NEGATIVE test: the request is for one person's census record, not a surname survey.",
-    "The agent should recognize this is a single-person search and decline WITHOUT calling any tool — no place_search, no record_search, no research_log_append, no Write.",
+    "The agent should recognize this is a single-person search and decline WITHOUT calling any tool — no place_search, no record_search, no research_log_append; nothing is logged and no file is written.",
     "The agent should say something like 'That is a search for one person's record — please use search-records' and stop.",
     "A single tool call (even place_search) is a failure."
   ]

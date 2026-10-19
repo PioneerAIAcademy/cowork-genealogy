@@ -1,6 +1,8 @@
-"""Skill-specific validators for the research-plan skill.
+"""Suite-specific validators for the research-plan agent.
 
-research-plan creates a sequenced plan entry for a research question.
+research-plan creates a sequenced plan entry for a research question. It was a
+skill until issue #2116; the validators for the one test that moved to the
+research suite (`ut_research_rpn`) moved to `test_research.py` with it.
 The ownership check in `test_universal.py::test_ownership_table` already
 restricts writes to the `plans` section; FK integrity for
 `plans.question_id → questions` is covered by
@@ -31,6 +33,8 @@ from validators_lib import (
     extract_year,
     research_append_ops,
 )
+from validators_lib import existing_plan_changes
+from validators_lib import new_plan_ids as _new_plan_ids
 
 # Identifier extraction is shared with `make provenance-report` (issue #1667)
 # so the two agree on what counts as a traceable identifier: ARKs and 5+ digit
@@ -64,15 +68,6 @@ def test_log_unchanged_by_research_plan(before_state, after_state):
 
 # --- Tag-gated: do not create a new plan when one already exists -----
 
-def _new_plan_ids(before: dict, after: dict) -> list[str]:
-    before_ids = {p.get("id") for p in (before.get("plans") or [])}
-    return [
-        p.get("id")
-        for p in (after.get("plans") or [])
-        if p.get("id") and p.get("id") not in before_ids
-    ]
-
-
 def test_research_plan_no_new_plan(before_state, after_state, test):
     """Tag-gated: when an active plan already addresses the target
     question, research-plan should review (not create) — adding a
@@ -91,169 +86,127 @@ def test_research_plan_no_new_plan(before_state, after_state, test):
     )
 
 
-# --- Tag-gated: nothing is written once the search is declared exhaustive ---
+# --- Tag-gated: review mode writes nothing to plans ------------------------
 
-def test_no_plan_writes_when_resolved(before_state, after_state, test):
-    """Tag-gated: on a question whose `search_stop.stopped_because` is
-    already a stop-gate value, research-plan must add nothing and change nothing.
+def test_review_writes_no_plan(before_state, after_state, test):
+    """Tag-gated (``research-plan-review-no-writes``): a review leaves `plans[]`
+    exactly as it found it.
 
-    Covers the gap the other two leave. `test_research_plan_no_new_plan`
-    catches a whole new `pl_` and `test_plans_no_deletions` catches removals;
-    neither sees an item **appended to an existing plan** or an existing item
-    **edited in place**. Either rewrites the GPS audit trail the declaration
-    rests on — and appending to `pl_002` is the obvious way to write a plan
-    without creating one.
-
-    This is one of two routing-independent gates for `ut_research_plan_003`
-    (`grade_on_invariant`): whichever skill ends up handling the prompt, no run
-    may leave a mark on `plans[]`. Its companion
-    `test_resolved_question_not_reopened` guards the question's own state —
-    `status`, `search_stop`, `project.status` — which this one does
-    not look at and which is the likelier harm on that prompt. Both are gated
-    on the same tag; neither is sufficient alone.
+    Review mode (Step 1a) recaps an active plan that still has unfinished items
+    and writes nothing. ``research-plan-no-new-plan`` catches only a whole new
+    ``pl_``, and ``pli-006-status-unchanged`` only that one item's status, so an
+    item appended to the active plan, an existing item edited, or the plan's own
+    ``status`` set to ``completed`` passed both -- the last being exactly what a
+    delegation saying "the current plan is finished" invites
+    (``ut_research_plan_d01``). Issue #2116. Measured before gating: across the
+    eight committed run logs from 2026-10-07 on, the two review tests made zero
+    ``research_append`` calls in all 16 runs, so this cannot false-fail a run
+    that reviewed.
     """
-    if "no-plan-writes-when-resolved" not in test.get("tags", []):
-        pytest.skip("not a no-plan-writes-when-resolved scenario")
+    if "research-plan-review-no-writes" not in test.get("tags", []):
+        pytest.skip("not a research-plan-review-no-writes scenario")
+    before = before_state.get("research_json")
+    after = after_state.get("research_json")
+    if before is None or after is None:
+        pytest.skip("missing research.json for diff")
+    errors = [f"new plan {pid} written" for pid in _new_plan_ids(before, after)]
+    errors += existing_plan_changes(before, after)
+    assert not errors, (
+        "review mode wrote to plans:\n  - " + "\n  - ".join(errors)
+    )
+
+
+# --- Tag-gated: Dispose mode closes out only the named planned items -------
+
+_DISPOSE_FIELDS = ("status", "skip_category", "skip_reason")
+
+
+def _delegated_item_ids(test: dict) -> str:
+    """The `planItemIds:` line of a direct test's delegation, or "" (any id)."""
+    for line in (test.get("delegation") or "").splitlines():
+        if line.strip().lower().startswith("planitemids:"):
+            return line
+    return ""
+
+
+def test_dispose_named_items(before_state, after_state, test):
+    """Tag-gated (``research-plan-dispose``): Dispose mode (Step 1a) closes out
+    planned items and does nothing else.
+
+    research-exhaustiveness refuses a stop-gate declaration while an item on the
+    active plan is still `planned`, and the router then spawns research-plan to
+    dispose of the named items: each becomes `completed` if its search was done
+    and logged, otherwise `skipped` with a `skip_category`. No item is added or
+    deleted, no plan is superseded or written, and a planned item changes only
+    in those three fields. A `completed` item no log entry names claims a search
+    that never ran. Issue #2116: Dispose mode is entered on the caller's word, so
+    it is the one mode the agent's delegation rule has to let through, and no
+    test reached it before.
+    """
+    if "research-plan-dispose" not in test.get("tags", []):
+        pytest.skip("not a research-plan-dispose scenario")
     before = before_state.get("research_json")
     after = after_state.get("research_json")
     if before is None or after is None:
         pytest.skip("missing research.json for diff")
 
-    before_plans = {
-        p.get("id"): p for p in (before.get("plans") or []) if p.get("id")
+    named = set(re.findall(r"pli_\d+", _delegated_item_ids(test)))
+    errors = [f"new plan {pid} written" for pid in _new_plan_ids(before, after)]
+    logged = {
+        entry.get("plan_item_id")
+        for entry in (after.get("log") or [])
+        if entry.get("plan_item_id")
     }
-    errors: list[str] = []
+    before_plans = {p.get("id"): p for p in (before.get("plans") or []) if p.get("id")}
+    disposed: list[str] = []
     for plan in after.get("plans") or []:
         prior = before_plans.get(plan.get("id"))
         if prior is None:
-            # A whole new plan is test_research_plan_no_new_plan's finding;
-            # reporting it here too would double-count the same defect.
             continue
-        if plan == prior:
-            continue
-
-        # Compare the WHOLE prior plan object, not just the items present in
-        # the after-state. Walking only `after`'s items cannot see a deletion —
-        # a removed item simply isn't there to check — and misses plan-level
-        # fields entirely. With `grade_on_invariant` on ut_003, that gap scored
-        # "wiped every item from pl_002" and "flipped pl_002 back to active" as
-        # a PASS, which is the opposite of what this validator exists for.
-        before_items = {
-            i.get("id"): i for i in (prior.get("items") or []) if i.get("id")
-        }
-        after_items = {
-            i.get("id"): i for i in (plan.get("items") or []) if i.get("id")
-        }
         pid = plan.get("id")
-        # Accumulate PER PLAN. Checking the shared `errors` for emptiness would
-        # let a second damaged plan slip through unnamed once the first has
-        # reported — the assert still fires, but you fix pl_001, re-run, and
-        # only then learn pl_002 was wrong too.
-        plan_errors: list[str] = []
-        for gone in before_items.keys() - after_items.keys():
-            plan_errors.append(f"{pid}: item {gone} DELETED from an existing plan")
-        for added in after_items.keys() - before_items.keys():
-            plan_errors.append(f"{pid}: item {added} added to an existing plan")
-        for both in before_items.keys() & after_items.keys():
-            if before_items[both] != after_items[both]:
-                plan_errors.append(f"{pid}: item {both} modified in place")
-        for field in set(prior) | set(plan):
-            if field == "items":
-                continue
+        for field in sorted((set(prior) | set(plan)) - {"items"}):
             if prior.get(field) != plan.get(field):
-                plan_errors.append(
-                    f"{pid}: plan field '{field}' changed "
-                    f"{prior.get(field)!r} -> {plan.get(field)!r}"
-                )
-        if not plan_errors:  # differs, but no rule above named it — never silent
-            plan_errors.append(
-                f"{pid}: plan object changed in a way this check did not classify"
-            )
-        errors.extend(plan_errors)
-    assert not errors, (
-        "research-plan wrote to a question whose search is already declared "
-        "exhaustive:\n  - " + "\n  - ".join(errors)
-    )
-
-
-def test_resolved_question_not_reopened(before_state, after_state, test):
-    """Tag-gated: the resolved question's own state must survive untouched.
-
-    Companion to `test_no_plan_writes_when_resolved`, and the more important
-    half. That one guards `plans[]`; this guards the fields the ut_003 prompt
-    actually tempts the skill to change.
-
-    Why it has to exist here rather than being covered already: the universal
-    `test_ownership_table` / `test_tree_ownership_table` **skip themselves on
-    negative tests**, and their docstring gives the reason — "a negative test
-    where the skill *does* wrongly activate already fails on the routing
-    check." `grade_on_invariant: true` is precisely the flag that removes that
-    routing check (`orchestrator.py` returns "pass" the moment validators
-    pass), so for this test the premise behind the skip is void and nothing
-    replaces it. Verified against the real fixture: with a writer-tool call
-    present, flipping `q_001` back to open, un-declaring exhaustiveness,
-    reopening `project.status`, or rewriting the question text all scored a
-    clean pass before this check existed.
-
-    That is the harm the prompt invites. "The probate search came up empty —
-    are we done?" tempts reopening the question far more than it tempts adding
-    a plan item, and reopening silently undoes a completed GPS proof: the
-    declaration and the proof summary both cite the negative probate result.
-
-    Deliberately narrow. A blanket "questions[] must not change" would
-    false-fail the legitimate routes — `question-selection` may append a
-    follow-on question, which is one of this test's `correct_skill` answers.
-    So this names the specific deltas that are never legitimate here: the
-    target question's `status` and `search_stop`, and
-    `project.status`. Same shape as
-    `test_search_external_sites.py::test_no_external_search_or_log_on_routeaway_negative`.
-    """
-    if "no-plan-writes-when-resolved" not in test.get("tags", []):
-        pytest.skip("not a no-plan-writes-when-resolved scenario")
-    before = before_state.get("research_json")
-    after = after_state.get("research_json")
-    if before is None or after is None:
-        pytest.skip("missing research.json for diff")
-
-    def _resolved(research: dict) -> dict:
-        return {
-            q.get("id"): q
-            for q in (research.get("questions") or [])
-            if q.get("status") == "resolved"
-            or (q.get("search_stop") or {}).get("stopped_because") in {"question_answered", "record_exhausted", "nothing_further_reachable"}
-        }
-
-    before_q = _resolved(before)
-    if not before_q:
-        pytest.skip("no resolved/declared question in the before-state")
-
-    errors: list[str] = []
-    after_q = {q.get("id"): q for q in (after.get("questions") or [])}
-    for qid, was in before_q.items():
-        now = after_q.get(qid)
-        if now is None:
-            errors.append(f"{qid}: resolved question DELETED")
-            continue
-        for field in ("status", "search_stop", "question",
-                      "resolution_assertion_ids", "resolved"):
-            if was.get(field) != now.get(field):
                 errors.append(
-                    f"{qid}: '{field}' changed {was.get(field)!r} -> "
-                    f"{now.get(field)!r} on a question whose search is "
-                    f"already declared exhaustive"
+                    f"{pid}: plan field {field!r} changed {prior.get(field)!r} -> "
+                    f"{plan.get(field)!r}; Dispose mode leaves the plan itself alone"
                 )
-
-    before_status = (before.get("project") or {}).get("status")
-    after_status = (after.get("project") or {}).get("status")
-    if before_status != after_status:
-        errors.append(
-            f"project.status changed {before_status!r} -> {after_status!r}"
-        )
-
-    assert not errors, (
-        "the resolved question's own state was modified:\n  - "
-        + "\n  - ".join(errors)
-    )
+        was_items = {i.get("id"): i for i in (prior.get("items") or []) if i.get("id")}
+        now_items = {i.get("id"): i for i in (plan.get("items") or []) if i.get("id")}
+        errors += [f"{pid}: item {i} added" for i in sorted(now_items.keys() - was_items.keys())]
+        errors += [f"{pid}: item {i} deleted" for i in sorted(was_items.keys() - now_items.keys())]
+        for iid in sorted(was_items.keys() & now_items.keys()):
+            was, now = was_items[iid], now_items[iid]
+            if was == now:
+                continue
+            if was.get("status") != "planned":
+                errors.append(f"{iid}: changed, but it was {was.get('status')!r}, not planned")
+                continue
+            if named and iid not in named:
+                errors.append(f"{iid}: changed, but the delegation did not name it")
+            rest = lambda item: {k: v for k, v in item.items() if k not in _DISPOSE_FIELDS}  # noqa: E731
+            if rest(was) != rest(now):
+                errors.append(f"{iid}: fields other than status/skip_category/skip_reason changed")
+            status = now.get("status")
+            if status == "skipped":
+                if not now.get("skip_category"):
+                    errors.append(f"{iid}: skipped with no skip_category")
+                disposed.append(iid)
+            elif status == "completed":
+                if iid not in logged:
+                    errors.append(f"{iid}: completed, but no log entry names it")
+                disposed.append(iid)
+            else:
+                errors.append(f"{iid}: status {status!r} is not a disposal")
+    if not disposed:
+        errors.append("no planned item was disposed of")
+    still_planned = {
+        i.get("id")
+        for p in (after.get("plans") or [])
+        for i in (p.get("items") or [])
+        if i.get("status") == "planned"
+    }
+    errors += [f"{iid}: named for disposal but still planned" for iid in sorted(named & still_planned)]
+    assert not errors, "Dispose mode wrote the wrong thing:\n  - " + "\n  - ".join(errors)
 
 
 # --- Tag-gated: existing in-progress plan items stay in_progress -----
@@ -550,9 +503,14 @@ _FORBIDDEN_SKILL = "locality-guide"
 def test_research_plan_no_out_of_lane_tools(
     tool_calls, attempted_mcp_calls, skills_invoked, builtin_tool_calls=None
 ):
-    """research-plan states "You have no place-survey tools" (SKILL.md Step 2).
-    Fail on any call OR attempt of wiki_search / wiki_place_page /
+    """research-plan states "You have no place-survey tools" (the agent body's
+    Step 2). Fail on any call OR attempt of wiki_search / wiki_place_page /
     place_population, or delegation to locality-guide. Issue #1866 V2.
+
+    The agent holds none of these tools and no spawn tool (its `tools:` list,
+    pinned by agent-tool-names.test.ts), so on the direct arm this gate catches
+    a widened grant or a dispatcher that strays from its one Agent call, not a
+    call the agent can make today.
     `wiki_read` is granted since issue #2251 for the Step 3 record-type
     pre-work and is deliberately not in the prohibition.
 
@@ -985,7 +943,7 @@ def _person_source_grams(person: dict, tree: dict, noise: set[str]) -> set[str]:
     return grams - noise
 
 
-def report_survey_surfaces_already_attached_fan_facts(before_state, text_response, test):
+def report_survey_surfaces_already_attached_fan_facts(before_state, text_response, test, agent_returns=None):
     """Tag-gated (issue #1948), tier 2 -- reporting only, per ADR-0011 /
     `unit-test-spec.md`: the harness can detect whether a non-subject
     person's already-sourced fact was surfaced, but not decide whether the
@@ -1103,11 +1061,16 @@ def report_survey_surfaces_already_attached_fan_facts(before_state, text_respons
     tree = before_state.get("tree_gedcomx_json") or before_state.get("tree_gedcomx")
     if research is None or tree is None:
         pytest.skip("missing research.json or tree.gedcomx.json for before-state")
-    if not text_response:
-        pytest.skip("no text_response captured")
+    # On the direct arm `text_response` is the dispatcher relaying the agent's
+    # return, possibly paraphrased; grade the agent's own words (issue #2116).
+    from harness.skill_runner import subject_reply_text
+
+    reply = subject_reply_text(agent_returns, text_response, test.get("skill") or "research-plan", test)
+    if not reply:
+        pytest.skip("no reply captured")
 
     subject_ids = set(research.get("project", {}).get("subject_person_ids") or [])
-    response_lower = text_response.lower()
+    response_lower = reply.lower()
     paragraphs = [response_lower]
     noise = _survey_noise_grams(research, tree)
 
