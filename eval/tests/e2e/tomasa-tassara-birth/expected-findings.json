@@ -11,7 +11,9 @@
         "place": "Buenos Aires, Argentina"
       },
       "supporting_sources": [
-        "Argentina, National Census, 1895 — household entry for Tomasa Tassara, Cuartel 01 (Población rural), Mercedes, Buenos Aires, born 1864"
+        "Argentina, National Census, 1895 — household entry for Tomasa Tassara, Cuartel 01 (Población rural), Mercedes, Buenos Aires, born 1864",
+        "INDEXED (hint record): ark:/61903/1:1:MW49-LBB — Tomasa Tassara, married, Birth 1864, Buenos Aires, Argentina; Census 1895, Cuartel 01 (Población rural), Mercedes, Buenos Aires. Birth year and birthplace are indexed (the year is an age-derived 'about 1864'; the place is only 'Buenos Aires', which in this census can be the province or the city).",
+        "CORROBORATION (indexed household members, same 1895 census, Cuartel 01 rural Mercedes): husband Juan Rossello ark:/61903/1:1:MW49-LBT (b.1858 Italy, married); children Juan ark:/61903/1:1:MW49-LB5 (b.1886), Catalina ark:/61903/1:1:MW49-LBY (b.1888), Angela ark:/61903/1:1:MW49-LB1 (b.1890) and Bartolome ark:/61903/1:1:MW49-LBR (b.1892) — each child's indexed year matches the tree within ±1, and Maria (tree b.1898) is correctly absent, being born after the census."
       ],
       "required": true
     }
