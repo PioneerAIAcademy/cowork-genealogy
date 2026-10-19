@@ -175,6 +175,21 @@ def test_an_aborted_turn_names_its_abort():
     assert "stop=max_wall_clock_seconds" in line
 
 
+def test_a_capped_turn_that_saved_still_fails_on_stop():
+    g, line = run([agent("source-evaluation")], aborted="max_tool_calls")
+    assert not g.passed
+    assert "failed=[stop]" in line
+
+
+def test_a_background_spawn_is_flagged():
+    calls = [{**agent("source-evaluation"), "response_summary": "Async agent launched successfully. agentId: a1"}]
+    g, line = run(calls, final_research=final())
+    assert g.background_spawns == 1
+    assert "background spawns: 1" in line
+    _, quiet = run([agent("source-evaluation")])
+    assert "background spawns" not in quiet
+
+
 def test_missing_research_json_fails_save_and_no_research_job():
     g, line = run([agent("source-evaluation")], final_research=None)
     assert g.failed == ["no_research_job", "save"]
@@ -224,6 +239,8 @@ def _write(tmp_path: Path, **over) -> Path:
         {"expected_save": {"section": "log"}},
         {"expected_save": "log"},
         {"expected_owner": ""},
+        {"is_plan_ask": "false"},
+        {"setup_units": "init-project"},
     ],
 )
 def test_bad_fixture_is_refused(tmp_path, over):

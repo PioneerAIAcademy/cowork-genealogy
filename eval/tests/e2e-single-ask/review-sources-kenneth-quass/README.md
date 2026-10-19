@@ -35,10 +35,11 @@ entries or sources.
 
 ## Caps
 
-`wall_clock_seconds: 1200`, `tool_calls: 60`, `max_turns: 60`, `max_cost_usd: 3`. One
-source review of one person is a short job; the autonomous defaults (two hours, $15)
-would let a turn that wrongly starts a research job run on and cost a full e2e run
-before it fails.
+`wall_clock_seconds: 1200`, `tool_calls: 60`, `max_turns: 60`. One source review of one
+person is a short job (the first run took 3 minutes and 25 tool calls). The autonomous
+defaults (two hours, 300 tool calls) would let a turn that wrongly starts a research job
+run on for the price of a full e2e run before it ends. `max_cost_usd: 3` only labels a
+run that went over; it does not stop one (spec §6).
 
 ## Cost
 

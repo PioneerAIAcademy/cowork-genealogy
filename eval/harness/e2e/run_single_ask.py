@@ -68,6 +68,11 @@ def load_single_ask_fixture(fixture_dir: Path) -> tuple[Fixture, SingleAskSpec]:
         )
     if save["section"] == "log" and not save.get("tool"):
         raise FixtureError(f"{fixture_dir.name}: a log expected_save needs a `tool`")
+    if not isinstance(raw.get("is_plan_ask", False), bool):
+        raise FixtureError(f"{fixture_dir.name}: is_plan_ask must be true or false")
+    setup = raw.get("setup_units") or []
+    if not isinstance(setup, list) or not all(isinstance(u, str) for u in setup):
+        raise FixtureError(f"{fixture_dir.name}: setup_units must be a list of unit names")
     for name in ("starting-research.json", "starting-tree.gedcomx.json"):
         if not (fixture_dir / name).is_file():
             raise FixtureError(f"{fixture_dir.name}: {name} is missing")
@@ -90,8 +95,8 @@ def load_single_ask_fixture(fixture_dir: Path) -> tuple[Fixture, SingleAskSpec]:
         message=raw["message"],
         expected_owner=raw["expected_owner"],
         expected_save={k: str(v) for k, v in save.items()},
-        is_plan_ask=bool(raw.get("is_plan_ask", False)),
-        setup_units=tuple(raw.get("setup_units") or ()),
+        is_plan_ask=raw.get("is_plan_ask", False),
+        setup_units=tuple(setup),
         must_not=str(raw.get("must_not") or ""),
     )
     return fixture, spec

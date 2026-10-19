@@ -2641,7 +2641,7 @@ would need an exclusion in every reader and breaks the first time one is missed.
 | `is_plan_ask` | no (false) | allows `research-plan` and a new `plans` entry |
 | `setup_units` | no (`[]`) | units skipped when finding the owner, e.g. `["init-project"]` for a new-folder ask |
 | `must_not` | no | free text; printed, not graded |
-| `caps` | no | the keys of `FixtureCaps` (§6). Set them low and give the reason in the README |
+| `caps` | no | the keys of `FixtureCaps` (§6). Set `wall_clock_seconds` and `tool_calls` low and give the reason in the README; they are what end a runaway turn (`max_cost_usd` only labels one) |
 | `model.agent`, `blocked_tools` | no | as for autonomous fixtures (§3.1, §6.1) |
 
 Plus `starting-research.json` and `starting-tree.gedcomx.json`, named as for
@@ -2669,7 +2669,7 @@ There is no `expected-findings.json` and no judge.
 
 ### 16.4 Grade
 
-Deterministic, in `e2e/single_ask_grade.py`. PASS only if all three hold:
+Deterministic, in `e2e/single_ask_grade.py`. PASS only if all four hold:
 
 1. **`owner`** — the first **main-thread** `Agent`/`Task`/`Skill` spawn, skipping the
    `research` router and any `setup_units`, is `expected_owner`. A spawn inside a
@@ -2681,10 +2681,14 @@ Deterministic, in `e2e/single_ask_grade.py`. PASS only if all three hold:
 3. **`save`** — a new `sources` entry, or a new `log` entry whose `tool` is the
    expected value. "New" means its id is in the final `research.json` and not in
    `starting-research.json`.
+4. **`stop`** — the turn ended on its own. A turn a cap or watchdog cut off fails
+   here even if it saved: the patron never got the answer.
 
 Printed, not graded: whether the main thread called `research_delivered`, every
 unit in order (nested ones in brackets), the `extraction_append` count, how the
-turn stopped (`stop=clean` or the abort reason), and the whole-run cost estimate.
+turn stopped (`stop=clean` or the abort reason), the whole-run cost estimate, and
+any background spawn ("Async agent launched"), whose save can land after the grade
+reads `research.json`.
 A turn that ended on `host_slept` is printed `UNGRADED` and counts as a failure.
 
 ### 16.5 What a pass does not show

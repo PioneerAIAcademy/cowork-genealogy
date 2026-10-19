@@ -15,6 +15,9 @@ PASS needs all three checks:
 - ``save`` — the expected save is new: a ``sources`` entry, or a ``log`` entry
   whose ``tool`` is the expected value. New = id in the final ``research.json``
   and absent from the starting one.
+
+A turn a cap or watchdog cut off also fails, on ``stop``: what it saved before
+the cut is not an answer the patron got.
 """
 
 from __future__ import annotations
@@ -24,7 +27,8 @@ from typing import Any
 
 ROUTER_UNIT = "research"
 SAVE_SECTIONS = ("log", "sources")
-CHECKS = ("owner", "no_research_job", "save")
+CHECKS = ("owner", "no_research_job", "save", "stop")
+ASYNC_LAUNCH = "Async agent launched"
 
 
 @dataclass(frozen=True)
@@ -47,6 +51,7 @@ class SingleAskGrade:
     delivered: bool
     extraction_appends: int
     stop: str
+    background_spawns: int = 0
     failed: list[str] = field(default_factory=list)
 
 
@@ -69,13 +74,17 @@ def _is_main(entry: dict[str, Any]) -> bool:
     return entry.get("agent_id") is None
 
 
+def _is_agent(tool: str) -> bool:
+    return tool.endswith("Agent") or tool.endswith("Task")
+
+
 def spawned_units(tool_calls: list[dict[str, Any]]) -> list[dict[str, Any]]:
     """Every Agent/Task and Skill call, in order, with its thread."""
     units: list[dict[str, Any]] = []
     for entry in tool_calls:
         tool = str(entry.get("tool") or "")
         args = entry.get("args") or {}
-        if tool.endswith("Agent") or tool.endswith("Task"):
+        if _is_agent(tool):
             name = _unit_name(args.get("subagent_type") or "general-purpose")
         elif tool == "Skill":
             name = _unit_name(args.get("skill") or "?")
@@ -170,6 +179,13 @@ def grade(
     extraction_appends = sum(
         1 for e in tool_calls if _bare(str(e.get("tool") or "")) == "extraction_append"
     )
+    checks["stop"] = (aborted_reason is None, aborted_reason or "clean")
+    # A background spawn's work can land after research.json is read, so a
+    # `save` FAIL beside one may be a timing artifact; printed, not graded.
+    background_spawns = sum(
+        1 for e in tool_calls
+        if _is_agent(str(e.get("tool") or "")) and ASYNC_LAUNCH in str(e.get("response_summary") or "")
+    )
     failed = [name for name in CHECKS if not checks[name][0]]
     return SingleAskGrade(
         passed=not failed,
@@ -179,6 +195,7 @@ def grade(
         delivered=delivered,
         extraction_appends=extraction_appends,
         stop=aborted_reason or "clean",
+        background_spawns=background_spawns,
         failed=failed,
     )
 
@@ -198,6 +215,11 @@ def format_line(spec: SingleAskSpec, g: SingleAskGrade) -> str:
     if g.failed:
         line += f"  failed=[{','.join(g.failed)}]"
     line += f"\n    units: {order}  extraction_append={g.extraction_appends}"
+    if g.background_spawns:
+        line += (
+            f"\n    background spawns: {g.background_spawns} "
+            "(their saves can land after the grade read research.json)"
+        )
     if not g.checks["no_research_job"][0]:
         line += f"\n    research job: {g.checks['no_research_job'][1]}"
     if spec.must_not:
