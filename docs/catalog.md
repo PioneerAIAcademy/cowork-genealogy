@@ -109,9 +109,9 @@ way project state changes.
 
 `logout` and `auth_status` are direct-invocation tools — Claude calls
 them in response to the user ("log me out", "am I logged in?") rather
-than as part of any skill workflow. `login` is invoked both directly
-by the `search-records` and `init-project` and
-`search-external-sites` agents, when a tool call needs authentication.
+than as part of any skill workflow. `login` is invoked the same way, in
+response to the user. No agent holds it: `search-records` tells the user to
+ask for a login when a search fails on authentication.
 
 The `place_population` tool combines data from populstat (234 countries),
 gapminder, and FamilySearch indexed birth records. The `wiki_search`

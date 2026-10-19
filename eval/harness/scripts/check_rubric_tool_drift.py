@@ -328,6 +328,20 @@ SUPPRESSIONS: list[dict[str, str]] = [
     },
     {
         "file": "eval/tests/unit/research-plan/locality-survey-first-plan.json",
+        "tool": "wiki_search",
+        "quotes": [
+            "it should NOT call wiki_search / wiki_place_page / place_population (research-plan no longer holds those tools - the know-how comes from the localities entry). Do NOT fail it for not surveying.",
+        ],
+        "reason": (
+            "negative mention naming the retirement outright - 'it should "
+            "NOT call wiki_search / wiki_place_page / place_population "
+            "(research-plan no longer holds those tools - the know-how "
+            "comes from the localities entry). Do NOT fail it for not "
+            "surveying.'"
+        ),
+    },
+    {
+        "file": "eval/tests/unit/research-plan/locality-survey-first-plan.json",
         "tool": "wiki_place_page",
         "quotes": [
             "it should NOT call wiki_search / wiki_place_page / place_population (research-plan no longer holds those tools - the know-how comes from the localities entry). Do NOT fail it for not surveying.",
@@ -352,6 +366,19 @@ SUPPRESSIONS: list[dict[str, str]] = [
             "(research-plan no longer holds those tools - the know-how "
             "comes from the localities entry). Do NOT fail it for not "
             "surveying.'"
+        ),
+    },
+    {
+        "file": "eval/tests/unit/research-plan/plan-danish-parentage-includes-levy-rolls.json",
+        "tool": "wiki_search",
+        "quotes": [
+            "it should NOT call wiki_search / wiki_place_page / place_population (research-plan no longer holds those tools). Do NOT fail it for not surveying.",
+        ],
+        "reason": (
+            "negative mention naming the retirement outright - 'it should "
+            "NOT call wiki_search / wiki_place_page / place_population "
+            "(research-plan no longer holds those tools). Do NOT fail it "
+            "for not surveying.'"
         ),
     },
     {

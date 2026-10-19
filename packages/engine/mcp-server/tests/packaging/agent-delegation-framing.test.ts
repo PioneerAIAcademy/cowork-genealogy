@@ -328,7 +328,8 @@ const DELEGATION_EDGES: Record<string, Edge> = {
     pins: [
       {
         side: "caller",
-        excerpt: "the `questionId` and `planItemId` for `@plugin:search-records`",
+        excerpt:
+          "Do not pre-judge the agent's gate — read nothing\n   beyond the ids you are passing, and judge nothing",
       },
       {
         side: "agent",
