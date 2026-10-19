@@ -1,0 +1,10 @@
+{
+  "tool": "wiki_read",
+  "description": "Catch-all wiki_read fixture for a page no specific fixture covers: answers with the real tool's not-found text (src/tools/wiki-read.ts, on a 404: 'No wiki page found for \"<slug>\". The page may not exist in the corpus.'), in the shape of wiki-read-cuba-naming-customs-not-found.json, rather than wiki-read-any.json's invented page, which the agent would plan from. The agent's documented path for this answer is to say so and plan from the localities entry. List it AFTER a test's specific wiki-read fixtures so they answer first. Added for the research-plan suite (issue #2116), where an unanticipated call otherwise returns fixture_not_found and fails the run on Tool Arguments.",
+  "args": {
+    "url": "~"
+  },
+  "response": {
+    "error": "No wiki page found for this URL. The page may not exist in the corpus."
+  }
+}

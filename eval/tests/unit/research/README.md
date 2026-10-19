@@ -44,7 +44,8 @@ first as often as before. The runs are on #3119.
 
 Not restored:
 
-- `ut_research_002` (`slash-research-question.json`), which issue #3116 owns.
+- `ut_research_002` (`slash-research-question.json`). Its slash-entry defect was
+  fixed in PR #3146; `ut_research_so2` now covers a `/research` entry.
 - `ut_research_003` (`find-relative.json`), which is not part of #2927's removal
   condition.
 
@@ -63,13 +64,46 @@ that is still a skill is stubbed at its `Skill` call only, except on a test that
 sets `execution.stop_at_stub`, such as `ut_research_015` below: there a spawn of
 any stubbed name is denied too and ends the run.
 
+## Agent dispatch tests (issue #1851)
+
+Every agent the routing table spawns is the asserted first hand-off of at least
+one `routes-to:` test. The last five were added together, each copying `ut_research_012`: every neighbour stubbed, the
+first hand-off asserted by `test_routes_to_expected_skill`, and a `judge_context`
+that keeps the judge off the routing decision.
+
+| Test | Row | Scenario |
+|---|---|---|
+| `ut_research_pe7` | Assertions not yet linked to persons | `flynn-household-skeleton` |
+| `ut_research_rx4` | All plan items completed or skipped, analysis done | `ma-birth-record-unsearched` |
+| `ut_research_es9` | Unexecuted plan item, non-FS branch | `ma-state-census-external` |
+| `ut_research_si3` | Plan item targets a digitized-but-unindexed set | `barren-order-books-browse-only` |
+| `ut_research_rs5` | Positive log entry with no assertion, non-FS branch | `ma-state-census-capture-returned` |
+
+`search-images` was spelled as a bare name in the table, which the table's own
+legend reads as a `Skill` call. The skill was deleted in #2268, so the row now
+spells `@plugin:search-images`, and `_paired_names()` picks it up.
+
+`ut_research_es9` failed once in its first suite run because the router followed
+`project_context`'s advisory `nextStep`, which then said `search-records` for any
+planned item whatever its repository. The step now names `search-external-sites`
+for a non-FamilySearch item (`docs/specs/project-context-tool-spec.md`). The
+advisory is still wrong on two of these states and the router passed both 3 of 3
+regardless: for `pe7` it says `research-exhaustiveness`, because a no-link leaves
+no record to tell a rejected assertion from an unlinked one, and for `si3` it says
+`search-records`, because browse-only is stated only in the plan item's rationale.
+
+Rows not given a test of their own: the "not yet exhaustive" and "declaration
+refused" rows route on what `research-exhaustiveness` returned in the same
+session, which a fresh-context test cannot seed; the proof-conclusion
+tree-encoding and `exhaustive_declared` rows reach the same agent that
+`ut_research_s59` already asserts.
+
 ## What is NOT covered (and why)
 
-- **Second-opinion hand-off and verdict handling**: gps-mentor is not a
-  routing row; it runs only on request. Neither the on-demand hand-off nor what
-  the router does with the returned verdict is tested. A `/research` entry
-  never records `research` as invoked, so a positive test of the hand-off fails
-  even when it routes correctly; a bare second-opinion request bypasses the
+- **Second-opinion verdict handling**: gps-mentor is not a routing row; it
+  runs only on request. `ut_research_so2` covers the on-demand hand-off from a
+  `/research` entry with gps-mentor stubbed, so what the router does with the
+  returned verdict is not tested. A bare second-opinion request bypasses the
   router and spawns gps-mentor directly (9 of 9 scratch runs, three wordings).
 - **Row 16** (blocked on #1492, research/SKILL.md reconciliation): who writes `project.status = "completed"` — the routing table,
   the ownership validator, the tool comments, and the empirical run logs all
@@ -182,10 +216,9 @@ its validator, and nobody could see it; 022 says so in its own description and h
 this whole section. Every e2e run enters as `/research --autonomous {question}`, so
 every run reads it, and 63 of the 136 committed e2e fixtures ask a question whose
 SHAPE is on the bounded list. Without the `--autonomous` carve-out the router would
-deliver one answer and stop on those. Its message deliberately omits the leading
-`/research`: `skills_invoked` is filled only by a `Skill` tool call, so a slash entry
-grades a positive test `fail` whatever the router does (issue #3116, fix PR #3146 open).
-Restore the prefix once that lands and this becomes the e2e entry form exactly.
+deliver one answer and stop on those. Its message carries the leading `/research`, restored
+once PR #3146 made `skills_invoked` record a slash-command entry at index 0, so this
+is the e2e entry form exactly.
 
 **What they do NOT cover, and cannot:** that a bounded turn ends with the
 `delivered` OUTCOME. `research_delivered` IS in this harness's `LIVE_TOOLS` now, so the
@@ -212,6 +245,10 @@ to research-plan or search-records.
 - **ut_research_018** (`negative-next-question.json`): near-miss negative — user asks "what should I research next?" (→ question-selection). Tag: `no-exhaustive-declaration`, `grade_on_invariant`. Moved from research-exhaustiveness suite when the routing skill was deleted.
 - **ut_research_024** (`negative-research-plan-exhaustiveness.json`): near-miss negative — user asks to plan more searches (→ research-plan). Tag: `no-exhaustive-declaration`, `grade_on_invariant`. Moved from research-exhaustiveness suite when the routing skill was deleted.
 
-**Future hazard:** ut_research_024 names `correct_skill: ["research-plan"]`; when issue #2116 deletes that skill directory the test will abort at `runnability.py`'s `correct_skill` check. ut_research_018 names `correct_skill: ["question-selection"]`, which is already an agent (not a skill) and remains runnable because the check accepts agent names — but if the agent is ever renamed or deleted, the test aborts the same way.
+**Converted callees:** ut_research_024 names `correct_skill: ["research-plan"]` and ut_research_018 `["question-selection"]`. Both are agents now (issue #2116 deleted the research-plan skill), and both tests stay runnable because `runnability.py`'s `correct_skill` check accepts an agent name; the routing short-circuit stops on an `Agent` spawn of either. If an agent is ever renamed or deleted, the test aborts at that check.
+
+### Moved from research-plan (issue #2116)
+
+- **ut_research_rpn** (`handle-negative-probate-result.json`, formerly `ut_research_plan_003`): near-miss negative — on a project whose question is resolved, "what should the next plan item look like, or are we done?" must write no plan. Tags `research-plan-no-new-plan` and `no-plan-writes-when-resolved`, `grade_on_invariant`. Moved when the research-plan skill was deleted (Richard's 2026-09-24 note on that issue, applying the issue #2738 ruling); its three validators moved into `validators/test_research.py`.
 
 A live `make e2e-run` remains the only end-to-end instrument.
