@@ -218,15 +218,18 @@ def test_a_typed_yes_after_a_turn_with_no_hand_back_is_its_own_message(tmp_path)
     assert len(project.messages[True]) == 3
 
 
-@pytest.mark.parametrize("between", ["interrupt", "API error"])
+@pytest.mark.parametrize("between", ["interrupt", "API error", "API error with no text"])
 def test_a_yes_after_an_interrupted_or_failed_hand_back_is_its_own_message(tmp_path, between):
     """The runner never answers a hand-back the person interrupted or an error followed, so a
-    "Yes." after either was typed."""
-    stop = (_row("s", 2, type="user", message={"role": "user", "content": [
-                {"type": "text", "text": "[Request interrupted by user]"}]})
-            if between == "interrupt" else
-            call("s", 2, "err", model="<synthetic>", text="API Error: Connection closed mid-response.",
-                 isApiErrorMessage=True))
+    "Yes." after either was typed. An error clears the hand-back even with no text of its own."""
+    if between == "interrupt":
+        stop = _row("s", 2, type="user", message={"role": "user", "content": [
+            {"type": "text", "text": "[Request interrupted by user]"}]})
+    else:
+        stop = call("s", 2, "err", model="<synthetic>", text="API Error: Connection closed mid-response.",
+                    isApiErrorMessage=True)
+        if between == "API error with no text":
+            stop["message"]["content"] = []
     rows = [person("s", 0, "Start."),
             call("s", 1, "a", cw=40_000, text="Found it.\nNext: search records. Continue?"),
             stop, person("s", 3, "Yes."), call("s", 4, "b", cr=40_000)]
