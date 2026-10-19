@@ -2373,7 +2373,7 @@ describe("research_append (Phase 3)", () => {
         projectPath: dir,
         section: "timelines",
         op: "append",
-        entry: { label: "test timeline", person_ids: ["I1"], events: [], gaps: [], ...fields },
+        entry: { label: "test timeline", person_ids: ["I1"], events: [], gaps: [], ...(fields as Record<string, unknown>) },
       } as never);
       expect(r.ok).toBe(false);
       if (r.ok) return;
