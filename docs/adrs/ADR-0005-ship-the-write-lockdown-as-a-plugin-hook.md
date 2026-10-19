@@ -6,7 +6,7 @@
 
 - **Status:** Accepted
 - **Decided:** 2026-07-30 (#989; Windows path fix #984)
-- **Last updated:** 2026-08-19 (the caller check reached production; the per-context trigger fired)
+- **Last updated:** 2026-10-19 (the step-mode phase-0 probe: a plugin hook can halt a Cowork turn; `SessionStart` and `Stop` fire)
 - **Deciders:** Dallan Quass
 - **Supersedes:** —
 - **Superseded by:** —
@@ -184,6 +184,66 @@ this ADR records behaviour rather than citing them:
   either. Nothing depends on `SessionStart` today; it is recorded because it is
   the natural place to put per-session setup (seeding state, injecting project
   context) and it would silently not run. `CLAUDE.md` carries that as a rule.
+  **Contradicted 2026-10-19:** it fired, on startup and on resume (below).
+
+**What the step-mode phase-0 probe found (Cowork, 2026-10-19).** Phase 0 of
+`docs/plan/research-step-mode.md`, measured with `apps/server/dev/step-probe/`: a
+recorder plugin on `PreToolUse` (matcher `.*`), `UserPromptSubmit`,
+`SessionStart` and `Stop`. One session on macOS, run by Praise, with the plugin
+and `.mcpb` built from `main` at `04ea53f86`: 10 user messages, 45 hook lines.
+The control held, with 25 `PreToolUse` lines.
+
+| # | Question | Result |
+|---|---|---|
+| 1 | `PreToolUse` fires on main-thread `Agent`/`Task`/`Skill` calls | **Not exercised, still open.** No such call was made: the model answered the research prompt with direct MCP calls |
+| 2 | `UserPromptSubmit` fires and carries the prompt text | Yes, on 10 of 10 messages, each with its text |
+| 3 | `prompt_id` | On every line except `SessionStart`. One value per user message (10 distinct), shared by that turn's `PreToolUse` and `Stop` lines |
+| 4 | `transcript_path` is readable from the hook | Yes, 45 of 45. It is a path inside the VM |
+| 5 | A deny is honoured, and the model reports and ends | Yes. The canary write (via `device_bash`) was denied; the model quoted the sentinel, did not retry, and ended. No file was written |
+| 6 | Sibling calls in one turn are visible | Yes, up to 7 per `prompt_id` |
+| 7 | The hook can read `research.json` from its cwd | **No.** The hook's cwd is `/home/claude` in the VM, which holds only dotfiles. The model reached the project only through `device_bash`, on the host. `guard_project_files.py`'s claim holds here too |
+| 8 | A file the hook writes survives to its next call | Yes. The counter rose from 1 to 44 across every call, including across a resume 53 minutes later |
+| 9 | A plugin `PreToolUse` hook can end a Cowork turn | **Yes,** with `"continue": false` and a `stopReason` alongside the deny |
+
+**Item 9 is attributable to the runtime, not the model.** The halt fired on the
+first of two queued tasks, `cat STEP_PROBE_HALT.txt`. After it came no further
+tool call, no reply and no `Stop` line. It was the only one of the 10 turns with
+no `Stop`. The skipped second task is not the evidence, because the halt's reason
+text tells the model to end its turn. Message 3 is the control: its plain deny
+carried the same instruction, and the model replied and `Stop` fired, carrying
+that reply. So the model acts on a deny, while the runtime enforces a halt. The
+operator confirmed they did not press stop, which also leaves no `Stop` line. On
+the alpha a plain deny did not end a turn (`apps/server/dev/probe_step_deny.py`,
+2026-10-19); that probe measured a deny, not the halt fields.
+
+The operator reported seeing no reply, read the stop as a failure, and re-sent the
+message. A step boundary built on the halt has to tell the researcher that the
+step finished some other way.
+
+**What contradicts earlier records:**
+
+- **`SessionStart` fires.** It fired twice: with `source: "startup"` when the
+  session opened, and `source: "resume"` when it resumed after 53 minutes. That
+  reverses the 2026-07-30 finding above, and nothing here identifies why. As with
+  the tool-name spelling in ADR-0004, read it as a moving target: nothing should
+  depend on `SessionStart` firing in Cowork, or on it not firing.
+- **A plugin `Stop` hook fires.** There were 8 lines, each carrying
+  `stop_hook_active` and `last_assistant_message`, the model's final reply. The
+  probe was built on the belief that Cowork has no `Stop` hook. That is true only
+  of the SDK's `hooks=`; a plugin's `hooks.json` does register one.
+- **`permission_mode` was `"auto"`,** not the `"default"` stated in the Decision.
+  Whether that is a per-session setting is not known. The hooks bound under it.
+
+**What it means for step mode** (the plan decides; recorded here so it is not
+re-measured):
+
+- In Cowork the boundary can be a halt rather than a deny.
+- The turn is findable from `UserPromptSubmit` and `prompt_id`, and a state file
+  beside the hook persists between calls.
+- `ctx` cannot come from the hook's cwd (item 7), so under the plan's own rule the
+  Cowork host passes nothing unless it derives `ctx` from the transcript (item 4).
+- The plan's fallback, "Cowork runs on router prose alone" if the hook cannot find
+  turns or keep state, is not triggered.
 
 `docs/specs/guardrail-enforcement-spec.md` **§6** is the authority on this
 guardrail; **§4** is the table of every guardrail's instrument, binding

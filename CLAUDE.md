@@ -320,11 +320,13 @@ cannot be made to; a plugin-shipped `hooks/hooks.json` binds in both. Cowork run
 `permission_mode: "default"`, the hosted path runs `bypassPermissions`, and a
 hook binds under both.
 
-**`SessionStart` hooks do not fire in Cowork.** Nothing depends on one today, so
-do not put per-session setup — seeding state, injecting project context — in
-one: it would silently not run. `PreToolUse` does fire. Both were probed live;
-where an upstream issue thread says otherwise, the probe wins. Dates, probes and
-thread numbers: ADR-0005.
+**Do not depend on `SessionStart` in Cowork.** It did not fire on 2026-07-30 and
+did on 2026-10-19 (startup and resume), so it has moved once already. Nothing
+depends on one today; do not put per-session setup — seeding state, injecting
+project context — in one. `PreToolUse`, `UserPromptSubmit` and a plugin `Stop`
+hook all fire, and a `PreToolUse` hook returning `"continue": false` ends the turn.
+All were probed live; where an upstream issue thread says otherwise, the probe
+wins. Dates, probes and thread numbers: ADR-0005.
 
 Hook scripts run in the VM: **stdlib-only Python, no network** — the same rule
 as skill `scripts/`. A hook must never raise; every failure path falls through

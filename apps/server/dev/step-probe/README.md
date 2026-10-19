@@ -58,8 +58,12 @@ ship.
 **2. Drive one session** in a folder that holds a real project (items 7 and 8 are
 about the project folder, so an empty one answers a different question):
 
-1. Send a message that starts research, so a `Skill`/`Agent`/`Task` call happens
-   on the main thread. This is item 1 and, through `PreToolUse`, the control.
+1. Ask, in words, for a skill by name: "Use the research skill to continue
+   researching this project." This is item 1. A research question alone is not
+   enough: on 2026-10-19 the model answered one with direct tool calls and made
+   no `Skill`/`Agent`/`Task` call at all, which leaves item 1 unexercised. A
+   typed `/research` may not be enough either, since a slash command can expand
+   into the message without the model ever calling `Skill`.
 2. Send a **second** message. Item 3's semantics need two turns: one turn can
    show a `prompt_id` exists but not whether it changes between turns.
 3. Ask it to write a file named `STEP_PROBE_CANARY.txt`. That is item 5's
@@ -73,6 +77,11 @@ about the project folder, so an empty one answers a different question):
    turn, exactly as a plain deny did not on the alpha
    (`apps/server/dev/probe_step_deny.py`, 2026-10-19). Two tasks, not one: with
    a single task the turn ends either way and the result proves nothing.
+   **The skipped second task is not the evidence on its own:** the halt's reason
+   text tells the model to end its turn, so a model obeying a plain deny would
+   skip it too. What separates them is whether the model replies at all. Step 3
+   is the control: its deny also says to end the turn, and the model replies and
+   `Stop` fires. A halt the runtime honours leaves no reply and no `Stop` line.
 
 **3. Read it:**
 
@@ -90,9 +99,12 @@ the session, ask it to find the log and copy it into the connected folder:
 find / -name step-probe.jsonl 2>/dev/null
 ```
 
-**`read_probe.py` does not report item 9.** It reads the hook's own records, and
-whether the runtime HONOURED the halt is only visible in the session: if the
-second task ran after the halt, the halt did not end the turn.
+**`read_probe.py` does not score item 9, but the log shows it.** Find the line
+carrying `STEP_PROBE_HALT` and read the rest of that `prompt_id`: a later
+`PreToolUse` means the halt leaked; a `Stop` line means the model ended the turn
+itself (its `last_assistant_message` says what it told the researcher); neither
+means the runtime ended it. Confirm with the operator that they did not press
+stop, which also leaves no `Stop` line.
 
 ## Reading the result
 
@@ -113,18 +125,24 @@ Two answers are worth reading closely because each can look like its opposite:
   *emitted* a deny. Whether the runtime honoured it, and what the model did
   afterwards, is read off the session.
 
-`SessionStart` is registered as a second control. ADR-0005 found it does not fire
-in Cowork; if lines appear, that contradicts a recorded measurement and is
-re-measured rather than reworded.
+`SessionStart` is registered as a second control. ADR-0005 found it did not fire
+in Cowork on 2026-07-30; the 2026-10-19 run saw it fire on startup and on resume.
+Both are recorded in ADR-0005.
 
 ## Then
 
-Record the results in
+**Recorded 2026-10-19** in
 [`ADR-0005`](../../../../docs/adrs/ADR-0005-ship-the-write-lockdown-as-a-plugin-hook.md),
-as phase 0 asks. Delete this directory once they are recorded: the answers live
-in the ADR, and a probe left in the tree reads as something that runs.
+"What the step-mode phase-0 probe found", every item except 1. Re-run step 1 of
+the session alone, record item 1 there, then delete this directory: the answers
+live in the ADR, and a probe left in the tree reads as something that runs.
 
 ## Why item 9 is now the headline
+
+**Answered 2026-10-19: the halt ends a Cowork turn** (ADR-0005). The first bullet
+below was also wrong: a `Stop` hook registered in a plugin's `hooks.json` fires in
+Cowork. It is `hooks=`, the SDK argument, that Cowork does not let us set. The
+section is kept as the reasoning the probe was built on.
 
 The lead's steer on 2026-10-19 is that the alpha has 2-3 months left and the
 future is Cowork plus the prototype. Cowork is the hard case, because it is the

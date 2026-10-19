@@ -908,8 +908,8 @@ file's own sections, top to bottom.
 - **In live Cowork, check:**
   1. `PreToolUse` fires on `Agent|Task|Skill` main-thread calls;
   2. **`UserPromptSubmit` fires and carries the prompt text.** If it does, it is the clean
-     turn-and-mode signal, with no transcript parsing. `SessionStart` does not fire in Cowork
-     (ADR-0005), so this needs measuring.
+     turn-and-mode signal, with no transcript parsing. `SessionStart` is no help: it did not
+     fire in Cowork on 2026-07-30 and did on 2026-10-19 (ADR-0005), so nothing can rely on it.
   3. `prompt_id` presence and semantics;
   4. `transcript_path` readability;
   5. denies are honoured, after which the model reports and ends;
@@ -917,7 +917,9 @@ file's own sections, top to bottom.
   7. the hook can read the project's `research.json` from its working directory (for `ctx`);
   8. a file the hook writes is readable on its next call (for the turn's steps).
 - **On both hosted planes:** a host-side deny binds alongside `continue_policy.foreground_rewrite`.
-- **Record the results** in ADR-0005.
+- **Record the results** in ADR-0005. **Cowork half recorded 2026-10-19,** except item 1 (not
+  exercised; re-run). That run also found that a plugin `PreToolUse` hook returning
+  `"continue": false` ends a Cowork turn, and that item 7 is a NO.
 
 **Phase 1.** The prose ships as small PRs, so a failed eval holds up only the PR it is in. The
 prep PRs work under today's behaviour, so they land first. PR 1 is code only. PR 2 switches

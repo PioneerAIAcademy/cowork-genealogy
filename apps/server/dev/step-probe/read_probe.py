@@ -67,11 +67,21 @@ def answer(rows):
         r for r in pre if r.get("tool_name") in STEP_TOOLS and not r.get("agent_id")
     ]
     seen_tools = sorted({r.get("tool_name") for r in pre if r.get("tool_name")})
+    # Zero is UNKNOWN, not NO: "no such call was made" and "the hook did not see
+    # it" leave the same log. The 2026-10-19 Cowork run made none -- the model
+    # answered the research prompt with direct tool calls -- and this line used
+    # to print NO for it.
     out.append(
         (
             "1. PreToolUse fires on main-thread Agent|Task|Skill",
-            YES if step_calls else NO,
-            f"{len(step_calls)} such call(s); tools seen overall: {seen_tools or 'none'}",
+            YES if step_calls else UNKNOWN,
+            f"{len(step_calls)} such call(s); tools seen overall: {seen_tools or 'none'}"
+            + (
+                ""
+                if step_calls
+                else ". Check the session: if no skill or agent ran, item 1 was "
+                "not exercised"
+            ),
         )
     )
 

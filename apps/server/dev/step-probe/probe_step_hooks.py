@@ -79,14 +79,15 @@ CANARY = "STEP_PROBE_CANARY"
 # answered that on 2026-07-30) but "can a PLUGIN PreToolUse hook END A COWORK
 # TURN at all".
 #
-# That is unmeasured and it is the whole mechanism question for Cowork, because
-# Cowork has no other lever: `hooks=` is an SDK argument Cowork does not let us
-# set, so there is no Stop hook there, and the shipped matcher
-# (`Write|Edit|NotebookEdit|.*device_commit_files|.*research_append`) does not
-# match `research_delivered` or `AskUserQuestion` -- which is why
+# It was the whole mechanism question for Cowork, which was believed to have no
+# other lever: `hooks=` is an SDK argument Cowork does not let us set, and the
+# shipped matcher (`Write|Edit|NotebookEdit|.*device_commit_files|.*research_append`)
+# does not match `research_delivered` or `AskUserQuestion` -- which is why
 # `research-delivered.ts` says its inert arm is what runs in Cowork.
 #
-# The matcher is ours to widen; whether the HALT FIELDS are honoured is not.
+# ANSWERED 2026-10-19 (ADR-0005): the halt ends a Cowork turn. The run also found
+# that a plugin `hooks.json` Stop hook DOES fire in Cowork, so "no other lever"
+# was wrong: only the SDK's `hooks=` is out of reach.
 CANARY_HALT = "STEP_PROBE_HALT"
 
 # Printed in the deny reason so the model's own report can be attributed to THIS
