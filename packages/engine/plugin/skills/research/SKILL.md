@@ -11,8 +11,8 @@ description: >-
   rather than a specific action. Start it rather than first asking the user
   about the person: it reads what the project already records about them.
   Do NOT use when the user explicitly targets one step only (search-records,
-  research-plan, question-selection, etc.), wants only a status summary
-  (project-status), or has no project yet (init-project first).
+  research-plan, question-selection, etc.), only asks where the project stands
+  (answered from project_context, no skill), or has no project yet (init-project first).
 allowed-tools:
   - validate_research_schema
   - research_query
@@ -106,7 +106,7 @@ finding a record; reviewing the sources already attached to a person; whether
 two people are the same, or should be merged; a verdict on a hint; a
 transcription; where the records are for a place and period; a research plan;
 a records-request letter; whether a person's children or siblings are complete;
-a status question such as "where are we?".
+where the project stands (answer from `project_context` in one paragraph).
 Two or more of them in one message is still bounded: deliver each, name each,
 and end the turn when the last one is met, the same way a single one ends it. A message that also asks for
 open-ended research is a job.
@@ -118,7 +118,7 @@ can be both. "Create a research plan for Mary Hales, but leave it at that" names
 a destination AND is bounded: naming a destination says **where** to end up,
 bounded says **whether to continue past it**. Hand a bounded request straight
 to the step that owns its deliverable — a
-transcription to `@plugin:image-reader`, a plan to `research-plan`, a record to
+transcription to `@plugin:image-reader`, a plan to `@plugin:research-plan`, a record to
 `search-records`. Do not walk the routing table from the top for one: that table
 sequences a *job*, and on a project with no questions yet its first satisfiable
 row sends you to `@plugin:question-selection` — the one place a bounded request
@@ -210,20 +210,21 @@ it by name.
    |-------------------------|--------|
    | **No `research.json` at all**, and the message states **no objective** (no person and question to research) | `@plugin:tree-survey`, passing the FamilySearch id if one was given and no `projectPath`. Relay its suggestions and stop for the researcher's pick; then `@plugin:init-project` with that person and question as the objective |
    | **No `research.json` at all**, and the message states a person or objective | `@plugin:init-project`. With one present, do NOT invoke it: the project exists and the delegation is wasted |
-   | Objective but no questions | `@plugin:question-selection`. **Even when the message already states the question**, it is not a question until question-selection WRITES it: `research-plan` may not write `questions`, and a plan referencing an unregistered one is refused by the validator. Registration, not derivation |
+   | Objective but no questions | `@plugin:question-selection`. **Even when the message already states the question**, it is not a question until question-selection WRITES it: planning may not write `questions`, and a plan referencing an unregistered one is refused by the validator. Registration, not derivation |
    | A question with no plan, and **no `localities` entry yet for its target jurisdiction** | `@plugin:locality-guide` (survey the place first — it persists a `loc_` entry with the how-to-search facts and quirks that research-plan then plans from) |
-   | A question with no plan, and its jurisdiction **already has a `localities` entry** | `research-plan` |
-   | The question's **`active`** plan has items not yet executed, and no analyzed evidence yet plausibly answers it — query `plans` with `status: "active"`; never dispatch an item off a `superseded` or `exhausted` plan, which a revision leaves behind still `planned` | `search-records` (or `@plugin:search-external-sites` for non-FS sources) |
+   | A question with no plan, and its jurisdiction **already has a `localities` entry** | `@plugin:research-plan` |
+   | The question's **`active`** plan has items not yet executed, and no analyzed evidence yet plausibly answers it — query `plans` with `status: "active"`; never dispatch an item off a `superseded` or `completed` plan, which a revision leaves behind still `planned` | `search-records` (or `@plugin:search-external-sites` for non-FS sources) |
    | A plan item targets a **digitized-but-unindexed** FamilySearch record set (browse-only images — `volume_search` shows image groups with ~0% record-searchable), or indexed/full-text search has been exhausted and the remaining path is reading register pages directly | `@plugin:search-images` (browses the volume page-by-page: `volume_search` → `image_search` → `image_transcribe`) |
    | **Any** log entry with a positive/partial outcome and no assertion referencing it — even one such entry, even if other entries from the same or a later search already went through extraction | FamilySearch records: `extraction_append({ recordIds })`, one call for every pending record. Any other source: `@plugin:record-structurer`, one spawn for the batch. (See the **Extraction contract** below.) |
    | Assertions not yet linked to persons | `@plugin:person-evidence` — **always the agent, never inline.** You (the orchestrator) never write `person_evidence` entries or add record-derived facts/relationships to tree persons yourself: person-evidence owns the identity decision and scores every cross-record link with `same_person` before it links. Writing `pe_` links inline skips that check — it is exactly how a same-named stranger's record gets attached to the subject (a b. 1814 man was given a 1918 death, age 104, this way). Extraction never links; its output ALWAYS flows through person-evidence next |
    | Evidence conflicts present | `@plugin:conflict-resolution` |
    | Identity uncertainty across assertions | `@plugin:hypothesis-tracking` |
    | `project_context` reports **`competingParentSets`** for the question (its `nextStep` reads `hypothesis-tracking — competing parent sets`) — the tree gives a person more than one set of parents with no hypothesis per set | `@plugin:hypothesis-tracking`, naming the person and parent ids it lists — one hypothesis per parent couple. Never compare or eliminate the sets yourself |
-   | Analyzed evidence now plausibly answers the active question | `@plugin:research-exhaustiveness` (consult the stop criteria *before* draining the rest of the plan; it sends you back to `research-plan` if the question — e.g. a completeness "did they have *any other* children?" question — is not yet reasonably exhausted) |
+   | Analyzed evidence now plausibly answers the active question | `@plugin:research-exhaustiveness` (consult the stop criteria *before* draining the rest of the plan; it sends you back to `@plugin:research-plan` if the question — e.g. a completeness "did they have *any other* children?" question — is not yet reasonably exhausted) |
    | All plan items for a question are `completed` or `skipped`, and analysis above is done | `@plugin:research-exhaustiveness` |
-   | `research-exhaustiveness` returned "not yet exhaustive" with gaps to fill | `research-plan` (extend the plan) or `@plugin:question-selection` (FAN pivot) |
-   | `research-exhaustiveness` reported the declaration refused because items on the active plan are still `planned` | `research-plan` to **dispose of the named items** — complete each one whose search was done, or skip it with a `skip_category`. Not an extension: the stop criteria have already been judged |
+   | `research-exhaustiveness` returned "not yet exhaustive" with gaps to fill | `@plugin:research-plan` (extend the plan) or `@plugin:question-selection` (FAN pivot) |
+   | `research-exhaustiveness` reported the declaration refused because items on the active plan are still `planned` | `@plugin:research-plan` to **dispose of the named items** — complete each one whose search was done, or skip it with a `skip_category`. Not an extension: the stop criteria have already been judged |
+   | `research-plan` returned that a jurisdiction it must plan has no `localities` entry | `@plugin:locality-guide` for that jurisdiction, then `@plugin:research-plan` again |
     | `proof-conclusion` wrote `<ps_id>` at tier ≥ probable **but the concluded relationship or fact is not yet in `tree.gedcomx.json`** (a parentage link, a Couple, or a vital fact — e.g. the concluded death date/place, bounded expressions included; check each claim's own relationship when `claims[]` is present, not just the scalar's) | `@plugin:proof-conclusion` again for the same question — it must encode the conclusion before you proceed (see **Tree-encoding gate**) |
     | A question is at `status: "exhaustive_declared"` with no `proof_summaries` entry yet | `@plugin:proof-conclusion` |
     | All questions are `resolved` and `project.status` still `active` | **First check the objective, not the question list.** An objective can hold several independent facts ("where was she born, and who were her parents" is two). If any fact the objective asks for has no question covering it, invoke `@plugin:question-selection` and do not continue this row — a relationship already in `tree.gedcomx.json` without a resolved question behind it does not cover it, and a fact the project's questions or proofs mention but the objective does not ask for is not part of it. When every fact the objective asks for has a resolved question, go straight to the tree-encoding gate — do not call question-selection to confirm it. Once question-selection has returned "no further questions — objective answered" for the current state, treat the objective as covered. **Then verify the tree-encoding gate — do not write `completed` until it holds:** every tier-≥-probable conclusion is encoded in `tree.gedcomx.json` (see **Tree-encoding gate**; per claim where a `claims[]` breakdown exists); if not, re-invoke `@plugin:proof-conclusion` for that question. Marking a question `resolved` is not, by itself, evidence the check happened. Once it is verified, re-invoke `@plugin:proof-conclusion` for the last resolved question — its §8 owns the `project.status` write. **You never write it yourself:** a `project.status` write is refused unless it comes from `@plugin:proof-conclusion`. Then stop. |
@@ -273,16 +274,18 @@ it by name.
    exactly what this contract forbids.
 
    **Every spawn names `projectPath` and the id the agent works on** — a
-   `questionId` for `@plugin:research-exhaustiveness` and
-   `@plugin:proof-conclusion`, the assertion ids for
+   `questionId` for `@plugin:research-exhaustiveness`,
+   `@plugin:proof-conclusion` and `@plugin:research-plan` (plus, when disposing,
+   a `planItemIds:` line with the `pli_` ids research-exhaustiveness named), the assertion ids for
    `@plugin:person-evidence`, the conflict or competing assertion ids for
    `@plugin:conflict-resolution`, the `h_`/`c_`/assertion ids at issue for
    `@plugin:hypothesis-tracking`, one jurisdiction and its period per call for
    `@plugin:locality-guide` (several jurisdictions mean several separate calls in the same turn), and the `planItemId` (plus the parish page as
    `baseUrl` when one is known, `userPresent` (`no` only when you are running autonomously and will not wait for the researcher, otherwise `yes`), and for a returned capture its
-   file path or the results text) for `@plugin:search-external-sites`, the `planItemId` for `@plugin:search-images`, and the
+   file path or the results text) for `@plugin:search-external-sites`, and the
    `personId` (and, on the second spawn, the researcher's verdicts) for
-   `@plugin:search-hints`. A `@plugin:tree-survey` spawn takes no `projectPath`. The agent runs in fresh context and reads the
+   `@plugin:search-hints`, and the `planItemId` plus the volume's `standardPlace` (with its
+   years) or `imageGroupNumber`, as the plan item names it, for `@plugin:search-images`. A `@plugin:tree-survey` spawn takes no `projectPath`. The agent runs in fresh context and reads the
    project itself; a delegation missing `projectPath` fails on its first tool
    call.
 
@@ -326,12 +329,12 @@ it by name.
    execute the remaining `planned` items first. When it names items
    still open, close them out through the skill that owns each: a moot
    item is `skipped` with a reason, a plan new information has
-   invalidated is superseded via `research-plan`. Exhaustiveness is the
+   invalidated is superseded via `@plugin:research-plan`. Exhaustiveness is the
    stop gate: it weighs the question against the 7-point stop criteria,
    assessed in order and stopping at the first that fails, and either
    declares the search reasonably
-   exhaustive (→ proof) or routes you back to `research-plan` /
-   `question-selection` for the gaps. That round-trip is what lets a
+   exhaustive (→ proof) or routes you back to `@plugin:research-plan` /
+   `@plugin:question-selection` for the gaps. That round-trip is what lets a
    simple-recall question stop early **without** weakening a
    completeness / negative one ("did they have *any other* children?"):
    finding a single child does not satisfy such a question, so

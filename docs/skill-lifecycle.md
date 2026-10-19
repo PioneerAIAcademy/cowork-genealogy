@@ -725,6 +725,7 @@ hand-catching the same class of issue ten rounds in, the loop isn't learning.
 |---|---|---|---|
 | 0 Branch | ⌨️ terminal | `git checkout -b <short-task-name>` | GitHub Desktop → New branch… |
 | 1 Start from a failure | 🤖 / ⌨️ / 🖥️ | `make feedback-case ZIP=…` · `/interpret-e2e-result` · `make e2e-project TEST=…` | `scripts\setup-feedback-case.bat` · `eval\SeedProject.bat` |
+| *(side)* measure a hosted run | ⌨️ terminal | `make feedback-profile ZIP=…` — time and cost per session, agent, skill and tool | in `eval\harness`: `uv run python -m e2e.feedback_profile <zip>` |
 | 2 Whose fault? | 🤖 Claude Code | read the project's `results/` files | same |
 | 3 Capture | 🤖 Claude Code | `/mine-unit-test [--project \| --e2e-run <dir>]` | same |
 | 4 Run + grade *(baseline)* | ⌨️ terminal → 🌐 browser | `make eval-skill SKILL=<name>`, `make eval-ui` | `eval\RunTests.bat`, `eval\Start.bat` |

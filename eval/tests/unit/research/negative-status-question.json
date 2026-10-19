@@ -1,0 +1,27 @@
+{
+  "test": {
+    "id": "ut_research_025",
+    "skill": "research",
+    "name": "A 'where are we?' status question is answered from project_context in one paragraph, not routed",
+    "type": "negative",
+    "description": "The user asks where the project stands. Per the lead's 2026-10-06 ruling, the main thread answers from project_context in exactly one plain-language paragraph — a status request is NOT routed to a sub-skill or an agent. The main thread must not read research.json or tree.gedcomx.json directly, must not spawn an agent, must not call research_append, the answer must be one paragraph with no lead-in line, headings, tables, lists, bold or closing question, and it must contain no project identifiers (any research.json id prefix — rp_, kh_, q_, pl_, pli_, log_, src_, a_, pe_, c_, h_, t_, ps_, ev_, loc_ — or tree id such as I1 or S3).",
+    "tags": [
+      "negative-status-question"
+    ]
+  },
+  "input": {
+    "user_message": "Where are we? Summarize progress on this project.",
+    "scenario": "mid-research-flynn"
+  },
+  "negative": {
+    "correct_skill": [],
+    "explanation": "This is the status-answering surface the project_context tool's description now owns (2026-10-06 lead ruling). The main thread sees the clause (project_context is ALWAYS_LOAD) and answers in one plain-language paragraph without routing to any skill or agent. Six deterministic things must hold and are validator-gated under the `negative-status-question` tag: project_context was called; neither research.json nor tree.gedcomx.json was Read or Grepped directly; no subagent spawn occurred; no research_append write occurred; the reply is a single paragraph with no line break, heading, list or table line, bold, or closing question; and the reply contains no research.json id of the form `<prefix>_<digits>` for any prefix in the engine's ID_PREFIXES (rp_, kh_, q_, pl_, pli_, log_, src_, a_, pe_, c_, h_, t_, ps_, ev_, loc_) and no tree id (I1, S3, F2, N1, R1). The judge grades the paragraph for coverage (objective, what is established, what is open, next step) and plain-language presentation.",
+    "grade_on_invariant": false
+  },
+  "judge_context": [
+    "The ideal response is ONE plain-language paragraph (~3-6 sentences) naming: (1) what the project is researching (the objective); (2) what has been established or found; (3) what is open or waiting on the researcher; and (4) the next step, stated rather than asked.",
+    "The paragraph must contain NO identifiers — no research.json id (any prefix in ID_PREFIXES: rp_, kh_, q_, pl_, pli_, log_, src_, a_, pe_, c_, h_, t_, ps_, ev_, loc_) and no tree id (I1, S3, F2, N1, R1). The deterministic validator fails the run on any such id, and also on a second paragraph, a lead-in line, a heading, table or list, bold, or a closing question, so the judge need only verify coverage and plain-language quality.",
+    "The paragraph must contain NO file names (research.json, tree.gedcomx.json), tool names, or field names.",
+    "The main thread must have called project_context. It must NOT have called Read on research.json or tree.gedcomx.json, must NOT have spawned any Agent, and must NOT have called research_append. The deterministic validator gates these; a failure there is a validator failure, not a judge failure."
+  ]
+}

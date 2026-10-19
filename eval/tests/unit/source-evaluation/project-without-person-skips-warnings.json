@@ -7,6 +7,7 @@
     "description": "Issue #2942, the other direction. The working folder holds a project for a different person (Patrick Flynn, I1, no ark), so its tree has no one whose id is KD96-TV2 or whose ark ends in 4:1:KD96-TV2. The impossible-date check runs only over a project tree that holds the audited person: person_warnings, called with KD96-TV2, answers 'not found', and the agent must neither retry under another id nor add the person to this project, which the user did not ask to change. The agent says in one line that the check runs only on a project that holds this person, and the source audit proceeds exactly as it would anywhere else.",
     "tags": [
       "no-project-person",
+      "census-variance-trap",
       "direct-arm"
     ]
   },
