@@ -122,6 +122,17 @@ anything below that.
    (`Independent City`) separates them. `County` also admits the wiki's `Parish`
    (Louisiana) and `Borough`. An unresolved or failed type lookup rejects every
    typed title, so it can cost a page but never return the wrong jurisdiction's.
+   When no ranked title matches the leaf, the same titles are matched against
+   the place's names in **every** language (`getPlaceCandidateNames(…, {
+   anyLanguage: true })`): the wiki titles some provinces by their local name
+   (`South Holland, Netherlands` → `Zuid-Holland, Netherlands Genealogy`; the
+   sibling `Noord-Holland` never matches). A parenthetical that is one of those
+   names is a name, not a type word (`Bavaria (Bayern), Germany Genealogy`);
+   one that is not must still fit the type (`Baltimore (Independent City)`).
+   The parent check admits one alias: a place under Northern Ireland matches a
+   title under `Ireland`, because the wiki titles all six counties under
+   pre-1922 Ireland (`County Antrim, Ireland Genealogy`; every
+   `County X, Northern Ireland Genealogy` 404s, measured 2026-10-19).
 3. **Below state level, the other three sections return no page at once.** They
    exist only for a country or a state/province (measured 2026-10-01: every
    county-level section page 404s while the state's 200s), and the leaf grammar

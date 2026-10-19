@@ -166,32 +166,60 @@ async function placeTypeOf(standardPlace: string): Promise<string | null> {
   }
 }
 
-/** The home page of a sub-national place, resolved from its real wiki title. */
+/**
+ * The home page of a sub-national place, resolved from its real wiki title. The
+ * ranked titles are matched against the leaf first, then against the place's
+ * names in every language: the wiki titles some provinces by their local name
+ * (`South Holland, Netherlands` is `Zuid-Holland, Netherlands Genealogy`), and
+ * a parenthetical that is one of those names is a name, not a type word
+ * (`Bavaria (Bayern), Germany Genealogy`).
+ */
 async function homeByTitle(
   standardPlace: string,
   parts: string[],
   baseUrl: string
 ): Promise<WikiPlacePageResult | null> {
   const titles = await searchTitles(baseUrl, `${parts[0]} ${parts[1]} genealogy`);
+  if (titles.length === 0) return null;
   let placeType: Promise<string | null> | undefined;
-  for (const title of titles) {
-    const shape = homeTitleShape(title, parts);
-    if (!shape.ok) continue;
-    if (shape.typeWord) {
-      placeType ??= placeTypeOf(standardPlace);
-      if (!typeWordFits(shape.typeWord, await placeType)) continue;
+  let placeNames: Promise<string[]> | undefined;
+  const namesOf = () =>
+    (placeNames ??= standardPlaceToPlaceId(standardPlace).then((id) =>
+      id ? getPlaceCandidateNames(id, {}, { anyLanguage: true }) : [],
+    ));
+  const tryLeaf = async (leaf: string): Promise<WikiPlacePageResult | null> => {
+    for (const title of titles) {
+      const shape = homeTitleShape(title, [leaf, ...parts.slice(1)]);
+      if (!shape.ok) continue;
+      if (shape.typeWord) {
+        placeType ??= placeTypeOf(standardPlace);
+        if (!typeWordFits(shape.typeWord, await placeType)) {
+          const qualifier = shape.head.split(",")[0].slice(leaf.length).trim();
+          const ownName = /^\(.+\)$/.test(qualifier) &&
+            (await namesOf()).some((n) => n.toLowerCase() === qualifier.slice(1, -1).toLowerCase());
+          if (!ownName) continue;
+        }
+      }
+      // Diacritics are preserved, never folded: the folded slug 404s.
+      const slug = nameToSlug(`${shape.head} Genealogy`);
+      const page = await fetchPage(baseUrl, slug);
+      if (page !== null) {
+        return {
+          url: `${FS_WIKI_BASE}/${slug}`,
+          content: page.content,
+          standardPlace,
+          placeName: shape.head,
+        };
+      }
     }
-    // Diacritics are preserved, never folded: the folded slug 404s.
-    const slug = nameToSlug(`${shape.head} Genealogy`);
-    const page = await fetchPage(baseUrl, slug);
-    if (page !== null) {
-      return {
-        url: `${FS_WIKI_BASE}/${slug}`,
-        content: page.content,
-        standardPlace,
-        placeName: shape.head,
-      };
-    }
+    return null;
+  };
+  const hit = await tryLeaf(parts[0]);
+  if (hit) return hit;
+  for (const name of await namesOf()) {
+    if (name === parts[0]) continue;
+    const alt = await tryLeaf(name);
+    if (alt) return alt;
   }
   return null;
 }

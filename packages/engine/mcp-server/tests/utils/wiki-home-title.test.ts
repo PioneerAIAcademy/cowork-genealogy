@@ -23,6 +23,13 @@ describe("homeTitleShape", () => {
     ).toEqual({ ok: true, typeWord: null, head: "Gloucestershire, England" });
   });
 
+  it("accepts a Northern Ireland county titled under pre-1922 Ireland, and only there", () => {
+    expect(
+      homeTitleShape("County Antrim, Ireland Genealogy", parts("County Antrim, Northern Ireland, United Kingdom"))
+    ).toEqual({ ok: true, typeWord: null, head: "County Antrim, Ireland" });
+    expect(homeTitleShape("Lanark, Ireland Genealogy", parts("Lanark, Scotland, United Kingdom"))).toEqual({ ok: false });
+  });
+
   it("decodes a percent-encoded title and keeps its diacritics", () => {
     const shape = homeTitleShape(
       "Barseb%C3%A4ck Parish, Malm%C3%B6hus, Sweden Genealogy",

@@ -20,6 +20,15 @@
  *    are boroughs. `County` therefore also admits Parish and Borough.
  */
 
+/**
+ * Parents the wiki names differently from the Places API. Northern Ireland's six
+ * counties are titled under pre-1922 Ireland (`County Antrim, Ireland Genealogy`;
+ * every `County X, Northern Ireland Genealogy` 404s, measured 2026-10-19).
+ */
+const WIKI_PARENT_ALIASES: Record<string, string[]> = {
+  "northern ireland": ["ireland"],
+};
+
 export type HomeTitleShape =
   | { ok: false }
   | { ok: true; typeWord: string | null; head: string };
@@ -60,9 +69,12 @@ export function homeTitleShape(title: string, parts: string[]): HomeTitleShape {
   const remainder = after.trim();
   if (remainder && !/^\(?[A-Za-z ]+\)?$/.test(remainder)) return { ok: false };
 
-  const parent = (parts[1] ?? "").trim().normalize("NFC").toLowerCase();
+  const parentName = (parts[1] ?? "").trim().normalize("NFC").toLowerCase();
   const container = (rest[0] ?? "").normalize("NFC");
-  if (!parent || !container.toLowerCase().startsWith(parent)) return { ok: false };
+  const parent = [parentName, ...(WIKI_PARENT_ALIASES[parentName] ?? [])].find(
+    (p) => p && container.toLowerCase().startsWith(p),
+  );
+  if (!parent) return { ok: false };
   const tail = container.slice(parent.length);
   if (tail && !/^\s+\(?[A-Za-z ]+\)?$/.test(tail)) return { ok: false };
 
