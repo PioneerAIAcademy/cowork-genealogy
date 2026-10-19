@@ -253,10 +253,39 @@ carries the same items into the new plan and re-blocks the gate. Put
 every item in ONE `research_append` call; one `skip_reason` may cover
 several items sharing a reason.
 
+**Dispose mode also serves a wrap-up.** When the caller says the
+researcher is wrapping the question up rather than searching further,
+every OPEN item is `skipped` with `skip_category: "user_declined"`,
+whatever its subject: the researcher declined the remaining searches, so
+no other category describes it, and guessing a per-item reason would
+record a finding nobody made. An item whose search was done and logged
+is still `completed` — a wrap-up does not rewrite what happened. Name
+the skipped items in your return: they are what the conclusion has to
+say it did not search.
+
+**Edit mode** — The caller passes the researcher's own words changing a
+plan you just presented: items to strike, items to add, or both. This is
+the reply to "Continue with running the searches?", so the plan is yours
+to change and review mode's "do not modify items" does not apply.
+- a struck item → `skipped`, with `skip_category: "user_declined"`;
+- an added item → a new plan item on the same active plan.
+Change nothing the researcher did not name. Do not supersede: the plan is
+being corrected, not replaced, and superseding would carry the struck items
+into the new plan. Put every change in ONE `research_append` call.
+
+**Edit mode is for a researcher's words, not an agent's.** A caller
+reporting that a search is needed (a conflict's decisive records, a FAN
+pivot, an objective-level sub-question) is add-new or edit work too, but it
+arrives as a delegation naming the records to plan, not as a struck-item
+list. Write those as plan items on the CURRENT question; do not open a new
+question for them, and do not hand back to question-selection.
+
 **Heuristic for ambiguous prompts.** When a prompt could mean "tell me
 the plan" (review) or "make a plan" (add/supersede), default to review
 if an active plan has unfinished items — a duplicate plan alongside a
-usable one is the worse mistake.
+usable one is the worse mistake. A message that names specific items to
+strike or add is edit mode, not review: the researcher is answering the
+plan, not asking about it.
 
 ### 2. Survey the locality — know-how from locality-guide, records you find yourself
 
