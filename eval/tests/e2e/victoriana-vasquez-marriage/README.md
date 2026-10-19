@@ -73,8 +73,8 @@ Encinos, Parroquia de Ayo el Chico.)
 
 **Inferences and limits.** The marriage year **~1859 is derived** from the
 velación's "sixteen years" statement, not indexed; the **exact marriage date is
-unknown**. The **original ~1859 marriage register was searched for and not
-located** (San Pedro Piedragorda). **No baptism was found for either daughter**
+unknown**. The **original ~1859 marriage register was not located** (San Pedro
+Piedragorda). **No baptism was found for either daughter**
 (Silveria 1876, Gregoria 1878) — the children are evidenced by Silveria's 1900
 marriages and Gregoria's 1879 death/burials, not by baptisms. The identity link
 (`GFG9-7H4` = the woman in the 1879 death registration = the velación bride) is a
