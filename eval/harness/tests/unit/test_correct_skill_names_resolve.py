@@ -33,12 +33,10 @@ no run_skills *name* — only its mutual exclusion with `stub_skills` (`:239-250
 (`skills_dir/<name>/SKILL.md`, no agent fallback). An arm over an empty
 population, mirroring nothing, asserts nothing.
 
-`test.skill` is not walked either, though `runnability.py:179-181` refuses a
-ROUTED test whose skill has no directory. That refusal has different semantics
-on purpose — no agent fallback, "falling through to an agent of the same name
-would run it by a route the test did not ask for" — and 363 of the 462 routed
-tests name a converted agent today, so mirroring it here would red most of the
-corpus. Why those 363 do not abort is its own question, and its own card.
+`test.skill` is walked with `runnability.py:179-191`'s own rule: a routed test
+needs a skill directory (plugin or `eval/skills/`, via `skill_dir_for`), and
+only a direct-agent test (`input.delegation` set) may fall back to
+`agents/<name>.md`.
 """
 
 from __future__ import annotations
@@ -47,7 +45,11 @@ import json
 from pathlib import Path
 
 from harness.skill_stubs import parse_stub_skills
-from harness.workspace import DEFAULT_PLUGIN_AGENTS, DEFAULT_PLUGIN_SKILLS
+from harness.workspace import (
+    DEFAULT_PLUGIN_AGENTS,
+    DEFAULT_PLUGIN_SKILLS,
+    skill_dir_for,
+)
 
 REPO_ROOT = Path(__file__).resolve().parents[4]
 CORPUS = REPO_ROOT / "eval/tests/unit"
@@ -119,6 +121,14 @@ def dead_callee_entries(
             if not _resolves(name, skills_dir, agents_dir):
                 dead.append((path, "execution.stub_skills", None, name))
 
+        # `test.skill` — runnability.py:179-191. Routed: skill dir only.
+        # Direct-agent (input.delegation): the agent file is the fallback.
+        skill = test.get("skill")
+        if isinstance(skill, str) and skill and not skill_dir_for(skill, skills_dir).is_dir():
+            inp = raw.get("input") if isinstance(raw.get("input"), dict) else {}
+            if not inp.get("delegation") or not (agents_dir / f"{skill}.md").is_file():
+                dead.append((path, "test.skill", None, skill))
+
     return dead
 
 
@@ -147,7 +157,7 @@ def test_the_walk_saw_the_shapes_it_claims_to_check():
     than the PR that breaks a name.
     """
     negatives = stubbing = 0
-    correct_skill_via_agent = stub_via_agent = 0
+    correct_skill_via_agent = stub_via_agent = direct_via_agent = 0
     for path in sorted(CORPUS.rglob("*.json")):
         try:
             raw = json.loads(path.read_text(encoding="utf-8"))
@@ -161,6 +171,14 @@ def test_the_walk_saw_the_shapes_it_claims_to_check():
             for name in (raw.get("negative") or {}).get("correct_skill") or []:
                 if isinstance(name, str) and not (DEFAULT_PLUGIN_SKILLS / name).is_dir():
                     correct_skill_via_agent += 1
+        inp = raw.get("input") if isinstance(raw.get("input"), dict) else {}
+        name = test.get("skill")
+        if (
+            inp.get("delegation")
+            and isinstance(name, str)
+            and not skill_dir_for(name, DEFAULT_PLUGIN_SKILLS).is_dir()
+        ):
+            direct_via_agent += 1
         stubs = parse_stub_skills(raw.get("execution") or {})
         if stubs:
             stubbing += 1
@@ -177,6 +195,10 @@ def test_the_walk_saw_the_shapes_it_claims_to_check():
     )
     assert stub_via_agent, (
         "no stub_skills entry resolved through agents/ only — same gap, stub arm"
+    )
+    assert direct_via_agent, (
+        "no direct-agent test resolved its own skill through agents/ only, so "
+        "this run does not prove the test.skill fallback branch is reachable"
     )
 
 
@@ -195,6 +217,7 @@ def _corpus(tmp_path: Path, test_file: dict, *, skills=(), agents=()) -> tuple[P
     for name in agents:
         (agents_dir / f"{name}.md").write_text("x", encoding="utf-8")
     skills_dir.mkdir(parents=True, exist_ok=True)
+    (skills_dir / test_file["test"]["skill"]).mkdir(exist_ok=True)
     tests_dir = tmp_path / "tests" / "some-skill"
     tests_dir.mkdir(parents=True)
     (tests_dir / "t.json").write_text(json.dumps(test_file), encoding="utf-8")
@@ -276,4 +299,24 @@ def test_accepts_an_empty_correct_skill_list(tmp_path):
 def test_accepts_a_positive_test_naming_nothing(tmp_path):
     doc = {"test": {"id": "ut_x_004", "skill": "s", "type": "positive"}}
     dirs = _corpus(tmp_path, doc, skills=["live"])
+    assert dead_callee_entries(*dirs) == []
+
+
+def test_fires_on_a_routed_test_whose_skill_is_only_an_agent(tmp_path):
+    """Routed tests get no agent fallback (`runnability.py:179-191`)."""
+    doc = {"test": {"id": "ut_x_005", "skill": "converted", "type": "positive"},
+           "input": {"user_message": "do the thing"}}
+    dirs = _corpus(tmp_path, doc, skills=["live"], agents=["converted"])
+    # _corpus auto-creates the named skill, so remove it to model the conversion
+    (dirs[1] / "converted").rmdir()
+    dead = dead_callee_entries(*dirs)
+    assert [(d[1], d[3]) for d in dead] == [("test.skill", "converted")], dead
+
+
+def test_accepts_a_direct_agent_test_whose_skill_is_only_an_agent(tmp_path):
+    """`input.delegation` set means the agent file IS the fallback."""
+    doc = {"test": {"id": "ut_x_006", "skill": "converted", "type": "positive"},
+           "input": {"delegation": "Do this specific thing."}}
+    dirs = _corpus(tmp_path, doc, skills=["live"], agents=["converted"])
+    (dirs[1] / "converted").rmdir()
     assert dead_callee_entries(*dirs) == []
