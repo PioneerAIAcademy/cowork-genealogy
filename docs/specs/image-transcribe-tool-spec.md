@@ -367,6 +367,7 @@ consistent across schema, manifest, and skill.)*
 {
   imageId?: string    // DGS Image Group Number "NUMBER_NUMBER", e.g. 004884748_02613
   ark?: string        // FamilySearch document-image ARK / resolver URL / dist URL
+  imageArk?: string   // another name for ark (record_read's field); not advertised
   memoryArtifactUrl?: string // FamilySearch MEMORY artifact URL
   file?: string       // project-relative path to an UPLOADED image/PDF inside the project (needs projectPath)
   lookingFor?: string // optional search key — WHO/WHAT to locate on the page
@@ -380,6 +381,15 @@ consistent across schema, manifest, and skill.)*
   shapes `image_read` accepts today (`3:1:`/`3:2:` ARKs, an unprefixed
   `XXXX-XXXX-XXXX-X` id treated as `3:1:`, resolver URLs, `/$dist`,
   `dgs:.../dist.jpg`).
+- `imageArk` — the field `record_read` returns a page image under, and the key
+  `research_log_append` logs an image entry by — is read as `ark`, and a query
+  string never decides an `ark`'s shape. Both are `foldImageArkInput`'s job, run
+  first, before the forms are counted; the rules are `image-read-spec.md`'s
+  (Input, and "ark format"), shared unchanged. Among them: when `ark` and
+  `imageArk` are one ARK and only one carries `i`/`cc`/`groupId`, the one
+  carrying them is read, since `i=` can pick the page. `imageArk` therefore counts as
+  the `ark` form in the exactly-one check, and the staged `source` and
+  `metadata` report it as `ark`.
 - `memoryArtifactUrl` is a person's **memory** artifact, as carried by a
   `person_read` source that came from the memories API — a scanned will,
   certificate, obituary clipping or compiled history uploaded by a relative. It
@@ -587,8 +597,10 @@ list the caller can turn into assertions.
 
 | Condition | Message shape |
 |---|---|
-| None of the four inputs | `image_transcribe requires one of imageId, ark, memoryArtifactUrl, or file (…)` |
-| More than one provided | `Provide exactly one of imageId, ark, memoryArtifactUrl, or file — not X and Y.` |
+| None of the four inputs | `image_transcribe requires one of imageId, ark, memoryArtifactUrl, or file (…). Received keys: {each key passed, marked (empty) or (not a string) where so}.` — or `Received no keys.` |
+| More than one provided | `Provide exactly one of imageId, ark, memoryArtifactUrl, or file — not X and Y.` (`imageArk` counts as `ark`) |
+| `ark` and `imageArk` both given, and they do not name the same image (`image-read-spec.md`, Input) | `image_transcribe was given both ark ('…') and imageArk ('…'), which do not name the same image. imageArk is another name for ark: pass only one.` Refused before the key lookup and any fetch |
+| `ark` is not a string | `image_transcribe was given an ark that is not a string (…). Pass ark as a string: the ARK (ark:/61903/3:1:...) or page URL exactly as it was given.` Refused before the key lookup and any fetch |
 | `file` with no `projectPath` / a missing directory | the shared loud messages (`projectPath is required …`, `projectPath does not exist: …`); a folder holding neither project file RETURNS `{ ok: false, reason: "no_project" }` (not thrown) |
 | `file` ref shape | absolute / drive letter / backslash / NUL / empty, `.`, `..` segment — named before any I/O; a symlink out of the project is the store's "escapes the project directory" |
 | `file` missing / a directory / not an image or PDF | `'<ref>' was not found under the project folder …` / `is a directory` / `is not an image or a PDF (by its content, not its name) …` |
@@ -600,7 +612,7 @@ list the caller can turn into assertions.
 | No OpenRouter key configured | LLM-instruction error directing the user to set the key in the extension's settings in Claude Desktop or as `openRouterApiKey` in `~/.familysearch-mcp/config.json` (§6.4). The tool never accepts an API key as a parameter. |
 | FS image fetch non-2xx | `FamilySearch image fetch failed: {status} {statusText}` (reused; `{statusText}` and its separating space are omitted when the response carries none). On a **400 or 404** for a `3:1:`/`3:2:` ark that is not a memory artifact, appends: the ark may not be a valid document-image identifier; directs to `record_read`'s `imageArk` field, and to passing the full page URL when the ark carries `i=`/`cc=`/`groupId=` context. It states that `image_search` returns image ids rather than arks. Every other status — including 401/403 (rights-restricted image) and 429 — keeps the bare message. |
 | Response not an image | `Expected an image response but got content-type: {type}` (reused) |
-| OpenRouter non-2xx | `OpenRouter OCR failed: {status} {statusText}` (+ body excerpt if present) |
+| OpenRouter non-2xx | `OpenRouter OCR failed: {status} {statusText}` (+ body excerpt if present). A 429 or 503 gets it only once the backoff in §5.9 is spent |
 | OpenRouter unreachable | friendly `Could not reach OpenRouter (...)` (mirror `wiki-search.ts`) |
 | Empty/garbage OCR result (no cap) | throw rather than return a fabricated read — the caller pivots to indexes |
 | Empty result **with** an output cap (`finish_reason`/`native_finish_reason` marks it) | throw too — a zero-content read has nothing to return — but the message names the cap (budget likely spent on reasoning) so the caller learns a budget bound, not an unreadable scan. Keeps the invariant that `truncated: true` never ships beside an empty `transcription` (§6.2) |
@@ -619,7 +631,7 @@ headers and body together:
 | Leg | Constant | Budget |
 |---|---|---|
 | FS image download (and its fallback-URL retry) | `IMAGE_FETCH_TIMEOUT_MS` (`utils/fs-image-fetch.ts`) | 90s per attempt |
-| OpenRouter OCR | `OCR_TIMEOUT_MS` (`utils/ocr.ts`) | 180s |
+| OpenRouter OCR | `OCR_TIMEOUT_MS` (`utils/ocr.ts`) | 180s for the whole leg, its retries and waits included (§5.9) |
 
 Worst case for one `image_transcribe` is therefore 90 + 90 + 180 = **360s**,
 inside the e2e harness's 600s inactivity window — and a timeout returns as a
@@ -756,7 +768,7 @@ ARK to its group is deliberately out of scope.
 surfaces the link), and how often production researchers are refused
 (`docs/architecture.md` §9.4). The unit tests prove only that the refusal fires.
 
-### 5.9 Runtime failure: one retry, transport only
+### 5.9 Runtime failure: one transport retry, and a backoff on 429/503
 
 **The measurement.** Over the committed e2e corpus, 30 of 175 classifiable
 `image_transcribe` calls (17.1%) were lost before reaching a model — 24 at the
@@ -796,20 +808,38 @@ awaiting the coded failures, not a measured property.
 
 And the budget the argument is framed against is the wrong one for the
 environment most users are in. `OCR_TIMEOUT_MS` is 180s, but Cowork's device
-bridge aborts every MCP call at 60s, and the retry does not check any clock — it
-spends a budget the code never reads. At the current default's measured 4.0s per
-page a second attempt is nowhere near either ceiling, which is why this is
-recorded rather than guarded; a slower default would make it bite, and that is
-the condition to re-check on.
+bridge aborts every MCP call at 60s. Every attempt after the first runs on what
+is left of the call's own budget — 180s, or the lower one a caller passes — and
+a pause that would use up the rest is not taken, so no retry stretches the call
+past that budget; the code still never reads the bridge's 60s. At the current
+default's measured 4.0s per page a second attempt is nowhere near either ceiling,
+which is why the bridge is recorded rather than guarded; a slower default would
+make it bite, and that is the condition to re-check on.
+
+**429 and 503: up to two retries, backing off.** These are OpenRouter's
+rate-limit and overload answers: they say to come back shortly, not that the
+request was bad. In the hosted feedback of 2026-10-05 to 10-18, 2 of about 200
+`image_transcribe` calls got an OpenRouter 429 while every call still ran one at
+a time. Claude Code now runs read-only tools side by side (`docs/architecture.md`
+§5.2), so parallel transcriptions make them likelier. The wait is the response's
+`Retry-After` when it is whole seconds (`retryAfterMs` in `utils/http.ts`; an
+HTTP-date is treated as absent), else 2s then 4s with up to 50% jitter so
+parallel calls do not retry in step. At most two retries and 20s of waiting in
+all, inside the call's budget as above. Once they are spent the call throws the
+same `OpenRouter OCR failed: {status} …` error as any other non-2xx. Other 5xx
+are not retried: they report a fault in this request rather than a queue, and
+every attempt is a live OCR call.
 
 **Alternatives it beat.**
 
 - **Retry everything, including timeouts.** Rejected on the budget: 2 × 180s
   exceeds what §5.7 sizes, for the failure shape least likely to succeed on a
   second try.
-- **Retry more than once, with backoff.** Rejected as unmeasured. Nothing in the
-  corpus shows a third attempt would convert anything a second does not, and
-  each attempt is a live OCR call.
+- **Retry a transport failure more than once, with backoff.** Rejected as
+  unmeasured. Nothing in the corpus shows a third attempt would convert anything
+  a second does not, and each attempt is a live OCR call. The 429/503 backoff
+  above is a separate rule: those responses ask for a wait, they do not report
+  a failure.
 - **Wait for the host-vs-provider classification first.** Rejected because the
   classification does not change the action. Both hypotheses are "intermittent",
   and a bounded retry is the right response to either. The classification remains
@@ -1276,11 +1306,21 @@ Mirror `tests/tools/wiki-search.test.ts` (stub global `fetch`, mock the
 - **No key** → LLM-instruction error, **and `fetch` to OpenRouter is never
   called** (fail closed).
 - **OpenRouter non-2xx** → clean `OpenRouter OCR failed: …`.
+- **OpenRouter 429/503** → retried at most twice, honouring `Retry-After`, never
+  past 20s of waiting or the call's budget, then the same error
+  (`tests/utils/ocr.test.ts`, fake timers).
 - **OpenRouter unreachable** (fetch rejects) → friendly error.
 - **FS fetch 404 / non-image** → reuse and assert the shared-fetch errors.
 - **Empty OCR content** → throws (no fabricated transcription).
 - **Input validation**: neither/both of imageId/ark; bad formats (reuse
-  `image_read`'s cases via the shared resolver).
+  `image_read`'s cases via the shared resolver). The no-input error names the
+  keys received.
+- **`imageArk`**: read as `ark` and reported back as `ark`; `ark` and `imageArk`
+  naming different images, or an `ark` that is not a string, are refused before
+  the key lookup; of one ARK given bare and with `i=`/`cc=`, the side carrying
+  them is read; `imageArk` beside `imageId` is two forms; a query string is
+  stripped from a DGS URL, and the film viewer link still built. The respelling table itself is unit-tested in
+  `tests/utils/fs-image-fetch.test.ts`.
 
 ### 13.3 Image-prep unit tests — not applicable
 
@@ -1407,7 +1447,8 @@ passed unedited across the move:*
    fine? (Kept out of v1.)
 8. ~~**Fallback if OpenRouter is down** at runtime.~~ RESOLVED 2026-08-30 — see
    §5.9. Degrade to a clean NOT-READ→pivot-to-indexes still holds, but only
-   after **one** bounded retry on a transport failure.
+   after **one** bounded retry on a transport failure, or up to two on a
+   429/503.
 9. **User-invoked Opus transcription ("Flow 2") — parked, not requested.**
    Brainstormed alongside this spec and never asked for by a user, so it is
    recorded here rather than carried as work. The research workflow stays on
