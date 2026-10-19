@@ -87,13 +87,18 @@ export function planItemFlags(
   const places = (localities ?? [])
     .map((l) => (typeof l?.place === "string" ? l.place : ""))
     .filter(Boolean);
-  if (jurisdiction && places.length > 0 && !places.some((p) => isInside(jurisdiction, p))) {
+  // Either direction: a search inside a recorded locality, or one that ENCLOSES it (a
+  // statewide or national index covering the county), is in the right place.
+  if (
+    jurisdiction &&
+    places.length > 0 &&
+    !places.some((p) => isInside(jurisdiction, p) || isInside(p, jurisdiction))
+  ) {
     flags.push({
       kind: "jurisdiction",
       message:
         `${jurisdiction} is not inside any locality this project has researched ` +
-        `(${places.join("; ")}). An independent city belongs to no county, so county ` +
-        `records cannot hold a record created in one.`
+        `(${places.join("; ")}). Check that its records can hold an event from there.`
     });
   }
 

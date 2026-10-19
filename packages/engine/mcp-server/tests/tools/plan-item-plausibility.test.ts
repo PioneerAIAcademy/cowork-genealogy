@@ -66,6 +66,29 @@ describe("planItemFlags — jurisdiction", () => {
   });
 });
 
+describe("planItemFlags — enclosing jurisdictions", () => {
+  // A statewide or national search covers the recorded county, so it is in the right
+  // place. Routine, and flagging it drowned the real cases.
+  for (const jurisdiction of ["Michigan, United States", "Michigan", "United States"]) {
+    it(`is quiet for ${jurisdiction}, which encloses the recorded locality`, () => {
+      expect(planItemFlags({ jurisdiction }, [loc("Wayne, Michigan, United States")])).toEqual([]);
+    });
+  }
+
+  it("still flags a different state", () => {
+    const flags = planItemFlags({ jurisdiction: "Ohio, United States" },
+      [loc("Wayne, Michigan, United States")]);
+    expect(flags.some((f) => f.kind === "jurisdiction")).toBe(true);
+  });
+
+  it("does not explain every flag with independent cities", () => {
+    // The sentence was attached whether or not a city was involved.
+    const [flag] = planItemFlags({ jurisdiction: "Ohio, United States" },
+      [loc("Wayne, Michigan, United States")]);
+    expect(flag.message).not.toMatch(/independent city/i);
+  });
+});
+
 describe("planItemFlags — years", () => {
   it("flags a reversed range", () => {
     const item = { jurisdiction: "Wayne, Michigan, United States", date_range: "1920-1880" };

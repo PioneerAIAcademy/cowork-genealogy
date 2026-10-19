@@ -99,7 +99,7 @@ describe("rankForReview", () => {
 // should-fix 14 of the #3262 self-review: this module was marked BUILT and imported by
 // nothing but this file. Ranking that no caller applies orders nothing.
 
-import { researchQuery } from "../../src/tools/research-query.js";
+import { researchQuery, researchQuerySchema } from "../../src/tools/research-query.js";
 import { mkdtempSync, writeFileSync, mkdirSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
@@ -164,3 +164,12 @@ describe("research_query orders person_evidence by consequence", () => {
   });
 });
 
+
+describe("research_query advertises orderBy", () => {
+  it("lists it in the input schema the description tells callers to use", () => {
+    // The description says to pass orderBy; a caller that reads only the schema would
+    // never find it.
+    expect((researchQuerySchema.inputSchema.properties as Record<string, unknown>).orderBy)
+      .toEqual(expect.objectContaining({ type: "string", enum: ["review"] }));
+  });
+});

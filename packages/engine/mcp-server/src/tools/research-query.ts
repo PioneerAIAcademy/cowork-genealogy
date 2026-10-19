@@ -788,6 +788,13 @@ export const researchQuerySchema = {
         type: "string",
         description: "external_collections: record-type substring, case-insensitive.",
       },
+      orderBy: {
+        type: "string",
+        enum: ["review"],
+        description:
+          "person_evidence only (not a filter): \"review\" orders the links by consequence " +
+          "and adds `reviewReasons`. Omit for stored order.",
+      },
       offset: {
         type: "number",
         description:
