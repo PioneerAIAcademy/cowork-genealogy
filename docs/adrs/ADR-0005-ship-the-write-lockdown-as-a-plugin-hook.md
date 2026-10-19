@@ -189,13 +189,14 @@ this ADR records behaviour rather than citing them:
 **What the step-mode phase-0 probe found (Cowork, 2026-10-19).** Phase 0 of
 `docs/plan/research-step-mode.md`, measured with `apps/server/dev/step-probe/`: a
 recorder plugin on `PreToolUse` (matcher `.*`), `UserPromptSubmit`,
-`SessionStart` and `Stop`. One session on macOS, run by Praise, with the plugin
-and `.mcpb` built from `main` at `04ea53f86`: 10 user messages, 45 hook lines.
-The control held, with 25 `PreToolUse` lines.
+`SessionStart` and `Stop`. Two sessions on macOS, run by Praise, with the plugin
+and `.mcpb` built from `main` at `04ea53f86`. The first had 10 user messages and
+45 hook lines; the control held, with 25 `PreToolUse` lines. The second, a
+re-run for item 1, had 13 lines and the session transcript copied out with them.
 
 | # | Question | Result |
 |---|---|---|
-| 1 | `PreToolUse` fires on main-thread `Agent`/`Task`/`Skill` calls | **Not exercised, still open.** No such call was made: the model answered the research prompt with direct MCP calls |
+| 1 | `PreToolUse` fires on main-thread `Agent`/`Task`/`Skill` calls | **`Skill`: yes.** In the second session the main-thread `Skill` call reached the hook, and the hook's 10 lines match the transcript's 10 `tool_use` blocks one for one. **`Agent`/`Task`: not exercised.** The operator interrupted before any spawn. The first session made none of these calls; the model answered the research prompt with direct MCP calls |
 | 2 | `UserPromptSubmit` fires and carries the prompt text | Yes, on 10 of 10 messages, each with its text |
 | 3 | `prompt_id` | On every line except `SessionStart`. One value per user message (10 distinct), shared by that turn's `PreToolUse` and `Stop` lines |
 | 4 | `transcript_path` is readable from the hook | Yes, 45 of 45. It is a path inside the VM |
@@ -220,10 +221,23 @@ The operator reported seeing no reply, read the stop as a failure, and re-sent t
 message. A step boundary built on the halt has to tell the researcher that the
 step finished some other way.
 
+**The second session added three facts:**
+
+- **An interrupt also leaves no `Stop` line.** The transcript marks it
+  `[Request interrupted by user for tool use]`. So item 9's "no `Stop` line" is
+  evidence only together with the operator's word that they did not press stop.
+- **The hook's state file is per session.** It persisted across every call within
+  a session, but the second session started with it absent, under the same plugin
+  path in the VM.
+- **Cowork's `Skill` call names the skill with its plugin prefix:**
+  `genealogy-research:research`. The plan's rule that names are compared after
+  the last `:` is needed here, not only on the SDK path.
+
 **What contradicts earlier records:**
 
-- **`SessionStart` fires.** It fired twice: with `source: "startup"` when the
-  session opened, and `source: "resume"` when it resumed after 53 minutes. That
+- **`SessionStart` fires,** in both sessions. In the first it fired twice: with
+  `source: "startup"` when the session opened, and `source: "resume"` when it
+  resumed after 53 minutes. In the second it fired on startup. That
   reverses the 2026-07-30 finding above, and nothing here identifies why. As with
   the tool-name spelling in ADR-0004, read it as a moving target: nothing should
   depend on `SessionStart` firing in Cowork, or on it not firing.

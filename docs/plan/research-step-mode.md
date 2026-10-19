@@ -917,9 +917,10 @@ file's own sections, top to bottom.
   7. the hook can read the project's `research.json` from its working directory (for `ctx`);
   8. a file the hook writes is readable on its next call (for the turn's steps).
 - **On both hosted planes:** a host-side deny binds alongside `continue_policy.foreground_rewrite`.
-- **Record the results** in ADR-0005. **Cowork half recorded 2026-10-19,** except item 1 (not
-  exercised; re-run). That run also found that a plugin `PreToolUse` hook returning
-  `"continue": false` ends a Cowork turn, and that item 7 is a NO.
+- **Record the results** in ADR-0005. **Cowork half recorded 2026-10-19.** Item 1 is a yes
+  for `Skill`; `Agent`/`Task` was not exercised. The run also found that a plugin
+  `PreToolUse` hook returning `"continue": false` ends a Cowork turn, and that item 7 is
+  a NO.
 
 **Phase 1.** The prose ships as small PRs, so a failed eval holds up only the PR it is in. The
 prep PRs work under today's behaviour, so they land first. PR 1 is code only. PR 2 switches

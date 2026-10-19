@@ -133,9 +133,11 @@ Both are recorded in ADR-0005.
 
 **Recorded 2026-10-19** in
 [`ADR-0005`](../../../../docs/adrs/ADR-0005-ship-the-write-lockdown-as-a-plugin-hook.md),
-"What the step-mode phase-0 probe found", every item except 1. Re-run step 1 of
-the session alone, record item 1 there, then delete this directory: the answers
-live in the ADR, and a probe left in the tree reads as something that runs.
+"What the step-mode phase-0 probe found", every item. Item 1 is a yes for
+`Skill`; `Agent`/`Task` was not exercised, because the re-run was interrupted
+before any spawn. Once that is measured or judged unnecessary, delete this
+directory: the answers live in the ADR, and a probe left in the tree reads as
+something that runs.
 
 ## Why item 9 is now the headline
 
