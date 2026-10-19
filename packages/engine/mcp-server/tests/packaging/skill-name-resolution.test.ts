@@ -361,17 +361,7 @@ describe("research's routing table spawns every agent it names", () => {
 const SKILL_CALL = /Skill\(\s*["']([a-z0-9-]+)["']\s*\)/g;
 // Shrink-only. Each entry is a body that spells the call on purpose: how many
 // times, and why. A count, not a flag, so a new call on an allowed edge fails.
-const SKILL_CALLS_TO_AGENTS_ALLOWED = new Map<string, { count: number; why: string }>([
-  [
-    "search-records -> project-status",
-    {
-      count: 2,
-      why:
-        "two prohibitions ('do NOT call `Skill(\"project-status\")`', '❌ WRONG'), not calls; " +
-        "PR #3289 deletes both lines",
-    },
-  ],
-]);
+const SKILL_CALLS_TO_AGENTS_ALLOWED = new Map<string, { count: number; why: string }>([]);
 
 describe("no skill calls an agent as a skill", () => {
   const skills = readdirSync(join(pluginRoot, "skills")).filter((n) =>

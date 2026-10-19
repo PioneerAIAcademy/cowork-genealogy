@@ -221,15 +221,15 @@ are relative to `packages/engine/mcp-server/` unless shown otherwise.)*
 | Component | Count | Where | What it is for |
 |---|---|---|---|
 | **MCP tools** — `src/tools/`, advertised via `allToolSchemas` in `src/tool-schemas.ts` | every tool in `allToolSchemas` | host | Network access (FamilySearch, the wiki sidecar, OpenRouter OCR) and **validate-before-persist** writes to project state. Invariants live here because a tool contract cannot be argued past. |
-| **Skills** — `packages/engine/plugin/skills/<name>/SKILL.md` | **4** | VM, in the session's own context | Judgment and procedure: GPS doctrine, routing, when-to-stop criteria. A skill folder may also carry `references/` (§3.3) and `templates/`. |
+| **Skills** — `packages/engine/plugin/skills/<name>/SKILL.md` | **3** | VM, in the session's own context | Judgment and procedure: GPS doctrine, routing, when-to-stop criteria. A skill folder may also carry `references/` (§3.3) and `templates/`. |
 | **Plugin agents** — `packages/engine/plugin/agents/*.md` | **29** | VM, **fresh context** | Heavy or capability-restricted work delegated off the main thread. Each spawns with **no session state** — only its own `tools:` allow-list and its `model:` pin. (`disallowedTools:` was deleted from all five on 2026-08-30 — §5.2.) |
 
 The twenty-nine agents are `gps-mentor`, `record-structurer`, `image-reader`,
 `proof-conclusion`, `research-exhaustiveness`, `person-evidence`,
 `search-full-text`, `search-images`, `citation`, `question-selection`, `search-wikipedia`, `convert-dates`,
 `search-familysearch-wiki`, `check-warnings`, `translation`, `tree-edit`, `validate-schema`,
-`hypothesis-tracking`, `locality-guide`, `historical-context`, `project-status`,
-`search-external-sites`, `source-evaluation`, `survey-surname`, `search-hints`, `conflict-resolution`,
+`hypothesis-tracking`, `locality-guide`, `historical-context`,
+`timeline`, `search-external-sites`, `source-evaluation`, `survey-surname`, `search-hints`, `conflict-resolution`,
 `init-project`, `tree-survey` and `research-plan`.
 
 > Plugin agents (`packages/engine/plugin/agents/`) are consumed by the **Cowork
@@ -355,7 +355,7 @@ descriptions because a user may still invoke any of them directly.
 
 ### 3.3 `references/` — the fourth artifact, duplicated on purpose
 
-2 of the 4 skills carry a `references/` folder, loaded on demand, in-session,
+1 of the 3 skills carries a `references/` folder, loaded on demand, in-session,
 for material too long to sit in the skill body.
 
 **A reference is loaded deliberately only if its own `SKILL.md` names it** — or if
@@ -686,8 +686,9 @@ Architecturally:
 - **Also touch, and nothing will tell you if you don't:** `src/types/<name>.ts`
   (shared response types), `dev/try-<name>.ts` (a one-shot live-API smoke script
   — your only real debugger when the MCP harness swallows errors),
-  `tests/tools/<name>.test.ts`, `docs/catalog.md`'s tool table, and — if a skill will
-  call it — an `eval/fixtures/mcp/` fixture.
+  `tests/tools/<name>.test.ts`, `docs/catalog.md`'s tool table, `READ_ONLY` in
+  `src/tool-schemas.ts` if concurrent calls cannot corrupt project state (§5.2),
+  and — if a skill will call it — an `eval/fixtures/mcp/` fixture.
 - **Changing an existing tool's response type also breaks its fixtures**, in the
   other direction: add or rename a required field and every fixture for that tool
   is now a shape the tool cannot return.
@@ -731,7 +732,8 @@ Architecturally:
 
 > **On the User-Agent, the rule is conditional.** `genealogy-mcp-server/<version>`
 > is what the four non-FamilySearch tools send today (`wikipedia`, `wiki_search`,
-> `wiki_read`, `wiki_place_page`) and is correct for them. It is also exactly
+> `wiki_read`, `wiki_place_page`) and is correct for them; `wikipedia` adds the
+> repo's URL, because Wikimedia throttles agents without contact details. It is also exactly
 > what Imperva 403s on any FamilySearch endpoint. So: **FamilySearch →
 > `BROWSER_USER_AGENT`; anything else → the service's own convention.** The
 > deleted `mcp-tool-scaffolder` subagent stated it unconditionally — because its
@@ -1139,6 +1141,20 @@ driver must wait.
 > and the SDK's `@tool` cannot emit that `_meta` key. So `make eval-skill`
 > diverges from production here. Nothing on the unit plane grades ToolSearch
 > counts.
+>
+> **Read-only tools run side by side: `READ_ONLY` (`src/tool-schemas.ts`).**
+> Those tools carry `annotations: {"readOnlyHint": true}` in `tools/list`, which
+> the Claude Code CLI reads as concurrency-safe (verified on 2.1.139, 2.1.220 and
+> 2.1.302), so several in one assistant message run at once. A tool belongs in the
+> set when concurrent calls cannot corrupt project state and their order does not
+> matter: a pure read, or a read that only stages its own result file, appends a
+> log line, writes `external-collections.json` under `withProjectLock`, or
+> rewrites its own retained scan under `images/`. Every other tool —
+> anything that writes `research.json` or the tree, or whose effect a later call
+> in the batch can depend on — stays serial: it runs alone, in order, after the
+> calls before it finish. `tests/packaging/read-only-tools.test.ts` pins the set
+> and refuses a writer in it. The unit harness stays serial, since `mock_mcp.py`
+> copies no annotations; whether Cowork's bridge passes them on is unverified.
 
 ### 5.3 Capability restriction by tool identity
 
@@ -1513,8 +1529,9 @@ document** — never mixing them across the repo, which is intentional.
 
 ### 6.5 State reaches the prompt too
 
-All 4 skills carry a `**Narration:**` line as the first line of the body,
-instructing Claude to read
+All 3 skills carry a `**Narration:**` line near the top of the body —
+directly after the frontmatter for `forget-and-rederive`, right after the
+title heading for the other two — instructing Claude to read
 `researcher_profile.narration_guidance` from `research.json` and apply it as that
 invocation's narration style. The `init-project` agent writes the profile at
 project creation as fixed values and asks only the research objective — it
@@ -1868,8 +1885,8 @@ Other environment differences that bite:
   budget this bites (though measured 2026-09-08, none of 59 live reads exceeded
   60s — p50 18.7s, max 50.1s; see the spec's Timeout budget section), but
   it is not specific to that tool — `IMAGE_FETCH_TIMEOUT_MS` (90s) and the 60s
-  budgets in `wikipedia.ts`/`wiki-search.ts`/`collections-search.ts` sit at or
-  above the ceiling too. **No automated check reaches this** — neither harness
+  budgets in `wiki-search.ts`/`collections-search.ts` sit at or above the
+  ceiling too (`wikipedia.ts` shares one 55s deadline across its requests). **No automated check reaches this** — neither harness
   goes through the bridge — so it is only observable in a live Cowork session.
 
 ### If you're asked to…

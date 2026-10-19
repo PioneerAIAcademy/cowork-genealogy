@@ -213,10 +213,8 @@ def test_skill_refs_finds_every_declared_callee(tmp_path):
 
     # The real file: search-external-sites (issue #2802) and research-plan
     # (issue #2116) left this list when each became an agent that search-records
-    # spawns. project-status is an agent too; its `Skill()` lines are what is left.
-    assert skill_refs_for_skill(PLUGIN_SKILLS / "search-records" / "SKILL.md") == [
-        "project-status",
-    ]
+    # spawns, and project-status left when issue #3112 deleted that agent.
+    assert skill_refs_for_skill(PLUGIN_SKILLS / "search-records" / "SKILL.md") == []
     skills, _ = _skill_pair(tmp_path)
     assert skill_refs_for_skill(skills / "caller" / "SKILL.md") == ["callee", "other"]
 

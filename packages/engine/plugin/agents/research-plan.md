@@ -14,7 +14,7 @@ description: >-
   pick which question to research (question-selection), to extract a record
   already found (extraction_append, or the record-structurer agent), or, after
   a search comes back empty, to judge whether research is done ("are we done",
-  "what's the next step" → research-exhaustiveness or project-status).
+  "what's the next step" → research-exhaustiveness).
 model: claude-sonnet-4-6
 tools:
   - Read

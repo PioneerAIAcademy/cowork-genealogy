@@ -4,7 +4,7 @@
     "skill": "survey-surname",
     "name": "Statewide Dixon survey across three Virginia censuses (1820-1840)",
     "type": "positive",
-    "description": "The happy-path survey: three census years (1820, 1830, 1840), all under the 600 threshold. The agent should resolve Virginia with place_search, call record_search for each year, log each page with research_log_append, build a table grouped by household and sectioned by year, and write it with Write.",
+    "description": "The happy-path survey: three census years (1820, 1830, 1840), all under the 600 threshold. The agent should resolve Virginia with place_search, call record_search for each year, log each page with research_log_append, build a table grouped by household and sectioned by year, and log it as one survey_surname research-log entry with the table in notes.",
     "tags": ["survey", "statewide", "multi-year", "direct-arm"]
   },
   "input": {
@@ -18,6 +18,7 @@
     "record-search-dixon-virginia-1840-census-page2",
     "record-search-dixon-virginia-1840-census"
   ],
+  "judge_reads_files": true,
   "execution": {
     "max_wall_clock_seconds": 600
   },
@@ -27,7 +28,7 @@
     "All three years are under the 600 totalMatches threshold (3, 3, 6), so the agent should fetch all results and NOT ask for counties. 1820 and 1830 fit on one page each (hasMore: false). 1840 has 6 results split across two pages (hasMore: true on page 1) — the agent MUST page with offset 100 to get the remaining 2 results.",
     "Should call research_log_append after each record_search page to log the search, passing the staged.resultsRef from the record_search response as stagedResultsRef.",
     "Should build a markdown table with one section per census year, columns for year, county, head of household, other surname members, record ARK, and ruled out. Pre-1850 censuses name only the head of household, so there are no other members to list.",
-    "Should write the table to a markdown file using Write. The file name should follow the pattern surname-survey-dixon-virginia.md.",
+    "The table is logged as one research-log entry (tool survey_surname, planItemId null, query {surname, place, yearSpan}, no stagedResultsRef) whose notes hold the whole table and end with the sentence 'Censuses before 1880 have no relationship column: the first person listed in a dwelling is shown as head, and relationships are not stated.' It appears in the file changes summary as a new `log` entry; grade Table structure from that entry's notes. No file is written: the agent holds no `Write`.",
     "1820 and 1830 return hasMore: false (single page). 1840 returns hasMore: true on page 1 — the agent must call record_search again with offset 100 for 1840. Expect two record_search calls for 1840 (page 1 and page 2) and one each for 1820 and 1830, for a total of four record_search calls.",
     "The agent's return should end with the summary_for_user block: a `---` line followed by two unlabeled paragraphs in plain language."
   ]

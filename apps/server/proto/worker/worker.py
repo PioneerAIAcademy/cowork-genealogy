@@ -287,7 +287,6 @@ EXPECTED_AGENTS = frozenset({
     "init-project",
     "locality-guide",
     "person-evidence",
-    "project-status",
     "proof-conclusion",
     "question-selection",
     "record-structurer",
@@ -301,15 +300,16 @@ EXPECTED_AGENTS = frozenset({
     "search-wikipedia",
     "source-evaluation",
     "survey-surname",
+    "timeline",
     "translation",
     "tree-edit",
     "tree-survey",
     "validate-schema",
 })
 # The other half of the same precondition, a literal for the same reason: a count of
-# the directory the SDK loads the plugin from shrinks with it -- an image shipping 3
-# skills registers 3 and passes. test_proto_worker pins this against the repo.
-EXPECTED_SKILLS = 4
+# the directory the SDK loads the plugin from shrinks with it -- an image shipping 2
+# skills registers 2 and passes. test_proto_worker pins this against the repo.
+EXPECTED_SKILLS = 3
 
 _stdout_lock = threading.Lock()
 

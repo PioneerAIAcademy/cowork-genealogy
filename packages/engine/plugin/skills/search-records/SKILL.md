@@ -47,9 +47,8 @@ The bridge between planning (research-plan) and extraction (`extraction_append`)
 - "What should I search for?" / "What next?" / "How do I find X?" → spawn `@plugin:research-plan` immediately
 - "Is the research done?" → spawn `@plugin:research-exhaustiveness` immediately
 
-**CRITICAL — do NOT call `Skill("project-status")` before routing.** research-plan handles its own project reading; call it with no prior tool calls.
+**CRITICAL — spawn the routed agent with no prior tool calls.** research-plan handles its own project reading.
 
-❌ WRONG: `Skill("project-status")` → read project → answer with research recommendations  
 ✅ CORRECT: spawn `@plugin:research-plan` with no prior tool calls → stop
 
 After any routed Skill call or agent spawn, stop, except for an authorized hand-back from research-plan (above). Do not read files, call MCP tools, or provide supplementary information; relay a spawned agent's return as it came back, or only what follows its `---` line when it has one.
