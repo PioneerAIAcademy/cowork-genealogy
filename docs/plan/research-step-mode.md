@@ -1,6 +1,8 @@
 # Research one step at a time
 
-**Status:** Proposed, not started. For Praise to fold into the research-as-a-job work
+**Status:** **Phase 0 complete (2026-10-19); phases 1+ not started.** Its answers are in
+ADR-0005 and decisions 23 and 24 below carry what they changed. For Praise to fold into the
+research-as-a-job work
 (`docs/plan/research-as-a-job-later.md`, PR #3262); see "Integrating with research-as-a-job".
 Phase 0 (a probe) comes first and changes no product code. This merges two drafts: a
 single-pass plan drawn from feedback issue #3475, and a one-step-per-turn draft. plan-critic
@@ -60,9 +62,30 @@ the replacement and the unsettled-conflict ending; their findings are folded in.
 21. **`deferred` is a closed-enum value** of `not_reached`, not prose (section B).
 22. **`--autonomous` is retired** once e2e runs on the host's "Keep going." replies (section
     F). The e2e orchestrator then passes search-external-sites `userPresent: no` itself.
-23. **The `AskUserQuestion` decision carrier is dropped.** Every step ends at a boundary, so a
-    question for the researcher is a step's ending. `DecisionCard` becomes the home for the
-    reply buttons.
+23. ~~**The `AskUserQuestion` decision carrier is dropped.**~~ **REVERSED by the lead,
+    2026-10-19.** The carrier STAYS, and is the mechanism rather than something made
+    redundant by one. Its premise -- "every step ends at a boundary, so a question for the
+    researcher is a step's ending" -- was falsified by phase 0: a `PreToolUse` deny does not
+    end a turn (`probe_step_deny.py`, alpha), and `AskUserQuestion` itself waits in Cowork but
+    does not end the turn either (ADR-0005 item 10). `DecisionCard` still becomes the home for
+    the reply buttons, which is unchanged.
+
+## Decisions taken (lead, 2026-10-19)
+24. **The boundary is `AskUserQuestion`, and nothing else.** Option 1 of the four put to the
+    lead after phase 0. Asked because a `PreToolUse` deny was measured NOT to end a turn: the
+    model reports the refusal and carries on with whatever else the turn had queued
+    (`apps/server/dev/probe_step_deny.py`, alpha, 2026-10-19). The lead's words: *"Just go with
+    option 1 (AskUserQuestion is the main path). No need for anything else (no halt)."*
+
+    **One premise of that choice is since measured false, and the question is back with the
+    lead.** It was chosen on the understanding that `AskUserQuestion` ends the turn. It does
+    not: in Cowork it genuinely WAITS (93s, no call until answered) but the answer returns
+    inside the same turn, and the run carried on for ~5.5 minutes afterwards (ADR-0005 item
+    10). So the researcher is reliably asked, which is what decisions 1-3 are for, but a step
+    is bounded only by router prose, not by a turn boundary. That is the cost-and-latency half
+    of the motivation, and prose failing to bind is the failure this whole plan exists to fix.
+    Until the lead answers, treat "no halt" as the standing instruction and this as the open
+    risk against it.
 
 ## Evidence
 **#3475.** Proxy-exact, after question selection: $49.84 over about 361 live minutes. Each
@@ -846,7 +869,7 @@ file's own sections, top to bottom.
 | `research` as the only front door (PR #3262's frontmatter) | **Keep:** section H depends on it |
 | "Not every turn is a job"; the `research_delivered` finish line (PR #3187, PR #3286, PR #3235) | **Superseded:** every turn is one step. Keep the bounded routing list and "name what was saved"; delete `research_delivered` in phase 2 |
 | "Never ask a question you will not wait for" | **Keep, applied to every step.** Offers at the **end** of a step become its "Continue with X?". Offers **mid-step** become statements, because nothing stops mid-step: for example search-records' "Let the user confirm before extraction", now that extraction is inside the search step |
-| "Give 'I need you' an exit" (`AskUserQuestion` carrier, `pending_decision`, `DecisionCard`) | **Change.** The step boundary already ends every turn, so a question is just a step's ending. `DecisionCard` becomes the home for the reply buttons. The carrier is dropped (decision 23) |
+| "Give 'I need you' an exit" (`AskUserQuestion` carrier, `pending_decision`, `DecisionCard`) | **Keep** (decision 24, reversing 23). The carrier IS the boundary. The premise this row carried -- "the step boundary already ends every turn" -- was measured false in phase 0: a deny does not end a turn, and `AskUserQuestion` waits without ending one either. `DecisionCard` still becomes the home for the reply buttons |
 | The fourth stop's clauses: unreachable records end `completed`; a blocking conflict "is a decision" | **Unreachable records:** unchanged (the proof at the tier reached, `completed`). **A blocking conflict:** the conflict step names the record that could settle it and offers the planning step (section E), no `decision` exit needed |
 | "Capture a real feed before specifying phase 2" | **Keep:** it now shows the step reports |
 | *Before phase 2*'s acceptance list | **Replaced** by this plan's acceptance items 8–9 (a fresh session ends after one step) and item 7 (one-shot and plan-only asks end after their step) |
