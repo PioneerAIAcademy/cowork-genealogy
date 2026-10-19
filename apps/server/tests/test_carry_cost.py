@@ -159,28 +159,44 @@ def test_a_resumed_sdk_session_is_measured_from_the_projects_first_call(tmp_path
 @pytest.mark.parametrize("shape, reason", [
     ("truncated", "log truncated"),
     ("headless", "does not open with a person prompt"),
+    ("unmarked opener", "does not open with a person prompt"),
 ])
 def test_a_session_the_bundle_cannot_show_whole_is_left_out(tmp_path, shape, reason):
+    """An unmarked opener: the log marks its later prompts "sdk", so its first row is no
+    person's prompt even though it has text."""
     rows = [person("s", 0, "Start."), call("s", 1, "a", cw=40_000)]
     rows[0]["parentUuid"] = None
     if shape == "truncated":
         rows.insert(0, {"type": "_truncation_note", "note": "older rows dropped"})
-    else:
+    elif shape == "headless":
         rows[0]["parentUuid"] = "an-earlier-row"
+    else:
+        del rows[0]["promptSource"]
+        rows += [person("s", 2, "Go on."), call("s", 3, "b", cr=40_000)]
     [project] = carry_cost.analyze([bundle(tmp_path, "b", "prj", {"session-log.jsonl": rows})])
     assert project.excluded == reason
 
 
-def test_meta_rows_and_tool_results_are_not_messages(tmp_path):
+@pytest.mark.parametrize("marked", [True, False], ids=["sdk-marked log", "unmarked log"])
+def test_meta_rows_tool_results_and_interrupts_are_not_messages(tmp_path, marked):
+    """In a log with no `promptSource` the text rule decides alone, so each of these rows must
+    be turned away by its own check. A tool result can carry a text block beside the result."""
     rows = [person("s", 0, "Start."), call("s", 1, "a", cw=40_000),
-            person("s", 2, "Base directory for this skill: /opt/x", isMeta=True),
+            _row("s", 2, type="user", isMeta=True, message={
+                "role": "user", "content": "Base directory for this skill: /opt/x"}),
             call("s", 3, "b", cr=40_000),
             _row("s", 4, type="user", message={"role": "user", "content": [
+                {"type": "tool_result", "tool_use_id": "t", "content": "ok"},
+                {"type": "text", "text": "A note added beside the result."}]}),
+            call("s", 5, "c", cr=40_000),
+            _row("s", 6, type="user", message={"role": "user", "content": [
                 {"type": "text", "text": "[Request interrupted by user]"}]}),
-            call("s", 5, "c", cr=40_000)]
+            call("s", 7, "d", cr=40_000)]
     rows[0]["parentUuid"] = None
+    if not marked:
+        del rows[0]["promptSource"]
     [project] = carry_cost.analyze([bundle(tmp_path, "b", "prj", {"session-log.jsonl": rows})])
-    assert len(project.messages[True]) == 1
+    assert len(project.messages[True]) == 1 and project.disagree == 0
 
 
 def test_importing_the_script_leaves_eval_harness_off_the_path():
@@ -202,6 +218,23 @@ def test_a_typed_yes_after_a_turn_with_no_hand_back_is_its_own_message(tmp_path)
     assert len(project.messages[True]) == 3
 
 
+@pytest.mark.parametrize("between", ["interrupt", "API error"])
+def test_a_yes_after_an_interrupted_or_failed_hand_back_is_its_own_message(tmp_path, between):
+    """The runner never answers a hand-back the person interrupted or an error followed, so a
+    "Yes." after either was typed."""
+    stop = (_row("s", 2, type="user", message={"role": "user", "content": [
+                {"type": "text", "text": "[Request interrupted by user]"}]})
+            if between == "interrupt" else
+            call("s", 2, "err", model="<synthetic>", text="API Error: Connection closed mid-response.",
+                 isApiErrorMessage=True))
+    rows = [person("s", 0, "Start."),
+            call("s", 1, "a", cw=40_000, text="Found it.\nNext: search records. Continue?"),
+            stop, person("s", 3, "Yes."), call("s", 4, "b", cr=40_000)]
+    rows[0]["parentUuid"] = None
+    [project] = carry_cost.analyze([bundle(tmp_path, "b", "prj", {"session-log.jsonl": rows})])
+    assert len(project.messages[True]) == 2
+
+
 def test_a_call_never_carries_more_than_it_holds():
     """51,000 tokens of context against a 45,000 fresh start can carry 6,000, not 15,000."""
     c = carry_cost.Call("claude-sonnet-4-6", (0, 51_000, 0, 0))
@@ -220,8 +253,12 @@ def test_an_agent_launch_no_transcript_answers_leaves_the_session_out(tmp_path):
 
 
 def test_a_prompt_the_two_rules_read_differently_is_counted(tmp_path):
+    """Both ways: a queued prompt has text but no "sdk" mark, and a meta row marked "sdk" fails
+    the text rule. Neither is a message."""
     rows = [person("s", 0, "Start."), call("s", 1, "a", cw=40_000),
-            person("s", 2, "Queued while busy.", promptSource="queue"), call("s", 3, "b", cr=40_000)]
+            person("s", 2, "Queued while busy.", promptSource="queue"), call("s", 3, "b", cr=40_000),
+            person("s", 4, "Base directory for this skill: /opt/x", isMeta=True),
+            call("s", 5, "c", cr=40_000)]
     rows[0]["parentUuid"] = None
     [project] = carry_cost.analyze([bundle(tmp_path, "b", "prj", {"session-log.jsonl": rows})])
-    assert len(project.messages[True]) == 1 and project.disagree == 1
+    assert len(project.messages[True]) == 1 and project.disagree == 2

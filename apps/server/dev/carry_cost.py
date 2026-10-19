@@ -14,24 +14,28 @@ How each figure is measured:
   (`_truncation_note`), and each agent run's longest transcript.
 - **A hosted session is a project** (`project_folder_path` in the bundles' `feedback.json`).
   Its SDK sessions (a resume can start a new one) share one fresh-start baseline: the
-  project's earliest main-thread call. Left out, and named: a project whose log was truncated,
-  whose agent transcripts the bundle dropped, or whose first SDK session does not open with a
-  person prompt (`parentUuid` null).
+  project's earliest main-thread call. Left out, and named: a project whose log was truncated;
+  one missing an agent run, either a transcript the bundle dropped or an agent launch no
+  transcript answers (`build_profile`'s `missing_agent_transcripts`); and one whose first SDK
+  session does not open with a person prompt (`parentUuid` null).
 - **Calls** are main-thread assistant rows in timestamp order, one per message id (its last
   entry), `<synthetic>` API-error placeholders skipped. A call's context is its input +
   cache-write + cache-read tokens.
-- **A user message** is a `user` row a person sent: `promptSource` "sdk" where the log records
-  it, else text that is not a tool result, `isMeta`, a compaction summary or an interrupt
-  marker. It counts only if a call follows it. A "Yes." answering the hand-back line
-  (`app.agent.hand_back`) is the runner's auto-continue or the Continue button, not a new
-  request, so it is folded into the message before it; the figure without folding is printed
-  too.
+- **A user message** is a `user` row a person sent. The text rule: the row has text, and it is
+  not a tool result, `isMeta`, a compaction summary or an interrupt marker. In a log that
+  records `promptSource`, the row must also be marked "sdk"; rows the mark and the text rule
+  read differently, either way, are counted and printed. A message counts only if a call
+  follows it. A "Yes." answering the hand-back line (`app.agent.hand_back`) is the runner's
+  auto-continue or the Continue button, not a new request, so it is folded into the message
+  before it; the figure without folding is printed too. As in the runner, the text a hand-back
+  would end is cleared at each prompt, interrupt and API error, so only a "Yes." right after a
+  turn that ended on the hand-back line is folded.
 - **Excess:** for each user message, its first call's context minus (baseline + seed), floored
-  at 0. Every call of the message carries it, from the message's first call until a compaction
-  (`isCompactSummary`, or a "This session is being continued" prompt), which resets the
-  carried context. A compaction before the first call changes nothing: the first call's
-  context already reflects it. The project's first message is the fresh start, so its excess
-  is 0 by construction.
+  at 0. The message's calls carry it from its first call until a compaction (`isCompactSummary`,
+  or a "This session is being continued" prompt), which resets the carried context, and no
+  call carries more than it holds beyond the fresh start. A compaction before the first call
+  changes nothing: the first call's context already reflects it. The project's first message
+  is the fresh start, so its excess is 0 by construction.
 - **Price,** two ways, at `spend.rates_for` the call's model (`PRICE_PER_MTOK` for one it does
   not know). That is the 5-minute-TTL table, the one the alpha writes at, so a call after a
   pause of over 5 minutes already pays for the rewrite in its cache-write tokens.
@@ -39,9 +43,11 @@ How each figure is measured:
   as the span right after the fresh-start prefix, at cache-read where the call read that span,
   cache-write where it rewrote it, input beyond.
 - **Share,** two ways: over the project's whole cost (main thread, inline sidechains and every
-  agent run, each call priced in full), and over its main-thread cost.
+  agent run, each call priced in full), and over its main-thread cost. It is reported at seeds
+  of 2,000, 5,000 and 10,000 tokens (`SEEDS`), over the projects with at least 3 user messages
+  (`--min-messages`), against a bar of 10% of cost (`BAR`).
 
-    cd apps/server && uv run python dev/carry_cost.py ~/fs-agent/feedback/zips/*.zip
+    cd apps/server && uv run python dev/carry_cost.py path/to/feedback-*.zip
     cd apps/server && uv run python dev/carry_cost.py <bundles...> --explain <project or bundle>
 
 Arguments are zips, unpacked bundles, or folders of unpacked bundles.
@@ -139,7 +145,7 @@ class Project:
     main_calls: list[Call] = field(default_factory=list)
     other_calls: list[Call] = field(default_factory=list)
     compactions: int = 0
-    disagree: int = 0  # user rows the promptSource and text rules read differently
+    disagree: int = 0  # user rows the "sdk" mark and the text rule read differently
 
     def cost(self, main_only: bool = False) -> float:
         calls = self.main_calls if main_only else self.main_calls + self.other_calls
@@ -167,13 +173,23 @@ def _is_compaction(row: dict) -> bool:
     return bool(row.get("isCompactSummary")) or bool(text and text.startswith(COMPACTION_PREFIX))
 
 
-def _is_person(row: dict, sdk_marked: bool) -> bool:
+def _by_text(row: dict) -> bool:
+    """The text rule: a `user` row with text that is not a tool result, `isMeta`, a compaction
+    summary or an interrupt marker."""
     if row.get("type") != "user" or row.get("isMeta") or _is_compaction(row):
         return False
     text = (_text(row) or "").strip()
-    if not text or text.startswith("[Request interrupted"):
-        return False
-    return row.get("promptSource") == "sdk" if sdk_marked else True
+    return bool(text) and not text.startswith("[Request interrupted")
+
+
+def _sdk_marked(rows: list[dict]) -> bool:
+    """Whether the log records `promptSource` on its user rows."""
+    return any(r.get("type") == "user" and r.get("promptSource") for r in rows)
+
+
+def _is_person(row: dict, sdk_marked: bool) -> bool:
+    """The text rule, and the "sdk" mark too in a log that records one."""
+    return _by_text(row) and (not sdk_marked or row.get("promptSource") == "sdk")
 
 
 def _assistant_text(row: dict) -> str:
@@ -203,11 +219,11 @@ def _calls(rows: list[dict]) -> dict[str, Call]:
 
 def _walk(rows: list[dict], fold: bool) -> tuple[list[Message], list[Call], int, int]:
     """One SDK session's user messages (with the calls that carry each), calls, compactions,
-    and how many user rows the promptSource rule and the text rule read differently."""
+    and how many user rows the "sdk" mark and the text rule read differently, either way."""
     final = _calls(rows)
-    sdk_marked = any(r.get("type") == "user" and r.get("promptSource") for r in rows)
+    sdk_marked = _sdk_marked(rows)
     disagree = sum(1 for r in rows if r.get("type") == "user"
-                   and _is_person(r, True) != _is_person(r, False)) if sdk_marked else 0
+                   and (r.get("promptSource") == "sdk") != _by_text(r)) if sdk_marked else 0
     messages: list[Message] = []
     calls: list[Call] = []
     seen: set[str] = set()
@@ -293,7 +309,7 @@ def analyze(bundles: list[tuple[str, Path]]) -> list[Project]:
                         key=lambda sid: parse_when(main[sid][0].get("timestamp")), default=None)
         opener = main[first_sid][0] if first_sid else None
         if p.excluded is None and (opener is None or opener.get("parentUuid") is not None
-                                   or not _is_person(opener, bool(opener.get("promptSource")))):
+                                   or not _is_person(opener, _sdk_marked(main[first_sid]))):
             p.excluded = "does not open with a person prompt"
         for fold in (True, False):
             p.messages[fold] = []
@@ -335,7 +351,7 @@ def report(projects: list[Project], min_messages: int, bundles: int) -> int:
             print(f"  left out: {p.name} ({p.excluded}; bundles {', '.join(p.bundles)})")
     disagree = sum(p.disagree for p in projects)
     if disagree:
-        print(f"  {disagree} user rows read differently by the promptSource rule and the text rule:"
+        print(f"  {disagree} user rows read differently by the \"sdk\" mark and the text rule:"
               " check them before trusting the message counts.")
     if not qualified:
         print("No hosted session qualifies.")
