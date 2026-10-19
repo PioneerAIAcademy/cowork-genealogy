@@ -59,7 +59,7 @@
 | Worker | Claude Agent SDK 0.2.128 / Claude Code CLI 2.1.220, resumed from Postgres; no `Bash` or web tools; a hook denies file reads and raw writes, logs calls, forces explicit background calls to the foreground | Beanstalk worker tier |
 | Postgres 16 | Documents, blob index, SDK transcript, turns, events, tool-call log | RDS |
 | S3 | MinIO, immutable objects | S3 |
-| Tool server | 48 MCP tools (2026-09-29) over Streamable HTTP, one process for all patrons. **Nothing checks a bearer may reach the project it names.** | Beanstalk environment (handoff step 9; platform per F12) |
+| Tool server | 48 MCP tools (2026-09-29) over Streamable HTTP, one process for all patrons. A project request is refused 403 unless its bearer is the one the worker stamped on that open turn of that project (U4, 2026-10-13). | Beanstalk environment (handoff step 9; platform per F12) |
 | Browser | `apps/web` on SSE; Vite dev server only | Static, behind the edge |
 
 - **Beanstalk probe** (D3, 2026-09-11, torn down): sqsd 3.0.5 cuts the POST at `InactivityTimeout` silently and redelivers after `VisibilityTimeout`: 300 s idle at 2,100 / 1,800. The worker tier always creates a DLQ.
@@ -145,7 +145,8 @@ time in 3; the worker never does (removed from the harness by handoff U17, 2026-
 **What closes it** (ours, handoff U16):
 
 1. **A blind human grade of one prototype bagley tree:** D18's `_072ee7`, the like-for-like
-   pair, posted for a genealogist session (issue #3355, open). Still n=1.
+   pair, graded blind (PR #3358, 2026-10-13): `f1` true, proof quality 2 (thin: a Jr./Sr. competitor
+   in the run's own data never weighed); its harness pair was graded `partial`, 3. Done; still n=1.
 2. **A paired sample:** several fixtures and runs a side; same commit, week, CLI, stop policy,
    image cap and time limit. ~$15–30 a run.
 3. **Before beta (R5), re-baseline the corpus on the prototype:** 108 of 136 fixtures have runs
@@ -157,7 +158,7 @@ time in 3; the worker never does (removed from the harness by handoff U17, 2026-
 - **Deployed gateway:** no research run; the worker ran two short turns on a local copy (P3k). Local copies add +0.35 s first byte per call, ~7–14 s a turn (P3g, 2026-09-25). TAP's auth, guardrails, capacity and deployed latency unmeasured. U14.
 - **Unmapped model id:** silently becomes a general-purpose stand-in that ignores the agent's `tools:`, and the turn reports success (P3h). U14.
 - **Prototype on AWS, research turns run:** the U13 rehearsal (2026-10-07, n=1) deployed the CI bundles to Beanstalk with RDS: every tier signs with its instance role, tools reaches S3 keylessly, the migrations runner ran against RDS under `verify-full`, and FamilySearch sign-in completed through the dev key's loopback callback. The acceptance turn (U13, 2026-10-08, n=1), `bagley-father-1884` autonomous, ran 13,565 s on receive 1 and completed at the $35 spend cap, with `completed_at` set, `research.json` in `documents` and every acceptance-3 query 0. Mid-turn the attempt's shared advisory lock was held on a dedicated direct connection, beside the turn's own connection named `turn:<id>`. The tree-read block was a prompt instruction only, a departure: the worker refuses `BLOCKED_TOOLS` without `DEV_PATHS`, which the Beanstalk templates refuse (U11); the six `person_*` tools it names were called 0 times each over 558 tool calls. On AWS since (U13, 2026-10-08, n=1 per case): a SIGKILL mid-delegation inside a tools commit hold came back after `ErrorVisibilityTimeout` (294 s), resumed and wrote the source exactly once; a SIGTERM outside a deploy was answered and redelivered after ~306 s, and receive 2 resumed; `MaxRetries` 1 plus a 500 closed the turn `retries_exhausted` and released the held message, the DLQ unchanged because the worker answers 200 on the last receive; a kill-resume with a grant refresh forced between attempts had 0 reauth hits and resumed; a message held mid-turn was released when the turn closed. The SIGTERM case's second run, the dead-letter case's released turn and the refresh case's resumed turn then closed `no_progress`, a recorded departure: the deployed web tier turns the nudge arm on for every message (`AUTONOMOUS_MAX_NUDGES` 60), and with nudges on (measured at caps 60 and 3) a project-less probe session gets two empty nudges and the continue policy closes it `no_progress` (still so with the cap at 3); compose's kill recipes run with nudges off (`AUTONOMOUS_MAX_NUDGES=0`); the mid-delegation turn was stopped to cap spend once the nudges drove it into locality research. Since (2026-10-10, n=1 per case): https served without sign-in through an imported self-signed certificate (U13); U6's `claim_epoch` migrations applied on its first AWS deploy, with no superseded attempt logged; and 1, 4 and 8 concurrent turns on one t3.xlarge averaged 0.107, 0.448 and 0.89 cores, under its 1.6-core credit baseline, with no surplus credits charged (U18).
-- **One patron, no sign-in:** any bearer reaches any project; a refresh revokes the prior token at once, so two turns on one grant break each other; token custody (R7) assumed minute-long turns. U2–U4 (U2, U3 built; U4's worker half built, its tool-server half open).
+- **One patron, no sign-in:** any bearer reached any project until U4; a refresh revokes the prior token at once, so two turns on one grant break each other; token custody (R7) assumed minute-long turns. U2–U4 (U2, U3 and U4 built; U4's tool-server half built ahead of F8, 2026-10-13).
 - **No time limit:** nothing ends a run by time; a cut attempt would keep running beside its redelivery, though since U6 (`claim_epoch`, 2026-10-09, n=1) its close, transcript and tool-server commits are no-ops and it halts at its next tool call; a dead-lettered turn holds the session; the cross-instance tool-server write lock is untested. U5, U26.
 - **Postgres backend (R14):** the engine suite runs on `PgS3ProjectStore` in CI (`vitest-pg`, U15): 6,802 cases on head `bce24a20d` (2026-10-12), none skipped, 29 run on the file store by name (`fileStoreOnly`). All 30 unit suites ran on it once (U15, 2026-10-12, n=1 per test): 440 tests, 0 store faults in 1,384 live tool calls.
 - **Throughput:** Bedrock counts input + cache write + 5× output for Sonnet 4.6 and exempts cache reads (documented; read back in our test account, 2026-10-09, n=1 per arm), so a session settles at ~26–43k tokens/min, not the ~166k that counted every token. 50 sessions ≈ 2M TPM against a 6M default; the 700M per-day default (~12 sessions around the clock) binds first. The throttle decides on a `max_tokens` reservation nobody has measured. The gateway is one 0.25 vCPU task, no autoscaling (2026-09-11). U18, [capacity](./search-agent-capacity.md).
@@ -216,7 +217,7 @@ Numbers are the handoff's; Richard routes them to FamilySearch. "Sent" means sen
 
 **Not yet asked:**
 
-- **F8, InfoSec:** live bearer on every internal hop, grant at rest, tool-server isolation: acceptable? Unblocks U3, U4.
+- **F8, InfoSec:** live bearer on every internal hop, grant at rest, a sha256 of the live bearer on `turns`, tool-server isolation: acceptable? Unblocks U3.
 - **F11, FS platform:** the SSE edge probe, only if F10 says they bypass DTM.
 - **F12, FS platform and DTL:** which Beanstalk platform and AMI; does Blueprint keep our sqsd and nginx overrides? Unblocks any FamilySearch deploy (R9: "weeks").
 - **F13, FS network:** VPC, egress and gateway allowlists (the gateway admits the VPN /14 and named security groups in its own shared VPC, so our VPC decides the ask), internal names past Imperva, HAProxy idle timer. Unblocks U14.
@@ -228,9 +229,9 @@ Numbers are the handoff's; Richard routes them to FamilySearch. "Sent" means sen
 
 Retention (U19): a session's delete takes its SDK transcript under both ids (PR #3356), and its
 project's rows only with the project's last session (U2); the S3 orphan sweep deletes the objects
-nothing points at once they pass its grace (PR #3394). Nothing yet expires `session_entries`,
-`session_events` or `tool_calls`: retention by session inactivity is drafted (PR #3369). The
-periods are F17's. Our own decisions: handoff U21, all made 2026-09-29.
+nothing points at once they pass its grace (PR #3394). Retention is built and ships off (PR #3369): a
+session idle past `RETENTION_SESSION_IDLE_S` with no open turn loses its transcript, events and
+tool calls and answers a new message 410. The period is F17's. Our own decisions: handoff U21, all made 2026-09-29.
 
 ## Where the evidence is
 

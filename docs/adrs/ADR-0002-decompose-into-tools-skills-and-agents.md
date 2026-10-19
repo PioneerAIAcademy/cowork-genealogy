@@ -50,10 +50,10 @@ extractor outside its stated lane and it fabricated a match score.
 | **Skill** | VM, session context | judgment that depends on what the session already knows |
 | **Plugin agent** | VM, **fresh context** | isolation from session state, a narrowed capability set, or a different model |
 
-Today that is 54 tools, 4 skills, and 29 agents.
+Today that is 54 tools, 2 skills, and 30 agents.
 
 The dividing line between a skill and an agent is **not** size — it is whether
-inheriting the conversation helps or hurts. `record-extractor` runs one agent per
+inheriting the conversation helps or hurts. `record-structurer` runs one agent per
 record specifically so no record's extraction can see another's conclusions.
 `gps-mentor` critiques a proof in fresh context so it cannot be persuaded by the
 reasoning that produced it.
@@ -85,7 +85,7 @@ are the direction of travel, not three special cases.
 
 **Whatever a step acquires, the host fetches and stages; the model receives a
 digest and a reference, never the payload.** The three search tools already work
-this way — the sidecar is written host-side and `record-extractor` reads it back
+this way — the sidecar is written host-side and `record-structurer` reads it back
 by `resultsRef`, so a search result never crosses the main-thread window.
 
 Ruled 2026-09-11: every acquisition lane joins them (issue #2489). A page

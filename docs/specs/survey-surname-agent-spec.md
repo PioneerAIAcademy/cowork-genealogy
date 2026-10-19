@@ -4,7 +4,8 @@
 
 Tabulate every household of a surname across a place's US federal censuses.
 The agent searches each census year in a given span, stages results, groups
-stubs by household, and writes a markdown table sectioned by census year.
+stubs by household, and logs a markdown table sectioned by census year as
+one research-log entry.
 
 ## Scope rule
 
@@ -13,9 +14,59 @@ The agent searches at state level by default. It passes the state as
 narrows further with `residencePlace: "<County>, <State>, United States"`.
 
 Results are staged: the agent passes `projectPath` to `record_search`, so
-rows come back as staged stubs (~400-540 B each). The search log is the
-agent's one `research.json` write (via `research_log_append`), and the tree
-is untouched.
+rows come back as staged stubs (~400-540 B each). The log is the agent's one
+`research.json` write (via `research_log_append`): one entry per search page,
+plus one entry carrying the table (below). The tree is untouched, and the
+agent writes no file.
+
+## The table entry
+
+The table is the `notes` of one `research_log_append` entry. It used to be
+a `surname-survey-*.md` written with `Write`, which the hosted worker's
+read-only `/project` refused (EACCES) and which no ProjectStore ever saw.
+
+Arguments, decided review-ready 2026-10-14:
+
+| Argument | Value |
+|----------|-------|
+| `tool` | `"survey_surname"` |
+| `planItemId` | `null` |
+| `query` | `{surname, place, yearSpan}` from the delegation |
+| `outcome` | `"positive"`, or `"negative"` when no census year returned a household |
+| `resultsExamined` | the number of household rows |
+| `stagedResultsRef` | none |
+| `notes` | the whole table |
+
+- `tool` is a free string (research-schema-spec.md, `log` table: "The MCP
+  tool or method used"; fixtures already carry `manual`). A non-search value
+  keeps the entry out of `STAGING_SEARCH_TOOLS` and off the staged-payload
+  census trigger, which fires only for `record_search` with a ref
+  (`preflightCensusHedge` in research-log-append.ts).
+- `query` is required because there is no staged ref
+  (`preflightRequiredFields`).
+- `tool: "record_search"` was considered and rejected: the entry would read as
+  one more search page to every log reader, and attaching the last page's ref
+  would put the table on the staged-payload census path.
+
+**The hedge line.** `requirePre1880CensusHedge` reads the table as a note.
+Decided (lead, 2026-10-14): the table ends with this sentence, verbatim, and the
+gate does not change:
+
+> Censuses before 1880 have no relationship column: the first person listed in a dwelling is shown as head, and relationships are not stated.
+
+Measured 2026-10-14 against main: the gate refused 7 of the 8 tables committed
+in the `v1_2026-10-05_*` unit run logs, and 0 of 8 with the sentence appended.
+Exempting `survey_surname` entries from the gate was rejected: a carve-out in a
+deny guard keyed on a tool name the caller writes itself fails open.
+
+Since 2026-10-18 (lead; research-log-editor-spec.md §8.2) a table of only
+1790–1840 US census years, which names only heads, passes the gate without the
+sentence. The sentence stays required in every table, as decided above; a table
+that reaches 1850 is still refused without it.
+
+**Append-only.** The log is append-only (research-log-editor-spec.md), so the
+`Ruled out` column is final once logged. A later rule-out is a new entry; there
+is no update path.
 
 ## Per-year threshold: 600 `totalMatches`
 
@@ -76,4 +127,4 @@ sub-section, never merged into households.
 - Spelling variants beyond what `record_search`'s fuzzy surname matching
   already provides.
 - Ruling out households on its own (the `Ruled out` column is filled only
-  with reasons the delegation carries or the user later edits in).
+  with reasons the delegation carries; a later rule-out is a new log entry).

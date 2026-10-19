@@ -1,0 +1,457 @@
+{
+  "log_id": "log_008",
+  "tool": "record_search",
+  "retrieved": "2026-10-09T19:05:44.241Z",
+  "returned_count": 1,
+  "payload": {
+    "query": {
+      "birthYearFrom": 1843,
+      "birthYearTo": 1848,
+      "count": 50,
+      "givenName": "Sarah",
+      "recordCountry": "United States",
+      "recordSubdivision": "Mississippi",
+      "surname": "Lovett"
+    },
+    "totalMatches": 87,
+    "paginationCappedAt": 4999,
+    "returned": 1,
+    "offset": 0,
+    "hasMore": true,
+    "results": [
+      {
+        "recordId": "ark:/61903/1:1:M4P3-8Q9",
+        "events": [
+          {
+            "type": "MaritalStatus",
+            "value": "Married"
+          },
+          {
+            "type": "Occupation",
+            "value": "Houskeeper"
+          },
+          {
+            "type": "Race",
+            "value": "White"
+          },
+          {
+            "type": "Census",
+            "date": "1880",
+            "place": "Raleigh, Smith, Mississippi, United States"
+          }
+        ],
+        "treeMatches": [],
+        "personName": "Martha S. Lovett",
+        "score": 4.49698,
+        "confidence": 2,
+        "sex": "Female",
+        "birthDate": "1845",
+        "birthPlace": "Mississippi, United States",
+        "collectionId": "1417683",
+        "collectionTitle": "United States, Census, 1880",
+        "collectionUrl": "https://www.familysearch.org/service/cds/recapi/collections/1417683",
+        "recordTitle": "Household of Major W. Lovett, \"United States, Census, 1880\"",
+        "recordArk": "ark:/61903/1:2:MWVG-ZTX",
+        "gedcomx": {
+          "persons": [
+            {
+              "id": "p_188821021",
+              "ark": "ark:/61903/1:1:M4P3-8Q9",
+              "gender": "Female",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "surname": "Lovett",
+                  "given": "Martha S."
+                }
+              ],
+              "facts": [
+                {
+                  "type": "MaritalStatus",
+                  "value": "Married"
+                },
+                {
+                  "type": "Occupation",
+                  "value": "Houskeeper"
+                },
+                {
+                  "type": "Race",
+                  "value": "White"
+                },
+                {
+                  "type": "Birth",
+                  "date": "1845",
+                  "standard_date": "1845",
+                  "place": "Mississippi, United States",
+                  "standard_place": "Mississippi, United States"
+                },
+                {
+                  "type": "Census",
+                  "primary": true,
+                  "date": "1880",
+                  "standard_date": "1880",
+                  "place": "Raleigh, Smith, Mississippi, United States",
+                  "standard_place": "Raleigh, Smith, Mississippi, United States"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            },
+            {
+              "id": "p_188821020",
+              "ark": "ark:/61903/1:1:M4P3-8QM",
+              "gender": "Male",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "surname": "Lovett",
+                  "given": "Major W."
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Birth",
+                  "date": "1833",
+                  "standard_date": "1833",
+                  "place": "Mississippi, United States",
+                  "standard_place": "Mississippi, United States"
+                },
+                {
+                  "type": "Census",
+                  "primary": true,
+                  "date": "1880",
+                  "standard_date": "1880",
+                  "place": "Raleigh, Smith, Mississippi, United States",
+                  "standard_place": "Raleigh, Smith, Mississippi, United States"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            },
+            {
+              "id": "p_188821022",
+              "ark": "ark:/61903/1:1:M4P3-8QS",
+              "gender": "Male",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "surname": "Lovett",
+                  "given": "SIMEON J."
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Birth",
+                  "date": "1866",
+                  "standard_date": "1866",
+                  "place": "Mississippi, United States",
+                  "standard_place": "Mississippi, United States"
+                },
+                {
+                  "type": "Census",
+                  "primary": true,
+                  "date": "1880",
+                  "standard_date": "1880",
+                  "place": "Raleigh, Smith, Mississippi, United States",
+                  "standard_place": "Raleigh, Smith, Mississippi, United States"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            },
+            {
+              "id": "p_188821023",
+              "ark": "ark:/61903/1:1:M4P3-8Q3",
+              "gender": "Female",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "surname": "Lovett",
+                  "given": "CATHERINE E."
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Census",
+                  "primary": true,
+                  "date": "1880",
+                  "standard_date": "1880",
+                  "place": "Raleigh, Smith, Mississippi, United States",
+                  "standard_place": "Raleigh, Smith, Mississippi, United States"
+                },
+                {
+                  "type": "Birth",
+                  "date": "1869",
+                  "standard_date": "1869",
+                  "place": "Mississippi, United States",
+                  "standard_place": "Mississippi, United States"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            },
+            {
+              "id": "p_188821024",
+              "ark": "ark:/61903/1:1:M4P3-8QQ",
+              "gender": "Male",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "surname": "Lovett",
+                  "given": "MAJOR J."
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Census",
+                  "primary": true,
+                  "date": "1880",
+                  "standard_date": "1880",
+                  "place": "Raleigh, Smith, Mississippi, United States",
+                  "standard_place": "Raleigh, Smith, Mississippi, United States"
+                },
+                {
+                  "type": "Birth",
+                  "date": "1872",
+                  "standard_date": "1872",
+                  "place": "Mississippi, United States",
+                  "standard_place": "Mississippi, United States"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            },
+            {
+              "id": "p_188821025",
+              "ark": "ark:/61903/1:1:M4P3-8Q7",
+              "gender": "Male",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "surname": "Lovett",
+                  "given": "Fred A."
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Birth",
+                  "date": "1875",
+                  "standard_date": "1875",
+                  "place": "Mississippi, United States",
+                  "standard_place": "Mississippi, United States"
+                },
+                {
+                  "type": "Census",
+                  "primary": true,
+                  "date": "1880",
+                  "standard_date": "1880",
+                  "place": "Raleigh, Smith, Mississippi, United States",
+                  "standard_place": "Raleigh, Smith, Mississippi, United States"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            },
+            {
+              "id": "p_188821026",
+              "ark": "ark:/61903/1:1:M4P3-8QW",
+              "gender": "Male",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "surname": "Lovett",
+                  "given": "Alie W."
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Birth",
+                  "date": "1877",
+                  "standard_date": "1877",
+                  "place": "Mississippi, United States",
+                  "standard_place": "Mississippi, United States"
+                },
+                {
+                  "type": "Census",
+                  "primary": true,
+                  "date": "1880",
+                  "standard_date": "1880",
+                  "place": "Raleigh, Smith, Mississippi, United States",
+                  "standard_place": "Raleigh, Smith, Mississippi, United States"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da2"
+                }
+              ]
+            },
+            {
+              "id": "p_188821027",
+              "ark": "ark:/61903/1:1:M4P3-8Q4",
+              "gender": "Male",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "surname": "Lovett",
+                  "given": "Asbury"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Birth",
+                  "date": "1879",
+                  "standard_date": "1879",
+                  "place": "Mississippi, United States",
+                  "standard_place": "Mississippi, United States"
+                },
+                {
+                  "type": "Census",
+                  "primary": true,
+                  "date": "1880",
+                  "standard_date": "1880",
+                  "place": "Raleigh, Smith, Mississippi, United States",
+                  "standard_place": "Raleigh, Smith, Mississippi, United States"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da2"
+                }
+              ]
+            }
+          ],
+          "relationships": [
+            {
+              "type": "ParentChild",
+              "parent": "p_188821020",
+              "child": "p_188821025"
+            },
+            {
+              "type": "ParentChild",
+              "parent": "p_188821020",
+              "child": "p_188821026"
+            },
+            {
+              "type": "ParentChild",
+              "parent": "p_188821020",
+              "child": "p_188821023"
+            },
+            {
+              "type": "ParentChild",
+              "parent": "p_188821020",
+              "child": "p_188821024"
+            },
+            {
+              "type": "ParentChild",
+              "parent": "p_188821020",
+              "child": "p_188821022"
+            },
+            {
+              "type": "ParentChild",
+              "parent": "p_188821020",
+              "child": "p_188821027"
+            },
+            {
+              "type": "Couple",
+              "person1": "p_188821020",
+              "person2": "p_188821021"
+            },
+            {
+              "type": "ParentChild",
+              "parent": "p_188821021",
+              "child": "p_188821022"
+            },
+            {
+              "type": "ParentChild",
+              "parent": "p_188821021",
+              "child": "p_188821023"
+            },
+            {
+              "type": "ParentChild",
+              "parent": "p_188821021",
+              "child": "p_188821024"
+            },
+            {
+              "type": "ParentChild",
+              "parent": "p_188821021",
+              "child": "p_188821027"
+            },
+            {
+              "type": "ParentChild",
+              "parent": "p_188821021",
+              "child": "p_188821025"
+            },
+            {
+              "type": "ParentChild",
+              "parent": "p_188821021",
+              "child": "p_188821026"
+            }
+          ],
+          "sources": [
+            {
+              "id": "src_r_160983794",
+              "title": "Household of Major W. Lovett, \"United States, Census, 1880\"",
+              "citation": "\"United States, Census, 1880\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:M4P3-8QM : Wed Sep 09 15:44:06 UTC 2026), Entry for Major W. Lovett and Martha S. Lovett, 1880.",
+              "url": "https://www.familysearch.org/ark:/61903/1:2:MWVG-ZTX"
+            },
+            {
+              "id": "sd_c_1417683",
+              "title": "United States, Census, 1880",
+              "url": "https://www.familysearch.org/service/cds/recapi/collections/1417683"
+            },
+            {
+              "id": "sd_da1",
+              "url": "https://www.familysearch.org/ark:/61903/3:1:33S7-9YB8-HDX"
+            },
+            {
+              "id": "sd_da2",
+              "url": "https://www.familysearch.org/ark:/61903/3:1:33S7-9YB8-HWW"
+            },
+            {
+              "id": "sd_auto_M9JT-92D",
+              "title": "United States, Residences, Census, from 1793 to 1964"
+            },
+            {
+              "id": "src_p_p_188821021",
+              "url": "#p_188821021"
+            }
+          ],
+          "places": [
+            {
+              "id": "369",
+              "name": "Mississippi, United States",
+              "latitude": 32.7503,
+              "longitude": -89.7503
+            },
+            {
+              "id": "4313321",
+              "name": "Raleigh, Smith, Mississippi, United States",
+              "latitude": 32.0333,
+              "longitude": -89.5222
+            }
+          ]
+        },
+        "primaryId": "p_188821021"
+      }
+    ]
+  }
+}

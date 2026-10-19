@@ -103,10 +103,23 @@ merge passes already took off.** Count those first — they run before this one 
 their closures are the bulk of the week's:
 
 ```sh
-gh issue list --repo PioneerAIAcademy/cowork-genealogy --state closed \
-  --limit 200 --search "closed:>=$d \"Merged into issue\"" \
-  --json number,title -q 'length'
+gh issue list --repo PioneerAIAcademy/cowork-genealogy --state closed --limit 300 \
+  --search "closed:>=$d reason:\"not planned\"" --json number,title,comments > /tmp/np.json
+python3 - <<'PY'
+import json, re
+MERGED = re.compile(r'\b(merged|folded) into (issue )?#\d+|\bcovered by (issue|#|two|three|both)', re.I)
+rows = json.load(open('/tmp/np.json', encoding='utf-8'))
+hits = [i['number'] for i in rows
+        if not i['title'].startswith('[feedback]')
+        and i['comments'] and MERGED.search(i['comments'][-1]['body'])]
+print(len(hits), sorted(hits))
+PY
 ```
+
+Key it on the **closing** comment of a **not-planned** close. A full-text search for
+"Merged into issue" over-counts every completed issue that merely mentions the
+phrase, and misses hand-closed merges worded "Folded into issue #N" or "Covered by
+two issues". `[feedback]` folds are `/triage-feedback`'s, not a merge pass's.
 
 Subtract that count from the inflow; the remainder is what this pass owes in
 closes and obsoletes. **Do not re-open a merge verdict either pass reached**, in
@@ -392,6 +405,19 @@ independent. Do not re-propose merging them. What this pass owes the table is th
 *other* three columns — which items are active on each snapshot, how long they
 have sat, and which skills are already stale.
 
+Take "Idle days" and "Already stale?" from `runlog_state.py`, which reads each
+suite's **newest** releasable run log by timestamp, candidates included:
+
+```sh
+cd eval/harness && uv run python ../../.claude/skills/audit-board/runlog_state.py
+```
+
+Do not read a suite through `check_runlogs.latest_full_skill_runlog`. It prefers any
+released log over every candidate, so a suite whose newer candidate is active reads
+as stale and idle since its release. Such a suite is `promote` in the script's
+output: it owes a promotion in the CRUD UI, not a paid run. Name the same newest log
+on the suite's `next run:` card.
+
 Order matters within a queue: some issues are gated on a free harness-side change
 that should land first so the authoring only happens once. #1108 before #995 is
 the live example — the matchers can only pin values once the mechanism exists.
@@ -471,12 +497,9 @@ When a skill's list is long enough to justify a run, that becomes the cluster's
 **next action** on that cluster, with a doer and a date — not a standing
 intention.
 
-Check `check_runlogs.py` rule 2 directly for skills that are *already* stale, since
-those cost a run before any new work lands:
-
-```sh
-cd eval/harness && uv run python scripts/check_runlogs.py
-```
+Skills that are *already* stale cost a run before any new work lands. They are the
+`stale` rows of `runlog_state.py` above. `check_runlogs.py` grades one PR's diff
+and needs `BASE_SHA`/`HEAD_SHA`, so it cannot answer this for `main`.
 
 ## 4. Better handling than the bodies propose
 

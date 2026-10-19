@@ -80,6 +80,16 @@ export interface TreeGapCoverage {
   placeLevel: PlaceLevel;
 }
 
+// FamilySearch's pending record hints for the hole's person (and spouse, for a
+// couple-level hole). `fitting` counts those whose collection title names the
+// event the hole is missing (a birth or christening for missing parents, a death
+// or burial for a death date, a marriage for a spouse or maiden name, a census
+// for the couple's children); `total` counts them all.
+export interface TreeGapHints {
+  fitting: number;
+  total: number;
+}
+
 export interface TreeGap {
   type: TreeGapType;
   personId: string;
@@ -98,6 +108,9 @@ export interface TreeGap {
   yearRange: TreeGapYearRange | null;
   place: string | null;
   coverage: TreeGapCoverage | null;
+  // `null` when the hints could not be read for any person on the hole, or time
+  // ran out first.
+  pendingHints: TreeGapHints | null;
 }
 
 export interface TreeGapsResult {

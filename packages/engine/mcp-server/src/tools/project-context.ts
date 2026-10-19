@@ -396,6 +396,16 @@ function diedByYear(p: any): number | null {
 export const projectContextSchema = {
   name: "project_context",
   description:
+    "When the user asks where the project stands (\"where are we?\", \"summarize " +
+    "progress\", \"what have we found?\") or reopens a project, call this and answer " +
+    "from it in exactly ONE plain-language paragraph and nothing else: the objective, " +
+    "what is established, what is open or waiting on the researcher, and the next " +
+    "step, stated rather than asked. No lead-in line (\"Here's where things stand:\"), " +
+    "no line breaks, headings, tables, lists or bold, no closing question, " +
+    "and no identifiers, file names, tool names or field names: " +
+    "say \"the proof summary\" or \"the parentage question\", never q_001 or ps_001. " +
+    "nextStep values name ids and agents; restate them in plain words. " +
+    "Do not read the project files and do not delegate. " +
     "Read-only compact projection of the project state — call this INSTEAD of " +
     "reading research.json or tree.gedcomx.json. Returns projectStatus; " +
     "objective (research.project.objective verbatim, including any stated doubt " +

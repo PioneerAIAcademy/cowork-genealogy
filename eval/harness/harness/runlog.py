@@ -607,6 +607,7 @@ def build_run_log(
     model: str,
     judge_prompt_hash: str,
     judge_model: str | None = None,
+    instrument: dict[str, Any] | None = None,
     snapshot: dict[str, str],
     tests: list[dict[str, Any]],
     review_sample: dict[str, Any] | None = None,
@@ -671,6 +672,10 @@ def build_run_log(
         envelope["tool_search"] = tool_search
     if store is not None:
         envelope["store"] = store
+    # instrument is optional (issue #2479 PR 3): what produced and graded the run,
+    # read by check_runlogs rule 2c. Absent when the tool catalog could not be read.
+    if instrument is not None:
+        envelope["instrument"] = instrument
     return envelope
 
 

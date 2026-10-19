@@ -453,8 +453,27 @@ def test_id_references_resolve(after_state):
 #    correct writes, which is what a replay of the old literals over the
 #    committed corpus measured.
 #
-# A skill named by no row is read-only (search-wikipedia, historical-context);
+# A skill named by no row is read-only (convert-dates, translation);
 # it fails these checks if it touches a project file at all.
+
+
+def _healer_normalized(tree: dict) -> dict:
+    """The tree as `tree-sanitize.ts` leaves it on every tree write: an empty
+    `facts` array on a person or a relationship is deleted, so `facts: []` and
+    no `facts` are the same tree. Without this, a legitimate write (an
+    extraction_append adding a source) reads as editing an untouched person
+    whose scenario carries `facts: []`, which 24 scenario trees do
+    (ut_search_records_015, issue #2116)."""
+    out = dict(tree)
+    for key in ("persons", "relationships"):
+        items = tree.get(key)
+        if isinstance(items, list):
+            out[key] = [
+                {k: v for k, v in item.items() if not (k == "facts" and v == [])}
+                if isinstance(item, dict) else item
+                for item in items
+            ]
+    return out
 
 
 def _modified_sections(before: dict, after: dict, sections: list[str]) -> list[str]:
@@ -1031,6 +1050,8 @@ def test_tree_ownership_table(before_state, after_state, skill_frontmatter, test
     after = after_state.get("tree_gedcomx_json") or after_state.get("tree_gedcomx")
     if before is None or after is None:
         pytest.skip("Missing tree.gedcomx.json for ownership diff")
+    before = _healer_normalized(before)
+    after = _healer_normalized(after)
 
     skill_name = (skill_frontmatter or {}).get("name")
     if not skill_name:

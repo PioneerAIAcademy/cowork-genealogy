@@ -664,6 +664,96 @@ SUPPRESSIONS: list[dict[str, str]] = [
             "bounded search-records attempts'"
         ),
     },
+    {
+        "file": "eval/tests/unit/research-plan/direct-first-plan-orchestrator-phrasing.json",
+        "tool": "wiki_search",
+        "quotes": [
+            "it should NOT call wiki_search / wiki_place_page / place_population (research-plan no longer holds those tools - the know-how comes from the localities entry). Do NOT fail it for not surveying.",
+        ],
+        "reason": (
+            "negative mention naming the retirement outright, copied from ut_research_plan_005 (whose three entries above suppress the same line): the direct twin _d02 grades the same localities-entry consumer"
+        ),
+    },
+    {
+        "file": "eval/tests/unit/research-plan/direct-first-plan-orchestrator-phrasing.json",
+        "tool": "wiki_place_page",
+        "quotes": [
+            "it should NOT call wiki_search / wiki_place_page / place_population (research-plan no longer holds those tools - the know-how comes from the localities entry). Do NOT fail it for not surveying.",
+        ],
+        "reason": (
+            "negative mention naming the retirement outright, copied from ut_research_plan_005 (whose three entries above suppress the same line): the direct twin _d02 grades the same localities-entry consumer"
+        ),
+    },
+    {
+        "file": "eval/tests/unit/research-plan/direct-first-plan-orchestrator-phrasing.json",
+        "tool": "place_population",
+        "quotes": [
+            "it should NOT call wiki_search / wiki_place_page / place_population (research-plan no longer holds those tools - the know-how comes from the localities entry). Do NOT fail it for not surveying.",
+        ],
+        "reason": (
+            "negative mention naming the retirement outright, copied from ut_research_plan_005 (whose three entries above suppress the same line): the direct twin _d02 grades the same localities-entry consumer"
+        ),
+    },
+    {
+        "file": "packages/engine/plugin/agents/research-plan.md",
+        "tool": "wiki_search",
+        "quotes": [
+            "`locality-guide` (which owns `wiki_search`, `wiki_place_page`, `place_population`), read back from the `localities` section. research-plan does not call those three.",
+        ],
+        "reason": (
+            "negative mention: the body says locality-guide owns these three and research-plan does not call them (folded verbatim from the deleted research-plan SKILL.md, issue #2116)"
+        ),
+    },
+    {
+        "file": "packages/engine/plugin/agents/research-plan.md",
+        "tool": "wiki_place_page",
+        "quotes": [
+            "`locality-guide` (which owns `wiki_search`, `wiki_place_page`, `place_population`), read back from the `localities` section. research-plan does not call those three.",
+        ],
+        "reason": (
+            "negative mention: the body says locality-guide owns these three and research-plan does not call them (folded verbatim from the deleted research-plan SKILL.md, issue #2116)"
+        ),
+    },
+    {
+        "file": "packages/engine/plugin/agents/research-plan.md",
+        "tool": "place_population",
+        "quotes": [
+            "`locality-guide` (which owns `wiki_search`, `wiki_place_page`, `place_population`), read back from the `localities` section. research-plan does not call those three.",
+        ],
+        "reason": (
+            "negative mention: the body says locality-guide owns these three and research-plan does not call them (folded verbatim from the deleted research-plan SKILL.md, issue #2116)"
+        ),
+    },
+    {
+        "file": "packages/engine/plugin/agents/research-plan.md",
+        "tool": "extraction_append",
+        "quotes": [
+            "extraction: `extraction_append` for a FamilySearch record, the record-structurer agent for any other source",
+        ],
+        "reason": (
+            "hand-back routing row: the agent names extraction_append as the owner of a record-extraction request and calls no tool (ROUTING section, issue #2116)"
+        ),
+    },
+    {
+        "file": "packages/engine/plugin/agents/research-plan.md",
+        "tool": "validate_research_schema",
+        "quotes": [
+            "No separate `validate_research_schema` step is needed.",
+        ],
+        "reason": (
+            "negative mention: the body tells the agent the call is not needed (folded verbatim from the deleted research-plan SKILL.md, issue #2116)"
+        ),
+    },
+    {
+        "file": "packages/engine/plugin/agents/research-plan.md",
+        "tool": "record_search",
+        "quotes": [
+            "indexed `record_search` on the surname will fail no matter how many variants you try",
+        ],
+        "reason": (
+            "describes why an indexed search fails and a full-text item is planned instead; research-plan plans the search, search-records runs it (Appendix B, folded verbatim from record-type-guide.md, issue #2116)"
+        ),
+    },
 ]
 
 

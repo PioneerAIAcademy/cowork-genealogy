@@ -56,13 +56,14 @@ SKILLS_DIR = REPO_ROOT / "packages" / "engine" / "plugin" / "skills"
 #     fixture can reach it. Its coverage is the unit suite
 #     (`eval/tests/unit/source-evaluation/`), which is where the ruling put it.
 # They are listed rather than exempted so the count stays honest.
-#   - `project-status` was on this list until 2026-09-30 and is NOT re-listed:
-#     issue #2793 deleted the skill, so it is no longer a skill that could be
-#     dark. The dark reading held for the same reason it always did -- it reports
-#     state to a human, and every e2e run is launched as `/research --autonomous`
-#     (`eval/harness/e2e/orchestrator.py:876`), so there is no human mid-run to
-#     report to. Its successor `agents/project-status.md` is reachable by
-#     auto-delegation from its own description, which this set does not measure.
+#   - A former status skill was on this list until 2026-09-30 and is NOT
+#     re-listed: issue #2793 deleted the skill (converting it to an agent),
+#     and issue #3112 then deleted the agent too. The dark reading always
+#     held for one reason -- it reported state to a human, and every e2e run
+#     is launched as `/research --autonomous`
+#     (`eval/harness/e2e/orchestrator.py:876`), so there is no human mid-run
+#     to report to. The main thread now answers status requests directly from
+#     `project_context`, which this set does not measure.
 #   - `citation` was on this list until 2026-09-23 and is NOT re-listed: issue
 #     #2799 deleted the skill, so it is no longer a skill that could be dark.
 #     The dark reading was never disproved -- nothing in the corpus reached it
@@ -90,10 +91,11 @@ SKILLS_DIR = REPO_ROOT / "packages" / "engine" / "plugin" / "skills"
 #   - `source-evaluation` left on 2026-10-01, same reason (issue #2796), NOT
 #     re-listed, same caveat for `agents/source-evaluation.md`. Its dark-by-ruling
 #     entry above records why it was dark while it was a skill.
+#   - `timeline` left on 2026-10-06, same reason (issue #2797), NOT re-listed,
+#     same caveat for `agents/timeline.md`.
 DARK_SKILLS_2026_09_01 = frozenset(
     {
         "forget-and-rederive",
-        "timeline",
     }
 )
 
@@ -139,9 +141,8 @@ def test_the_corpus_is_actually_readable():
     counts = invocation_counts()
     assert sum(counts.values()) > 0, "no skill invocations found — is E2E_RUNLOGS right?"
     # A floor against an empty scan, not a count: conversions shrink the set, and
-    # research, record-extraction and forget-and-rederive stay skills (lead
-    # ruling 2026-09-22).
-    assert len(shipped_skills()) >= 3, "skills directory did not enumerate"
+    # research and forget-and-rederive are the skills left.
+    assert len(shipped_skills()) >= 2, "skills directory did not enumerate"
 
 
 def test_no_new_skill_has_gone_dark():

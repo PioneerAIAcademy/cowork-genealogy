@@ -14,11 +14,13 @@ what is / is not covered.
 
 from __future__ import annotations
 
+import re
 import pytest
 
 from validators_lib import bare_tool_name
 from validators_lib import new_log_entries as _new_log_entries
 from validators_lib import check_no_gate_stop
+from validators_lib import existing_plan_changes, new_plan_ids
 
 _ROUTES_TO_PREFIX = "routes-to:"
 
@@ -209,8 +211,9 @@ def test_no_browse_or_writes_on_planning_request(
     deterministic gate for the grade_on_invariant negative
     ut_research_016: which skill wins the route is a known-unstable
     model prior (the router picks research-plan directly on some runs,
-    search-images on others, project-status on others), but the state-harm
-    invariant holds under every one of those routes and is what we assert.
+    search-images on others, answers directly from project_context on
+    others), but the state-harm invariant holds under every one of those
+    routes and is what we assert.
 
     Since the pair conversion (issue #2121) the redirect lives in
     agents/search-images.md's ROUTING section, not in SKILL.md: the routing
@@ -480,6 +483,118 @@ def test_every_bounded_deliverable_is_handed_off(skills_invoked, builtin_tool_ca
         "path, which a bounded request must not enter."
     )
 
+# ---------------------------------------------------------------------------
+# `negative-status-question` tag (issue #3112)
+# ---------------------------------------------------------------------------
+
+# Every research.json id prefix, as `ID_PREFIXES` in
+# packages/engine/mcp-server/src/validation/validator.ts declares it (validators
+# cannot import the TypeScript; tests/unit/test_status_question_validator.py pins
+# the two in step). Plus the tree ids `project_context` hands over (`I1`, `S3`...),
+# the kind every measured miss copied from the projection.
+_PROJECT_ID_PREFIXES = (
+    "rp_", "kh_", "q_", "pl_", "pli_", "log_", "src_", "a_", "pe_", "c_", "h_",
+    "t_", "ps_", "ev_", "loc_",
+)
+_PROJECT_ID_RE = re.compile(
+    r"\b(?:(?:" + "|".join(re.escape(p) for p in _PROJECT_ID_PREFIXES) + r")\d+|[FINRS]\d+)\b"
+)
+_PROJECT_FILES = ("research.json", "tree.gedcomx.json")
+_SHAPED_LINE_RE = re.compile(r"^\s*(?:#|\||[-*+]\s|\d+[.)]\s)", re.MULTILINE)
+
+
+def test_status_question_answered_from_project_context_only(
+    tool_calls, builtin_tool_calls, before_state, after_state, text_response, test
+):
+    """Tag-gated (negative-status-question): a `"where are we?"` request is
+    answered by the main thread in one plain paragraph from `project_context`,
+    per the lead's 2026-10-06 ruling (issue #3112).
+
+    Deterministic assertions, each a hard assert:
+
+      1. `project_context` was called (a deferred schema loaded through
+         ToolSearch still records the call under its qualified name).
+      2. No `Read` or `Grep` of `research.json` or `tree.gedcomx.json`: the
+         projection is the read path.
+      3. No subagent spawn (`Agent` or `Task`): the status answer is the main
+         thread's own paragraph.
+      4. No `research_append` call: a status question writes nothing.
+      5. The main thread's text is one plain paragraph: no line break (so no
+         lead-in line and no second paragraph), no heading, list or table line,
+         no bold, and no closing question. `text_response` joins every
+         main-thread turn, so a narration line before the `project_context`
+         call fails this check exactly as a lead-in line does.
+      6. No identifier in the reply: no research.json id (`<prefix>_<digits>`
+         for any prefix the schema defines) and no tree id (`I1`, `S3`).
+
+    `project_context` is ALWAYS_LOAD, so assertion 1 can hold even with the
+    description clause removed; assertions 5 and 6 are the ones that track the
+    clause.
+    """
+    from harness.skill_runner import SPAWN_TOOL_NAMES
+
+    if "negative-status-question" not in test.get("tags", []):
+        pytest.skip("not a negative-status-question scenario")
+
+    pc_calls = [c for c in (tool_calls or []) if bare_tool_name(str(c.get("tool") or "")) == "project_context"]
+    assert pc_calls, (
+        "status question must call project_context — the tool's description "
+        "instructs the main thread to answer from it"
+    )
+
+    forbidden_reads = []
+    for c in (builtin_tool_calls or []):
+        if (c.get("tool") or "") not in ("Read", "Grep"):
+            continue
+        args = c.get("args") or {}
+        path = str(args.get("file_path") or args.get("path") or "")
+        # A Grep over a directory reaches the file through its `glob` filter.
+        glob = str(args.get("glob") or "")
+        if path.endswith(_PROJECT_FILES) or any(name in glob for name in _PROJECT_FILES):
+            forbidden_reads.append(f"{c.get('tool')} {path} {glob}".strip())
+    assert not forbidden_reads, (
+        "status question must not read the raw project files; got: "
+        f"{forbidden_reads}"
+    )
+
+    # Every main-thread spawn, named or not: `spawned_agents()` skips a
+    # general-purpose spawn (no `subagent_type`), which is still a delegation.
+    spawns = [
+        (c.get("args") or {}).get("subagent_type") or "general-purpose"
+        for c in (builtin_tool_calls or [])
+        if c.get("tool") in SPAWN_TOOL_NAMES and "agent_id" not in c
+    ]
+    assert not spawns, (
+        f"status question must be answered by the main thread, not delegated; got {spawns}"
+    )
+
+    appends = [c for c in (tool_calls or []) if bare_tool_name(str(c.get("tool") or "")) == "research_append"]
+    assert not appends, (
+        "status question must not write to research.json; got "
+        f"{len(appends)} research_append call(s)"
+    )
+
+    body = (text_response or "").strip()
+    shape = []
+    if "\n" in body:
+        shape.append(f"{len([ln for ln in body.splitlines() if ln.strip()])} lines")
+    if _SHAPED_LINE_RE.search(body):
+        shape.append("a heading, list or table line")
+    if "**" in body:
+        shape.append("bold")
+    if body.endswith("?"):
+        shape.append("a closing question")
+    assert body and not shape, (
+        "status answer must be ONE plain paragraph with no lead-in, headings, "
+        f"tables, lists, bold or closing question; got: {shape or ['an empty reply']}"
+    )
+
+    hits = _PROJECT_ID_RE.findall(text_response or "")
+    assert not hits, (
+        "status answer must contain no project identifiers; found: "
+        f"{sorted(set(hits))}"
+    )
+
 
 _ENDS_WITH_DELIVERY_TAG = "ends-with-delivery"
 _DELIVERED_TOOL = "research_delivered"
@@ -551,4 +666,138 @@ def test_a_bounded_turn_ends_with_the_delivery_signal(tool_calls, test):
         f"got {summary!r}. Read from the FIRST call, which is the one the hosted plane "
         "halts on and puts in front of the stop reason -- an empty summary there is what "
         "the researcher reads, however well-formed a later call might be."
+    )
+
+# ── Moved from test_research_plan.py (issue #2116) ─────────────────────
+#
+# `ut_research_rpn` (formerly `ut_research_plan_003`) moved here when the
+# research-plan skill was deleted. Validators load by suite name, so its
+# tag-gated invariants move with it; `research-plan-no-new-plan` stays gated in
+# test_research_plan.py too, for that suite's review tests.
+
+
+def test_no_new_plan(before_state, after_state, test):
+    """Tag-gated (``research-plan-no-new-plan``): no new ``pl_`` entry."""
+    if "research-plan-no-new-plan" not in test.get("tags", []):
+        pytest.skip("not a research-plan-no-new-plan scenario")
+    before = before_state.get("research_json")
+    after = after_state.get("research_json")
+    if before is None or after is None:
+        pytest.skip("missing research.json for diff")
+    new_plans = new_plan_ids(before, after)
+    assert not new_plans, (
+        f"a new plan was written where none was asked for; new plan IDs: {new_plans}"
+    )
+
+
+def test_no_plan_writes_when_resolved(before_state, after_state, test):
+    """Tag-gated: on a question whose `search_stop.stopped_because` is
+    already a stop-gate value, no run may add or change anything in `plans[]`.
+
+    Covers the gap the other two leave. `test_no_new_plan` catches a whole
+    new `pl_` and the universal `test_no_entries_deleted` catches removals;
+    neither sees an item **appended to an existing plan** or an existing item
+    **edited in place**. Either rewrites the GPS audit trail the declaration
+    rests on — and appending to `pl_002` is the obvious way to write a plan
+    without creating one.
+
+    This is one of two routing-independent gates for `ut_research_rpn`
+    (formerly `ut_research_plan_003`; `grade_on_invariant`): whichever skill ends up handling the prompt, no run
+    may leave a mark on `plans[]`. Its companion
+    `test_resolved_question_not_reopened` guards the question's own state —
+    `status`, `search_stop`, `project.status` — which this one does
+    not look at and which is the likelier harm on that prompt. Both are gated
+    on the same tag; neither is sufficient alone.
+    """
+    if "no-plan-writes-when-resolved" not in test.get("tags", []):
+        pytest.skip("not a no-plan-writes-when-resolved scenario")
+    before = before_state.get("research_json")
+    after = after_state.get("research_json")
+    if before is None or after is None:
+        pytest.skip("missing research.json for diff")
+
+    errors = existing_plan_changes(before, after)
+    assert not errors, (
+        "a plan was written to a question whose search is already declared "
+        "exhaustive:\n  - " + "\n  - ".join(errors)
+    )
+
+
+def test_resolved_question_not_reopened(before_state, after_state, test):
+    """Tag-gated: the resolved question's own state must survive untouched.
+
+    Companion to `test_no_plan_writes_when_resolved`, and the more important
+    half. That one guards `plans[]`; this guards the fields the ut_003 prompt
+    actually tempts the skill to change.
+
+    Why it has to exist here rather than being covered already: the universal
+    `test_ownership_table` / `test_tree_ownership_table` **skip themselves on
+    negative tests**, and their docstring gives the reason — "a negative test
+    where the skill *does* wrongly activate already fails on the routing
+    check." `grade_on_invariant: true` is precisely the flag that removes that
+    routing check (`orchestrator.py` returns "pass" the moment validators
+    pass), so for this test the premise behind the skip is void and nothing
+    replaces it. Verified against the real fixture: with a writer-tool call
+    present, flipping `q_001` back to open, un-declaring exhaustiveness,
+    reopening `project.status`, or rewriting the question text all scored a
+    clean pass before this check existed.
+
+    That is the harm the prompt invites. "The probate search came up empty —
+    are we done?" tempts reopening the question far more than it tempts adding
+    a plan item, and reopening silently undoes a completed GPS proof: the
+    declaration and the proof summary both cite the negative probate result.
+
+    Deliberately narrow. A blanket "questions[] must not change" would
+    false-fail the legitimate routes — `question-selection` may append a
+    follow-on question, which is one of this test's `correct_skill` answers.
+    So this names the specific deltas that are never legitimate here: the
+    target question's `status` and `search_stop`, and
+    `project.status`. Same shape as
+    `test_search_external_sites.py::test_no_external_search_or_log_on_routeaway_negative`.
+    """
+    if "no-plan-writes-when-resolved" not in test.get("tags", []):
+        pytest.skip("not a no-plan-writes-when-resolved scenario")
+    before = before_state.get("research_json")
+    after = after_state.get("research_json")
+    if before is None or after is None:
+        pytest.skip("missing research.json for diff")
+
+    def _resolved(research: dict) -> dict:
+        return {
+            q.get("id"): q
+            for q in (research.get("questions") or [])
+            if q.get("status") == "resolved"
+            or (q.get("search_stop") or {}).get("stopped_because") in {"question_answered", "record_exhausted", "nothing_further_reachable"}
+        }
+
+    before_q = _resolved(before)
+    if not before_q:
+        pytest.skip("no resolved/declared question in the before-state")
+
+    errors: list[str] = []
+    after_q = {q.get("id"): q for q in (after.get("questions") or [])}
+    for qid, was in before_q.items():
+        now = after_q.get(qid)
+        if now is None:
+            errors.append(f"{qid}: resolved question DELETED")
+            continue
+        for field in ("status", "search_stop", "question",
+                      "resolution_assertion_ids", "resolved"):
+            if was.get(field) != now.get(field):
+                errors.append(
+                    f"{qid}: '{field}' changed {was.get(field)!r} -> "
+                    f"{now.get(field)!r} on a question whose search is "
+                    f"already declared exhaustive"
+                )
+
+    before_status = (before.get("project") or {}).get("status")
+    after_status = (after.get("project") or {}).get("status")
+    if before_status != after_status:
+        errors.append(
+            f"project.status changed {before_status!r} -> {after_status!r}"
+        )
+
+    assert not errors, (
+        "the resolved question's own state was modified:\n  - "
+        + "\n  - ".join(errors)
     )

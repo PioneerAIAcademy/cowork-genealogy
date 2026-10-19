@@ -15,5 +15,5 @@
     "judge": "claude-haiku-4-5-20251001"
   },
   "difficulty": "medium",
-  "notes": "Record-hint fixture (filtered-list-samples-3.csv row 7, hint-samples.csv row 288, flags adds_father/adds_mother/adds_marriage, confidence 3). Draft transcribed from a 1768 Higüey, La Altagracia marriage index entry; unverified."
+  "notes": "Record-hint fixture (filtered-list-samples-3.csv row 7, hint-samples.csv row 288, flags adds_father/adds_mother/adds_marriage, confidence 3). Resolved 2026-10-15 (issue #3330): the hint is a true match. A 1793 Higüey marriage (ark:/61903/1:1:6R89-44PS) names a bride's parents as Baltasar Guerrero and Olaya Hurtarte, tying the 1768 bride's surname to the tree's couple; their other records call her Olaya Guerrero."
 }

@@ -51,3 +51,15 @@ def test_an_unknown_model_prices_to_none_not_to_sonnet(model):
 @pytest.mark.parametrize("block", [None, {}, {"input_tokens": 0, "output_tokens": 0}, "x"])
 def test_a_block_with_no_tokens_is_unrecoverable_on_every_model(block):
     assert pricing.estimate_cost_for_model(block, "claude-haiku-4-5") is None
+
+
+def test_a_message_prices_each_cache_write_at_its_own_ttl():
+    split = {"output_tokens": 10, "cache_creation_input_tokens": 1_000,
+             "cache_creation": {"ephemeral_5m_input_tokens": 600, "ephemeral_1h_input_tokens": 400}}
+    assert pricing.estimate_message_cost(split, "claude-haiku-4-5") == \
+        pytest.approx((10 * 5.00 + 600 * 1.25 + 400 * 2.00) / 1_000_000)
+    no_split = {"cache_creation_input_tokens": 1_000}
+    assert pricing.estimate_message_cost(no_split, "claude-haiku-4-5-20251001") == \
+        pytest.approx(1_000 * 1.25 / 1_000_000)
+    assert pricing.estimate_message_cost(split, "claude-unknown-9") is None
+    assert pricing.estimate_message_cost({}, "claude-haiku-4-5") is None

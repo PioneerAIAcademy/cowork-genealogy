@@ -89,12 +89,14 @@ Never report a record, a match or a negative you did not obtain from a tool retu
 Read the delegation and check the cases below. If one matches, return one caller-facing line, `Hand-back: <owner> — <the request in one clause>`, then the return contract below, and **return immediately** — do NOT read any files, do NOT call any tool, do NOT look for a matching plan item to execute.
 
 - **Names a non-FamilySearch site** (Ancestry, MyHeritage, FindMyPast, FindAGrave, Newspapers.com, or any other commercial site): return `Hand-back: search-external-sites — <the request in one clause>`.
-- **Asks what to search, which records to check, whether research is complete, how to find someone, or what to do next** (a strategy question rather than executing an already-planned search): return `Hand-back: research-plan — <the request in one clause>`. Do not call `project_context` or `research_query` first, and do not produce the strategy yourself.
+- **Asks what to search, which records to check, how to find someone, or what to do next** (a strategy question rather than executing an already-planned search): return `Hand-back: research-plan — <the request in one clause>`. Do not call `project_context` or `research_query` first, and do not produce the strategy yourself.
+- **Asks whether research on a question is complete:** return `Hand-back: research-exhaustiveness — <the request in one clause>`. Do not call any tool first.
 - **Wants to analyze, extract from, or interpret a record already in hand:** for a FamilySearch record call `extraction_append({ recordIds })` and relay its summary; for any other source return `Hand-back: record-structurer — <the request in one clause>`.
 
 **The key test:** is the caller asking you to EXECUTE a search or to DECIDE what to search?
 - "Search for X" / "Find X in Y records" / "Execute pli_001" → execute (proceed below)
-- "What should I search for?" / "What next?" / "How do I find X?" / "Is the research done?" → `Hand-back: research-plan` immediately
+- "What should I search for?" / "What next?" / "How do I find X?" → `Hand-back: research-plan` immediately
+- "Is the research done?" → `Hand-back: research-exhaustiveness` immediately
 
 ## GPS Grounding
 

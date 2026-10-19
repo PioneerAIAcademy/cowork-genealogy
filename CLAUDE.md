@@ -209,7 +209,8 @@ entrypoints only connect a transport: `src/index.ts` (stdio, the `.mcpb`) and
 `src/http.ts` (the prototype's Streamable HTTP server, compose service `tools`, binding each
 request's `Authorization: Bearer` and a `PgS3ProjectStore` from its
 `X-Genealogy-Project-Id` header, fenced by `X-Genealogy-Turn-Id` and
-`X-Genealogy-Claim-Epoch` so a superseded worker attempt's writes roll back — U6). Per-tool
+`X-Genealogy-Claim-Epoch` so a superseded worker attempt's writes roll back, and
+owner-checked against the bearer the worker stamped on that open turn — U6/U4). Per-tool
 behavioral contracts are in
 `docs/specs/<tool>-tool-spec.md`, and a spec can land before the tool
 does. Implementation plans for unbuilt work are in `docs/plan/`.
@@ -623,7 +624,7 @@ and add the tool name to `manifest.json`'s `tools` array. Dispatch lives in
 `src/server.ts` (`createServer(principal)`); `src/index.ts` is the shipped stdio
 entrypoint binding `LOCAL`, `src/http.ts` the prototype's Streamable HTTP one binding each
 request's `Authorization: Bearer` (never `LOCAL`) and a `PgS3ProjectStore` from its
-`X-Genealogy-Project-Id` header (claim-fenced, U6), and a new tool's arm goes in
+`X-Genealogy-Project-Id` header (claim-fenced and owner-checked, U6/U4), and a new tool's arm goes in
 `server.ts`, never in an entrypoint. A new tool also needs a row in
 `dev/smoke-calls.ts`: `make engine-smoke-http` fails on an advertised tool it
 neither calls nor lists as an exclusion.
@@ -827,7 +828,8 @@ Where to look first:
   `fetch` directly (enforced by `tests/packaging/no-bare-fetch.test.ts`).
   Default timeout 30s; pass a longer one as the third argument (180s for
   `image_transcribe`'s OCR call, 90s for `fs-image-fetch.ts`'s multi-MB scan,
-  60s for `wiki_search`, `collections_search` and `wikipedia_search`). Size a
+  60s for `wiki_search` and `collections_search`; `wikipedia_search`'s three
+  requests share one 55s deadline, under the Cowork bridge's 60s abort). Size a
   raise from the measured e2e corpus, not by guessing — the worked method is in
   `docs/specs/image-transcribe-tool-spec.md`. The
   budget covers headers **and** body — size it for the whole transfer, not the

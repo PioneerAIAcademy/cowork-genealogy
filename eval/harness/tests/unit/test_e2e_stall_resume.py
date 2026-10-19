@@ -122,7 +122,7 @@ def test_watchdog_aborts_on_no_progress_when_resume_off(tmp_path, monkeypatch):
     # Stream stays alive (system messages every 20ms) but never makes progress;
     # the inactivity timer (2s) never fires — the progress watchdog (0.3s) does.
     steps = [(0.0, _sys())] + [(0.02, _sys()) for _ in range(60)]
-    monkeypatch.setattr(orchestrator, "query", lambda **kw: _FakeAgen(steps))
+    monkeypatch.setattr(orchestrator, "open_query", lambda **kw: _FakeAgen(steps))
     fx = _fixture(
         tmp_path, progress_stall_seconds=0.3, inactivity_seconds=2, wall_clock_seconds=30
     )
@@ -152,7 +152,7 @@ def test_resume_recovers_a_stall_in_safe_state(tmp_path, monkeypatch):
         assert opts.fork_session is False
         return _FakeAgen(second)
 
-    monkeypatch.setattr(orchestrator, "query", fake_query)
+    monkeypatch.setattr(orchestrator, "open_query", fake_query)
     fx = _fixture(
         tmp_path, progress_stall_seconds=0.3, inactivity_seconds=2, wall_clock_seconds=30
     )
@@ -175,7 +175,7 @@ def test_max_output_tokens_injected_into_env_and_logged(tmp_path, monkeypatch):
         captured["env"] = dict(kw["options"].env)
         return _FakeAgen([(0.0, _sys()), (0.0, _result())])
 
-    monkeypatch.setattr(orchestrator, "query", fake_query)
+    monkeypatch.setattr(orchestrator, "open_query", fake_query)
     _tc, _t, usage, *_ = _run(_fixture(tmp_path), tmp_path, max_output_tokens=16000)
     assert captured["env"]["CLAUDE_CODE_MAX_OUTPUT_TOKENS"] == "16000"
     assert usage["max_output_tokens"] == 16000
@@ -188,7 +188,7 @@ def test_max_output_tokens_absent_from_env_when_unset(tmp_path, monkeypatch):
         captured["env"] = dict(kw["options"].env)
         return _FakeAgen([(0.0, _sys()), (0.0, _result())])
 
-    monkeypatch.setattr(orchestrator, "query", fake_query)
+    monkeypatch.setattr(orchestrator, "open_query", fake_query)
     _tc, _t, usage, *_ = _run(_fixture(tmp_path), tmp_path)
     assert "CLAUDE_CODE_MAX_OUTPUT_TOKENS" not in captured["env"]
     assert usage["max_output_tokens"] is None
@@ -197,7 +197,7 @@ def test_max_output_tokens_absent_from_env_when_unset(tmp_path, monkeypatch):
 def test_cli_version_captured_from_init_message(tmp_path, monkeypatch):
     init = SystemMessage(subtype="init", data={"session_id": "S1", "version": "2.1.208"})
     monkeypatch.setattr(
-        orchestrator, "query", lambda **kw: _FakeAgen([(0.0, init), (0.0, _result())])
+        orchestrator, "open_query", lambda **kw: _FakeAgen([(0.0, init), (0.0, _result())])
     )
     _tc, _t, usage, *_ = _run(_fixture(tmp_path), tmp_path)
     assert usage["cli_version"] == "2.1.208"
@@ -210,7 +210,7 @@ def test_agent_model_override_sets_parent_model(tmp_path, monkeypatch):
         captured["model"] = kw["options"].model
         return _FakeAgen([(0.0, _sys()), (0.0, _result())])
 
-    monkeypatch.setattr(orchestrator, "query", fake_query)
+    monkeypatch.setattr(orchestrator, "open_query", fake_query)
     _run(_fixture(tmp_path), tmp_path, agent_model="claude-sonnet-4-6")
     assert captured["model"] == "claude-sonnet-4-6"
 
@@ -222,7 +222,7 @@ def test_parent_model_defaults_to_fixture_when_no_override(tmp_path, monkeypatch
         captured["model"] = kw["options"].model
         return _FakeAgen([(0.0, _sys()), (0.0, _result())])
 
-    monkeypatch.setattr(orchestrator, "query", fake_query)
+    monkeypatch.setattr(orchestrator, "open_query", fake_query)
     _run(_fixture(tmp_path), tmp_path)  # _fixture uses the default agent_model
     assert captured["model"]  # a concrete model id, not None
 
@@ -255,7 +255,7 @@ def _errored_same_person_run(tmp_path, monkeypatch, person_id="I1"):
         (0.0, _tool_result("tu_1", "upstream 503", is_error=True)),
         (0.0, _result()),
     ]
-    monkeypatch.setattr(orchestrator, "query", lambda **kw: _FakeAgen(steps))
+    monkeypatch.setattr(orchestrator, "open_query", lambda **kw: _FakeAgen(steps))
     tool_calls, *_ = _run(_fixture(tmp_path), tmp_path)
     return tool_calls
 
@@ -280,7 +280,7 @@ def test_successful_tool_result_records_is_error_false_not_none(tmp_path, monkey
         (0.0, _tool_result("tu_1", '{"score":0.9}', is_error=None)),
         (0.0, _result()),
     ]
-    monkeypatch.setattr(orchestrator, "query", lambda **kw: _FakeAgen(steps))
+    monkeypatch.setattr(orchestrator, "open_query", lambda **kw: _FakeAgen(steps))
     tool_calls, *_ = _run(_fixture(tmp_path), tmp_path)
     assert tool_calls[0]["is_error"] is False
 
@@ -322,7 +322,7 @@ def test_unresolved_tool_call_carries_no_is_error_key(tmp_path, monkeypatch):
         # No _tool_result — the stream ends with the call still in flight.
         (0.0, _result()),
     ]
-    monkeypatch.setattr(orchestrator, "query", lambda **kw: _FakeAgen(steps))
+    monkeypatch.setattr(orchestrator, "open_query", lambda **kw: _FakeAgen(steps))
     tool_calls, *_ = _run(_fixture(tmp_path), tmp_path)
     assert len(tool_calls) == 1
     assert "is_error" not in tool_calls[0]

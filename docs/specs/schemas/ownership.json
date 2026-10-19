@@ -141,9 +141,9 @@
     {
       "artifact": "research.json",
       "section": "plans",
-      "owner": "skill:research-plan",
+      "owner": "agent:research-plan",
       "callers": [
-        "skill:research-plan",
+        "agent:research-plan",
         "agent:search-records",
         "agent:search-external-sites",
         "agent:search-full-text",
@@ -155,17 +155,17 @@
       "enforceableAt": [
         "unit"
       ],
-      "requires": "research-plan owns plan and item structure. The search skills, the search-images, search-external-sites and search-full-text agents may update only `items[].status` after executing an item.",
+      "requires": "The research-plan agent owns plan and item structure. The search skills, the search-images, search-external-sites and search-full-text agents may update only `items[].status` after executing an item.",
       "failure": "A search skill rewrites the plan it was handed, and the plan stops being a record of what was intended versus what was done.",
-      "remedy": "Update the item's status; route a change to the plan itself through research-plan.",
+      "remedy": "Update the item's status; route a change to the plan itself through the research-plan agent.",
       "override": "none"
     },
     {
       "artifact": "research.json",
       "section": "plan_items",
-      "owner": "skill:research-plan",
+      "owner": "agent:research-plan",
       "callers": [
-        "skill:research-plan",
+        "agent:research-plan",
         "agent:search-records",
         "agent:search-external-sites",
         "agent:search-full-text",
@@ -220,7 +220,8 @@
         "agent:search-hints",
         "agent:survey-surname",
         "agent:search-wikipedia",
-        "agent:search-familysearch-wiki"
+        "agent:search-familysearch-wiki",
+        "agent:historical-context"
       ],
       "agentCallers": [
         {
@@ -262,6 +263,12 @@
         },
         {
           "agent": "agent:search-familysearch-wiki",
+          "tools": [
+            "research_log_append"
+          ]
+        },
+        {
+          "agent": "agent:historical-context",
           "tools": [
             "research_log_append"
           ]
@@ -424,9 +431,9 @@
     {
       "artifact": "research.json",
       "section": "timelines",
-      "owner": "skill:timeline",
+      "owner": "agent:timeline",
       "callers": [
-        "skill:timeline"
+        "agent:timeline"
       ],
       "writerTools": [
         "research_append",
@@ -438,10 +445,10 @@
       "enforceableAt": [
         "unit"
       ],
-      "notes": "Zero writes across the committed e2e corpus — the section is regenerated wholesale when it is written at all, and no e2e run has ever routed to the skill. Enforced on the unit plane, where the skill has a suite.",
+      "notes": "Zero writes across the committed e2e corpus — the section is regenerated wholesale when it is written at all, and no e2e run has ever routed to it. Enforced on the unit plane, where the agent has a suite.",
       "requires": "Only timeline regenerates the section; it is replaced wholesale, not edited entry by entry.",
       "failure": "A partially-edited timeline reads as a complete one, and the gaps it exists to expose are hidden.",
-      "remedy": "Regenerate through timeline.",
+      "remedy": "Regenerate through the timeline agent.",
       "override": "none"
     },
     {
