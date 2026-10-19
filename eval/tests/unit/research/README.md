@@ -44,7 +44,8 @@ first as often as before. The runs are on #3119.
 
 Not restored:
 
-- `ut_research_002` (`slash-research-question.json`), which issue #3116 owns.
+- `ut_research_002` (`slash-research-question.json`). Its slash-entry defect was
+  fixed in PR #3146; `ut_research_so2` now covers a `/research` entry.
 - `ut_research_003` (`find-relative.json`), which is not part of #2927's removal
   condition.
 
