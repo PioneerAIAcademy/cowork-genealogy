@@ -96,16 +96,15 @@ function inOrder(titleWords: string[], queryWords: readonly string[]): boolean {
 function titleMatches(title: string, queryWords: readonly string[]): boolean {
   const paren = title.match(/^(.*?)\s*\(([^()]*)\)\s*$/);
   const base = paren ? paren[1] : title;
-  const kept = paren && /\d/.test(paren[2]) ? [paren[2]] : [];
-  const headOf = base.match(/^(.+?) of (.+)$/);
+  const dated = paren !== null && /\d/.test(paren[2]);
+  const headOf = dated ? null : base.match(/^(.+?) of (.+)$/);
   const spellings = headOf ? [base, `${headOf[2]} ${headOf[1]}`] : [base];
-  const significant = (text: string) => words(text).filter((w) => !FUNCTION_WORDS.has(w));
   return spellings.some((spelling) => {
-    const parts = spelling.split(",").map(significant).filter((part) => part.length > 0);
-    return (
-      parts.length > 0 &&
-      [...parts, ...kept.map(significant)].every((part) => inOrder(part, queryWords))
-    );
+    const parts = spelling
+      .split(",")
+      .map((part) => words(part).filter((w) => !FUNCTION_WORDS.has(w)))
+      .filter((part) => part.length > 0);
+    return parts.length > 0 && parts.every((part) => inOrder(part, queryWords));
   });
 }
 
