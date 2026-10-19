@@ -898,8 +898,18 @@ function planActiveInvariants(entry: any, research: any): string[] {
     (p: any) => p && p !== entry && p.question_id === entry.question_id && p.status === "active",
   );
   if (conflicting.length > 0) {
+    const plan = conflicting[0];
+    const items: any[] = Array.isArray(plan.items) ? plan.items : [];
+    const searchedOut =
+      items.length > 0 &&
+      items.every((it: any) => it?.status === "completed" || it?.status === "skipped");
+    if (searchedOut) {
+      return [
+        `question '${entry.question_id}' already has an active plan (${plan.id}) whose items are all searched out; complete it first: {section:'plans', op:'update', entryId:'${plan.id}', fields:{status:'completed'}}`,
+      ];
+    }
     return [
-      `question '${entry.question_id}' already has an active plan (${conflicting[0].id}); supersede it before adding another`,
+      `question '${entry.question_id}' already has an active plan (${plan.id}); supersede it before adding another`,
     ];
   }
   return [];
