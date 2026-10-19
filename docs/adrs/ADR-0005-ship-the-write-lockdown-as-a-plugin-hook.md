@@ -294,18 +294,38 @@ asking again.
 - **`permission_mode` was `"auto"`,** not the `"default"` stated in the Decision.
   Whether that is a per-session setting is not known. The hooks bound under it.
 
-**What it means for step mode** (the plan decides; recorded here so it is not
-re-measured):
+**What it means for step mode.** Settled by the lead on 2026-10-19 after these
+measurements: **the halt is built on the FS prototype only.** Cowork gets
+`AskUserQuestion` plus router prose and NO hook; the alpha gets nothing, since it
+is retired within months. See the plan's decision 25.
 
-- A halt can end a Cowork turn (item 9). Option 1 puts none behind
-  `AskUserQuestion`, which waits but does not end the turn (item 10).
-- The turn is findable from `prompt_id`. `UserPromptSubmit` also fires for agent
-  hand-backs. A state file beside the hook persists between calls within a
-  session, not across sessions.
-- `ctx` cannot come from the hook's cwd (item 7), so under the plan's own rule the
-  Cowork host passes nothing unless it derives `ctx` from the transcript (item 4).
+- A halt can end a Cowork turn (item 9), and `AskUserQuestion` waits there without
+  ending one (item 10). Both are measured; neither is being built on that plane.
 - The plan's fallback, "Cowork runs on router prose alone" if the hook cannot find
-  turns or keep state, is not triggered.
+  turns or keep state, is now the chosen design rather than a fallback. It was not
+  triggered by a failure: the hook could have done it.
+
+**PARKED for a possible future Cowork hook** (lead, 2026-10-19: "PR 1 doesn't need
+them. Please write them into ADR-0005 with today's date, so they're there if we
+build the Cowork hook later"). None of the following is an input to PR 1, and they
+are recorded here so they do not have to be re-measured:
+
+- The turn is findable from `prompt_id`, and `UserPromptSubmit` is NOT a turn
+  counter: it fires for every subagent hand-back carrying the researcher's own
+  `prompt_id` (above). Key turns on `prompt_id`.
+- Cowork's spawn tool is `Agent`, not `Task`, and `subagent_type` arrives
+  plugin-prefixed (`genealogy-research:record-extractor`), so a name comparison
+  has to cut at the last `:`.
+- A Cowork agent outlives its first hand-back.
+- A state file beside the hook persists between calls within a session, not across
+  sessions.
+- `ctx` cannot come from the hook's cwd (item 7), so a Cowork hook would have to
+  derive it from the transcript (item 4).
+
+**What the prototype halt is expected to tell us about Cowork.** The router prose
+is the same on both planes, so the prototype's halt rate measures how often a model
+starts a step without asking. If it is high, the Cowork hook gets built with
+numbers behind it rather than on a guess (lead, 2026-10-19).
 
 `docs/specs/guardrail-enforcement-spec.md` **§6** is the authority on this
 guardrail; **§4** is the table of every guardrail's instrument, binding

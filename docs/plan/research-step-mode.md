@@ -87,6 +87,37 @@ the replacement and the unsettled-conflict ending; their findings are folded in.
     Until the lead answers, treat "no halt" as the standing instruction and this as the open
     risk against it.
 
+25. **ANSWERED, and 24 is superseded: build the halt, on the FS prototype only** (lead,
+    2026-10-19). The reasoning is that the real cost and latency exposure is the prototype,
+    not Cowork, where the researcher can always press stop.
+
+    - **Prototype.** `AskUserQuestion` is the normal path and the halt is the BACKSTOP, not
+      the first move. When the model starts a new step without having asked, **deny** it
+      first ("report the step and ask with `AskUserQuestion` first"); **halt** only if it
+      tries again. That keeps the report and the question as what the researcher normally
+      sees and makes a silent stop rare, which is the answer to the "a halt ends the turn
+      with no reply" finding (ADR-0005 item 10). The halt also DENIES the call it stops, as
+      `_halt` already does, so the next step never starts.
+    - **Cowork.** No hook. `AskUserQuestion` plus router prose. If the model forgets to ask
+      it runs on, which is what Cowork does today, and the researcher can stop it. Not worth
+      a stateful hook yet.
+    - **Alpha.** Nothing. It is retired within months.
+
+    Three riders the lead attached:
+
+    1. **The rule is "no new step until the researcher has answered since the last one",**
+       NOT "one step per turn". In Cowork the answer returns inside the same turn (ADR-0005
+       item 10), so a per-turn rule would be wrong there.
+    2. **Log every halt on the prototype.** The router prose is identical on both planes, so
+       the halt rate measures how often Cowork runs past a boundary. A high rate is what
+       would buy the Cowork hook, with numbers rather than a guess.
+    3. **The eval harnesses will enforce a boundary Cowork does not have,** so no eval can
+       catch a Cowork miss. Recorded on the `nothing-checks` register as an ARCHITECTURE gap rather than a
+       backlog issue, because it changes how a correct change is made: see
+       `docs/architecture.md` §9.4, gap 4.
+
+    Decision 23 stays reversed: the `AskUserQuestion` carrier is kept.
+
 ## Evidence
 **#3475.** Proxy-exact, after question selection: $49.84 over about 361 live minutes. Each
 "not exhaustive" verdict auto-produced a new plan:
