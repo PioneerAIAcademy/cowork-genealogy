@@ -5274,6 +5274,9 @@ describe("research_append (batch ops)", () => {
     await refusedFor(running([conflict("unresolved", ["q_001"])]), { unblocks: [] });
     await refusedFor(running([conflict("unresolved", ["q_009"])]), { unblocks: ["q_001"] });
   });
+  it("(in-flight) still refuses the d01 shape even when the delegation also claims selection_basis: unresolved_conflict", async () => {
+    await refusedFor(running(), { depends_on: ["q_001"], selection_basis: "unresolved_conflict" });
+  });
 
   it("(in-flight) allows the conflict exception: an unresolved conflict blocks it and unblocks names it (ut_003)", async () => {
     await writeProject(running([conflict("unresolved", ["q_001"])]));
@@ -5301,6 +5304,19 @@ describe("research_append (batch ops)", () => {
     await writeProject(research);
     const r = await researchAppend({ projectPath: dir, section: "questions", op: "update", entryId: "q_002", fields: { priority: "low" } } as any);
     expect(r.ok).toBe(true);
+  });
+
+  // ── issue #3259: the person_warnings-contradiction exception ──
+  // Unlike the conflict exception, not scoped to `unblocks` naming the
+  // in-flight question -- a contradiction found this call need not be about
+  // whatever is already in progress.
+  it("(in-flight) allows the person_warnings-contradiction exception: selection_basis unresolved_conflict, no unblocks, no conflicts[] entry at all", async () => {
+    await writeProject(running());
+    const r = await researchAppend(newQ({ selection_basis: "unresolved_conflict", depends_on: [], unblocks: [] }));
+    expect(r.ok, `refused: ${JSON.stringify((r as any).errors)}`).toBe(true);
+  });
+  it("(in-flight) still refuses an ordinary objective_decomposition question while an item is in-flight", async () => {
+    await refusedFor(running(), { selection_basis: "objective_decomposition", depends_on: [], unblocks: [] });
   });
 
   // BREAK IT MORE THAN ONE WAY. Each of these is a different shape of "no entry
