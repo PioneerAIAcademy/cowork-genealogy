@@ -1447,6 +1447,27 @@ function validateResearch(data: any, report: ValidationReport): ResearchIds {
         const sorted = Array.from(DATE_CERTAINTY_TIMELINE).sort();
         addError(report, ep, `'${ev.date_certainty}' is not valid for timeline events (use: ${sorted.join(', ')})`);
       }
+      // The same three checks as a proof summary's supporting_assertion_ids.
+      // Without them `"a_001"` and a dangling `["a_999"]` persisted and read as
+      // sourced, which the unsourced-event advisory then could not see. Zero of
+      // 411 references in 515 committed research documents fail any of them.
+      if ("assertion_ids" in ev && !Array.isArray(ev.assertion_ids)) {
+        addError(report, ep, `'assertion_ids' must be an array (got ${JSON.stringify(ev.assertion_ids)})`);
+      }
+      if (Array.isArray(ev.assertion_ids)) {
+        for (const aid of ev.assertion_ids) {
+          if (typeof aid !== "string") {
+            addError(
+              report,
+              ep,
+              `assertion_ids contains a non-string entry (${JSON.stringify(aid)}); ` +
+                `every entry must be an 'a_' assertion id`
+            );
+            continue;
+          }
+          checkRefExists(aid, ids.assertions, "assertion", ep, report);
+        }
+      }
     }
 
     const gaps = Array.isArray(t.gaps) ? t.gaps : [];

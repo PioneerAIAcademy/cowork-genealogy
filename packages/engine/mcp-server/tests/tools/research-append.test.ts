@@ -2277,6 +2277,43 @@ describe("research_append (Phase 3)", () => {
       expect(viaLabel.ok).toBe(true);
       if (!viaLabel.ok) return;
       expect(viaLabel.validation.warnings.some((x) => WARN.test(x))).toBe(false);
+
+      const viaGaps = await update({ gaps: [] });
+      expect(viaGaps.ok).toBe(true);
+      if (!viaGaps.ok) return;
+      expect(viaGaps.validation.warnings.some((x) => WARN.test(x))).toBe(false);
+    });
+
+    // An event must not read as sourced on an id that is no assertion: the
+    // advisory counts empty lists only, so these shapes would slip past it.
+    it.each([
+      ["a string", "a_001", /'assertion_ids' must be an array/],
+      ["a non-string entry", [42], /non-string entry \(42\)/],
+      ["a dangling id", ["a_999"], /a_999/],
+    ])("refuses an event whose assertion_ids is %s", async (_label, ids, msg) => {
+      await writeProject();
+      const r = await appendTimeline([{ ...event([]), assertion_ids: ids }]);
+      expect(r.ok).toBe(false);
+      if (r.ok) return;
+      expect(r.errors.join(" ")).toMatch(msg);
+      expect((await readResearch()).timelines ?? []).toHaveLength(0);
+    });
+
+    it("names each entry's own id in a batch", async () => {
+      await writeProject();
+      const r = await researchAppend({
+        projectPath: dir,
+        ops: [
+          { section: "timelines", op: "append", entry: { label: "one", person_ids: ["I1"], events: [event([])], gaps: [] } },
+          { section: "timelines", op: "append", entry: { label: "two", person_ids: ["I1"], events: [event(["a_001"]), event([])], gaps: [] } },
+        ],
+      } as never);
+      expect(r.ok).toBe(true);
+      if (!r.ok) return;
+      expect(r.validation.warnings.filter((x) => WARN.test(x))).toEqual([
+        expect.stringMatching(/^1 of 1 events in t_001 /),
+        expect.stringMatching(/^1 of 2 events in t_002 /),
+      ]);
     });
   });
 
@@ -2295,7 +2332,7 @@ describe("research_append (Phase 3)", () => {
     // (ut_timeline_005, 2026-10-09): an `every` test over `standard_place`
     // stayed silent here because the birth event alone broke unanimity.
     const mixedEvents = [
-      { date: "~1845", date_certainty: "estimated", event_type: "birth", description: "born", place: "Ireland", standard_place: "Ireland", assertion_ids: ["a_000"], distance_from_previous_km: null },
+      { date: "~1845", date_certainty: "estimated", event_type: "birth", description: "born", place: "Ireland", standard_place: "Ireland", assertion_ids: ["a_001"], distance_from_previous_km: null },
       { date: "1880", date_certainty: "exact", event_type: "census", description: "enumerated", place: "Pennsylvania", standard_place: "Schuylkill, Pennsylvania, United States", assertion_ids: ["a_001"], distance_from_previous_km: null },
     ];
     const appendWithGap = (expectedEvents: string[], events: any[] = usEvents) =>
