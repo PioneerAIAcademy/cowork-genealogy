@@ -212,6 +212,10 @@ to research-plan or search-records.
 - **ut_research_018** (`negative-next-question.json`): near-miss negative — user asks "what should I research next?" (→ question-selection). Tag: `no-exhaustive-declaration`, `grade_on_invariant`. Moved from research-exhaustiveness suite when the routing skill was deleted.
 - **ut_research_024** (`negative-research-plan-exhaustiveness.json`): near-miss negative — user asks to plan more searches (→ research-plan). Tag: `no-exhaustive-declaration`, `grade_on_invariant`. Moved from research-exhaustiveness suite when the routing skill was deleted.
 
-**Future hazard:** ut_research_024 names `correct_skill: ["research-plan"]`; when issue #2116 deletes that skill directory the test will abort at `runnability.py`'s `correct_skill` check. ut_research_018 names `correct_skill: ["question-selection"]`, which is already an agent (not a skill) and remains runnable because the check accepts agent names — but if the agent is ever renamed or deleted, the test aborts the same way.
+**Converted callees:** ut_research_024 names `correct_skill: ["research-plan"]` and ut_research_018 `["question-selection"]`. Both are agents now (issue #2116 deleted the research-plan skill), and both tests stay runnable because `runnability.py`'s `correct_skill` check accepts an agent name; the routing short-circuit stops on an `Agent` spawn of either. If an agent is ever renamed or deleted, the test aborts at that check.
+
+### Moved from research-plan (issue #2116)
+
+- **ut_research_rpn** (`handle-negative-probate-result.json`, formerly `ut_research_plan_003`): near-miss negative — on a project whose question is resolved, "what should the next plan item look like, or are we done?" must write no plan. Tags `research-plan-no-new-plan` and `no-plan-writes-when-resolved`, `grade_on_invariant`. Moved when the research-plan skill was deleted (Richard's 2026-09-24 note on that issue, applying the issue #2738 ruling); its three validators moved into `validators/test_research.py`.
 
 A live `make e2e-run` remains the only end-to-end instrument.
