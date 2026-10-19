@@ -46,11 +46,11 @@ def call(sid, minute, mid, *, cw=0, cr=0, inp=0, out=10, text="", model="claude-
                   "cache_read_input_tokens": cr, "output_tokens": out}}, **fields)
 
 
-def bundle(root, name, project, logs, subagents=None):
+def bundle(root, name, project, logs, subagents=None, **meta):
     """Write one bundle: `logs` maps a path under `_feedback/` to its rows."""
     fb = root / name / "_feedback"
     fb.mkdir(parents=True)
-    (fb / "feedback.json").write_text(json.dumps({"project_folder_path": project}), encoding="utf-8")
+    (fb / "feedback.json").write_text(json.dumps({"project_folder_path": project, **meta}), encoding="utf-8")
     for rel, rows in {**logs, **{f"subagents/{k}": v for k, v in (subagents or {}).items()}}.items():
         path = fb / rel
         path.parent.mkdir(parents=True, exist_ok=True)
@@ -236,6 +236,23 @@ def test_a_yes_after_an_interrupted_or_failed_hand_back_is_its_own_message(tmp_p
     rows[0]["parentUuid"] = None
     [project] = carry_cost.analyze([bundle(tmp_path, "b", "prj", {"session-log.jsonl": rows})])
     assert len(project.messages[True]) == 2
+
+
+def test_the_command_measures_only_the_hosted_web_apps_bundles(tmp_path, capsys):
+    """The feedback folder also holds desktop bundles. A bundle with no platform is not the
+    web app's either, since the app has always written one."""
+    def log(sid):
+        rows = [person(sid, 0, "Start."), call(sid, 1, f"{sid}-a", cw=40_000)]
+        rows[0]["parentUuid"] = None
+        return {"session-log.jsonl": rows}
+
+    paths = [bundle(tmp_path, "b-web", "prj_web", log("s1"), platform="web")[1],
+             bundle(tmp_path, "b-win", "prj_win", log("s2"), platform="win32")[1],
+             bundle(tmp_path, "b-none", "prj_none", log("s3"))[1]]
+    carry_cost.main([str(p) for p in paths])
+    lines = capsys.readouterr().out.splitlines()
+    assert lines[0] == "Skipped 2 bundles not from the hosted web app (platform: none 1, win32 1)."
+    assert lines[1].startswith("1 web bundles hold 1 hosted sessions (projects);")
 
 
 def test_a_call_never_carries_more_than_it_holds():

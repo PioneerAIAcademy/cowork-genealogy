@@ -11,7 +11,9 @@ How each figure is measured:
 - **Bundles** are read with `feedback_profile.load_bundles` (`eval/harness/e2e/`): each SDK
   session's rows merged across bundles by uuid (a later bundle repeats an earlier one's), the
   other sessions a bundle ships under `_feedback/sessions/<sid>/`, a log cut to its newest rows
-  (`_truncation_note`), and each agent run's longest transcript.
+  (`_truncation_note`), and each agent run's longest transcript. Only the hosted web app's
+  bundles are measured (`platform` "web" in `feedback.json`, which the app has always written):
+  the feedback folder also holds desktop bundles, which the count of skipped ones names.
 - **A hosted session is a project** (`project_folder_path` in the bundles' `feedback.json`).
   Its SDK sessions (a resume can start a new one) share one fresh-start baseline: the
   project's earliest main-thread call. Left out, and named: a project whose log was truncated;
@@ -58,6 +60,7 @@ from __future__ import annotations
 import argparse
 import json
 import sys
+from collections import Counter
 from contextlib import ExitStack
 from dataclasses import dataclass, field
 from pathlib import Path
@@ -271,16 +274,20 @@ def _walk(rows: list[dict], fold: bool) -> tuple[list[Message], list[Call], int,
     return [m for m in messages if m.first_context is not None], calls, compactions, disagree
 
 
+def _meta(path: Path) -> dict:
+    """A bundle's `feedback.json`, or {} when it has none or it does not parse."""
+    try:
+        meta = json.loads((path / "_feedback" / "feedback.json").read_text(encoding="utf-8"))
+    except (OSError, ValueError):
+        return {}
+    return meta if isinstance(meta, dict) else {}
+
+
 def _projects_of(bundles: list[tuple[str, Path]]) -> dict[str, str]:
     """Bundle name -> its project, from `feedback.json` (the bundle's own name if absent)."""
     out = {}
     for name, path in bundles:
-        project = None
-        try:
-            meta = json.loads((path / "_feedback" / "feedback.json").read_text(encoding="utf-8"))
-            project = meta.get("project_folder_path") if isinstance(meta, dict) else None
-        except (OSError, ValueError):
-            pass
+        project = _meta(path).get("project_folder_path")
         out[name] = project if isinstance(project, str) and project else name
     return out
 
@@ -340,10 +347,13 @@ def _pct(part: float, whole: float) -> str:
     return f"{100 * part / whole:.1f}%" if whole else "-"
 
 
-def report(projects: list[Project], min_messages: int, bundles: int) -> int:
+def report(projects: list[Project], min_messages: int, bundles: int, skipped: Counter) -> int:
     kept = [p for p in projects if p.excluded is None]
     qualified = [p for p in kept if len(p.messages[True]) >= min_messages]
-    print(f"{bundles} bundles hold {len(projects)} hosted sessions (projects); "
+    if skipped:
+        print(f"Skipped {sum(skipped.values())} bundles not from the hosted web app (platform: "
+              + ", ".join(f"{k} {n}" for k, n in sorted(skipped.items())) + ").")
+    print(f"{bundles} web bundles hold {len(projects)} hosted sessions (projects); "
           f"{len(projects) - len(kept)} left out; {len(qualified)} of the remaining {len(kept)} have "
           f">= {min_messages} user messages.")
     for p in projects:
@@ -426,10 +436,13 @@ def main(argv: list[str] | None = None) -> int:
             bundles = resolve_inputs(args.inputs, stack)
         except ValueError as exc:
             ap.error(str(exc))
-        projects = analyze(bundles)
+        platform = {name: str(_meta(path).get("platform") or "none") for name, path in bundles}
+        web = [(name, path) for name, path in bundles if platform[name] == "web"]
+        skipped = Counter(p for p in platform.values() if p != "web")
+        projects = analyze(web)
         if args.explain:
             return explain(projects, args.explain, args.seed)
-        return report(projects, args.min_messages, len(bundles))
+        return report(projects, args.min_messages, len(web), skipped)
 
 
 if __name__ == "__main__":
