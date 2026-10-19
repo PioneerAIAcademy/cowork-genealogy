@@ -1,0 +1,67 @@
+{
+  "tool": "record_read",
+  "description": "1870 Lancaster County household behind crowded Henry Weber hit MXW1-0A1 (head Johann Weber), for ut_search_records_d31. Stocked so reading a candidate is served rather than aborting the run. Hand-authored.",
+  "args": {
+    "recordId": "~MXW1-0A1"
+  },
+  "response": {
+    "persons": [
+      {
+        "id": "p1",
+        "names": [
+          {
+            "given": "Johann",
+            "surname": "Weber"
+          }
+        ],
+        "facts": [
+          {
+            "type": "Residence",
+            "date": "1870",
+            "place": "Manheim, Lancaster, Pennsylvania, United States"
+          },
+          {
+            "type": "Birth",
+            "date": "about 1830",
+            "place": "Pennsylvania, United States"
+          }
+        ]
+      },
+      {
+        "id": "p2",
+        "names": [
+          {
+            "given": "Henry",
+            "surname": "Weber"
+          }
+        ],
+        "facts": [
+          {
+            "type": "Residence",
+            "date": "1870",
+            "place": "Manheim, Lancaster, Pennsylvania, United States"
+          },
+          {
+            "type": "Birth",
+            "date": "about 1862",
+            "place": "Pennsylvania, United States"
+          }
+        ]
+      }
+    ],
+    "relationships": [
+      {
+        "type": "ParentChild",
+        "parent": "p1",
+        "child": "p2"
+      }
+    ],
+    "sources": [
+      {
+        "title": "United States Census, 1870",
+        "recordId": "ark:/61903/1:1:MXW1-0A1"
+      }
+    ],
+    "places": []
+  }
+}

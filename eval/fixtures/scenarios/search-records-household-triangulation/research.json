@@ -1,0 +1,64 @@
+{
+  "project": {
+    "id": "rp_001",
+    "objective": "Trace Henry Weber (b. 1862, Lancaster County, Pennsylvania) through his childhood",
+    "subject_person_ids": [
+      "I1"
+    ],
+    "status": "active",
+    "created": "2026-10-19",
+    "updated": "2026-10-19"
+  },
+  "questions": [
+    {
+      "id": "q_001",
+      "question": "Where was Henry Weber (b. 1862) living in 1870?",
+      "rationale": "Selected as the next question; a plan already exists for it.",
+      "selection_basis": "objective_decomposition",
+      "priority": "high",
+      "status": "in_progress",
+      "depends_on": [],
+      "unblocks": [],
+      "resolved": null,
+      "resolution_assertion_ids": [],
+      "created": "2026-10-19",
+      "search_stop": {
+        "stopped_because": null,
+        "justification": null,
+        "log_entry_ids": [],
+        "stop_criteria": null,
+        "not_reached": []
+      }
+    }
+  ],
+  "plans": [
+    {
+      "id": "pl_001",
+      "question_id": "q_001",
+      "status": "active",
+      "created": "2026-10-19",
+      "items": [
+        {
+          "id": "pli_001",
+          "sequence": 1,
+          "record_type": "census",
+          "jurisdiction": "Lancaster County, Pennsylvania",
+          "date_range": "1870",
+          "repository": "FamilySearch",
+          "rationale": "Henry should appear as a child of about eight in the 1870 census of Lancaster County.",
+          "fallback_for": null,
+          "status": "planned"
+        }
+      ]
+    }
+  ],
+  "log": [],
+  "sources": [],
+  "assertions": [],
+  "person_evidence": [],
+  "conflicts": [],
+  "hypotheses": [],
+  "timelines": [],
+  "proof_summaries": [],
+  "evaluations": []
+}

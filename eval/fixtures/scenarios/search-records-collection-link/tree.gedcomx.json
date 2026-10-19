@@ -1,0 +1,28 @@
+{
+  "persons": [
+    {
+      "id": "I1",
+      "gender": "Female",
+      "names": [
+        {
+          "id": "N1",
+          "preferred": true,
+          "given": "Mary Ellen",
+          "surname": "Hollis",
+          "type": "BirthName"
+        }
+      ],
+      "facts": [
+        {
+          "id": "F1",
+          "type": "Birth",
+          "primary": true,
+          "date": "1834",
+          "place": "Licking County, Ohio"
+        }
+      ]
+    }
+  ],
+  "relationships": [],
+  "sources": []
+}

@@ -1,0 +1,38 @@
+{
+  "test": {
+    "id": "ut_search_records_d32",
+    "skill": "search-records",
+    "name": "OVER-APPLICATION GUARD: a unique, well-indexed subject needs no co-resident household search",
+    "type": "positive",
+    "description": "OVER-APPLICATION GUARD for ut_search_records_d31 — it cannot fail on the pre-edit skill text by construction, and is labelled so. Thaddeus Quarrington (b. 1863) returns one clear 1870 hit, ranked 0.95, in his mother Lavinia's household. The household / co-resident lever is for a subject whose own entries cannot be told apart; here there is nothing to triangulate, so no search may name Lavinia (or any other parent) as the principal. Graded deterministically by test_household_not_searched_by_co_resident_when_unneeded. Issue #2213 PR 3 item 6.",
+    "tags": [
+      "search",
+      "census",
+      "over-application-guard",
+      "household-triangulation-unneeded"
+    ]
+  },
+  "input": {
+    "user_message": "Run the 1870 census search in the plan for Thaddeus Quarrington and tell me what you find.",
+    "scenario": "search-records-household-triangulation-unneeded"
+  },
+  "mcp_fixtures": [
+    "wiki-read-united-states-census",
+    "record-search-lavinia-quarrington-1870",
+    "record-search-quarrington-1870-unique",
+    "rank-search-matches-quarrington-1870-unique",
+    "catalog-search-empty",
+    "catalog-search-empty-keywords"
+  ],
+  "judge_context": [
+    "The single 1870 hit is the subject, aged 7, in his mother Lavinia's household, ranked 0.95 with no conflicts. Reporting it as a promising match and offering extraction is correct. Whether the skill ran an unneeded co-resident search for Lavinia is decided by a deterministic validator; do not also deduct for it.",
+    "Do NOT penalise the skill for not searching the household by a co-resident: with one clear match there is nothing to triangulate.",
+    "Completeness: the hit reported, the search logged and the plan item updated is complete. Do NOT require extraction.",
+    "The census `wiki_read` from Step 2's pre-work block is NOT graded on Tool Arguments — score that dimension on the `record_search` call's arguments. The census fixture's predicate matches any URL containing `United_States_Census`, so a per-year page is answered by the same country page; that is the shape of the fixture set, not a wrong call."
+  ],
+  "judge_reads_files": true,
+  "execution": {
+    "max_wall_clock_seconds": 600,
+    "max_turns": 35
+  }
+}

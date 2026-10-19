@@ -1,0 +1,20 @@
+{
+  "tool": "record_search",
+  "description": "Henry's mother searched under her earlier married surname Weber in ut_search_records_d31: nil for 1870, by which date she had remarried Jacob Kessler. Listed BEFORE record-search-weber-1870-crowded, whose surname predicate would otherwise serve her the Henry rows.",
+  "args": {
+    "givenName": "~Cath",
+    "surname": "~Weber"
+  },
+  "response": {
+    "query": {
+      "surname": "Weber",
+      "givenName": "Catharina"
+    },
+    "totalMatches": 0,
+    "paginationCappedAt": 100,
+    "returned": 0,
+    "offset": 0,
+    "hasMore": false,
+    "results": []
+  }
+}

@@ -1,0 +1,35 @@
+{
+  "persons": [
+    {
+      "id": "I1",
+      "gender": "Male",
+      "names": [
+        {
+          "id": "N1",
+          "preferred": true,
+          "given": "Elias",
+          "surname": "Thornbury",
+          "type": "BirthName"
+        }
+      ],
+      "facts": [
+        {
+          "id": "F1",
+          "type": "Birth",
+          "primary": true,
+          "date": "1821",
+          "place": "Virginia"
+        },
+        {
+          "id": "F2",
+          "type": "Death",
+          "primary": true,
+          "date": "1891",
+          "place": "Hamilton County, Ohio"
+        }
+      ]
+    }
+  ],
+  "relationships": [],
+  "sources": []
+}

@@ -1,0 +1,617 @@
+{
+  "tool": "record_search",
+  "description": "1870 census search for Henry Weber in Lancaster County, for ut_search_records_d31 (and any Weber-surnamed search there): six Henry Webers, all born 1861-1863 in Pennsylvania, all in Lancaster County townships, scores within 0.03 of each other. Rows carry no recordTitle, so nothing on the page tells them apart. Row 4 (MXK7-1HW) is the subject, in the household of his stepfather Jacob Kessler -- reachable as a household only by searching a co-resident. Hand-authored, no real person. Must follow the two nil fixtures whose narrower predicates it would shadow.",
+  "args": {
+    "surname": "~Weber"
+  },
+  "response": {
+    "query": {
+      "surname": "Weber",
+      "givenName": "Henry",
+      "residencePlace": "Lancaster, Pennsylvania, United States",
+      "residenceYearFrom": 1870,
+      "residenceYearTo": 1870
+    },
+    "totalMatches": 6,
+    "paginationCappedAt": 100,
+    "returned": 6,
+    "offset": 0,
+    "hasMore": false,
+    "results": [
+      {
+        "personId": "MXW1-0A1",
+        "recordId": "MXW1-0A1",
+        "personName": "Henry Weber",
+        "score": 0.88,
+        "sex": "Male",
+        "birthDate": "about 1862",
+        "birthPlace": "Pennsylvania, United States",
+        "events": [
+          {
+            "type": "Residence",
+            "date": "1870",
+            "place": "Manheim, Lancaster, Pennsylvania, United States"
+          }
+        ],
+        "arkUrl": "https://www.familysearch.org/ark:/61903/1:1:MXW1-0A1",
+        "collectionId": "1438024",
+        "collectionTitle": "United States Census, 1870",
+        "treeMatches": [],
+        "primaryId": "P2",
+        "gedcomx": {
+          "persons": [
+            {
+              "id": "P1",
+              "gender": "Male",
+              "names": [
+                {
+                  "id": "N1",
+                  "preferred": true,
+                  "given": "Johann",
+                  "surname": "Weber",
+                  "type": "BirthName"
+                }
+              ],
+              "facts": [
+                {
+                  "id": "F1",
+                  "type": "Residence",
+                  "date": "1870",
+                  "place": "Manheim, Lancaster, Pennsylvania, United States"
+                },
+                {
+                  "id": "F2",
+                  "type": "Birth",
+                  "date": "about 1830",
+                  "place": "Pennsylvania, United States"
+                }
+              ]
+            },
+            {
+              "id": "P2",
+              "gender": "Male",
+              "names": [
+                {
+                  "id": "N2",
+                  "preferred": true,
+                  "given": "Henry",
+                  "surname": "Weber",
+                  "type": "BirthName"
+                }
+              ],
+              "facts": [
+                {
+                  "id": "F3",
+                  "type": "Residence",
+                  "date": "1870",
+                  "place": "Manheim, Lancaster, Pennsylvania, United States"
+                },
+                {
+                  "id": "F4",
+                  "type": "Birth",
+                  "date": "about 1862",
+                  "place": "Pennsylvania, United States"
+                }
+              ]
+            }
+          ],
+          "relationships": [
+            {
+              "id": "CR1",
+              "type": "ParentChild",
+              "parent": "P1",
+              "child": "P2"
+            }
+          ]
+        }
+      },
+      {
+        "personId": "MXW1-0B2",
+        "recordId": "MXW1-0B2",
+        "personName": "Henry Weber",
+        "score": 0.88,
+        "sex": "Male",
+        "birthDate": "about 1861",
+        "birthPlace": "Pennsylvania, United States",
+        "events": [
+          {
+            "type": "Residence",
+            "date": "1870",
+            "place": "Ephrata, Lancaster, Pennsylvania, United States"
+          }
+        ],
+        "arkUrl": "https://www.familysearch.org/ark:/61903/1:1:MXW1-0B2",
+        "collectionId": "1438024",
+        "collectionTitle": "United States Census, 1870",
+        "treeMatches": [],
+        "primaryId": "P2",
+        "gedcomx": {
+          "persons": [
+            {
+              "id": "P1",
+              "gender": "Male",
+              "names": [
+                {
+                  "id": "N1",
+                  "preferred": true,
+                  "given": "Peter",
+                  "surname": "Weber",
+                  "type": "BirthName"
+                }
+              ],
+              "facts": [
+                {
+                  "id": "F1",
+                  "type": "Residence",
+                  "date": "1870",
+                  "place": "Ephrata, Lancaster, Pennsylvania, United States"
+                },
+                {
+                  "id": "F2",
+                  "type": "Birth",
+                  "date": "about 1830",
+                  "place": "Pennsylvania, United States"
+                }
+              ]
+            },
+            {
+              "id": "P2",
+              "gender": "Male",
+              "names": [
+                {
+                  "id": "N2",
+                  "preferred": true,
+                  "given": "Henry",
+                  "surname": "Weber",
+                  "type": "BirthName"
+                }
+              ],
+              "facts": [
+                {
+                  "id": "F3",
+                  "type": "Residence",
+                  "date": "1870",
+                  "place": "Ephrata, Lancaster, Pennsylvania, United States"
+                },
+                {
+                  "id": "F4",
+                  "type": "Birth",
+                  "date": "about 1861",
+                  "place": "Pennsylvania, United States"
+                }
+              ]
+            }
+          ],
+          "relationships": [
+            {
+              "id": "CR1",
+              "type": "ParentChild",
+              "parent": "P1",
+              "child": "P2"
+            }
+          ]
+        }
+      },
+      {
+        "personId": "MXW1-0C3",
+        "recordId": "MXW1-0C3",
+        "personName": "Henry Weber",
+        "score": 0.88,
+        "sex": "Male",
+        "birthDate": "about 1862",
+        "birthPlace": "Pennsylvania, United States",
+        "events": [
+          {
+            "type": "Residence",
+            "date": "1870",
+            "place": "Earl, Lancaster, Pennsylvania, United States"
+          }
+        ],
+        "arkUrl": "https://www.familysearch.org/ark:/61903/1:1:MXW1-0C3",
+        "collectionId": "1438024",
+        "collectionTitle": "United States Census, 1870",
+        "treeMatches": [],
+        "primaryId": "P2",
+        "gedcomx": {
+          "persons": [
+            {
+              "id": "P1",
+              "gender": "Male",
+              "names": [
+                {
+                  "id": "N1",
+                  "preferred": true,
+                  "given": "Christian",
+                  "surname": "Weber",
+                  "type": "BirthName"
+                }
+              ],
+              "facts": [
+                {
+                  "id": "F1",
+                  "type": "Residence",
+                  "date": "1870",
+                  "place": "Earl, Lancaster, Pennsylvania, United States"
+                },
+                {
+                  "id": "F2",
+                  "type": "Birth",
+                  "date": "about 1830",
+                  "place": "Pennsylvania, United States"
+                }
+              ]
+            },
+            {
+              "id": "P2",
+              "gender": "Male",
+              "names": [
+                {
+                  "id": "N2",
+                  "preferred": true,
+                  "given": "Henry",
+                  "surname": "Weber",
+                  "type": "BirthName"
+                }
+              ],
+              "facts": [
+                {
+                  "id": "F3",
+                  "type": "Residence",
+                  "date": "1870",
+                  "place": "Earl, Lancaster, Pennsylvania, United States"
+                },
+                {
+                  "id": "F4",
+                  "type": "Birth",
+                  "date": "about 1862",
+                  "place": "Pennsylvania, United States"
+                }
+              ]
+            }
+          ],
+          "relationships": [
+            {
+              "id": "CR1",
+              "type": "ParentChild",
+              "parent": "P1",
+              "child": "P2"
+            }
+          ]
+        }
+      },
+      {
+        "personId": "MXK7-1HW",
+        "recordId": "MXK7-1HW",
+        "personName": "Henry Weber",
+        "score": 0.88,
+        "sex": "Male",
+        "birthDate": "about 1862",
+        "birthPlace": "Pennsylvania, United States",
+        "events": [
+          {
+            "type": "Residence",
+            "date": "1870",
+            "place": "Warwick, Lancaster, Pennsylvania, United States"
+          }
+        ],
+        "arkUrl": "https://www.familysearch.org/ark:/61903/1:1:MXK7-1HW",
+        "collectionId": "1438024",
+        "collectionTitle": "United States Census, 1870",
+        "treeMatches": [],
+        "primaryId": "P3",
+        "gedcomx": {
+          "persons": [
+            {
+              "id": "P1",
+              "gender": "Male",
+              "names": [
+                {
+                  "id": "N1",
+                  "preferred": true,
+                  "given": "Jacob",
+                  "surname": "Kessler",
+                  "type": "BirthName"
+                }
+              ],
+              "facts": [
+                {
+                  "id": "F1",
+                  "type": "Residence",
+                  "date": "1870",
+                  "place": "Warwick, Lancaster, Pennsylvania, United States"
+                },
+                {
+                  "id": "F2",
+                  "type": "Birth",
+                  "date": "about 1831",
+                  "place": "Pennsylvania, United States"
+                }
+              ]
+            },
+            {
+              "id": "P2",
+              "gender": "Female",
+              "names": [
+                {
+                  "id": "N2",
+                  "preferred": true,
+                  "given": "Catharina",
+                  "surname": "Kessler",
+                  "type": "BirthName"
+                }
+              ],
+              "facts": [
+                {
+                  "id": "F3",
+                  "type": "Residence",
+                  "date": "1870",
+                  "place": "Warwick, Lancaster, Pennsylvania, United States"
+                },
+                {
+                  "id": "F4",
+                  "type": "Birth",
+                  "date": "about 1835",
+                  "place": "Pennsylvania, United States"
+                }
+              ]
+            },
+            {
+              "id": "P3",
+              "gender": "Male",
+              "names": [
+                {
+                  "id": "N3",
+                  "preferred": true,
+                  "given": "Henry",
+                  "surname": "Weber",
+                  "type": "BirthName"
+                }
+              ],
+              "facts": [
+                {
+                  "id": "F5",
+                  "type": "Residence",
+                  "date": "1870",
+                  "place": "Warwick, Lancaster, Pennsylvania, United States"
+                },
+                {
+                  "id": "F6",
+                  "type": "Birth",
+                  "date": "about 1862",
+                  "place": "Pennsylvania, United States"
+                }
+              ]
+            },
+            {
+              "id": "P4",
+              "gender": "Female",
+              "names": [
+                {
+                  "id": "N4",
+                  "preferred": true,
+                  "given": "Mary",
+                  "surname": "Kessler",
+                  "type": "BirthName"
+                }
+              ],
+              "facts": [
+                {
+                  "id": "F7",
+                  "type": "Residence",
+                  "date": "1870",
+                  "place": "Warwick, Lancaster, Pennsylvania, United States"
+                },
+                {
+                  "id": "F8",
+                  "type": "Birth",
+                  "date": "about 1869",
+                  "place": "Pennsylvania, United States"
+                }
+              ]
+            }
+          ],
+          "relationships": [
+            {
+              "id": "CR1",
+              "type": "Couple",
+              "person1": "P1",
+              "person2": "P2"
+            },
+            {
+              "id": "CR2",
+              "type": "ParentChild",
+              "parent": "P2",
+              "child": "P3"
+            },
+            {
+              "id": "CR3",
+              "type": "ParentChild",
+              "parent": "P1",
+              "child": "P4"
+            },
+            {
+              "id": "CR4",
+              "type": "ParentChild",
+              "parent": "P2",
+              "child": "P4"
+            }
+          ]
+        }
+      },
+      {
+        "personId": "MXW1-0D4",
+        "recordId": "MXW1-0D4",
+        "personName": "Henry Weber",
+        "score": 0.88,
+        "sex": "Male",
+        "birthDate": "about 1863",
+        "birthPlace": "Pennsylvania, United States",
+        "events": [
+          {
+            "type": "Residence",
+            "date": "1870",
+            "place": "Lititz, Lancaster, Pennsylvania, United States"
+          }
+        ],
+        "arkUrl": "https://www.familysearch.org/ark:/61903/1:1:MXW1-0D4",
+        "collectionId": "1438024",
+        "collectionTitle": "United States Census, 1870",
+        "treeMatches": [],
+        "primaryId": "P2",
+        "gedcomx": {
+          "persons": [
+            {
+              "id": "P1",
+              "gender": "Male",
+              "names": [
+                {
+                  "id": "N1",
+                  "preferred": true,
+                  "given": "Samuel",
+                  "surname": "Weber",
+                  "type": "BirthName"
+                }
+              ],
+              "facts": [
+                {
+                  "id": "F1",
+                  "type": "Residence",
+                  "date": "1870",
+                  "place": "Lititz, Lancaster, Pennsylvania, United States"
+                },
+                {
+                  "id": "F2",
+                  "type": "Birth",
+                  "date": "about 1830",
+                  "place": "Pennsylvania, United States"
+                }
+              ]
+            },
+            {
+              "id": "P2",
+              "gender": "Male",
+              "names": [
+                {
+                  "id": "N2",
+                  "preferred": true,
+                  "given": "Henry",
+                  "surname": "Weber",
+                  "type": "BirthName"
+                }
+              ],
+              "facts": [
+                {
+                  "id": "F3",
+                  "type": "Residence",
+                  "date": "1870",
+                  "place": "Lititz, Lancaster, Pennsylvania, United States"
+                },
+                {
+                  "id": "F4",
+                  "type": "Birth",
+                  "date": "about 1863",
+                  "place": "Pennsylvania, United States"
+                }
+              ]
+            }
+          ],
+          "relationships": [
+            {
+              "id": "CR1",
+              "type": "ParentChild",
+              "parent": "P1",
+              "child": "P2"
+            }
+          ]
+        }
+      },
+      {
+        "personId": "MXW1-0E5",
+        "recordId": "MXW1-0E5",
+        "personName": "Henry Weber",
+        "score": 0.88,
+        "sex": "Male",
+        "birthDate": "about 1862",
+        "birthPlace": "Pennsylvania, United States",
+        "events": [
+          {
+            "type": "Residence",
+            "date": "1870",
+            "place": "Elizabeth, Lancaster, Pennsylvania, United States"
+          }
+        ],
+        "arkUrl": "https://www.familysearch.org/ark:/61903/1:1:MXW1-0E5",
+        "collectionId": "1438024",
+        "collectionTitle": "United States Census, 1870",
+        "treeMatches": [],
+        "primaryId": "P2",
+        "gedcomx": {
+          "persons": [
+            {
+              "id": "P1",
+              "gender": "Female",
+              "names": [
+                {
+                  "id": "N1",
+                  "preferred": true,
+                  "given": "Anna",
+                  "surname": "Weber",
+                  "type": "BirthName"
+                }
+              ],
+              "facts": [
+                {
+                  "id": "F1",
+                  "type": "Residence",
+                  "date": "1870",
+                  "place": "Elizabeth, Lancaster, Pennsylvania, United States"
+                },
+                {
+                  "id": "F2",
+                  "type": "Birth",
+                  "date": "about 1830",
+                  "place": "Pennsylvania, United States"
+                }
+              ]
+            },
+            {
+              "id": "P2",
+              "gender": "Male",
+              "names": [
+                {
+                  "id": "N2",
+                  "preferred": true,
+                  "given": "Henry",
+                  "surname": "Weber",
+                  "type": "BirthName"
+                }
+              ],
+              "facts": [
+                {
+                  "id": "F3",
+                  "type": "Residence",
+                  "date": "1870",
+                  "place": "Elizabeth, Lancaster, Pennsylvania, United States"
+                },
+                {
+                  "id": "F4",
+                  "type": "Birth",
+                  "date": "about 1862",
+                  "place": "Pennsylvania, United States"
+                }
+              ]
+            }
+          ],
+          "relationships": [
+            {
+              "id": "CR1",
+              "type": "ParentChild",
+              "parent": "P1",
+              "child": "P2"
+            }
+          ]
+        }
+      }
+    ]
+  }
+}

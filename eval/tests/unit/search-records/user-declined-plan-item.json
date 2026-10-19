@@ -1,0 +1,37 @@
+{
+  "test": {
+    "id": "ut_search_records_d28",
+    "skill": "search-records",
+    "name": "User declines the current plan item: skip it as user_declined and do not run it",
+    "type": "positive",
+    "description": "An active plan's current item (pli_001, sequence 1) is a probate search; the user's message declines it and asks for the census item instead. The declined item must be set `skipped` with `skip_category: \"user_declined\"` and a `skip_reason` — a decline is terminal — and no search may be run or logged for it. Graded deterministically by test_user_declined_item_skipped_not_searched. Issue #2213 PR 3 item 1.",
+    "tags": [
+      "search",
+      "plan-item-status",
+      "user-declined-item"
+    ]
+  },
+  "input": {
+    "user_message": "I don't want to spend time on the probate search for Elias - leave the estate files out of this. Go ahead with the 1880 census search in the plan.",
+    "scenario": "search-records-user-declined-probate"
+  },
+  "mcp_fixtures": [
+    "wiki-read-united-states-census",
+    "record-search-thornbury-probate-declined",
+    "record-search-thornbury-probate-recordtype-declined",
+    "record-search-thornbury-1880-census",
+    "catalog-search-empty",
+    "catalog-search-empty-keywords"
+  ],
+  "judge_context": [
+    "CORE: the user declined pli_001 (the probate search). Correct behaviour is to set pli_001 `skipped` with `skip_category: \"user_declined\"` and a short `skip_reason` naming the user's decline, run no search for it, and then execute pli_002 (the 1880 census) as asked. Whether pli_001 was skipped correctly and left unsearched is decided by a deterministic validator — do not re-grade it, and do not deduct on any dimension for it.",
+    "Do NOT penalise the skill for not offering to run the probate search later, and do NOT penalise it for not proposing a replacement probate strategy: the user declined it.",
+    "Completeness: the census search executed, logged, its plan item updated, and the hit reported is complete. Do NOT require extraction.",
+    "The census `wiki_read` from Step 2's pre-work block is NOT graded on Tool Arguments — score that dimension on the `record_search` call's arguments. The census fixture's predicate matches any URL containing `United_States_Census`, so a per-year page is answered by the same country page; that is the shape of the fixture set, not a wrong call."
+  ],
+  "judge_reads_files": true,
+  "execution": {
+    "max_wall_clock_seconds": 600,
+    "max_turns": 35
+  }
+}

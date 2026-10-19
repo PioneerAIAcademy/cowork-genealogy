@@ -1,0 +1,50 @@
+{
+  "test": {
+    "id": "ut_search_records_d31",
+    "skill": "search-records",
+    "name": "Crowded subject results: search the household by a known co-resident to confirm which entry is the subject",
+    "type": "positive",
+    "description": "The 1870 census search for Henry Weber (b. 1862, Lancaster County) returns six Henry Webers in the county, born 1861-1863, scores within 0.03 — his own entries cannot be told apart. The tree names his mother Catharina, who remarried Jacob Kessler in 1867. The lever is to search the household by a co-resident: Catharina or Jacob Kessler as the principal, which returns the Kessler household enumerating Henry Weber, 8 — the same persona as one of the six. Graded deterministically by test_household_searched_by_co_resident (a record_search whose givenName/surname name a parent or step-parent of the subject). The over-application guard is ut_search_records_d32. Issue #2213 PR 3 item 6.",
+    "tags": [
+      "search",
+      "census",
+      "fan",
+      "household-triangulation"
+    ]
+  },
+  "input": {
+    "user_message": "Run the 1870 census search for Henry Weber in the plan. Keep going until you can tell which entry is actually him - don't stop at a list of candidates.",
+    "scenario": "search-records-household-triangulation"
+  },
+  "mcp_fixtures": [
+    "wiki-read-united-states-census",
+    "record-search-henry-kessler-1870-nil",
+    "record-search-catharina-weber-1870-nil",
+    "record-search-weber-1870-crowded",
+    "record-search-kessler-1870-household",
+    "rank-search-matches-weber-1870-crowded",
+    "record-read-weber-1870-mxw1-0a1",
+    "record-read-weber-1870-mxw1-0b2",
+    "record-read-weber-1870-mxw1-0c3",
+    "record-read-weber-1870-mxk7-1hw",
+    "record-read-weber-1870-mxw1-0d4",
+    "record-read-weber-1870-mxw1-0e5",
+    "record-read-kessler-1870-mxk7-1jk",
+    "record-read-kessler-1870-mxk7-1ck",
+    "catalog-search-empty",
+    "catalog-search-empty-keywords"
+  ],
+  "judge_context": [
+    "CORE: the six Henry Weber hits are indistinguishable on the page, and the user asked the skill to keep going until it can tell which is him. The tree names his mother Catharina (Weber) Kessler and stepfather Jacob Kessler (married 1867). Searching the household by that co-resident — Catharina or Jacob Kessler as the principal of a census search — finds the Kessler household with Henry Weber, 8, and so identifies which of the six is the subject. Whether that search was run is decided by a deterministic validator; do not also deduct for its absence.",
+    "Score Completeness 1 if the run ends presenting the six candidates (or a subset) as unresolved, or proposes the co-resident search as a next step without running it, despite the user's instruction to keep going.",
+    "Do NOT penalise searches for Henry under the stepfather's surname, or parent-name-anchored searches for Henry (motherGivenName etc.): they are reasonable levers that happen to come back nil or crowded here. They do not substitute for the co-resident search.",
+    "Score Correctness 1 if the skill states that Henry was living in the Kessler household without a search result or record read that shows him there.",
+    "Completeness otherwise: identifying the subject's entry, logging every search, and reporting the household is complete. Do NOT require extraction.",
+    "The census `wiki_read` from Step 2's pre-work block is NOT graded on Tool Arguments — score that dimension on the `record_search` call's arguments. The census fixture's predicate matches any URL containing `United_States_Census`, so a per-year page is answered by the same country page; that is the shape of the fixture set, not a wrong call."
+  ],
+  "judge_reads_files": true,
+  "execution": {
+    "max_wall_clock_seconds": 600,
+    "max_turns": 40
+  }
+}

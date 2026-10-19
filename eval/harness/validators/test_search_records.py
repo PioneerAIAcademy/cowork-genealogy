@@ -892,3 +892,384 @@ def test_census_wiki_fixture_actually_used(tool_calls, test):
         "shaped the search, and reading it late is how a run states from memory "
         "and then confirms itself."
     )
+
+
+# --- Issue #2213 PR 3: declined items, thin subjects, collection links,
+# --- household triangulation, unproven surnames ------------------------
+
+_SEARCH_TOOLS = frozenset({
+    "record_search", "fulltext_search", "volume_search", "image_search",
+})
+
+
+def _calls_named(tool_calls, *names) -> list[dict]:
+    wanted = set(names)
+    return [
+        c for c in (tool_calls or [])
+        if _bare_tool_name(c.get("tool") or "") in wanted
+    ]
+
+
+def _plan_items(research_json) -> list[tuple[dict, dict]]:
+    """(plan, item) for every plan item, in file order."""
+    out = []
+    for plan in (research_json or {}).get("plans") or []:
+        for item in plan.get("items") or []:
+            out.append((plan, item))
+    return out
+
+
+def test_user_declined_item_skipped_not_searched(
+    before_state, after_state, tool_calls, test
+):
+    """Tag-gated (user-declined-item): issue #2213 PR 3 item 1. When the user
+    declines the current plan item, it is `skipped` with
+    `skip_category: "user_declined"` and a `skip_reason`, and no search is run
+    for it — a decline is terminal, not a cue to do the declined work first.
+
+    "The current plan item" is Step 1's: the lowest-sequence `planned` item of
+    the active plan in the starting state, so the test names no id.
+
+    A search "for" the item is any of: a new log entry carrying its id as
+    `plan_item_id`; a `record_search` whose `collectionId` is one the item's
+    rationale names; a `record_search` whose `recordType` is the item's
+    `record_type`; or a full-text, volume or image search at all (none of the
+    tagged tests stocks one for any other purpose).
+    """
+    if "user-declined-item" not in test.get("tags", []):
+        pytest.skip("not a user-declined-item scenario")
+    before = before_state.get("research_json") or {}
+    after = after_state.get("research_json") or {}
+    planned = [
+        (plan, item) for plan, item in _plan_items(before)
+        if plan.get("status") == "active" and item.get("status") == "planned"
+    ]
+    assert planned, "scenario has no planned item in an active plan to decline"
+    plan, current = min(planned, key=lambda pi: pi[1].get("sequence") or 0)
+    item_id = current.get("id")
+
+    after_item = next(
+        (i for p, i in _plan_items(after)
+         if p.get("id") == plan.get("id") and i.get("id") == item_id),
+        None,
+    )
+    assert after_item is not None, f"declined item {item_id} is gone from the plan"
+    assert after_item.get("status") == "skipped", (
+        f"the user declined {item_id}, so it must be `skipped`; it ended "
+        f"{after_item.get('status')!r}"
+    )
+    assert after_item.get("skip_category") == "user_declined", (
+        f"{item_id} was declined by the user, so its skip_category must be "
+        f"'user_declined'; got {after_item.get('skip_category')!r}"
+    )
+    reason = after_item.get("skip_reason")
+    assert isinstance(reason, str) and reason.strip(), (
+        f"{item_id} is skipped with no skip_reason saying the user declined it"
+    )
+
+    logged = [
+        e.get("id") for e in _new_log_entries(before_state, after_state)
+        if e.get("plan_item_id") == item_id
+    ]
+    assert not logged, (
+        f"the user declined {item_id}, yet the run logged a search for it: {logged}"
+    )
+
+    rationale = current.get("rationale") or ""
+    declined_collections = set(re.findall(r"collectionId\s+([A-Za-z0-9_-]+)", rationale))
+    declined_type = (current.get("record_type") or "").strip().lower()
+    for call in _calls_named(tool_calls, "record_search"):
+        args = _as_mapping(call.get("args"))
+        cid = str(args.get("collectionId") or "")
+        assert cid not in declined_collections, (
+            f"the user declined {item_id}, yet record_search ran against its "
+            f"collection {cid}: {args}"
+        )
+        rtype = str(args.get("recordType") or "").strip().lower()
+        assert not (declined_type and rtype == declined_type), (
+            f"the user declined {item_id} ({declined_type}), yet record_search "
+            f"ran with recordType {rtype!r}: {args}"
+        )
+    other = _calls_named(tool_calls, *(_SEARCH_TOOLS - {"record_search"}))
+    assert not other, (
+        f"the user declined {item_id}, yet the run pivoted to "
+        f"{sorted({_bare_tool_name(c.get('tool') or '') for c in other})}"
+    )
+
+
+def test_thin_subject_hit_not_extracted(tool_calls, builtin_tool_calls, test):
+    """Tag-gated (subject-too-thin): issue #2213 PR 3 item 4. When the subject
+    is too thin to separate from a namesake (`ranked.subjectTooThin`), every
+    hit is needs-review and none is handed to extraction on score.
+
+    Fails on any `extraction_append` call, from any thread, and on any spawn of
+    the record-structurer agent. Not conditioned on the flag having reached the
+    agent: the tagged scenario's tree is thin by construction, so a run that
+    dropped `subjectId` and never saw the flag has not earned an extraction
+    either.
+    """
+    from harness.skill_runner import SPAWN_TOOL_NAMES
+
+    if "subject-too-thin" not in test.get("tags", []):
+        pytest.skip("not a subject-too-thin scenario")
+    extracted = _calls_named(tool_calls, "extraction_append")
+    assert not extracted, (
+        "the subject is too thin to tell from a namesake, so no hit may be "
+        "extracted; extraction_append was called with "
+        f"{[_as_mapping(c.get('args')).get('recordIds') for c in extracted]}"
+    )
+    structurer = [
+        c for c in (builtin_tool_calls or [])
+        if c.get("tool") in SPAWN_TOOL_NAMES
+        and "record-structurer" in str((c.get("args") or {}).get("subagent_type") or "")
+    ]
+    assert not structurer, (
+        "the subject is too thin to tell from a namesake, so no hit may be "
+        "handed to record-structurer either"
+    )
+
+
+_COLLECTION_LINK_RE = re.compile(
+    r"familysearch\.org/search/collection/([A-Za-z0-9_-]+)", re.IGNORECASE
+)
+
+
+def _collection_ids(tool_calls) -> tuple[set[str], set[str]]:
+    """(every collection id the run was served or sent, the ids of record hits)."""
+    seen: set[str] = set()
+    hits: set[str] = set()
+    for call in tool_calls or []:
+        name = _bare_tool_name(call.get("tool") or "")
+        args = _as_mapping(call.get("args"))
+        resp = call.get("response") if isinstance(call.get("response"), dict) else {}
+        if args.get("collectionId"):
+            seen.add(str(args["collectionId"]))
+        if name == "record_search":
+            for row in resp.get("results") or []:
+                if isinstance(row, dict) and row.get("collectionId"):
+                    hits.add(str(row["collectionId"]))
+            if isinstance(resp.get("collections"), dict):
+                hits.update(str(k) for k in resp["collections"])
+        elif name == "collections_search":
+            for row in resp.get("results") or []:
+                if isinstance(row, dict) and row.get("id"):
+                    seen.add(str(row["id"]))
+    return seen | hits, hits
+
+
+def test_collection_named_with_link(tool_calls, text_response, test):
+    """Tag-gated (collection-link): issue #2213 PR 3 item 5. A FamilySearch
+    collection named to the user carries its title and its
+    `https://www.familysearch.org/search/collection/{id}` link — never a bare id.
+
+    Two arms. The collection of a record_search hit must appear as such a link
+    (the tagged test's user asks which collection holds the record). And no
+    collection id the run saw — sent, or served by record_search or
+    collections_search — may appear in the reply outside such a link: a mention
+    preceded by `/` is the link itself and is skipped; anything else (`collection
+    1803785`, `f.collectionId=1803785`) is bare. The title half is the judge's.
+    """
+    if "collection-link" not in test.get("tags", []):
+        pytest.skip("not a collection-link scenario")
+    text = text_response or ""
+    ids, hit_ids = _collection_ids(tool_calls)
+    if not ids:
+        pytest.skip("the run was served no collection id")
+    linked = {m.group(1) for m in _COLLECTION_LINK_RE.finditer(text)}
+    if hit_ids:
+        assert linked & hit_ids, (
+            "the reply names the hit's collection without its "
+            "familysearch.org/search/collection/<id> link; hit collections "
+            f"{sorted(hit_ids)}, linked {sorted(linked)}"
+        )
+    bare = []
+    for cid in sorted(ids):
+        for m in re.finditer(r"(?<![\w/-])" + re.escape(cid) + r"(?![\w-])", text):
+            bare.append(text[max(0, m.start() - 30): m.end() + 10])
+    assert not bare, (
+        "a collection id appears in the reply outside a "
+        f"familysearch.org/search/collection/<id> link: {bare}"
+    )
+
+
+def _norm_name(value) -> str:
+    return re.sub(r"[^a-z]", "", str(value or "").lower())
+
+
+def _subject_and_co_residents(before_state) -> tuple[list[dict], list[list[dict]]]:
+    """(the subject's names, each co-resident's names): parents of the
+    project's first subject person and their other couple partners."""
+    research = before_state.get("research_json") or {}
+    tree = before_state.get("tree_gedcomx_json") or before_state.get("tree_gedcomx") or {}
+    subjects = (research.get("project") or {}).get("subject_person_ids") or []
+    if not subjects:
+        return [], []
+    subject = subjects[0]
+    persons = {p.get("id"): p for p in tree.get("persons") or []}
+    rels = tree.get("relationships") or []
+    parents = {
+        r.get("parent") for r in rels
+        if r.get("type") == "ParentChild" and r.get("child") == subject
+    }
+    co = set(parents)
+    for r in rels:
+        if r.get("type") != "Couple":
+            continue
+        a, b = r.get("person1"), r.get("person2")
+        if a in parents:
+            co.add(b)
+        if b in parents:
+            co.add(a)
+    co.discard(subject)
+    subject_names = (persons.get(subject) or {}).get("names") or []
+    return subject_names, [
+        (persons.get(pid) or {}).get("names") or [] for pid in sorted(co) if pid in persons
+    ]
+
+
+def _same_name(a, b, width: int) -> bool:
+    a, b = _norm_name(a), _norm_name(b)
+    n = min(width, len(a), len(b))
+    return n > 0 and a[:n] == b[:n]
+
+
+def _co_resident_searches(before_state, tool_calls) -> list[dict]:
+    """record_search args whose principal is a co-resident, not the subject.
+
+    Principal means the givenName/surname fields; a parent-name anchor on a
+    search for the subject (motherGivenName, ...) is not a co-resident search.
+    A given name counts as the co-resident's when it shares its first four
+    letters (Catharina/Catherine), a surname when it shares its first three
+    (Kessler/Kesler), so a variant spelling still counts. A call whose given
+    name is the subject's is the subject's own search. A call with no given
+    name counts only on a co-resident surname the subject does not carry.
+    """
+    subject_names, co_names = _subject_and_co_residents(before_state)
+    subject_given = [n.get("given") for n in subject_names]
+    subject_surnames = [n.get("surname") for n in subject_names]
+    found = []
+    for call in _calls_named(tool_calls, "record_search"):
+        args = _as_mapping(call.get("args"))
+        given, surname = args.get("givenName"), args.get("surname")
+        if given and any(_same_name(given, g, 4) for g in subject_given):
+            continue
+        for names in co_names:
+            givens = [n.get("given") for n in names]
+            surnames = [n.get("surname") for n in names]
+            surname_ok = surname is None or any(_same_name(surname, s, 3) for s in surnames)
+            if given and surname_ok and any(_same_name(given, g, 4) for g in givens):
+                found.append(args)
+                break
+            if (
+                not given and surname
+                and any(_same_name(surname, s, 3) for s in surnames)
+                and not any(_same_name(surname, s, 3) for s in subject_surnames)
+            ):
+                found.append(args)
+                break
+    return found
+
+
+def test_household_searched_by_co_resident(before_state, tool_calls, test):
+    """Tag-gated (household-triangulation): issue #2213 PR 3 item 6. When the
+    subject's own entries are too many to tell apart and a co-resident (a
+    parent, or a parent's other spouse) is known, the household is searched by
+    that co-resident: a record_search naming them as the principal.
+
+    Co-residents are read from the starting tree, so the test names nobody.
+    """
+    if "household-triangulation" not in test.get("tags", []):
+        pytest.skip("not a household-triangulation scenario")
+    _, co_names = _subject_and_co_residents(before_state)
+    assert co_names, "scenario's subject has no parent or step-parent in the tree"
+    searched = _co_resident_searches(before_state, tool_calls)
+    assert searched, (
+        "the subject's entries could not be told apart and a co-resident is "
+        "known, but no record_search named a parent or step-parent as the "
+        "principal. record_search calls: "
+        f"{[_as_mapping(c.get('args')) for c in _calls_named(tool_calls, 'record_search')]}"
+    )
+
+
+def test_household_not_searched_by_co_resident_when_unneeded(
+    before_state, tool_calls, test
+):
+    """Tag-gated (household-triangulation-unneeded): the over-application guard
+    for test_household_searched_by_co_resident. A unique, well-indexed subject
+    has nothing to triangulate, so no record_search names a co-resident as the
+    principal."""
+    if "household-triangulation-unneeded" not in test.get("tags", []):
+        pytest.skip("not a household-triangulation-unneeded scenario")
+    searched = _co_resident_searches(before_state, tool_calls)
+    assert not searched, (
+        "the subject had one clear match, yet the run searched the household "
+        f"by a co-resident: {searched}"
+    )
+
+
+# Test id -> (her given name, the researcher-named surname that is not proven).
+_UNPROVEN_SURNAME_BY_TEST_ID = {
+    "ut_search_records_d33": ("Juanita", "Fenstermaker"),
+}
+
+
+def test_unproven_surname_used_as_search_input(
+    before_state, after_state, tool_calls, test
+):
+    """Tag-gated (unproven-surname-search): issue #2213 PR 3 item 3, the Fittro
+    run. Typing a researcher-named, unproven surname into a query asserts
+    nothing, so she is searched under it: a record_search whose givenName is
+    hers and whose surname is that surname. The caution belongs on the tree, so
+    nothing written to it asserts the marriage: no new Couple relationship for
+    the subject, and no name on her in that surname.
+    """
+    tags = test.get("tags", [])
+    test_id = test.get("id")
+    assert test_id not in _UNPROVEN_SURNAME_BY_TEST_ID or "unproven-surname-search" in tags, (
+        f"{test_id} has an entry in _UNPROVEN_SURNAME_BY_TEST_ID but no "
+        "'unproven-surname-search' tag - restore the tag or delete the entry"
+    )
+    if "unproven-surname-search" not in test.get("tags", []):
+        pytest.skip("not an unproven-surname-search scenario")
+    assert test_id in _UNPROVEN_SURNAME_BY_TEST_ID, (
+        f"{test_id} carries 'unproven-surname-search' but has no entry in "
+        "_UNPROVEN_SURNAME_BY_TEST_ID"
+    )
+    given, surname = _UNPROVEN_SURNAME_BY_TEST_ID[test_id]
+    calls = [_as_mapping(c.get("args")) for c in _calls_named(tool_calls, "record_search")]
+    hit = [
+        a for a in calls
+        if _same_name(a.get("givenName"), given, len(_norm_name(given)))
+        and _norm_name(a.get("surname")).startswith(_norm_name(surname)[:6])
+    ]
+    assert hit, (
+        f"no record_search looked for {given} under the unproven surname "
+        f"{surname}; searching under it asserts nothing. record_search calls: {calls}"
+    )
+
+    research = before_state.get("research_json") or {}
+    subjects = (research.get("project") or {}).get("subject_person_ids") or []
+    subject = subjects[0] if subjects else None
+
+    def couples(state):
+        tree = state.get("tree_gedcomx_json") or state.get("tree_gedcomx") or {}
+        return {
+            r.get("id") for r in tree.get("relationships") or []
+            if r.get("type") == "Couple" and subject in (r.get("person1"), r.get("person2"))
+        }
+
+    def surnames(state):
+        tree = state.get("tree_gedcomx_json") or state.get("tree_gedcomx") or {}
+        person = next((p for p in tree.get("persons") or [] if p.get("id") == subject), {})
+        return {_norm_name(n.get("surname")) for n in person.get("names") or []}
+
+    new_couples = couples(after_state) - couples(before_state)
+    assert not new_couples, (
+        f"the marriage to a {surname} is unproven, yet the run wrote a Couple "
+        f"relationship for the subject: {sorted(new_couples)}"
+    )
+    added = surnames(after_state) - surnames(before_state)
+    assert _norm_name(surname) not in added, (
+        f"the marriage to a {surname} is unproven, yet the run gave the subject "
+        f"a {surname} name in the tree"
+    )

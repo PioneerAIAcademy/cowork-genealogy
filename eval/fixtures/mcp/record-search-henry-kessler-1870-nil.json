@@ -1,0 +1,20 @@
+{
+  "tool": "record_search",
+  "description": "Henry searched under his stepfather's surname in ut_search_records_d31: nil, because the 1870 index enumerates him as Henry Weber. Listed BEFORE record-search-kessler-1870-household, whose broader predicate would otherwise serve it.",
+  "args": {
+    "givenName": "~Henry",
+    "surname": "~Kessler"
+  },
+  "response": {
+    "query": {
+      "surname": "Kessler",
+      "givenName": "Henry"
+    },
+    "totalMatches": 0,
+    "paginationCappedAt": 100,
+    "returned": 0,
+    "offset": 0,
+    "hasMore": false,
+    "results": []
+  }
+}

@@ -1,0 +1,39 @@
+{
+  "test": {
+    "id": "ut_search_records_d33",
+    "skill": "search-records",
+    "name": "Search a woman under a researcher-named, unproven married surname — the query asserts nothing",
+    "type": "positive",
+    "description": "Shaped on the Fittro run (issue #2213 PR 2 item 1). The plan item's rationale records the researcher's recollection that Juanita Kimbrell married a man named Fenstermaker in the early 1940s; it is unproven. Typing that surname into a query asserts nothing — the caution belongs on what is written to the tree — so the skill must search for Juanita under Fenstermaker for the 1950 census, not only under her birth surname or as a marriage. Graded deterministically by test_unproven_surname_used_as_search_input: a record_search with givenName Juanita and surname Fenstermaker, and no tree write that asserts the marriage. Issue #2213 PR 3 item 3.",
+    "tags": [
+      "search",
+      "census",
+      "married-name",
+      "unproven-surname-search"
+    ]
+  },
+  "input": {
+    "user_message": "Run the next search in the plan for Juanita.",
+    "scenario": "search-records-unproven-married-surname"
+  },
+  "mcp_fixtures": [
+    "wiki-read-united-states-census",
+    "record-search-juanita-fenstermaker-1950",
+    "record-search-kimbrell-1950-nil",
+    "record-search-fenstermaker-1950-household",
+    "catalog-search-empty",
+    "catalog-search-empty-keywords"
+  ],
+  "judge_context": [
+    "CORE: the Fenstermaker marriage is a researcher's recollection, not evidence. Searching for Juanita under that surname is correct and asserts nothing; whether the search was run is decided by a deterministic validator. Grade what the reply CLAIMS about the hit.",
+    "Score Correctness 1 if the reply states the marriage to a Fenstermaker as established, or presents the 1950 Juanita Fenstermaker as proven to be the subject. The hit is a candidate: born about 1921 in Kansas and living in Wichita are consistent with her, not proof.",
+    "Do NOT penalise the skill for also searching under Kimbrell, or for a marriage-style search; both come back nil here.",
+    "Completeness: the Fenstermaker search run and logged, the hit reported as a candidate needing confirmation, and the plan item updated is complete. Do NOT require extraction.",
+    "The census `wiki_read` from Step 2's pre-work block is NOT graded on Tool Arguments — score that dimension on the `record_search` call's arguments. The census fixture's predicate matches any URL containing `United_States_Census`, so a per-year page is answered by the same country page; that is the shape of the fixture set, not a wrong call."
+  ],
+  "judge_reads_files": true,
+  "execution": {
+    "max_wall_clock_seconds": 600,
+    "max_turns": 35
+  }
+}
