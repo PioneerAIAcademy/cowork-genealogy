@@ -12,7 +12,7 @@ from sqlalchemy import inspect, text
 from sqlmodel import Session, SQLModel, create_engine, select
 
 from .config import get_settings
-from .models import AllowedEmail, TurnCost
+from .models import AllowedEmail, ApiCall, TurnCost
 
 _settings = get_settings()
 if _settings.is_sqlite:
@@ -52,6 +52,7 @@ def init_db() -> None:
     """Bootstrap schema + sync allowlist."""
     SQLModel.metadata.create_all(_engine)
     add_missing_columns(_engine, TurnCost)
+    add_missing_columns(_engine, ApiCall)
     if not _settings.allowlist:
         return
     with Session(_engine) as session:
