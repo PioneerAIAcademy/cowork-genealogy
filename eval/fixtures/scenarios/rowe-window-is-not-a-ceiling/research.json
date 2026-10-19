@@ -1,0 +1,114 @@
+{
+  "project": {
+    "id": "rp_001",
+    "objective": "Determine where Josiah Rowe resided between 1850 and 1865, and with whom he was living",
+    "subject_person_ids": [
+      "I1"
+    ],
+    "status": "active",
+    "created": "2026-10-19",
+    "updated": "2026-10-19"
+  },
+  "researcher_profile": {
+    "experience_level": "intermediate",
+    "subscriptions": [],
+    "narration_guidance": "concise"
+  },
+  "questions": [
+    {
+      "id": "q_001",
+      "question": "Where did Josiah Rowe (b. ~1828, Ohio) reside between 1850 and 1865, and with whom was he living?",
+      "rationale": "Primary research objective. The tree places Josiah in Vigo County, Indiana at his death in 1879 and gives Ohio as his birthplace, but nothing is documented between his birth and his 1862 enlistment. No records have been searched yet.",
+      "selection_basis": "objective_decomposition",
+      "priority": "high",
+      "status": "in_progress",
+      "depends_on": [],
+      "unblocks": [],
+      "created": "2026-10-19",
+      "resolved": null,
+      "resolution_assertion_ids": [],
+      "search_stop": {
+        "stopped_because": null,
+        "justification": null,
+        "log_entry_ids": [],
+        "stop_criteria": null,
+        "not_reached": []
+      }
+    }
+  ],
+  "plans": [],
+  "log": [],
+  "sources": [],
+  "assertions": [],
+  "person_evidence": [],
+  "conflicts": [],
+  "hypotheses": [],
+  "timelines": [],
+  "proof_summaries": [],
+  "evaluations": [],
+  "localities": [
+    {
+      "id": "loc_001",
+      "place": "United States",
+      "for_place": "Vigo County, Indiana, United States",
+      "time_period": "1828-1900",
+      "jurisdictions": [
+        {
+          "name": "Vigo County, Indiana",
+          "date_range": "1818-present"
+        },
+        {
+          "name": "Terre Haute (county seat)",
+          "date_range": "historical"
+        }
+      ],
+      "collections": [
+        {
+          "id": "1401638",
+          "title": "United States Census, 1850",
+          "date_range": "1850"
+        },
+        {
+          "id": "1473181",
+          "title": "United States Census, 1860",
+          "date_range": "1860"
+        },
+        {
+          "id": "1888129",
+          "title": "United States Civil War and Later Pension Files, 1861-1934",
+          "date_range": "1861-1934"
+        }
+      ],
+      "quirks": [
+        "A Civil War widow's pension file is assembled years or decades after the service it documents — commonly in the 1880s and 1890s, after the 1890 Dependent Pension Act widened eligibility. Its contents are retrospective: neighbours' and comrades' affidavits describing where the soldier lived, whom he married and when, often reaching back thirty or forty years before the file's own date.",
+        "Indiana kept no statewide vital registration before 1882, so for a man who died in 1879 the county and federal records are the whole field.",
+        "The 1850 and 1860 federal censuses name every household member, but state no relationships between them.",
+        "Indiana probate and marriage records exist for this county but are not indexed in a collection the locality guide surfaced; plan them from the county clerk and the Master Commissioner rather than from a collection id."
+      ],
+      "created": "2026-10-19",
+      "source": "locality-guide",
+      "pages_read": [
+        {
+          "section": "home",
+          "url": "https://www.familysearch.org/en/wiki/Indiana,_United_States_Genealogy",
+          "found": true
+        },
+        {
+          "section": "getting_started",
+          "url": "https://www.familysearch.org/en/wiki/Indiana_Getting_Started",
+          "found": true
+        },
+        {
+          "section": "online_records",
+          "url": "https://www.familysearch.org/en/wiki/Indiana_Online_Genealogy_Records",
+          "found": true
+        },
+        {
+          "section": "research_tips",
+          "url": "https://www.familysearch.org/en/wiki/Vigo_County,_Indiana_Genealogy",
+          "found": true
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,44 @@
+{
+  "test": {
+    "id": "ut_research_plan_wnc",
+    "skill": "research-plan",
+    "name": "A question's date window bounds the question, not the records that answer it",
+    "type": "positive",
+    "description": "Issue #1830. q_001 asks where Josiah Rowe lived between 1850 and 1865 — a window stated in the question itself. The record that best answers it is his Civil War pension file, assembled decades later, whose affidavits describe his residences in the 1850s. A sound plan reaches that file by dating its item to the file's own period, past 1865. A plan whose every item stops at 1865 has read the window as a ceiling on evidence rather than a bound on the question. Distinct from ut_research_plan_qxr, which tests sizing an INDIRECT record to its creator's lifespan and is already licensed by the agent's 'size an indirect record's date window to its likely CREATOR' rule; here the record is about the subject himself and simply postdates the window. Synthetic scenario — no PII.",
+    "tags": [
+      "planning",
+      "date-window",
+      "record-type-selection",
+      "new-plan-items-planned-status",
+      "direct-arm"
+    ]
+  },
+  "input": {
+    "delegation": "Create the first research plan for q_001 — where did Josiah Rowe reside between 1850 and 1865, and with whom was he living?\n\nquestionId: q_001\nprojectPath: <workspace>",
+    "scenario": "rowe-window-is-not-a-ceiling"
+  },
+  "judge_reads_files": true,
+  "execution": {
+    "sdk_message_silence_seconds": 360,
+    "max_wall_clock_seconds": 600,
+    "max_turns": 40
+  },
+  "mcp_fixtures": [
+    "place-search-any",
+    "place-search-all-any",
+    "collections-search-any",
+    "volume-search-any",
+    "external-links-search-any",
+    "person-read-empty-any",
+    "wiki-read-not-found-any"
+  ],
+  "judge_context": [
+    "STEP ONE, BEFORE ANY VERDICT ON THIS DIMENSION. Go through the persisted plan items, read each one's `date_range`, and work out a single number: the LARGEST end year across all of them. Write that number down as the first thing you say about this plan. Do not characterise the plan before you have it.",
+    "STEP TWO. Compare that number to 1865. If it is greater than 1865, the plan satisfies this test's requirement — do not reduce Correctness on this dimension, whatever else the plan does or does not contain. If it is 1865 or lower, the plan satisfies nothing here and Correctness is 1. There is no middle case, and no item's presence or absence changes the comparison; only the largest end year matters.",
+    "WHY THAT NUMBER IS THE TEST. The question asks where Josiah Rowe lived between 1850 and 1865. He served 1862-1865, so a Civil War pension file exists — and such files are assembled decades after the service, commonly in the 1880s and 1890s, carrying neighbours' affidavits describing where the soldier lived thirty and forty years earlier. The locality says exactly this in its quirks. That file is the best evidence for the question, and only an item whose date_range runs past 1865 can retrieve it, because the file itself is dated later.",
+    "Several items legitimately stop at or before 1865, and their presence is not a defect. The 1850 and 1860 censuses do. A marriage item dated to the courtship years does. Even a military item dated 1862-1865 does, because compiled service records genuinely sit in the service years — a plan may hold that item AND a separate one reaching the pension. None of these lowers the largest end year, so none of them affects step two.",
+    "The repository is irrelevant. FamilySearch, Fold3 and NARA all reach the pension file, and an item may get there without naming a collection id. Judge the date_range, not the route.",
+    "Do not require any particular extra record type. Probate, cemetery, newspaper and land items all strengthen the plan and none is required. Breadth is not what this test grades.",
+    "GRADING NOTE — Tool Arguments: if the skill calls validate_research_schema, gets a validation error, self-corrects, and re-validates successfully, score Tool Arguments=3."
+  ]
+}

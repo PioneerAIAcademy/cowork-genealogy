@@ -524,7 +524,12 @@ Order items for efficient discovery (BCG Standard 15):
     reach the later part of that window, not only its start. Where a recurring
     series exists for the jurisdiction, prefer the years falling inside the
     window, and among them a year whose schedule records each person's
-    relationship to the head of household over one that does not
+    relationship to the head of household over one that does not. The window
+    bounds the question, not the records that answer it. Where the collection
+    an item searches runs past the window, size the item to the collection and
+    not to the window: a file assembled decades later — a pension, an estate,
+    a delayed registration — testifies to events inside it, and an item capped
+    at the window will never retrieve one
 
 **Plan size guidance:** A typical plan has 4-10 items: fewer than 3
 usually isn't exhaustive enough; more than 12 suggests the question is
@@ -542,7 +547,8 @@ you are about to write:
 4. All relevant jurisdictions included (considering boundary changes)?
 5. All relevant time periods included — do the plan's `date_range`s
    span the question's whole window, from the birth estimate to the
-   death or last-known date?
+   death or last-known date, and is any item whose collection runs past
+   that window sized to the collection rather than cut back to it?
 6. If a baptism may not exist (Step 3), is there an item for the
    **subject's own** death or burial entry, dated after the birth window
    and placed in the parish where the subject last lived — not a parent's,
@@ -999,7 +1005,9 @@ research. Thorough research:
 3. Have variant spellings and name forms been accounted for?
 4. Have records from all relevant jurisdictions been included
    (considering boundary changes)?
-5. Have records from all relevant time periods been included?
+5. Have records from all relevant time periods been included —
+   including records created after the question's window that testify
+   to events inside it?
 
 ---
 
