@@ -2222,7 +2222,7 @@ def test_a_stub_naming_an_agent_reaches_run_skill_as_a_spawn_stub(tmp_path, monk
         timestamp="2026-09-22_10-00-00",
     ))
     assert seen.get("stub_agents") == {"gps-mentor": None}
-    assert seen.get("stub_skills") == {"gps-mentor": None, "research-plan": None}
+    assert seen.get("stub_skills") == {"gps-mentor": None, "research": None}
 
 
 # --- stop_at_stub: a test that ends at its first stubbed hand-off (#3119) -----
