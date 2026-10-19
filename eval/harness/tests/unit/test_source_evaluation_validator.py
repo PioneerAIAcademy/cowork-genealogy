@@ -393,7 +393,20 @@ def test_both_guards_pass_on_every_committed_positive_run():
         if not p.endswith(".ann.json")
     )
     assert logs, "no committed source-evaluation run logs found"
+    # Pin the glob: `v1_*` would skip every released `v<N>.json`, and this
+    # replay's only other assertion is that it read SOMETHING, so the narrowing
+    # would pass silently. Verified: passes on `v*.json` (finds v1, v2), fails
+    # on `v1_*.json` (finds none).
+    assert any("_" not in Path(q).stem for q in logs), (
+        "the replay must read the released v<N>.json logs"
+    )
     checked = 0
+    # Pin the field, the other half of the same regression: if `reply` goes back
+    # to `output["text_response"]`, every replayed reply becomes identical to it
+    # and the replay grades the dispatcher again. On this corpus the two differ
+    # on 79 of 79 replies, so one sighting is enough to prove the subject's own
+    # return is what was read.
+    saw_subject_return = False
     for path in logs:
         log = json.loads(Path(path).read_text(encoding="utf-8"))
         for entry in log.get("tests") or []:
@@ -416,6 +429,8 @@ def test_both_guards_pass_on_every_committed_positive_run():
                 ).strip()
                 if not reply:
                     continue
+                if reply != (output.get("text_response") or "").strip():
+                    saw_subject_return = True
                 protected = _PROTECTED if "Hole" in reply else "Drouin Collection"
                 if protected.lower() not in reply.lower():
                     continue
@@ -424,6 +439,10 @@ def test_both_guards_pass_on_every_committed_positive_run():
                 _no_detach(reply, test)
                 checked += 1
     assert checked, "replayed no positive runs — the corpus reader is broken"
+    assert saw_subject_return, (
+        "every replayed reply equalled its run's text_response, so this replay "
+        "graded the main thread's relay rather than the subject's own return"
+    )
 
 
 # --- the direct arm: the agent's return is the reply (issue #2796) --------
