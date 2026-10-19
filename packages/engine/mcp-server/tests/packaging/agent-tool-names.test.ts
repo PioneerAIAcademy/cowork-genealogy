@@ -818,7 +818,14 @@ const AGENT_PERMISSIONS: Record<string, { tools: string[]; denies: string[] }> =
   // `Read` is required for tree.gedcomx.json (persons' dates, places and
   // sources); the body forbids reading research.json with it.
   "question-selection.md": {
-    tools: ["Read", "project_context", "research_append", "research_query"],
+    tools: [
+      "Read",
+      "census_children_gap",
+      "person_warnings",
+      "project_context",
+      "research_append",
+      "research_query",
+    ],
     denies: [],
   },
 
