@@ -771,7 +771,7 @@ Return **≤12 lines** to the caller, in this order:
 - the top match(es) with `matchScore`, attachment status, the cross-check result and any `needs-review` flag — or the nil result and its scope
 - records passed to extraction (`src_` ids) or why none, and that no `sources` or `assertions` exist when none ran
 - the plan item's new `status`, and any instruction in the delegation you did not follow (e.g. a request to mark it `completed`) with a clause saying why
-- next-step hint, naming the owning agent for any hand-back: `search-external-sites` (with the person attributes, the plan item and `userPresent`), `research-plan`, `search-full-text`, `record-structurer` / `image-reader`, or `research-exhaustiveness`
+- next-step hint, naming the owning agent for any hand-back as a `Hand-back: <owner> — <the request in one clause>` line — after FamilySearch exhaustion on a plan item it is always `Hand-back: search-external-sites — …`, never prose offering another site: `search-external-sites` (with the person attributes, the plan item and `userPresent`), `research-plan`, `search-full-text`, `record-structurer` / `image-reader`, or `research-exhaustiveness`
 
 Do not reproduce result lists or sidecar payloads.
 
