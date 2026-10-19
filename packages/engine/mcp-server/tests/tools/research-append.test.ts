@@ -1625,6 +1625,59 @@ describe("research_append (Phase 2)", () => {
     expect(second.errors.join(" ")).toMatch(/already has an active plan/);
   });
 
+  it("says 'searched out' when the conflicting plan's items are all completed/skipped", async () => {
+    const research = phase2Research();
+    research.plans = [
+      validPlan("pl_001", "q_001", "active", [
+        { ...seededPlanItem("pli_001"), status: "completed" },
+        { ...seededPlanItem("pli_002"), status: "skipped" },
+      ]),
+    ];
+    await writeProject(research);
+    const { id: _o, ...plan2 } = validPlan("y", "q_001", "active", [seededPlanItem("pli_003")]);
+    const r = await researchAppend({ projectPath: dir, section: "plans", op: "append", entry: plan2 });
+    expect(r.ok).toBe(false);
+    if (r.ok) return;
+    const msg = r.errors.join(" ");
+    expect(msg).toMatch(/already has an active plan/);
+    expect(msg).toMatch(/searched out/);
+    expect(msg).toMatch(/complete it first/);
+    expect(msg).toMatch(/entryId:'pl_001'/);
+  });
+
+  it("says 'supersede' when the conflicting plan has an unfinished item", async () => {
+    const research = phase2Research();
+    research.plans = [
+      validPlan("pl_001", "q_001", "active", [
+        { ...seededPlanItem("pli_001"), status: "completed" },
+        { ...seededPlanItem("pli_002"), status: "planned" },
+      ]),
+    ];
+    await writeProject(research);
+    const { id: _o, ...plan2 } = validPlan("y", "q_001", "active", [seededPlanItem("pli_003")]);
+    const r = await researchAppend({ projectPath: dir, section: "plans", op: "append", entry: plan2 });
+    expect(r.ok).toBe(false);
+    if (r.ok) return;
+    const msg = r.errors.join(" ");
+    expect(msg).toMatch(/already has an active plan/);
+    expect(msg).toMatch(/supersede/);
+    expect(msg).not.toMatch(/searched out/);
+  });
+
+  it("says 'supersede' when the conflicting plan has empty items", async () => {
+    const research = phase2Research();
+    research.plans = [validPlan("pl_001", "q_001", "active", [])];
+    await writeProject(research);
+    const { id: _o, ...plan2 } = validPlan("y", "q_001", "active", [seededPlanItem("pli_001")]);
+    const r = await researchAppend({ projectPath: dir, section: "plans", op: "append", entry: plan2 });
+    expect(r.ok).toBe(false);
+    if (r.ok) return;
+    const msg = r.errors.join(" ");
+    expect(msg).toMatch(/already has an active plan/);
+    expect(msg).toMatch(/supersede/);
+    expect(msg).not.toMatch(/searched out/);
+  });
+
   it("rejects an update that flips a superseded plan back to active when one is already active", async () => {
     const research = phase2Research();
     research.plans = [validPlan("pl_001", "q_001", "active"), validPlan("pl_002", "q_001", "superseded")];
