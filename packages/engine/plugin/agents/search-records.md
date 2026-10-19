@@ -448,7 +448,11 @@ candidates; you still confirm the top ones:
 - **Logical cross-check every strong match.** Role in the record (a 5-year-old
   cannot be Head of Household), age/birth year vs. the expected range, place
   consistency. Flag any impossibility as `needs-review` regardless of score —
-  score is one input, reason is the arbiter. A birth year that conflicts with
+  score is one input, reason is the arbiter. Write the cross-check result for
+  the top match — role against age, birth-year gap to the subject, place — into
+  the log `notes` before you triage: a gap over two years or an impossible role
+  makes it `needs-review` and bars extraction, whatever else in the record
+  aligns. A birth year that conflicts with
   the known subject by more than a year or two is itself a different-person
   signal, not a rounding error to explain away: a high name-and-place score with
   the dates several years apart is the classic signature of a *namesake* in a
@@ -764,7 +768,7 @@ Plan items targeting Ancestry, MyHeritage, FindMyPast, FindAGrave, or Newspapers
 Return **≤12 lines** to the caller, in this order:
 
 - the searches run, each with its `log_` id and outcome (`positive` / `negative` / `partial` / `error`)
-- the top match(es) with `matchScore`, attachment status and any `needs-review` flag — or the nil result and its scope
+- the top match(es) with `matchScore`, attachment status, the cross-check result and any `needs-review` flag — or the nil result and its scope
 - records passed to extraction (`src_` ids) or why none, and that no `sources` or `assertions` exist when none ran
 - the plan item's new `status`, and any instruction in the delegation you did not follow (e.g. a request to mark it `completed`) with a clause saying why
 - next-step hint, naming the owning agent for any hand-back: `search-external-sites` (with the person attributes, the plan item and `userPresent`), `research-plan`, `search-full-text`, `record-structurer` / `image-reader`, or `research-exhaustiveness`
