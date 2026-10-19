@@ -1966,6 +1966,7 @@
       "q.residencePlace.street": "Unable to map supplied value=street to term modifier"
     },
     "termsAccepted": [],
+    "termsFaulted": [],
     "verdict:address search term": "NO ADDRESS SEARCH TERM (10 of 10 rejected)",
     "addressFieldsByCollection": {
       "US 1880": {},
@@ -1975,8 +1976,8 @@
         "EVENT_HOUSE_NBR_ORIG": "1 1/4 mile on left"
       }
     },
-    "verdict:address field to read": "1 of 4 sampled collections carry a populated address field (US 1950)",
+    "verdict:address field to read": "1 of 4 collections, one sampled record each, carry a populated address field (US 1950)",
     "verdict:address lever": "DROP the address search lever: the tool cannot express it",
-    "measured_at": "2026-10-19T19:18:23.053Z"
+    "measured_at": "2026-10-19T22:21:33.438Z"
   }
 }

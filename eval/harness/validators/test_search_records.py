@@ -894,7 +894,7 @@ def test_census_wiki_fixture_actually_used(tool_calls, test):
     )
 
 
-# --- Issue #2213 PR 3: thin subjects, collection links,
+# --- Issue #2213 PR 3: thin subjects,
 # --- household triangulation, unproven surnames ------------------------
 
 def _calls_named(tool_calls, *names) -> list[dict]:
@@ -934,69 +934,6 @@ def test_thin_subject_hit_not_extracted(tool_calls, builtin_tool_calls, test):
     assert not structurer, (
         "the subject is too thin to tell from a namesake, so no hit may be "
         "handed to record-structurer either"
-    )
-
-
-_COLLECTION_LINK_RE = re.compile(
-    r"familysearch\.org/search/collection/([A-Za-z0-9_-]+)", re.IGNORECASE
-)
-
-
-def _collection_ids(tool_calls) -> tuple[set[str], set[str]]:
-    """(every collection id the run was served or sent, the ids of record hits)."""
-    seen: set[str] = set()
-    hits: set[str] = set()
-    for call in tool_calls or []:
-        name = _bare_tool_name(call.get("tool") or "")
-        args = _as_mapping(call.get("args"))
-        resp = call.get("response") if isinstance(call.get("response"), dict) else {}
-        if args.get("collectionId"):
-            seen.add(str(args["collectionId"]))
-        if name == "record_search":
-            for row in resp.get("results") or []:
-                if isinstance(row, dict) and row.get("collectionId"):
-                    hits.add(str(row["collectionId"]))
-            if isinstance(resp.get("collections"), dict):
-                hits.update(str(k) for k in resp["collections"])
-        elif name == "collections_search":
-            for row in resp.get("results") or []:
-                if isinstance(row, dict) and row.get("id"):
-                    seen.add(str(row["id"]))
-    return seen | hits, hits
-
-
-def test_collection_named_with_link(tool_calls, text_response, test):
-    """Tag-gated (collection-link): issue #2213 PR 3 item 5. A FamilySearch
-    collection named to the user carries its title and its
-    `https://www.familysearch.org/search/collection/{id}` link — never a bare id.
-
-    Two arms. The collection of a record_search hit must appear as such a link
-    (the tagged test's user asks which collection holds the record). And no
-    collection id the run saw — sent, or served by record_search or
-    collections_search — may appear in the reply outside such a link: a mention
-    preceded by `/` is the link itself and is skipped; anything else (`collection
-    1803785`, `f.collectionId=1803785`) is bare. The title half is the judge's.
-    """
-    if "collection-link" not in test.get("tags", []):
-        pytest.skip("not a collection-link scenario")
-    text = text_response or ""
-    ids, hit_ids = _collection_ids(tool_calls)
-    if not ids:
-        pytest.skip("the run was served no collection id")
-    linked = {m.group(1) for m in _COLLECTION_LINK_RE.finditer(text)}
-    if hit_ids:
-        assert linked & hit_ids, (
-            "the reply names the hit's collection without its "
-            "familysearch.org/search/collection/<id> link; hit collections "
-            f"{sorted(hit_ids)}, linked {sorted(linked)}"
-        )
-    bare = []
-    for cid in sorted(ids):
-        for m in re.finditer(r"(?<![\w/-])" + re.escape(cid) + r"(?![\w-])", text):
-            bare.append(text[max(0, m.start() - 30): m.end() + 10])
-    assert not bare, (
-        "a collection id appears in the reply outside a "
-        f"familysearch.org/search/collection/<id> link: {bare}"
     )
 
 
@@ -1050,11 +987,10 @@ def _co_resident_searches(before_state, tool_calls) -> list[dict]:
     letters (Catharina/Catherine), a surname when it shares its first three
     (Kessler/Kesler), so a variant spelling still counts. A call whose given
     name is the subject's is the subject's own search. A call with no given
-    name counts only on a co-resident surname the subject does not carry.
+    name never counts: a surname alone does not name the co-resident.
     """
     subject_names, co_names = _subject_and_co_residents(before_state)
     subject_given = [n.get("given") for n in subject_names]
-    subject_surnames = [n.get("surname") for n in subject_names]
     found = []
     for call in _calls_named(tool_calls, "record_search"):
         args = _as_mapping(call.get("args"))
@@ -1066,13 +1002,6 @@ def _co_resident_searches(before_state, tool_calls) -> list[dict]:
             surnames = [n.get("surname") for n in names]
             surname_ok = surname is None or any(_same_name(surname, s, 3) for s in surnames)
             if given and surname_ok and any(_same_name(given, g, 4) for g in givens):
-                found.append(args)
-                break
-            if (
-                not given and surname
-                and any(_same_name(surname, s, 3) for s in surnames)
-                and not any(_same_name(surname, s, 3) for s in subject_surnames)
-            ):
                 found.append(args)
                 break
     return found
@@ -1127,7 +1056,9 @@ def test_unproven_surname_used_as_search_input(
     """Tag-gated (unproven-surname-search): issue #2213 PR 3 item 3, the Fittro
     run. Typing a researcher-named, unproven surname into a query asserts
     nothing, so she is searched under it: a record_search whose givenName is
-    hers and whose surname is that surname. The caution belongs on the tree, so
+    hers and whose `surname` or `surnameAlt` is that surname (a wildcard such as
+    `Fenst*` counts when up to its first six letters match, as does a variant
+    spelling such as Fenstermacher). The caution belongs on the tree, so
     nothing written to it asserts the marriage: no new Couple relationship for
     the subject, and no name on her in that surname.
     """
@@ -1145,10 +1076,17 @@ def test_unproven_surname_used_as_search_input(
     )
     given, surname = _UNPROVEN_SURNAME_BY_TEST_ID[test_id]
     calls = [_as_mapping(c.get("args")) for c in _calls_named(tool_calls, "record_search")]
+    target = _norm_name(surname)
+
+    def under_it(value) -> bool:
+        v = _norm_name(value)
+        n = min(len(v), len(target), 6)
+        return n >= 4 and v[:n] == target[:n]
+
     hit = [
         a for a in calls
         if _same_name(a.get("givenName"), given, len(_norm_name(given)))
-        and _norm_name(a.get("surname")).startswith(_norm_name(surname)[:6])
+        and (under_it(a.get("surname")) or under_it(a.get("surnameAlt")))
     ]
     assert hit, (
         f"no record_search looked for {given} under the unproven surname "

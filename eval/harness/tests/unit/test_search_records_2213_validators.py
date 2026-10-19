@@ -21,7 +21,6 @@ _VALIDATORS_DIR = Path(__file__).resolve().parents[2] / "validators"
 sys.path.insert(0, str(_VALIDATORS_DIR))
 
 from test_search_records import (  # noqa: E402
-    test_collection_named_with_link as collection_link,
     test_household_not_searched_by_co_resident_when_unneeded as triangulation_unneeded,
     test_household_searched_by_co_resident as triangulation,
     test_thin_subject_hit_not_extracted as thin_subject,
@@ -98,74 +97,6 @@ def test_thin_subject_skips_untagged():
         thin_subject([call("extraction_append")], [], UNTAGGED)
 
 
-# --- collection-link (ut_search_records_d30) -----------------------------
-
-D30 = spec("collection-named-with-link.json")
-HIT = rs(
-    {"surname": "Hollis", "givenName": "Mary Ellen"},
-    {"results": [{"recordId": "XK2J-9HL", "collectionId": "1803785"}],
-     "collections": {"1803785": "Ohio, County Marriages, 1789-2013"}},
-)
-LINK = "https://www.familysearch.org/search/collection/1803785"
-
-
-@pytest.mark.parametrize("text", [
-    f"Her marriage is in Ohio, County Marriages, 1789-2013 ({LINK}).",
-    f"Collection: [Ohio, County Marriages, 1789-2013]({LINK})",
-    f"Browse it at <{LINK}> - Ohio, County Marriages, 1789-2013.",
-])
-def test_collection_link_passes_on_linked_title(text):
-    collection_link([HIT], text, D30)
-
-
-def test_collection_link_fails_on_bare_id():
-    text = "Her marriage is in Ohio, County Marriages, 1789-2013 (collection 1803785)."
-    with pytest.raises(AssertionError, match="without its"):
-        collection_link([HIT], text, D30)
-
-
-def test_collection_link_fails_on_bare_id_beside_a_link():
-    text = f"Ohio, County Marriages, 1789-2013 ({LINK}); collection id 1803785."
-    with pytest.raises(AssertionError, match="outside"):
-        collection_link([HIT], text, D30)
-
-
-def test_collection_link_fails_on_query_string_id():
-    text = (f"Ohio, County Marriages ({LINK}). Search it at "
-            "https://www.familysearch.org/search/record/results?f.collectionId=1803785")
-    with pytest.raises(AssertionError, match="outside"):
-        collection_link([HIT], text, D30)
-
-
-def test_collection_link_fails_on_title_only():
-    with pytest.raises(AssertionError, match="without its"):
-        collection_link([HIT], "Her marriage is in Ohio, County Marriages, 1789-2013.", D30)
-
-
-def test_collection_link_fails_on_record_ark_only():
-    text = "Record: https://www.familysearch.org/ark:/61903/1:1:XK2J-9HL"
-    with pytest.raises(AssertionError, match="without its"):
-        collection_link([HIT], text, D30)
-
-
-def test_collection_link_flags_bare_collections_search_id():
-    cs = call("collections_search", {"standardPlace": "Ohio"},
-              {"results": [{"id": "1987542", "title": "Ohio, Tax Records, 1800-1850"}]})
-    text = f"Ohio, County Marriages ({LINK}). Also try Ohio, Tax Records (1987542)."
-    with pytest.raises(AssertionError, match="outside"):
-        collection_link([HIT, cs], text, D30)
-
-
-def test_collection_link_ignores_unrelated_numbers():
-    text = f"Married 14 Oct 1856. Ohio, County Marriages, 1789-2013: {LINK}"
-    collection_link([HIT], text, D30)
-
-
-def test_collection_link_skips_untagged():
-    with pytest.raises(pytest.skip.Exception):
-        collection_link([HIT], "collection 1803785", UNTAGGED)
-
-
 # --- household-triangulation (ut_search_records_d31 / d32) ---------------
 
 D31 = spec("household-triangulation-by-co-resident.json")
@@ -193,7 +124,6 @@ SUBJECT_CALLS = [
     {"surname": "Kessler", "givenName": "Catharina", "residenceYearFrom": 1870},
     {"surname": "Kesler", "givenName": "Catherine"},
     {"surname": "Kessler", "givenName": "Jacob", "spouseGivenName": "Catharina"},
-    {"surname": "Kessler", "residencePlace": "Lancaster, Pennsylvania"},
     {"givenName": "Cath*", "surname": "Weber"},
 ])
 def test_triangulation_passes_on_co_resident_principal(d31_before, args):
@@ -256,6 +186,8 @@ def d33_before():
     {"givenName": "Juanita", "surname": "Fenstermaker", "residenceYearFrom": 1950},
     {"givenName": "Juanita Ruth", "surname": "Fenstermacher"},
     {"givenName": "Juanita*", "surname": "Fenster*"},
+    {"givenName": "Juanita", "surname": "Kimbrell", "surnameAlt": "Fenstermaker"},
+    {"givenName": "Juanita", "surname": "Fenst*"},
 ])
 def test_unproven_passes_on_search_under_surname(d33_before, args):
     calls = [rs({"givenName": "Juanita", "surname": "Kimbrell"}), rs(args)]
@@ -300,3 +232,10 @@ def test_unproven_tag_without_map_entry_fails(d33_before):
     other = {"id": "ut_other", "tags": ["unproven-surname-search"]}
     with pytest.raises(AssertionError, match="no entry"):
         unproven_surname(d33_before, d33_before, [], other)
+
+
+def test_triangulation_fails_on_a_surname_only_search(d31_before):
+    """A surname alone, even the stepfather's, does not name the co-resident."""
+    calls = [rs({"surname": "Weber", "givenName": "Henry"}), rs({"surname": "Kessler", "residencePlace": "Lancaster, Pennsylvania"})]
+    with pytest.raises(AssertionError, match="no record_search named a parent"):
+        triangulation(d31_before, calls, D31)

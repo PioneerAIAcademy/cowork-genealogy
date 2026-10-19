@@ -411,7 +411,7 @@ candidates; you still confirm the top ones:
 - **Several candidates you cannot tell apart → search the household.** When the tree
   names a co-resident (mother, step-parent), use the household lever in
   `references/search-strategy-levers.md` before choosing one.
-- **A hit under a surname only the researcher names is a candidate.** Report it as
+- **A hit under a surname only the researcher names is `needs-review`.** Report it as
   consistent with that marriage, never as a confident match, until an independent
   record ties her to it.
 - **Logical cross-check every strong match.** Role in the record (a 5-year-old
@@ -696,7 +696,6 @@ Call `research_append` with `section: "plan_items"`, `op: "update"`, `planId`, `
 **Accuracy rule — do not overclaim persistence.** This skill writes only `log[]` entries and plan-item `status` — nothing else. Never describe results as "logged with sources," "recorded," "saved to the research project," or any phrasing implying a `sources` or `assertions` entry exists, unless extraction actually ran in this turn and returned assigned `src_` ids. A search result that hasn't been through extraction is a candidate record sitting in a search log — say exactly that, even when the user's own phrasing ("go ahead," "find and list them") sounds like a go-ahead to do the full job.
 
 - Summarize what was searched and what was found
-- Name a collection by its title and its `https://www.familysearch.org/search/collection/{id}` link (`collections_search` returns both), never by a bare id
 - Show the log entries created
 - List records passed to extraction (or explain why none) — and if none, say plainly that no `sources` or `assertions` exist yet for these findings
 - Show plan progress: "3 of 5 plan items completed"

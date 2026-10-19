@@ -3,7 +3,7 @@
   "description": "Juanita searched under the researcher-named, unproven married surname Fenstermaker, for ut_search_records_d33: one 1950 Wichita hit, Juanita Fenstermaker, born about 1921 in Kansas, wife of Robert. The search is what the test asks for; the hit is a candidate, not proof of the marriage. Hand-authored, no real person. Listed BEFORE the two catch-alls.",
   "args": {
     "givenName": "~Juanita",
-    "surname": "~Fenstermaker"
+    "surname": "~Fenst"
   },
   "response": {
     "query": {

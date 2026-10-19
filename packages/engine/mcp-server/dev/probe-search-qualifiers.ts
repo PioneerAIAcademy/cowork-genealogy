@@ -306,6 +306,7 @@ import { getValidToken } from "../src/auth/refresh.js";
 import { BROWSER_USER_AGENT } from "../src/constants.js";
 import { fetchWithTimeout } from "../src/utils/http.js";
 import { fetchRetry } from "./http-retry.js";
+import { extractEntityId } from "../src/tools/record-read.js";
 import {
   yearOf,
   yearOfDate,
@@ -2703,6 +2704,8 @@ const L_COLLECTIONS: Array<[string, string]> = [
   ["US 1880", "1417683"], ["US 1900", "1325221"], ["US 1940", "2000219"], ["US 1950", "4464515"],
 ];
 const L_ADDRESS_LABEL = /STREET|HOUSE_NBR|HOUSE_NUMBER|ADDRESS/;
+/** The API's own refusal of a term. Any other error (401, network, retries spent) is a fault, not a rejection. */
+const L_REJECTED = /Unsupported Term|not an allowed filter|Unable to map supplied value/;
 const RECAPI = "https://sg30p0.familysearch.org/service/cds/recapi/records/persona";
 
 async function rawPersona(entityId: string): Promise<unknown | null> {
@@ -2735,16 +2738,19 @@ async function sectionL(): Promise<void> {
   console.log(`  baseline (1940, Smith, Logan)  -> ${baseline.error ?? `results=${baseline.total}`}`);
   const accepted: string[] = [];
   const rejected: Record<string, string | null> = {};
+  const faulted: string[] = [];
   for (const term of L_TERMS) {
     const r = await search(`${base}&${term}=Main`);
-    if (errored(r)) rejected[term] = r.error;
-    else accepted.push(term);
+    if (!errored(r)) accepted.push(term);
+    else if (L_REJECTED.test(r.error ?? "")) rejected[term] = r.error;
+    else faulted.push(term);
     console.log(`  ${term.padEnd(26)} -> ${r.error ?? `results=${r.total}`}`);
   }
   record("L", "termsRejected", rejected);
   record("L", "termsAccepted", accepted);
-  const searchVerdict = errored(baseline)
-    ? "NOT MEASURED"
+  record("L", "termsFaulted", faulted);
+  const searchVerdict = errored(baseline) || faulted.length
+    ? `NOT MEASURED${faulted.length ? ` (${faulted.length} term(s) hit a fault, not a refusal)` : ""}`
     : accepted.length === 0
       ? `NO ADDRESS SEARCH TERM (${L_TERMS.length} of ${L_TERMS.length} rejected)`
       : `ACCEPTED: ${accepted.join(", ")}`;
@@ -2760,7 +2766,7 @@ async function sectionL(): Promise<void> {
       console.log(`  ${label}: ${hit.error ?? "no persona"} — NOT MEASURED`);
       continue;
     }
-    const raw = await rawPersona(persona.id.replace(/^\d:\d:/, ""));
+    const raw = await rawPersona(extractEntityId(persona.id));
     if (!raw) {
       console.log(`  ${label}: record ${persona.id} unreadable — NOT MEASURED`);
       continue;
@@ -2774,13 +2780,13 @@ async function sectionL(): Promise<void> {
   const withAddress = Object.entries(readable).filter(([, f]) => Object.keys(f).length).map(([c]) => c);
   const readVerdict = sampled === 0
     ? "NOT MEASURED"
-    : `${withAddress.length} of ${sampled} sampled collections carry a populated address field${withAddress.length ? ` (${withAddress.join(", ")})` : ""}`;
+    : `${withAddress.length} of ${sampled} collections, one sampled record each, carry a populated address field${withAddress.length ? ` (${withAddress.join(", ")})` : ""}`;
   record("L", "verdict:address field to read", readVerdict);
   console.log(`  -> read: ${readVerdict}`);
 
   const lever = searchVerdict.startsWith("NO ADDRESS SEARCH TERM")
     ? "DROP the address search lever: the tool cannot express it"
-    : searchVerdict === "NOT MEASURED" ? "NOT MEASURED" : "an address term exists; the lever is expressible";
+    : searchVerdict.startsWith("NOT MEASURED") ? "NOT MEASURED" : "an address term exists; the lever is expressible";
   record("L", "verdict:address lever", lever);
   console.log(`  -> lever: ${lever}`);
 }
