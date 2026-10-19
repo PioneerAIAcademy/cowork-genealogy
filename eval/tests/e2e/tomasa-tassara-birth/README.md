@@ -28,17 +28,66 @@ match strength.
 
 ## Notes for reviewers
 
-**DRAFT PENDING ADJUDICATION.** This fixture comes from a hint batch
-(`filtered-list-samples-3.csv` row 33, `hint-samples.csv` row 13,
-flag `adds_birth`, confidence 3) in which roughly half the hint records are
-**false matches**, and the authors do not know which.
-`expected-findings.json` was transcribed from the hint record — "Argentina, National Census, 1895", an entry for Tomasa Tassara, married, born 1864 in Buenos Aires, enumerated in Cuartel 01 (Población rural) of Mercedes, Buenos Aires (register image from Mercedes); the birth year is computed from her census age.
-The genealogist + developer teams must decide (a) true match — keep the
-findings; (b) different answer — edit `expected-findings.json`; or (c) no
-findable answer — replace the findings with a `"polarity": "avoid"` guard
-naming the birth about 1864, plus a `required` finding that the report documents
-the rejection.
+**Resolved: OUTCOME 1 (true match).** The hint
+`ark:/61903/1:1:MW49-LBB` ("Argentina, censo nacional, 1895") is the tree person
+Tomasa Tassara (`GW82-2VP`). The research question — when and where she was born —
+is answered: **about 1864, Buenos Aires, Argentina**, as the hint indexes. One
+required finding (f1), kept as drafted with the confirming arks appended.
 
-A strong candidate on identity. A search of the same 1895 census returns, in the same rural district of Mercedes and with record numbers adjacent to hers, a married Juan Rossello born 1858 in Italy and children Juan (1886), Catalina (1888), Angela (1890) and Bartolome (1892) — the tree's husband and four of its children, with birth years one off at most. A married woman of about 31 fits a mother whose first child was christened in Mercedes in 1885. The tree's three sources for her are her children's baptisms, which index her as Tomasa Passara (1885, `ark:/61903/1:1:66M1-15HH`), Pasara (1889) and Tassaro (1899); none gives an age or birthplace, and none is a re-index of the census.
+**Indexed facts.** The hint entry indexes Tomasa Tassara, **married**, **Birth
+1864, Buenos Aires, Argentina**, Census 1895, Cuartel 01 (Población rural),
+Mercedes. The same 1895 census independently indexes, all in that same cuartel,
+the rest of the tree family: husband Juan Rossello `ark:/61903/1:1:MW49-LBT`
+(b.1858 Italy, married); children Juan `ark:/61903/1:1:MW49-LB5` (b.1886),
+Catalina `ark:/61903/1:1:MW49-LBY` (b.1888), Angela `ark:/61903/1:1:MW49-LB1`
+(b.1890) and Bartolome `ark:/61903/1:1:MW49-LBR` (b.1892). Each child's indexed
+year matches the tree within ±1, and Maria (tree b.1898) is correctly absent,
+being born after the census. The tree's three existing sources for her are her
+children's baptisms, which index her as Tomasa Passara (1885,
+`ark:/61903/1:1:66M1-15HH`), Pasara (1889) and Tassaro (1899) — none gives an age
+or birthplace, and none is a re-index of the census, so the hint adds genuinely
+new information. The surname spelling variants (Passara/Pasara/Tassaro) are not
+evidence against the match.
 
-What is thin is the fact itself: an age turned into a year, good to a year or so, and a birthplace of only "Buenos Aires", which in this census can mean the province or the city. The surname is also unsettled — the baptisms read Passara or Pasara as often as Tassara. The discriminating check is the census sheet itself: confirming that Tomasa is listed as Juan Rossello's wife in the household with Juan, Catalina, Angela and Bartolome settles identity, and her marriage or death entry would then fix the year and the place more closely than an age can.
+**Calibrated image-read facts (`image_basis: true`).** Identity rests on the
+census register image, not the index alone: the index does **not** group the
+household (each member has its own `1:2` record), so record-number adjacency in a
+search is not proof. The register image `ark:/61903/3:1:S3HY-674Q-DT3` settles it —
+lines 4–9 are one consecutive household: Juan Rossello (age 37, married, Italia) →
+**Tomasa Tassara (age 31, married, Argentina / Bs Aires, "4 children / 10 years
+married")** → Juan (9) → Catalina (7) → Angela (5) → Bartolomé (3). Age 31 → born
+~1864; the "10 years married" fits a first child christened in Mercedes in 1885.
+This reading is licensed under the Step 1a two-entry check — two other indexed
+entries on the **same image** matched the reading on name, sex, age and
+birthplace:
+
+- **Andrés Ballestrero** (`ark:/61903/1:1:MW49-L19`): index male, b.1830 (age 65),
+  Italy, married — matches image line 10 (Ballestrero, Andrés, 65, Italia).
+- **Pedro Ratti, the son** (`ark:/61903/1:1:MW49-L1Q`): index male, b.1884 (age
+  11), Buenos Aires — matches image line 13 (Ratti, Pedro, 11, Argentina Bs Aires).
+
+Both controls' `1:1` personas carry this same image ark, so the image is the
+correct sheet (not a wrong film waypoint).
+
+**Disclosed discrepancy.** A *third* entry on the sheet, **Pedro Ratti the
+father** (`ark:/61903/1:1:MW49-L1W`), is indexed b.1835 (age 60), but the OCR read
+his age as **40** — a probable handwritten 6-vs-4 digit misread. It is immaterial
+to this adjudication: it is a control, not the subject, and the identity
+conclusion rests on independently-indexed fields (the household's names, the
+cuartel, and the children's exactly-matching ages), not on any image-only digit.
+Tomasa's own age (31) is corroborated by the index's 1864.
+
+**Limits / precision.** The birth is kept at **"about 1864"** — an age converted
+to a year, good to about a year, not an exact date. The birthplace is kept at
+**"Buenos Aires, Argentina"**: census column F ("provincia donde ha nacido") reads
+only "Bs Aires", which can mean the province or the city, so it is **not** sharpened
+to the city (FamilySearch's own standardization is inconsistent — the search stub
+read "Buenos Aires City" while `record_read` gave plain "Buenos Aires"). A
+marriage or death entry for her would fix the year and place more closely than an
+age can; neither was pursued, as the question is answered at the precision the
+census gives.
+
+**Retrieval** was read-only via the MCP `person_read` / `record_read` /
+`record_search` / `image_transcribe` tools against live FamilySearch; the image
+reading was calibrated per Step 1a (above), and the identity judgement is the
+genealogist's. The call is a confident true match, not borderline.
