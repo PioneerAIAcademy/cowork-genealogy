@@ -41,14 +41,16 @@ query: of, the, and, in, on, at, a, an, de, la, le, du, des, von, van, der. A
 title made only of those words never matches. Before matching:
 
 - A trailing parenthetical is dropped from the title unless it contains a
-  digit: `"(U.S. state)"` is dropped, `"(1948–1994)"` is kept and must match.
+  digit: `"(U.S. state)"` is dropped, `"(1948–1994)"` is kept and must match,
+  as one part of its own (below), whatever commas it holds.
 - A title split by commas is matched part by part. Each part's words must
   appear in order, but the parts may come in any order, and each part is
   matched on its own: `"Topsham Vermont history Orange County"` matches
   `"Orange County, Vermont"`.
-- A title `"History of X"` or `"Geography of X"` also matches when the query
-  puts the word after X: `"Norway history 19th century"` matches `"History of
-  Norway"`, and so does `"History of Norway …"`.
+- A title `"<Head> of X"` also matches when the query puts the head after X,
+  split at the first `of`: `"Norway history 19th century"` matches `"History of
+  Norway"` (and so does `"History of Norway …"`), and `"Posen province
+  history"` matches `"Province of Posen"`.
 
 Search ranks by relevance, not meaning, so without the rule a query for a
 place with no article of its own gets another article back as its answer:
@@ -64,11 +66,14 @@ France"` to `"Pecquencourt"`, and `"Detroit Wayne County Michigan history
 genealogy records"` to `"History of Detroit"`. Replayed over the 100 distinct
 `wikipedia_search` queries in `eval/runlogs/e2e/` on one frozen set of hits
 (2026-10-19), the order rule changed one pick, the wrong South Africa one. The
-cost is that a right hit is not found when its title carries a word the query
-lacks (`"Skåne Sweden history"` misses `"Scania"`) or when the query puts one
-part's words in another order. Plain in-order matching, with no comma or
-"History of" handling, was rejected: it loses `"Orange County, Vermont"` and
-`"History of Norway"` above.
+rule only narrows: every title it takes, a set match with no order would also
+take. The cost is that a right hit is not found when its title carries a word
+the query lacks (`"Skåne Sweden history"` misses `"Scania"`, `"Treaty of Paris
+American Revolution"` misses `"Treaty of Paris (1783)"`), or when the query
+puts one part's words in another order and no `of` swap restores it
+(`"Cork Ireland county history"` misses `"County Cork"`). Plain in-order
+matching, with no comma or `of` handling, was rejected: it loses `"Orange
+County, Vermont"` and `"History of Norway"` above.
 
 The not-found error is kept when no hit matches, or the matched hit's summary
 also 404s. Any other status ends the lookup with an error (below).
@@ -226,8 +231,8 @@ The index.ts is the MCP server entry point that registers all tools. Update it t
 | 1 | An exact title is answered by the summary alone — one request, no search |
 | 2 | A descriptive query that 404s as a title resolves through search; the result carries the hit's real title |
 | 3 | A search with no hit keeps the not-found error |
-| 4 | Hits none of whose titles the query spells out, in order, keep the not-found error (`"Maddock North Dakota history"`, `"Hollow Creek Settlement"`, `"Church Missionary Society in Kenya"`, on their live hit lists) |
-| 5 | Hits that match still resolve, through diacritics, a stroked letter, apostrophes, small words, a parenthetical, comma parts in either order and "History of X" either way round (`"Luo people"`, `"Schuylkill County, Pennsylvania"`, `"Saint-Étienne"`, `"Hamre, Osterøy"`, `"Moʼorea"`, `"O’Brien"`, `"History of Georgia (U.S. state)"`, `"Pecquencourt"`, `"History of Norway"`, `"Orange County, Vermont"`, `"History of Detroit"`); a parenthetical with a digit is kept, so `"Pretoria"` is taken over `"History of South Africa (1948–1994)"` in both orders Wikipedia has served them |
+| 4 | Hits none of whose titles the query spells out, in order, keep the not-found error (`"Maddock North Dakota history"`, `"Hollow Creek Settlement"`, `"Church Missionary Society in Kenya"`, on their live hit lists), and the rule's stated costs (`"Treaty of Paris American Revolution"`, `"Cork Ireland county history"`) |
+| 5 | Hits that match still resolve, through diacritics, a stroked letter, apostrophes, small words, a parenthetical, comma parts in either order and `"<Head> of X"` either way round (`"Luo people"`, `"Schuylkill County, Pennsylvania"`, `"Saint-Étienne"`, `"Hamre, Osterøy"`, `"Moʼorea"`, `"O’Brien"`, `"History of Georgia (U.S. state)"`, `"Pecquencourt"`, `"History of Norway"`, `"Orange County, Vermont"`, `"History of Detroit"`, `"Province of Posen"`, `"Springfield (Illinois, 1821)"`, `"Treaty of Paris (1783)"`); a parenthetical with a digit is kept, so `"Pretoria"` is taken over `"History of South Africa (1948–1994)"` in both orders Wikipedia has served them |
 | 6 | A matching second hit is taken over a first that does not match; a title made only of small words is never taken |
 | 7 | A summary error other than 404 is reported without searching |
 | 8 | A failed search is reported as a search error, not as no article |

@@ -156,6 +156,8 @@ describe("wikipediaSearch — which search hit it takes", () => {
     ["Maddock North Dakota history", MADDOCK],
     ["Hollow Creek Settlement", HOLLOW_CREEK],
     ["Church Missionary Society in Kenya", KENYA],
+    ["Treaty of Paris American Revolution", ["Treaty of Paris (1783)"]],
+    ["Cork Ireland county history", ["County Cork"]],
   ])("keeps the not-found error for '%s' when no hit's title is in the query", async (query, hits) => {
     status(404);
     searchHits(hits);
@@ -180,6 +182,9 @@ describe("wikipediaSearch — which search hit it takes", () => {
     ["Topsham Vermont history Orange County", TOPSHAM, "Orange County, Vermont"],
     ["Detroit Wayne County Michigan history genealogy records", DETROIT, "History of Detroit"],
     ["History of Detroit Michigan", DETROIT, "History of Detroit"],
+    ["Posen province history Prussia", ["Province of Posen", "Posen"], "Province of Posen"],
+    ["Illinois 1821 Springfield history", ["Springfield (Illinois, 1821)"], "Springfield (Illinois, 1821)"],
+    ["Treaty of Paris 1783 American Revolution", ["Treaty of Paris (1783)"], "Treaty of Paris (1783)"],
   ])("resolves '%s' to the hit whose title it spells out", async (query, hits, title) => {
     status(404);
     searchHits(hits);

@@ -94,12 +94,13 @@ function inOrder(titleWords: string[], queryWords: readonly string[]): boolean {
  * governors of North Dakota"), and the caller would take it as the answer.
  */
 function titleMatches(title: string, queryWords: readonly string[]): boolean {
-  const kept = title.replace(/\s*\(([^()]*)\)\s*$/, (paren, inner: string) => (/\d/.test(inner) ? paren : ""));
-  const topic = kept.match(/^(History|Geography) of (.+)$/);
-  const spellings = topic ? [kept, `${topic[2]} ${topic[1]}`] : [kept];
+  const paren = title.match(/^(.*?)\s*\(([^()]*)\)\s*$/);
+  const base = paren ? paren[1] : title;
+  const kept = paren && /\d/.test(paren[2]) ? [paren[2]] : [];
+  const headOf = base.match(/^(.+?) of (.+)$/);
+  const spellings = headOf ? [base, `${headOf[2]} ${headOf[1]}`] : [base];
   return spellings.some((spelling) => {
-    const parts = spelling
-      .split(",")
+    const parts = [...spelling.split(","), ...kept]
       .map((part) => words(part).filter((w) => !FUNCTION_WORDS.has(w)))
       .filter((part) => part.length > 0);
     return parts.length > 0 && parts.every((part) => inOrder(part, queryWords));
