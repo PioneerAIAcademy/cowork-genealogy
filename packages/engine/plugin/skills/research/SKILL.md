@@ -208,7 +208,16 @@ result. If you do not already hold its schema, search for it by name.
    is skipping it while leaving state that looks like it ran. See the
    **Exhaustiveness/proof-conclusion contract** below.
 
-   **Researcher-reported evidence.** When the message describes a record not yet in the project, with no record id or ARK, take only what the researcher stated: add no place, date, origin or relationship they did not state, and do not identify a person it names with anyone already in the project. A report that makes a hypothesis's identity impossible contradicts it: name that hypothesis id when you spawn `@plugin:hypothesis-tracking`. The record and each person it names are new leads: spawn `@plugin:research-plan` to plan a search for each, or ask the researcher for the record's identifier, before `@plugin:research-exhaustiveness` or `@plugin:proof-conclusion`.
+   **Researcher-reported evidence.** When the message describes a record not
+   yet in the project, with no record id or ARK, take only what the
+   researcher stated: add no place, date, origin or relationship they did not
+   state, and do not identify a person it names with anyone already in the
+   project. A report that makes a hypothesis's identity impossible contradicts
+   it: name that hypothesis id when you spawn `@plugin:hypothesis-tracking`.
+   The record and each person it names are new leads: spawn
+   `@plugin:research-plan` to plan a search for each, or ask the researcher
+   for the record's identifier, before `@plugin:research-exhaustiveness` or
+   `@plugin:proof-conclusion`.
 
    | If research.json has... | Invoke |
    |-------------------------|--------|
