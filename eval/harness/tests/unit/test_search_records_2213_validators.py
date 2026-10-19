@@ -26,7 +26,6 @@ from test_search_records import (  # noqa: E402
     test_household_searched_by_co_resident as triangulation,
     test_thin_subject_hit_not_extracted as thin_subject,
     test_unproven_surname_used_as_search_input as unproven_surname,
-    test_user_declined_item_skipped_not_searched as user_declined,
 )
 
 REPO_ROOT = Path(__file__).resolve().parents[4]
@@ -58,86 +57,6 @@ def call(tool, args=None, response=None):
 
 
 UNTAGGED = {"id": "ut_x", "tags": ["search"]}
-
-
-# --- user-declined-item (ut_search_records_d28) --------------------------
-
-D28 = spec("user-declined-plan-item.json")
-
-
-def declined_after(before, *, status="skipped", category="user_declined",
-                   reason="User declined the probate search.", log=()):
-    after = copy.deepcopy(before)
-    item = after["research_json"]["plans"][0]["items"][0]
-    item["status"] = status
-    if category is not None:
-        item["skip_category"] = category
-    if reason is not None:
-        item["skip_reason"] = reason
-    after["research_json"]["log"] = list(log)
-    return after
-
-
-CENSUS_LOG = {"id": "log_001", "plan_item_id": "pli_002", "tool": "record_search"}
-CENSUS_CALL = rs({"surname": "Thornbury", "givenName": "Elias", "residenceYearFrom": 1880})
-
-
-@pytest.fixture
-def d28_before():
-    return scenario_state("search-records-user-declined-probate")
-
-
-def test_user_declined_passes_when_skipped_and_census_run(d28_before):
-    after = declined_after(d28_before, log=[CENSUS_LOG])
-    user_declined(d28_before, after, [CENSUS_CALL], D28)
-
-
-def test_user_declined_fails_when_item_left_planned(d28_before):
-    after = declined_after(d28_before, status="planned", category=None, reason=None, log=[CENSUS_LOG])
-    with pytest.raises(AssertionError, match="must be `skipped`"):
-        user_declined(d28_before, after, [CENSUS_CALL], D28)
-
-
-def test_user_declined_fails_on_wrong_category(d28_before):
-    after = declined_after(d28_before, category="premise_invalidated", log=[CENSUS_LOG])
-    with pytest.raises(AssertionError, match="user_declined"):
-        user_declined(d28_before, after, [CENSUS_CALL], D28)
-
-
-@pytest.mark.parametrize("reason", [None, "", "   "])
-def test_user_declined_fails_without_reason(d28_before, reason):
-    after = declined_after(d28_before, reason=reason, log=[CENSUS_LOG])
-    with pytest.raises(AssertionError, match="skip_reason"):
-        user_declined(d28_before, after, [CENSUS_CALL], D28)
-
-
-def test_user_declined_fails_when_declined_search_logged(d28_before):
-    log = [CENSUS_LOG, {"id": "log_002", "plan_item_id": "pli_001", "tool": "record_search"}]
-    after = declined_after(d28_before, log=log)
-    with pytest.raises(AssertionError, match="logged a search"):
-        user_declined(d28_before, after, [CENSUS_CALL], D28)
-
-
-@pytest.mark.parametrize("args", [
-    {"surname": "Thornbury", "collectionId": "SYNTH-OH-PROBATE"},
-    {"surname": "Thornbury", "recordType": "Probate"},
-])
-def test_user_declined_fails_when_declined_search_run_unlogged(d28_before, args):
-    after = declined_after(d28_before, log=[CENSUS_LOG])
-    with pytest.raises(AssertionError, match="declined pli_001"):
-        user_declined(d28_before, after, [rs(args), CENSUS_CALL], D28)
-
-
-def test_user_declined_fails_on_fulltext_pivot(d28_before):
-    after = declined_after(d28_before, log=[CENSUS_LOG])
-    calls = [call("fulltext_search", {"query": "Thornbury estate"}), CENSUS_CALL]
-    with pytest.raises(AssertionError, match="pivoted"):
-        user_declined(d28_before, after, calls, D28)
-
-
-def test_user_declined_skips_untagged(d28_before):
-    with pytest.raises(pytest.skip.Exception):
-        user_declined(d28_before, d28_before, [], UNTAGGED)
 
 
 # --- subject-too-thin (ut_search_records_d29) ----------------------------

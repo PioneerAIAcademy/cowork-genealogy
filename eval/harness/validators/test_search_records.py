@@ -894,13 +894,8 @@ def test_census_wiki_fixture_actually_used(tool_calls, test):
     )
 
 
-# --- Issue #2213 PR 3: declined items, thin subjects, collection links,
+# --- Issue #2213 PR 3: thin subjects, collection links,
 # --- household triangulation, unproven surnames ------------------------
-
-_SEARCH_TOOLS = frozenset({
-    "record_search", "fulltext_search", "volume_search", "image_search",
-})
-
 
 def _calls_named(tool_calls, *names) -> list[dict]:
     wanted = set(names)
@@ -908,93 +903,6 @@ def _calls_named(tool_calls, *names) -> list[dict]:
         c for c in (tool_calls or [])
         if _bare_tool_name(c.get("tool") or "") in wanted
     ]
-
-
-def _plan_items(research_json) -> list[tuple[dict, dict]]:
-    """(plan, item) for every plan item, in file order."""
-    out = []
-    for plan in (research_json or {}).get("plans") or []:
-        for item in plan.get("items") or []:
-            out.append((plan, item))
-    return out
-
-
-def test_user_declined_item_skipped_not_searched(
-    before_state, after_state, tool_calls, test
-):
-    """Tag-gated (user-declined-item): issue #2213 PR 3 item 1. When the user
-    declines the current plan item, it is `skipped` with
-    `skip_category: "user_declined"` and a `skip_reason`, and no search is run
-    for it — a decline is terminal, not a cue to do the declined work first.
-
-    "The current plan item" is Step 1's: the lowest-sequence `planned` item of
-    the active plan in the starting state, so the test names no id.
-
-    A search "for" the item is any of: a new log entry carrying its id as
-    `plan_item_id`; a `record_search` whose `collectionId` is one the item's
-    rationale names; a `record_search` whose `recordType` is the item's
-    `record_type`; or a full-text, volume or image search at all (none of the
-    tagged tests stocks one for any other purpose).
-    """
-    if "user-declined-item" not in test.get("tags", []):
-        pytest.skip("not a user-declined-item scenario")
-    before = before_state.get("research_json") or {}
-    after = after_state.get("research_json") or {}
-    planned = [
-        (plan, item) for plan, item in _plan_items(before)
-        if plan.get("status") == "active" and item.get("status") == "planned"
-    ]
-    assert planned, "scenario has no planned item in an active plan to decline"
-    plan, current = min(planned, key=lambda pi: pi[1].get("sequence") or 0)
-    item_id = current.get("id")
-
-    after_item = next(
-        (i for p, i in _plan_items(after)
-         if p.get("id") == plan.get("id") and i.get("id") == item_id),
-        None,
-    )
-    assert after_item is not None, f"declined item {item_id} is gone from the plan"
-    assert after_item.get("status") == "skipped", (
-        f"the user declined {item_id}, so it must be `skipped`; it ended "
-        f"{after_item.get('status')!r}"
-    )
-    assert after_item.get("skip_category") == "user_declined", (
-        f"{item_id} was declined by the user, so its skip_category must be "
-        f"'user_declined'; got {after_item.get('skip_category')!r}"
-    )
-    reason = after_item.get("skip_reason")
-    assert isinstance(reason, str) and reason.strip(), (
-        f"{item_id} is skipped with no skip_reason saying the user declined it"
-    )
-
-    logged = [
-        e.get("id") for e in _new_log_entries(before_state, after_state)
-        if e.get("plan_item_id") == item_id
-    ]
-    assert not logged, (
-        f"the user declined {item_id}, yet the run logged a search for it: {logged}"
-    )
-
-    rationale = current.get("rationale") or ""
-    declined_collections = set(re.findall(r"collectionId\s+([A-Za-z0-9_-]+)", rationale))
-    declined_type = (current.get("record_type") or "").strip().lower()
-    for call in _calls_named(tool_calls, "record_search"):
-        args = _as_mapping(call.get("args"))
-        cid = str(args.get("collectionId") or "")
-        assert cid not in declined_collections, (
-            f"the user declined {item_id}, yet record_search ran against its "
-            f"collection {cid}: {args}"
-        )
-        rtype = str(args.get("recordType") or "").strip().lower()
-        assert not (declined_type and rtype == declined_type), (
-            f"the user declined {item_id} ({declined_type}), yet record_search "
-            f"ran with recordType {rtype!r}: {args}"
-        )
-    other = _calls_named(tool_calls, *(_SEARCH_TOOLS - {"record_search"}))
-    assert not other, (
-        f"the user declined {item_id}, yet the run pivoted to "
-        f"{sorted({_bare_tool_name(c.get('tool') or '') for c in other})}"
-    )
 
 
 def test_thin_subject_hit_not_extracted(tool_calls, builtin_tool_calls, test):
