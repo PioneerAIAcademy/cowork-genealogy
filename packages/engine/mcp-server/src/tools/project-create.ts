@@ -483,7 +483,7 @@ async function loadStagedRead(projectPath: string, rawRef: unknown, warnings: st
     // Classify on the message with the ref's own text removed, so a ref that
     // happens to contain "invalid JSON" cannot pick the reason.
     const why = (e instanceof Error ? e.message : String(e)).split(ref).join("<ref>");
-    const fault = /could not be read/.test(why);
+    const NOT_STAGED = "is not a staged read in results/.staging/ (pruned after 24h, or never staged)";
     const reason = /does not match log entry tool/.test(why)
       ? "was not staged by person_read"
       : /is not inside|escapes the project/.test(why)
@@ -491,9 +491,14 @@ async function loadStagedRead(projectPath: string, rawRef: unknown, warnings: st
         : /could not be read/.test(why)
           ? `exists but could not be read (${why.replace(/^.*could not be read: /, "")})`
           : /is not in results\/\.staging|invalid JSON|no 'results'/.test(why)
-            ? "is not a staged read in results/.staging/ (pruned after 24h, or never staged)"
+            ? NOT_STAGED
             : "could not be read";
-    throw new StagedRefError(`personReadRef '${ref}' ${reason}: ${redo}`, !fault);
+    // Only a ref that names no staged person_read may fall back. Anything else
+    // is a store fault — including one the staging helper rethrows unwrapped
+    // when its own existence check fails — and must surface, not be papered
+    // over by an older copy.
+    const recoverable = ["was not staged by person_read", "is not under results/.staging/", NOT_STAGED].includes(reason);
+    throw new StagedRefError(`personReadRef '${ref}' ${reason}: ${redo}`, recoverable);
   }
   const read = personReadOf(envelope);
   if (!read) {

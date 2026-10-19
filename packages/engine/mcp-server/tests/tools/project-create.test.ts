@@ -1254,6 +1254,30 @@ describe("project_create — a personReadRef that is not a staged read falls bac
     expect(result.errors.join(" ")).toMatch(/is not a staged read/);
   });
 
+  it("does not paper over a store fault that also fails the existence check", async () => {
+    await stage("LZNY-BRF", structuredClone(FAMILY));
+    vi.setSystemTime(new Date(T.getTime() + 1000));
+    const named = await stage("LZNY-BRF", structuredClone(FAMILY));
+    const store = getProjectStore();
+    const readText = store.readText.bind(store);
+    const exists = store.exists.bind(store);
+    vi.spyOn(store, "readText").mockImplementation(async (p, r) => {
+      if (r === named) throw new Error("ECONNRESET");
+      return readText(p, r);
+    });
+    vi.spyOn(store, "exists").mockImplementation(async (p, r) => {
+      if (r === named) throw new Error("ECONNRESET");
+      return exists(p, r);
+    });
+    try {
+      const result = await create(named, ["LZNY-BRF"]);
+      expect(result.ok).toBe(false);
+      expect(result.errors.join(" ")).toMatch(/could not be read/);
+    } finally {
+      vi.restoreAllMocks();
+    }
+  });
+
   it("does not paper over a store fault on the ref it was given", async () => {
     fileStoreOnly("a directory where a staged file belongs has no Postgres meaning");
     await stage("LZNY-BRF", structuredClone(FAMILY));
