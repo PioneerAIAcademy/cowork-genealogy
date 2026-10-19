@@ -9,11 +9,12 @@
       "planning",
       "external-archive",
       "archion",
-      "handoff-rule"
+      "handoff-rule",
+      "direct-arm"
     ]
   },
   "input": {
-    "user_message": "Make the research plan for q_001 - where would Katharina Seeger's parents be recorded? Tell me what I need to do.",
+    "delegation": "Make the research plan for q_001 - where would Katharina Seeger's parents be recorded? Tell me what I need to do.\n\nquestionId: q_001\nprojectPath: <workspace>",
     "scenario": "archion-baiersbronn-unplanned"
   },
   "mcp_fixtures": [
@@ -21,23 +22,24 @@
     "place-search-all-baiersbronn",
     "collections-search-baiersbronn",
     "external-links-search-baiersbronn",
-    "volume-search-baiersbronn"
+    "volume-search-baiersbronn",
+    "place-search-any",
+    "place-search-all-any",
+    "collections-search-any",
+    "volume-search-any",
+    "external-links-search-any",
+    "wiki-read-not-found-any",
+    "person-read-empty-any"
   ],
   "execution": {
     "max_wall_clock_seconds": 600,
     "sdk_message_silence_seconds": 300,
-    "max_turns": 30,
-    "stub_skills": [
-      {
-        "skill": "search-external-sites",
-        "response": "Handed over the Archion parish page for Baiersbronn and logged it as an in-flight external_site entry; the plan item stays in_progress until the capture comes back."
-      }
-    ]
+    "max_turns": 30
   },
   "judge_context": [
     "loc_001 records that the Baiersbronn Protestant registers are on Archion and gives the parish page URL. The plan should target that register.",
     "Because the researcher must open Archion themselves, the reply must carry the hand-off: (1) the parish link itself — the Archion URL from loc_001, not just 'Archion' or the site's home page; (2) what the register would settle — Katharina's parents, from her 1843 baptism entry or the family register; (3) what to look for — the baptism register or Familienregister covering 1843, and the entry for Katharina Seeger; (4) an offer to walk the researcher through capturing the page and uploading it. Bare directions to a site with no link, or no offer, is a fail.",
     "Archion needs a paid pass to view; saying so is correct, not a hedge.",
-    "Do not grade whether search-external-sites was spawned: it is stubbed, and planning without executing is a legitimate ending here."
+    "Do not grade whether search-external-sites ran: the research-plan agent hands an external search back to its caller instead of spawning it, and planning without executing is a legitimate ending here."
   ]
 }

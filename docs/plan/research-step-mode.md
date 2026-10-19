@@ -135,7 +135,7 @@ that apply:
     setup, init-project → setup, record-structurer → search. The overlaps only admit a
     follower:
     - **`locality-guide` after research-plan,** because research-plan stops for an unsurveyed
-      place (`skills/research-plan/SKILL.md:182-187`).
+      place (`agents/research-plan.md:270-275`).
     - **research-plan after research-exhaustiveness, only while the active plan has open
       items.** That is dispose's precondition (`skills/research/SKILL.md:226`). So a decline
       turn cannot start a new plan.
@@ -378,7 +378,7 @@ that apply:
   - **high:** "Continue with planning the searches?", after a sentence naming the sources that
     could change the answer and why, with "wrap it up" named.
 - **Conclude:** proof-conclusion writes at the tier reached, with `shortfall: "gap"`.
-  **Search more:** research-plan's add-new mode (`skills/research-plan/SKILL.md:144-148`) plans
+  **Search more:** research-plan's add-new mode (`agents/research-plan.md:229-233`) plans
   from the `deferred` entries.
 - **No writer-tool loop rule is needed.** A new plan can only follow a researcher's reply, or
   the one extra round "Keep going" allows (section A2).
@@ -657,7 +657,7 @@ that apply:
   (`skills/research/SKILL.md:361-362`). The objective row (`:229`), after the tree-encoding gate,
   names any uncovered part of the objective as a suggested next question, as a statement. The
   `compound-objective-*` router tests point at that statement.
-- **research-plan's FAN-pivot hand-off** (`skills/research-plan/SKILL.md:655`) becomes a plan
+- **research-plan's FAN-pivot hand-off** (`agents/research-plan.md:751`) becomes a plan
   item.
 
 ### F. e2e continues on its own
@@ -685,7 +685,7 @@ that apply:
 ### G. Editing the plan at the plan step
 A free-text reply after the plan step is a plan edit. Today research-plan's review mode forbids
 modifying items, and it defaults to review whenever an active plan has open items
-(`skills/research-plan/SKILL.md:134-142`, `:165-168`). So research-plan gains an **edit mode**:
+(`agents/research-plan.md:219-227`, `:253-256`). So research-plan gains an **edit mode**:
 - a struck item → `skipped` with `user_declined`;
 - an added item → a new plan item.
 
