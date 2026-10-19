@@ -15,7 +15,7 @@
     "scenario": "empty-project-just-created"
   },
   "mcp_fixtures": [
-    "wikipedia-search-hollow-creek-error"
+    "wikipedia-search-hollow-creek-not-found"
   ],
   "judge_context": [
     "Should call `wikipedia_search` once with a query targeting Hollow Creek Settlement; the tool answers not-found",

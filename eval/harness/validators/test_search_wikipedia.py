@@ -3,8 +3,8 @@
 `search-wikipedia` was a skill until issue #2795; every suite file is now a
 direct-agent test and every "SKILL.md step N" reference below has been
 repointed at `packages/engine/plugin/agents/search-wikipedia.md`. Its
-`## Return contract` is exactly one line saying the summary was saved to the
-research log. It carries no `summary_for_user` paragraphs (PENDING in
+`## Return contract` is exactly one line: the summary was saved to the research
+log, or (step 2) no article was found, or the lookup failed. It carries no `summary_for_user` paragraphs (PENDING in
 `agent-return-contract.test.ts`).
 
 The deliverable is one research-log entry (#3244 option L, U20): `tool:
@@ -83,7 +83,8 @@ def test_only_lookup_and_log_called(tool_calls, test):
         f"research_log_append; also called: {bad}"
     )
     log_calls = _calls(tool_calls, "research_log_append")
-    limit = 0 if "scope-decline" in test.get("tags", []) else 1
+    tags = test.get("tags", [])
+    limit = 0 if "scope-decline" in tags or "lookup-failed" in tags else 1
     assert len(log_calls) <= limit, (
         f"expected at most {limit} research_log_append call(s); got "
         f"{len(log_calls)}. One lookup is one log entry."
@@ -120,6 +121,8 @@ def _skip_unless_logging_run(test) -> None:
         pytest.skip("scope-decline: the agent declines, so it logs nothing")
     if "no-project" in tags:
         pytest.skip("no-project: test_no_project_returns_template grades this run")
+    if "lookup-failed" in tags:
+        pytest.skip("lookup-failed: test_lookup_failed_logs_nothing grades this run")
 
 
 def _wiki_log_entries(before_state, after_state) -> list[dict]:
@@ -315,13 +318,38 @@ def test_no_project_returns_template(before_state, after_state, tool_calls, agen
     )
 
 
-def test_not_found_logs_negative(before_state, after_state, agent_returns, text_response, test):
+NOT_FOUND_PREFIX = "No Wikipedia article found"
+NOT_FOUND_REPLY = "No Wikipedia article was found for that topic."
+LOOKUP_FAILED_REPLY = "The Wikipedia lookup failed; nothing was logged."
+
+
+def _served_errors(tool_calls) -> list[str]:
+    """The `error` strings the mock served for wikipedia_search this run."""
+    return [
+        str(tc["response"]["error"])
+        for tc in _calls(tool_calls, "wikipedia_search")
+        if isinstance(tc.get("response"), dict) and "error" in tc["response"]
+    ]
+
+
+def _assert_exact_reply(reply: str, expected: str) -> None:
+    assert reply.strip() == expected, (
+        f"agent body step 2: the return is exactly {expected!r} and nothing "
+        f"else; reply was {reply!r}"
+    )
+
+
+def test_not_found_logs_negative(before_state, after_state, tool_calls, agent_returns, text_response, test):
     """Tag-gated (`not-found`): when `wikipedia_search` answers `No Wikipedia
     article found`, the agent logs one negative entry, fills no template, writes
-    no file, and returns the not-found line (agent body step 2).
+    no file, and returns exactly the not-found line (agent body step 2).
     """
     if "not-found" not in test.get("tags", []):
         pytest.skip("not a not-found scenario")
+    errors = _served_errors(tool_calls)
+    assert errors and all(e.startswith(NOT_FOUND_PREFIX) for e in errors), (
+        f"the fixture must serve a not-found error; served {errors!r}"
+    )
     new = new_log_entries(before_state, after_state)
     assert len(new) == 1, f"expected exactly one new log entry; got {len(new)}"
     entry = new[0]
@@ -337,12 +365,32 @@ def test_not_found_logs_negative(before_state, after_state, agent_returns, text_
     files = _files_created(before_state, after_state)
     assert not files, f"a not-found lookup writes no file; wrote: {files}"
     reply = _graded_reply(agent_returns, text_response)
-    assert "No Wikipedia article was found" in reply, (
-        f"expected the not-found return line; reply was {reply!r}"
-    )
     assert "Saved the Wikipedia summary" not in reply, (
         f"nothing was found, so nothing was saved; reply was {reply!r}"
     )
+    _assert_exact_reply(reply, NOT_FOUND_REPLY)
+
+
+def test_lookup_failed_logs_nothing(before_state, after_state, tool_calls, agent_returns, text_response, test):
+    """Tag-gated (`lookup-failed`): any `wikipedia_search` error other than
+    not-found is a failed lookup. The agent logs nothing, writes no file, and
+    returns exactly the lookup-failed line (agent body step 2).
+    """
+    if "lookup-failed" not in test.get("tags", []):
+        pytest.skip("not a lookup-failed scenario")
+    errors = _served_errors(tool_calls)
+    assert errors and not any(e.startswith(NOT_FOUND_PREFIX) for e in errors), (
+        f"the fixture must serve an error other than not-found; served {errors!r}"
+    )
+    log_calls = _calls(tool_calls, "research_log_append")
+    new = new_log_entries(before_state, after_state)
+    assert not log_calls and not new, (
+        "a failed lookup logs nothing; got "
+        f"{len(log_calls)} research_log_append call(s) and {len(new)} new log entries"
+    )
+    files = _files_created(before_state, after_state)
+    assert not files, f"a failed lookup writes no file; wrote: {files}"
+    _assert_exact_reply(_graded_reply(agent_returns, text_response), LOOKUP_FAILED_REPLY)
 
 
 # --- Negative no-harm invariant (tag-gated) ---------------------------

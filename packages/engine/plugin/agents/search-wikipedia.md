@@ -82,7 +82,7 @@ background on a specific topic, person, place, or historical event.
 ## What to do
 
 Do not announce a step before doing it. No "Now I'll …", no "I'm going to …" —
-the only thing you say is the return below, after the entry is logged.
+the only thing you say is the return below.
 
 **Everything you write outside the logged entry is about the lookup, never about
 the topic.** You know nothing about the topic beyond what the tool returned, and
@@ -97,8 +97,8 @@ anything drawn from your own knowledge rather than the tool response.
    `research_log_append` once with `projectPath`, `tool: "wikipedia_search"`,
    `query: {query}`, `planItemId: null`, `outcome: "negative"`,
    `resultsExamined: 0` and `notes: null`. On any other `error`, log nothing and
-   do not re-query. Either way, fill no template and return the matching line
-   from the return contract.
+   do not re-query. Either way, fill no template, return the matching line
+   from the return contract, and stop there.
 3. Fill in this template — replace `{{title}}`, `{{extract}}` and `{{url}}`
    with the corresponding fields from the tool result:
 
@@ -121,7 +121,7 @@ anything drawn from your own knowledge rather than the tool response.
    The `{{title}}` is the **article title the tool returned**, never the query
    you sent, with its accents and punctuation unchanged. A redirect to a formal
    title is correct behavior, not a discrepancy: follow it silently.
-5. If `research_log_append` returns `reason: "no_project"`, return the filled
+5. If step 4's `research_log_append` returns `reason: "no_project"`, return the filled
    template as your reply instead of the line below, and nothing else.
 
 ## Re-invocation behavior

@@ -2,7 +2,7 @@
 
 Grading dimensions for search-wikipedia unit tests. Evaluated by the LLM judge alongside the base rubric (correctness, completeness, tool arguments).
 
-`search-wikipedia` is an **agent** (`packages/engine/plugin/agents/search-wikipedia.md`), not a skill, and every test in this suite is a direct-agent test: the main thread relays a delegation verbatim and replies with whatever the agent returns. So the "reply" you are grading below is the agent's return, and every citation in this file is to the agent body — it has no numbered step 5.
+`search-wikipedia` is an **agent** (`packages/engine/plugin/agents/search-wikipedia.md`), not a skill, and every test in this suite is a direct-agent test: the main thread relays a delegation verbatim and replies with whatever the agent returns. So the "reply" you are grading below is the agent's return, and every citation in this file is to the agent body.
 
 The deliverable is one research-log entry (`tool: "wikipedia_search"`) whose `notes` hold the filled template; it appears in the file changes summary as a new `log` entry. Its byte-level fidelity is checked **deterministically**, not here: `test_log_notes_match_template` compares the logged entry's notes byte-for-byte against the template inlined in the agent body, and `test_notes_title_is_returned_title` pins the H1 to the returned title. Do not re-derive either, and do not penalize a dimension because the reply does not show the notes — the agent is instructed not to show them.
 
@@ -10,7 +10,7 @@ One test runs with **no project** (`ut_search_wikipedia_002`, tagged `no-project
 
 One test in this suite is a **decline** (`ut_search_wikipedia_008`, tagged `scope-decline`). It logs nothing and makes no tool call, and that is its correct outcome. On that test read "Template fidelity" and "Tool query and response interpretation" as N/A, and grade "Reply economy" on the decline shape described in its own section.
 
-One test is a **not-found** lookup (`ut_search_wikipedia_011`, tagged `not-found`). The tool answers `No Wikipedia article found`. One negative log entry and no template are correct. On that test read "Template fidelity" as N/A, and under "Reply economy" the line "No Wikipedia article was found for that topic." is the correct one-line return.
+Two tests serve a `wikipedia_search` error (agent body step 2). On the **not-found** test (`ut_search_wikipedia_011`, tagged `not-found`) one negative log entry and no template are correct, and the correct reply is "No Wikipedia article was found for that topic." On the **lookup-failed** test (`ut_search_wikipedia_012`, tagged `lookup-failed`) the tool fails with an upstream error; logging nothing and making no second call are correct, `(no file changes)` is correct, and the correct reply is "The Wikipedia lookup failed; nothing was logged." On both, read "Template fidelity" as N/A, and under "Reply economy" the step-2 line is the correct one-line return.
 
 ## Template fidelity
 
