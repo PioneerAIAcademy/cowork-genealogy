@@ -2619,7 +2619,8 @@ MCP server unavailable — §6, #941).
 ### 16.1 Directories
 
 - Fixtures: `eval/tests/e2e-single-ask/<slug>/`.
-- Run logs: `eval/runlogs/e2e-single-ask/<slug>/run-<timestamp>.json`.
+- Run logs: `eval/runlogs/e2e-single-ask/<slug>/run-<timestamp>.json`. They are not
+  committed; a PR that changes a fixture's result pastes the printed line instead.
 
 Both are **siblings** of `eval/tests/e2e/` and `eval/runlogs/e2e/`, never inside
 them. About 20 readers walk those two trees with no exclusion (`corpus_report`,
@@ -2685,7 +2686,7 @@ Deterministic, in `e2e/single_ask_grade.py`. PASS only if all four hold:
    here even if it saved: the patron never got the answer.
 
 Printed, not graded: whether the main thread called `research_delivered`, every
-unit in order (nested ones in brackets), the `extraction_append` count, how the
+unit in order (nested ones in parentheses), the `extraction_append` count, how the
 turn stopped (`stop=clean` or the abort reason), the whole-run cost estimate, and
 any background spawn ("Async agent launched"), whose save can land after the grade
 reads `research.json`.

@@ -160,7 +160,7 @@ def test_setup_units_are_skipped():
     assert g.first_unit == "source-evaluation" and g.passed
 
 
-def test_plugin_namespace_prefix_is_normalised():
+def test_plugin_namespace_prefix_is_normalized():
     g, _ = run([agent("genealogy-research:source-evaluation")])
     assert g.first_unit == "source-evaluation"
 
@@ -246,6 +246,13 @@ def _write(tmp_path: Path, **over) -> Path:
 def test_bad_fixture_is_refused(tmp_path, over):
     with pytest.raises(FixtureError):
         load_single_ask_fixture(_write(tmp_path, **over))
+
+
+def test_a_fixture_that_is_not_an_object_is_refused(tmp_path):
+    d = _write(tmp_path)
+    (d / "fixture.json").write_text("[]", encoding="utf-8")
+    with pytest.raises(FixtureError):
+        load_single_ask_fixture(d)
 
 
 def test_sources_save_needs_no_tool(tmp_path):
@@ -418,7 +425,10 @@ def test_fixture_dirs_takes_one_slug(tmp_path):
 
 # --- main(): exit codes for runs that never happened or cannot be graded ----
 
-def _main_with(monkeypatch, tmp_path, capsys, aborted, final_research=SAVED):
+FIXTURE_SAVED = final(log=[{"id": "log_002", "tool": "source_evaluation"}])
+
+
+def _main_with(monkeypatch, tmp_path, capsys, aborted, final_research=FIXTURE_SAVED):
     import e2e.run_single_ask as rsa
 
     async def fake_turn(**kwargs):

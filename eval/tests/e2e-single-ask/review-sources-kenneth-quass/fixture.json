@@ -4,7 +4,7 @@
   "expected_owner": "source-evaluation",
   "expected_save": {
     "section": "log",
-    "tool": "source-evaluation"
+    "tool": "source_evaluation"
   },
   "is_plan_ask": false,
   "setup_units": [],

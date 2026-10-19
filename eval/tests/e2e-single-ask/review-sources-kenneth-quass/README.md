@@ -3,7 +3,7 @@
 **Ask:** "Review the sources attached to KNS4-P6W."
 
 **Expected owner:** `source-evaluation`. **Expected save:** one new `log` entry with
-`tool: "source-evaluation"`.
+`tool: "source_evaluation"`.
 
 ## Where it came from
 
@@ -11,11 +11,14 @@ A placeholder (issue #3527). Issue #3571 picks and adjudicates the real panel fr
 alpha feedback; replace or extend this fixture from its comment on issue #3527.
 
 The `tool` value is provisional. Issue #3524 says the log entry's `tool` "names the
-activity" but does not fix the string. Match it to what #3524 ships.
+activity" but does not fix the string. `source_evaluation` follows the one agent that
+already logs itself (`historical-context` writes `historical_context`). Match it to
+what #3524 ships.
 
 ## Expected result today
 
-Measured 2026-10-19 on `main`: FAIL on `save` only.
+Measured 2026-10-19 on `main`, when the fixture still expected `source-evaluation`
+(the turn wrote no log entry at all, so the result is the same): FAIL on `save` only.
 
 ```
 FAIL review-sources-kenneth-quass  expected=source-evaluation  first=source-evaluation  save=missing log tool=source-evaluation (new log tools: none)  delivered=no  stop=clean  failed=[save]
@@ -43,5 +46,6 @@ run that went over; it does not stop one (spec §6).
 
 ## Cost
 
-Measured 2026-10-19: $0.92 (`usage.whole_run_cost_usd_estimated`), 3 min 5 s, on
+Measured 2026-10-19: $0.92 (`usage.whole_run_cost_usd_estimated`), 3 min 5 s of wall
+clock (164 s of it in the SDK's `duration_ms`), on
 `claude-sonnet-4-6` at effort `high`. One run, so read it as an order of magnitude.

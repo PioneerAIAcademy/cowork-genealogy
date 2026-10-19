@@ -58,6 +58,8 @@ class FixtureError(ValueError):
 def load_single_ask_fixture(fixture_dir: Path) -> tuple[Fixture, SingleAskSpec]:
     fixture_dir = Path(fixture_dir)
     raw = json.loads((fixture_dir / "fixture.json").read_text(encoding="utf-8"))
+    if not isinstance(raw, dict):
+        raise FixtureError(f"{fixture_dir.name}: fixture.json must be a JSON object")
     missing = [k for k in REQUIRED_KEYS if not raw.get(k)]
     if missing:
         raise FixtureError(f"{fixture_dir.name}: fixture.json is missing {missing}")
