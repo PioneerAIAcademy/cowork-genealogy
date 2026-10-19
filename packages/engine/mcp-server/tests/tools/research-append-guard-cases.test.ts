@@ -33,7 +33,12 @@ interface GuardCase {
   tree?: any;
 }
 
-const writerGuards = registry.guards.filter((g: any) => g.writer_guard);
+// Scoped to this file's guards (proof_summary-shaped). The research-log-append
+// guards replay through their own harness (research-log-append-guard-cases.test.ts),
+// which also asserts every registry writer-guard file is one of the two known ones.
+const writerGuards = registry.guards.filter((g: any) =>
+  g.writer_guard?.file.endsWith("/research-append.ts"),
+);
 
 describe("guard case files: writer-tool replay", () => {
   it("binds every registered writer guard", () => {
