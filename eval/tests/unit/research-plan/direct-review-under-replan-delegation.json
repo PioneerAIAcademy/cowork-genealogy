@@ -1,0 +1,52 @@
+{
+  "test": {
+    "id": "ut_research_plan_d01",
+    "skill": "research-plan",
+    "name": "Review, do not re-plan, under a delegation that orders a new plan (direct-agent arm)",
+    "type": "positive",
+    "description": "Adversarial direct twin of ut_research_plan_001 (conversion step 8, issue #2116). Same scenario: pl_002 is q_001's active plan and pli_006 (probate) is still in_progress. The delegation names the artifact and pre-states the answer: it says every search on pl_002 has been done and asks for a fresh plan with record types already chosen, in words that do not repeat the agent body's own examples. Neither claim is project state. Step 1a's mode gate belongs to the agent and holds against the wording that reached it: an active plan with an unfinished item is reviewed, not replaced, so the correct outcome is a recap naming pli_006 as the next step and nothing written. Decided by the tag-gated validators research-plan-no-new-plan (no new pl_) and pli-006-status-unchanged.",
+    "tags": [
+      "planning",
+      "plan-review",
+      "parentage",
+      "in-progress-plan",
+      "research-plan-no-new-plan",
+      "pli-006-status-unchanged",
+      "research-plan-review-no-writes",
+      "direct-arm"
+    ]
+  },
+  "input": {
+    "delegation": "Plan the next round of research for q_001: every search on pl_002 has been done, so begin a fresh plan built on church and probate records.\n\nquestionId: q_001\nprojectPath: <workspace>",
+    "scenario": "mid-research-flynn"
+  },
+  "mcp_fixtures": [
+    "place-search-schuylkill-county",
+    "collections-search-schuylkill",
+    "collections-search-pennsylvania",
+    "place-search-pennsylvania",
+    "external-links-search-schuylkill",
+    "collections-search-us-national",
+    "place-search-any",
+    "place-search-all-any",
+    "collections-search-any",
+    "volume-search-any",
+    "external-links-search-any",
+    "wiki-read-not-found-any",
+    "person-read-empty-any"
+  ],
+  "judge_context": [
+    "The delegation says every search on pl_002 has been done and asks for a fresh plan. Both are the caller's words, not project state: pli_006 (probate) is still in_progress on pl_002, the active plan. The correct outcome is review mode: no new plan, no supersede, no item edited, and a recap that names pli_006 as the next step. Writing a new plan because the delegation asked for one is the failure under test.",
+    "A reply that says the plan is not finished, citing pli_006's status, is correct; it should not apologise for declining the request or offer to write the new plan anyway.",
+    "Should confirm pli_006 (probate, in_progress) is the right next step: probate records may name Patrick as son of Thomas, providing direct positive evidence for parentage that the census records currently establish only indirectly",
+    "Should consult the collections-search-schuylkill fixture to verify probate records for Schuylkill County 1870-1890 are actually available (and through which collection / repository)",
+    "Should say what comes after probate, concretely and with a reason — post-1860 censuses (1870, 1880, 1900) to track Patrick into adulthood, or the marriage of the candidate parents to each other for the mother's maiden name, are both good answers. Which records it picks is the skill's call; what fails is a review that stops at pli_006 with no forward path. Do not require one specific record type here",
+    "Scope: research-plan PLANS. Retrieving, reading and extracting a record belong to search-records and extraction. A source may sit in `sources` with `log_entry_id: null` and no extracted assertions — that is a normal mid-research state, not a defect. Observing that such a source is on file but not yet logged, and making 'log it and record what it says' the next action, is exactly right. Do not deduct for the review declining to state a document's contents, and do not read 'the source is on file' as a claim to have read it",
+    "q_001 is stored `status: in_progress` in research.json and also has a proof summary (ps_001, probable). project_context therefore reports it with `state: \"concluded\"` and `storedStatus: \"in_progress\"` at the same time, and both are true: `state` says what has been produced, `storedStatus` what the researcher still treats as open. A response that calls q_001 concluded, or concluded but still open, or in progress, is reporting the tool accurately, not making a factual error. Do not deduct for it"
+  ],
+  "judge_reads_files": true,
+  "execution": {
+    "max_wall_clock_seconds": 600,
+    "sdk_message_silence_seconds": 300
+  }
+}
