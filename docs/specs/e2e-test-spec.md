@@ -1990,7 +1990,7 @@ exemptions (`_RUNLOG_EXEMPT_KEYS`) can bypass the per-string and backstop caps
 for specific (tool, response_key) pairs — `image_transcribe`'s `transcription`
 is the first exemption.
 
-`thread` (`"main"` or `"sub"`, from runs after issue #3527) is set when the call
+`thread` (`"main"` or `"sub"`, on runs from 2026-10-19 on) is set when the call
 is streamed, from the SDK message's `parent_tool_use_id`, so unlike `agent_id` it
 is present on an entry whose result never arrived. Backfilled entries (below) do
 not carry it; read their `agent_id`.
@@ -2608,13 +2608,13 @@ next person reads before re-running.
 
 About 70 of the 135 alpha feedback bundles reviewed on 2026-10-04 were one bounded ask — find a record, review
 the sources on a person, are these the same person, transcribe this — not a
-research job. Single-ask mode covers that use (issue #3527): it sends one
+research job. Single-ask mode covers that use: it sends one
 message as one ordinary turn and checks which unit answered and what was saved.
 
 `make e2e-single-ask [TEST=<slug>]` runs `e2e.run_single_ask`. Omit `TEST` to run
 the whole panel. It prints one line per fixture, exits 0 when all pass, 1 when
 any fails, and 2 when a run never happened (bad fixture, no build, the genealogy
-MCP server unavailable — §6, #941).
+MCP server unavailable — §6).
 
 ### 16.1 Directories
 
