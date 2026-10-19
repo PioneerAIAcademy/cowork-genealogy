@@ -219,8 +219,7 @@ second, write last.
 
 **Review mode** — An `active` plan still has `planned`/`in_progress`
 items, and the user wants a recap. Narrate which item is next, why,
-and what follows it — a named record set or search with its reason, not a
-hand-off to another skill — **do not create a new plan or modify items.** The
+and what follows — **do not create a new plan or modify items.** The
 active plan is the audit trail; review is explanatory only. If the
 item you confirm as the next step names no specific collection, run a
 quick `collections_search` at its jurisdiction to confirm the source
